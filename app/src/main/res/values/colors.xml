@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#979b9d</color>
+    <color name="colorPrimaryDark">#979b9d</color>
+    <color name="colorAccent">#D81B60</color>
+
+    <!--for selector -->
+    <color name="toggle_button_background_checked">#ccffffff</color>
+    <color name="toggle_button_background_unchecked">#2dffffff</color>
+    <color name="toggle_button_text_color_checked">#7f000000</color>
+    <color name="toggle_button_text_color_unchecked">#1c000000</color>
+
+    <!-- activity_listening.xml -->
+    <color name="activity_listening_background">#f1f2f3</color>
+
+    <!--result textview-->
+    <color name="result_hint_color">#70767d</color>
+    <color name="result_text_color">#222222</color>
+
+    <color name="snackbar_backround">#323232</color>
+    <color name="snackbar_border_color">#33000000</color>
+
+    <color name="white">#ffffff</color>
+</resources>

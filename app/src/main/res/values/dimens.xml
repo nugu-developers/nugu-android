@@ -1,0 +1,24 @@
+<resources>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <!--Floating action button-->
+    <dimen name="button_fab_margin">16dp</dimen>
+
+    <!--close button-->
+    <dimen name="button_close_margin">16dp</dimen>
+
+    <!--result textview-->
+    <dimen name="textview_result_margin_start_end">32dp</dimen>
+    <dimen name="textview_result_margin_top">48dp</dimen>
+    <dimen name="textview_result_text_size">28sp</dimen>
+
+    <!-- voicechrome -->
+    <dimen name="voicechrome_width">112dp</dimen>
+    <dimen name="voicechrome_height">56dp</dimen>
+    <dimen name="voicechrome_margin_bottom">20dp</dimen>
+
+    <dimen name="toggle_button_shape_border_radius">25dp</dimen>
+</resources>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <TextView android:text="인공지능 NUGU 사용하기" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+        <Switch android:id="@+id/switch_enable_nugu" android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <TextView android:text="이름을 불러 대화 시작하기" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+        <Switch android:id="@+id/switch_enable_trigger" android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <TextView android:text="부르는 이름" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+        <Spinner
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" android:id="@+id/spinner_wakeup_word" android:layout_weight="1"/>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <TextView android:text="대화 시작 효과음" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+        <Switch android:id="@+id/switch_enable_wakeup_beep" android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <TextView android:text="인식 성공 효과음" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+        <Switch android:id="@+id/switch_enable_recognition_beep" android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+
+    <LinearLayout android:id="@+id/layout_hidden" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <TextView android:text="계정선택" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+        <Spinner
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" android:id="@+id/spinner_auth_type" android:layout_weight="1"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp">
+        <Button android:text="로그아웃"
+                android:id="@+id/btn_logout"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,73 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.skt.nugu.sampleapp"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def buildType = variant.buildType.name
+            def fileNamePostfix = "OpenSDK-NuguSample-${buildType}-${variant.versionName}"
+            outputFileName = "${fileNamePostfix}.apk"
+
+
+            if (variant.getBuildType().isMinifyEnabled()) {
+                variant.assemble.doLast {
+                    copy {
+                        from variant.mappingFile
+                        into "${rootDir}/app/build/outputs/mapping/${flavor}/${buildType}"
+                        rename { String fileName ->
+                            "mapping_${fileNamePostfix}.txt"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation project(':nugu-android-helper')
+    implementation project(':nugu-ux-kit')
+    implementation project(':nugu-login-kit')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    //implementation "io.grpc:grpc-okhttp:1.20.0"
+    implementation "com.squareup.okhttp:okhttp:2.5.0"
+    implementation "com.google.code.gson:gson:2.7"
+    implementation "com.android.support:design:28.0.0"
+    // 2.8.0 requires androidx.
+    //noinspection GradleDependency
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.2'
+    implementation 'com.google.android.exoplayer:exoplayer-hls:2.10.2'
+
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+}

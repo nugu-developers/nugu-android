@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        package="com.skt.nugu.sdk.platform.android.login">
+
+    <application
+            android:allowBackup="false"
+            android:label="@string/app_name"
+            android:supportsRtl="true"
+            tools:replace="android:allowBackup">
+        <activity
+                android:name="com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthCallbackActivity"
+                android:excludeFromRecents="true"
+                android:exported="true"
+                android:launchMode="singleTop"
+                android:noHistory="true"
+                android:theme="@style/Romain.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:host="@string/nugu_redirect_host" android:scheme="@string/nugu_redirect_scheme" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

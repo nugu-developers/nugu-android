@@ -1,0 +1,77 @@
+// Copyright 2015 The gRPC Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "devicegateway.grpc";
+option java_outer_classname = "RegistryProto";
+
+service Registry {
+    rpc GetPolicy(PolicyRequest) returns (PolicyResponse);
+}
+
+enum Protocol {
+    H2_GRPC     = 0;     // grpc + http2
+    H2C_GRPC    = 1;     // grpc + http2 clear text (현재 지원 하지 않음)
+    H2          = 2;     // http2
+    H2C         = 3;     // http2 clear text (현재 지원 하지 않음)
+    H1          = 4;     // http1.1 (현재 지원 하지 않음)
+    WEB_SOCKET  = 5;     // web socket (현재 지원 하지 않음)
+}
+
+enum Charge {
+    NORMAL = 0; // 일반적인 통신 요금 과금 (default)
+    FREE = 1;   // 무과금 포트를 이용하여 device gateway에 접속해서 TTS.SpeechPlay Event를 통해 음성 합성
+}
+
+message PolicyRequest {
+    string device_id    = 1;
+    string user_id      = 2;
+    Protocol protocol   = 3;  // protocol filter
+    Charge Charge       = 4;
+}
+
+message PolicyResponse {
+    message ServerPolicy {
+
+        Protocol protocol = 1;
+        string host_name = 2;   // overrideAuthority에 입력 (참고: https://grpc.io/grpc-java/javadoc/io/grpc/ManagedChannelBuilder.html#overrideAuthority-java.lang.String- )
+        string address = 3;
+        int32 port = 4;
+
+        int32 retry_count_limit = 5;    // retry_count_limit까지 요청 한 후 다음 server로 접속 시도
+        int32 connection_timeout = 6;   // ms
+
+
+        Charge charge = 7;      // null일 경우 과금
+
+    }
+
+    repeated ServerPolicy server_policy = 1; // 맨 앞의 주소부터 차례로 요청
+
+
+    message HealthCheckPolicy {
+        // next_health_check_time = max( now + ttl_max + beta * log_e(0 < rand() <= 1) - ttl_max * (누적 헬스 체크 실패 카운트 / 누적 헬스체크 시도 카운트), now + retry_delay)
+
+        int32 ttl = 1;                  // ms
+        int32 ttl_max = 2;              // ms
+        float beta = 3;
+        int32 retry_count_limit = 4;    // retry_count_limit까지 health check 후 실패하면 접속 해제
+        int32 retry_delay = 5;          // ms
+        int32 health_check_timeout = 6; // ms
+        int32 accumulation_time = 7;     // ms / 누적 시간 동안 헬스체크 성공 통계 작성
+    }
+
+    HealthCheckPolicy health_check_policy = 2;
+}

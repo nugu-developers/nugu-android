@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        tools:openDrawer="start">
+
+    <android.support.design.widget.CoordinatorLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context=".activity.MainActivity">
+
+        <android.support.design.widget.AppBarLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:theme="@style/AppTheme.AppBarOverlay">
+
+            <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="?attr/colorPrimary"
+                    app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+        </android.support.design.widget.AppBarLayout>
+
+        <include layout="@layout/content_main"/>
+
+        <include layout="@layout/bottom_sheet_voice_chrome"/>
+
+        <com.skt.nugu.sdk.platform.android.ux.widget.NuguFloatingActionButton
+                android:id="@+id/fab"
+                android:layout_width="@dimen/fab_size_large"
+                android:layout_height="@dimen/fab_size_large"
+                app:fab_micLargeDrawable="@drawable/nugu_btn_large_mic"
+                app:fab_nuguLargeDrawable="@drawable/nugu_btn_large_nugu"
+                app:fab_micStandardDrawable="@drawable/nugu_btn_mic"
+                app:fab_nuguStandardDrawable="@drawable/nugu_btn_nugu"
+                app:fab_color="#009DFF"
+                app:fab_sizes="standard"
+                app:fab_autoPlay="true"
+                app:fab_loop="true"
+                android:layout_gravity="bottom|center"
+                android:contentDescription="@string/button_fab_description"
+                android:layout_margin="@dimen/button_fab_margin"/>
+    </android.support.design.widget.CoordinatorLayout>
+
+    <android.support.design.widget.NavigationView
+            android:id="@+id/nav_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:fitsSystemWindows="true"
+            app:menu="@menu/activity_main_drawer">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:padding="10dp">
+            <TextView android:id="@+id/tv_version" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"/>
+        </LinearLayout>
+    </android.support.design.widget.NavigationView>
+</android.support.v4.widget.DrawerLayout>

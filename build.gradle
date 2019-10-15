@@ -1,0 +1,43 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = '1.3.21'
+    ext.grpc_version = '1.21.0'
+    ext.protobuf_version = '1.21.0'
+    ext.protoc_version = '3.7.0'
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+
+        maven {
+            url "http://211.108.174.69:8081/nexus/content/repositories/releases/"
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+ext {
+    keensenseVersion="0.1.0"
+    jademarbleVersion="0.1.1"
+    silvertrayVersion="4.1.0"
+
+    nuguVersionCode=600
+    nuguVersionName="0.6.0"
+}

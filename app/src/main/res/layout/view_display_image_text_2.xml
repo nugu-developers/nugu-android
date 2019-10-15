@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+       android:layout_width="match_parent"
+       android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                  android:orientation="vertical">
+        <FrameLayout android:layout_width="match_parent" android:layout_height="77dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                          android:layout_marginTop="29dp" android:gravity="center_horizontal">
+                <include layout="@layout/title_view"/>
+            </LinearLayout>
+
+            <ImageView
+                    android:id="@+id/btn_close"
+                    android:layout_width="wrap_content" android:layout_height="28dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginRight="20dp"
+                    android:layout_gravity="top|right"
+                    android:src="@drawable/btn_close"/>
+        </FrameLayout>
+
+        <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                          android:orientation="vertical" android:gravity="center_horizontal"
+                          android:layout_marginLeft="32dp" android:layout_marginRight="32dp">
+                <ImageView
+                        android:id="@+id/iv_content_image"
+                        android:layout_width="140dp" android:layout_height="140dp"
+                        android:layout_gravity="center_horizontal"/>
+
+                <TextView
+                        android:id="@+id/tv_content_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="26sp"
+                        android:textColor="@color/black"
+                        android:lineSpacingExtra="12sp"
+                        android:gravity="center_horizontal"
+                        android:layout_marginTop="10dp"/>
+
+                <TextView
+                        android:id="@+id/tv_content_footer"
+                        style="@style/AosTemplateFullText2ContentFooter"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="#888888"
+                        android:gravity="center_horizontal"
+                        android:layout_marginTop="10dp"/>
+
+                <TextView
+                        android:id="@+id/tv_content_body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textColor="#444444"
+                        android:lineSpacingExtra="14sp"
+                        android:layout_marginTop="20dp"/>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</merge>
