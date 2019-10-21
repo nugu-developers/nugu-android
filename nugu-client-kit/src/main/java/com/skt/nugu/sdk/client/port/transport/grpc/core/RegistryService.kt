@@ -43,7 +43,7 @@ internal class RegistryService(private val observer: GrpcServiceListener) :
             if(blockingStub == null || channel == null) {
                 return false
             }
-            val timeout = channel!!.opts.connectionTimeout.toLong()
+            val timeout = channel!!.defaultOptions.connectionTimeout.toLong()
             // request grpc
             blockingStub!!.apply {
                 val request = PolicyRequest.newBuilder().build()

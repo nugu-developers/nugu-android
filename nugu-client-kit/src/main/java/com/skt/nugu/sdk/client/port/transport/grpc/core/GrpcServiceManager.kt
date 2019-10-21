@@ -17,80 +17,93 @@ package com.skt.nugu.sdk.client.port.transport.grpc.core
 
 import com.skt.nugu.sdk.client.port.transport.grpc.Channels
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.reflect.KClass
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.KParameter
 
+/**
+ * A manager to manage and create grpc service
+ */
 internal class GrpcServiceManager {
-    // RPC services
-    private val services = ConcurrentHashMap<KClass<*>, GrpcServiceInterface>()
+    /** RPC services **/
+    private val services = ConcurrentHashMap<Class<*>, GrpcServiceInterface>()
+    /** A kind of server*/
     enum class SERVER { REGISTRY, DEVICEGATEWAY }
 
-    // Add a service to the list of services
+    /**
+     * Registers a service.
+     */
     fun addServices(listener: GrpcServiceListener, service : SERVER) {
         this.shutdown()
-
         when(service) {
             SERVER.REGISTRY -> {
-                // set the registry as a service list
-                addService<RegistryService>(listener)
+                services.putIfAbsent(RegistryService::class.java, RegistryService(listener))
             }
             SERVER.DEVICEGATEWAY -> {
                 // set the deviceGateway as a service list
-                addService<PingService>(listener)
-                addService<EventStreamService>(listener)
-                addService<CrashReportService>(listener)
+                services.putIfAbsent(PingService::class.java, PingService(listener))
+                services.putIfAbsent(EventStreamService::class.java, EventStreamService(listener))
+                services.putIfAbsent(CrashReportService::class.java, CrashReportService(listener))
             }
         }
     }
 
+    /**
+     * Returns whether this object is currently registered with a service.
+     */
     fun hasService(server: SERVER): Boolean {
-        when (server) {
+        return when (server) {
             SERVER.REGISTRY -> {
-                return has<RegistryService>()
+                has<RegistryService>()
             }
             SERVER.DEVICEGATEWAY -> {
-                return has<PingService>() &&
+                has<PingService>() &&
                         has<EventStreamService>() &&
                         has<CrashReportService>()
             }
         }
     }
 
-
+    /**
+     * Initiate a connection to service.
+     */
     fun connect(channel: Channels) = services.forEach {
         it.value.connect(channel)
     }
 
-    // Explicitly clean up client resources.
+    /**
+     * Shutdown from service.
+     * This method can explicitly clean up client resources.
+     */
     fun shutdown() {
         services.forEach { it.value.shutdown() }
         services.clear()
     }
 
-    private inline fun <reified T : Any> addService(observer: GrpcServiceListener) {
-        addService(T::class, observer )
-    }
-
-    // Creating New Class Instances
-    private fun addService(kClass: KClass<*>, vararg args: Any) {
-        val constructor = kClass.primaryConstructor ?: return
-        constructor.isAccessible = true
-        val argParameters = ConcurrentHashMap<KParameter, Any>(2)
-        val constructorParameters = constructor.parameters
-        for (index in constructorParameters.indices) {
-            argParameters.putIfAbsent(constructorParameters[index], args[index])
-        }
-        services.putIfAbsent(kClass, constructor.callBy(argParameters) as GrpcServiceInterface)
-    }
-
+    /**
+     * Returns eventstream service registered
+     */
     fun getEvent() : EventStreamService? = get()
+
+    /**
+     * Returns crashreport service registered
+     */
     fun getCrashReport() : CrashReportService? = get()
+
+    /**
+     * Returns ping service registered
+     */
     fun getPing() : PingService?  = get()
 
-    fun get(kClass: KClass<*>): Any? = services[kClass]
+    /**
+     * This is a helper method which get an service
+     * @param cls is javaclass
+     **/
+    fun get(cls: Class<*>): Any? = services[cls]
+    /**
+     * This is the helper method where the service exists.
+     **/
+    inline fun <reified T : Any> has() : Boolean  = get(T::class.java) != null
 
-    inline fun <reified T : Any> has() : Boolean  = get(T::class) != null
-    inline fun <reified T : Any> get() : T? = get(T::class) as? T
+    /**
+     * This is a helper method which get an service
+     **/
+    inline fun <reified T : Any> get() : T? = get(T::class.java) as? T
 }

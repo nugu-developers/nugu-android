@@ -27,7 +27,8 @@ import java.util.logging.Level
 /**
  * Class to create and manage an GRPC Channels
  */
-internal class Channels(var opts: Options) {
+internal class Channels(val defaultOptions: Options) {
+    private var currentOptions = defaultOptions.copy()
     private var managedChannel: ManagedChannel? = null
     private var channel: Channel? = null
     private var backoff = Backoff()
@@ -58,12 +59,12 @@ internal class Channels(var opts: Options) {
      */
     fun connect(callback: Runnable, authorization : String): Channels {
         val builder = ManagedChannelBuilder
-            .forAddress(opts.address, opts.port)
+            .forAddress(currentOptions.address, currentOptions.port)
             .userAgent(userAgent())
-        if(!opts.hostname.isNullOrBlank()) {
-            builder.overrideAuthority(opts.hostname)
+        if(!currentOptions.hostname.isNullOrBlank()) {
+            builder.overrideAuthority(currentOptions.hostname)
         }
-        if (opts.debug) {
+        if (currentOptions.debug) {
             // adb shell setprop log.tag.io.grpc.ChannelLogger DEBUG
             builder.maxTraceEvents(100)
             val logger = java.util.logging.Logger.getLogger(ChannelLogger::class.java.name)
@@ -177,7 +178,7 @@ internal class Channels(var opts: Options) {
      * @return true is success, otherwise false
      */
     private fun nextChannel( policy: PolicyResponse.ServerPolicy ) : Boolean {
-        with(opts) {
+        with(currentOptions) {
             address = policy.address
             port = policy.port
             retryCountLimit = policy.retryCountLimit
@@ -196,7 +197,7 @@ internal class Channels(var opts: Options) {
      */
     fun resetChannel() {
         // setup default
-        opts = Options()
+        currentOptions = defaultOptions.copy()
     }
 
     /**
