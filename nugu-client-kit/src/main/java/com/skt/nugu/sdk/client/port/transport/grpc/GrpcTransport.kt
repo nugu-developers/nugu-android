@@ -43,7 +43,6 @@ internal class GrpcTransport(
     private val messageConsumer: MessageConsumer,
     private val transportObserver: TransportListener
 ) : Transport, GrpcServiceListener, AuthStateListener {
-    //private val database by lazy { SQLiteStorage.getInstance()?.messageDao }
     private var requestQueue = ConcurrentLinkedQueue<MessageRequest>()
     private var state = State.INIT
     private var registryFinished: Boolean = false
@@ -142,7 +141,6 @@ internal class GrpcTransport(
             State.CONNECTING,
             State.WAITING_TO_RETRY_CONNECTING,
             State.POST_CONNECTING -> {
-                //messageRouter.onConnectionStatusChanged(ConnectionStatusListener.Status.PENDING)
                 transportObserver.onConnecting(this)
             }
             State.CONNECTED -> {
@@ -156,8 +154,6 @@ internal class GrpcTransport(
             State.DISCONNECTING,
             State.SHUTDOWN -> {
                 transportObserver.onConnecting(this)
-                // TODO : XXX
-                //transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.INTERNAL_ERROR)
             }
         }
 
@@ -316,14 +312,6 @@ internal class GrpcTransport(
         services.getEvent()?.sendCompleted()
     }
 
-    //if it is reconnected, send message.
-//    private fun restoreCertifiedMessage() {
-//        val messages = database?.getAll()
-//        messages?.let {
-//            requestQueue.addAll(it)
-//        }
-//    }
-
     /**
      * Perform sending from queue
      */
@@ -409,8 +397,10 @@ internal class GrpcTransport(
                 }
             }
             AuthStateListener.State.REFRESHED -> {
-                if (State.AUTHORIZING == state) {
-                    setState(State.CONNECTING)
+                when (state) {
+                    State.CONNECTED -> setState(State.DISCONNECTING)
+                    State.AUTHORIZING -> setState(State.CONNECTING)
+                    else -> {}
                 }
                 reconnect()
             }
