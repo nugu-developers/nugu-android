@@ -34,8 +34,7 @@ internal class RegistryService(private val observer: GrpcServiceListener) :
 
     private var executor = Executors.newSingleThreadExecutor()
     private var channel: Channels? = null
-
-
+    
     /**
      * Execute a request to the device-gateway-registry.
      */
@@ -44,7 +43,7 @@ internal class RegistryService(private val observer: GrpcServiceListener) :
             if(blockingStub == null || channel == null) {
                 return false
             }
-            val timeout = channel!!.defaultOptions.connectionTimeout.toLong()
+            val timeout = channel!!.getOptions().connectionTimeout.toLong()
             // request grpc
             blockingStub!!.apply {
                 val request = PolicyRequest.newBuilder().build()
@@ -60,6 +59,7 @@ internal class RegistryService(private val observer: GrpcServiceListener) :
                     observer.onUnAuthenticated()
                     return true
                 }
+                else -> {}
             }
             Logger.d(TAG, "[RegistryService] throwable ${e.message}")
             return false

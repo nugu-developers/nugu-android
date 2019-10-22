@@ -46,6 +46,12 @@ internal class Channels(val defaultOptions: Options) {
             return Channels(opts)
         }
     }
+
+    /**
+     * Returns the current [Options]
+     */
+    fun getOptions() = currentOptions
+
     /**
      * Returns a string that User-Agent
      */
