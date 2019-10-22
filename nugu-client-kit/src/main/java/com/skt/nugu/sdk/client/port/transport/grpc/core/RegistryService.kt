@@ -19,6 +19,7 @@ import com.skt.nugu.sdk.client.port.transport.grpc.Channels
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.PolicyRequest
 import devicegateway.grpc.RegistryGrpc
+import io.grpc.Status
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -53,6 +54,13 @@ internal class RegistryService(private val observer: GrpcServiceListener) :
                 }
             }
         } catch (e: Throwable) {
+            val status = Status.fromThrowable(e)
+            when(status.code) {
+                Status.Code.UNAUTHENTICATED -> {
+                    observer.onUnAuthenticated()
+                    return true
+                }
+            }
             Logger.d(TAG, "[RegistryService] throwable ${e.message}")
             return false
         }

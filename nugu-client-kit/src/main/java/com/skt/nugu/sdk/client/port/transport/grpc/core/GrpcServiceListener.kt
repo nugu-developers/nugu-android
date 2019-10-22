@@ -40,4 +40,8 @@ internal interface GrpcServiceListener {
      * Receives a Directive from the DeviceGateway.
      */
     fun onDirectives(directive : String)
+    /**
+     * Notification that a unauthenticated.
+     */
+    fun onUnAuthenticated()
 }
