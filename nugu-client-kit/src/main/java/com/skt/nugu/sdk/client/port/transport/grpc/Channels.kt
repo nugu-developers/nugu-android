@@ -178,13 +178,13 @@ internal class Channels(val defaultOptions: Options) {
      * @return true is success, otherwise false
      */
     private fun nextChannel( policy: PolicyResponse.ServerPolicy ) : Boolean {
-        with(currentOptions) {
-            address = policy.address
-            port = policy.port
-            retryCountLimit = policy.retryCountLimit
-            connectionTimeout = policy.connectionTimeout
+        currentOptions = Options(
+            address = policy.address,
+            port = policy.port,
+            retryCountLimit = policy.retryCountLimit,
+            connectionTimeout = policy.connectionTimeout,
             hostname = policy.hostName
-        }
+        )
         with(backoff) {
             maxAttempts = policy.retryCountLimit
             reset()

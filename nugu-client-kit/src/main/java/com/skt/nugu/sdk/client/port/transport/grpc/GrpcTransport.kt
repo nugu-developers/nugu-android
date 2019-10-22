@@ -534,4 +534,9 @@ internal class GrpcTransport(
 
         connect()
     }
+
+    override fun onUnAuthenticated() {
+        setState(State.WAITING_TO_RETRY_CONNECTING)
+        authDelegate.onAuthFailure(authDelegate.getAuthorization())
+    }
 }
