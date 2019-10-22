@@ -401,28 +401,6 @@ object DefaultASRAgent {
             val result = notifyResultPayload.result
 
             executor.submit {
-                when (state) {
-                    AsrNotifyResultPayload.State.PARTIAL -> {
-                        onResultListeners.forEach {
-                            it.onPartialResult(result!!)
-                        }
-                    }
-                    AsrNotifyResultPayload.State.COMPLETE -> {
-                        onResultListeners.forEach {
-                            it.onCompleteResult(result!!)
-                        }
-                    }
-                    AsrNotifyResultPayload.State.NONE -> {
-                        onResultListeners.forEach {
-                            it.onNoneResult()
-                        }
-                    }
-                    AsrNotifyResultPayload.State.ERROR -> {
-                        onResultListeners.forEach {
-                            it.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
-                        }
-                    }
-                }
                 currentSpeechProcessor.notifyResult(state.name, result)
                 setHandlingCompleted(info)
             }
