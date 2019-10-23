@@ -31,7 +31,9 @@ import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import java.math.BigInteger
 import java.security.SecureRandom
 
-
+/**
+ * Activity to demonstrate nugu authentication using a nugu-login-kit
+ */
 class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
     companion object {
         fun invokeActivity(context: Context) {
@@ -40,9 +42,9 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
 
         private const val TAG = "LoadingActivity"
 
-        enum class LOGIN { TYPE1, TYPE2 }
+        enum class GrantType { AUTHORIZATION_CODE, CLIENT_CREDENTIALS }
 
-        private var loginType = LOGIN.TYPE1
+        private var grantType = GrantType.AUTHORIZATION_CODE
     }
 
     /**
@@ -65,8 +67,8 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
     }
 
     override fun onInitialized() {
-        /** TYPE1 **/
-        if (loginType == LOGIN.TYPE1) {
+        /** authorization_code **/
+        if (grantType == GrantType.AUTHORIZATION_CODE) {
             // load credentials
             val storedCredentials = PreferenceHelper.credentials(this@LoadingActivity)
             // serialized a credential, extract of refreshToken
@@ -107,8 +109,8 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                 })
             }
         }
-        /** TYPE2 **/
-        else if (loginType == LOGIN.TYPE2) {
+        /** client_credentials **/
+        else if (grantType == GrantType.CLIENT_CREDENTIALS) {
             authClient.login(object : NuguOAuthInterface.OnLoginListener {
                 override fun onSuccess(credentials: Credentials) {
                     // save credentials
