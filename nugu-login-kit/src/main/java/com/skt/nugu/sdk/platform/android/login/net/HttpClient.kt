@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.login.net
 
+import android.net.Uri
 import java.io.*
 import java.net.URL
 import java.net.UnknownHostException
@@ -25,26 +26,22 @@ import java.security.cert.X509Certificate
 /**
  * Provide a base class for http client
  */
-class HttpClient {
-
-    private class DefaultTrustManager : X509TrustManager {
-        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-        }
-
-        override fun getAcceptedIssuers(): Array<X509Certificate?> {
-            return arrayOfNulls(0)
-        }
-
-        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-        }
-    }
+class HttpClient(private val baseUrl: String) {
+    /**
+     * HTTP Status-Code 499(not official) : custom client error.
+     */
+    private val HTTP_CLIENT_ERROR = 499
 
     /**
      * Returns a [HttpsURLConnection] instance
      */
     private fun getConnection(uri: String) : HttpsURLConnection{
         val connection = URL(uri).openConnection() as HttpsURLConnection
-        connection.hostnameVerifier = HostnameVerifier { hostname, session -> true }
+        connection.hostnameVerifier = HostnameVerifier { _, session ->
+            HttpsURLConnection.getDefaultHostnameVerifier().run {
+                verify(Uri.parse(baseUrl).host, session)
+            }
+        }
         connection.requestMethod = "POST"
         connection.instanceFollowRedirects = false
         connection.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded")
@@ -62,11 +59,6 @@ class HttpClient {
      * Prepare the request, Invokes the request immediately
      */
     fun newCall(uri: String, form: FormEncodingBuilder): Response {
-        // configure the SSLContext with a TrustManager
-        val ctx = SSLContext.getInstance("TLS")
-        ctx.init(arrayOfNulls(0), arrayOf(DefaultTrustManager()), SecureRandom())
-        SSLContext.setDefault(ctx)
-
         val connection = getConnection(uri)
         try {
             connection.connect()
@@ -87,16 +79,16 @@ class HttpClient {
                         val stream = BufferedInputStream(connection.inputStream)
                         Response(connection.responseCode, readStream(inputStream = stream))
                     } catch (e : FileNotFoundException) {
-                        Response(connection.responseCode, "")
+                        Response(connection.responseCode, e.message ?: "")
                     }
                 }
             }
         } catch (e : UnknownHostException) {
-            return Response(499, "UnknownHostException")
+            return Response(HTTP_CLIENT_ERROR, "UnknownHostException")
         } catch (e : SSLException) {
-            return Response(499, "SSLException")
+            return Response(HTTP_CLIENT_ERROR, "SSLException")
         } catch (e: IOException) {
-            return Response(499, "IOException")
+            return Response(HTTP_CLIENT_ERROR, "IOException")
         } finally {
             connection.disconnect()
         }
