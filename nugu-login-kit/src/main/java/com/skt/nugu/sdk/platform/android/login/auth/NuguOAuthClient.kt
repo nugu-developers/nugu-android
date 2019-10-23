@@ -29,7 +29,7 @@ import com.skt.nugu.sdk.platform.android.login.net.FormEncodingBuilder
 internal class NuguOAuthClient(
     private val baseUrl: String
 ) {
-    private val client = HttpClient()
+    private val client = HttpClient(baseUrl)
     // The current Credentials for the app
     private var credential: Credentials
     private var options: NuguOAuthOptions
