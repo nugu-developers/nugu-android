@@ -988,9 +988,13 @@ object DefaultAudioPlayerAgent {
             contextSetter.setState(namespaceAndName, JsonObject().apply {
                 addProperty("version", VERSION)
                 addProperty("playerActivity", currentActivity.name)
-                addProperty("token", token)
+                if(token.isNotBlank() && currentActivity != AudioPlayerAgentInterface.State.IDLE) {
+                    addProperty("token", token)
+                }
                 addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-                addProperty("durationInMilliseconds", getDurationInMilliseconds())
+                if(getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
+                    addProperty("durationInMilliseconds", getDurationInMilliseconds())
+                }
             }.toString(), policy, stateRequestToken)
         }
 
