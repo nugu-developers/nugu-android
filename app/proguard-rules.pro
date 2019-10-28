@@ -19,9 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keep class kotlin.** { *; }
--keepclassmembers enum com.skt.nugu.** { *; }
--keep class com.skt.nugu.sdk.client.transport.** { *; }
+-keepclassmembers enum com.skt.nugu.** { *; 
 -keep class com.sktelecom.tyche.** { *; }
+-keep class com.skt.nugu.silvertray.codec.CBROpusDecoder { *; }
 -keep class com.skt.aidev.** { *; }
 -keep class * extends com.google.protobuf.** { *; }
