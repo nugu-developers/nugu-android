@@ -77,7 +77,7 @@ class DialogUXStateAggregator :
         }
     }
 
-    override fun onStateChanged(state: TTSAgentInterface.State) {
+    override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
         Logger.d(TAG, "[onStateChanged] State: $state")
         ttsState = state
 
@@ -94,7 +94,7 @@ class DialogUXStateAggregator :
         }
     }
 
-    override fun onReceiveTTSText(text: String?) {
+    override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
         // no-op
     }
 

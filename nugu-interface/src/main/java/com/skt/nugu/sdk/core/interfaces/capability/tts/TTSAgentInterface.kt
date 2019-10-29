@@ -48,13 +48,15 @@ interface TTSAgentInterface {
     interface Listener {
         /** Called to notify an change of state
          * @param state current state
+         * @param dialogRequestId the dialog request id
          */
-        fun onStateChanged(state: State)
+        fun onStateChanged(state: State, dialogRequestId: String)
 
         /** Called to receive a text will be playing
          * @param text the text will be playing soon
+         * @param dialogRequestId the dialog request id
          */
-        fun onReceiveTTSText(text: String?)
+        fun onReceiveTTSText(text: String?, dialogRequestId: String)
     }
 
     /** Add a listener to be called when a state changed.

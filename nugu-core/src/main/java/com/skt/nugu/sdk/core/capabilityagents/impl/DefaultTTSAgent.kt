@@ -369,23 +369,19 @@ object DefaultTTSAgent {
                 currentState = state
                 currentInfo?.directive?.let {
                     if (state == TTSAgentInterface.State.PLAYING) {
-                        requestListenerMap[it.getDialogRequestId()]?.let { listener ->
-                            listener.onStart()
-                        }
+                        requestListenerMap[it.getDialogRequestId()]?.onStart()
                     } else if (state == TTSAgentInterface.State.FINISHED || state == TTSAgentInterface.State.STOPPED) {
-                        requestListenerMap.remove(it.getDialogRequestId())?.let { listener ->
-                            listener.onFinish()
-                        }
+                        requestListenerMap.remove(it.getDialogRequestId())?.onFinish()
                     }
 
-                    notifyObservers(state)
+                    notifyObservers(state, it.getDialogRequestId())
                 }
             }
         }
 
-        private fun notifyObservers(state: TTSAgentInterface.State) {
+        private fun notifyObservers(state: TTSAgentInterface.State, dialogRequestId: String) {
             for (observer in listeners) {
-                observer.onStateChanged(state)
+                observer.onStateChanged(state, dialogRequestId)
             }
         }
 
@@ -464,7 +460,7 @@ object DefaultTTSAgent {
 
             val text = speakInfo.payload.text
             listeners.forEach {
-                it.onReceiveTTSText(text)
+                it.onReceiveTTSText(text, speakInfo.getDialogRequestId())
             }
 
             if (currentFocus == FocusState.FOREGROUND) {

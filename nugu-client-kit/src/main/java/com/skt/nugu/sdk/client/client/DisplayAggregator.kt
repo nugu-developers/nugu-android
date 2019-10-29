@@ -27,9 +27,10 @@ class DisplayAggregator(
         override fun render(
             templateId: String,
             templateType: String,
-            templateContent: String
+            templateContent: String,
+            dialogRequestId: String
         ): Boolean {
-            val willRender = observer?.render(templateId, templateType, templateContent, DisplayAggregatorInterface.Type.INFOMATION) ?: false
+            val willRender = observer?.render(templateId, templateType, templateContent, dialogRequestId, DisplayAggregatorInterface.Type.INFOMATION) ?: false
 
             if(willRender) {
                 requestAgentMap[templateId] = templateAgent
@@ -47,9 +48,10 @@ class DisplayAggregator(
         override fun render(
             templateId: String,
             templateType: String,
-            templateContent: String
+            templateContent: String,
+            dialogRequestId: String
         ): Boolean {
-            val willRender = observer?.render(templateId, templateType, templateContent, DisplayAggregatorInterface.Type.AUDIO_PLAYER) ?: false
+            val willRender = observer?.render(templateId, templateType, templateContent, dialogRequestId, DisplayAggregatorInterface.Type.AUDIO_PLAYER) ?: false
 
             if(willRender) {
                 requestAgentMap[templateId] = audioPlayerAgent
