@@ -224,7 +224,8 @@ abstract class BaseDisplayAgent(
         val willBeRender = renderer?.render(
             template.getMessageId(),
             template.getName(),
-            template.payload
+            template.payload,
+            info.getDialogRequestId()
         ) ?: false
         if (!willBeRender) {
             if (clearInfoIfCurrent(info.info)) {

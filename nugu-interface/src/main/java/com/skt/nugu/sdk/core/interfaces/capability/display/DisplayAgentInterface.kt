@@ -36,9 +36,10 @@ interface DisplayAgentInterface: DisplayInterface<DisplayAgentInterface.Renderer
          * @param templateId the unique identifier for the template card
          * @param templateType the template type
          * @param templateContent the content of template in structured JSON
+         * @param dialogRequestId the dialog request id
          * @return true: if will render, false: otherwise
          */
-        fun render(templateId: String, templateType: String, templateContent: String): Boolean
+        fun render(templateId: String, templateType: String, templateContent: String, dialogRequestId: String): Boolean
 
         /**
          * Used to notify the renderer when display should be cleared .

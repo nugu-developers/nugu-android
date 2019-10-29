@@ -40,9 +40,10 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         templateId: String,
         templateType: String,
         templateContent: String,
+        dialogRequestId: String,
         displayType: DisplayAggregatorInterface.Type
     ): Boolean {
-        Log.d(TAG, "[render] templateType: $templateType, templateId: $templateId, templateContent: $templateContent, displayType: $displayType")
+        Log.d(TAG, "[render] templateType: $templateType, templateId: $templateId, templateContent: $templateContent, dialogRequestId: $dialogRequestId, displayType: $displayType")
 
         val countDownLatch = CountDownLatch(1)
         val rendered = AtomicBoolean(false)
