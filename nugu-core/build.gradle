@@ -12,7 +12,12 @@ tasks.withType(JavaCompile) {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(':nugu-interface')
+
+    if(isReleaseMode) {
+        implementation "com.skt.nugu.sdk:nugu-interface:$version"
+    } else {
+        implementation project(':nugu-interface')
+    }
 
     implementation 'javax.annotation:javax.annotation-api:1.2'
     testImplementation 'junit:junit:4.12'
@@ -26,3 +31,6 @@ dependencies {
 repositories {
     mavenCentral()
 }
+
+apply from: '../javadoc.gradle'
+apply from: '../publish.gradle'

@@ -24,8 +24,13 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation project(':nugu-interface')
-    implementation project(':nugu-core')
+    if (isReleaseMode) {
+        implementation "com.skt.nugu.sdk:nugu-interface:$version"
+        implementation "com.skt.nugu.sdk:nugu-core:$version"
+    } else {
+        implementation project(':nugu-interface')
+        implementation project(':nugu-core')
+    }
 
     implementation "io.grpc:grpc-protobuf-lite:${protobuf_version}"
     implementation "io.grpc:grpc-stub:${grpc_version}"
@@ -54,3 +59,6 @@ protobuf {
         }
     }
 }
+
+apply from: '../javadoc.gradle'
+apply from: '../publish.gradle'
