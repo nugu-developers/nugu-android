@@ -17,44 +17,38 @@ package com.skt.nugu.sdk.client.client
 
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class DisplayAggregator(
     private val templateAgent: DisplayAgentInterface,
     private val audioPlayerAgent: DisplayAgentInterface
 ) : DisplayAggregatorInterface {
+    private abstract inner class BaseRenderer : DisplayAgentInterface.Renderer {
+        protected abstract fun getAgent(): DisplayAgentInterface
+        protected abstract fun getType(): DisplayAggregatorInterface.Type
 
-    private val templateRenderer = object : DisplayAgentInterface.Renderer {
         override fun render(
             templateId: String,
             templateType: String,
             templateContent: String,
             dialogRequestId: String
         ): Boolean {
-            val willRender = observer?.render(templateId, templateType, templateContent, dialogRequestId, DisplayAggregatorInterface.Type.INFOMATION) ?: false
-
-            if(willRender) {
-                requestAgentMap[templateId] = templateAgent
+            lock.withLock {
+                requestAgentMap[templateId] = getAgent()
             }
+            val willRender = observer?.render(
+                templateId,
+                templateType,
+                templateContent,
+                dialogRequestId,
+                getType()
+            ) ?: false
 
-            return willRender
-        }
-
-        override fun clear(templateId: String, force: Boolean) {
-            observer?.clear(templateId, force)
-        }
-    }
-
-    private val audioPlayerRenderer = object : DisplayAgentInterface.Renderer {
-        override fun render(
-            templateId: String,
-            templateType: String,
-            templateContent: String,
-            dialogRequestId: String
-        ): Boolean {
-            val willRender = observer?.render(templateId, templateType, templateContent, dialogRequestId, DisplayAggregatorInterface.Type.AUDIO_PLAYER) ?: false
-
-            if(willRender) {
-                requestAgentMap[templateId] = audioPlayerAgent
+            if (!willRender) {
+                lock.withLock {
+                    requestAgentMap.remove(templateId)
+                }
             }
 
             return willRender
@@ -66,23 +60,40 @@ class DisplayAggregator(
     }
 
     private var observer: DisplayAggregatorInterface.Renderer? = null
+    private val lock = ReentrantLock()
     private val requestAgentMap = HashMap<String, DisplayAgentInterface>()
 
     init {
-        templateAgent.setRenderer(templateRenderer)
-        audioPlayerAgent.setRenderer(audioPlayerRenderer)
+        templateAgent.setRenderer(object : BaseRenderer() {
+            override fun getAgent(): DisplayAgentInterface = templateAgent
+
+            override fun getType(): DisplayAggregatorInterface.Type =
+                DisplayAggregatorInterface.Type.INFOMATION
+        })
+        audioPlayerAgent.setRenderer(object : BaseRenderer() {
+            override fun getAgent(): DisplayAgentInterface = audioPlayerAgent
+
+            override fun getType(): DisplayAggregatorInterface.Type =
+                DisplayAggregatorInterface.Type.AUDIO_PLAYER
+        })
     }
 
     override fun setElementSelected(templateId: String, token: String) {
-        requestAgentMap[templateId]?.setElementSelected(templateId, token)
+        lock.withLock {
+            requestAgentMap[templateId]
+        }?.setElementSelected(templateId, token)
     }
 
     override fun displayCardRendered(templateId: String) {
-        requestAgentMap[templateId]?.displayCardRendered(templateId)
+        lock.withLock {
+            requestAgentMap[templateId]
+        }?.displayCardRendered(templateId)
     }
 
     override fun displayCardCleared(templateId: String) {
-        requestAgentMap.remove(templateId)?.displayCardCleared(templateId)
+        lock.withLock {
+            requestAgentMap.remove(templateId)
+        }?.displayCardCleared(templateId)
     }
 
     override fun setRenderer(renderer: DisplayAggregatorInterface.Renderer?) {
