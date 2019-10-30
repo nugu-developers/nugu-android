@@ -31,11 +31,17 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    api project(':nugu-interface')
-    implementation project(':nugu-client-kit')
+    if(isReleaseMode) {
+        api "com.skt.nugu.sdk:nugu-interface:$version"
+        implementation "com.skt.nugu.sdk:nugu-client-kit:$version"
+    } else {
+        api project(':nugu-interface')
+        implementation project(':nugu-client-kit')
+    }
+
     implementation "com.skt.nugu:silvertray:$silvertrayVersion-RELEASE@aar"
-    implementation "com.skt.nugu:jademarble:$jademarbleVersion@aar"
-    implementation "com.skt.nugu:keensense:$keensenseVersion-RELEASE"
+    implementation "com.skt.nugu:jademarble:$jademarbleVersion"
+    implementation "com.skt.nugu:keensense:$keensenseVersion"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
@@ -43,3 +49,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "io.grpc:grpc-okhttp:${grpc_version}"
 }
+
+apply from: '../javadoc-android.gradle'
+apply from: '../publish-android.gradle'
