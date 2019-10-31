@@ -58,6 +58,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import java.util.concurrent.Future
 
@@ -213,6 +214,7 @@ class NuguAndroidClient private constructor(
     override val extensionAgent: ExtensionAgentInterface? = client.extensionAgent
     override val asrAgent: ASRAgentInterface? = client.asrAgent
     override val textAgent: TextAgentInterface? = client.textAgent
+    override val locationAgent: LocationAgentInterface? = client.locationAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
 
     private val externalAudioPlayer: ExternalAudioPlayer

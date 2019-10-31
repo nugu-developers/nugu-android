@@ -78,6 +78,8 @@ import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFactory
+import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentFactory
+import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
@@ -91,6 +93,7 @@ class NuguClient private constructor(
     builder: Builder
 ) : ClientHelperInterface
     , NuguClientInterface {
+
     companion object {
         private const val TAG = "NuguClient"
     }
@@ -129,6 +132,7 @@ class NuguClient private constructor(
         internal var textAgentFactory: TextAgentFactory = DefaultTextAgent.FACTORY
         internal var extensionAgentFactory: ExtensionAgentFactory = DefaultExtensionAgent.FACTORY
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultDisplayAgent.FACTORY
+        internal var locationAgentFactory: LocationAgentFactory? = DefaultLocationAgent.FACTORY
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
@@ -161,6 +165,8 @@ class NuguClient private constructor(
 
         fun displayAgentFactory(factory: DisplayAgentFactory) =
             apply { displayAgentFactory = factory }
+        fun locationAgentFactory(factory: LocationAgentFactory) =
+            apply { locationAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
         fun logger(logger: LogInterface) = apply { this.logger = logger }
@@ -181,6 +187,7 @@ class NuguClient private constructor(
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
     private val systemCapabilityAgent: AbstractSystemAgent
     override var displayAgent: DisplayAgentInterface? = null
+    override var locationAgent: LocationAgentInterface? = null
 
     // CA internal Object (ref)
 
@@ -363,6 +370,10 @@ class NuguClient private constructor(
                     DefaultFocusChannel.CONTENT_CHANNEL_NAME,
                     null
                 )
+            }
+
+            locationAgent = locationAgentFactory?.create()?.apply {
+                contextManager.setStateProvider(namespaceAndName, this)
             }
 
             PlayStackContextManager(

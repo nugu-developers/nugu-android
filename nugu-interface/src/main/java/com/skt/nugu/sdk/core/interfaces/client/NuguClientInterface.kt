@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentI
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 
@@ -33,5 +34,6 @@ interface NuguClientInterface {
     val extensionAgent: ExtensionAgentInterface?
     val asrAgent: ASRAgentInterface?
     val textAgent: TextAgentInterface?
+    val locationAgent: LocationAgentInterface?
     val networkManager: NetworkManagerInterface
 }
