@@ -26,11 +26,14 @@ import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 
 /**
  * Porting class for [TycheEndPointDetector] to use in NUGU SDK
+ * @param epdModelFilePath the absolute path for epd model file
+ * @param maxDurationInSeconds the allowed maximum speech duration from SPEECH_START to SPEECH_END in seconds (default = 10sec)
+ * @param pauseLengthInMilliseconds the inter-breath time which determine speech end in milliseconds(default = 700ms)
  */
 class EndPointDetector(
     epdModelFilePath: String,
-    var maxSpeechLengthSec: Int = 10,
-    var speechBreathThresholdMillis: Int = 700
+    var maxDurationInSeconds: Int = 10,
+    var pauseLengthInMilliseconds: Int = 700
 ) :
     AudioEndPointDetector {
 
@@ -105,7 +108,7 @@ class EndPointDetector(
     override fun startDetector(
         audioInputStreamReader: SharedDataStream.Reader,
         audioFormat: AudioFormat,
-        silenceTimeoutSec: Int
+        timeoutInSeconds: Int
     ) {
         Log.d(TAG, "[startDetector] $audioInputStreamReader")
         speechStartPosition = null
@@ -123,9 +126,9 @@ class EndPointDetector(
                     audioFormat.bitsPerSample,
                     audioFormat.numChannels
                 )
-                , silenceTimeoutSec
-                , maxSpeechLengthSec
-                , speechBreathThresholdMillis
+                , timeoutInSeconds
+                , maxDurationInSeconds
+                , pauseLengthInMilliseconds
             )
         }
     }
