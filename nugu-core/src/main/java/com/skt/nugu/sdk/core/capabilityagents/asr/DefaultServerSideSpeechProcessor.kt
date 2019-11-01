@@ -83,7 +83,7 @@ class DefaultServerSideSpeechProcessor(
         override fun startDetector(
             reader: SharedDataStream.Reader,
             audioFormat: AudioFormat,
-            silenceTimeoutSec: Int
+            timeoutInSeconds: Int
         ) {
             speechToTextConverter.startSpeechToTextConverter(reader, audioFormat, speechToTextConverterEventObserver)
             state = AudioEndPointDetector.State.EXPECTING_SPEECH
@@ -91,7 +91,7 @@ class DefaultServerSideSpeechProcessor(
             timeoutFuture = timeoutScheduler.schedule({
                 state = AudioEndPointDetector.State.TIMEOUT
                 speechToTextConverter.stopSpeechToTextConverter()
-            }, silenceTimeoutSec.toLong(), TimeUnit.SECONDS)
+            }, timeoutInSeconds.toLong(), TimeUnit.SECONDS)
         }
 
         override fun stopDetector() {

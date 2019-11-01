@@ -79,12 +79,12 @@ interface AudioEndPointDetector {
      *
      * @param reader reader for audio source
      * @param audioFormat audio format for [reader]'s stream
-     * @param silenceTimeoutSec the silence timeout at seconds
+     * @param timeoutInSeconds the silence timeout in seconds
      */
     fun startDetector(
         reader: SharedDataStream.Reader,
         audioFormat: AudioFormat,
-        silenceTimeoutSec: Int
+        timeoutInSeconds: Int
     )
 
     /**
