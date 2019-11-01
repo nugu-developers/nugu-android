@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFactory
@@ -77,9 +78,10 @@ object DefaultExtensionAgent {
 
         private var client: ExtensionAgentInterface.Client? = null
 
+        private val jsonParser = JsonParser()
+
         init {
             contextManager.setStateProvider(namespaceAndName, this)
-            contextManager.setState(namespaceAndName, buildContext(), StateRefreshPolicy.NEVER)
         }
 
         override fun setClient(client: ExtensionAgentInterface.Client) {
@@ -88,6 +90,13 @@ object DefaultExtensionAgent {
 
         private fun buildContext(): String = JsonObject().apply {
             addProperty("version", VERSION)
+            client?.getData()?.let {
+                try {
+                    add("data", jsonParser.parse(it).asJsonObject)
+                } catch (th: Throwable) {
+                    Logger.e(TAG, "[buildContext] error to create data json object.", th)
+                }
+            }
         }.toString()
 
         override fun provideState(
@@ -98,7 +107,7 @@ object DefaultExtensionAgent {
             contextSetter.setState(
                 namespaceAndName,
                 buildContext(),
-                StateRefreshPolicy.NEVER,
+                StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
         }

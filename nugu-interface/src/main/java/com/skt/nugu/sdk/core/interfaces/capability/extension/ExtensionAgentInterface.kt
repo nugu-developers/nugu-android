@@ -15,6 +15,9 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.extension
 
+/**
+ * The public interface for ExtensionAgent
+ */
 interface ExtensionAgentInterface {
     /**
      * The client for Extension Agent Interface
@@ -28,7 +31,17 @@ interface ExtensionAgentInterface {
          * @return true: success, false: otherwise
          */
         fun action(data: String, playServiceId: String): Boolean
+
+        /**
+         * Return a data string in structured JSON.
+         * @return a data string in structured JSON. if not exist, null.
+         */
+        fun getData(): String?
     }
 
+    /**
+     * Set the client which interact with agent
+     * @param client the client which interact with agent
+     */
     fun setClient(client: Client)
 }
