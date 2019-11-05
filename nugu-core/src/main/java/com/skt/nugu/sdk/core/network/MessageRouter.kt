@@ -232,20 +232,7 @@ class MessageRouter(
     }
 
     /**
-     * Notify the onServerSideDisconnect observer When disconnected by DeviceGateway.
-     * @see [setConnectionStatus]
-     * @param transport is Interface
-     */
-    override fun onServerSideDisconnect(transport: Transport) {
-        Logger.d(TAG, "[onServerSideDisconnect] $transport")
-        setConnectionStatus(
-            ConnectionStatusListener.Status.DISCONNECTED,
-            ConnectionStatusListener.ChangedReason.SUCCESS
-        )
-    }
-
-    /**
-     * receive the message from transport, then notify it to observer
+     * receive the message from transport, then it is notify
      * @see [setConnectionStatus]
      * @param message the message received
      */

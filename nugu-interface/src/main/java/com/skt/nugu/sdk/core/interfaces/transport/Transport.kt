@@ -42,12 +42,6 @@ interface Transport {
      */
     fun send(request: MessageRequest)
 
-    /** unused code */
-    fun sendCompleted()
-
-    /** unused code */
-    fun sendPostConnectMessage(request: MessageRequest)
-
     /**
      *  Explicitly clean up client resources.
      */
