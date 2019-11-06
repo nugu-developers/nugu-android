@@ -89,7 +89,7 @@ class BackOff private constructor(builder: Builder) {
      * Increase attempts count
      */
     private fun attempt(): Int {
-        return ++attempts
+        return attempts++
     }
 
     /**

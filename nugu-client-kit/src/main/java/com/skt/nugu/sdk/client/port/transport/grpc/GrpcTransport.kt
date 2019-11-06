@@ -1,6 +1,6 @@
 package com.skt.nugu.sdk.client.port.transport.grpc
 
-import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayTransport
+import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.auth.AuthStateListener
@@ -69,7 +69,7 @@ class GrpcTransport private constructor(
             Logger.d(TAG, "state changed : $field -> $value ")
             field = value
         }
-    private var deviceGatewayTransport: DeviceGatewayTransport? = null
+    private var deviceGatewayClient: DeviceGatewayClient? = null
 
     override fun connect(): Boolean {
         if (state == State.CONNECTED || state == State.CONNECTING || registry.isConnecting()) {
@@ -125,13 +125,13 @@ class GrpcTransport private constructor(
     private fun tryConnectToDeviceGateway(policy: PolicyResponse, authorization: String): Boolean {
         state = State.CONNECTING
 
-        DeviceGatewayTransport(
+        DeviceGatewayClient(
             policy,
             messageConsumer,
             this,
             authorization
         ).let {
-            deviceGatewayTransport = it
+            deviceGatewayClient = it
             return@tryConnectToDeviceGateway it.connect()
         }
     }
@@ -139,11 +139,11 @@ class GrpcTransport private constructor(
     override fun disconnect() {
         state = State.DISCONNECTING
 
-        deviceGatewayTransport?.disconnect()
-        deviceGatewayTransport = null
+        deviceGatewayClient?.disconnect()
+        deviceGatewayClient = null
     }
 
-    override fun isConnected(): Boolean = deviceGatewayTransport?.isConnected() ?: false
+    override fun isConnected(): Boolean = deviceGatewayClient?.isConnected() ?: false
 
     override fun send(request: MessageRequest) {
         if (state != State.CONNECTED && state != State.CONNECTING) {
@@ -152,12 +152,12 @@ class GrpcTransport private constructor(
             )
             return
         }
-        deviceGatewayTransport?.send(request)
+        deviceGatewayClient?.send(request)
     }
 
     override fun shutdown() {
-        deviceGatewayTransport?.shutdown()
-        deviceGatewayTransport = null
+        deviceGatewayClient?.shutdown()
+        deviceGatewayClient = null
 
         state = State.DISCONNECTED
     }
@@ -171,7 +171,7 @@ class GrpcTransport private constructor(
         connectionTimeout: Int,
         charge: String
     ) {
-        val transport = deviceGatewayTransport
+        val transport = deviceGatewayClient
         transport?.onHandoffConnection(
             protocol,
             domain,

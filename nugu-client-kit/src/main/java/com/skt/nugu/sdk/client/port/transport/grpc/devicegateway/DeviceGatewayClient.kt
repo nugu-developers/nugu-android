@@ -21,15 +21,15 @@ import java.util.concurrent.ConcurrentLinkedQueue
 /**
  *  Implementation of DeviceGateway
  **/
-class DeviceGatewayTransport(policyResponse: PolicyResponse,
-                             private val messageConsumer: MessageConsumer,
-                             private val transportObserver: TransportListener,
-                             private val authorization: String)
+class DeviceGatewayClient(policyResponse: PolicyResponse,
+                          private val messageConsumer: MessageConsumer,
+                          private val transportObserver: TransportListener,
+                          private val authorization: String)
     : Transport
     , PingService.Observer
     , EventStreamService.Observer {
     companion object {
-        private const val TAG = "DeviceGatewayTransport"
+        private const val TAG = "DeviceGatewayClient"
     }
 
     private val policies = ConcurrentLinkedQueue(policyResponse.serverPolicyList)
@@ -58,6 +58,7 @@ class DeviceGatewayTransport(policyResponse: PolicyResponse,
             }
         }
         if(serverPolicy == null) {
+            Logger.d(TAG, "No more serverPolicy")
             transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
             return false
         }
@@ -72,8 +73,8 @@ class DeviceGatewayTransport(policyResponse: PolicyResponse,
             currentChannel =
                 ChannelBuilderUtils.createChannelBuilderWith(option, authorization).build()
             currentChannel.also {
-                pingService = PingService(VoiceServiceGrpc.newBlockingStub(it), healthCheckPolicy, observer = this@DeviceGatewayTransport)
-                eventStreamService = EventStreamService(VoiceServiceGrpc.newStub(it), observer = this@DeviceGatewayTransport)
+                pingService = PingService(VoiceServiceGrpc.newBlockingStub(it), healthCheckPolicy, observer = this@DeviceGatewayClient)
+                eventStreamService = EventStreamService(VoiceServiceGrpc.newStub(it), observer = this@DeviceGatewayClient)
                 crashReportService = CrashReportService(VoiceServiceGrpc.newBlockingStub(it))
             }
         }

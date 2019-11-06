@@ -46,15 +46,12 @@ class ChannelBuilderUtils {
                         isTerminated = true
                         return@apply
                     }
-                    Logger.d("DeviceGatewayTransport","awaitTermination begin")
                     isTerminated = shutdown().awaitTermination(10, TimeUnit.SECONDS)
-                    Logger.d("DeviceGatewayTransport","awaitTermination end")
                 } catch (e: Throwable) {
-                    Logger.d("DeviceGatewayTransport","awaitTermination ${e.message}")
+                    // nothing to do
                 } finally {
                     if(!isTerminated) {
                         shutdownNow()
-                        Logger.d("DeviceGatewayTransport","awaitTermination shutdownNow")
                     }
                 }
             }
