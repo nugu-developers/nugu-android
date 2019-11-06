@@ -34,11 +34,11 @@ class DisplayAudioPlayerAgent(
 ) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, channelName),
     AudioPlayerAgentInterface.Listener {
     companion object {
-        const val NAMESPACE = "Display"
+        const val NAMESPACE = "AudioPlayer"
         const val VERSION = "1.0"
 
-        private const val NAME_AUDIOPLAYER_TEMPLATE1 = "AudioPlayer.Template1"
-        private const val NAME_AUDIOPLAYER_TEMPLATE2 = "AudioPlayer.Template2"
+        private const val NAME_AUDIOPLAYER_TEMPLATE1 = "Template1"
+        private const val NAME_AUDIOPLAYER_TEMPLATE2 = "Template2"
 
         private val AUDIOPLAYER_TEMPLATE1 =
             NamespaceAndName(NAMESPACE, NAME_AUDIOPLAYER_TEMPLATE1)

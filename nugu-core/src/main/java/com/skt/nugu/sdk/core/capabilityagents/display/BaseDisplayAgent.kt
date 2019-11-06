@@ -39,7 +39,13 @@ abstract class BaseDisplayAgent(
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
     channelName: String
-) : AbstractDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, channelName),
+) : AbstractDisplayAgent(
+    focusManager,
+    contextManager,
+    messageSender,
+    playSynchronizer,
+    channelName
+),
     ChannelObserver {
     companion object {
         private const val TAG = "BaseDisplayAgent"
@@ -112,7 +118,7 @@ abstract class BaseDisplayAgent(
 
     final override fun preHandleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-        if(payload == null) {
+        if (payload == null) {
             return
         }
 
@@ -223,7 +229,7 @@ abstract class BaseDisplayAgent(
         val template = info.info.directive
         val willBeRender = renderer?.render(
             template.getMessageId(),
-            template.getName(),
+            "${template.getNamespace()}.${template.getName()}",
             template.payload,
             info.getDialogRequestId()
         ) ?: false

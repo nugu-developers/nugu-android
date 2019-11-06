@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.core.capabilityagents.audioplayer
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
+import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.message.Header
@@ -52,19 +52,28 @@ data class AudioItem(
         val template: JsonObject?
     ) {
         fun asDisplayDirective(dialogRequestId: String, playServiceId: String): Directive? {
-            if (template == null) {
+            try {
+                if (template == null) {
+                    return null
+                }
+
+                template.addProperty("playServiceId", playServiceId)
+                val type = template.getAsJsonPrimitive("type").asString.split(".")
+                val namespace = type[0]
+                val name = type[1]
+
+                return MessageFactory.createDirective(
+                    null, Header(
+                        dialogRequestId,
+                        UUIDGeneration.shortUUID().toString(),
+                        name,
+                        namespace,
+                        DisplayAudioPlayerAgent.VERSION
+                    ), template
+                )
+            } catch (th: Throwable) {
                 return null
             }
-
-            template.addProperty("playServiceId", playServiceId)
-
-            return MessageFactory.createDirective(null, Header(
-                dialogRequestId,
-                UUIDGeneration.shortUUID().toString(),
-                template.getAsJsonPrimitive("type").asString,
-                AbstractDisplayAgent.NAMESPACE,
-                AbstractDisplayAgent.VERSION
-            ), template)
         }
     }
 
