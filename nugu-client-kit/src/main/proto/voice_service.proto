@@ -66,6 +66,7 @@ message Attachment {
     bytes content = 3;
     bool is_end = 4;
     string parent_message_id = 5;
+    string media_type = 6;
 }
 
 message Header {
@@ -74,6 +75,7 @@ message Header {
     string version = 6;
     string message_id = 4;
     string dialog_request_id = 5;
+    string referrer_dialog_request_id = 7;
 }
 
 message PingRequest {
@@ -94,9 +96,9 @@ message CrashReportRequest {
             TRACE = 4;
         }
         Level level = 1;
-        string token = 2;
         string message = 3;
         string detail = 4;
+        string device_id = 5;       // crash report는 인증을 하지 못해 auth token이 없는 경우도 있으므로 참고 정보로 device_id를 추가
     }
     repeated CrashReport crash_report = 1;
 }

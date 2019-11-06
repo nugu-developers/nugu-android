@@ -373,6 +373,11 @@ internal class GrpcTransport(
                         .setMessageId(messageId)
                         .setDialogRequestId(dialogRequestId)
                         .setVersion(version)
+                        .also {
+                            if(referrerDialogRequestId != null) {
+                                it.referrerDialogRequestId = referrerDialogRequestId
+                            }
+                        }
                         .build()
                 )
                 .setPayload(payload)

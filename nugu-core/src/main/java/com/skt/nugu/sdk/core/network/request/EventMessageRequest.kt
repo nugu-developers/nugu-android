@@ -15,9 +15,7 @@
  */
 package com.skt.nugu.sdk.core.network.request
 
-import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 
@@ -32,34 +30,12 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * @param payload the payload (json formatted string).
  */
 data class EventMessageRequest(
-    @SerializedName("messageId")
     val messageId: String = UUIDGeneration.shortUUID().toString(),
-    @SerializedName("dialogRequestId")
     val dialogRequestId: String = UUIDGeneration.timeUUID().toString(),
-    @SerializedName("context")
     val context: String,
-    @SerializedName("namespace")
     val namespace: String,
-    @SerializedName("name")
     val name: String,
-    @SerializedName("version")
     val version: String,
-    @SerializedName("payload")
-    val payload: String = JsonObject().toString()
-) : MessageRequest {
-    companion object {
-        /**
-         * serialized a EventMessageRequest
-         * @param json is json formatted string
-         */
-        fun from(json: String): EventMessageRequest {
-            return Gson().fromJson(json, EventMessageRequest::class.java)
-        }
-    }
-    /**
-     * unused code
-     */
-    fun toGson(): String {
-        return Gson().toJson(this::class.java)
-    }
-}
+    val payload: String = JsonObject().toString(),
+    val referrerDialogRequestId: String? = null
+) : MessageRequest
