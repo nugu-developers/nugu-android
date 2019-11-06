@@ -113,12 +113,13 @@ abstract class RecognizeSenderThread(
             messageSender.sendMessage(
                 EventMessageRequest(
                     UUIDGeneration.shortUUID().toString(),
-                    it.dialogRequestId,
+                    UUIDGeneration.timeUUID().toString(),
                     it.context,
                     AbstractASRAgent.NAMESPACE,
                     DefaultASRAgent.EVENT_STOP_RECOGNIZE,
                     AbstractASRAgent.VERSION,
-                    ""
+                    "",
+                    it.referrerDialogRequestId
                 )
             )
         }
