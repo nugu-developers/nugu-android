@@ -901,7 +901,8 @@ object DefaultTTSAgent {
                                     VERSION,
                                     JsonObject().apply {
                                         addProperty(KEY_PLAY_SERVICE_ID, it)
-                                    }.toString()
+                                    }.toString(),
+                                    info.getDialogRequestId()
                                 )
                             messageSender.sendMessage(messageRequest)
 
