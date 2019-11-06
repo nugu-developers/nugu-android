@@ -119,7 +119,7 @@ abstract class RecognizeSenderThread(
                     DefaultASRAgent.EVENT_STOP_RECOGNIZE,
                     AbstractASRAgent.VERSION,
                     "",
-                    it.referrerDialogRequestId
+                    it.dialogRequestId
                 )
             )
         }
