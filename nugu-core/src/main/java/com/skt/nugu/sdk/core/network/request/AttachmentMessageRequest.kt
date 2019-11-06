@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.core.network.request
 
-import com.google.gson.Gson
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 
 /**
@@ -40,22 +39,4 @@ data class AttachmentMessageRequest(
     val seq: Int,
     val isEnd: Boolean,
     var byteArray: ByteArray?
-) : MessageRequest {
-    // header
-    companion object {
-        /**
-         * serialized a AttachmentMessageRequest
-         * @param json is json formatted string
-         */
-        fun from(json: String): AttachmentMessageRequest {
-            return Gson().fromJson(json, AttachmentMessageRequest::class.java)
-        }
-    }
-
-    /**
-     * Set the byteArray.
-     */
-    fun setContent(byteArray: ByteArray) {
-        this.byteArray = byteArray
-    }
-}
+) : MessageRequest
