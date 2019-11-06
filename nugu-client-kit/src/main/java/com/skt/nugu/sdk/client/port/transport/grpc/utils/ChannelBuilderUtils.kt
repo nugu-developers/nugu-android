@@ -2,7 +2,6 @@ package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
 import com.skt.nugu.sdk.client.port.transport.grpc.Options
 import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import io.grpc.*
 import java.util.concurrent.TimeUnit

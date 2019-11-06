@@ -12,11 +12,34 @@ import java.util.concurrent.TimeUnit
 class BackOff private constructor(builder: Builder) {
     companion object {
         private const val TAG = "BackOff"
+
+        /**
+         * Default maximum back-off time before retrying a request
+         */
+        val DEFAULT_MAX_BACKOFF_IN_MILLISECONDS : Long = 1000 * 60
+
+        /**
+         * Default base sleep time (milliseconds) for non-throttled exceptions.
+         */
+        private val DEFAULT_BASE_DELAY : Long = 1000
+
+        /**
+         * Default constructor of Credentials
+         **/
+        fun DEFAULT() = BackOff(Builder(
+                maxAttempts = Int.MAX_VALUE,
+                baseDelay = DEFAULT_BASE_DELAY,
+                maxBackoffTime = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
+            )
+        )
     }
 
     interface Observer {
         fun onError(reason: String)
-        fun onComplete(attempts: Int)
+        /**
+         *  Determine whether a request should or should not be retried.
+         * @param attempts The number of times the current request has been attempted.**/
+        fun onRetry(retriesAttempted: Int)
     }
 
     private var state = State.RETRY_INIT
@@ -26,17 +49,21 @@ class BackOff private constructor(builder: Builder) {
     }
     private var scheduledFuture: ScheduledFuture<*>? = null
 
-    /** The default and maximum socket timeout in milliseconds  */
-    private var seed: Long = 1000
-    private var max: Long = 1000 * 60
-    private var waitTime: Long = seed
 
-    private val RETRYABLE_STATUS_CODES: MutableSet<Status.Code> = HashSet(1)
+    /** The current retry count.  */
+    @Volatile private var attempts: Int = 0
+    private var baseDelay: Long
+    private var maxBackoffTime: Long
+    private var waitTime: Long
+
+    private val RETRYABLE_STATUS_CODES: MutableSet<Status.Code> = HashSet(5)
 
     init {
         RETRYABLE_STATUS_CODES.add(Status.Code.UNAVAILABLE)
         RETRYABLE_STATUS_CODES.add(Status.Code.ABORTED)
         RETRYABLE_STATUS_CODES.add(Status.Code.INTERNAL)
+        RETRYABLE_STATUS_CODES.add(Status.Code.CANCELLED)
+        RETRYABLE_STATUS_CODES.add(Status.Code.DEADLINE_EXCEEDED)
     }
 
     internal enum class State {
@@ -46,14 +73,15 @@ class BackOff private constructor(builder: Builder) {
         RETRY_COMPLETE,
     }
 
-    /** The current retry count.  */
-    @Volatile private var attempts: Int = 0
 
     /** The maximum number of attempts.  */
     var maxAttempts: Int
 
     init {
         this.maxAttempts = builder.maxAttempts
+        this.maxBackoffTime = builder.maxBackoffTime
+        this.baseDelay = builder.baseDelay
+        this.waitTime = this.baseDelay
     }
     /**
      * Returns the duration (milliseconds).
@@ -61,14 +89,14 @@ class BackOff private constructor(builder: Builder) {
      * sleep = min(cap, random_between(base, sleep * 3))
      */
     fun duration(): Long {
-        waitTime = Math.min(max, betweenRandom(seed, waitTime * 3))
+        waitTime = Math.min(maxBackoffTime, betweenRandom(baseDelay, waitTime * 3))
         return waitTime
     }
 
     /**
      * Difference between Random
      * @param i is min
-     * @param j is max
+     * @param j is maxBackoffTime
      */
     private fun betweenRandom(i: Long, j: Long): Long {
         return i + Math.floor(Math.random() * (j - i + 1)).toLong()
@@ -78,35 +106,25 @@ class BackOff private constructor(builder: Builder) {
      *  Explicitly clean up
      */
     fun reset() {
-        this.waitTime = seed
+        this.waitTime = baseDelay
         this.attempts = 0
         this.state = State.RETRY_INIT
-
         this.scheduledFuture?.cancel(true)
     }
 
     /**
-     * Increase attempts count
-     */
-    private fun attempt(): Int {
-        return attempts++
-    }
-
-    /**
      * Indicates whether a retry should be performed or not.
-     * @param The attempt number.
      * @return True to retry, false to not.
      */
-    private fun shouldRetry(attempt : Int): Boolean {
-        return attempt < maxAttempts
+    private fun isAttemptExceed(): Boolean {
+        return attempts < maxAttempts
     }
-
     /**
      * Indicates whether a retry should be performed or not.
-     * @param The retryable Status Code
+     * @param The exception status code
      * @return True to retry, false to not.
      */
-    private fun shouldRetry(code: Status.Code): Boolean {
+    private fun isRetryableServiceException(code: Status.Code): Boolean {
         return RETRYABLE_STATUS_CODES.contains(code)
     }
 
@@ -120,25 +138,31 @@ class BackOff private constructor(builder: Builder) {
         if (state == State.RETRY_IN_PROGRESS) {
             return
         }
-        if (!shouldRetry(attempts)) {
-            state = State.RETRY_FAILED
-            observer.onError("reached maximum retry attempts")
-            return
-        }
-        if (!shouldRetry(code)) {
-            state = State.RETRY_FAILED
-            observer.onError("Status code that can't be retried")
-            return
-        }
-
         state = State.RETRY_IN_PROGRESS
 
-        attempt()
-        Logger.w(TAG, String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}"))
+        if (!isAttemptExceed()) {
+            state = State.RETRY_FAILED
+            observer.onError("exceeded maxBackoffTime attempts")
+            return
+        }
+        if (!isRetryableServiceException(code)) {
+            state = State.RETRY_FAILED
+            observer.onError("Status code($code) that can't be retried")
+            return
+        }
+
+        // Increase attempts count
+        attempts++
+
+
+        val duration = duration()
         scheduledFuture = executorService.schedule({
             state = State.RETRY_COMPLETE
-            observer.onComplete(attempts)
-        }, duration(), TimeUnit.MILLISECONDS)
+            // Retry done
+            observer.onRetry(attempts)
+
+        }, duration, TimeUnit.MILLISECONDS)
+        Logger.w(TAG, String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}"))
     }
 
 
@@ -147,7 +171,9 @@ class BackOff private constructor(builder: Builder) {
      */
     data class Builder(
         /** The maximum number of attempts.  */
-        internal var maxAttempts: Int = Int.MAX_VALUE
+        internal val maxAttempts : Int,
+        internal val baseDelay: Long = DEFAULT_BASE_DELAY,
+        internal val maxBackoffTime: Long = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
     ) {
         fun build() = BackOff(this)
     }

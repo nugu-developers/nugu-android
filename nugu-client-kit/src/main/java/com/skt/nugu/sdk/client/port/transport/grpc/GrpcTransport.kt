@@ -50,7 +50,7 @@ class GrpcTransport private constructor(
         /** Ready to start data connection setup. */
         INIT,
         /** Awaiting response from Registry in order to receive policy **/
-        POLICY,
+        POLICY_WAIT,
         /** Currently connecting to DeviceGateway **/
         CONNECTING,
         /** DeviceGateway should be available **/
@@ -63,16 +63,16 @@ class GrpcTransport private constructor(
         FAILED
     }
 
-    private val registry = RegistryClient.newClient()
     private var state: Enum<State> = State.INIT
         set(value) {
             Logger.d(TAG, "state changed : $field -> $value ")
             field = value
         }
+    private val registryClient = RegistryClient.newClient()
     private var deviceGatewayClient: DeviceGatewayClient? = null
 
     override fun connect(): Boolean {
-        if (state == State.CONNECTED || state == State.CONNECTING || registry.isConnecting()) {
+        if (state == State.CONNECTED || state == State.CONNECTING || registryClient.isConnecting()) {
             return false
         }
 
@@ -83,7 +83,7 @@ class GrpcTransport private constructor(
             return false
         }
 
-        val policy = registry.policy
+        val policy = registryClient.policy
         if (policy == null) {
             tryGetPolicy(authorization)
         } else {
@@ -94,18 +94,18 @@ class GrpcTransport private constructor(
 
 
     private fun tryGetPolicy(authorization: String) {
-        state = State.POLICY
+        state = State.POLICY_WAIT
 
         val registryChannel =
             ChannelBuilderUtils.createChannelBuilderWith(registryServerOption, authorization)
                 .build()
-        registry.getPolicy(registryChannel, object : RegistryClient.Observer {
+        registryClient.getPolicy(registryChannel, object : RegistryClient.Observer {
             override fun onCompleted() {
                 connect()
             }
 
             override fun onError(code: Status.Code) {
-                registry.shutdown()
+                registryClient.shutdown()
 
                 when (code) {
                     Status.Code.UNAUTHENTICATED -> {
@@ -113,6 +113,7 @@ class GrpcTransport private constructor(
                     }
                     else -> {
                         state = State.FAILED
+
                         transportObserver.onDisconnected(this@GrpcTransport,
                             ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR
                         )
@@ -182,7 +183,7 @@ class GrpcTransport private constructor(
             charge
         )
 
-        registry.policy = PolicyResponse.newBuilder()
+        registryClient.policy = PolicyResponse.newBuilder()
             .addServerPolicy(
                 PolicyResponse.ServerPolicy.newBuilder()
                     .setPort(port)
@@ -229,6 +230,7 @@ class GrpcTransport private constructor(
         reason: ConnectionStatusListener.ChangedReason
     ) {
         state = State.DISCONNECTED
+
         transportObserver.onDisconnected(transport, reason)
 
         if(reason == ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR) {

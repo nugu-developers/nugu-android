@@ -15,7 +15,7 @@ internal class RegistryClient {
         private const val TAG = "RegistryClient"
         fun newClient() = RegistryClient()
     }
-    private var backoff : BackOff = BackOff.Builder(maxAttempts = Int.MAX_VALUE).build()
+    private var backoff : BackOff = BackOff.DEFAULT()
     private val executor: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1).apply {
         removeOnCancelPolicy = true
     }
@@ -63,7 +63,7 @@ internal class RegistryClient {
                             observer.onError(status.code)
                         }
 
-                        override fun onComplete(attempts: Int) {
+                        override fun onRetry(retriesAttempted: Int) {
                             if(state !=  State.POLICY_COMPLETE) {
                                 getPolicy(registryChannel, observer)
                             }

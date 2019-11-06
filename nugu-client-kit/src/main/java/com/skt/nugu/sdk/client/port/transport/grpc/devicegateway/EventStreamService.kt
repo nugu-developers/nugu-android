@@ -103,22 +103,34 @@ internal class EventStreamService(
     }
 
     fun sendAttachmentMessage(attachment: AttachmentMessage) {
-        eventStream?.onNext(
-            Upstream.newBuilder()
-                .setAttachmentMessage(attachment)
-                .build()
-        )
+        try {
+            eventStream?.onNext(
+                Upstream.newBuilder()
+                    .setAttachmentMessage(attachment)
+                    .build()
+            )
+        } catch (ignored: IllegalStateException) {
+            // Perhaps, Stream is already completed, no further calls are allowed
+        }
     }
 
     fun sendEventMessage(event: EventMessage) {
-        eventStream?.onNext(
-            Upstream.newBuilder()
-                .setEventMessage(event)
-                .build()
-        )
+        try {
+            eventStream?.onNext(
+                Upstream.newBuilder()
+                    .setEventMessage(event)
+                    .build()
+            )
+        } catch (ignored : IllegalStateException) {
+            // Perhaps, Stream is already completed, no further calls are allowed
+        }
     }
 
     fun shutdown() {
-        eventStream?.onCompleted()
+        try {
+            eventStream?.onCompleted()
+        } catch (ignored : IllegalStateException) {
+            // Perhaps, call already half-closed
+        }
     }
 }

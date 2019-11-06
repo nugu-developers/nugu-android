@@ -33,7 +33,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     }
 
     private val policies = ConcurrentLinkedQueue(policyResponse.serverPolicyList)
-    private var backoff : BackOff = BackOff.Builder().build()
+    private var backoff : BackOff = BackOff.DEFAULT()
 
     private var currentChannel: ManagedChannel? = null
 
@@ -104,6 +104,8 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     }
 
     override fun onError(code: Status.Code) {
+        Logger.w(TAG, "[awaitRetry] Error : $code")
+
         if(isConnected) {
             isConnected = false
             transportObserver.onDisconnected(this, when(code) {
@@ -137,7 +139,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
                 connect()
             }
 
-            override fun onComplete(attempts : Int) {
+            override fun onRetry(retriesAttempted: Int) {
                 if (isConnected) {
                     Logger.w(TAG, "[awaitRetry] connected")
                 } else {
@@ -169,6 +171,8 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         if(!isConnected) {
             isConnected = true
             transportObserver.onConnected(this)
+
+            backoff.reset()
         }
         Logger.d(TAG, "onPingRequestAcknowledged")
     }
