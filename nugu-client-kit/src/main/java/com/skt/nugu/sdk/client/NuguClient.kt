@@ -66,6 +66,7 @@ import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.client.client.DisplayAggregator
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
+import com.skt.nugu.sdk.core.directivesequencer.TimeoutResponseHandler
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
@@ -214,6 +215,7 @@ class NuguClient private constructor(
             SdkVersion.currentVersion = sdkVersion
             val messageInterpreter =
                 MessageInterpreter(directiveSequencer, AttachmentManager()).apply {
+                    addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
                     if (displayAgentFactory != null) {
                         addDirectiveGroupPreprocessor(AudioPlayerDirectivePreProcessor())
                     }
