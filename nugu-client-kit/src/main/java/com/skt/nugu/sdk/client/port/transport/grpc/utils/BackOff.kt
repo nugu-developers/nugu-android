@@ -42,8 +42,6 @@ class BackOff private constructor(builder: Builder) {
         fun onRetry(retriesAttempted: Int)
     }
 
-    private var state = State.RETRY_INIT
-
     private val executorService: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1).apply {
         removeOnCancelPolicy = true
     }
@@ -51,31 +49,12 @@ class BackOff private constructor(builder: Builder) {
 
 
     /** The current retry count.  */
-    @Volatile private var attempts: Int = 0
+    private var attempts: Int = 0
     private var baseDelay: Long
     private var maxBackoffTime: Long
     private var waitTime: Long
-
-    private val RETRYABLE_STATUS_CODES: MutableSet<Status.Code> = HashSet(5)
-
-    init {
-        RETRYABLE_STATUS_CODES.add(Status.Code.UNAVAILABLE)
-        RETRYABLE_STATUS_CODES.add(Status.Code.ABORTED)
-        RETRYABLE_STATUS_CODES.add(Status.Code.INTERNAL)
-        RETRYABLE_STATUS_CODES.add(Status.Code.CANCELLED)
-        RETRYABLE_STATUS_CODES.add(Status.Code.DEADLINE_EXCEEDED)
-    }
-
-    internal enum class State {
-        RETRY_INIT,
-        RETRY_IN_PROGRESS,
-        RETRY_FAILED,
-        RETRY_COMPLETE,
-    }
-
-
     /** The maximum number of attempts.  */
-    var maxAttempts: Int
+    private var maxAttempts: Int
 
     init {
         this.maxAttempts = builder.maxAttempts
@@ -88,7 +67,7 @@ class BackOff private constructor(builder: Builder) {
      * @see https://aws.amazon.com/ko/blogs/architecture/exponential-backoff-and-jitter/
      * sleep = min(cap, random_between(base, sleep * 3))
      */
-    fun duration(): Long {
+    private fun duration(): Long {
         waitTime = Math.min(maxBackoffTime, betweenRandom(baseDelay, waitTime * 3))
         return waitTime
     }
@@ -108,7 +87,6 @@ class BackOff private constructor(builder: Builder) {
     fun reset() {
         this.waitTime = baseDelay
         this.attempts = 0
-        this.state = State.RETRY_INIT
         this.scheduledFuture?.cancel(true)
     }
 
@@ -125,7 +103,11 @@ class BackOff private constructor(builder: Builder) {
      * @return True to retry, false to not.
      */
     private fun isRetryableServiceException(code: Status.Code): Boolean {
-        return RETRYABLE_STATUS_CODES.contains(code)
+        return when(code) {
+            Status.Code.OK,
+            Status.Code.UNAUTHENTICATED -> false
+            else -> true
+        }
     }
 
     /**
@@ -135,33 +117,27 @@ class BackOff private constructor(builder: Builder) {
      *
      */
     fun awaitRetry(code: Status.Code, observer: Observer) {
-        if (state == State.RETRY_IN_PROGRESS) {
+        if (scheduledFuture?.isDone == false) {
             return
         }
-        state = State.RETRY_IN_PROGRESS
 
         if (!isAttemptExceed()) {
-            state = State.RETRY_FAILED
             observer.onError("exceeded maxBackoffTime attempts")
             return
         }
         if (!isRetryableServiceException(code)) {
-            state = State.RETRY_FAILED
             observer.onError("Status code($code) that can't be retried")
             return
         }
 
         // Increase attempts count
         attempts++
-
-
         val duration = duration()
         scheduledFuture = executorService.schedule({
-            state = State.RETRY_COMPLETE
             // Retry done
             observer.onRetry(attempts)
-
         }, duration, TimeUnit.MILLISECONDS)
+
         Logger.w(TAG, String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}"))
     }
 
