@@ -16,7 +16,7 @@ class BackOff private constructor(builder: Builder) {
         /**
          * Default maximum back-off time before retrying a request
          */
-        val DEFAULT_MAX_BACKOFF_IN_MILLISECONDS : Long = 1000 * 60
+        val DEFAULT_MAX_BACKOFF_IN_MILLISECONDS : Long = 1000 * 300
 
         /**
          * Default base sleep time (milliseconds) for non-throttled exceptions.
@@ -65,11 +65,19 @@ class BackOff private constructor(builder: Builder) {
     /**
      * Returns the duration (milliseconds).
      * @see https://aws.amazon.com/ko/blogs/architecture/exponential-backoff-and-jitter/
+     *
+     * implement "Decorrelated Jitter"
+     * temp = min(cap, base * 2 ** attempt)
+     * sleep = temp / 2 + random_between(0, temp / 2)
      * sleep = min(cap, random_between(base, sleep * 3))
      */
     private fun duration(): Long {
-        waitTime = Math.min(maxBackoffTime, betweenRandom(baseDelay, waitTime * 3))
-        return waitTime
+        // Exponential backoff
+        val temp = Math.min(maxBackoffTime.toDouble(), baseDelay *  Math.pow(2.0, attempts.toDouble()) )
+        // Full Jitter
+        val sleep =  temp.toLong() / 2 + betweenRandom(baseDelay, temp.toLong() / 2)
+        // Decorrelated Jitter
+        return Math.min(maxBackoffTime, betweenRandom(baseDelay, sleep * 3)).apply { waitTime = this }
     }
 
     /**
@@ -82,7 +90,7 @@ class BackOff private constructor(builder: Builder) {
     }
 
     /**
-     *  Explicitly clean up
+     *  clean up
      */
     fun reset() {
         this.waitTime = baseDelay

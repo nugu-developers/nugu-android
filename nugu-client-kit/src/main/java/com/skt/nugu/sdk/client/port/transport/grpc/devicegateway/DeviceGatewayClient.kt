@@ -52,13 +52,14 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
 
         serverPolicy ?: run {
             policies.poll()?.apply {
+                serverPolicy = this
                 backoff.reset()
                 backoff = BackOff.Builder(maxAttempts = this.retryCountLimit).build()
-                serverPolicy = this
             }
         }
         if(serverPolicy == null) {
             Logger.d(TAG, "No more serverPolicy")
+            shutdown()
             transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
             return false
         }

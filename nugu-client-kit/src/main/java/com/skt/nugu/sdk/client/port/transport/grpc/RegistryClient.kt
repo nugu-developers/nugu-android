@@ -16,9 +16,6 @@ internal class RegistryClient {
         fun newClient() = RegistryClient()
     }
     private var backoff : BackOff = BackOff.DEFAULT()
-    private val executor: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1).apply {
-        removeOnCancelPolicy = true
-    }
 
     var policy: PolicyResponse? = null
     private var state: Enum<State> = State.POLICY_INIT
@@ -64,17 +61,16 @@ internal class RegistryClient {
                         }
 
                         override fun onRetry(retriesAttempted: Int) {
-                            if(state !=  State.POLICY_COMPLETE) {
-                                getPolicy(registryChannel, observer)
-                            }
+                            getPolicy(registryChannel, observer)
                         }
                     })
                 }
 
                 override fun onCompleted() {
                     registryChannel.shutdownNow()
-
+                    backoff.reset()
                     state = State.POLICY_COMPLETE
+
 
                     val policy = policy
                     if (policy == null) {
