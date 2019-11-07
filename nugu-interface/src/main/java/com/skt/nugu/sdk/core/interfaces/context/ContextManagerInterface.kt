@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.core.interfaces.context
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 
 interface ContextGetterInterface {
-    fun getContext(contextRequester: ContextRequester)
+    fun getContext(contextRequester: ContextRequester, namespaceAndName: NamespaceAndName? = null)
 }
 
 interface ContextStateProviderRegistry {
