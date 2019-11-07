@@ -116,7 +116,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
                 Status.Code.UNKNOWN,
                 Status.Code.INVALID_ARGUMENT -> ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT
                 Status.Code.DEADLINE_EXCEEDED -> ConnectionStatusListener.ChangedReason.READ_TIMEDOUT
-                Status.Code.NOT_FOUND ->  ConnectionStatusListener.ChangedReason.INTERNAL_ERROR
+                Status.Code.NOT_FOUND ,
                 Status.Code.ALREADY_EXISTS ,
                 Status.Code.PERMISSION_DENIED ,
                 Status.Code.RESOURCE_EXHAUSTED ,
@@ -126,7 +126,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
                 Status.Code.UNIMPLEMENTED ,
                 Status.Code.INTERNAL ,
                 Status.Code.DATA_LOSS -> ConnectionStatusListener.ChangedReason.INTERNAL_ERROR
-                Status.Code.UNAUTHENTICATED -> ConnectionStatusListener.ChangedReason.INTERNAL_ERROR
+                Status.Code.UNAUTHENTICATED -> ConnectionStatusListener.ChangedReason.INVALID_AUTH
             })
         }
 
