@@ -1,6 +1,6 @@
 ext {
-    keensenseVersion="0.1.1"
-    jademarbleVersion="0.1.2"
+    keensenseVersion="0.1.2"
+    jademarbleVersion="0.1.3"
     silvertrayVersion="4.1.0"
 
     nuguVersionCode=600
