@@ -28,14 +28,7 @@ allprojects {
         jcenter()
 
         maven {
-            url "http://211.108.174.69:8081/nexus/content/repositories/releases/"
-        }
-
-        maven {
-            url "http://223.39.117.163:8081/repository/maven-public/"
-        }
-        maven {
-            url "http://223.39.117.164:8081/repository/maven-public/"
+            url "https://nexus.nugu.co.kr/repository/maven-public/"
         }
     }
 }
