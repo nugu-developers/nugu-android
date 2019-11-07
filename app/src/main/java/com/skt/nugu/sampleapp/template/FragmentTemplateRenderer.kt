@@ -58,9 +58,12 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
                     if (fragment is TemplateFragment) {
                         Log.d(TAG, "[render] update fragment")
                         val prevTemplateId = fragment.getTemplateId()
-                        fragment.updateView(templateType, templateId, templateContent)
-                        ClientManager.getClient().getDisplay()?.displayCardCleared(prevTemplateId)
-                        ClientManager.getClient().getDisplay()?.displayCardRendered(templateId)
+                        if(prevTemplateId != templateId) {
+                            fragment.updateView(templateType, templateId, templateContent)
+                            ClientManager.getClient().getDisplay()
+                                ?.displayCardCleared(prevTemplateId)
+                            ClientManager.getClient().getDisplay()?.displayCardRendered(templateId)
+                        }
                     } else {
                         Log.d(TAG, "[render] not match fragment, remove and add newFragment")
                         removeFragment(fragmentManager, fragment)
