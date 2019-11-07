@@ -911,7 +911,7 @@ object DefaultTTSAgent {
 
                         override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                         }
-                    })
+                    }, namespaceAndName)
                 }
             }
         }
@@ -953,7 +953,7 @@ object DefaultTTSAgent {
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                     listener?.onError()
                 }
-            })
+            }, namespaceAndName)
         }
 
         override fun onSendEventFinished(dialogRequestId: String) {

@@ -360,6 +360,12 @@ object DefaultSystemCapabilityAgent {
         }
 
         private fun sendEvent(name: String, payload: String? = null) {
+            val tempNamespaceAndName = if(name == EVENT_NAME_SYNCHRONIZE_STATE) {
+                null
+            } else {
+                namespaceAndName
+            }
+
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     messageSender.sendMessage(
@@ -385,7 +391,7 @@ object DefaultSystemCapabilityAgent {
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {
 
                 }
-            })
+            }, tempNamespaceAndName)
         }
 
         /**

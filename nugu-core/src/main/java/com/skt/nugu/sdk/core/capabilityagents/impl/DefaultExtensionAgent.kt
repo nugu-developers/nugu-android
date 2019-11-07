@@ -207,7 +207,7 @@ object DefaultExtensionAgent {
 
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 }
-            })
+            }, namespaceAndName)
         }
     }
 }

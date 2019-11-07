@@ -882,7 +882,7 @@ object DefaultASRAgent {
                         version = VERSION,
                         payload = payload.toString()
                     )
-            })
+            }, namespaceAndName)
         }
 
         private var currentSessionId: String? = null
