@@ -49,36 +49,34 @@ internal class RegistryClient {
                     state = State.POLICY_FAILED
 
                     val status = Status.fromThrowable(t)
-                    //observer.onError(status.code)
-
                     Logger.e(TAG, "[onError] error on getPolicy($status)")
 
-                    backoff.awaitRetry(status.code, object : BackOff.Observer {
-
-                        override fun onError(reason: String) {
-                            Logger.w(TAG, "[awaitRetry] Error : $reason")
-                            observer.onError(status.code)
-                        }
-
-                        override fun onRetry(retriesAttempted: Int) {
-                            getPolicy(registryChannel, observer)
-                        }
-                    })
+                    awaitRetry(status.code)
                 }
 
                 override fun onCompleted() {
-                    registryChannel.shutdownNow()
-                    backoff.reset()
-                    state = State.POLICY_COMPLETE
-
-
-                    val policy = policy
                     if (policy == null) {
-                        TODO("policy is null")
+                        state = State.POLICY_FAILED
+                        awaitRetry(Status.Code.NOT_FOUND)
                     } else {
+                        backoff.reset()
+                        state = State.POLICY_COMPLETE
+                        registryChannel.shutdownNow()
                         observer.onCompleted()
                     }
                 }
+
+                private fun awaitRetry(code: Status.Code) = backoff.awaitRetry(code, object : BackOff.Observer {
+                    override fun onError(reason: String) {
+                        Logger.w(TAG, "[awaitRetry] Error : $reason")
+                        observer.onError(code)
+                    }
+
+                    override fun onRetry(retriesAttempted: Int) {
+                        getPolicy(registryChannel, observer)
+                    }
+                })
+
             })
     }
 
