@@ -60,6 +60,7 @@ object DefaultDisplayAgent {
             const val NAMESPACE = "Display"
             const val VERSION = "1.0"
 
+            // supported types for v1.0
             private const val NAME_FULLTEXT1 = "FullText1"
             private const val NAME_FULLTEXT2 = "FullText2"
             private const val NAME_IMAGETEXT1 = "ImageText1"
@@ -68,8 +69,11 @@ object DefaultDisplayAgent {
             private const val NAME_IMAGETEXT4 = "ImageText4"
             private const val NAME_TEXTLIST1 = "TextList1"
             private const val NAME_TEXTLIST2 = "TextList2"
+            private const val NAME_TEXTLIST3 = "TextList3"
+            private const val NAME_TEXTLIST4 = "TextList4"
             private const val NAME_IMAGELIST1 = "ImageList1"
             private const val NAME_IMAGELIST2 = "ImageList2"
+            private const val NAME_IMAGELIST3 = "ImageList3"
             private const val NAME_CUSTOMTEMPLATE = "CustomTemplate"
 
             private val FULLTEXT1 = NamespaceAndName(
@@ -104,6 +108,17 @@ object DefaultDisplayAgent {
                 NAMESPACE,
                 NAME_TEXTLIST2
             )
+
+            private val TEXTLIST3 = NamespaceAndName(
+                NAMESPACE,
+                NAME_TEXTLIST3
+            )
+
+            private val TEXTLIST4 = NamespaceAndName(
+                NAMESPACE,
+                NAME_TEXTLIST4
+            )
+
             private val IMAGELIST1 = NamespaceAndName(
                 NAMESPACE,
                 NAME_IMAGELIST1
@@ -111,6 +126,10 @@ object DefaultDisplayAgent {
             private val IMAGELIST2 = NamespaceAndName(
                 NAMESPACE,
                 NAME_IMAGELIST2
+            )
+            private val IMAGELIST3 = NamespaceAndName(
+                NAMESPACE,
+                NAME_IMAGELIST3
             )
             private val CUSTOM_TEMPLATE = NamespaceAndName(
                 NAMESPACE,
@@ -132,6 +151,7 @@ object DefaultDisplayAgent {
             val nonBlockingPolicy = BlockingPolicy()
 
             val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+
             configuration[FULLTEXT1] = nonBlockingPolicy
             configuration[FULLTEXT2] = nonBlockingPolicy
             configuration[IMAGETEXT1] = nonBlockingPolicy
@@ -140,8 +160,11 @@ object DefaultDisplayAgent {
             configuration[IMAGETEXT4] = nonBlockingPolicy
             configuration[TEXTLIST1] = nonBlockingPolicy
             configuration[TEXTLIST2] = nonBlockingPolicy
+            configuration[TEXTLIST3] = nonBlockingPolicy
+            configuration[TEXTLIST4] = nonBlockingPolicy
             configuration[IMAGELIST1] = nonBlockingPolicy
             configuration[IMAGELIST2] = nonBlockingPolicy
+            configuration[IMAGELIST3] = nonBlockingPolicy
             configuration[CUSTOM_TEMPLATE] = nonBlockingPolicy
 
             return configuration
