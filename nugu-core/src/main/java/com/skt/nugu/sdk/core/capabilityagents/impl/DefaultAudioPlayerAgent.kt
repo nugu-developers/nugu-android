@@ -1066,7 +1066,7 @@ object DefaultAudioPlayerAgent {
 
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 }
-            })
+            }, namespaceAndName)
         }
 
         private fun sendProgressReportDelay(actual: Long) {
@@ -1137,7 +1137,7 @@ object DefaultAudioPlayerAgent {
 
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 }
-            })
+            }, namespaceAndName)
         }
 
         override fun onButtonPressed(button: PlaybackButton) {

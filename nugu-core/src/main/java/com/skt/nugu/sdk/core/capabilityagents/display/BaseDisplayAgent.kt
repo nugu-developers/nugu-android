@@ -333,7 +333,7 @@ abstract class BaseDisplayAgent(
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
-        })
+        }, namespaceAndName)
     }
 
     protected abstract fun getDisplayType(): DisplayAggregatorInterface.Type
