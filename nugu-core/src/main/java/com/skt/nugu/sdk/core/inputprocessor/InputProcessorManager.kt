@@ -33,6 +33,7 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
         private const val KEY_ATTACHMENT = "attachment"
     }
 
+    private val responseTimeoutListeners = HashSet<InputProcessorManagerInterface.OnResponseTimeoutListener>()
     private val requests = ConcurrentHashMap<String, InputProcessor>()
     private val timeoutFutureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
     private val timeoutScheduler = Executors.newSingleThreadScheduledExecutor()
@@ -57,6 +58,9 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
         timeoutFutureMap[dialogRequestId]?.cancel(true)
         timeoutFutureMap[dialogRequestId] = timeoutScheduler.schedule({
             inputProcessor.onResponseTimeout(dialogRequestId)
+            responseTimeoutListeners.forEach {
+                it.onResponseTimeout(dialogRequestId)
+            }
         }, 10, TimeUnit.SECONDS)
     }
 
@@ -96,5 +100,13 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
 
     private fun onReceiveUnknownMessage(message: String) {
         Logger.e(TAG, "[onReceiveUnknownMessage] $message")
+    }
+
+    override fun addResponseTimeoutListener(listener: InputProcessorManagerInterface.OnResponseTimeoutListener) {
+        responseTimeoutListeners.add(listener)
+    }
+
+    override fun removeResponseTimeoutListener(listener: InputProcessorManagerInterface.OnResponseTimeoutListener) {
+        responseTimeoutListeners.remove(listener)
     }
 }
