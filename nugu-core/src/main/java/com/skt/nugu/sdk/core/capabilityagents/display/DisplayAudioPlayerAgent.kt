@@ -49,6 +49,10 @@ class DisplayAudioPlayerAgent(
     private var playerActivity: AudioPlayerAgentInterface.State =
         AudioPlayerAgentInterface.State.IDLE
 
+    override fun getNamespace(): String = NAMESPACE
+
+    override fun getVersion(): String = VERSION
+
     override fun getDisplayType(): DisplayAggregatorInterface.Type = DisplayAggregatorInterface.Type.AUDIO_PLAYER
 
     override fun executeOnFocusBackground(info: DirectiveInfo) {

@@ -67,8 +67,11 @@ abstract class BaseDisplayAgent(
     override val namespaceAndName: NamespaceAndName =
         NamespaceAndName(
             "supportedInterfaces",
-            NAMESPACE
+            getNamespace()
         )
+
+    protected abstract fun getNamespace(): String
+    protected abstract fun getVersion(): String
 
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
     private var clearTimeoutFuture: ScheduledFuture<*>? = null
@@ -198,7 +201,7 @@ abstract class BaseDisplayAgent(
         Logger.d(TAG, "[requestFocusForRender] playServiceId: $playServiceId")
         focusManager.acquireChannel(
             channelName, this,
-            NAMESPACE, playServiceId
+            getNamespace(), playServiceId
         )
     }
 
@@ -317,8 +320,8 @@ abstract class BaseDisplayAgent(
                 messageSender.sendMessage(
                     EventMessageRequest(
                         name = EVENT_NAME_ELEMENT_SELECTED,
-                        namespace = NAMESPACE,
-                        version = VERSION,
+                        namespace = getNamespace(),
+                        version = getVersion(),
                         context = jsonContext,
                         payload = JsonObject().apply {
                             addProperty(KEY_TOKEN, token)
