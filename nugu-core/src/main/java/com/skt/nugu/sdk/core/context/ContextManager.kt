@@ -27,11 +27,13 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class ContextManager : ContextManagerInterface {
     companion object {
         private const val TAG = "ContextManager"
+        const val SUPPORTED_INTERFACES = "supportedInterfaces"
     }
 
     private data class StateInfo(
@@ -41,7 +43,8 @@ class ContextManager : ContextManagerInterface {
     )
 
     private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
-    private val contextRequesterQueue: Queue<ContextRequester> = LinkedList<ContextRequester>()
+    private val contextRequesterQueue: Queue<Pair<ContextRequester, NamespaceAndName?>> =
+        LinkedList()
     private val pendingOnStateProviders = HashSet<NamespaceAndName>()
     private val stateProviderLock = ReentrantLock()
     private var stateRequestToken: Int = 0
@@ -58,7 +61,10 @@ class ContextManager : ContextManagerInterface {
                 sendContextToRequesters()
             } else {
                 // Timeout
-                sendContextAndClearQueue("", ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT)
+                sendContextAndClearQueue(
+                    null,
+                    ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT
+                )
             }
         }
 
@@ -66,7 +72,10 @@ class ContextManager : ContextManagerInterface {
             val start = System.currentTimeMillis()
             while (pendingOnStateProviders.isNotEmpty()) {
                 if (System.currentTimeMillis() - start > PROVIDE_STATE_DEFAULT_TIMEOUT) {
-                    Logger.w(TAG, "[waitUntilRequestStateFinished] failed pending : ${pendingOnStateProviders.size}")
+                    Logger.w(
+                        TAG,
+                        "[waitUntilRequestStateFinished] failed pending : ${pendingOnStateProviders.size}"
+                    )
                     stateProviderLock.withLock {
                         pendingOnStateProviders.forEach {
                             Logger.w(TAG, "[waitUntilRequestStateFinished] failed pending : $it")
@@ -109,7 +118,7 @@ class ContextManager : ContextManagerInterface {
         Logger.d(TAG, "[sendContextToRequesters]")
 
         val jsonContext = stateProviderLock.withLock {
-            buildContext().toString()
+            buildContext()
         }
 
         sendContextAndClearQueue(jsonContext, null)
@@ -121,15 +130,18 @@ class ContextManager : ContextManagerInterface {
             val supportedInterfaces = JsonObject()
             val client = JsonObject()
 
-            add("supportedInterfaces", supportedInterfaces)
+            add(SUPPORTED_INTERFACES, supportedInterfaces)
             add("client", client)
 
             for (it in namespaceNameToStateInfo) {
                 if (it.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETHIMES == it.value.refreshPolicy) {
                     // pass
                 } else {
-                    if (it.key.namespace == "supportedInterfaces") {
-                        supportedInterfaces.add(it.key.name, JsonParser().parse(it.value.jsonState).asJsonObject)
+                    if (it.key.namespace == SUPPORTED_INTERFACES) {
+                        supportedInterfaces.add(
+                            it.key.name,
+                            JsonParser().parse(it.value.jsonState).asJsonObject
+                        )
                     } else if (it.key.namespace == "client") {
                         client.add(it.key.name, JsonParser().parse(it.value.jsonState))
                     }
@@ -139,22 +151,56 @@ class ContextManager : ContextManagerInterface {
     }
 
     private fun sendContextAndClearQueue(
-        context: String,
+        context: JsonObject?,
         contextRequestError: ContextRequester.ContextRequestError?
     ) {
         Logger.d(TAG, "[sendContextAndClearQueue]")
+        val strAllContext = context.toString()
+        val jsonParser = JsonParser()
+
         synchronized(contextRequesterQueue) {
             while (contextRequesterQueue.isNotEmpty()) {
-                if (!context.isNullOrBlank()) {
-                    contextRequesterQueue.poll().onContextAvailable(context)
-                } else {
-                    contextRequesterQueue.poll().onContextFailure(contextRequestError!!)
+                with(contextRequesterQueue.poll()) {
+                    if (context != null) {
+                        val namespaceAndName = second
+                        val strContext = if (namespaceAndName == null) {
+                            strAllContext
+                        } else {
+                            val filterOutContext = filterOutContextBy(namespaceAndName, jsonParser.parse(strAllContext).asJsonObject)
+                            filterOutContext.toString()
+                        }
+                        first.onContextAvailable(strContext)
+                    } else {
+                        first.onContextFailure(contextRequestError!!)
+                    }
                 }
             }
         }
     }
 
-    override fun setStateProvider(namespaceAndName: NamespaceAndName, stateProvider: ContextStateProvider?) {
+    private fun filterOutContextBy(
+        namespaceAndName: NamespaceAndName,
+        context: JsonObject
+    ): JsonObject {
+        val namespaceJsonObject = context.getAsJsonObject(namespaceAndName.namespace)
+        val entrySet = namespaceJsonObject.entrySet()
+        val shouldBeRemoveKeys = HashSet<String>()
+        entrySet.forEach {
+            if (it.key != namespaceAndName.name) {
+                shouldBeRemoveKeys.add(it.key)
+            }
+        }
+        shouldBeRemoveKeys.forEach {
+            namespaceJsonObject.remove(it)
+        }
+
+        return context
+    }
+
+    override fun setStateProvider(
+        namespaceAndName: NamespaceAndName,
+        stateProvider: ContextStateProvider?
+    ) {
         stateProviderLock.withLock {
             if (stateProvider == null) {
                 namespaceNameToStateInfo.remove(namespaceAndName)
@@ -214,7 +260,8 @@ class ContextManager : ContextManagerInterface {
                     ContextSetterInterface.SetStateResult.STATE_PROVIDER_NOT_REGISTERED
                 }
                 StateRefreshPolicy.NEVER -> {
-                    namespaceNameToStateInfo[namespaceAndName] = StateInfo(null, jsonState, refreshPolicy)
+                    namespaceNameToStateInfo[namespaceAndName] =
+                        StateInfo(null, jsonState, refreshPolicy)
                     ContextSetterInterface.SetStateResult.SUCCESS
                 }
             }
@@ -225,9 +272,12 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    override fun getContext(contextRequester: ContextRequester) {
+    override fun getContext(
+        contextRequester: ContextRequester,
+        namespaceAndName: NamespaceAndName?
+    ) {
         synchronized(contextRequesterQueue) {
-            contextRequesterQueue.offer(contextRequester)
+            contextRequesterQueue.offer(Pair(contextRequester, namespaceAndName))
 
             if (contextRequesterQueue.isNotEmpty()) {
                 updateStatesThread.wakeOne()
