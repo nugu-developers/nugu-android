@@ -58,7 +58,7 @@ object DefaultDisplayAgent {
     ) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, channelName) {
         companion object {
             const val NAMESPACE = "Display"
-            const val VERSION = "1.0"
+            const val VERSION = "1.1"
 
             // supported types for v1.0
             private const val NAME_FULLTEXT1 = "FullText1"
@@ -75,6 +75,13 @@ object DefaultDisplayAgent {
             private const val NAME_IMAGELIST2 = "ImageList2"
             private const val NAME_IMAGELIST3 = "ImageList3"
             private const val NAME_CUSTOMTEMPLATE = "CustomTemplate"
+
+            // supported types for v1.1
+            private const val NAME_WEATHER_1 = "Weather1"
+            private const val NAME_WEATHER_2 = "Weather2"
+            private const val NAME_WEATHER_3 = "Weather3"
+            private const val NAME_WEATHER_4 = "Weather4"
+            private const val NAME_WEATHER_5 = "Weather5"
 
             private val FULLTEXT1 = NamespaceAndName(
                 NAMESPACE,
@@ -135,6 +142,31 @@ object DefaultDisplayAgent {
                 NAMESPACE,
                 NAME_CUSTOMTEMPLATE
             )
+
+            private val WEATHER1 = NamespaceAndName(
+                NAMESPACE,
+                NAME_WEATHER_1
+            )
+
+            private val WEATHER2 = NamespaceAndName(
+                NAMESPACE,
+                NAME_WEATHER_2
+            )
+
+            private val WEATHER3 = NamespaceAndName(
+                NAMESPACE,
+                NAME_WEATHER_3
+            )
+
+            private val WEATHER4 = NamespaceAndName(
+                NAMESPACE,
+                NAME_WEATHER_4
+            )
+
+            private val WEATHER5 = NamespaceAndName(
+                NAMESPACE,
+                NAME_WEATHER_5
+            )
         }
 
         init {
@@ -170,6 +202,12 @@ object DefaultDisplayAgent {
             configuration[IMAGELIST2] = nonBlockingPolicy
             configuration[IMAGELIST3] = nonBlockingPolicy
             configuration[CUSTOM_TEMPLATE] = nonBlockingPolicy
+
+            configuration[WEATHER1] = nonBlockingPolicy
+            configuration[WEATHER2] = nonBlockingPolicy
+            configuration[WEATHER3] = nonBlockingPolicy
+            configuration[WEATHER4] = nonBlockingPolicy
+            configuration[WEATHER5] = nonBlockingPolicy
 
             return configuration
         }
