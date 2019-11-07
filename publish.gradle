@@ -11,14 +11,6 @@ publishing {
 
     repositories {
         maven {
-            url "http://211.108.174.69:8081/nexus/content/repositories/releases"
-            credentials {
-                username userName
-                password passWord
-            }
-        }
-
-        maven {
             url "http://223.39.117.163:8081/repository/maven-releases/"
             credentials {
                 username userName
