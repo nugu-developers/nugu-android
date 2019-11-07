@@ -141,6 +141,10 @@ object DefaultDisplayAgent {
             contextManager.setStateProvider(namespaceAndName, this)
         }
 
+        override fun getNamespace(): String = NAMESPACE
+
+        override fun getVersion(): String = VERSION
+
         override fun getDisplayType(): DisplayAggregatorInterface.Type = DisplayAggregatorInterface.Type.INFOMATION
 
         override fun executeOnFocusBackground(info: DirectiveInfo) {

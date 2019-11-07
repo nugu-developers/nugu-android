@@ -36,7 +36,7 @@ class AudioPlayerDirectivePreProcessor : DirectiveGroupPreprocessor {
         }
 
         val displayDirective =
-            directives.find { it.getNamespace() == AbstractDisplayAgent.NAMESPACE }
+            directives.find { it.getNamespace() == "Display" }
 
         if (displayDirective != null) {
             Logger.d(TAG, "[preprocess] do not display audio player template display")

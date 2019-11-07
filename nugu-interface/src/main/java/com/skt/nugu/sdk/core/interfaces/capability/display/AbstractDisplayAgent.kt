@@ -27,9 +27,4 @@ abstract class AbstractDisplayAgent(
     protected val messageSender: MessageSender,
     protected val playSynchronizer: PlaySynchronizerInterface,
     protected val channelName: String
-) : CapabilityAgent(), DisplayAgentInterface {
-    companion object {
-        const val NAMESPACE = "Display"
-        const val VERSION = "1.0"
-    }
-}
+) : CapabilityAgent(), DisplayAgentInterface
