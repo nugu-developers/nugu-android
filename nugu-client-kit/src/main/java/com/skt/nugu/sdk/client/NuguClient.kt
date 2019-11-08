@@ -174,6 +174,7 @@ class NuguClient private constructor(
             apply { displayAgentFactory = factory }
         fun locationAgentFactory(factory: LocationAgentFactory) =
             apply { locationAgentFactory = factory }
+
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
         fun soundAgentFactory(factory: SoundAgentFactory) = apply { soundAgentFactory = factory }
         fun logger(logger: LogInterface) = apply { this.logger = logger }

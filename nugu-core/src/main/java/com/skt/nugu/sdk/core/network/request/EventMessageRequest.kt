@@ -31,12 +31,16 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * @param referrerDialogRequestId the referrerDialogRequestId.
  */
 data class EventMessageRequest(
+
     val messageId: String,
     val dialogRequestId: String,
+    val messageId: String = UUIDGeneration.shortUUID().toString(),
+    val dialogRequestId: String = UUIDGeneration.timeUUID().toString(),
     val context: String,
     val namespace: String,
     val name: String,
     val version: String,
+
     val payload: String,
     val referrerDialogRequestId: String?
 ) : MessageRequest {

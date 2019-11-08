@@ -384,6 +384,22 @@ object DefaultTTSAgent {
         private fun notifyObservers(state: TTSAgentInterface.State, dialogRequestId: String) {
             for (observer in listeners) {
                 observer.onStateChanged(state, dialogRequestId)
+
+            }
+        }
+
+        private fun executeHandleImmediately(info: DirectiveInfo) {
+            when (info.directive.getNamespaceAndName()) {
+                SPEAK -> {
+                    val speakInfo = createValidateSpeakInfo(info, false)
+                    if (speakInfo == null) {
+                        setHandlingInvalidSpeakDirectiveReceived(info)
+                        return
+                    }
+                    executePrepareSpeakInfo(speakInfo)
+                    executeHandleSpeakDirective(info)
+                }
+                STOP -> executeHandleStopDirective(info)
             }
         }
 
@@ -889,8 +905,8 @@ object DefaultTTSAgent {
                                     )
                                     .referrerDialogRequestId(info.getDialogRequestId())
                                     .build()
-                            messageSender.sendMessage(messageRequest)
 
+                            messageSender.sendMessage(messageRequest)
                             Logger.d(TAG, "[sendEventWithToken] $messageRequest")
                         }
 

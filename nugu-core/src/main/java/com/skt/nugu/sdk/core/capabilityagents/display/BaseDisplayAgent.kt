@@ -321,7 +321,7 @@ abstract class BaseDisplayAgent(
 
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                messageSender.sendMessage(
+
                     EventMessageRequest.Builder(
                         jsonContext,
                         getNamespace(),
@@ -329,6 +329,7 @@ abstract class BaseDisplayAgent(
                         getVersion()
                     ).payload(
                         JsonObject().apply {
+
                             addProperty(KEY_TOKEN, token)
                             directiveInfo.payload.playServiceId
                                 ?.let {

@@ -99,6 +99,7 @@ object DefaultDisplayAgent {
             private const val NAME_CLOSE_SUCCEEDED = "CloseSucceeded"
             private const val NAME_CLOSE_FAILED = "CloseFailed"
 
+
             private val FULLTEXT1 = NamespaceAndName(
                 NAMESPACE,
                 NAME_FULLTEXT1

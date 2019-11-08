@@ -1021,6 +1021,7 @@ object DefaultAudioPlayerAgent {
                 }
                 addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
                 if (getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
+
                     addProperty("durationInMilliseconds", getDurationInMilliseconds())
                 }
             }.toString(), policy, stateRequestToken)

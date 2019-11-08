@@ -12,6 +12,7 @@ publishing {
 
     repositories {
         maven {
+
             url "http://223.39.117.163:8081/repository/maven-releases/"
             credentials {
                 username userName
