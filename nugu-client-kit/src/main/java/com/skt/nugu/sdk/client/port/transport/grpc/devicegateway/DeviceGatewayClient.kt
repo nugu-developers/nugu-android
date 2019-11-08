@@ -51,19 +51,21 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         }
 
         serverPolicy ?: run {
+            backoff.reset()
+
             policies.poll()?.apply {
                 serverPolicy = this
-                backoff.reset()
-                backoff = BackOff.Builder(maxAttempts = this.retryCountLimit).build()
+            } ?: run {
+                Logger.d(TAG, "No more serverPolicy")
+                shutdown()
+                transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
+                return false
             }
+
+            backoff = BackOff.Builder(maxAttempts = serverPolicy!!.retryCountLimit).build()
         }
-        if(serverPolicy == null) {
-            Logger.d(TAG, "No more serverPolicy")
-            shutdown()
-            transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
-            return false
-        }
-        serverPolicy!!.apply {
+
+        serverPolicy?.apply {
             val option = Options(
                 address = this.address,
                 port = this.port,

@@ -234,6 +234,7 @@ class GrpcTransport private constructor(
         transportObserver.onDisconnected(transport, reason)
 
         if(reason == ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR) {
+            registryClient.shutdown()
             disconnect()
             connect()
         }
