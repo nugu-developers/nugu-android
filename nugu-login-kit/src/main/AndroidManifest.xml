@@ -14,7 +14,7 @@
                 android:exported="true"
                 android:launchMode="singleTop"
                 android:noHistory="true"
-                android:theme="@style/Romain.NoDisplay">
+                android:theme="@style/Nugu.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
