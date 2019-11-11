@@ -14,9 +14,9 @@
 
     <string name="menu_setting">setting</string>
     <string name="setting_enable_nugu">인공지능 NUGU 사용하기</string>
-    <string name="setting_linking_nugu">인공지능 NUGU 이용하기</string>
+    <string name="setting_using_nugu">인공지능 NUGU 이용하기</string>
     <string name="setting_enable_trigger">이름을 불러 대화 시작하기</string>
-    <string name="setting_wakup_word">부르는 이름</string>
+    <string name="setting_wakeup_word">부르는 이름</string>
     <string name="setting_recognition_beep">대화 시작 효과음</string>
     <string name="setting_enable_recognition_beep">인식 성공 효과음</string>
     <string name="setting_auth_type">계정선택</string>
