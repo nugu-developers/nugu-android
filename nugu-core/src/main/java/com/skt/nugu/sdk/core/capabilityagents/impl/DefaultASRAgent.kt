@@ -320,6 +320,7 @@ object DefaultASRAgent {
             }
 
             val audioProvider = currentSpeechProcessor.defaultAudioProvider
+            currentAudioProvider = audioProvider
             if(audioProvider == null) {
                 Logger.w(
                     TAG,
@@ -680,6 +681,7 @@ object DefaultASRAgent {
                     )
                 } else {
                     val audioProvider = currentSpeechProcessor.defaultAudioProvider
+                    currentAudioProvider = audioProvider
                     if(audioProvider == null) {
                         Logger.w(
                             TAG,
