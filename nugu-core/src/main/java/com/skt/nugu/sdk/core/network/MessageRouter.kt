@@ -126,6 +126,10 @@ class MessageRouter(
     override fun disable() {
         isEnabled = false
         resetActiveTransport()
+        setConnectionStatus(
+            ConnectionStatusListener.Status.DISCONNECTED,
+            ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
+        )
     }
 
     /**
@@ -172,7 +176,6 @@ class MessageRouter(
     /**
      * Queries the status of the connection.
      */
-    /* unused code */
     override fun getConnectionStatus(): ConnectionStatusListener.Status {
         return this.status
     }
