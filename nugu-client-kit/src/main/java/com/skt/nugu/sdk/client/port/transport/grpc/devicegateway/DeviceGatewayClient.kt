@@ -111,13 +111,13 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     override fun isConnected(): Boolean = isConnected
 
     override fun send(request: MessageRequest) : Boolean {
-        val event = eventStreamService
-        val crash = crashReportService
+        val event = eventStreamService ?: return false
+        val crash = crashReportService ?: return false
 
         when(request) {
-            is AttachmentMessageRequest -> event?.sendAttachmentMessage(toProtobufMessage(request))
-            is EventMessageRequest -> event?.sendEventMessage(toProtobufMessage(request))
-            is CrashReportMessageRequest -> crash?.sendCrashReport(request)
+            is AttachmentMessageRequest -> event.sendAttachmentMessage(toProtobufMessage(request))
+            is EventMessageRequest -> event.sendEventMessage(toProtobufMessage(request))
+            is CrashReportMessageRequest -> crash.sendCrashReport(request)
             else -> { return false }
         }
         return true
