@@ -149,9 +149,11 @@ class MessageRouter(
 
     /**
      * Expect to have the message sent to the transport.
+     * @param messageRequest the messageRequest to be sent
+     * @return true is success, otherwise false
      */
-    override fun sendMessage(messageRequest: MessageRequest) {
-        activeTransport?.send(messageRequest)
+    override fun sendMessage(messageRequest: MessageRequest) : Boolean {
+        return activeTransport?.send(messageRequest) ?: false
     }
 
     /**

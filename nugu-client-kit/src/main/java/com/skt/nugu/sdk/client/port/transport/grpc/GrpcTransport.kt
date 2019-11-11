@@ -146,14 +146,14 @@ class GrpcTransport private constructor(
 
     override fun isConnected(): Boolean = deviceGatewayClient?.isConnected() ?: false
 
-    override fun send(request: MessageRequest) {
+    override fun send(request: MessageRequest) : Boolean {
         if (state != State.CONNECTED) {
             Logger.d(TAG,
                 "send failed, Status : ($state), request : $request"
             )
-            return
+            return false
         }
-        deviceGatewayClient?.send(request)
+        return deviceGatewayClient?.send(request) ?: false
     }
 
     override fun shutdown() {

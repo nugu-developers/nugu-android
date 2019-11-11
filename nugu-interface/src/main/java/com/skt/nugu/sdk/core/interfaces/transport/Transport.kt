@@ -39,8 +39,10 @@ interface Transport {
 
     /**
      * Sends an message request.
+     * @param request the messageRequest to be sent
+     * @return true is success, otherwise false
      */
-    fun send(request: MessageRequest)
+    fun send(request: MessageRequest) : Boolean
 
     /**
      *  Explicitly clean up client resources.
