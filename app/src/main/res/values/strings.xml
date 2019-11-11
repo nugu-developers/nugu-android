@@ -20,6 +20,7 @@
     <string name="setting_recognition_beep">대화 시작 효과음</string>
     <string name="setting_enable_recognition_beep">인식 성공 효과음</string>
     <string name="setting_auth_type">계정선택</string>
+    <string name="setting_logout">로그아웃</string>
 
     <!-- Chips Array -->
     <string-array name="chips">
