@@ -29,7 +29,7 @@ internal class CrashReportService(val blockingStub: VoiceServiceGrpc.VoiceServic
         private const val defaultTimeout: Long = 1000 * 10L
     }
 
-    fun sendCrashReport(crashReportMessageRequest : CrashReportMessageRequest) {
+    fun sendCrashReport(crashReportMessageRequest : CrashReportMessageRequest) : Boolean {
         val builder =
             CrashReportRequest.CrashReport.newBuilder()
                 .setDetail(crashReportMessageRequest.message)
@@ -44,12 +44,12 @@ internal class CrashReportService(val blockingStub: VoiceServiceGrpc.VoiceServic
                 defaultTimeout,
                 TimeUnit.MILLISECONDS
             ).sendCrashReport(request)
-            Logger.w(TAG, "[CrashReportService] response = $response")
-
         } catch (th: Throwable) {
             val status = Status.fromThrowable(th)
             Logger.w(TAG, "[CrashReportService] status = $status")
+            return false
         }
+        return true
     }
 
     fun shutdown() {

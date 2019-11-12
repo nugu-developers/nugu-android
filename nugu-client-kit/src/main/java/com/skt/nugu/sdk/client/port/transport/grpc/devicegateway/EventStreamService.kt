@@ -117,7 +117,7 @@ internal class EventStreamService(
         })
     }
 
-    fun sendAttachmentMessage(attachment: AttachmentMessage) {
+    fun sendAttachmentMessage(attachment: AttachmentMessage) : Boolean {
         try {
             eventStream?.onNext(
                 Upstream.newBuilder()
@@ -126,10 +126,12 @@ internal class EventStreamService(
             )
         } catch (ignored: IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
+            return false
         }
+        return true
     }
 
-    fun sendEventMessage(event: EventMessage) {
+    fun sendEventMessage(event: EventMessage) : Boolean {
         try {
             eventStream?.onNext(
                 Upstream.newBuilder()
@@ -138,7 +140,9 @@ internal class EventStreamService(
             )
         } catch (ignored : IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
+            return false
         }
+        return true
     }
 
     fun shutdown() {
