@@ -86,6 +86,13 @@ class GrpcTransport private constructor(
     private val registryClient = RegistryClient.newClient()
     private var deviceGatewayClient: DeviceGatewayClient? = null
 
+    /**
+     * Transport Initialize.
+     */
+    init {
+        authDelegate.addAuthStateListener(this)
+    }
+
     override fun connect(): Boolean {
         if (state == State.CONNECTED || state == State.CONNECTING || registryClient.isConnecting()) {
             return false
