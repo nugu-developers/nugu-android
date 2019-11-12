@@ -19,6 +19,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 
 interface ContextGetterInterface {
     fun getContext(contextRequester: ContextRequester, namespaceAndName: NamespaceAndName? = null)
+    fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String
 }
 
 interface ContextStateProviderRegistry {

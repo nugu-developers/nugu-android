@@ -604,16 +604,16 @@ object DefaultAudioPlayerAgent {
         private fun executeOnPlaybackStarted(id: SourceId) {
             Logger.d(TAG, "[executeOnPlaybackStarted] id: $id, focus: $focus")
             playCalled = false
-            executeOnPlaybackPlayingInternal(id)
             progressTimer.start()
             sendPlaybackStartedEvent()
+            executeOnPlaybackPlayingInternal(id)
         }
 
         private fun executeOnPlaybackResumed(id: SourceId) {
             Logger.d(TAG, "[executeOnPlaybackResumed] id: $id, focus: $focus")
-            executeOnPlaybackPlayingInternal(id)
             progressTimer.resume()
             sendPlaybackResumedEvent()
+            executeOnPlaybackPlayingInternal(id)
         }
 
         private fun executeOnPlaybackPlayingInternal(id: SourceId) {
@@ -660,9 +660,9 @@ object DefaultAudioPlayerAgent {
             }
 
             pauseCalled = false
-            changeActivity(AudioPlayerAgentInterface.State.PAUSED)
             progressTimer.pause()
             sendPlaybackPausedEvent()
+            changeActivity(AudioPlayerAgentInterface.State.PAUSED)
         }
 
         private fun executeOnPlaybackError(id: SourceId, type: ErrorType, error: String) {
@@ -671,8 +671,8 @@ object DefaultAudioPlayerAgent {
                 return
             }
 
-            sendPlaybackFailedEvent(type, error)
             progressTimer.stop()
+            sendPlaybackFailedEvent(type, error)
             executeOnPlaybackStopped(sourceId, true)
         }
 
@@ -688,11 +688,11 @@ object DefaultAudioPlayerAgent {
             when (currentActivity) {
                 AudioPlayerAgentInterface.State.PLAYING,
                 AudioPlayerAgentInterface.State.PAUSED -> {
-                    changeActivity(AudioPlayerAgentInterface.State.STOPPED)
+                    progressTimer.stop()
                     if (!isError) {
                         sendPlaybackStoppedEvent()
                     }
-                    progressTimer.stop()
+                    changeActivity(AudioPlayerAgentInterface.State.STOPPED)
 
                     if (playNextItemAfterStopped) {
                         if (focus == FocusState.FOREGROUND && nextItem != null) {
@@ -730,9 +730,9 @@ object DefaultAudioPlayerAgent {
             pauseReason = null
             when (currentActivity) {
                 AudioPlayerAgentInterface.State.PLAYING -> {
-                    changeActivity(AudioPlayerAgentInterface.State.FINISHED)
-                    progressTimer.stop()
                     sendPlaybackFinishedEvent()
+                    progressTimer.stop()
+                    changeActivity(AudioPlayerAgentInterface.State.FINISHED)
                     if (nextItem == null) {
                         handlePlaybackCompleted(false)
                     } else {
@@ -1108,6 +1108,31 @@ object DefaultAudioPlayerAgent {
         }
 
         private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
+            currentItem?.apply {
+                val token = audioItem.stream.token
+                val messageRequest = EventMessageRequest(
+                    UUIDGeneration.shortUUID().toString(),
+                    UUIDGeneration.timeUUID().toString(),
+                    contextManager.getContextWithoutUpdate(namespaceAndName),
+                    NAMESPACE,
+                    eventName,
+                    VERSION,
+                    JsonObject().apply {
+                        addProperty("playServiceId", playServiceId)
+                        addProperty("token", token)
+                        addProperty("offsetInMilliseconds", offset)
+                    }.toString()
+                )
+
+                if (condition.invoke()) {
+                    messageSender.sendMessage(messageRequest)
+                    Logger.d(TAG, "[sendEvent] $messageRequest")
+                } else {
+                    Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
+                }
+            }
+
+            /*
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     currentItem?.apply {
@@ -1138,6 +1163,7 @@ object DefaultAudioPlayerAgent {
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 }
             }, namespaceAndName)
+             */
         }
 
         override fun onButtonPressed(button: PlaybackButton) {

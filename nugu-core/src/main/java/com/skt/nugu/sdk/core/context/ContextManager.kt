@@ -284,4 +284,14 @@ class ContextManager : ContextManagerInterface {
             }
         }
     }
+
+    override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String {
+        val context = buildContext()
+
+        return if(namespaceAndName == null) {
+            context
+        } else {
+            filterOutContextBy(namespaceAndName, context)
+        }.toString()
+    }
 }
