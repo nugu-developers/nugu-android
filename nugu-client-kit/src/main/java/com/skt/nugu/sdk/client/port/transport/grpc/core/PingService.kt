@@ -35,7 +35,9 @@ internal class PingService(val observer: GrpcServiceListener) :
     private var blockingStub: VoiceServiceGrpc.VoiceServiceBlockingStub? = null
     @Volatile
     private var isShutdown = true
-    private var executorService: ScheduledThreadPoolExecutor? = null
+    private val executorService: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1).apply {
+        removeOnCancelPolicy = true
+    }
     private var intervalFuture: ScheduledFuture<*>? = null
     private var channel: Channels? = null
 
@@ -77,20 +79,23 @@ internal class PingService(val observer: GrpcServiceListener) :
         this.channel = channel
         this.isShutdown = false
 
-        executorService = ScheduledThreadPoolExecutor(1)
-        executorService?.removeOnCancelPolicy = true
         this.blockingStub = VoiceServiceGrpc.newBlockingStub(channel.getChannel())
-        var timeout = channel.getBackoff().retryDelay
-        if (timeout <= 0) {
-            timeout = pingInterval
-        }
-        this.intervalFuture?.cancel(true)
-        this.intervalFuture = executorService?.scheduleWithFixedDelay({
-            val success = onExecute()
-            if (!isShutdown) {
-                observer.onPingRequestAcknowledged(success)
+        schedulePing()
+    }
+
+    fun schedulePing() {
+        intervalFuture?.cancel(true)
+        intervalFuture = executorService.schedule(object : Callable<Unit> {
+            override fun call() {
+                val success = onExecute()
+                if (!isShutdown) {
+                    observer.onPingRequestAcknowledged(success)
+                    intervalFuture?.cancel(true)
+                    val delay = (Math.random() * 180000 + 120000).toLong()
+                    intervalFuture = executorService.schedule(this, delay, TimeUnit.MILLISECONDS)
+                }
             }
-        }, 0, timeout, TimeUnit.MILLISECONDS)
+        }, 0L, TimeUnit.MILLISECONDS)
     }
 
 
@@ -102,7 +107,7 @@ internal class PingService(val observer: GrpcServiceListener) :
         if (!isShutdown) {
             this.isShutdown = true
             this.intervalFuture?.cancel(true)
-            this.executorService?.shutdown()
+            this.executorService.shutdown()
             this.blockingStub = null
         }
     }
