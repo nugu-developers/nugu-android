@@ -90,4 +90,8 @@ class DisplayAudioPlayerAgent(
             }
         }
     }
+
+    override fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
+        // nothing
+    }
 }
