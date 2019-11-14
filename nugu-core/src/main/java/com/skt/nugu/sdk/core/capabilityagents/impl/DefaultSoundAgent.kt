@@ -172,26 +172,18 @@ object DefaultSoundAgent {
 
         private fun sendEvent(name: String, playServiceId: String) {
             Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    val request = EventMessageRequest(
-                        UUIDGeneration.shortUUID().toString(),
-                        UUIDGeneration.timeUUID().toString(),
-                        jsonContext,
-                        NAMESPACE,
-                        name,
-                        VERSION,
-                        JsonObject().apply {
-                            addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
-                        }.toString()
-                    )
-
-                    messageSender.sendMessage(request)
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                }
-            })
+            val request = EventMessageRequest(
+                UUIDGeneration.shortUUID().toString(),
+                UUIDGeneration.timeUUID().toString(),
+                contextManager.getContextWithoutUpdate(namespaceAndName),
+                NAMESPACE,
+                name,
+                VERSION,
+                JsonObject().apply {
+                    addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
+                }.toString()
+            )
+            messageSender.sendMessage(request)
         }
     }
 }
