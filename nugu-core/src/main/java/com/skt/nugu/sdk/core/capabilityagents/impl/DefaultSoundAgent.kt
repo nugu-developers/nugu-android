@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.core.interfaces.mediaplayer.UriSourcePlayablePlayer
 import java.util.HashMap
 import java.util.concurrent.Executors
 
@@ -39,7 +39,7 @@ object DefaultSoundAgent {
     private const val TAG = "DefaultSoundAgent"
 
     val FACTORY = object : SoundAgentFactory {
-        override fun create(mediaPlayer : MediaPlayerInterface,
+        override fun create(mediaPlayer : UriSourcePlayablePlayer,
                             contextManager: ContextManagerInterface,
                             messageSender: MessageSender,
                             soundProvider: SoundProvider
@@ -59,7 +59,7 @@ object DefaultSoundAgent {
     )
 
     internal class Impl constructor(
-        mediaPlayer : MediaPlayerInterface,
+        mediaPlayer : UriSourcePlayablePlayer,
         contextManager: ContextManagerInterface,
         messageSender: MessageSender,
         soundProvider: SoundProvider

@@ -16,12 +16,12 @@
 package com.skt.nugu.sdk.core.interfaces.capability.sound
 
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.core.interfaces.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
 interface SoundAgentFactory {
     fun create(
-        mediaPlayer : MediaPlayerInterface,
+        mediaPlayer : UriSourcePlayablePlayer,
         contextManager: ContextManagerInterface,
         messageSender: MessageSender,
         soundProvider: SoundProvider

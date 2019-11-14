@@ -60,6 +60,7 @@ import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundProvider
+import com.skt.nugu.sdk.core.interfaces.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import java.util.concurrent.Future
 
@@ -109,10 +110,8 @@ class NuguAndroidClient private constructor(
                 NuguOpusPlayer(AudioManager.STREAM_MUSIC)
             )
 
-            override fun createBeepPlayer(): MediaPlayerInterface = IntegratedMediaPlayer(
-                AndroidMediaPlayer(context, MediaPlayer()),
-                NuguOpusPlayer(AudioManager.STREAM_MUSIC)
-            )
+            override fun createBeepPlayer(): UriSourcePlayablePlayer =
+                AndroidMediaPlayer(context, MediaPlayer())
         }
         internal var speakerFactory: SpeakerFactory = object : SpeakerFactory {
             override fun createNuguSpeaker(): Speaker =
