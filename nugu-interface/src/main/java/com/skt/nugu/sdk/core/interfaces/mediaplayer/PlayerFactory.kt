@@ -47,6 +47,6 @@ interface PlayerFactory {
     /**
      * Create a player for playing beep
      */
-    fun createBeepPlayer(): MediaPlayerInterface
+    fun createBeepPlayer(): UriSourcePlayablePlayer
 
 }
