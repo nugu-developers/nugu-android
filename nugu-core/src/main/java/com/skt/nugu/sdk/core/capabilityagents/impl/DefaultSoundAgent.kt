@@ -25,7 +25,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundProvider
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -123,7 +122,8 @@ object DefaultSoundAgent {
             val playServiceId = payload.playServiceId
 
             executor.submit {
-                val sourceId = mediaPlayer.setSource(soundProvider.getContentUri(beepName))
+                val beep = SoundProvider.Beep.values().find { it.value == beepName } ?: SoundProvider.Beep.UNKNOWN
+                val sourceId = mediaPlayer.setSource(soundProvider.getContentUri(beep))
                 if(!sourceId.isError() && mediaPlayer.play(sourceId)) {
                     sendBeepSucceededEvent(playServiceId)
                 } else {

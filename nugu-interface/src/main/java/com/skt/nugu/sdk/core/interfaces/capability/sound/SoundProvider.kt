@@ -22,5 +22,9 @@ import java.net.URI
  * The public interface for SoundAgent
  */
 interface SoundProvider {
-    fun getContentUri(beepName: String) : URI
+    enum class Beep (val value: String) {
+        FAIL("FAIL"),
+        UNKNOWN("UNKNOWN")
+    }
+    fun getContentUri(name: Beep) : URI
 }
