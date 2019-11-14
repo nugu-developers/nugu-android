@@ -59,6 +59,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundProvider
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import java.util.concurrent.Future
 
@@ -107,6 +108,11 @@ class NuguAndroidClient private constructor(
                 AndroidMediaPlayer(context, MediaPlayer()),
                 NuguOpusPlayer(AudioManager.STREAM_MUSIC)
             )
+
+            override fun createBeepPlayer(): MediaPlayerInterface = IntegratedMediaPlayer(
+                AndroidMediaPlayer(context, MediaPlayer()),
+                NuguOpusPlayer(AudioManager.STREAM_MUSIC)
+            )
         }
         internal var speakerFactory: SpeakerFactory = object : SpeakerFactory {
             override fun createNuguSpeaker(): Speaker =
@@ -131,6 +137,7 @@ class NuguAndroidClient private constructor(
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
         internal var light: Light? = null
+        internal var soundProvider : SoundProvider? = null
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -186,6 +193,12 @@ class NuguAndroidClient private constructor(
          */
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
+        /**
+         * @param provider the provider for content URIs for sounds.
+         */
+        fun soundProvider(provider: SoundProvider?) =
+            apply { this.soundProvider = provider }
+
         fun build() = NuguAndroidClient(this)
     }
 
@@ -203,6 +216,7 @@ class NuguAndroidClient private constructor(
         .extensionClient(builder.extensionClient)
         .movementController(builder.movementController)
         .batteryStatusProvider(builder.batteryStatusProvider)
+        .soundProvider(builder.soundProvider)
         .light(builder.light)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
