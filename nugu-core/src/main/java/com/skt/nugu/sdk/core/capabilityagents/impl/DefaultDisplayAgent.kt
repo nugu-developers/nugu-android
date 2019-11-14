@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -30,8 +31,10 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.message.MessageFactory
+import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
 
 object DefaultDisplayAgent {
     private const val TAG = "DisplayTemplateAgent"
@@ -58,7 +61,13 @@ object DefaultDisplayAgent {
         messageSender: MessageSender,
         playSynchronizer: PlaySynchronizerInterface,
         channelName: String
-    ) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, channelName) {
+    ) : BaseDisplayAgent(
+        focusManager,
+        contextManager,
+        messageSender,
+        playSynchronizer,
+        channelName
+    ) {
         companion object {
             const val NAMESPACE = "Display"
             const val VERSION = "1.1"
@@ -86,6 +95,8 @@ object DefaultDisplayAgent {
             private const val NAME_WEATHER_4 = "Weather4"
             private const val NAME_WEATHER_5 = "Weather5"
             private const val NAME_CLOSE = "Close"
+            private const val NAME_CLOSE_SUCCEEDED = "CloseSucceeded"
+            private const val NAME_CLOSE_FAILED = "CloseFailed"
 
             private val FULLTEXT1 = NamespaceAndName(
                 NAMESPACE,
@@ -176,6 +187,16 @@ object DefaultDisplayAgent {
                 NAMESPACE,
                 NAME_CLOSE
             )
+
+            private val CLOSE_SUCCEEDED = NamespaceAndName(
+                NAMESPACE,
+                NAME_CLOSE_SUCCEEDED
+            )
+
+            private val CLOSE_FAILED = NamespaceAndName(
+                NAMESPACE,
+                NAME_CLOSE_FAILED
+            )
         }
 
         private data class ClosePayload(
@@ -191,38 +212,103 @@ object DefaultDisplayAgent {
 
         override fun getVersion(): String = VERSION
 
-        override fun getDisplayType(): DisplayAggregatorInterface.Type = DisplayAggregatorInterface.Type.INFOMATION
+        override fun getDisplayType(): DisplayAggregatorInterface.Type =
+            DisplayAggregatorInterface.Type.INFOMATION
 
         override fun preHandleDirective(info: DirectiveInfo) {
-            if(info.directive.getNamespaceAndName() != CLOSE) {
+            if (info.directive.getNamespaceAndName() != CLOSE) {
                 super.preHandleDirective(info)
             }
         }
 
         override fun handleDirective(info: DirectiveInfo) {
-            if(info.directive.getNamespaceAndName() != CLOSE) {
+            if (info.directive.getNamespaceAndName() != CLOSE) {
                 super.handleDirective(info)
             } else {
                 executor.submit {
+                    val closePayload =
+                        MessageFactory.create(info.directive.payload, ClosePayload::class.java)
+                    if (closePayload == null) {
+                        Logger.w(TAG, "[handleDirective] (Close) no playServiceId at Payload.")
+                        sendCloseFailed(info, "")
+                        return@submit
+                    }
+
                     val currentRenderedInfo = currentInfo ?: return@submit
                     val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
-                    if(currentPlayServiceId.isNullOrBlank()) {
-                        Logger.w(TAG, "[handleDirective] (Close) no current info (maybe already closed).")
+                    if (currentPlayServiceId.isNullOrBlank()) {
+                        Logger.w(
+                            TAG,
+                            "[handleDirective] (Close) no current info (maybe already closed)."
+                        )
+                        sendCloseSucceeded(info, closePayload.playServiceId)
                         return@submit
                     }
 
-                    val closePayload = MessageFactory.create(info.directive.payload, ClosePayload::class.java)
-                    if(closePayload == null) {
-                        Logger.w(TAG, "[handleDirective] (Close) no playServiceId at Payload.")
-                        return@submit
-                    }
-
-                    Logger.w(TAG, "[handleDirective] (Close) current : $currentPlayServiceId / close : ${closePayload.playServiceId}")
-                    if(currentPlayServiceId == closePayload.playServiceId) {
+                    Logger.w(
+                        TAG,
+                        "[handleDirective] (Close) current : $currentPlayServiceId / close : ${closePayload.playServiceId}"
+                    )
+                    if (currentPlayServiceId == closePayload.playServiceId) {
                         executeCancelUnknownInfo(currentRenderedInfo.info, true)
+                        sendCloseEventWhenClosed(currentRenderedInfo, info)
+                    } else {
+                        sendCloseSucceeded(info, closePayload.playServiceId)
                     }
                 }
             }
+        }
+
+        override fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
+            val pendingCloseSucceededEvent = pendingCloseSucceededEvents[templateDirectiveInfo]
+                ?: return
+
+            val payload = MessageFactory.create(
+                pendingCloseSucceededEvent.directive.payload,
+                ClosePayload::class.java
+            ) ?: return
+
+            sendCloseSucceeded(pendingCloseSucceededEvent, payload.playServiceId)
+        }
+
+        private val pendingCloseSucceededEvents =
+            ConcurrentHashMap<TemplateDirectiveInfo, DirectiveInfo>()
+
+        private fun sendCloseEventWhenClosed(
+            closeTargetTemplateDirective: TemplateDirectiveInfo,
+            closeDirective: DirectiveInfo
+        ) {
+            pendingCloseSucceededEvents[closeTargetTemplateDirective] = closeDirective
+        }
+
+        private fun sendCloseEvent(eventName: String, info: DirectiveInfo, playServiceId: String) {
+            contextManager.getContext(object : ContextRequester {
+                override fun onContextAvailable(jsonContext: String) {
+                    messageSender.sendMessage(
+                        EventMessageRequest(
+                            context = jsonContext,
+                            namespace = NAMESPACE,
+                            name = eventName,
+                            version = VERSION,
+                            payload = JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                            }.toString(),
+                            referrerDialogRequestId = info.directive.getDialogRequestId()
+                        )
+                    )
+                }
+
+                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                }
+            }, namespaceAndName)
+        }
+
+        private fun sendCloseSucceeded(info: DirectiveInfo, playServiceId: String) {
+            sendCloseEvent(NAME_CLOSE_SUCCEEDED, info, playServiceId)
+        }
+
+        private fun sendCloseFailed(info: DirectiveInfo, playServiceId: String) {
+            sendCloseEvent(NAME_CLOSE_FAILED, info, playServiceId)
         }
 
         override fun executeOnFocusBackground(info: DirectiveInfo) {
@@ -276,7 +362,8 @@ object DefaultDisplayAgent {
         }
 
         private fun buildContext(info: TemplateDirectiveInfo?): String = JsonObject().apply {
-            addProperty("version",
+            addProperty(
+                "version",
                 VERSION
             )
             info?.payload?.let {

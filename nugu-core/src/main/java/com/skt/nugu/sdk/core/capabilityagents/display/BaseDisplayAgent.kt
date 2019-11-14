@@ -273,6 +273,7 @@ abstract class BaseDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getDisplayId()}")
                 releaseSyncImmediately(it)
+                onDisplayCardCleared(it)
 
                 val cleared = clearInfoIfCurrent(it.info)
 
@@ -295,6 +296,8 @@ abstract class BaseDisplayAgent(
             }
         }
     }
+
+    protected abstract fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo)
 
     private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
         Logger.d(TAG, "[clearInfoIfCurrent]")
