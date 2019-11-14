@@ -82,6 +82,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFacto
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundProvider
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
@@ -136,6 +137,7 @@ class NuguClient private constructor(
         internal var extensionAgentFactory: ExtensionAgentFactory = DefaultExtensionAgent.FACTORY
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultDisplayAgent.FACTORY
         internal var locationAgentFactory: LocationAgentFactory? = DefaultLocationAgent.FACTORY
+        internal var soundAgentFactory: SoundAgentFactory = DefaultSoundAgent.FACTORY
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
@@ -172,8 +174,8 @@ class NuguClient private constructor(
             apply { displayAgentFactory = factory }
         fun locationAgentFactory(factory: LocationAgentFactory) =
             apply { locationAgentFactory = factory }
-
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
+        fun soundAgentFactory(factory: SoundAgentFactory) = apply { soundAgentFactory = factory }
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun build() = NuguClient(this)
@@ -430,11 +432,12 @@ class NuguClient private constructor(
                 }
                 soundProvider?.let {
                     addDirectiveHandler(
-                            DefaultSoundAgent.FACTORY.create(
-                                    playerFactory.createBeepPlayer(),
-                                    contextManager,
-                                    networkManager,
-                                    it))
+                        soundAgentFactory.create(
+                            playerFactory.createBeepPlayer(),
+                            contextManager,
+                            networkManager,
+                            it)
+                    )
                 }
             }
         }
