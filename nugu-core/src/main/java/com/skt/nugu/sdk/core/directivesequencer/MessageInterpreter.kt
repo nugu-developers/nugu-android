@@ -44,7 +44,6 @@ class MessageInterpreter(
 
     override fun receive(message: String) {
         // message의 parsing을 담당.
-        Logger.d(TAG, "[receive] $message")
         try {
             val jsonObject = JsonParser().parse(message).asJsonObject
             when {
@@ -58,6 +57,7 @@ class MessageInterpreter(
     }
 
     private fun onReceiveDirectives(jsonObject: JsonObject) {
+        Logger.d(TAG, "[onReceiveDirectives] $jsonObject")
         val jsonArray = jsonObject.getAsJsonArray(KEY_DIRECTIVES)
         var directives = ArrayList<Directive>()
 
@@ -91,9 +91,16 @@ class MessageInterpreter(
     }
 
     private fun onReceiveAttachment(jsonObject: JsonObject) {
-        Logger.d(TAG, "[onReceiveAttachment] $jsonObject")
-        val attachment = MessageFactory.createAttachmentMessage(jsonObject.getAsJsonObject(KEY_ATTACHMENT))
+        val jsonAttachment = jsonObject.getAsJsonObject(KEY_ATTACHMENT)
+        val attachment = MessageFactory.createAttachmentMessage(jsonAttachment)
         if(attachment != null) {
+            // change jsonAttachment to brief log
+            try {
+                jsonAttachment.remove("content")
+                jsonAttachment.addProperty("content", "...")
+            } catch (e: Exception) {
+            }
+            Logger.d(TAG, "[onReceiveAttachment] $jsonAttachment")
             attachmentManager.onAttachment(attachment)
         } else {
             Logger.e(TAG, "[onReceiveAttachment] failed to create Attachment from: $jsonObject")

@@ -245,12 +245,11 @@ class MessageRouter(
     }
 
     /**
-     * receive the message from transport, then it is notify
+     * receive the message from transport, then notify it to observer
      * @see [setConnectionStatus]
-     * @param transport is Interface
+     * @param message the message received
      */
     override fun consumeMessage(message: String) {
-        Logger.d(TAG, "[consumeMessage] $message")
         notifyObserverOnReceived(message)
     }
 
