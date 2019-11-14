@@ -33,6 +33,7 @@ import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
+import com.skt.nugu.sampleapp.provider.FallbackSoundProvider
 
 /**
  * This class manage everything related to NUGU.
