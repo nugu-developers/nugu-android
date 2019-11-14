@@ -119,13 +119,9 @@ abstract class BaseDisplayAgent(
         }
     }
 
-    final override fun preHandleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-        if (payload == null) {
-            return
-        }
+    override fun preHandleDirective(info: DirectiveInfo) {
+        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java) ?: return
 
-        // no-op
         executor.submit {
             executeCancelPendingInfo()
             val templateInfo = TemplateDirectiveInfo(info, payload)
@@ -135,7 +131,7 @@ abstract class BaseDisplayAgent(
         }
     }
 
-    private fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
+    protected fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
         if (info == currentInfo?.info) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
@@ -174,7 +170,7 @@ abstract class BaseDisplayAgent(
         releaseSyncImmediately(info)
     }
 
-    final override fun handleDirective(info: DirectiveInfo) {
+    override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
             val templateInfo = pendingInfo
             if (templateInfo == null || (info.directive.getMessageId() != templateInfo.getDisplayId())) {

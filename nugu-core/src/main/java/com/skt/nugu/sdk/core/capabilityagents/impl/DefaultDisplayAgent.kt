@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.capabilityagents.display.BaseDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentFactory
@@ -28,6 +29,8 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.message.MessageFactory
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.HashMap
 
 object DefaultDisplayAgent {
@@ -82,6 +85,7 @@ object DefaultDisplayAgent {
             private const val NAME_WEATHER_3 = "Weather3"
             private const val NAME_WEATHER_4 = "Weather4"
             private const val NAME_WEATHER_5 = "Weather5"
+            private const val NAME_CLOSE = "Close"
 
             private val FULLTEXT1 = NamespaceAndName(
                 NAMESPACE,
@@ -167,7 +171,17 @@ object DefaultDisplayAgent {
                 NAMESPACE,
                 NAME_WEATHER_5
             )
+
+            private val CLOSE = NamespaceAndName(
+                NAMESPACE,
+                NAME_CLOSE
+            )
         }
+
+        private data class ClosePayload(
+            @SerializedName("playServiceId")
+            val playServiceId: String
+        )
 
         init {
             contextManager.setStateProvider(namespaceAndName, this)
@@ -178,6 +192,38 @@ object DefaultDisplayAgent {
         override fun getVersion(): String = VERSION
 
         override fun getDisplayType(): DisplayAggregatorInterface.Type = DisplayAggregatorInterface.Type.INFOMATION
+
+        override fun preHandleDirective(info: DirectiveInfo) {
+            if(info.directive.getNamespaceAndName() != CLOSE) {
+                super.preHandleDirective(info)
+            }
+        }
+
+        override fun handleDirective(info: DirectiveInfo) {
+            if(info.directive.getNamespaceAndName() != CLOSE) {
+                super.handleDirective(info)
+            } else {
+                executor.submit {
+                    val currentRenderedInfo = currentInfo ?: return@submit
+                    val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
+                    if(currentPlayServiceId.isNullOrBlank()) {
+                        Logger.w(TAG, "[handleDirective] (Close) no current info (maybe already closed).")
+                        return@submit
+                    }
+
+                    val closePayload = MessageFactory.create(info.directive.payload, ClosePayload::class.java)
+                    if(closePayload == null) {
+                        Logger.w(TAG, "[handleDirective] (Close) no playServiceId at Payload.")
+                        return@submit
+                    }
+
+                    Logger.w(TAG, "[handleDirective] (Close) current : $currentPlayServiceId / close : ${closePayload.playServiceId}")
+                    if(currentPlayServiceId == closePayload.playServiceId) {
+                        executeCancelUnknownInfo(currentRenderedInfo.info, true)
+                    }
+                }
+            }
+        }
 
         override fun executeOnFocusBackground(info: DirectiveInfo) {
             getRenderer()?.clear(info.directive.getMessageId(), true)
@@ -208,6 +254,8 @@ object DefaultDisplayAgent {
             configuration[WEATHER3] = nonBlockingPolicy
             configuration[WEATHER4] = nonBlockingPolicy
             configuration[WEATHER5] = nonBlockingPolicy
+
+            configuration[CLOSE] = nonBlockingPolicy
 
             return configuration
         }
