@@ -82,6 +82,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFacto
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundProvider
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentFactory
@@ -123,6 +124,7 @@ class NuguClient private constructor(
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
         internal var batteryStatusProvider: BatteryStatusProvider? = null
+        internal var soundProvider: SoundProvider? = null
         internal var light: Light? = null
 
         // Agent Factory
@@ -152,6 +154,8 @@ class NuguClient private constructor(
 
         fun batteryStatusProvider(batteryStatusProvider: BatteryStatusProvider?) =
             apply { this.batteryStatusProvider = batteryStatusProvider }
+
+        fun soundProvider(provider: SoundProvider?) = apply { this.soundProvider = provider }
 
         fun light(light: Light?) = apply { this.light = light }
 
@@ -423,6 +427,14 @@ class NuguClient private constructor(
                             it
                         )
                     )
+                }
+                soundProvider?.let {
+                    addDirectiveHandler(
+                            DefaultSoundAgent.FACTORY.create(
+                                    playerFactory.createBeepPlayer(),
+                                    contextManager,
+                                    networkManager,
+                                    it))
                 }
             }
         }

@@ -43,4 +43,10 @@ interface PlayerFactory {
      * Create a player for playing ringtone
      */
 //    fun createRingtonePlayer(): MediaPlayerInterface
+
+    /**
+     * Create a player for playing beep
+     */
+    fun createBeepPlayer(): MediaPlayerInterface
+
 }

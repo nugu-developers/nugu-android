@@ -147,6 +147,8 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                     Context.MODE_PRIVATE
                 ).absolutePath + File.separator + "skt_epd_model.raw"
             )
+        ).soundProvider(
+            FallbackSoundProvider(context)
         ).build()
 
         client.addAudioPlayerListener(this)
