@@ -116,15 +116,10 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         buttonLogout.setOnClickListener {
-            onLogout()
+            NuguOAuth.getClient().logout()
+            ClientManager.getClient().shutdown()
+            PreferenceHelper.credentials(this@SettingsActivity,"")
+            finishAffinity()
         }
-
-    }
-    fun onLogout() {
-        NuguOAuth.getClient().logout()
-        ClientManager.getClient().shutdown()
-        PreferenceHelper.credentials(this@SettingsActivity,"")
-        finishAffinity()
-        LoadingActivity.invokeActivity(this@SettingsActivity)
     }
 }

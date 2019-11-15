@@ -35,6 +35,9 @@
 
         <activity android:name=".activity.SettingsActivity" android:screenOrientation="portrait"
                   android:configChanges="orientation|keyboardHidden"/>
+
+        <activity android:name=".activity.IntroActivity" />
+
         <service android:name=".service.MusicPlayerService"/>
     </application>
 </manifest>
