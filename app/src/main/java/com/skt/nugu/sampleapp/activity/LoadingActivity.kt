@@ -62,8 +62,18 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loading)
+    }
+
+    override fun onResume() {
+        super.onResume()
         /** Add observer When initialized, [onInitialized] is called **/
         ClientManager.observer = this
+    }
+
+    override fun onDestroy() {
+        /** remove observer **/
+        ClientManager.observer = null
+        super.onDestroy()
     }
 
     override fun onInitialized() {
@@ -80,8 +90,8 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                         override fun onSuccess(credentials: Credentials) {
                             // save credentials
                             PreferenceHelper.credentials(this@LoadingActivity, credentials.toString())
-                            // successful, calls MainActivity.
-                            startMainActivity()
+                            // successful, calls IntroActivity.
+                            startIntroActivity()
                         }
 
                         override fun onError(reason: String) {
@@ -105,6 +115,8 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                         Snackbar.with(findViewById(R.id.baseLayout))
                             .message(R.string.authorization_failure_message)
                             .show()
+                        // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
+                        PreferenceHelper.credentials(this@LoadingActivity, "")
                     }
                 })
             }
@@ -145,18 +157,26 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
         return deviceUniqueId
     }
 
+    /**
+     * Start main activity
+     **/
     private fun startMainActivity() {
-        // Start main activity
         runOnUiThread {
             MainActivity.invokeActivity(this@LoadingActivity)
             finishAffinity()
         }
     }
 
-    override fun onDestroy() {
-        // remove observer
-        ClientManager.observer = null
-        super.onDestroy()
+    /**
+     * Start intro activity, If not, go to main activity.
+     * You must enter poc_id[YOUR_POC_ID_HERE].
+     * please check below
+     * @see [https://developers.nugu.co.kr/#/sdk/pocList]
+    **/
+    private fun startIntroActivity() {
+        runOnUiThread {
+            IntroActivity.invokeActivity(this@LoadingActivity, "YOUR_POC_ID_HERE", getDeviceUniqueId())
+        }
     }
 
 }
