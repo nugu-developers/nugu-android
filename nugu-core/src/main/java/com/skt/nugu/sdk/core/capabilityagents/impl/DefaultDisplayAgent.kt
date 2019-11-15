@@ -94,6 +94,7 @@ object DefaultDisplayAgent {
             private const val NAME_WEATHER_3 = "Weather3"
             private const val NAME_WEATHER_4 = "Weather4"
             private const val NAME_WEATHER_5 = "Weather5"
+            private const val NAME_FULLIMAGE = "FullImage"
             private const val NAME_CLOSE = "Close"
             private const val NAME_CLOSE_SUCCEEDED = "CloseSucceeded"
             private const val NAME_CLOSE_FAILED = "CloseFailed"
@@ -181,6 +182,11 @@ object DefaultDisplayAgent {
             private val WEATHER5 = NamespaceAndName(
                 NAMESPACE,
                 NAME_WEATHER_5
+            )
+
+            private val FULLIMAGE = NamespaceAndName(
+                NAMESPACE,
+                NAME_FULLIMAGE
             )
 
             private val CLOSE = NamespaceAndName(
@@ -340,6 +346,7 @@ object DefaultDisplayAgent {
             configuration[WEATHER3] = nonBlockingPolicy
             configuration[WEATHER4] = nonBlockingPolicy
             configuration[WEATHER5] = nonBlockingPolicy
+            configuration[FULLIMAGE] = nonBlockingPolicy
 
             configuration[CLOSE] = nonBlockingPolicy
 
