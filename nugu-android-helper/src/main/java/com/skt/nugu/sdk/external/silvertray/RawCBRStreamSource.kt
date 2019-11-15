@@ -47,6 +47,10 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
 
     private val format: MediaFormat by lazy {
         object : MediaFormat {
+            override fun getMimeType(): String {
+                return "audio/opus"
+            }
+
             override fun getSampleRate(): Int {
                 return SAMPLE_RATE
             }
