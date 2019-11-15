@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.capabilityagents.display
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
@@ -84,7 +85,9 @@ abstract class BaseDisplayAgent(
         @SerializedName("token")
         val token: String?,
         @SerializedName("duration")
-        val duration: String?
+        val duration: String?,
+        @SerializedName("playStackControl")
+        val playStackControl: PlayStackControl?
     )
 
     protected inner class TemplateDirectiveInfo(
@@ -193,11 +196,11 @@ abstract class BaseDisplayAgent(
     }
 
     private fun requestFocusForRender(info: TemplateDirectiveInfo) {
-        val playServiceId = info.payload.playServiceId
-        Logger.d(TAG, "[requestFocusForRender] playServiceId: $playServiceId")
+        val pushPlayServiceId = info.payload.playStackControl?.getPushPlayServiceId()
+        Logger.d(TAG, "[requestFocusForRender] playServiceId: $pushPlayServiceId")
         focusManager.acquireChannel(
             channelName, this,
-            getNamespace(), playServiceId
+            getNamespace(), pushPlayServiceId
         )
     }
 

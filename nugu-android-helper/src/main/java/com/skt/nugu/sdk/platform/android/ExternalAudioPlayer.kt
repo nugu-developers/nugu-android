@@ -84,7 +84,7 @@ internal class ExternalAudioPlayer(
                     // 현재 외부 App이 Foreground로 가도록 하고, 지금 것은 Background로 가야한다.
                     // Nugu의 특정 Interaction이 발생하는 순간 외부 App은 Focus를 Loss 해야한다.
                     audioFocusManager.acquireChannel(channelName, this,
-                        TAG, null)
+                        TAG)
                 }
             }
         }

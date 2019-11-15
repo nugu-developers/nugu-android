@@ -15,13 +15,12 @@
  */
 package com.skt.nugu.sdk.core.capabilityagents.impl
 
-import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.capabilityagents.asr.ExpectSpeechPayload
 import com.skt.nugu.sdk.core.capabilityagents.audioplayer.AudioItem
 import com.skt.nugu.sdk.core.capabilityagents.audioplayer.ProgressTimer
+import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -79,12 +78,10 @@ object DefaultAudioPlayerAgent {
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("audioItem")
-        val audioItem: AudioItem
-    ) {
-        companion object {
-            fun create(jsonString: String): ExpectSpeechPayload? = Gson().fromJson(jsonString, ExpectSpeechPayload::class.java)
-        }
-    }
+        val audioItem: AudioItem,
+        @SerializedName("playStackControl")
+        val playStackControl: PlayStackControl?
+    )
 
     internal class Impl(
         mediaPlayer: MediaPlayerInterface,
@@ -172,7 +169,7 @@ object DefaultAudioPlayerAgent {
 
 
         private inner class AudioInfo(
-            val audioItem: AudioItem,
+            val payload: PlayPayload,
             val directive: Directive,
             val playServiceId: String
         ) : PlaySynchronizerInterface.SynchronizeObject {
@@ -236,7 +233,7 @@ object DefaultAudioPlayerAgent {
                 return
             }
 
-            val audioInfo = AudioInfo(playPayload.audioItem, info.directive, playServiceId).apply {
+            val audioInfo = AudioInfo(playPayload, info.directive, playServiceId).apply {
                 playSynchronizer.prepareSync(this)
             }
 
@@ -341,7 +338,7 @@ object DefaultAudioPlayerAgent {
                         channelName,
                         this,
                         NAMESPACE,
-                        nextItem?.playServiceId ?: ""
+                        nextItem?.payload?.playStackControl?.getPushPlayServiceId()
                     )
                 ) {
                     progressTimer.stop()
@@ -382,7 +379,7 @@ object DefaultAudioPlayerAgent {
                 return false
             }
 
-            return currentItem.audioItem.stream.token != nextItem.audioItem.stream.token
+            return currentItem.payload.audioItem.stream.token != nextItem.payload.audioItem.stream.token
         }
 
         private fun executeResume() {
@@ -535,8 +532,8 @@ object DefaultAudioPlayerAgent {
         private fun notifyOnActivityChanged() {
             currentItem?.let {
                 val context = AudioPlayerAgentInterface.Context(
-                    it.audioItem.stream.token,
-                    it.audioItem.metaData?.template?.toString(),
+                    it.payload.audioItem.stream.token,
+                    it.payload.audioItem.metaData?.template?.toString(),
                     getOffsetInMilliseconds()
                 )
                 activityListeners.forEach { listener ->
@@ -864,9 +861,9 @@ object DefaultAudioPlayerAgent {
                 }
                 currentItem = it
                 nextItem = null
-                if (!executeShouldResumeNextItem(token, it.audioItem.stream.token)) {
-                    token = it.audioItem.stream.token
-                    sourceId = mediaPlayer.setSource(URI.create(it.audioItem.stream.url))
+                if (!executeShouldResumeNextItem(token, it.payload.audioItem.stream.token)) {
+                    token = it.payload.audioItem.stream.token
+                    sourceId = mediaPlayer.setSource(URI.create(it.payload.audioItem.stream.url))
                     if (sourceId.isError()) {
                         Logger.w(TAG, "[executePlayNextItem] failed to setSource")
                         executeOnPlaybackError(
@@ -877,8 +874,8 @@ object DefaultAudioPlayerAgent {
                         return
                     }
 
-                    if (mediaPlayer.getOffset(sourceId) != it.audioItem.stream.offsetInMilliseconds) {
-                        mediaPlayer.seekTo(sourceId, it.audioItem.stream.offsetInMilliseconds)
+                    if (mediaPlayer.getOffset(sourceId) != it.payload.audioItem.stream.offsetInMilliseconds) {
+                        mediaPlayer.seekTo(sourceId, it.payload.audioItem.stream.offsetInMilliseconds)
                     }
 
                     if (!mediaPlayer.play(sourceId)) {
@@ -904,15 +901,15 @@ object DefaultAudioPlayerAgent {
                         })
 
                     progressTimer.init(
-                        it.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
+                        it.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
                             ?: ProgressTimer.NO_DELAY,
-                        it.audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
+                        it.payload.audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
                             ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
                     )
                 } else {
                     // Resume or Seek cases
-                    if (mediaPlayer.getOffset(sourceId) != it.audioItem.stream.offsetInMilliseconds) {
-                        mediaPlayer.seekTo(sourceId, it.audioItem.stream.offsetInMilliseconds)
+                    if (mediaPlayer.getOffset(sourceId) != it.payload.audioItem.stream.offsetInMilliseconds) {
+                        mediaPlayer.seekTo(sourceId, it.payload.audioItem.stream.offsetInMilliseconds)
                     }
 
                     if (currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
@@ -1030,7 +1027,7 @@ object DefaultAudioPlayerAgent {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     currentItem?.apply {
-                        val token = audioItem.stream.token
+                        val token = payload.audioItem.stream.token
                         val messageRequest = EventMessageRequest(
                             UUIDGeneration.shortUUID().toString(),
                             UUIDGeneration.timeUUID().toString(),
@@ -1109,7 +1106,7 @@ object DefaultAudioPlayerAgent {
 
         private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
             currentItem?.apply {
-                val token = audioItem.stream.token
+                val token = payload.audioItem.stream.token
                 val messageRequest = EventMessageRequest(
                     UUIDGeneration.shortUUID().toString(),
                     UUIDGeneration.timeUUID().toString(),

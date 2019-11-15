@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
@@ -80,7 +81,9 @@ object DefaultTTSAgent {
         @SerializedName("text")
         val text: String,
         @SerializedName("token")
-        val token: String
+        val token: String,
+        @SerializedName("playStackControl")
+        val playStackControl: PlayStackControl?
     )
 
     //@ThreadSafe
@@ -470,7 +473,7 @@ object DefaultTTSAgent {
                         channelName,
                         this,
                         NAMESPACE,
-                        speakInfo.getPlayServiceId()
+                        speakInfo.payload.playStackControl?.getPushPlayServiceId()
                     )
                 ) {
                     Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
