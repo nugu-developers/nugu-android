@@ -170,7 +170,7 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
     /**
      * Start intro activity, If not, go to main activity.
      * You must enter poc_id[YOUR_POC_ID_HERE].
-     * please check below
+     * Available after POC registration, please check below
      * @see [https://developers.nugu.co.kr/#/sdk/pocList]
     **/
     private fun startIntroActivity() {
