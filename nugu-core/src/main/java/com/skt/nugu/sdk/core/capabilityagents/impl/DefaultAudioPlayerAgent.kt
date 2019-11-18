@@ -32,7 +32,6 @@ import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -44,7 +43,11 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.net.URI
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import kotlin.collections.HashSet
 
 object DefaultAudioPlayerAgent {
@@ -134,6 +137,9 @@ object DefaultAudioPlayerAgent {
             NamespaceAndName("supportedInterfaces", NAMESPACE)
 
         private val executor = Executors.newSingleThreadExecutor()
+        private var pausedStopFuture: ScheduledFuture<*>? = null
+        private val pausedStopExecutor = ScheduledThreadPoolExecutor(1)
+        private val stopDelayForPausedSourceAtMinutes: Long = 10L
 
         private var currentActivity: AudioPlayerAgentInterface.State =
             AudioPlayerAgentInterface.State.IDLE
@@ -657,10 +663,28 @@ object DefaultAudioPlayerAgent {
                 return
             }
 
+            scheduleStopForPausedSource(id)
+
             pauseCalled = false
             progressTimer.pause()
             sendPlaybackPausedEvent()
             changeActivity(AudioPlayerAgentInterface.State.PAUSED)
+        }
+
+        private fun scheduleStopForPausedSource(id: SourceId) {
+            pausedStopFuture?.cancel(true)
+            pausedStopFuture = pausedStopExecutor.schedule(Callable{
+                executor.submit {
+                    if (id.id != sourceId.id) {
+                        return@submit
+                    }
+
+                    if(currentActivity != AudioPlayerAgentInterface.State.PAUSED) {
+                        return@submit
+                    }
+                    executeStop(false)
+                }
+            }, stopDelayForPausedSourceAtMinutes, TimeUnit.MINUTES)
         }
 
         private fun executeOnPlaybackError(id: SourceId, type: ErrorType, error: String) {
