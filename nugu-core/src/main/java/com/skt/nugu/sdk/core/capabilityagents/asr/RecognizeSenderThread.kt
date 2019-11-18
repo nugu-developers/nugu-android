@@ -111,16 +111,12 @@ abstract class RecognizeSenderThread(
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
         eventRequest?.let {
             messageSender.sendMessage(
-                EventMessageRequest(
-                    UUIDGeneration.shortUUID().toString(),
-                    UUIDGeneration.timeUUID().toString(),
+                EventMessageRequest.Builder(
                     it.context,
                     AbstractASRAgent.NAMESPACE,
                     DefaultASRAgent.EVENT_STOP_RECOGNIZE,
-                    AbstractASRAgent.VERSION,
-                    "",
-                    it.dialogRequestId
-                )
+                    AbstractASRAgent.VERSION
+                ).referrerDialogRequestId(it.dialogRequestId).build()
             )
         }
     }

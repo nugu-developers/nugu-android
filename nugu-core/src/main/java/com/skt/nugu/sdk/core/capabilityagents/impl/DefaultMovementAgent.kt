@@ -69,16 +69,20 @@ object DefaultMovementAgent {
             private const val NAME_DANCE_FINISHED = "DanceFinished"
             private const val NAME_EXCEPTION_ENCOUNTERED = "ExceptionEncountered"
 
-            private val MOVE = NamespaceAndName(NAMESPACE,
+            private val MOVE = NamespaceAndName(
+                NAMESPACE,
                 NAME_MOVE
             )
-            private val ROTATE = NamespaceAndName(NAMESPACE,
+            private val ROTATE = NamespaceAndName(
+                NAMESPACE,
                 NAME_ROTATE
             )
-            private val DANCE = NamespaceAndName(NAMESPACE,
+            private val DANCE = NamespaceAndName(
+                NAMESPACE,
                 NAME_DANCE
             )
-            private val STOP = NamespaceAndName(NAMESPACE,
+            private val STOP = NamespaceAndName(
+                NAMESPACE,
                 NAME_STOP
             )
 
@@ -145,20 +149,23 @@ object DefaultMovementAgent {
                             count,
                             object : MovementController.OnMoveListener {
                                 override fun onMoveStarted() {
-                                    sendEvent(movePayload.playServiceId,
+                                    sendEvent(
+                                        movePayload.playServiceId,
                                         NAME_MOVE_STARTED
                                     )
                                 }
 
                                 override fun onMoveFinished() {
-                                    sendEvent(movePayload.playServiceId,
+                                    sendEvent(
+                                        movePayload.playServiceId,
                                         NAME_MOVE_FINISHED
                                     )
                                 }
                             }
                         )
                     ) {
-                        sendEvent(movePayload.playServiceId,
+                        sendEvent(
+                            movePayload.playServiceId,
                             NAME_EXCEPTION_ENCOUNTERED
                         )
                     }
@@ -182,20 +189,23 @@ object DefaultMovementAgent {
                                 count,
                                 object : MovementController.OnRotateListener {
                                     override fun onRotateStarted() {
-                                        sendEvent(rotatePayload.playServiceId,
+                                        sendEvent(
+                                            rotatePayload.playServiceId,
                                             NAME_ROTATE_STARTED
                                         )
                                     }
 
                                     override fun onRotateFinished() {
-                                        sendEvent(rotatePayload.playServiceId,
+                                        sendEvent(
+                                            rotatePayload.playServiceId,
                                             NAME_ROTATE_FINISHED
                                         )
                                     }
                                 }
                             )
                         ) {
-                            sendEvent(rotatePayload.playServiceId,
+                            sendEvent(
+                                rotatePayload.playServiceId,
                                 NAME_EXCEPTION_ENCOUNTERED
                             )
                         }
@@ -216,19 +226,22 @@ object DefaultMovementAgent {
                                 count,
                                 object : MovementController.OnDanceListener {
                                     override fun onDanceStarted() {
-                                        sendEvent(dancePayload.playServiceId,
+                                        sendEvent(
+                                            dancePayload.playServiceId,
                                             NAME_DANCE_STARTED
                                         )
                                     }
 
                                     override fun onDanceFinished() {
-                                        sendEvent(dancePayload.playServiceId,
+                                        sendEvent(
+                                            dancePayload.playServiceId,
                                             NAME_DANCE_FINISHED
                                         )
                                     }
                                 })
                         ) {
-                            sendEvent(dancePayload.playServiceId,
+                            sendEvent(
+                                dancePayload.playServiceId,
                                 NAME_EXCEPTION_ENCOUNTERED
                             )
                         }
@@ -246,7 +259,8 @@ object DefaultMovementAgent {
                     )
 
                     if (!movementController.stop()) {
-                        sendEvent(it.playServiceId,
+                        sendEvent(
+                            it.playServiceId,
                             NAME_EXCEPTION_ENCOUNTERED
                         )
                     }
@@ -279,17 +293,12 @@ object DefaultMovementAgent {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     messageSender.sendMessage(
-                        EventMessageRequest(
-                            context = jsonContext,
-                            namespace = NAMESPACE,
-                            name = name,
-                            version = VERSION,
-                            payload = JsonObject().apply {
+                        EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(
+                            JsonObject().apply {
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
                             }.toString()
-                        )
+                        ).build()
                     )
-
                 }
 
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {

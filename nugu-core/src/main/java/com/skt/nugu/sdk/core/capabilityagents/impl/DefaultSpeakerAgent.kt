@@ -60,10 +60,12 @@ object DefaultSpeakerAgent {
             const val NAME_SET_MUTE_SUCCEEDED = "SetMuteSucceeded"
             const val NAME_SET_MUTE_FAILED = "SetMuteFailed"
 
-            val SET_VOLUME = NamespaceAndName(NAMESPACE,
+            val SET_VOLUME = NamespaceAndName(
+                NAMESPACE,
                 NAME_SET_VOLUME
             )
-            val SET_MUTE = NamespaceAndName(NAMESPACE,
+            val SET_MUTE = NamespaceAndName(
+                NAMESPACE,
                 NAME_SET_MUTE
             )
 
@@ -386,19 +388,12 @@ object DefaultSpeakerAgent {
         private fun sendSpeakerEvent(eventName: String, playServiceId: String, name: String) {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
-                    val request = EventMessageRequest(
-                        UUIDGeneration.shortUUID().toString(),
-                        UUIDGeneration.timeUUID().toString(),
-                        jsonContext,
-                        NAMESPACE,
-                        eventName,
-                        VERSION,
-                        JsonObject().apply {
-                            addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                            addProperty(KEY_NAME, name)
-                        }.toString()
-                    )
-
+                    val request =
+                        EventMessageRequest.Builder(jsonContext, NAMESPACE, eventName, VERSION)
+                            .payload(JsonObject().apply {
+                                addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                                addProperty(KEY_NAME, name)
+                            }.toString()).build()
                     messageSender.sendMessage(request)
                 }
 

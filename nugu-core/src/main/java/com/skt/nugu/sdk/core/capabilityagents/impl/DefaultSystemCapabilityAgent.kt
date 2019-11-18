@@ -369,22 +369,11 @@ object DefaultSystemCapabilityAgent {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     messageSender.sendMessage(
-                        if (payload == null) {
-                            EventMessageRequest(
-                                name = name,
-                                namespace = NAMESPACE,
-                                context = jsonContext,
-                                version = VERSION
-                            )
-                        } else {
-                            EventMessageRequest(
-                                name = name,
-                                namespace = NAMESPACE,
-                                context = jsonContext,
-                                version = VERSION,
-                                payload = payload
-                            )
-                        }
+                        EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).also {
+                            if(payload != null) {
+                                it.payload(payload)
+                            }
+                        }.build()
                     )
                 }
 

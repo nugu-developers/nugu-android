@@ -38,12 +38,14 @@ object DefaultSoundAgent {
     private const val TAG = "DefaultSoundAgent"
 
     val FACTORY = object : SoundAgentFactory {
-        override fun create(mediaPlayer : UriSourcePlayablePlayer,
-                            contextManager: ContextManagerInterface,
-                            messageSender: MessageSender,
-                            soundProvider: SoundProvider
+        override fun create(
+            mediaPlayer: UriSourcePlayablePlayer,
+            contextManager: ContextManagerInterface,
+            messageSender: MessageSender,
+            soundProvider: SoundProvider
         ): AbstractSoundAgent =
-            Impl(mediaPlayer,
+            Impl(
+                mediaPlayer,
                 contextManager,
                 messageSender,
                 soundProvider
@@ -58,7 +60,7 @@ object DefaultSoundAgent {
     )
 
     internal class Impl constructor(
-        mediaPlayer : UriSourcePlayablePlayer,
+        mediaPlayer: UriSourcePlayablePlayer,
         contextManager: ContextManagerInterface,
         messageSender: MessageSender,
         soundProvider: SoundProvider
@@ -113,18 +115,25 @@ object DefaultSoundAgent {
 
         private fun handleSoundBeepDirective(info: DirectiveInfo) {
             val payload = MessageFactory.create(info.directive.payload, SoundPayload::class.java)
-            if(payload == null) {
-                Logger.d(TAG, "[handleSoundBeepDirective] invalid payload: ${info.directive.payload}")
-                setHandlingFailed(info, "[handleSoundBeepDirective] invalid payload: ${info.directive.payload}")
+            if (payload == null) {
+                Logger.d(
+                    TAG,
+                    "[handleSoundBeepDirective] invalid payload: ${info.directive.payload}"
+                )
+                setHandlingFailed(
+                    info,
+                    "[handleSoundBeepDirective] invalid payload: ${info.directive.payload}"
+                )
                 return
             }
             val beepName = payload.beepName
             val playServiceId = payload.playServiceId
 
             executor.submit {
-                val beep = SoundProvider.Beep.values().find { it.value == beepName } ?: SoundProvider.Beep.UNKNOWN
+                val beep = SoundProvider.Beep.values().find { it.value == beepName }
+                    ?: SoundProvider.Beep.UNKNOWN
                 val sourceId = mediaPlayer.setSource(soundProvider.getContentUri(beep))
-                if(!sourceId.isError() && mediaPlayer.play(sourceId)) {
+                if (!sourceId.isError() && mediaPlayer.play(sourceId)) {
                     sendBeepSucceededEvent(playServiceId)
                 } else {
                     sendBeepFailedEvent(playServiceId)
@@ -172,17 +181,14 @@ object DefaultSoundAgent {
 
         private fun sendEvent(name: String, playServiceId: String) {
             Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
-            val request = EventMessageRequest(
-                UUIDGeneration.shortUUID().toString(),
-                UUIDGeneration.timeUUID().toString(),
+            val request = EventMessageRequest.Builder(
                 contextManager.getContextWithoutUpdate(namespaceAndName),
                 NAMESPACE,
                 name,
-                VERSION,
-                JsonObject().apply {
-                    addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
-                }.toString()
-            )
+                VERSION
+            ).payload(JsonObject().apply {
+                addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
+            }.toString()).build()
             messageSender.sendMessage(request)
         }
     }

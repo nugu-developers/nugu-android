@@ -66,7 +66,8 @@ object DefaultMicrophoneAgent {
             private const val NAME_SET_MIC_SUCCEEDED = "SetMicSucceeded"
             private const val NAME_SET_MIC_FAILED = "SetMicFailed"
 
-            val SET_MIC = NamespaceAndName(NAMESPACE,
+            val SET_MIC = NamespaceAndName(
+                NAMESPACE,
                 NAME_SET_MIC
             )
 
@@ -99,7 +100,7 @@ object DefaultMicrophoneAgent {
         private fun handleSetMic(info: DirectiveInfo) {
             val directive = info.directive
             val payload = MessageFactory.create(directive.payload, SetMicPayload::class.java)
-            if(payload == null) {
+            if (payload == null) {
                 Logger.e(TAG, "[handleSetMic] invalid payload: ${directive.payload}")
                 setHandlingFailed(info, "[handleSetMic] invalid payload: ${directive.payload}")
                 return
@@ -134,17 +135,14 @@ object DefaultMicrophoneAgent {
         private fun sendEvent(eventName: String) {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
-                    val messageRequest = EventMessageRequest(
-                        UUIDGeneration.shortUUID().toString(),
-                        UUIDGeneration.timeUUID().toString(),
-                        jsonContext,
-                        NAMESPACE,
-                        eventName,
-                        VERSION,
-                        JsonObject().toString()
+                    messageSender.sendMessage(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            eventName,
+                            VERSION
+                        ).build()
                     )
-
-                    messageSender.sendMessage(messageRequest)
                 }
 
                 override fun onContextFailure(error: ContextRequester.ContextRequestError) {

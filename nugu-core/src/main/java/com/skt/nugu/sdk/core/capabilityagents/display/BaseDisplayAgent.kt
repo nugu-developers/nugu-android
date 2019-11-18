@@ -123,7 +123,8 @@ abstract class BaseDisplayAgent(
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java) ?: return
+        val payload =
+            MessageFactory.create(info.directive.payload, TemplatePayload::class.java) ?: return
 
         executor.submit {
             executeCancelPendingInfo()
@@ -320,19 +321,20 @@ abstract class BaseDisplayAgent(
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
-                    EventMessageRequest(
-                        name = EVENT_NAME_ELEMENT_SELECTED,
-                        namespace = getNamespace(),
-                        version = getVersion(),
-                        context = jsonContext,
-                        payload = JsonObject().apply {
+                    EventMessageRequest.Builder(
+                        jsonContext,
+                        getNamespace(),
+                        EVENT_NAME_ELEMENT_SELECTED,
+                        getVersion()
+                    ).payload(
+                        JsonObject().apply {
                             addProperty(KEY_TOKEN, token)
                             directiveInfo.payload.playServiceId
                                 ?.let {
                                     addProperty(KEY_PLAY_SERVICE_ID, it)
                                 }
                         }.toString()
-                    )
+                    ).build()
                 )
             }
 

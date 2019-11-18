@@ -135,7 +135,8 @@ object DefaultAudioPlayerAgent {
 
         private val executor = Executors.newSingleThreadExecutor()
 
-        private var currentActivity: AudioPlayerAgentInterface.State = AudioPlayerAgentInterface.State.IDLE
+        private var currentActivity: AudioPlayerAgentInterface.State =
+            AudioPlayerAgentInterface.State.IDLE
         private var focus: FocusState = FocusState.NONE
 
         private var currentItem: AudioInfo? = null
@@ -220,7 +221,7 @@ object DefaultAudioPlayerAgent {
         private fun preHandlePlayDirective(info: DirectiveInfo) {
             Logger.d(TAG, "[preHandlePlayDirective] info : $info")
             val playPayload = MessageFactory.create(info.directive.payload, PlayPayload::class.java)
-            if(playPayload == null) {
+            if (playPayload == null) {
                 Logger.w(TAG, "[preHandlePlayDirective] invalid payload")
                 setHandlingFailed(info, "[preHandlePlayDirective] invalid payload")
                 return
@@ -400,9 +401,9 @@ object DefaultAudioPlayerAgent {
                 AudioPlayerAgentInterface.State.IDLE,
                 AudioPlayerAgentInterface.State.STOPPED,
                 AudioPlayerAgentInterface.State.FINISHED -> {
-                    if(playCalled) {
-                        if(mediaPlayer.stop(sourceId)) {
-                           stopCalled = true
+                    if (playCalled) {
+                        if (mediaPlayer.stop(sourceId)) {
+                            stopCalled = true
                         }
                     }
                     return
@@ -875,7 +876,10 @@ object DefaultAudioPlayerAgent {
                     }
 
                     if (mediaPlayer.getOffset(sourceId) != it.payload.audioItem.stream.offsetInMilliseconds) {
-                        mediaPlayer.seekTo(sourceId, it.payload.audioItem.stream.offsetInMilliseconds)
+                        mediaPlayer.seekTo(
+                            sourceId,
+                            it.payload.audioItem.stream.offsetInMilliseconds
+                        )
                     }
 
                     if (!mediaPlayer.play(sourceId)) {
@@ -909,7 +913,10 @@ object DefaultAudioPlayerAgent {
                 } else {
                     // Resume or Seek cases
                     if (mediaPlayer.getOffset(sourceId) != it.payload.audioItem.stream.offsetInMilliseconds) {
-                        mediaPlayer.seekTo(sourceId, it.payload.audioItem.stream.offsetInMilliseconds)
+                        mediaPlayer.seekTo(
+                            sourceId,
+                            it.payload.audioItem.stream.offsetInMilliseconds
+                        )
                     }
 
                     if (currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
@@ -985,11 +992,11 @@ object DefaultAudioPlayerAgent {
             contextSetter.setState(namespaceAndName, JsonObject().apply {
                 addProperty("version", VERSION)
                 addProperty("playerActivity", currentActivity.name)
-                if(token.isNotBlank() && currentActivity != AudioPlayerAgentInterface.State.IDLE) {
+                if (token.isNotBlank() && currentActivity != AudioPlayerAgentInterface.State.IDLE) {
                     addProperty("token", token)
                 }
                 addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-                if(getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
+                if (getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
                     addProperty("durationInMilliseconds", getDurationInMilliseconds())
                 }
             }.toString(), policy, stateRequestToken)
@@ -1028,14 +1035,13 @@ object DefaultAudioPlayerAgent {
                 override fun onContextAvailable(jsonContext: String) {
                     currentItem?.apply {
                         val token = payload.audioItem.stream.token
-                        val messageRequest = EventMessageRequest(
-                            UUIDGeneration.shortUUID().toString(),
-                            UUIDGeneration.timeUUID().toString(),
+                        val messageRequest = EventMessageRequest.Builder(
                             jsonContext,
                             NAMESPACE,
                             EVENT_NAME_PLAYBACK_FAILED,
-                            VERSION,
-                            JsonObject().apply {
+                            VERSION
+                        )
+                            .payload(JsonObject().apply {
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
                                 addProperty(KEY_TOKEN, token)
                                 addProperty("offsetInMilliseconds", offset)
@@ -1054,8 +1060,7 @@ object DefaultAudioPlayerAgent {
                                     addProperty("offsetInMilliseconds", offset)
                                     addProperty("playActivity", currentActivity.name)
                                 }
-                            }.toString()
-                        )
+                            }.toString()).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -1107,19 +1112,18 @@ object DefaultAudioPlayerAgent {
         private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
             currentItem?.apply {
                 val token = payload.audioItem.stream.token
-                val messageRequest = EventMessageRequest(
-                    UUIDGeneration.shortUUID().toString(),
-                    UUIDGeneration.timeUUID().toString(),
+                val messageRequest = EventMessageRequest.Builder(
                     contextManager.getContextWithoutUpdate(namespaceAndName),
                     NAMESPACE,
                     eventName,
-                    VERSION,
+                    VERSION
+                ).payload(
                     JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
                         addProperty("token", token)
                         addProperty("offsetInMilliseconds", offset)
                     }.toString()
-                )
+                ).build()
 
                 if (condition.invoke()) {
                     messageSender.sendMessage(messageRequest)
@@ -1128,39 +1132,6 @@ object DefaultAudioPlayerAgent {
                     Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
                 }
             }
-
-            /*
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    currentItem?.apply {
-                        val token = audioItem.stream.token
-                        val messageRequest = EventMessageRequest(
-                            UUIDGeneration.shortUUID().toString(),
-                            UUIDGeneration.timeUUID().toString(),
-                            jsonContext,
-                            NAMESPACE,
-                            eventName,
-                            VERSION,
-                            JsonObject().apply {
-                                addProperty("playServiceId", playServiceId)
-                                addProperty("token", token)
-                                addProperty("offsetInMilliseconds", offset)
-                            }.toString()
-                        )
-
-                        if (condition.invoke()) {
-                            messageSender.sendMessage(messageRequest)
-                            Logger.d(TAG, "[sendEvent] $messageRequest")
-                        } else {
-                            Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
-                        }
-                    }
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                }
-            }, namespaceAndName)
-             */
         }
 
         override fun onButtonPressed(button: PlaybackButton) {
