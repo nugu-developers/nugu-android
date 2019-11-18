@@ -140,7 +140,8 @@ abstract class BaseDisplayAgent(
         if (info == currentInfo?.info) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
             if (immediate) {
-                restartClearTimer(0L)
+                stopClearTimer()
+                renderer?.clear(info.directive.getMessageId(), true)
             } else {
                 restartClearTimer()
             }
