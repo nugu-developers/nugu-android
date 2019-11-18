@@ -76,7 +76,7 @@ class HttpClient(private val baseUrl: String) {
                 }
                 else -> {
                     try {
-                        val stream = BufferedInputStream(connection.inputStream)
+                        val stream = BufferedInputStream(connection.errorStream)
                         Response(connection.responseCode, readStream(inputStream = stream))
                     } catch (e : FileNotFoundException) {
                         Response(connection.responseCode, e.message ?: "")

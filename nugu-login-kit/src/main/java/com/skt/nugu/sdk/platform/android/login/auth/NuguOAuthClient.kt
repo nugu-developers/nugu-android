@@ -102,6 +102,7 @@ internal class NuguOAuthClient(
                 val error = if (json.has("error")) json.get("error").toString() else ""
                 @Suppress("UNUSED_VARIABLE")
                 when (error) {
+                    "invalid_token",
                     "invalid_grant",
                     "invalid_client" -> {
                         val resultMessage = json.get("error_description").toString()
