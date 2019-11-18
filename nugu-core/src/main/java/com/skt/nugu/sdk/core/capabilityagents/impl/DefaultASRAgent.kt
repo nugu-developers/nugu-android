@@ -321,7 +321,7 @@ object DefaultASRAgent {
 
             val audioProvider = currentSpeechProcessor.defaultAudioProvider
             currentAudioProvider = audioProvider
-            if(audioProvider == null) {
+            if (audioProvider == null) {
                 Logger.w(
                     TAG,
                     "[executeHandleExpectSpeechDirective] defaultAudioProvider is null"
@@ -671,7 +671,7 @@ object DefaultASRAgent {
         ): Future<Boolean> {
             Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
             return executor.submit(Callable<Boolean> {
-                if(audioInputStream != null && audioFormat != null) {
+                if (audioInputStream != null && audioFormat != null) {
                     executeStartRecognition(
                         audioInputStream,
                         audioFormat,
@@ -682,7 +682,7 @@ object DefaultASRAgent {
                 } else {
                     val audioProvider = currentSpeechProcessor.defaultAudioProvider
                     currentAudioProvider = audioProvider
-                    if(audioProvider == null) {
+                    if (audioProvider == null) {
                         Logger.w(
                             TAG,
                             "[startRecognition] defaultAudioProvider is null"
@@ -690,7 +690,8 @@ object DefaultASRAgent {
                         return@Callable false
                     }
 
-                    val newAudioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
+                    val newAudioInputStream: SharedDataStream? =
+                        audioProvider.acquireAudioInputStream(this)
                     val newAudioFormat: AudioFormat = audioProvider.getFormat()
 
                     if (newAudioInputStream == null) {
@@ -877,13 +878,7 @@ object DefaultASRAgent {
                 }
 
                 private fun createMessage(jsonContext: String): EventMessageRequest =
-                    EventMessageRequest(
-                        context = jsonContext,
-                        namespace = NAMESPACE,
-                        name = name,
-                        version = VERSION,
-                        payload = payload.toString()
-                    )
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).build()
             }, namespaceAndName)
         }
 

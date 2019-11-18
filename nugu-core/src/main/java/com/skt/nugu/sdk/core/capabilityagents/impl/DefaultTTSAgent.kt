@@ -108,10 +108,12 @@ object DefaultTTSAgent {
             const val NAME_SPEAK = "Speak"
             const val NAME_STOP = "Stop"
 
-            val SPEAK = NamespaceAndName(NAMESPACE,
+            val SPEAK = NamespaceAndName(
+                NAMESPACE,
                 NAME_SPEAK
             )
-            val STOP = NamespaceAndName(NAMESPACE,
+            val STOP = NamespaceAndName(
+                NAMESPACE,
                 NAME_STOP
             )
 
@@ -623,9 +625,13 @@ object DefaultTTSAgent {
                 return null
             }
 
-            val payload = MessageFactory.create(info.directive.payload, SpeakInfoPayload::class.java)
-            if(payload == null) {
-                Logger.w(TAG, "[createValidateSpeakInfo] invalid payload: ${info.directive.payload}")
+            val payload =
+                MessageFactory.create(info.directive.payload, SpeakInfoPayload::class.java)
+            if (payload == null) {
+                Logger.w(
+                    TAG,
+                    "[createValidateSpeakInfo] invalid payload: ${info.directive.payload}"
+                )
                 return null
             }
 
@@ -802,7 +808,8 @@ object DefaultTTSAgent {
             setCurrentState(TTSAgentInterface.State.PLAYING)
 
             if (info.sendPlaybackStartedMessage) {
-                sendEventWithToken(NAMESPACE,
+                sendEventWithToken(
+                    NAMESPACE,
                     EVENT_SPEECH_STARTED
                 )
             }
@@ -818,7 +825,8 @@ object DefaultTTSAgent {
             val info = currentInfo ?: return
             setCurrentState(TTSAgentInterface.State.STOPPED)
             if (info.sendPlaybackStoppedMessage) {
-                sendEventWithToken(NAMESPACE,
+                sendEventWithToken(
+                    NAMESPACE,
                     EVENT_SPEECH_STOPPED
                 )
             }
@@ -852,7 +860,8 @@ object DefaultTTSAgent {
             val info = currentInfo ?: return
             setCurrentState(TTSAgentInterface.State.FINISHED)
             if (info.sendPlaybackFinishedMessage) {
-                sendEventWithToken(NAMESPACE,
+                sendEventWithToken(
+                    NAMESPACE,
                     EVENT_SPEECH_FINISHED
                 )
             }
@@ -895,18 +904,14 @@ object DefaultTTSAgent {
                         ContextRequester {
                         override fun onContextAvailable(jsonContext: String) {
                             val messageRequest =
-                                EventMessageRequest(
-                                    UUIDGeneration.shortUUID().toString(),
-                                    UUIDGeneration.timeUUID().toString(),
-                                    jsonContext,
-                                    namespace,
-                                    name,
-                                    VERSION,
-                                    JsonObject().apply {
-                                        addProperty(KEY_PLAY_SERVICE_ID, it)
-                                    }.toString(),
-                                    info.getDialogRequestId()
-                                )
+                                EventMessageRequest.Builder(jsonContext, namespace, name, VERSION)
+                                    .payload(
+                                        JsonObject().apply {
+                                            addProperty(KEY_PLAY_SERVICE_ID, it)
+                                        }.toString()
+                                    )
+                                    .referrerDialogRequestId(info.getDialogRequestId())
+                                    .build()
                             messageSender.sendMessage(messageRequest)
 
                             Logger.d(TAG, "[sendEventWithToken] $messageRequest")
@@ -931,20 +936,20 @@ object DefaultTTSAgent {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     val dialogRequestId = UUIDGeneration.timeUUID().toString()
-                    val messageRequest = EventMessageRequest(
-                        UUIDGeneration.shortUUID().toString(),
-                        dialogRequestId,
-                        jsonContext,
-                        NAMESPACE,
-                        NAME_SPEECH_PLAY,
-                        VERSION,
-                        JsonObject().apply {
-                            addProperty("format", Format.TEXT.name)
-                            addProperty("text", text)
-                            addProperty("playServiceId", playServiceId)
-                            addProperty("token", UUIDGeneration.timeUUID().toString())
-                        }.toString()
-                    )
+                    val messageRequest =
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            NAME_SPEECH_PLAY,
+                            VERSION
+                        ).dialogRequestId(dialogRequestId)
+                            .payload(JsonObject().apply {
+                                addProperty("format", Format.TEXT.name)
+                                addProperty("text", text)
+                                addProperty("playServiceId", playServiceId)
+                                addProperty("token", UUIDGeneration.timeUUID().toString())
+                            }.toString())
+                            .build()
 
                     listener?.let {
                         requestListenerMap[dialogRequestId] = it

@@ -68,7 +68,8 @@ object DefaultTextAgent {
         companion object {
             const val NAME_TEXT_SOURCE = "TextSource"
 
-            val TEXT_SOURCE = NamespaceAndName(NAMESPACE,
+            val TEXT_SOURCE = NamespaceAndName(
+                NAMESPACE,
                 NAME_TEXT_SOURCE
             )
 
@@ -103,10 +104,14 @@ object DefaultTextAgent {
             Logger.d(TAG, "[executeHandleDirective] info: $info")
             val directive = info.directive
 
-            val payload = MessageFactory.create(info.directive.payload, TextSourcePayload::class.java)
-            if(payload == null) {
+            val payload =
+                MessageFactory.create(info.directive.payload, TextSourcePayload::class.java)
+            if (payload == null) {
                 Logger.d(TAG, "[executeHandleDirective] invalid payload: ${info.directive.payload}")
-                executeSetHandlingFailed(info, "[executeHandleDirective] invalid payload: ${info.directive.payload}")
+                executeSetHandlingFailed(
+                    info,
+                    "[executeHandleDirective] invalid payload: ${info.directive.payload}"
+                )
                 return
             }
 
@@ -159,12 +164,14 @@ object DefaultTextAgent {
         }
 
         private fun createMessage(text: String, context: String, token: String? = null) =
-            EventMessageRequest(
-                context = context,
-                namespace = NAMESPACE,
-                name = NAME_TEXT_INPUT,
-                version = VERSION,
-                payload = JsonObject().apply {
+            EventMessageRequest.Builder(
+                context,
+                NAMESPACE,
+                NAME_TEXT_INPUT,
+                VERSION
+            ).payload(
+                JsonObject().apply
+                {
                     addProperty("text", text)
                     token?.let {
                         addProperty("token", it)
@@ -188,7 +195,7 @@ object DefaultTextAgent {
                         }
                     }
                 }.toString()
-            )
+            ).build()
 
         private fun executeSendTextInputEvent(
             text: String,

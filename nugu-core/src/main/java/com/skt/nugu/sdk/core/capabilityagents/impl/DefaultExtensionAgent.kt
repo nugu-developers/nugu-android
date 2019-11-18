@@ -65,7 +65,8 @@ object DefaultExtensionAgent {
             private const val NAME_ACTION_SUCCEEDED = "ActionSucceeded"
             private const val NAME_ACTION_FAILED = "ActionFailed"
 
-            private val ACTION = NamespaceAndName(NAMESPACE,
+            private val ACTION = NamespaceAndName(
+                NAMESPACE,
                 NAME_ACTION
             )
             private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
@@ -122,10 +123,14 @@ object DefaultExtensionAgent {
         }
 
         private fun handleActionDirective(info: DirectiveInfo) {
-            val payload = MessageFactory.create(info.directive.payload, ExtensionPayload::class.java)
-            if(payload == null) {
+            val payload =
+                MessageFactory.create(info.directive.payload, ExtensionPayload::class.java)
+            if (payload == null) {
                 Logger.d(TAG, "[handleActionDirective] invalid payload: ${info.directive.payload}")
-                setHandlingFailed(info, "[handleActionDirective] invalid payload: ${info.directive.payload}")
+                setHandlingFailed(
+                    info,
+                    "[handleActionDirective] invalid payload: ${info.directive.payload}"
+                )
                 return
             }
 
@@ -190,17 +195,10 @@ object DefaultExtensionAgent {
             Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
-                    val request = EventMessageRequest(
-                        UUIDGeneration.shortUUID().toString(),
-                        UUIDGeneration.timeUUID().toString(),
-                        jsonContext,
-                        NAMESPACE,
-                        name,
-                        VERSION,
-                        JsonObject().apply {
+                    val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                        .payload(JsonObject().apply {
                             addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
-                        }.toString()
-                    )
+                        }.toString()).build()
 
                     messageSender.sendMessage(request)
                 }

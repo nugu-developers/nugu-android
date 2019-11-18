@@ -125,13 +125,12 @@ class DefaultServerSideSpeechProcessor(
     ) :
         AbstractSpeechToTextConverter(enablePartialResult, enableSpeakerRecognition, messageSender, audioEncoder) {
         override fun createRecognizeEvent(): EventMessageRequest =
-            EventMessageRequest(
-                UUIDGeneration.shortUUID().toString(),
-                UUIDGeneration.timeUUID().toString(),
+            EventMessageRequest.Builder(
                 context ?: "",
                 DefaultASRAgent.RECOGNIZE.namespace,
                 DefaultASRAgent.RECOGNIZE.name,
-                AbstractASRAgent.VERSION,
+                AbstractASRAgent.VERSION
+            ).payload(
                 AsrRecognizeEventPayload(
                     codec = AsrRecognizeEventPayload.CODEC_SPEEX,
                     sessionId = payload?.sessionId,
@@ -141,6 +140,6 @@ class DefaultServerSideSpeechProcessor(
                     endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
                     encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
                 ).toJsonString()
-            )
+            ).build()
     }
 }

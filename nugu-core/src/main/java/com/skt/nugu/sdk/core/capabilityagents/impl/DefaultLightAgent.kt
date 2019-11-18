@@ -87,16 +87,20 @@ object DefaultLightAgent {
             const val NAME_CHANGE_LIGHT = "ChangeLight"
             const val NAME_FLICKER = "Flicker"
 
-            val TURN_ON_LIGHT = NamespaceAndName(NAMESPACE,
+            val TURN_ON_LIGHT = NamespaceAndName(
+                NAMESPACE,
                 NAME_TURN_ON_LIGHT
             )
-            val TURN_OFF_LIGHT = NamespaceAndName(NAMESPACE,
+            val TURN_OFF_LIGHT = NamespaceAndName(
+                NAMESPACE,
                 NAME_TURN_OFF_LIGHT
             )
-            val CHANGE_LIGHT = NamespaceAndName(NAMESPACE,
+            val CHANGE_LIGHT = NamespaceAndName(
+                NAMESPACE,
                 NAME_CHANGE_LIGHT
             )
-            val FLICKER = NamespaceAndName(NAMESPACE,
+            val FLICKER = NamespaceAndName(
+                NAMESPACE,
                 NAME_FLICKER
             )
 
@@ -149,9 +153,15 @@ object DefaultLightAgent {
 
         private fun executeHandleTurnOffLight(info: DirectiveInfo) {
             val payload = MessageFactory.create(info.directive.payload, EmptyPayload::class.java)
-            if(payload == null) {
-                Logger.w(TAG, "[executeHandleTurnOffLight] invalid payload: ${info.directive.payload}")
-                executeSetHandlingFailed(info, "[executeHandleTurnOffLight] invalid payload: ${info.directive.payload}")
+            if (payload == null) {
+                Logger.w(
+                    TAG,
+                    "[executeHandleTurnOffLight] invalid payload: ${info.directive.payload}"
+                )
+                executeSetHandlingFailed(
+                    info,
+                    "[executeHandleTurnOffLight] invalid payload: ${info.directive.payload}"
+                )
                 return
             }
 
@@ -172,7 +182,7 @@ object DefaultLightAgent {
                 val minBrightness = light.getMinBrightness()
                 val maxBrightness = light.getMaxBrightness()
                 val payload = MessageFactory.create(payload, ChangeLightPayload::class.java)
-                if(payload == null) {
+                if (payload == null) {
                     Logger.w(
                         TAG,
                         "[executeHandleChangeLight] invalid payload: ${this.payload}"
@@ -246,7 +256,7 @@ object DefaultLightAgent {
         private fun executeHandleFlicker(info: DirectiveInfo) {
             with(info.directive) {
                 val payload = MessageFactory.create(payload, FlickerPayload::class.java)
-                if(payload == null) {
+                if (payload == null) {
                     Logger.w(
                         TAG,
                         "[executeHandleChangeLight] invalid payload: ${this.payload}"
@@ -360,15 +370,11 @@ object DefaultLightAgent {
         private fun sendEvent(name: String, playServiceId: String) {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
-                    val messageRequest = EventMessageRequest(
-                        context = jsonContext,
-                        namespace = NAMESPACE,
-                        name = name,
-                        version = VERSION,
-                        payload = JsonObject().apply {
-                            addProperty("playServiceId", playServiceId)
-                        }.toString()
-                    )
+                    val messageRequest =
+                        EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                            .payload(JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                            }.toString()).build()
                     messageSender.sendMessage(messageRequest)
                 }
 

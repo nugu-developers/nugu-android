@@ -291,16 +291,14 @@ object DefaultDisplayAgent {
             contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     messageSender.sendMessage(
-                        EventMessageRequest(
-                            context = jsonContext,
-                            namespace = NAMESPACE,
-                            name = eventName,
-                            version = VERSION,
-                            payload = JsonObject().apply {
-                                addProperty("playServiceId", playServiceId)
-                            }.toString(),
-                            referrerDialogRequestId = info.directive.getDialogRequestId()
-                        )
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            eventName,
+                            VERSION
+                        ).payload(JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                        }.toString()).referrerDialogRequestId(info.directive.getDialogRequestId()).build()
                     )
                 }
 
