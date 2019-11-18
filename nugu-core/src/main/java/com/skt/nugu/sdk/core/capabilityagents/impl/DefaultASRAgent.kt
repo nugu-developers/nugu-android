@@ -878,7 +878,7 @@ object DefaultASRAgent {
                 }
 
                 private fun createMessage(jsonContext: String): EventMessageRequest =
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).build()
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(payload.toString()).build()
             }, namespaceAndName)
         }
 
