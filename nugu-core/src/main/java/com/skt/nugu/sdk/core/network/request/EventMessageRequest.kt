@@ -30,15 +30,15 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * @param payload the payload (json formatted string).
  * @param referrerDialogRequestId the referrerDialogRequestId.
  */
-data class EventMessageRequest (
-    val messageId: String = UUIDGeneration.shortUUID().toString(),
-    val dialogRequestId: String = UUIDGeneration.timeUUID().toString(),
+data class EventMessageRequest(
+    val messageId: String,
+    val dialogRequestId: String,
     val context: String,
     val namespace: String,
     val name: String,
     val version: String,
-    val payload: String = JsonObject().toString(),
-    val referrerDialogRequestId: String? = null
+    val payload: String,
+    val referrerDialogRequestId: String?
 ) : MessageRequest {
 
     /**
