@@ -70,10 +70,10 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
         ClientManager.observer = this
     }
 
-    override fun onDestroy() {
+    override fun onPause() {
+        super.onPause()
         /** remove observer **/
         ClientManager.observer = null
-        super.onDestroy()
     }
 
     override fun onInitialized() {
@@ -178,5 +178,4 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
             IntroActivity.invokeActivity(this@LoadingActivity, "YOUR_POC_ID_HERE", getDeviceUniqueId())
         }
     }
-
 }
