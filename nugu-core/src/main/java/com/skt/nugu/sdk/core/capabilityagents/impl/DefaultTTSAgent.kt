@@ -75,7 +75,7 @@ object DefaultTTSAgent {
         )
     }
 
-    internal data class SpeakInfoPayload(
+    internal data class SpeakPayload(
         @SerializedName("playServiceId")
         val playServiceId: String?,
         @SerializedName("text")
@@ -130,22 +130,15 @@ object DefaultTTSAgent {
                 TEXT,
                 SKML
             }
-
-
         }
 
         inner class SpeakDirectiveInfo(
             val directiveInfo: DirectiveInfo,
-            val payload: SpeakInfoPayload
+            val payload: SpeakPayload
         ) : PlaySynchronizerInterface.SynchronizeObject {
             val directive: Directive = directiveInfo.directive
             val result = directiveInfo.result
-            var sendPlaybackStartedMessage = false
-            var sendPlaybackStoppedMessage = false
-            var sendPlaybackFinishedMessage = false
 
-            var sendCompletedMessage = false
-            var isSetFailedCalled = false
             var isPlaybackInitiated = false
             var isDelayedCancel = false
 
@@ -179,18 +172,7 @@ object DefaultTTSAgent {
                 }
             }
 
-            private fun clearFlags() {
-                sendPlaybackStartedMessage = false
-                sendPlaybackStoppedMessage = false
-                sendPlaybackFinishedMessage = false
-                sendCompletedMessage = false
-                isSetFailedCalled = false
-                isPlaybackInitiated = false
-                isDelayedCancel = false
-            }
-
             fun clear() {
-                clearFlags()
                 directive.destroy()
             }
 
@@ -430,9 +412,6 @@ object DefaultTTSAgent {
             with(info) {
                 if (isPlaybackInitiated) {
                     setDesireState(TTSAgentInterface.State.STOPPED)
-                    sendPlaybackStartedMessage = false
-                    sendCompletedMessage = false
-                    sendPlaybackStoppedMessage = true
                     stopPlaying()
                 } else {
                     isDelayedCancel = true
@@ -513,9 +492,6 @@ object DefaultTTSAgent {
             when (newState) {
                 TTSAgentInterface.State.PLAYING -> {
                     currentInfo?.apply {
-                        sendPlaybackStartedMessage = true
-                        sendPlaybackFinishedMessage = true
-                        sendCompletedMessage = true
                         isPlaybackInitiated = true
                         startPlaying(this)
                     }
@@ -524,15 +500,8 @@ object DefaultTTSAgent {
                 TTSAgentInterface.State.STOPPED,
                 TTSAgentInterface.State.FINISHED -> {
                     currentInfo?.apply {
-                        sendPlaybackFinishedMessage = false
-                        sendCompletedMessage = false
-                        if (result != null) {
-                            result.setCompleted()
-//                        isSetFailedCalled = true
-                        }
-
+                        result?.setCompleted()
                         if (isPlaybackInitiated) {
-                            sendPlaybackStoppedMessage = true
                             stopPlaying()
                         } else {
                             releaseSyncImmediately(this)
@@ -552,7 +521,7 @@ object DefaultTTSAgent {
                     when {
                         isError() -> executePlaybackError(
                             ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                            "playFailed"
+                            "setSource failed"
                         )
                         !speechPlayer.play(this) -> executePlaybackError(
                             ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
@@ -607,7 +576,7 @@ object DefaultTTSAgent {
             }
 
             val payload =
-                MessageFactory.create(info.directive.payload, SpeakInfoPayload::class.java)
+                MessageFactory.create(info.directive.payload, SpeakPayload::class.java)
             if (payload == null) {
                 Logger.w(
                     TAG,
@@ -784,16 +753,14 @@ object DefaultTTSAgent {
 
         private fun executePlaybackStarted() {
             Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
-
-            val info = currentInfo ?: return
-            setCurrentState(TTSAgentInterface.State.PLAYING)
-
-            if (info.sendPlaybackStartedMessage) {
-                sendEventWithToken(
-                    NAMESPACE,
-                    EVENT_SPEECH_STARTED
-                )
+            if (currentInfo == null) {
+                return
             }
+            setCurrentState(TTSAgentInterface.State.PLAYING)
+            sendEventWithToken(
+                NAMESPACE,
+                EVENT_SPEECH_STARTED
+            )
         }
 
         private fun executePlaybackStopped() {
@@ -805,21 +772,13 @@ object DefaultTTSAgent {
             Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
             val info = currentInfo ?: return
             setCurrentState(TTSAgentInterface.State.STOPPED)
-            if (info.sendPlaybackStoppedMessage) {
-                sendEventWithToken(
-                    NAMESPACE,
-                    EVENT_SPEECH_STOPPED
-                )
-            }
+            sendEventWithToken(
+                NAMESPACE,
+                EVENT_SPEECH_STOPPED
+            )
 
             with(info) {
-                sendPlaybackFinishedMessage = false
-                sendCompletedMessage = false
-                if (result != null) {
-                    result.setCompleted()
-//                result.setFailed("Stopped due to MediaPlayer stopping.")
-//                isSetFailedCalled = true
-                }
+                result?.setCompleted()
             }
 
             releaseSync(info)
@@ -836,15 +795,12 @@ object DefaultTTSAgent {
 
             val info = currentInfo ?: return
             setCurrentState(TTSAgentInterface.State.FINISHED)
-            if (info.sendPlaybackFinishedMessage) {
-                sendEventWithToken(
-                    NAMESPACE,
-                    EVENT_SPEECH_FINISHED
-                )
-            }
+            sendEventWithToken(
+                NAMESPACE,
+                EVENT_SPEECH_FINISHED
+            )
 
             setHandlingCompleted()
-
             releaseSync(info)
         }
 
@@ -862,12 +818,8 @@ object DefaultTTSAgent {
             }
 
             setCurrentState(TTSAgentInterface.State.STOPPED)
-            // TODO : Error 이벤터 전송 및 에러 처리
             with(info) {
-                if (result != null && !isSetFailedCalled) {
-                    result.setFailed("Playback Error (type: $type, error: $error)")
-                    isSetFailedCalled = true
-                }
+                result?.setFailed("Playback Error (type: $type, error: $error)")
             }
 
             releaseSync(info)
