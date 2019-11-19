@@ -16,6 +16,7 @@
 package com.skt.nugu.sampleapp.activity
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -65,8 +66,12 @@ class IntroActivity : AppCompatActivity() {
                 url?.apply {
                     // Otherwise, the link is not for a page on my site, so launch
                     // another Activity that handles URLs
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    startActivity(intent)
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        startActivity(intent)
+                    } catch ( e : ActivityNotFoundException) {
+                        return false
+                    }
                     return true
                 }
                 return false
