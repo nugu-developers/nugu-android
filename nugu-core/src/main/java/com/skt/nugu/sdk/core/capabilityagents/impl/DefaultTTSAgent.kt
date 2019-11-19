@@ -148,6 +148,7 @@ object DefaultTTSAgent {
             var isSetFailedCalled = false
             var isPlaybackInitiated = false
             var isDelayedCancel = false
+            var cancelByStop = false
 
             val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
                 override fun onGranted() {
@@ -324,7 +325,9 @@ object DefaultTTSAgent {
             Logger.d(TAG, "[executeHandleStopDirective] info: $info")
 
             if (currentInfo != null) {
+                //            if(info.directive.getMessageId() == it.directive.getMessageId()) {
                 executeCancelCurrentSpeakInfo()
+//            }
             } else {
                 Logger.d(TAG, "[executeHandleStopDirective] ignore : currentInfo is null")
             }
@@ -387,6 +390,21 @@ object DefaultTTSAgent {
             }
         }
 
+        private fun executeHandleImmediately(info: DirectiveInfo) {
+            when (info.directive.getNamespaceAndName()) {
+                SPEAK -> {
+                    val speakInfo = createValidateSpeakInfo(info, false)
+                    if (speakInfo == null) {
+                        setHandlingInvalidSpeakDirectiveReceived(info)
+                        return
+                    }
+                    executePrepareSpeakInfo(speakInfo)
+                    executeHandleSpeakDirective(info)
+                }
+                STOP -> executeHandleStopDirective(info)
+            }
+        }
+
         private fun executePrepareSpeakInfo(speakInfo: SpeakDirectiveInfo) {
             executeCancelAllSpeakInfo()
 
@@ -428,6 +446,7 @@ object DefaultTTSAgent {
             Logger.d(TAG, "[executeCancelCurrentSpeakInfo] cancel currentSpeakInfo : $currentInfo")
 
             with(info) {
+                cancelByStop = true
                 if (isPlaybackInitiated) {
                     setDesireState(TTSAgentInterface.State.STOPPED)
                     sendPlaybackStartedMessage = false
@@ -822,7 +841,11 @@ object DefaultTTSAgent {
                 }
             }
 
-            releaseSync(info)
+            if (info.cancelByStop) {
+                releaseSyncImmediately(info)
+            } else {
+                releaseSync(info)
+            }
         }
 
         private fun executePlaybackFinished() {
