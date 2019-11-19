@@ -119,10 +119,11 @@ class NetworkManager private constructor(
     }
     /**
      * Send message
-    * @param messageRequest the messageRequest to be sent
+     * @param messageRequest the messageRequest to be sent
+     * @return true is success, otherwise false
     */
-    override fun sendMessage(messageRequest: MessageRequest) {
-        messageRouter.sendMessage(messageRequest)
+    override fun sendMessage(messageRequest: MessageRequest) : Boolean {
+        return messageRouter.sendMessage(messageRequest)
     }
 
     /**
