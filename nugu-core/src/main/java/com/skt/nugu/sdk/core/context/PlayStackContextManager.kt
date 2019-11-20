@@ -46,11 +46,12 @@ class PlayStackContextManager(
         private const val PROVIDER_NAME = "playStack"
     }
 
-    override val namespaceAndName: NamespaceAndName = NamespaceAndName(CONTEXT_NAMESPACE, PROVIDER_NAME)
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName(CONTEXT_NAMESPACE, PROVIDER_NAME)
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName,this)
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun provideState(
@@ -74,19 +75,19 @@ class PlayStackContextManager(
      * the visual is higher priority than audio.
      */
     private fun buildPlayStack(): List<String> {
-        // use treemap to order
+        // use treemap to order (ascending)
         val playStackMap = TreeMap<Int, String>()
 
         visualPlayStackProvider?.getPlayStack()?.apply {
             forEach {
-                playStackMap[it.priority] = it.playServiceId
+                // audio player stack's priority higher than visual, so plus 1.
+                playStackMap[it.priority * 2 + 1] = it.playServiceId
             }
         }
 
-        // audio player stack's priority higher than visual
         audioPlayStackProvider.getPlayStack().apply {
             forEach {
-                playStackMap[it.priority] = it.playServiceId
+                playStackMap[it.priority * 2 + 0] = it.playServiceId
             }
         }
 
