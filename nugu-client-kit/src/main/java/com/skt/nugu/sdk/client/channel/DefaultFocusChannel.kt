@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 class DefaultFocusChannel {
     companion object {
         // If you add other channel, only allow to use positive number for priority
+        // Also, each priority must be a multiple of 2.
         const val INTRUSION_CHANNEL_NAME = "Intrusion"
         const val INTRUSION_CHANNEL_PRIORITY = 50
         const val DIALOG_CHANNEL_NAME = "Dialog"
