@@ -90,6 +90,8 @@ import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentFactory
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.playstack.AudioPlayStackProvider
+import com.skt.nugu.sdk.core.playstack.DisplayPlayStackProvider
 import java.util.concurrent.Future
 
 class NuguClient private constructor(
@@ -386,8 +388,10 @@ class NuguClient private constructor(
 
             PlayStackContextManager(
                 contextManager,
-                audioFocusManager,
-                visualFocusManager as PlayStackProvider
+                AudioPlayStackProvider(audioFocusManager, audioPlayerAgent, ttsAgent),
+                visualFocusManager?.let {
+                    DisplayPlayStackProvider(it)
+                }
             )
 
             with(directiveSequencer) {

@@ -16,12 +16,17 @@
 package com.skt.nugu.sdk.core.context
 
 import com.google.gson.JsonArray
+import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
+import com.skt.nugu.sdk.core.utils.Logger
+import java.util.*
 import java.util.concurrent.Executors
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashSet
 
 /**
  * Provides integrated playstack of audio and visual.
@@ -68,26 +73,40 @@ class PlayStackContextManager(
      *
      * the visual is higher priority than audio.
      */
-    private fun buildPlayStack() = LinkedHashSet<String>().apply {
-        visualPlayStackProvider?.getPlayStack()?.let { stack ->
-            while (stack.isNotEmpty()) {
-                stack.pop().let {
-                    if(it.isNotBlank()) {
-                        add(it)
-                    }
-                }
+    private fun buildPlayStack(): List<String> {
+        // use treemap to order
+        val playStackMap = TreeMap<Int, String>()
+
+        visualPlayStackProvider?.getPlayStack()?.apply {
+            forEach {
+                playStackMap[it.priority] = it.playServiceId
             }
         }
 
-        audioPlayStackProvider.getPlayStack().let { stack ->
-            while (stack.isNotEmpty()) {
-                stack.pop().let {
-                    if(it.isNotBlank()) {
-                        add(it)
-                    }
-                }
+        // audio player stack's priority higher than visual
+        audioPlayStackProvider.getPlayStack().apply {
+            forEach {
+                playStackMap[it.priority] = it.playServiceId
             }
         }
+
+        // remove duplicated value
+        val playStackSet = LinkedHashSet<String>().apply {
+            playStackMap.forEach {
+                add(it.value)
+            }
+        }
+
+        // convert to list
+        val playStackList = ArrayList<String>().apply {
+            playStackSet.forEach {
+                add(it)
+            }
+        }
+
+        Logger.d(TAG, "[buildPlayStack] playStack: $playStackList, map: $playStackMap")
+
+        return playStackList
     }
 
     private fun buildContext(): String {
