@@ -15,15 +15,19 @@
  */
 package com.skt.nugu.sdk.core.context
 
-import java.util.*
-
 /**
  * Interface to provide a playstack
  */
 interface PlayStackProvider {
+    data class PlayStackContext(
+        val playServiceId: String,
+        val priority: Int
+    ): Comparable<PlayStackContext> {
+        override fun compareTo(other: PlayStackContext): Int = other.priority - priority
+    }
     /**
-     * Returns a playstack whose top-priority item is located at the top of the stack.
+     * Returns a playstack.
      * @return the playstack
      */
-    fun getPlayStack(): Stack<String>
+    fun getPlayStack(): List<PlayStackContext>
 }

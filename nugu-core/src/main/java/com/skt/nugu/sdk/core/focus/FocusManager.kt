@@ -28,7 +28,7 @@ import kotlin.collections.LinkedHashSet
 class FocusManager(
     channelConfigurations: List<FocusManagerInterface.ChannelConfiguration>,
     tagHint: String? = null
-) : FocusManagerInterface, PlayStackProvider {
+) : FocusManagerInterface {
 
 
     private val TAG = if (tagHint.isNullOrBlank()) {
@@ -37,6 +37,7 @@ class FocusManager(
         "FocusManager_$tagHint"
     }
 
+    private val allChannelConfigurations: MutableMap<String, FocusManagerInterface.ChannelConfiguration> = HashMap()
     private val allChannels: MutableMap<String, Channel> = HashMap()
 
     /**
@@ -53,6 +54,7 @@ class FocusManager(
         for (channelConfiguration in channelConfigurations) {
             allChannels[channelConfiguration.name] =
                 Channel(channelConfiguration.name, channelConfiguration.priority, channelConfiguration.volatile)
+            allChannelConfigurations[channelConfiguration.name] = channelConfiguration
         }
     }
 
@@ -194,7 +196,7 @@ class FocusManager(
             return
         }
 
-        listeners.forEach { it.onFocusChanged(channel.name, focus, channel.state.interfaceName) }
+        listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName, channel.state.playServiceId) }
     }
 
     private fun getChannel(channelName: String): Channel? = allChannels[channelName]
@@ -220,23 +222,5 @@ class FocusManager(
 
     override fun removeListener(listener: FocusManagerInterface.OnFocusChangedListener) {
         listeners.remove(listener)
-    }
-
-    override fun getPlayStack(): Stack<String> {
-        val set = LinkedHashSet<String>().apply {
-            synchronized(activeChannels) {
-                activeChannels.forEach {
-                    it.getPlayServiceId()?.let { playServiceId ->
-                        add(playServiceId)
-                    }
-                }
-            }
-        }
-
-        return Stack<String>().apply {
-            set.forEach {
-                push(it)
-            }
-        }
     }
 }

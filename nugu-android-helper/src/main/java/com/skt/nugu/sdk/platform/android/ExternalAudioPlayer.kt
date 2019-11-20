@@ -49,7 +49,12 @@ internal class ExternalAudioPlayer(
         audioFocusManager.addListener(this)
     }
 
-    override fun onFocusChanged(channelName: String, newFocus: FocusState, interfaceName: String) {
+    override fun onFocusChanged(
+        channelConfiguration: FocusManagerInterface.ChannelConfiguration,
+        newFocus: FocusState,
+        interfaceName: String,
+        playServiceId: String?
+    ) {
         if(interfaceName == TAG) {
             // do not acquire/release AAFM when ExternalAudioPlayer focus changed.
             return
