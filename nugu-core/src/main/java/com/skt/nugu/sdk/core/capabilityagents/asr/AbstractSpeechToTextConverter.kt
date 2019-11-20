@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.capabilityagents.asr
 
+import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultASRAgent
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -32,6 +33,7 @@ abstract class AbstractSpeechToTextConverter(
     companion object {
         private const val TAG = "AbstractSpeechToTextConverter"
     }
+
     private val observers = HashSet<SpeechToTextConverterInterface.OnStateChangedListener>()
     private var state: SpeechToTextConverterInterface.State =
         SpeechToTextConverterInterface.State.INACTIVE
@@ -45,7 +47,7 @@ abstract class AbstractSpeechToTextConverter(
         format: AudioFormat,
         observer: ASRAgentInterface.OnResultListener
     ) {
-        if(state == SpeechToTextConverterInterface.State.ACTIVE) {
+        if (state == SpeechToTextConverterInterface.State.ACTIVE) {
             Logger.w(TAG, "[startSpeechToTextConverter] Not allowed in ACTIVE")
             return
         }
@@ -76,6 +78,7 @@ abstract class AbstractSpeechToTextConverter(
                 dialogRequestId = event.dialogRequestId
                 return event
             }
+
             override fun onFinished() {
                 senderThread = null
             }
@@ -137,7 +140,10 @@ abstract class AbstractSpeechToTextConverter(
     }
 
     override fun notifyError(description: String?) {
-        eventObserver?.onError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+        // issue-77 : hack to prevent to call twice onError()
+        if(DefaultASRAgent.DESCRIPTION_NOTIFY_ERROR_RESPONSE_TIMEOUT != description) {
+            eventObserver?.onError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+        }
         setStateToInActive()
     }
 
