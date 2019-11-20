@@ -60,6 +60,8 @@ object DefaultASRAgent {
     private const val NAME_LISTEN_FAILED = "ListenFailed"
     private const val NAME_RESPONSE_TIMEOUT = "ResponseTimeout"
 
+    const val DESCRIPTION_NOTIFY_ERROR_RESPONSE_TIMEOUT = "Response timeout"
+
     const val EVENT_STOP_RECOGNIZE = "StopRecognize"
 
     val EXPECT_SPEECH = NamespaceAndName(
@@ -177,7 +179,7 @@ object DefaultASRAgent {
                 }
 
                 override fun onError(errorType: ASRAgentInterface.ErrorType) {
-                    Logger.w(TAG, "[onError]")
+                    Logger.w(TAG, "[onError] $errorType")
                     onResultListeners.forEach {
                         it.onError(errorType)
                     }
@@ -825,15 +827,17 @@ object DefaultASRAgent {
 
         override fun onResponseTimeout(dialogRequestId: String) {
             executor.submit {
+                Logger.d(TAG, "[onResponseTimeout] dialogRequestId: $dialogRequestId")
                 onResultListeners.forEach {
                     it.onError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
                 }
 
+                currentSpeechProcessor.notifyError(DESCRIPTION_NOTIFY_ERROR_RESPONSE_TIMEOUT)
+                sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
                 // BUSY 상태를 해제한다.
                 if (state == ASRAgentInterface.State.BUSY) {
                     setState(ASRAgentInterface.State.IDLE)
                 }
-                sendResponseTimeoutEvent()
             }
         }
 
@@ -854,14 +858,6 @@ object DefaultASRAgent {
                 }
             }.apply {
                 sendEvent(NAME_LISTEN_TIMEOUT, this)
-            }
-        }
-
-        private fun sendResponseTimeoutEvent() {
-            Logger.d(TAG, "[sendResponseTimeoutEvent]")
-            executor.submit {
-                currentSpeechProcessor.notifyError("Response Timeout")
-                sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
             }
         }
 
