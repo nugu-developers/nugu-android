@@ -673,13 +673,13 @@ object DefaultAudioPlayerAgent {
 
         private fun scheduleStopForPausedSource(id: SourceId) {
             pausedStopFuture?.cancel(true)
-            pausedStopFuture = pausedStopExecutor.schedule(Callable{
+            pausedStopFuture = pausedStopExecutor.schedule(Callable {
                 executor.submit {
                     if (id.id != sourceId.id) {
                         return@submit
                     }
 
-                    if(currentActivity != AudioPlayerAgentInterface.State.PAUSED) {
+                    if (currentActivity != AudioPlayerAgentInterface.State.PAUSED) {
                         return@submit
                     }
                     executeStop(false)
@@ -1210,6 +1210,10 @@ object DefaultAudioPlayerAgent {
 
         override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
             displayAgent?.setRenderer(renderer)
+        }
+
+        override fun stopRenderingTimer(templateId: String) {
+            displayAgent?.stopRenderingTimer(templateId)
         }
 
         internal fun setDisplayAgent(displayAgent: DisplayAgentInterface?) {

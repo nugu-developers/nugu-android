@@ -99,4 +99,10 @@ class DisplayAggregator(
     override fun setRenderer(renderer: DisplayAggregatorInterface.Renderer?) {
         this.observer = renderer
     }
+
+    override fun stopRenderingTimer(templateId: String) {
+        lock.withLock {
+            requestAgentMap[templateId]
+        }?.stopRenderingTimer(templateId)
+    }
 }
