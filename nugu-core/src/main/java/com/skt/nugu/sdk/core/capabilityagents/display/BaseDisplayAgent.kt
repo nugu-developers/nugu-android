@@ -347,7 +347,11 @@ abstract class BaseDisplayAgent(
     protected abstract fun getDisplayType(): DisplayAggregatorInterface.Type
 
     protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
-    //    protected abstract fun getRequestClearRunnable(info: DirectiveInfo): Runnable
+
+    override fun stopRenderingTimer(templateId: String) {
+        stopClearTimer()
+    }
+
     private fun startClearTimer(
         timeout: Long = 7000L
     ) {

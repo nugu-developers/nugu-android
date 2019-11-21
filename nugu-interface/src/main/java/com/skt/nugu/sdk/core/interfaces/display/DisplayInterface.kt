@@ -36,4 +36,12 @@ interface DisplayInterface<Renderer> {
      * @param renderer the renderer to be set
      */
     fun setRenderer(renderer: Renderer?)
+
+    /**
+     * Stop rendering timer for [templateId].
+     * The SDK manage a timer to notify proper display clear timing.
+     * Call this API to stop timer, if client do not want the behavior.
+     * @param templateId the templateId associated with internal timer
+     */
+    fun stopRenderingTimer(templateId: String)
 }
