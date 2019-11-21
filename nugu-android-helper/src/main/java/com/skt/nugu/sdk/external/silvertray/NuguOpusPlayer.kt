@@ -55,6 +55,9 @@ class NuguOpusPlayer(private val streamType: Int) : AttachmentPlayablePlayer {
         val listener = this.playbackEventListener ?: return
         when (status) {
             Status.IDLE -> {
+                if(prevStatus == Status.READY) {
+                    listener.onPlaybackStarted(currentSourceId)
+                }
                 listener.onPlaybackStopped(currentSourceId)
             }
             Status.STARTED -> {
