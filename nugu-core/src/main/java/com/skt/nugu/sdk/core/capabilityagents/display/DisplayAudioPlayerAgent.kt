@@ -78,7 +78,7 @@ class DisplayAudioPlayerAgent(
                 return@submit
             }
 
-            val templateId = currentInfo?.getDisplayId()
+            val templateId = currentInfo?.getTemplateId()
             if(templateId.isNullOrBlank()) {
                 return@submit
             }
