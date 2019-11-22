@@ -32,22 +32,28 @@ import java.util.concurrent.ConcurrentHashMap
 abstract class CapabilityAgent :
     DirectiveHandler
     , ContextStateProvider {
+
     /**
-     * The wrapping class for [Directive] & [DirectiveHandlerResult]
-     * @param directive the directive
-     * @param result the result handler for directive
+     * The wrapping interface for [Directive] & [DirectiveHandlerResult]
+     * @property directive the directive
+     * @property result the result handler for directive
      */
-    data class DirectiveInfo(
-        val directive: Directive,
+    interface DirectiveInfo {
+        val directive: Directive
         val result: DirectiveHandlerResult
-    ) {
+    }
+
+    private data class DirectiveInfoImpl(
+        override val directive: Directive,
+        override val result: DirectiveHandlerResult
+    ) : DirectiveInfo {
         /**
          * flag for cancellation
          */
-        var isCancelled = false
+        internal var isCancelled = false
     }
 
-    private val directiveInfoMap = ConcurrentHashMap<String, DirectiveInfo>()
+    private val directiveInfoMap = ConcurrentHashMap<String, DirectiveInfoImpl>()
 
     override fun preHandleDirective(directive: Directive, result: DirectiveHandlerResult) {
         val messageId = directive.getMessageId()
@@ -75,11 +81,7 @@ abstract class CapabilityAgent :
     }
 
     override fun cancelDirective(messageId: String) {
-        val info = getDirectiveInfo(messageId)
-
-        if (info == null) {
-            return
-        }
+        val info = getDirectiveInfo(messageId) ?: return
 
         info.isCancelled = true
         cancelDirective(info)
@@ -93,13 +95,13 @@ abstract class CapabilityAgent :
         // default no op
     }
 
-    private fun getDirectiveInfo(messageId: String): DirectiveInfo? = directiveInfoMap[messageId]
+    private fun getDirectiveInfo(messageId: String) = directiveInfoMap[messageId]
 
     private fun createDirectiveInfo(
         directive: Directive,
         result: DirectiveHandlerResult
-    ): DirectiveInfo =
-        DirectiveInfo(directive, result)
+    ) =
+        DirectiveInfoImpl(directive, result)
 
     /**
      * Convenient wrapper for [DirectiveHandler.preHandleDirective]
