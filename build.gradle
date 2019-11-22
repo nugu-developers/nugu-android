@@ -40,7 +40,7 @@ task clean(type: Delete) {
 apply from: 'versions.gradle'
 
 ext {
-    isReleaseMode=false
+    isReleaseMode=true
 }
 
 subprojects {
