@@ -122,15 +122,23 @@ abstract class BaseDisplayAgent(
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
-        val payload =
-            MessageFactory.create(info.directive.payload, TemplatePayload::class.java) ?: return
+        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
+        if(payload == null) {
+            setHandlingFailed(info,"[preHandleDirective] invalid Payload")
+            return
+        }
 
         executor.submit {
             executeCancelPendingInfo()
-            val templateInfo = TemplateDirectiveInfo(info, payload)
-            templateDirectiveInfoMap[templateInfo.getDisplayId()] = templateInfo
-            pendingInfo = templateInfo
-            playSynchronizer.prepareSync(templateInfo)
+            executePreparePendingInfo(info, payload)
+        }
+    }
+
+    private fun executePreparePendingInfo(info: DirectiveInfo, payload: TemplatePayload) {
+        TemplateDirectiveInfo(info, payload).apply {
+            templateDirectiveInfoMap[getDisplayId()] = this
+            pendingInfo = this
+            playSynchronizer.prepareSync(this)
         }
     }
 
@@ -169,8 +177,7 @@ abstract class BaseDisplayAgent(
     private fun executeCancelInfoInternal(info: TemplateDirectiveInfo) {
         Logger.d(TAG, "[executeCancelInfoInternal] cancel pendingInfo : $info")
 
-        info.info.result.setFailed("Canceled by the other display info")
-        removeDirective(info.info.directive.getMessageId())
+        setHandlingFailed(info.info, "Canceled by the other display info")
         templateDirectiveInfoMap.remove(info.info.directive.getMessageId())
         releaseSyncImmediately(info)
     }
@@ -210,10 +217,7 @@ abstract class BaseDisplayAgent(
         Logger.d(TAG, "[onFocusChanged] $newFocus / $channelName")
         executor.submit {
             this.focusState = newFocus
-            val templateInfo = currentInfo
-            if (templateInfo == null) {
-                return@submit
-            }
+            val templateInfo = currentInfo ?: return@submit
 
             when (newFocus) {
                 FocusState.NONE -> {
@@ -238,6 +242,12 @@ abstract class BaseDisplayAgent(
             info.getDialogRequestId()
         ) ?: false
         if (!willBeRender) {
+            // the renderer denied to render
+            info.info.result.setCompleted()
+            removeDirective(info.info.directive.getMessageId())
+            templateDirectiveInfoMap.remove(info.info.directive.getMessageId())
+            playSynchronizer.releaseWithoutSync(info)
+
             if (clearInfoIfCurrent(info.info)) {
                 focusManager.releaseChannel(channelName, this)
             }
@@ -278,12 +288,13 @@ abstract class BaseDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getDisplayId()}")
                 stopClearTimer(templateId)
+                removeDirective(templateId)
+                templateDirectiveInfoMap.remove(templateId)
                 releaseSyncImmediately(it)
+
                 onDisplayCardCleared(it)
 
-                val cleared = clearInfoIfCurrent(it.info)
-
-                if (cleared) {
+                if (clearInfoIfCurrent(it.info)) {
                     val nextInfo = pendingInfo
                     pendingInfo = null
 
@@ -309,7 +320,6 @@ abstract class BaseDisplayAgent(
         Logger.d(TAG, "[clearInfoIfCurrent]")
         if (currentInfo?.info == info) {
             currentInfo = null
-            templateDirectiveInfoMap.remove(info.directive.getMessageId())
             return true
         }
 
@@ -381,6 +391,11 @@ abstract class BaseDisplayAgent(
         }
 
         Logger.d(TAG, "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled")
+    }
+
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info.directive.getMessageId())
     }
 
     protected fun setHandlingCompleted(info: DirectiveInfo) {
