@@ -78,13 +78,15 @@ class DisplayAudioPlayerAgent(
                 return@submit
             }
 
+            val templateId = currentInfo?.getDisplayId()
+            if(templateId.isNullOrBlank()) {
+                return@submit
+            }
+
             playerActivity = activity
 
             when (activity) {
-                AudioPlayerAgentInterface.State.PAUSED -> restartClearTimer(10 * 60 * 1000L)
-//                State.PLAYING -> stopClearTimer()
-//                State.STOPPED,
-//                State.FINISHED -> restartClearTimer()
+                AudioPlayerAgentInterface.State.PAUSED -> restartClearTimer(templateId,10 * 60 * 1000L)
                 else -> {
                 }
             }
