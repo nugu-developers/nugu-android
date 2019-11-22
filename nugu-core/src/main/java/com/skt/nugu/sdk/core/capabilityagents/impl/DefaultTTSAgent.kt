@@ -270,7 +270,7 @@ object DefaultTTSAgent {
 
         private fun setHandlingInvalidSpeakDirectiveReceived(info: DirectiveInfo) {
             Logger.d(TAG, "[setHandlingInvalidSpeakDirectiveReceived] info: $info")
-            info.result?.setFailed("Invalid Speak Directive")
+            info.result.setFailed("Invalid Speak Directive")
             requestListenerMap.remove(info.directive.getDialogRequestId())?.onError()
         }
 
@@ -372,21 +372,6 @@ object DefaultTTSAgent {
             }
         }
 
-        private fun executeHandleImmediately(info: DirectiveInfo) {
-            when (info.directive.getNamespaceAndName()) {
-                SPEAK -> {
-                    val speakInfo = createValidateSpeakInfo(info, false)
-                    if (speakInfo == null) {
-                        setHandlingInvalidSpeakDirectiveReceived(info)
-                        return
-                    }
-                    executePrepareSpeakInfo(speakInfo)
-                    executeHandleSpeakDirective(info)
-                }
-                STOP -> executeHandleStopDirective(info)
-            }
-        }
-
         private fun executePrepareSpeakInfo(speakInfo: SpeakDirectiveInfo) {
             executeCancelAllSpeakInfo()
 
@@ -412,7 +397,7 @@ object DefaultTTSAgent {
             Logger.d(TAG, "[executeCancelPreparedSpeakInfo] cancel preparedSpeakInfo : $info")
 
             with(info) {
-                directiveInfo.result?.setFailed("Canceled by the other speak directive.")
+                directiveInfo.result.setFailed("Canceled by the other speak directive.")
                 removeDirective(directiveInfo.directive.getMessageId())
                 releaseSyncImmediately(info)
             }
@@ -519,7 +504,7 @@ object DefaultTTSAgent {
                 TTSAgentInterface.State.STOPPED,
                 TTSAgentInterface.State.FINISHED -> {
                     currentInfo?.apply {
-                        result?.setCompleted()
+                        result.setCompleted()
                         if (isPlaybackInitiated) {
                             stopPlaying()
                         } else {
@@ -580,17 +565,11 @@ object DefaultTTSAgent {
         }
 
         private fun createValidateSpeakInfo(
-            info: DirectiveInfo,
-            checkResult: Boolean = true
+            info: DirectiveInfo
         ): SpeakDirectiveInfo? {
             Logger.d(TAG, "[createValidateSpeakInfo]")
             if (info.directive.getName() != NAME_SPEAK) {
                 Logger.d(TAG, "[createValidateSpeakInfo] is not speak directive")
-                return null
-            }
-
-            if (checkResult && info.result == null) {
-                Logger.d(TAG, "[createValidateSpeakInfo] result is null")
                 return null
             }
 
@@ -797,7 +776,7 @@ object DefaultTTSAgent {
             )
 
             with(info) {
-                result?.setCompleted()
+                result.setCompleted()
             }
 
             if (info.cancelByStop) {

@@ -120,13 +120,13 @@ object DefaultTextAgent {
 
         private fun executeSetHandlingCompleted(info: DirectiveInfo) {
             Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
         private fun executeSetHandlingFailed(info: DirectiveInfo, msg: String) {
             Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
-            info.result?.setFailed(msg)
+            info.result.setFailed(msg)
             removeDirective(info)
         }
 

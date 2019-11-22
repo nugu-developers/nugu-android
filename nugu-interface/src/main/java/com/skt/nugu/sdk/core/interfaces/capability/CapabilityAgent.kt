@@ -39,7 +39,7 @@ abstract class CapabilityAgent :
      */
     data class DirectiveInfo(
         val directive: Directive,
-        val result: DirectiveHandlerResult?
+        val result: DirectiveHandlerResult
     ) {
         /**
          * flag for cancellation
@@ -97,7 +97,7 @@ abstract class CapabilityAgent :
 
     private fun createDirectiveInfo(
         directive: Directive,
-        result: DirectiveHandlerResult?
+        result: DirectiveHandlerResult
     ): DirectiveInfo =
         DirectiveInfo(directive, result)
 

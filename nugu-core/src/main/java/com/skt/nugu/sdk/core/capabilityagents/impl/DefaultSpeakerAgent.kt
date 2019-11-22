@@ -318,12 +318,12 @@ object DefaultSpeakerAgent {
         }
 
         private fun executeSetHandlingCompleted(info: DirectiveInfo) {
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
         private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
-            info.result?.setFailed(msg)
+            info.result.setFailed(msg)
             removeDirective(info)
         }
 

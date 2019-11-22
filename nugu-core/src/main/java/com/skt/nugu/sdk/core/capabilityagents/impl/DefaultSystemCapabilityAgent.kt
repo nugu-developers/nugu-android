@@ -241,7 +241,7 @@ object DefaultSystemCapabilityAgent {
         }
 
         private fun setHandlingCompleted(info: DirectiveInfo) {
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
