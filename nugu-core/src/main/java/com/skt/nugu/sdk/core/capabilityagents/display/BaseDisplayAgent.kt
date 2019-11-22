@@ -110,7 +110,7 @@ abstract class BaseDisplayAgent(
             }
         }
 
-        fun getDisplayId(): String = info.directive.getMessageId()
+        fun getTemplateId(): String = info.directive.getMessageId()
 
         fun getDuration(): Long {
             return when (payload.duration) {
@@ -136,7 +136,7 @@ abstract class BaseDisplayAgent(
 
     private fun executePreparePendingInfo(info: DirectiveInfo, payload: TemplatePayload) {
         TemplateDirectiveInfo(info, payload).apply {
-            templateDirectiveInfoMap[getDisplayId()] = this
+            templateDirectiveInfoMap[getTemplateId()] = this
             pendingInfo = this
             playSynchronizer.prepareSync(this)
         }
@@ -185,7 +185,7 @@ abstract class BaseDisplayAgent(
     override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
             val templateInfo = pendingInfo
-            if (templateInfo == null || (info.directive.getMessageId() != templateInfo.getDisplayId())) {
+            if (templateInfo == null || (info.directive.getMessageId() != templateInfo.getTemplateId())) {
                 Logger.d(TAG, "[handleDirective] skip, maybe canceled display info")
                 return@submit
             }
@@ -264,7 +264,7 @@ abstract class BaseDisplayAgent(
     override fun displayCardRendered(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
-                Logger.d(TAG, "[onRendered] ${it.getDisplayId()}")
+                Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
                 playSynchronizer.startSync(
                     it,
                     object : PlaySynchronizerInterface.OnRequestSyncListener {
@@ -286,7 +286,7 @@ abstract class BaseDisplayAgent(
     override fun displayCardCleared(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
-                Logger.d(TAG, "[onCleared] ${it.getDisplayId()}")
+                Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 stopClearTimer(templateId)
                 removeDirective(templateId)
                 templateDirectiveInfoMap.remove(templateId)
