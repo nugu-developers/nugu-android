@@ -133,12 +133,10 @@ object DefaultTTSAgent {
         }
 
         inner class SpeakDirectiveInfo(
-            val directiveInfo: DirectiveInfo,
+            info: DirectiveInfo,
             val payload: SpeakPayload
-        ) : PlaySynchronizerInterface.SynchronizeObject {
-            val directive: Directive = directiveInfo.directive
-            val result = directiveInfo.result
-
+        ) : PlaySynchronizerInterface.SynchronizeObject
+            , DirectiveInfo by info {
             var isPlaybackInitiated = false
             var isDelayedCancel = false
             var cancelByStop = false
@@ -184,7 +182,7 @@ object DefaultTTSAgent {
             override fun requestReleaseSync(immediate: Boolean) {
                 Logger.d(TAG, "[requestReleaseSync] immediate: $immediate")
                 executor.submit {
-                    executeCancel(directiveInfo)
+                    executeCancel(this)
                 }
             }
         }
@@ -397,9 +395,9 @@ object DefaultTTSAgent {
             Logger.d(TAG, "[executeCancelPreparedSpeakInfo] cancel preparedSpeakInfo : $info")
 
             with(info) {
-                directiveInfo.result.setFailed("Canceled by the other speak directive.")
-                removeDirective(directiveInfo.directive.getMessageId())
-                releaseSyncImmediately(info)
+                result.setFailed("Canceled by the other speak directive.")
+                removeDirective(directive.getMessageId())
+                releaseSyncImmediately(this)
             }
         }
 
@@ -814,14 +812,11 @@ object DefaultTTSAgent {
             }
 
             Logger.e(TAG, "[executePlaybackError] type: $type, error: $error")
-            val info = currentInfo
-            if (info == null) {
-                return
-            }
+            val info = currentInfo ?: return
 
             setCurrentState(TTSAgentInterface.State.STOPPED)
             with(info) {
-                result?.setFailed("Playback Error (type: $type, error: $error)")
+                result.setFailed("Playback Error (type: $type, error: $error)")
             }
 
             releaseSync(info)

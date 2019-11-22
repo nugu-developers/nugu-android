@@ -90,27 +90,28 @@ abstract class BaseDisplayAgent(
     )
 
     protected inner class TemplateDirectiveInfo(
-        val info: DirectiveInfo,
+        info: DirectiveInfo,
         val payload: TemplatePayload
-    ) : PlaySynchronizerInterface.SynchronizeObject {
+    ) : PlaySynchronizerInterface.SynchronizeObject
+        , DirectiveInfo by info {
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
-                Logger.d(TAG, "[onReleaseCallback] granted : $info")
+                Logger.d(TAG, "[onReleaseCallback] granted : $this")
             }
 
             override fun onDenied() {
             }
         }
 
-        override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+        override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
         override fun requestReleaseSync(immediate: Boolean) {
             executor.submit {
-                executeCancelUnknownInfo(info, immediate)
+                executeCancelUnknownInfo(this, immediate)
             }
         }
 
-        fun getTemplateId(): String = info.directive.getMessageId()
+        fun getTemplateId(): String = directive.getMessageId()
 
         fun getDuration(): Long {
             return when (payload.duration) {
@@ -123,8 +124,8 @@ abstract class BaseDisplayAgent(
 
     override fun preHandleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-        if(payload == null) {
-            setHandlingFailed(info,"[preHandleDirective] invalid Payload")
+        if (payload == null) {
+            setHandlingFailed(info, "[preHandleDirective] invalid Payload")
             return
         }
 
@@ -144,7 +145,7 @@ abstract class BaseDisplayAgent(
 
     protected fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
-        if (info == currentInfo?.info) {
+        if (info.directive.getMessageId() == currentInfo?.getTemplateId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
             val templateId = info.directive.getMessageId()
             if (immediate) {
@@ -153,7 +154,7 @@ abstract class BaseDisplayAgent(
             } else {
                 restartClearTimer(templateId)
             }
-        } else if (info == pendingInfo?.info) {
+        } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
             executeCancelPendingInfo()
         } else {
             templateDirectiveInfoMap[info.directive.getMessageId()]?.let {
@@ -177,8 +178,8 @@ abstract class BaseDisplayAgent(
     private fun executeCancelInfoInternal(info: TemplateDirectiveInfo) {
         Logger.d(TAG, "[executeCancelInfoInternal] cancel pendingInfo : $info")
 
-        setHandlingFailed(info.info, "Canceled by the other display info")
-        templateDirectiveInfoMap.remove(info.info.directive.getMessageId())
+        setHandlingFailed(info, "Canceled by the other display info")
+        templateDirectiveInfoMap.remove(info.directive.getMessageId())
         releaseSyncImmediately(info)
     }
 
@@ -224,7 +225,7 @@ abstract class BaseDisplayAgent(
                     // no-op
                 }
                 FocusState.BACKGROUND -> {
-                    executeOnFocusBackground(templateInfo.info)
+                    executeOnFocusBackground(templateInfo)
                 }
                 FocusState.FOREGROUND -> {
                     executeRender(templateInfo)
@@ -234,7 +235,7 @@ abstract class BaseDisplayAgent(
     }
 
     private fun executeRender(info: TemplateDirectiveInfo) {
-        val template = info.info.directive
+        val template = info.directive
         val willBeRender = renderer?.render(
             template.getMessageId(),
             "${template.getNamespace()}.${template.getName()}",
@@ -243,11 +244,11 @@ abstract class BaseDisplayAgent(
         ) ?: false
         if (!willBeRender) {
             // the renderer denied to render
-            setHandlingCompleted(info.info)
-            templateDirectiveInfoMap.remove(info.info.directive.getMessageId())
+            setHandlingCompleted(info)
+            templateDirectiveInfoMap.remove(info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
 
-            if (clearInfoIfCurrent(info.info)) {
+            if (clearInfoIfCurrent(info)) {
                 focusManager.releaseChannel(channelName, this)
             }
         }
@@ -287,13 +288,13 @@ abstract class BaseDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 stopClearTimer(templateId)
-                setHandlingCompleted(it.info)
+                setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
                 releaseSyncImmediately(it)
 
                 onDisplayCardCleared(it)
 
-                if (clearInfoIfCurrent(it.info)) {
+                if (clearInfoIfCurrent(it)) {
                     val nextInfo = pendingInfo
                     pendingInfo = null
 
@@ -317,7 +318,7 @@ abstract class BaseDisplayAgent(
 
     private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
         Logger.d(TAG, "[clearInfoIfCurrent]")
-        if (currentInfo?.info == info) {
+        if (currentInfo?.getTemplateId() == info.directive.getMessageId()) {
             currentInfo = null
             return true
         }
@@ -384,12 +385,15 @@ abstract class BaseDisplayAgent(
     protected fun stopClearTimer(templateId: String) {
         val future = clearTimeoutFutureMap[templateId]
         var canceled = false
-        if(future != null) {
+        if (future != null) {
             canceled = future.cancel(true)
             clearTimeoutFutureMap[templateId] = null
         }
 
-        Logger.d(TAG, "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled")
+        Logger.d(
+            TAG,
+            "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled"
+        )
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
