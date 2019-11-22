@@ -90,12 +90,12 @@ object DefaultDelegationAgent {
         }
 
         private fun setHandlingCompleted(info: DirectiveInfo) {
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
         private fun setHandlingFailed(info: DirectiveInfo, description: String) {
-            info.result?.setFailed(description)
+            info.result.setFailed(description)
             removeDirective(info)
         }
 

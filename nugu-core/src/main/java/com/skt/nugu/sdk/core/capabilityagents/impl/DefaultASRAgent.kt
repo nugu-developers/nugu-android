@@ -411,13 +411,13 @@ object DefaultASRAgent {
 
         private fun setHandlingCompleted(info: DirectiveInfo) {
             Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
         private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
             Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
-            info.result?.setFailed(msg)
+            info.result.setFailed(msg)
             removeDirective(info)
         }
 
@@ -541,9 +541,7 @@ object DefaultASRAgent {
         }
 
         private fun removeDirective(info: DirectiveInfo) {
-            if (info.directive != null && info.result != null) {
-                removeDirective(info.directive.getMessageId())
-            }
+            removeDirective(info.directive.getMessageId())
         }
 
         override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

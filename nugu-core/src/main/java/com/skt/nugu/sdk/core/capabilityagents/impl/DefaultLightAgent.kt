@@ -301,12 +301,12 @@ object DefaultLightAgent {
         }
 
         private fun executeSetHandlingCompleted(info: DirectiveInfo) {
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
         private fun executeSetHandlingFailed(info: DirectiveInfo, msg: String) {
-            info.result?.setFailed(msg)
+            info.result.setFailed(msg)
             removeDirective(info)
         }
 

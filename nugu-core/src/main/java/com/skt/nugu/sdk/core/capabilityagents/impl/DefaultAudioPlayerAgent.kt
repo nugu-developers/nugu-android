@@ -974,21 +974,17 @@ object DefaultAudioPlayerAgent {
         }
 
         private fun setHandlingCompleted(info: DirectiveInfo) {
-            info.result?.setCompleted()
+            info.result.setCompleted()
             removeDirective(info)
         }
 
         private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
-            info.result?.setFailed(msg)
+            info.result.setFailed(msg)
             removeDirective(info)
         }
 
         private fun removeDirective(info: DirectiveInfo) {
-            // Check result too, to catch cases where DirectiveInfo was created locally, without a nullptr result.
-            // In those cases there is no messageId to remove because no result was expected.
-            info.result?.let {
-                removeDirective(info.directive.getMessageId())
-            }
+            removeDirective(info.directive.getMessageId())
         }
 
         override fun provideState(

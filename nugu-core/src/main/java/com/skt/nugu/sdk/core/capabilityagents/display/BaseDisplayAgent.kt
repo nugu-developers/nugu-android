@@ -169,7 +169,7 @@ abstract class BaseDisplayAgent(
     private fun executeCancelInfoInternal(info: TemplateDirectiveInfo) {
         Logger.d(TAG, "[executeCancelInfoInternal] cancel pendingInfo : $info")
 
-        info.info.result?.setFailed("Canceled by the other display info")
+        info.info.result.setFailed("Canceled by the other display info")
         removeDirective(info.info.directive.getMessageId())
         templateDirectiveInfoMap.remove(info.info.directive.getMessageId())
         releaseSyncImmediately(info)
@@ -384,7 +384,7 @@ abstract class BaseDisplayAgent(
     }
 
     protected fun setHandlingCompleted(info: DirectiveInfo) {
-        info.result?.setCompleted()
+        info.result.setCompleted()
         removeDirective(info.directive.getMessageId())
     }
 
