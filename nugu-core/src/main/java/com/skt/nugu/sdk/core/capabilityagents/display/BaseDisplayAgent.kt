@@ -243,8 +243,7 @@ abstract class BaseDisplayAgent(
         ) ?: false
         if (!willBeRender) {
             // the renderer denied to render
-            info.info.result.setCompleted()
-            removeDirective(info.info.directive.getMessageId())
+            setHandlingCompleted(info.info)
             templateDirectiveInfoMap.remove(info.info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
 
@@ -288,7 +287,7 @@ abstract class BaseDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 stopClearTimer(templateId)
-                removeDirective(templateId)
+                setHandlingCompleted(it.info)
                 templateDirectiveInfoMap.remove(templateId)
                 releaseSyncImmediately(it)
 
@@ -398,7 +397,7 @@ abstract class BaseDisplayAgent(
         removeDirective(info.directive.getMessageId())
     }
 
-    protected fun setHandlingCompleted(info: DirectiveInfo) {
+    private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
         removeDirective(info.directive.getMessageId())
     }
