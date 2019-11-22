@@ -75,8 +75,7 @@ abstract class BaseDisplayAgent(
     protected abstract fun getVersion(): String
 
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
-    private var clearTimeoutFuture: ScheduledFuture<*>? = null
-
+    private var clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
 
     protected data class TemplatePayload(
@@ -139,11 +138,12 @@ abstract class BaseDisplayAgent(
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
         if (info == currentInfo?.info) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
+            val templateId = info.directive.getMessageId()
             if (immediate) {
-                stopClearTimer()
+                stopClearTimer(templateId)
                 renderer?.clear(info.directive.getMessageId(), true)
             } else {
-                restartClearTimer()
+                restartClearTimer(templateId)
             }
         } else if (info == pendingInfo?.info) {
             executeCancelPendingInfo()
@@ -260,9 +260,9 @@ abstract class BaseDisplayAgent(
                     object : PlaySynchronizerInterface.OnRequestSyncListener {
                         override fun onGranted() {
                             if (!playSynchronizer.existOtherSyncObject(it)) {
-                                restartClearTimer(it.getDuration())
+                                restartClearTimer(templateId, it.getDuration())
                             } else {
-                                stopClearTimer()
+                                stopClearTimer(templateId)
                             }
                         }
 
@@ -277,6 +277,7 @@ abstract class BaseDisplayAgent(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getDisplayId()}")
+                stopClearTimer(templateId)
                 releaseSyncImmediately(it)
                 onDisplayCardCleared(it)
 
@@ -307,7 +308,6 @@ abstract class BaseDisplayAgent(
     private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
         Logger.d(TAG, "[clearInfoIfCurrent]")
         if (currentInfo?.info == info) {
-            stopClearTimer()
             currentInfo = null
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
             return true
@@ -349,36 +349,38 @@ abstract class BaseDisplayAgent(
     protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
 
     override fun stopRenderingTimer(templateId: String) {
-        stopClearTimer()
+        stopClearTimer(templateId)
     }
 
     private fun startClearTimer(
+        templateId: String,
         timeout: Long = 7000L
     ) {
-        Logger.d(TAG, "[startClearTimer] timeout: $timeout")
-        clearTimeoutFuture =
-            clearTimeoutScheduler.schedule(
-                {
-                    currentInfo?.let {
-                        val template = it.info.directive
-                        renderer?.clear(template.getMessageId(), false)
-                    }
-                }, timeout, TimeUnit.MILLISECONDS
-            )
+        Logger.d(TAG, "[startClearTimer] templateId: $templateId, timeout: $timeout")
+        clearTimeoutFutureMap[templateId] =
+            clearTimeoutScheduler.schedule({
+                renderer?.clear(templateId, false)
+            }, timeout, TimeUnit.MILLISECONDS)
     }
 
     protected fun restartClearTimer(
+        templateId: String,
         timeout: Long = 7000L
     ) {
-        Logger.d(TAG, "[restartClearTimer]")
-        stopClearTimer()
-        startClearTimer(timeout)
+        Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
+        stopClearTimer(templateId)
+        startClearTimer(templateId, timeout)
     }
 
-    protected fun stopClearTimer() {
-        Logger.d(TAG, "[stopClearTimer]")
-        clearTimeoutFuture?.cancel(true)
-        clearTimeoutFuture = null
+    protected fun stopClearTimer(templateId: String) {
+        val future = clearTimeoutFutureMap[templateId]
+        var canceled = false
+        if(future != null) {
+            canceled = future.cancel(true)
+            clearTimeoutFutureMap[templateId] = null
+        }
+
+        Logger.d(TAG, "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled")
     }
 
     protected fun setHandlingCompleted(info: DirectiveInfo) {
