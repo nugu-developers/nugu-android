@@ -109,7 +109,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
                     syncContexts.remove(dialogRequestId)
                 }
 
-                Logger.d(TAG, "[releaseWithoutSync] removedAtWatingStart: $removedAtWatingStart, removedAtShouldRelease: $removedAtShouldRelease, synContexts: $syncContexts")
+                Logger.d(TAG, "[releaseWithoutSync] removedAtWaitingStart: $removedAtWatingStart, removedAtShouldRelease: $removedAtShouldRelease, synContexts: $syncContexts")
             }
         }
     }
