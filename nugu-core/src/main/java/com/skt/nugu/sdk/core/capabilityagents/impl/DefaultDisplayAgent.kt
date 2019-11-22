@@ -256,7 +256,7 @@ object DefaultDisplayAgent {
                         "[handleDirective] (Close) current : $currentPlayServiceId / close : ${closePayload.playServiceId}"
                     )
                     if (currentPlayServiceId == closePayload.playServiceId) {
-                        executeCancelUnknownInfo(currentRenderedInfo.info, true)
+                        executeCancelUnknownInfo(currentRenderedInfo, true)
                         sendCloseEventWhenClosed(currentRenderedInfo, info)
                     } else {
                         sendCloseSucceeded(info, closePayload.playServiceId)
