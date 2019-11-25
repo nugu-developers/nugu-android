@@ -33,26 +33,14 @@ internal class RegistryClient {
     private var backoff : BackOff = BackOff.DEFAULT()
 
     var policy: PolicyResponse? = null
-    private var state: Enum<State> = State.POLICY_INIT
 
     interface Observer {
         fun onCompleted()
         fun onError(code: Status.Code)
     }
 
-    internal enum class State {
-        POLICY_INIT,
-        POLICY_IN_PROGRESS,
-        POLICY_FAILED,
-        POLICY_COMPLETE,
-    }
-
-    fun isConnecting() = state == State.POLICY_IN_PROGRESS
-
-    fun getPolicy(registryChannel: ManagedChannel, observer: Observer) {
-        state = State.POLICY_IN_PROGRESS
-
-        RegistryGrpc.newStub(registryChannel).getPolicy(
+    fun getPolicy(channel: ManagedChannel, observer: Observer) {
+        RegistryGrpc.newStub(channel).getPolicy(
             PolicyRequest.newBuilder().build(),
             object : StreamObserver<PolicyResponse> {
                 override fun onNext(value: PolicyResponse?) {
@@ -61,8 +49,6 @@ internal class RegistryClient {
                 }
 
                 override fun onError(t: Throwable?) {
-                    state = State.POLICY_FAILED
-
                     val status = Status.fromThrowable(t)
                     Logger.e(TAG, "[onError] error on getPolicy($status)")
 
@@ -71,12 +57,9 @@ internal class RegistryClient {
 
                 override fun onCompleted() {
                     if (policy == null) {
-                        state = State.POLICY_FAILED
                         awaitRetry(Status.Code.NOT_FOUND)
                     } else {
                         backoff.reset()
-                        state = State.POLICY_COMPLETE
-                        registryChannel.shutdownNow()
                         observer.onCompleted()
                     }
                 }
@@ -88,7 +71,7 @@ internal class RegistryClient {
                     }
 
                     override fun onRetry(retriesAttempted: Int) {
-                        getPolicy(registryChannel, observer)
+                        getPolicy(channel, observer)
                     }
                 })
 
@@ -97,7 +80,6 @@ internal class RegistryClient {
 
     fun shutdown() {
         backoff.reset()
-        state = State.POLICY_INIT
         policy = null
     }
 }

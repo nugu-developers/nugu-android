@@ -62,8 +62,6 @@ class GrpcTransport private constructor(
      * Enum to Connection State of Transport
      */
     private enum class State {
-        /** Ready to start data connection setup. */
-        INIT,
         /** Awaiting response from Registry in order to receive policy **/
         POLICY_WAIT,
         /** Currently connecting to DeviceGateway **/
@@ -73,12 +71,10 @@ class GrpcTransport private constructor(
         /** Tearing down the connection. **/
         DISCONNECTING,
         /** not available. */
-        DISCONNECTED,
-        /** Attempt to connect failed. */
-        FAILED
+        DISCONNECTED
     }
 
-    private var state: Enum<State> = State.INIT
+    private var state: Enum<State> = State.DISCONNECTED
         set(value) {
             Logger.d(TAG, "state changed : $field -> $value ")
             field = value
@@ -94,7 +90,7 @@ class GrpcTransport private constructor(
     }
 
     override fun connect(): Boolean {
-        if (state == State.CONNECTED || state == State.CONNECTING || registryClient.isConnecting()) {
+        if (state == State.CONNECTED || state == State.CONNECTING) {
             return false
         }
 
@@ -106,16 +102,19 @@ class GrpcTransport private constructor(
         }
 
         val policy = registryClient.policy
-        if (policy == null) {
+        return if (policy == null) {
             tryGetPolicy(authorization)
         } else {
             tryConnectToDeviceGateway(policy, authorization)
         }
-        return true
+
     }
 
 
-    private fun tryGetPolicy(authorization: String) {
+    private fun tryGetPolicy(authorization: String): Boolean {
+        if(state == State.POLICY_WAIT) {
+            return false
+        }
         state = State.POLICY_WAIT
 
         val registryChannel =
@@ -123,31 +122,35 @@ class GrpcTransport private constructor(
                 .build()
         registryClient.getPolicy(registryChannel, object : RegistryClient.Observer {
             override fun onCompleted() {
+                ChannelBuilderUtils.shutdown(registryChannel)
                 connect()
             }
 
             override fun onError(code: Status.Code) {
                 registryClient.shutdown()
+                ChannelBuilderUtils.shutdown(registryChannel)
 
+                state = State.DISCONNECTED
                 when (code) {
                     Status.Code.UNAUTHENTICATED -> {
-                        authDelegate.onAuthFailure(authorization)
+                        onDisconnected(this@GrpcTransport,
+                            ConnectionStatusListener.ChangedReason.INVALID_AUTH
+                        )
                     }
                     else -> {
-                        state = State.FAILED
-
-                        transportObserver.onDisconnected(this@GrpcTransport,
+                        onDisconnected(this@GrpcTransport,
                             ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR
                         )
                     }
                 }
             }
         })
+
+        return true
     }
 
     private fun tryConnectToDeviceGateway(policy: PolicyResponse, authorization: String): Boolean {
         state = State.CONNECTING
-
         DeviceGatewayClient(
             policy,
             messageConsumer,
@@ -166,7 +169,7 @@ class GrpcTransport private constructor(
         deviceGatewayClient = null
     }
 
-    override fun isConnected(): Boolean = deviceGatewayClient?.isConnected() ?: false
+    override fun isConnected(): Boolean = (state == State.CONNECTED)
 
     override fun send(request: MessageRequest) : Boolean {
         if (state != State.CONNECTED) {
@@ -181,6 +184,8 @@ class GrpcTransport private constructor(
     override fun shutdown() {
         deviceGatewayClient?.shutdown()
         deviceGatewayClient = null
+
+        registryClient.shutdown()
 
         state = State.DISCONNECTED
     }
@@ -256,9 +261,9 @@ class GrpcTransport private constructor(
         transportObserver.onDisconnected(transport, reason)
 
         if(reason == ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR) {
-            registryClient.shutdown()
-            disconnect()
-            connect()
+            Logger.e(TAG, "UNRECOVERABLE_ERROR occurs, retry manually in app")
+        } else if(reason == ConnectionStatusListener.ChangedReason.INVALID_AUTH) {
+            authDelegate.onAuthFailure(authDelegate.getAuthorization())
         }
     }
 }
