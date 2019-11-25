@@ -32,6 +32,7 @@ import devicegateway.grpc.*
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 
 /**
  *  Implementation of DeviceGateway
@@ -55,32 +56,39 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     private var pingService: PingService? = null
     private var eventStreamService: EventStreamService? = null
     private var crashReportService: CrashReportService? = null
-    private var serverPolicy : PolicyResponse.ServerPolicy? = null
+    private var currentPolicy : PolicyResponse.ServerPolicy? = nextPolicy()
     private var healthCheckPolicy = policyResponse.healthCheckPolicy
     @Volatile
     private var isConnected = false
 
+    private fun nextPolicy(): PolicyResponse.ServerPolicy? {
+        Logger.w(TAG, "[nextPolicy]")
+        backoff.reset()
+
+        currentPolicy = policies.poll()
+        currentPolicy?.let {
+            backoff = BackOff.Builder(maxAttempts = it.retryCountLimit).build()
+        }
+        return currentPolicy
+    }
+
     override fun connect(): Boolean {
-        if(isConnected) {
+        if (isConnected) {
             return false
         }
 
-        serverPolicy ?: run {
-            backoff.reset()
+        val policy = currentPolicy ?: run {
+            Logger.d(TAG, "[connect] no more policy")
 
-            policies.poll()?.apply {
-                serverPolicy = this
-            } ?: run {
-                Logger.d(TAG, "No more serverPolicy")
-                shutdown()
-                transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
-                return false
-            }
-
-            backoff = BackOff.Builder(maxAttempts = serverPolicy!!.retryCountLimit).build()
+            shutdown()
+            transportObserver.onDisconnected(
+                this,
+                ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR
+            )
+            return false
         }
 
-        serverPolicy?.apply {
+        policy.apply {
             val option = Options(
                 address = this.address,
                 port = this.port,
@@ -88,15 +96,18 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
                 connectionTimeout = this.connectionTimeout,
                 hostname = this.hostName
             )
-            currentChannel =
-                ChannelBuilderUtils.createChannelBuilderWith(option, authorization).build()
+            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(option, authorization).build()
             currentChannel.also {
-                pingService = PingService(VoiceServiceGrpc.newBlockingStub(it), healthCheckPolicy, observer = this@DeviceGatewayClient)
-                eventStreamService = EventStreamService(VoiceServiceGrpc.newStub(it), observer = this@DeviceGatewayClient)
+                pingService = PingService(VoiceServiceGrpc.newBlockingStub(it),
+                    healthCheckPolicy,
+                    observer = this@DeviceGatewayClient
+                )
+                eventStreamService = EventStreamService(VoiceServiceGrpc.newStub(it),
+                    observer = this@DeviceGatewayClient
+                )
                 crashReportService = CrashReportService(VoiceServiceGrpc.newBlockingStub(it))
             }
         }
-
         return true
     }
 
@@ -104,7 +115,8 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         pingService?.shutdown()
         eventStreamService?.shutdown()
         crashReportService?.shutdown()
-        currentChannel?.shutdownNow()
+        ChannelBuilderUtils.shutdown(currentChannel)
+
         isConnected = false
     }
 
@@ -123,7 +135,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     }
 
     override fun onError(code: Status.Code) {
-        Logger.w(TAG, "[awaitRetry] Error : $code")
+        Logger.w(TAG, "[onError] Error : $code")
 
         if(isConnected) {
             isConnected = false
@@ -152,10 +164,17 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
 
             override fun onError(reason: String) {
                 Logger.w(TAG, "[awaitRetry] Error : $reason")
-                // clear serverPolicy, This means handoff.
-                serverPolicy = null
-                disconnect()
-                connect()
+
+                when (code) {
+                    Status.Code.UNAUTHENTICATED -> {
+                        shutdown()
+                    }
+                    else -> {
+                        nextPolicy()
+                        disconnect()
+                        connect()
+                    }
+                }
             }
 
             override fun onRetry(retriesAttempted: Int) {
