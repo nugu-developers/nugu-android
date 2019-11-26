@@ -333,6 +333,10 @@ class NuguAndroidClient private constructor(
         client.localStopTTS()
     }
 
+    override fun cancelTTSAndOthers() {
+        client.cancelTTSAndOthers()
+    }
+
     override fun getDisplay(): DisplayAggregatorInterface? = client.getDisplay()
 
     override fun setDisplayRenderer(renderer: DisplayAggregatorInterface.Renderer?) {

@@ -182,6 +182,11 @@ interface ClientHelperInterface {
      */
     fun localStopTTS()
 
+    /**
+     * Cancel playing tts and other directives which has same dialog request id.
+     */
+    fun cancelTTSAndOthers()
+
     // Display
     /**
      * Return [DisplayAggregatorInterface] to interact with the client display
