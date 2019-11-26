@@ -83,6 +83,7 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
                 }
 
                 it.setOnClickListener {
+                    ClientManager.getClient().getDisplay()?.stopRenderingTimer(getTemplateId())
                     ClientManager.getClient().localStopTTS()
                 }
             })
