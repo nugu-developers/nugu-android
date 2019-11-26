@@ -75,7 +75,8 @@ abstract class BaseDisplayAgent(
     protected abstract fun getVersion(): String
 
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
-    private var clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
+    private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
+    private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
 
     protected data class TemplatePayload(
@@ -180,6 +181,7 @@ abstract class BaseDisplayAgent(
 
         setHandlingFailed(info, "Canceled by the other display info")
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
+        stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
         releaseSyncImmediately(info)
     }
 
@@ -246,6 +248,7 @@ abstract class BaseDisplayAgent(
             // the renderer denied to render
             setHandlingCompleted(info)
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
+            stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
 
             if (clearInfoIfCurrent(info)) {
@@ -290,6 +293,7 @@ abstract class BaseDisplayAgent(
                 stopClearTimer(templateId)
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
+                stoppedTimerTemplateIdMap.remove(templateId)
                 releaseSyncImmediately(it)
 
                 onDisplayCardCleared(it)
@@ -359,7 +363,12 @@ abstract class BaseDisplayAgent(
     protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
 
     override fun stopRenderingTimer(templateId: String) {
+        if(stoppedTimerTemplateIdMap[templateId] == true){
+            Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId - already called")
+            return
+        }
         Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId")
+        stoppedTimerTemplateIdMap[templateId] = true
         stopClearTimer(templateId)
     }
 
@@ -378,6 +387,11 @@ abstract class BaseDisplayAgent(
         templateId: String,
         timeout: Long = 7000L
     ) {
+        if(stoppedTimerTemplateIdMap[templateId] == true) {
+            Logger.d(TAG, "[restartClearTimer] not restart because of stopped by stopRenderingTimer() - templateId: $templateId, timeout: $timeout")
+            return
+        }
+
         Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
         stopClearTimer(templateId)
         startClearTimer(templateId, timeout)
