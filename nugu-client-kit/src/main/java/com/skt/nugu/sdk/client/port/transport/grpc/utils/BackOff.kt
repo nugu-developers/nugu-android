@@ -42,7 +42,7 @@ class BackOff private constructor(builder: Builder) {
          * Default constructor of Credentials
          **/
         fun DEFAULT() = BackOff(Builder(
-                maxAttempts = Int.MAX_VALUE,
+                maxAttempts = 100,
                 baseDelay = DEFAULT_BASE_DELAY,
                 maxBackoffTime = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
             )

@@ -26,7 +26,7 @@ interface ConnectionStatusListener {
         /** not connected to server*/
         DISCONNECTED,
         /** attempting to establish a connection to server*/
-        PENDING,
+        CONNECTING,
         /**  connected to server.*/
         CONNECTED
     }
