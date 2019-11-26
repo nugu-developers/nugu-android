@@ -68,10 +68,10 @@ internal class PingService(
                 nextInterval()
             }
         } catch (e: Throwable) {
-            shutdown()
-
-            val status = Status.fromThrowable(e)
-            observer.onError(status.code)
+            if (!isShutdown) {
+                val status = Status.fromThrowable(e)
+                observer.onError(status.code)
+            }
         }
     }
 

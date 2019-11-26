@@ -66,7 +66,7 @@ class MessageRouter(
         if (!isConnected) {
             resetActiveTransport()
             setConnectionStatus(
-                ConnectionStatusListener.Status.PENDING,
+                ConnectionStatusListener.Status.CONNECTING,
                 ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
             )
             createActiveTransport()
@@ -189,13 +189,11 @@ class MessageRouter(
         status: ConnectionStatusListener.Status,
         reason: ConnectionStatusListener.ChangedReason
     ) {
-        if (status != this.status ||
-            (reason != this.reason && reason == ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
-        ) {
+        if (status != this.status) {
             this.status = status
-            this.reason = reason
             notifyObserverOnConnectionStatusChanged(status, reason)
         }
+        this.reason = reason
     }
 
     /**
@@ -231,8 +229,8 @@ class MessageRouter(
      */
     override fun onConnecting(transport: Transport) {
         setConnectionStatus(
-            ConnectionStatusListener.Status.PENDING,
-            ConnectionStatusListener.ChangedReason.SUCCESS
+            ConnectionStatusListener.Status.CONNECTING,
+            reason
         )
     }
 

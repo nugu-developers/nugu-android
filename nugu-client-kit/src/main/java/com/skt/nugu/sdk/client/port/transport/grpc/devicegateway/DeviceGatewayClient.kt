@@ -32,14 +32,13 @@ import devicegateway.grpc.*
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 
 /**
  *  Implementation of DeviceGateway
  **/
 class DeviceGatewayClient(policyResponse: PolicyResponse,
-                          private val messageConsumer: MessageConsumer,
-                          private val transportObserver: TransportListener,
+                          messageConsumer: MessageConsumer?,
+                          transportObserver: TransportListener?,
                           private val authorization: String)
     : Transport
     , PingService.Observer
@@ -48,6 +47,8 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         private const val TAG = "DeviceGatewayClient"
     }
 
+    private var messageConsumer: MessageConsumer? = messageConsumer
+    private var transportObserver: TransportListener? = transportObserver
     private val policies = ConcurrentLinkedQueue(policyResponse.serverPolicyList)
     private var backoff : BackOff = BackOff.DEFAULT()
 
@@ -80,13 +81,13 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         val policy = currentPolicy ?: run {
             Logger.d(TAG, "[connect] no more policy")
 
-            shutdown()
-            transportObserver.onDisconnected(
+            transportObserver?.onDisconnected(
                 this,
                 ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR
             )
             return false
         }
+        transportObserver?.onConnecting(this)
 
         policy.apply {
             val option = Options(
@@ -139,7 +140,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
 
         if(isConnected) {
             isConnected = false
-            transportObserver.onDisconnected(this, when(code) {
+            transportObserver?.onDisconnected(this, when(code) {
                 Status.Code.OK -> ConnectionStatusListener.ChangedReason.SUCCESS
                 Status.Code.CANCELLED -> ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
                 Status.Code.UNAVAILABLE,
@@ -189,8 +190,10 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     }
 
     override fun shutdown() {
-        backoff.reset()
+        messageConsumer = null
+        transportObserver = null
         disconnect()
+        backoff.reset()
     }
 
     override fun onHandoffConnection(
@@ -208,7 +211,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     override fun onPingRequestAcknowledged() {
         if(!isConnected) {
             isConnected = true
-            transportObserver.onConnected(this)
+            transportObserver?.onConnected(this)
 
             backoff.reset()
         }
@@ -216,11 +219,11 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     }
 
     override fun onReceiveDirectives(json: String) {
-        messageConsumer.consumeMessage(json)
+        messageConsumer?.consumeMessage(json)
     }
 
     override fun onReceiveAttachment(json: String) {
-        messageConsumer.consumeMessage(json)
+        messageConsumer?.consumeMessage(json)
     }
 
     private fun toProtobufMessage(request: AttachmentMessageRequest): AttachmentMessage {

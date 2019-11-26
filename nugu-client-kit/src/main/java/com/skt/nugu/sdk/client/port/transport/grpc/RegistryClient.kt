@@ -31,8 +31,11 @@ internal class RegistryClient {
         fun newClient() = RegistryClient()
     }
     private var backoff : BackOff = BackOff.DEFAULT()
+    private var channel: ManagedChannel? = null
 
     var policy: PolicyResponse? = null
+    @Volatile
+    var isShutdown = false
 
     interface Observer {
         fun onCompleted()
@@ -40,6 +43,8 @@ internal class RegistryClient {
     }
 
     fun getPolicy(channel: ManagedChannel, observer: Observer) {
+        this.channel = channel
+
         RegistryGrpc.newStub(channel).getPolicy(
             PolicyRequest.newBuilder().build(),
             object : StreamObserver<PolicyResponse> {
@@ -50,8 +55,6 @@ internal class RegistryClient {
 
                 override fun onError(t: Throwable?) {
                     val status = Status.fromThrowable(t)
-                    Logger.e(TAG, "[onError] error on getPolicy($status)")
-
                     awaitRetry(status.code)
                 }
 
@@ -59,15 +62,21 @@ internal class RegistryClient {
                     if (policy == null) {
                         awaitRetry(Status.Code.NOT_FOUND)
                     } else {
-                        backoff.reset()
-                        observer.onCompleted()
+                        if(!isShutdown) {
+                            shutdown()
+                            observer.onCompleted()
+                        }
                     }
                 }
 
                 private fun awaitRetry(code: Status.Code) = backoff.awaitRetry(code, object : BackOff.Observer {
                     override fun onError(reason: String) {
                         Logger.w(TAG, "[awaitRetry] Error : $reason")
-                        observer.onError(code)
+
+                        if(!isShutdown) {
+                            shutdown()
+                            observer.onError(code)
+                        }
                     }
 
                     override fun onRetry(retriesAttempted: Int) {
@@ -79,7 +88,14 @@ internal class RegistryClient {
     }
 
     fun shutdown() {
+        if(isShutdown) {
+            return
+        }
+        isShutdown = true
+
         backoff.reset()
-        policy = null
+
+        this.channel?.shutdown()
+        this.channel = null
     }
 }
