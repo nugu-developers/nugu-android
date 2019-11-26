@@ -775,12 +775,12 @@ object DefaultTTSAgent {
             )
 
             with(info) {
-                if (info.cancelByStop) {
+                if (cancelByStop) {
                     result.setFailed("playback stopped")
-                    releaseSyncImmediately(info)
+                    releaseSyncImmediately(this)
                 } else {
                     result.setCompleted()
-                    releaseSync(info)
+                    releaseSync(this)
                 }
             }
         }
