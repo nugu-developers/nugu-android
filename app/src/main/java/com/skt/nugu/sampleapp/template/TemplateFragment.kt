@@ -81,6 +81,10 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
                         }
                     }
                 }
+
+                it.setOnClickListener {
+                    ClientManager.getClient().localStopTTS()
+                }
             })
         }
     }
