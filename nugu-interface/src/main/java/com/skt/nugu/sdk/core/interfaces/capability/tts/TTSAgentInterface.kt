@@ -70,7 +70,11 @@ interface TTSAgentInterface {
      */
     fun removeListener(listener: Listener)
 
-    fun stopTTS()
+    /**
+     * Remove a listener
+     * @param cancelAssociation true: cancel all associated directives, false : only stop tts
+     */
+    fun stopTTS(cancelAssociation: Boolean)
 
     interface OnPlaybackListener {
         fun onStart()

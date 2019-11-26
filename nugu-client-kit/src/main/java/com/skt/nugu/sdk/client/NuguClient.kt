@@ -549,7 +549,7 @@ class NuguClient private constructor(
         systemCapabilityAgent.onUserDisconnect()
         systemCapabilityAgent.shutdown()
         audioPlayerAgent.shutdown()
-        ttsAgent.stopTTS()
+        ttsAgent.stopTTS(true)
         networkManager.disable()
     }
 
@@ -562,7 +562,11 @@ class NuguClient private constructor(
     }
 
     override fun localStopTTS() {
-        ttsAgent.stopTTS()
+        ttsAgent.stopTTS(false)
+    }
+
+    override fun cancelTTSAndOthers() {
+        ttsAgent.stopTTS(true)
     }
 
     override fun setDisplayRenderer(renderer: DisplayAggregatorInterface.Renderer?) {

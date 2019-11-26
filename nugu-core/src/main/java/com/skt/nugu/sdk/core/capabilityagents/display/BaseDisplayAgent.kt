@@ -359,6 +359,7 @@ abstract class BaseDisplayAgent(
     protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
 
     override fun stopRenderingTimer(templateId: String) {
+        Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId")
         stopClearTimer(templateId)
     }
 

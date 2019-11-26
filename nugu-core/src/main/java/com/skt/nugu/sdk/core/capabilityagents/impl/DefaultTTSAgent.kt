@@ -328,9 +328,10 @@ object DefaultTTSAgent {
             }
         }
 
-        override fun stopTTS() {
+        override fun stopTTS(cancelAssociation: Boolean) {
             executor.submit {
-                executeCancelCurrentSpeakInfo()
+                Logger.d(TAG, "[stopTTS] cancelAssociation: $cancelAssociation")
+                executeCancelCurrentSpeakInfo(cancelAssociation)
             }
         }
 
@@ -401,7 +402,7 @@ object DefaultTTSAgent {
             }
         }
 
-        private fun executeCancelCurrentSpeakInfo() {
+        private fun executeCancelCurrentSpeakInfo(cancelAssociation: Boolean = true) {
             val info = currentInfo
 
             if (info == null) {
@@ -411,7 +412,7 @@ object DefaultTTSAgent {
             Logger.d(TAG, "[executeCancelCurrentSpeakInfo] cancel currentSpeakInfo : $currentInfo")
 
             with(info) {
-                cancelByStop = true
+                cancelByStop = cancelAssociation
                 if (isPlaybackInitiated) {
                     setDesireState(TTSAgentInterface.State.STOPPED)
                     stopPlaying()
@@ -774,13 +775,13 @@ object DefaultTTSAgent {
             )
 
             with(info) {
-                result.setCompleted()
-            }
-
-            if (info.cancelByStop) {
-                releaseSyncImmediately(info)
-            } else {
-                releaseSync(info)
+                if (info.cancelByStop) {
+                    result.setFailed("playback stopped")
+                    releaseSyncImmediately(info)
+                } else {
+                    result.setCompleted()
+                    releaseSync(info)
+                }
             }
         }
 
