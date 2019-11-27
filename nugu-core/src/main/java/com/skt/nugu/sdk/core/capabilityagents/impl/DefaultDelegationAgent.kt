@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentFactory
@@ -55,7 +56,8 @@ object DefaultDelegationAgent {
     ) : AbstractDelegationAgent(defaultClient) {
         companion object {
             private const val NAME_DELEGATE = "Delegate"
-            private val DELEGATE = NamespaceAndName(NAMESPACE,
+            private val DELEGATE = NamespaceAndName(
+                NAMESPACE,
                 NAME_DELEGATE
             )
         }
@@ -77,14 +79,21 @@ object DefaultDelegationAgent {
         private fun handleDelegate(info: DirectiveInfo) {
             Logger.d(TAG, "[handleDelegate] info: $info")
             val payload = MessageFactory.create(info.directive.payload, DelegatePayload::class.java)
-            if(payload == null) {
+            if (payload == null) {
                 Logger.d(TAG, "[handleDelegate] invalid payload: ${info.directive.payload}")
-                setHandlingFailed(info, "[handleDelegate] invalid payload: ${info.directive.payload}")
+                setHandlingFailed(
+                    info,
+                    "[handleDelegate] invalid payload: ${info.directive.payload}"
+                )
                 return
             }
 
             executor.submit {
-                defaultClient.onReceive(payload.appId, payload.playServiceId, payload.data.toString())
+                defaultClient.onReceive(
+                    payload.appId,
+                    payload.playServiceId,
+                    payload.data.toString()
+                )
                 setHandlingCompleted(info)
             }
         }
@@ -119,25 +128,30 @@ object DefaultDelegationAgent {
             stateRequestToken: Int
         ) {
             executor.submit {
-                val appContext = defaultClient.getAppContext()
-                if(appContext != null) {
-                    contextSetter.setState(
-                        namespaceAndName, buildContext(appContext).toString(),
-                        StateRefreshPolicy.SOMETIMES, stateRequestToken
-                    )
-                } else {
-                    contextSetter.setState(
-                        namespaceAndName, "",
-                        StateRefreshPolicy.SOMETIMES, stateRequestToken
-                    )
-                }
+                contextSetter.setState(
+                    namespaceAndName, buildContext(defaultClient.getAppContext())?.toString() ?: "",
+                    StateRefreshPolicy.SOMETIMES, stateRequestToken
+                )
             }
         }
 
-        private fun buildContext(appContext: DelegationClient.Context) = JsonObject().apply {
-            addProperty("version", VERSION)
-            addProperty("playServiceId", appContext.playServiceId)
-            addProperty("data", appContext.data)
+        private fun buildContext(appContext: DelegationClient.Context?): JsonObject? {
+            if (appContext == null) {
+                return null
+            }
+
+            val jsonData = try {
+                JsonParser().parse(appContext.data).asJsonObject
+            } catch (e: Exception) {
+                Logger.e(TAG, "[buildContext] invalid : ${appContext.data}", e)
+                null
+            } ?: return null
+
+            return JsonObject().apply {
+                addProperty("version", VERSION)
+                addProperty("playServiceId", appContext.playServiceId)
+                add("data", jsonData)
+            }
         }
 
         private fun removeDirective(info: DirectiveInfo) {
