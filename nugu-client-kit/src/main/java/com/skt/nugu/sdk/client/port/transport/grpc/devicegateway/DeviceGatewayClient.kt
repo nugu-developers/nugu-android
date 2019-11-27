@@ -37,8 +37,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  *  Implementation of DeviceGateway
  **/
 class DeviceGatewayClient(policyResponse: PolicyResponse,
-                          messageConsumer: MessageConsumer?,
-                          transportObserver: TransportListener?,
+                          private var messageConsumer: MessageConsumer?,
+                          private var transportObserver: TransportListener?,
                           private val authorization: String)
     : Transport
     , PingService.Observer
@@ -47,8 +47,6 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         private const val TAG = "DeviceGatewayClient"
     }
 
-    private var messageConsumer: MessageConsumer? = messageConsumer
-    private var transportObserver: TransportListener? = transportObserver
     private val policies = ConcurrentLinkedQueue(policyResponse.serverPolicyList)
     private var backoff : BackOff = BackOff.DEFAULT()
 
@@ -63,7 +61,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
     private var isConnected = false
 
     private fun nextPolicy(): PolicyResponse.ServerPolicy? {
-        Logger.w(TAG, "[nextPolicy]")
+        Logger.d(TAG, "[nextPolicy]")
         backoff.reset()
 
         currentPolicy = policies.poll()
@@ -79,7 +77,7 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
         }
 
         val policy = currentPolicy ?: run {
-            Logger.d(TAG, "[connect] no more policy")
+            Logger.w(TAG, "[connect] no more policy")
 
             transportObserver?.onDisconnected(
                 this,
@@ -114,10 +112,13 @@ class DeviceGatewayClient(policyResponse: PolicyResponse,
 
     override fun disconnect() {
         pingService?.shutdown()
+        pingService = null
         eventStreamService?.shutdown()
+        eventStreamService = null
         crashReportService?.shutdown()
-        ChannelBuilderUtils.shutdown(currentChannel)
-
+        crashReportService = null
+        currentChannel?.shutdownNow()
+        currentChannel = null
         isConnected = false
     }
 

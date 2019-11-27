@@ -35,9 +35,8 @@ class GrpcTransport private constructor(
     private val registryServerOption: Options,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
-    transportObserver: TransportListener
+    private var transportObserver: TransportListener?
 ) : Transport, AuthStateListener, TransportListener {
-    private var transportObserver: TransportListener? = transportObserver
     /**
      * Transport Constructor.
      */
@@ -165,6 +164,10 @@ class GrpcTransport private constructor(
     }
 
     override fun disconnect() {
+        if (state != State.CONNECTED && state != State.CONNECTING) {
+            Logger.d(TAG, "disconnect failed, Status : ($state)")
+            return
+        }
         state = State.DISCONNECTING
         deviceGatewayClient?.disconnect()
     }
