@@ -119,11 +119,25 @@ object DefaultDelegationAgent {
             stateRequestToken: Int
         ) {
             executor.submit {
-                contextSetter.setState(
-                    namespaceAndName, defaultClient.getAppContext() ?: "",
-                    StateRefreshPolicy.SOMETHIMES, stateRequestToken
-                )
+                val appContext = defaultClient.getAppContext()
+                if(appContext != null) {
+                    contextSetter.setState(
+                        namespaceAndName, buildContext(appContext).toString(),
+                        StateRefreshPolicy.SOMETIMES, stateRequestToken
+                    )
+                } else {
+                    contextSetter.setState(
+                        namespaceAndName, "",
+                        StateRefreshPolicy.SOMETIMES, stateRequestToken
+                    )
+                }
             }
+        }
+
+        private fun buildContext(appContext: DelegationClient.Context) = JsonObject().apply {
+            addProperty("version", VERSION)
+            addProperty("playServiceId", appContext.playServiceId)
+            addProperty("data", appContext.data)
         }
 
         private fun removeDirective(info: DirectiveInfo) {

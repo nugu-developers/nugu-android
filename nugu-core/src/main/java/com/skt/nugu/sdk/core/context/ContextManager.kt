@@ -106,7 +106,7 @@ class ContextManager : ContextManagerInterface {
         for (it in namespaceNameToStateInfo) {
             val stateInfo = it.value
             if (StateRefreshPolicy.ALWAYS == stateInfo.refreshPolicy ||
-                StateRefreshPolicy.SOMETHIMES == stateInfo.refreshPolicy
+                StateRefreshPolicy.SOMETIMES == stateInfo.refreshPolicy
             ) {
                 pendingOnStateProviders.add(it.key)
                 stateInfo.stateProvider?.provideState(this, it.key, curStateReqToken)
@@ -134,7 +134,7 @@ class ContextManager : ContextManagerInterface {
             add("client", client)
 
             for (it in namespaceNameToStateInfo) {
-                if (it.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETHIMES == it.value.refreshPolicy) {
+                if (it.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETIMES == it.value.refreshPolicy) {
                     // pass
                 } else {
                     if (it.key.namespace == SUPPORTED_INTERFACES) {
@@ -256,7 +256,7 @@ class ContextManager : ContextManagerInterface {
 
         return if (stateInfo == null) {
             return when (refreshPolicy) {
-                StateRefreshPolicy.ALWAYS, StateRefreshPolicy.SOMETHIMES -> {
+                StateRefreshPolicy.ALWAYS, StateRefreshPolicy.SOMETIMES -> {
                     ContextSetterInterface.SetStateResult.STATE_PROVIDER_NOT_REGISTERED
                 }
                 StateRefreshPolicy.NEVER -> {

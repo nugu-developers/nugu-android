@@ -58,7 +58,6 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
 import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.context.PlayStackContextManager
-import com.skt.nugu.sdk.core.context.PlayStackProvider
 import com.skt.nugu.sdk.core.directivesequencer.DirectiveSequencer
 import com.skt.nugu.sdk.core.directivesequencer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.core.directivesequencer.MessageInterpreter
@@ -417,7 +416,7 @@ class NuguClient private constructor(
                         contextManager.setState(
                             namespaceAndName,
                             "",
-                            StateRefreshPolicy.SOMETHIMES,
+                            StateRefreshPolicy.SOMETIMES,
                             0
                         )
                     })

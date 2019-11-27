@@ -15,11 +15,12 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.delegation
 
-/**
- * TODO
- */
 interface DelegationClient {
-    fun getAppId(): String
-    fun getAppContext(): String?
+    data class Context(
+        val playServiceId: String,
+        val data: String
+    )
+
+    fun getAppContext(): Context?
     fun onReceive(data: String)
 }
