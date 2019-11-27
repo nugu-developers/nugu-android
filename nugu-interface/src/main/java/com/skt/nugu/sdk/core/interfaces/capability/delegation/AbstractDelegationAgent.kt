@@ -22,5 +22,6 @@ abstract class AbstractDelegationAgent(
 ) : CapabilityAgent() {
     companion object {
         const val NAMESPACE = "Delegation"
+        const val VERSION = "1.0"
     }
 }

@@ -19,5 +19,5 @@ package com.skt.nugu.sdk.core.interfaces.context
 enum class StateRefreshPolicy {
     NEVER,  // State의 변경은 변경하는 주체에서 설정하며, Context 필요시 다시 get하지 않고 현재 설정된 것을 쓴다.
     ALWAYS, // 항상 State는 갱신되야하며, 항상 Context에 포함되어야한다.
-    SOMETHIMES // 항상 State는 갱신되어야하지만, State가 Empty일 경우에 Context에 포함되지 않는다.
+    SOMETIMES // 항상 State는 갱신되어야하지만, State가 Empty일 경우에 Context에 포함되지 않는다.
 }
