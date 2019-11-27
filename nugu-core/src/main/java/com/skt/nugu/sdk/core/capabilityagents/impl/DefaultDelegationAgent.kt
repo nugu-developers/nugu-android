@@ -84,7 +84,7 @@ object DefaultDelegationAgent {
             }
 
             executor.submit {
-                defaultClient.onReceive(payload.data.toString())
+                defaultClient.onReceive(payload.appId, payload.playServiceId, payload.data.toString())
                 setHandlingCompleted(info)
             }
         }
