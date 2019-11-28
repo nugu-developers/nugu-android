@@ -23,15 +23,18 @@ import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
+import com.skt.nugu.sdk.core.network.event.AsrRecognizeEventPayload
 
-abstract class AbstractSpeechToTextConverter(
+class SpeechToTextConverterImpl(
     override var enablePartialResult: Boolean,
     override var enableSpeakerRecognition: Boolean,
+    private val enableServerEpd: Boolean,
     private val messageSender: MessageSender,
     private val audioEncoder: Encoder
 ) : SpeechToTextConverterInterface {
     companion object {
-        private const val TAG = "AbstractSpeechToTextConverter"
+        private const val TAG = "SpeechToTextConverterImpl"
     }
 
     private val observers = HashSet<SpeechToTextConverterInterface.OnStateChangedListener>()
@@ -45,6 +48,8 @@ abstract class AbstractSpeechToTextConverter(
     override fun startSpeechToTextConverter(
         reader: SharedDataStream.Reader,
         format: AudioFormat,
+        context: String,
+        payload: ExpectSpeechPayload?,
         observer: ASRAgentInterface.OnResultListener
     ) {
         if (state == SpeechToTextConverterInterface.State.ACTIVE) {
@@ -74,7 +79,7 @@ abstract class AbstractSpeechToTextConverter(
             audioEncoder
         ) {
             override fun createRecognizeEvent(): EventMessageRequest {
-                val event = this@AbstractSpeechToTextConverter.createRecognizeEvent()
+                val event = this@SpeechToTextConverterImpl.createRecognizeEvent(context, payload)
                 dialogRequestId = event.dialogRequestId
                 return event
             }
@@ -97,7 +102,22 @@ abstract class AbstractSpeechToTextConverter(
         senderThread?.requestFinish()
     }
 
-    abstract fun createRecognizeEvent(): EventMessageRequest
+    fun createRecognizeEvent(context: String, payload: ExpectSpeechPayload?): EventMessageRequest = EventMessageRequest.Builder(
+        context,
+        DefaultASRAgent.RECOGNIZE.namespace,
+        DefaultASRAgent.RECOGNIZE.name,
+        AbstractASRAgent.VERSION
+    ).payload(
+        AsrRecognizeEventPayload(
+            codec = AsrRecognizeEventPayload.CODEC_SPEEX,
+            sessionId = payload?.sessionId,
+            playServiceId = payload?.playServiceId,
+            property = payload?.property,
+            domainTypes = payload?.domainTypes,
+            endpointing = if(enableServerEpd) AsrRecognizeEventPayload.ENDPOINTING_SERVER else AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
+            encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
+        ).toJsonString()
+    ).build()
 
     override fun getState(): SpeechToTextConverterInterface.State = state
 

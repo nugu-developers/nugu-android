@@ -61,7 +61,7 @@ abstract class AbstractSpeechProcessor(
     protected var context: String? = null
     protected var payload: ExpectSpeechPayload? = null
 
-    abstract val speechToTextConverter: AbstractSpeechToTextConverter
+    abstract val speechToTextConverter: SpeechToTextConverterImpl
     abstract val endPointDetector: AudioEndPointDetector
     var inputProcessor: InputProcessor? = null
 
@@ -99,11 +99,13 @@ abstract class AbstractSpeechProcessor(
             return
         }
 
-        endPointDetector.startDetector(
+        if(!endPointDetector.startDetector(
             audioInputStream.createReader(),
             audioFormat,
             ((payload?.timeoutInMilliseconds ?: defaultTimeoutMillis) / 1000L).toInt()
-        )
+        )) {
+            Logger.e(TAG, "[startProcessor] failed to start epd.")
+        }
     }
 
     final override fun stopProcessor() {
