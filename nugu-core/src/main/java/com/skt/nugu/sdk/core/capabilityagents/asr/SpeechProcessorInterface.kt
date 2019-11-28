@@ -42,7 +42,7 @@ interface SpeechProcessorInterface {
     var enablePartialResult: Boolean
     var enableSpeakerRecognition: Boolean
 
-    fun startProcessor(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, context: String?, wakewordStartPosition: Long?, wakewordEndPosition: Long?, payload: ExpectSpeechPayload?)
+    fun startProcessor(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, context: String, wakewordStartPosition: Long?, wakewordEndPosition: Long?, payload: ExpectSpeechPayload?)
     fun stopProcessor()
 
     fun addListener(listener: OnStateChangeListener)
