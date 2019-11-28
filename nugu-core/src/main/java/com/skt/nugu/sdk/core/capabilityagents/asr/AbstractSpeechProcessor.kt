@@ -72,7 +72,7 @@ abstract class AbstractSpeechProcessor(
     final override fun startProcessor(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        context: String?,
+        context: String,
         wakewordStartPosition: Long?,
         wakewordEndPosition: Long?,
         payload: ExpectSpeechPayload?
@@ -84,14 +84,17 @@ abstract class AbstractSpeechProcessor(
         this.wakewordEndPosition = wakewordEndPosition
         this.payload = payload
 
-        Logger.d(TAG, "[startProcessor] wakewordStartPosition:$wakewordStartPosition, wakewordEndPosition:$wakewordEndPosition, currentInputPosition: ${audioInputStream?.getPosition()}")
+        Logger.d(
+            TAG,
+            "[startProcessor] wakewordStartPosition:$wakewordStartPosition, wakewordEndPosition:$wakewordEndPosition, currentInputPosition: ${audioInputStream?.getPosition()}"
+        )
 
-        if(audioInputStream == null) {
+        if (audioInputStream == null) {
             Logger.e(TAG, "[startProcessor] audioInputProcessor is null")
             return
         }
 
-        if(audioFormat ==  null) {
+        if (audioFormat == null) {
             Logger.e(TAG, "[startProcessor] audioFormat is null")
             return
         }
@@ -99,7 +102,7 @@ abstract class AbstractSpeechProcessor(
         endPointDetector.startDetector(
             audioInputStream.createReader(),
             audioFormat,
-            ((payload?.timeoutInMilliseconds ?: defaultTimeoutMillis)/1000L).toInt()
+            ((payload?.timeoutInMilliseconds ?: defaultTimeoutMillis) / 1000L).toInt()
         )
     }
 
@@ -117,11 +120,11 @@ abstract class AbstractSpeechProcessor(
     }
 
     fun setState(state: SpeechProcessorInterface.State) {
-        if(this.state == state) {
+        if (this.state == state) {
             return
         }
 
-        if(!this.state.isActive() && !state.isActive()) {
+        if (!this.state.isActive() && !state.isActive()) {
             return
         }
 

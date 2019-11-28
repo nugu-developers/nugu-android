@@ -145,7 +145,7 @@ object DefaultASRAgent {
         private var wakewordEndPosition: Long? = null
         private var expectSpeechPayload: ExpectSpeechPayload? = null
 
-        private var currentContext: String? = null
+        private var contextForRecognitionOnForegroundFocus: String? = null
 
         private var initialDialogUXStateReceived: Boolean = false
 
@@ -488,12 +488,11 @@ object DefaultASRAgent {
                     )
                     return false
                 }
+                contextForRecognitionOnForegroundFocus = jsonContext
             }
 
-            currentContext = jsonContext
-
             if (focusState == FocusState.FOREGROUND) {
-                executeInternalStartRecognition()
+                executeInternalStartRecognition(jsonContext)
             }
 
             return true
@@ -509,29 +508,25 @@ object DefaultASRAgent {
             focusState = newFocus
 
             when (newFocus) {
+                FocusState.FOREGROUND -> {
+                    val context = contextForRecognitionOnForegroundFocus
+                    contextForRecognitionOnForegroundFocus = null
+                    if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
+                        executeInternalStartRecognition(context)
+                    }
+                }
                 FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
                 FocusState.NONE -> executeStopRecognition()
             }
-
-            if (newFocus != FocusState.FOREGROUND) {
-                Logger.d(TAG, "[executeOnFocusChanged] lost focus")
-                return
-            }
-
-            if (state == ASRAgentInterface.State.RECOGNIZING) {
-                return
-            }
-
-            executeInternalStartRecognition()
         }
 
-        private fun executeInternalStartRecognition() {
+        private fun executeInternalStartRecognition(context: String) {
             Logger.d(TAG, "[executeInternalStartRecognition]")
             executeSelectSpeechProcessor()
             currentSpeechProcessor.startProcessor(
                 audioInputStream,
                 audioFormat,
-                currentContext,
+                context,
                 wakewordStartPosition,
                 wakewordEndPosition,
                 expectSpeechPayload
