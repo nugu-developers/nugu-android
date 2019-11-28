@@ -38,8 +38,6 @@ internal class EventStreamService(
     companion object {
         private const val TAG = "EventStreamService"
     }
-    @Volatile
-    var isShutdown = false
 
     interface Observer {
         fun onReceiveDirectives(json: String)
@@ -74,15 +72,13 @@ internal class EventStreamService(
             }
 
             override fun onError(t: Throwable) {
+                Logger.e(TAG, "[EventStreamService] onError : $t")
                 val status = Status.fromThrowable(t)
-                if(!isShutdown) {
-                    Logger.d(TAG, "[EventStreamService] onError : ${status.code}")
-                    observer.onError(status.code)
-                }
+                observer.onError(status.code)
             }
 
             override fun onCompleted() {
-                Logger.d(TAG, "[EventStreamService] onCompleted")
+                Logger.e(TAG, "[EventStreamService] onCompleted")
                 shutdown()
             }
 
@@ -150,8 +146,6 @@ internal class EventStreamService(
     }
 
     fun shutdown() {
-        isShutdown = true
-
         try {
             eventStream?.onCompleted()
         } catch (ignored : IllegalStateException) {
