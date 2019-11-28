@@ -149,11 +149,9 @@ class MessageRouter(
 
     /**
      * Expect to have the message sent to the transport.
-     * @param messageRequest the messageRequest to be sent
-     * @return true is success, otherwise false
      */
-    override fun sendMessage(messageRequest: MessageRequest) : Boolean {
-        return activeTransport?.send(messageRequest) ?: false
+    override fun sendMessage(messageRequest: MessageRequest) {
+        activeTransport?.send(messageRequest)
     }
 
     /**
@@ -234,7 +232,20 @@ class MessageRouter(
     }
 
     /**
-     * receive the message from transport, then it is notify
+     * Notify the onServerSideDisconnect observer When disconnected by DeviceGateway.
+     * @see [setConnectionStatus]
+     * @param transport is Interface
+     */
+    override fun onServerSideDisconnect(transport: Transport) {
+        Logger.d(TAG, "[onServerSideDisconnect] $transport")
+        setConnectionStatus(
+            ConnectionStatusListener.Status.DISCONNECTED,
+            ConnectionStatusListener.ChangedReason.SUCCESS
+        )
+    }
+
+    /**
+     * receive the message from transport, then notify it to observer
      * @see [setConnectionStatus]
      * @param message the message received
      */

@@ -33,4 +33,8 @@ interface TransportListener {
      * Called when a disconnected
      */
     fun onDisconnected(transport: Transport, reason: ConnectionStatusListener.ChangedReason)
+    /**
+     * Called when a disconnected from DeviceGateway
+     */
+    fun onServerSideDisconnect(transport: Transport)
 }

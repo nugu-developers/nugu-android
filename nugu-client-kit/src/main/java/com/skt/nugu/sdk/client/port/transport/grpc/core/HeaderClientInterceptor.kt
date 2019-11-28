@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc
+package com.skt.nugu.sdk.client.port.transport.grpc.core
 
 import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.*
 
-/**
- *  Implementation of ClientInterceptor that Authorization to Server
- **/
+
 internal class HeaderClientInterceptor(val authorization: String) : ClientInterceptor {
     companion object {
         private const val TAG = "HeaderClientInterceptor"
