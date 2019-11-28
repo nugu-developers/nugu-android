@@ -34,7 +34,7 @@ import io.grpc.Status
 class GrpcTransport private constructor(
     private val registryServerOption: Options,
     private val authDelegate: AuthDelegate,
-    private val messageConsumer: MessageConsumer,
+    private var messageConsumer: MessageConsumer,
     transportObserver: TransportListener
 ) : Transport, AuthStateListener, TransportListener {
     private var transportObserver: TransportListener? = transportObserver
