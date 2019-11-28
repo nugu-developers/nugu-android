@@ -56,11 +56,11 @@ class ChannelBuilderUtils {
             var isTerminated = false
             channel?.apply {
                 try {
-                    if (isTerminated()) {
+                    if (isShutdown) {
                         isTerminated = true
                         return@apply
                     }
-                    isTerminated = shutdown().awaitTermination(10, TimeUnit.MILLISECONDS)
+                    isTerminated = shutdown().awaitTermination(10, TimeUnit.SECONDS)
                 } catch (e: Throwable) {
                     // nothing to do
                 } finally {
