@@ -20,7 +20,6 @@ import devicegateway.grpc.PingRequest
 import devicegateway.grpc.PolicyResponse
 import devicegateway.grpc.VoiceServiceGrpc
 import io.grpc.Status
-import java.util.*
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -33,11 +32,10 @@ internal class PingService(
     healthCheckPolicy: PolicyResponse.HealthCheckPolicy,
     observer: Observer
 ) {
-    private val healthCheckPolicy = healthCheckPolicy
     private val timeout: Long = healthCheckPolicy.healthCheckTimeout.toLong()
+    private val pingInterval: Long =  healthCheckPolicy.retryDelay.toLong()
     private var intervalFuture: ScheduledFuture<*>? = null
-    @Volatile
-    var isShutdown = false
+    private var isShutdown = false
 
     companion object {
         private const val TAG = "PingService"
@@ -56,38 +54,22 @@ internal class PingService(
         fun onError(code: Status.Code)
     }
 
-    private val pingTask = Runnable {
-        try {
-            blockingStub.withDeadlineAfter(
-                if (timeout > 0) timeout else defaultTimeout,
-                TimeUnit.MILLISECONDS
-            ).ping(PingRequest.newBuilder().build())
-
-            if (!isShutdown) {
-                observer.onPingRequestAcknowledged()
-                nextInterval()
-            }
-        } catch (e: Throwable) {
-            shutdown()
-
-            val status = Status.fromThrowable(e)
-            observer.onError(status.code)
-        }
-    }
-
     init {
-        intervalFuture = executorService.schedule(pingTask, 0, TimeUnit.MILLISECONDS)
-    }
-
-    private fun nextInterval() {
-        val retryDelay: Long = healthCheckPolicy.retryDelay.toLong()
-        val ttlMax: Long = healthCheckPolicy.ttlMax.toLong()
-        val beta = healthCheckPolicy.beta
-        val internal = Math.max(
-            (beta * Math.log(Random().nextDouble())).toLong(),
-            retryDelay
-        )
-        intervalFuture = executorService.schedule(pingTask, internal, TimeUnit.MILLISECONDS)
+        intervalFuture = executorService.scheduleWithFixedDelay({
+            try {
+                val response = blockingStub.withDeadlineAfter(
+                    if (timeout > 0) timeout else defaultTimeout,
+                    TimeUnit.MILLISECONDS
+                ).ping(PingRequest.newBuilder().build())
+                if (!isShutdown) {
+                    observer.onPingRequestAcknowledged()
+                }
+            } catch (th: Throwable) {
+                shutdown()
+                val status = Status.fromThrowable(th)
+                observer.onError(status.code)
+            }
+        }, 0, if (pingInterval > 0) pingInterval else defaultInterval, TimeUnit.MILLISECONDS)
     }
 
     fun shutdown() {
