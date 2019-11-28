@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.message
+package com.skt.nugu.sdk.client.port.transport.grpc.core
 
-/**
- * An interface which send [MessageRequest]
- */
-interface MessageSender {
-    /**
-     * Send message
-     * @param messageRequest the messageRequest to be sent
-     */
-    fun sendMessage(messageRequest: MessageRequest)
+import com.skt.nugu.sdk.client.port.transport.grpc.Channels
+
+internal interface GrpcServiceInterface {
+    fun shutdown()
+    fun connect(channel: Channels)
 }
