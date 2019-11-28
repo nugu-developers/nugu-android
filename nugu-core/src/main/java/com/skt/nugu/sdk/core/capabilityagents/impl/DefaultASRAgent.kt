@@ -860,20 +860,13 @@ object DefaultASRAgent {
         }
 
         private fun sendEvent(name: String, payload: JsonObject) {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    messageSender.sendMessage(createMessage(jsonContext))
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    currentContext?.let {
-                        messageSender.sendMessage(createMessage(it))
-                    }
-                }
-
-                private fun createMessage(jsonContext: String): EventMessageRequest =
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(payload.toString()).build()
-            }, namespaceAndName)
+            messageSender.sendMessage(
+                EventMessageRequest.Builder(
+                    contextManager.getContextWithoutUpdate(
+                        namespaceAndName
+                    ), NAMESPACE, name, VERSION
+                ).payload(payload.toString()).build()
+            )
         }
 
         private var currentSessionId: String? = null
