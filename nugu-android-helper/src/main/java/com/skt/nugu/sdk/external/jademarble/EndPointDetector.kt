@@ -109,7 +109,7 @@ class EndPointDetector(
         audioInputStreamReader: SharedDataStream.Reader,
         audioFormat: AudioFormat,
         timeoutInSeconds: Int
-    ) {
+    ): Boolean {
         Log.d(TAG, "[startDetector] $audioInputStreamReader")
         speechStartPosition = null
         speechEndPosition = null
@@ -131,6 +131,8 @@ class EndPointDetector(
                 , pauseLengthInMilliseconds
             )
         }
+
+        return true
     }
 
     override fun stopDetector() {

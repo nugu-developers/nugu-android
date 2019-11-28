@@ -15,16 +15,11 @@
  */
 package com.skt.nugu.sdk.core.capabilityagents.asr
 
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
-import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultASRAgent
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
-import com.skt.nugu.sdk.core.network.request.EventMessageRequest
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
-import com.skt.nugu.sdk.core.network.event.AsrRecognizeEventPayload
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.util.concurrent.ScheduledFuture
@@ -43,8 +38,7 @@ class DefaultServerSideSpeechProcessor(
     }
 
     override val endPointDetector = EndPointDetectorImpl()
-    override val speechToTextConverter =
-        SpeechToTextConverterImpl(enablePartialResult, enableSpeakerRecognition, messageSender, audioEncoder)
+    override val speechToTextConverter = SpeechToTextConverterImpl(enablePartialResult, enableSpeakerRecognition, true, messageSender, audioEncoder)
 
     private val timeoutScheduler = ScheduledThreadPoolExecutor(1)
     private var timeoutFuture: ScheduledFuture<*>? = null
@@ -84,14 +78,17 @@ class DefaultServerSideSpeechProcessor(
             reader: SharedDataStream.Reader,
             audioFormat: AudioFormat,
             timeoutInSeconds: Int
-        ) {
-            speechToTextConverter.startSpeechToTextConverter(reader, audioFormat, speechToTextConverterEventObserver)
+        ): Boolean {
+            val recognitionContext = context ?: return false
+            speechToTextConverter.startSpeechToTextConverter(reader, audioFormat, recognitionContext, payload, speechToTextConverterEventObserver)
             state = AudioEndPointDetector.State.EXPECTING_SPEECH
             timeoutFuture?.cancel(true)
             timeoutFuture = timeoutScheduler.schedule({
                 state = AudioEndPointDetector.State.TIMEOUT
                 speechToTextConverter.stopSpeechToTextConverter()
             }, timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+
+            return true
         }
 
         override fun stopDetector() {
@@ -115,31 +112,5 @@ class DefaultServerSideSpeechProcessor(
                 it.onStateChanged(state)
             }
         }
-    }
-
-    inner class SpeechToTextConverterImpl(
-        enablePartialResult: Boolean,
-        enableSpeakerRecognition: Boolean,
-        messageSender: MessageSender,
-        audioEncoder: Encoder
-    ) :
-        AbstractSpeechToTextConverter(enablePartialResult, enableSpeakerRecognition, messageSender, audioEncoder) {
-        override fun createRecognizeEvent(): EventMessageRequest =
-            EventMessageRequest.Builder(
-                context ?: "",
-                DefaultASRAgent.RECOGNIZE.namespace,
-                DefaultASRAgent.RECOGNIZE.name,
-                AbstractASRAgent.VERSION
-            ).payload(
-                AsrRecognizeEventPayload(
-                    codec = AsrRecognizeEventPayload.CODEC_SPEEX,
-                    sessionId = payload?.sessionId,
-                    playServiceId = payload?.playServiceId,
-                    property = payload?.property,
-                    domainTypes = payload?.domainTypes,
-                    endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
-                    encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
-                ).toJsonString()
-            ).build()
     }
 }
