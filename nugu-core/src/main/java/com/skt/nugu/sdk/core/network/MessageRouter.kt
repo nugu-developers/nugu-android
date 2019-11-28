@@ -50,7 +50,7 @@ class MessageRouter(
     private var isEnabled: Boolean = false
     /** The current connection status. */
     var status: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
-    var reason: ConnectionStatusListener.ChangedReason = ConnectionStatusListener.ChangedReason.NONE
+
     /**
      * lock for create transport
      */
@@ -63,7 +63,7 @@ class MessageRouter(
         isEnabled = true
 
         val isConnected = activeTransport?.isConnected() ?: false
-        if (!isConnected) {
+        if (activeTransport == null || !isConnected) {
             resetActiveTransport()
             setConnectionStatus(
                 ConnectionStatusListener.Status.PENDING,
@@ -189,11 +189,8 @@ class MessageRouter(
         status: ConnectionStatusListener.Status,
         reason: ConnectionStatusListener.ChangedReason
     ) {
-        if (status != this.status ||
-            (reason != this.reason && reason == ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR)
-        ) {
+        if (status != this.status) {
             this.status = status
-            this.reason = reason
             notifyObserverOnConnectionStatusChanged(status, reason)
         }
     }
@@ -207,7 +204,7 @@ class MessageRouter(
         Logger.d(TAG, "[onConnected] $transport")
         setConnectionStatus(
             ConnectionStatusListener.Status.CONNECTED,
-            ConnectionStatusListener.ChangedReason.SUCCESS
+            ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
         )
     }
 
