@@ -197,7 +197,7 @@ class NuguClient private constructor(
     override val audioPlayerAgent: AbstractAudioPlayerAgent
     override val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
-    private val systemAgent: AbstractSystemAgent
+    override val systemAgent: AbstractSystemAgent
     override var displayAgent: DisplayAgentInterface? = null
     override var locationAgent: LocationAgentInterface? = null
 
