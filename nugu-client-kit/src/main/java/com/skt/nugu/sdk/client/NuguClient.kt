@@ -410,7 +410,7 @@ class NuguClient private constructor(
                 addDirectiveHandler(asrAgent)
                 addDirectiveHandler(systemCapabilityAgent)
                 delegationClient?.let {
-                    addDirectiveHandler(DefaultDelegationAgent.FACTORY.create(it).apply {
+                    addDirectiveHandler(DefaultDelegationAgent.FACTORY.create(contextManager, networkManager, inputProcessorManager, it).apply {
                         contextManager.setStateProvider(namespaceAndName, this)
                         // update delegate initial state
                         contextManager.setState(

@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.delegation
+package com.skt.nugu.sdk.core.interfaces.inputprocessor
 
-import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-
-interface DelegationAgentFactory {
-    fun create(
-        contextGetter: ContextGetterInterface,
-        messageSender: MessageSender,
-        inputProcessorManager: InputProcessorManagerInterface,
-        defaultClient: DelegationClient
-    ): AbstractDelegationAgent
+interface SingleInputProcessor {
 }
