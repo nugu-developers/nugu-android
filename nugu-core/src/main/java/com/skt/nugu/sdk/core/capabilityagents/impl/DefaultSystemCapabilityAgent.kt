@@ -329,9 +329,22 @@ object DefaultSystemCapabilityAgent {
                         CODE_UNAUTHORIZED_REQUEST_EXCEPTION -> {
                             authDelegate.onAuthFailure(authDelegate.getAuthorization())
                         }
-                        CODE_ASR_RECOGNIZING_EXCEPTION,
                         CODE_PLAY_ROUTER_PROCESSING_EXCEPTION,
-                        CODE_TTS_SPEAKING_EXCEPTION,
+                        CODE_TTS_SPEAKING_EXCEPTION -> {
+                            val exceptionCode = try {
+                                SystemCapabilityAgentListener.ExceptionCode.valueOf(payload.code)
+                            } catch (e: Exception){
+                                // ignore
+                                null
+                            }
+
+                            if(exceptionCode != null) {
+                                observers.forEach {
+                                    it.onException(exceptionCode, payload.description)
+                                }
+                            }
+                        }
+                        CODE_ASR_RECOGNIZING_EXCEPTION,
                         CODE_INTERNAL_SERVICE_EXCEPTION -> {
                         }
                     }

@@ -19,8 +19,20 @@ package com.skt.nugu.sdk.core.interfaces.capability.system
  * This interface is used by the System Capability agent
  */
 interface SystemCapabilityAgentListener {
+    enum class ExceptionCode {
+        PLAY_ROUTER_PROCESSING_EXCEPTION,
+        TTS_SPEAKING_EXCEPTION
+    }
+
     /**
      * After receiving an event, turn off immediately.
      */
     fun onTurnOff()
+
+    /**
+     * Called on receive exception.
+     * @param code
+     * @param description
+     */
+    fun onException(code: ExceptionCode, description: String?)
 }
