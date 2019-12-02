@@ -47,6 +47,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 //import javax.annotation.concurrent.GuardedBy
 //import javax.annotation.concurrent.ThreadSafe
@@ -191,6 +192,7 @@ object DefaultTTSAgent {
         private val listeners = HashSet<TTSAgentInterface.Listener>()
         private val requestListenerMap =
             ConcurrentHashMap<String, TTSAgentInterface.OnPlaybackListener>()
+        private val isRequesting = AtomicBoolean(false)
 
         private var preparedSpeakInfo: SpeakDirectiveInfo? = null
         private var currentInfo: SpeakDirectiveInfo? = null
@@ -860,35 +862,41 @@ object DefaultTTSAgent {
             playServiceId: String,
             listener: TTSAgentInterface.OnPlaybackListener?
         ) {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    val dialogRequestId = UUIDGeneration.timeUUID().toString()
-                    val messageRequest =
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            NAMESPACE,
-                            NAME_SPEECH_PLAY,
-                            VERSION
-                        ).dialogRequestId(dialogRequestId)
-                            .payload(JsonObject().apply {
-                                addProperty("format", Format.TEXT.name)
-                                addProperty("text", text)
-                                addProperty("playServiceId", playServiceId)
-                                addProperty("token", UUIDGeneration.timeUUID().toString())
-                            }.toString())
-                            .build()
+            Logger.d(TAG, "[requestTTS] $text / $playServiceId / $listener")
+            if(isRequesting.compareAndSet(false, true)) {
+                contextManager.getContext(object : ContextRequester {
+                    override fun onContextAvailable(jsonContext: String) {
+                        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+                        val messageRequest =
+                            EventMessageRequest.Builder(
+                                jsonContext,
+                                NAMESPACE,
+                                NAME_SPEECH_PLAY,
+                                VERSION
+                            ).dialogRequestId(dialogRequestId)
+                                .payload(JsonObject().apply {
+                                    addProperty("format", Format.TEXT.name)
+                                    addProperty("text", text)
+                                    addProperty("playServiceId", playServiceId)
+                                    addProperty("token", UUIDGeneration.timeUUID().toString())
+                                }.toString())
+                                .build()
 
-                    listener?.let {
-                        requestListenerMap[dialogRequestId] = it
+                        listener?.let {
+                            requestListenerMap[dialogRequestId] = it
+                        }
+                        messageSender.sendMessage(messageRequest)
+                        onSendEventFinished(messageRequest.dialogRequestId)
                     }
-                    messageSender.sendMessage(messageRequest)
-                    onSendEventFinished(messageRequest.dialogRequestId)
-                }
 
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    listener?.onError()
-                }
-            }, namespaceAndName)
+                    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                        listener?.onError()
+                        isRequesting.set(false)
+                    }
+                }, namespaceAndName)
+            } else {
+                listener?.onError()
+            }
         }
 
         override fun onSendEventFinished(dialogRequestId: String) {
@@ -896,11 +904,12 @@ object DefaultTTSAgent {
         }
 
         override fun onReceiveResponse(dialogRequestId: String, header: Header) {
-
+            isRequesting.set(false)
         }
 
         override fun onResponseTimeout(dialogRequestId: String) {
             requestListenerMap.remove(dialogRequestId)?.onError()
+            isRequesting.set(false)
         }
     }
 }
