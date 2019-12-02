@@ -240,7 +240,7 @@ class MessageRouter(
         Logger.d(TAG, "[onServerSideDisconnect] $transport")
         setConnectionStatus(
             ConnectionStatusListener.Status.DISCONNECTED,
-            ConnectionStatusListener.ChangedReason.SUCCESS
+            ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT
         )
     }
 
