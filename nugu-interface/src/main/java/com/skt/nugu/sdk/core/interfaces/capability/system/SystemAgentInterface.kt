@@ -45,15 +45,13 @@ interface SystemAgentInterface {
      * The function to be called when the user has become active.
      */
     fun onUserActive()
-    /**
-     * The function to be called on shutdown.
-     */
-    fun onUserDisconnect()
+
     /**
      * @hide
      * internal function
      * **/
     fun onEcho()
+
     /**
      * Add a listener to be called when a state changed.
      * @param listener the listener that added

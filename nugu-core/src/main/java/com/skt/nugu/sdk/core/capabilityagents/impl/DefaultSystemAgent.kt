@@ -162,6 +162,7 @@ object DefaultSystemAgent {
          * Shut down the Impl.
          */
         override fun shutdown() {
+            onUserDisconnect()
             inActiveFuture?.cancel(true)
             inActiveFuture = null
         }
@@ -430,7 +431,7 @@ object DefaultSystemAgent {
         /**
          * Execute event in thread for user disconnect
          */
-        override fun onUserDisconnect() {
+        private fun onUserDisconnect() {
             executor.submit(this@Impl::executeDisconnectEvent)
         }
 

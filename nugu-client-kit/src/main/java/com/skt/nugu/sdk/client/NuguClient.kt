@@ -556,7 +556,6 @@ class NuguClient private constructor(
     }
 
     override fun shutdown() {
-        systemAgent.onUserDisconnect()
         systemAgent.shutdown()
         audioPlayerAgent.shutdown()
         ttsAgent.stopTTS(true)
