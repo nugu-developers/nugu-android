@@ -215,7 +215,7 @@ class NuguOAuth private constructor(
     override fun onAuthFailure(token: String?) {
         if (token.isNullOrEmpty() || getAuthorization() == token) {
             Log.d(TAG, "Authentication failed because the authorization was invalid : $token")
-            setAuthState(AuthStateListener.State.UNRECOVERABLE_ERROR)
+            setAuthState(AuthStateListener.State.EXPIRED)
             executeAuthorization()
         }
     }
