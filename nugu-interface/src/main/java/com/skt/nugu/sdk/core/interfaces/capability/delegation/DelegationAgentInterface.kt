@@ -31,7 +31,11 @@ interface DelegationAgentInterface {
         /**
          * Failed to request
          */
-        UNKNOWN
+        UNKNOWN,
+        /**
+         * Failed due to processing previous request
+         */
+        ALREADY_REQUESTING
     }
 
     /**

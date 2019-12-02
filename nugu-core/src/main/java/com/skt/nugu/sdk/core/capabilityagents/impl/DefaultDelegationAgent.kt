@@ -38,6 +38,7 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 object DefaultDelegationAgent {
     private const val TAG = "DelegationAgent"
@@ -87,6 +88,7 @@ object DefaultDelegationAgent {
 
         private val executor = Executors.newSingleThreadExecutor()
 
+        private val isRequesting = AtomicBoolean(false)
         private val requestListenerMap = ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
 
         override fun preHandleDirective(info: DirectiveInfo) {
@@ -188,28 +190,33 @@ object DefaultDelegationAgent {
         ): String {
             val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
-            listener?.let {
-                requestListenerMap[dialogRequestId] = it
-            }
+            if(isRequesting.compareAndSet(false, true)) {
+                executor.submit {
+                    contextGetter.getContext(object : ContextRequester {
+                        override fun onContextAvailable(jsonContext: String) {
+                            messageSender.sendMessage(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    NAMESPACE,
+                                    NAME_REQUEST,
+                                    VERSION
+                                ).dialogRequestId(dialogRequestId).build()
+                            )
+                            listener?.let {
+                                requestListenerMap[dialogRequestId] = it
+                            }
 
-            executor.submit {
-                contextGetter.getContext(object : ContextRequester {
-                    override fun onContextAvailable(jsonContext: String) {
-                        messageSender.sendMessage(
-                            EventMessageRequest.Builder(
-                                jsonContext,
-                                NAMESPACE,
-                                NAME_REQUEST,
-                                VERSION
-                            ).dialogRequestId(dialogRequestId).build()
-                        )
-                        onSendEventFinished(dialogRequestId)
-                    }
+                            onSendEventFinished(dialogRequestId)
+                        }
 
-                    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                        requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.UNKNOWN)
-                    }
-                })
+                        override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                            listener?.onError(DelegationAgentInterface.Error.UNKNOWN)
+                            isRequesting.set(false)
+                        }
+                    })
+                }
+            } else {
+                listener?.onError(DelegationAgentInterface.Error.ALREADY_REQUESTING)
             }
 
             return dialogRequestId
@@ -221,10 +228,12 @@ object DefaultDelegationAgent {
 
         override fun onReceiveResponse(dialogRequestId: String, header: Header) {
             requestListenerMap.remove(dialogRequestId)?.onSuccess()
+            isRequesting.set(false)
         }
 
         override fun onResponseTimeout(dialogRequestId: String) {
             requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.TIMEOUT)
+            isRequesting.set(false)
         }
     }
 }
