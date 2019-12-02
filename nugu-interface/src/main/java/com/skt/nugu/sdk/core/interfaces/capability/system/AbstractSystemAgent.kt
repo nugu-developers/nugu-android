@@ -30,7 +30,7 @@ abstract class AbstractSystemAgent (
     protected val authDelegate: AuthDelegate,
     protected val batteryStatusProvider: BatteryStatusProvider? = null
 ) : CapabilityAgent(),
-    ConnectionStatusListener, SystemCapabilityAgentInterface, ContextRequester {
+    ConnectionStatusListener, SystemAgentInterface, ContextRequester {
     companion object {
         const val NAMESPACE = "System"
         const val VERSION = "1.0"
