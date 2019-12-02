@@ -71,6 +71,9 @@ import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentFactory
+import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
+import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentFactory
+import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentFactory
@@ -139,6 +142,7 @@ class NuguClient private constructor(
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultDisplayAgent.FACTORY
         internal var locationAgentFactory: LocationAgentFactory? = DefaultLocationAgent.FACTORY
         internal var soundAgentFactory: SoundAgentFactory = DefaultSoundAgent.FACTORY
+        internal var delegationAgentFactory: DelegationAgentFactory? = DefaultDelegationAgent.FACTORY
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
@@ -177,6 +181,7 @@ class NuguClient private constructor(
             apply { locationAgentFactory = factory }
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
         fun soundAgentFactory(factory: SoundAgentFactory) = apply { soundAgentFactory = factory }
+        fun delegationAgentFactory(factory: DelegationAgentFactory?) = apply { delegationAgentFactory = factory }
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun build() = NuguClient(this)
@@ -207,7 +212,7 @@ class NuguClient private constructor(
     override val asrAgent: AbstractASRAgent
     override val textAgent: TextAgentInterface
     override val extensionAgent: AbstractExtensionAgent?
-
+    override val delegationAgent: AbstractDelegationAgent?
     override val networkManager: NetworkManagerInterface
 
     private val displayAggregator: DisplayAggregator?
@@ -316,6 +321,19 @@ class NuguClient private constructor(
                 }
             }
 
+            delegationAgent = delegationClient?.let {
+                delegationAgentFactory?.create(contextManager, networkManager, inputProcessorManager, it)?.apply {
+                    contextManager.setStateProvider(namespaceAndName, this)
+                    // update delegate initial state
+                    contextManager.setState(
+                        namespaceAndName,
+                        "",
+                        StateRefreshPolicy.SOMETIMES,
+                        0
+                    )
+                }
+            }
+
             dialogSessionManager.addListener(dialogUXStateAggregator)
             dialogSessionManager.addListener(asrAgent)
             dialogSessionManager.addListener(textAgent)
@@ -409,21 +427,15 @@ class NuguClient private constructor(
                 addDirectiveHandler(textAgent)
                 addDirectiveHandler(asrAgent)
                 addDirectiveHandler(systemCapabilityAgent)
-                delegationClient?.let {
-                    addDirectiveHandler(DefaultDelegationAgent.FACTORY.create(contextManager, networkManager, inputProcessorManager, it).apply {
-                        contextManager.setStateProvider(namespaceAndName, this)
-                        // update delegate initial state
-                        contextManager.setState(
-                            namespaceAndName,
-                            "",
-                            StateRefreshPolicy.SOMETIMES,
-                            0
-                        )
-                    })
-                }
+
                 extensionAgent?.let {
                     addDirectiveHandler(it)
                 }
+
+                delegationAgent?.let {
+                    addDirectiveHandler(it)
+                }
+
                 movementController?.let {
                     addDirectiveHandler(
                         DefaultMovementAgent.FACTORY.create(

@@ -47,6 +47,7 @@ import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
@@ -228,6 +229,7 @@ class NuguAndroidClient private constructor(
     override val asrAgent: ASRAgentInterface? = client.asrAgent
     override val textAgent: TextAgentInterface? = client.textAgent
     override val locationAgent: LocationAgentInterface? = client.locationAgent
+    override val delegationAgent: DelegationAgentInterface? = client.delegationAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
 
     private val externalAudioPlayer: ExternalAudioPlayer
