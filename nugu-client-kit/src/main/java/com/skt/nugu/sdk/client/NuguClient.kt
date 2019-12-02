@@ -73,7 +73,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlay
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentFactory
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentFactory
@@ -198,7 +197,7 @@ class NuguClient private constructor(
     override val audioPlayerAgent: AbstractAudioPlayerAgent
     override val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
-    private val systemCapabilityAgent: AbstractSystemAgent
+    private val systemAgent: AbstractSystemAgent
     override var displayAgent: DisplayAgentInterface? = null
     override var locationAgent: LocationAgentInterface? = null
 
@@ -284,7 +283,7 @@ class NuguClient private constructor(
             dialogUXStateAggregator.addListener(ttsAgent)
             ttsAgent.addListener(dialogUXStateAggregator)
 
-            systemCapabilityAgent = DefaultSystemCapabilityAgent.FACTORY.create(
+            systemAgent = DefaultSystemAgent.FACTORY.create(
                 networkManager,
                 networkManager,
                 contextManager,
@@ -426,7 +425,7 @@ class NuguClient private constructor(
                 }
                 addDirectiveHandler(textAgent)
                 addDirectiveHandler(asrAgent)
-                addDirectiveHandler(systemCapabilityAgent)
+                addDirectiveHandler(systemAgent)
 
                 extensionAgent?.let {
                     addDirectiveHandler(it)
@@ -557,8 +556,8 @@ class NuguClient private constructor(
     }
 
     override fun shutdown() {
-        systemCapabilityAgent.onUserDisconnect()
-        systemCapabilityAgent.shutdown()
+        systemAgent.onUserDisconnect()
+        systemAgent.shutdown()
         audioPlayerAgent.shutdown()
         ttsAgent.stopTTS(true)
         networkManager.disable()

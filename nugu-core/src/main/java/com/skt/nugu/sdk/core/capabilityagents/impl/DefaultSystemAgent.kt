@@ -17,18 +17,14 @@ package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
-import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentFactory
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.interfaces.capability.system.*
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
-import com.skt.nugu.sdk.core.interfaces.capability.system.SystemCapabilityAgentListener
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -41,7 +37,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.collections.HashMap
 
-object DefaultSystemCapabilityAgent {
+object DefaultSystemAgent {
     private const val TAG = "DefaultSystemCapabilityAgent"
 
     val FACTORY = object : SystemAgentFactory {
@@ -151,7 +147,7 @@ object DefaultSystemCapabilityAgent {
         private var lastTimeActive = 0L
 
         private val executor = Executors.newSingleThreadExecutor()
-        private val observers = HashSet<SystemCapabilityAgentListener>()
+        private val observers = HashSet<SystemAgentInterface.Listener>()
 
         init {
             /**
@@ -332,7 +328,7 @@ object DefaultSystemCapabilityAgent {
                         CODE_PLAY_ROUTER_PROCESSING_EXCEPTION,
                         CODE_TTS_SPEAKING_EXCEPTION -> {
                             val exceptionCode = try {
-                                SystemCapabilityAgentListener.ExceptionCode.valueOf(payload.code)
+                                SystemAgentInterface.ExceptionCode.valueOf(payload.code)
                             } catch (e: Exception){
                                 // ignore
                                 null
@@ -472,7 +468,7 @@ object DefaultSystemCapabilityAgent {
         /** Add a listener to be called when a state changed.
          * @param listener the listener that added
          */
-        override fun addListener(listener: SystemCapabilityAgentListener) {
+        override fun addListener(listener: SystemAgentInterface.Listener) {
             Logger.d(TAG, "[addAuthStateListener] observer: $listener")
             executor.submit {
                 observers.add(listener)
@@ -484,7 +480,7 @@ object DefaultSystemCapabilityAgent {
          * Remove a listener
          * @param listener the listener that removed
          */
-        override fun removeListener(listener: SystemCapabilityAgentListener) {
+        override fun removeListener(listener: SystemAgentInterface.Listener) {
             Logger.d(TAG, "[removeAuthStateListener] observer: $listener")
             executor.submit {
                 observers.remove(listener)
