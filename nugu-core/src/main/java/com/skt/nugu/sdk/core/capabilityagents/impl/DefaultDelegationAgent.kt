@@ -20,14 +20,23 @@ import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentFactory
+import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.message.MessageFactory
+import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 object DefaultDelegationAgent {
@@ -35,9 +44,15 @@ object DefaultDelegationAgent {
 
     val FACTORY = object : DelegationAgentFactory {
         override fun create(
+            contextGetter: ContextGetterInterface,
+            messageSender: MessageSender,
+            inputProcessorManager: InputProcessorManagerInterface,
             defaultClient: DelegationClient
         ): AbstractDelegationAgent =
             Impl(
+                contextGetter,
+                messageSender,
+                inputProcessorManager,
                 defaultClient
             )
     }
@@ -52,10 +67,15 @@ object DefaultDelegationAgent {
     )
 
     internal class Impl(
+        contextGetter: ContextGetterInterface,
+        messageSender: MessageSender,
+        inputProcessorManager: InputProcessorManagerInterface,
         defaultClient: DelegationClient
-    ) : AbstractDelegationAgent(defaultClient) {
+    ) : AbstractDelegationAgent(contextGetter, messageSender, inputProcessorManager, defaultClient) {
         companion object {
             private const val NAME_DELEGATE = "Delegate"
+            private const val NAME_REQUEST = "Request"
+
             private val DELEGATE = NamespaceAndName(
                 NAMESPACE,
                 NAME_DELEGATE
@@ -64,7 +84,10 @@ object DefaultDelegationAgent {
 
         override val namespaceAndName: NamespaceAndName =
             NamespaceAndName("supportedInterfaces", NAMESPACE)
+
         private val executor = Executors.newSingleThreadExecutor()
+
+        private val requestListenerMap = ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
 
         override fun preHandleDirective(info: DirectiveInfo) {
             // no-op
@@ -156,6 +179,52 @@ object DefaultDelegationAgent {
 
         private fun removeDirective(info: DirectiveInfo) {
             removeDirective(info.directive.getMessageId())
+        }
+
+        override fun request(
+            playServiceId: String,
+            data: String,
+            errorListener: DelegationAgentInterface.OnRequestListener?
+        ): String {
+            val dialogRequestId = UUIDGeneration.timeUUID().toString()
+
+            errorListener?.let {
+                requestListenerMap[dialogRequestId] = it
+            }
+
+            executor.submit {
+                contextGetter.getContext(object : ContextRequester {
+                    override fun onContextAvailable(jsonContext: String) {
+                        messageSender.sendMessage(
+                            EventMessageRequest.Builder(
+                                jsonContext,
+                                NAMESPACE,
+                                NAME_REQUEST,
+                                VERSION
+                            ).dialogRequestId(dialogRequestId).build()
+                        )
+                        onSendEventFinished(dialogRequestId)
+                    }
+
+                    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                        requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.UNKNOWN)
+                    }
+                })
+            }
+
+            return dialogRequestId
+        }
+
+        override fun onSendEventFinished(dialogRequestId: String) {
+            inputProcessorManager.onRequested(this, dialogRequestId)
+        }
+
+        override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+            requestListenerMap.remove(dialogRequestId)?.onSuccess()
+        }
+
+        override fun onResponseTimeout(dialogRequestId: String) {
+            requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.TIMEOUT)
         }
     }
 }

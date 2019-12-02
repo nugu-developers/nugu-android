@@ -16,10 +16,17 @@
 package com.skt.nugu.sdk.core.interfaces.capability.delegation
 
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
 abstract class AbstractDelegationAgent(
+    protected val contextGetter: ContextGetterInterface,
+    protected val messageSender: MessageSender,
+    protected val inputProcessorManager: InputProcessorManagerInterface,
     protected val defaultClient: DelegationClient
-) : CapabilityAgent() {
+) : CapabilityAgent(), DelegationAgentInterface, InputProcessor {
     companion object {
         const val NAMESPACE = "Delegation"
         const val VERSION = "1.0"

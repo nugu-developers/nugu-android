@@ -15,15 +15,26 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.delegation
 
-import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+/**
+ * The public interface for DelegationAgent
+ * Usually, used when external app interacts with NUGU
+ */
+interface DelegationAgentInterface {
+    enum class Error {
+        TIMEOUT,
+        UNKNOWN
+    }
 
-interface DelegationAgentFactory {
-    fun create(
-        contextGetter: ContextGetterInterface,
-        messageSender: MessageSender,
-        inputProcessorManager: InputProcessorManagerInterface,
-        defaultClient: DelegationClient
-    ): AbstractDelegationAgent
+    interface OnRequestListener {
+        fun onSuccess()
+        fun onError(error: Error)
+    }
+
+    /**
+     * Sends a request to NUGU.
+     * @param playServiceId the identifier for play which sends request
+     * @param data the data structured JSON
+     * @return the dialogRequestId for request
+     */
+    fun request(playServiceId: String, data: String, errorListener: OnRequestListener?): String
 }
