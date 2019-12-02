@@ -134,7 +134,6 @@ internal class GrpcTransport(
             return false
         }
 
-        // TODO : State에 맞게 수정
         when (newState) {
             State.INIT,
             State.AUTHORIZING,
@@ -153,7 +152,8 @@ internal class GrpcTransport(
             }
             State.DISCONNECTING,
             State.SHUTDOWN -> {
-                transportObserver.onConnecting(this)
+                transportObserver.onDisconnected(this,
+                    ConnectionStatusListener.ChangedReason.CLIENT_REQUEST)
             }
         }
 
@@ -410,7 +410,10 @@ internal class GrpcTransport(
                 reconnect()
             }
             AuthStateListener.State.UNRECOVERABLE_ERROR -> {
-                setState(State.SHUTDOWN)
+                transportObserver.onDisconnected(
+                    this,
+                    ConnectionStatusListener.ChangedReason.INVALID_AUTH
+                )
             }
         }
         return true
