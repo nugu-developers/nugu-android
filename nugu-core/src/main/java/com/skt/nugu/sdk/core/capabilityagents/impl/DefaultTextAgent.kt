@@ -35,6 +35,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 object DefaultTextAgent {
     private const val TAG = "TextAgent"
@@ -81,6 +82,8 @@ object DefaultTextAgent {
 
         private val requestListeners = HashMap<String, TextAgentInterface.RequestListener>()
         private val executor = Executors.newSingleThreadExecutor()
+        private val isRequesting = AtomicBoolean(false)
+
         override val namespaceAndName: NamespaceAndName =
             NamespaceAndName("supportedInterfaces", NAMESPACE)
 
@@ -213,24 +216,30 @@ object DefaultTextAgent {
             token: String?,
             listener: TextAgentInterface.RequestListener?
         ) {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
-                    executor.submit {
-                        createMessage(text, jsonContext, token).let {
-                            messageSender.sendMessage(it)
-                            if (listener != null) {
-                                requestListeners[it.dialogRequestId] = listener
+            if(isRequesting.compareAndSet(false, true)) {
+                contextManager.getContext(object : ContextRequester {
+                    override fun onContextAvailable(jsonContext: String) {
+                        Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
+                        executor.submit {
+                            createMessage(text, jsonContext, token).let {
+                                messageSender.sendMessage(it)
+                                if (listener != null) {
+                                    requestListeners[it.dialogRequestId] = listener
+                                }
+                                onSendEventFinished(it.dialogRequestId)
                             }
-                            onSendEventFinished(it.dialogRequestId)
                         }
                     }
-                }
 
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    Logger.d(TAG, "[onContextFailure] error: $error")
-                }
-            })
+                    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                        Logger.d(TAG, "[onContextFailure] error: $error")
+                        listener?.onError(TextAgentInterface.ErrorType.ERROR_UNKNOWN)
+                        isRequesting.set(false)
+                    }
+                })
+            } else {
+                listener?.onError(TextAgentInterface.ErrorType.ERROR_UNKNOWN)
+            }
         }
 
         override fun onSendEventFinished(dialogRequestId: String) {
@@ -241,6 +250,7 @@ object DefaultTextAgent {
             Logger.d(TAG, "[onReceiveResponse] $header")
             executor.submit {
                 requestListeners.remove(dialogRequestId)?.onReceiveResponse()
+                isRequesting.set(false)
             }
         }
 
@@ -249,6 +259,7 @@ object DefaultTextAgent {
             executor.submit {
                 requestListeners.remove(dialogRequestId)
                     ?.onError(TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+                isRequesting.set(false)
             }
         }
 
