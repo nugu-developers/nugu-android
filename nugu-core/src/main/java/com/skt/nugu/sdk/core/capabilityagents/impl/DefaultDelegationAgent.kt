@@ -184,11 +184,11 @@ object DefaultDelegationAgent {
         override fun request(
             playServiceId: String,
             data: String,
-            errorListener: DelegationAgentInterface.OnRequestListener?
+            listener: DelegationAgentInterface.OnRequestListener?
         ): String {
             val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
-            errorListener?.let {
+            listener?.let {
                 requestListenerMap[dialogRequestId] = it
             }
 

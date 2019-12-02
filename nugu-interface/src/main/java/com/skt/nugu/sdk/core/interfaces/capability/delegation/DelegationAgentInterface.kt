@@ -20,13 +20,32 @@ package com.skt.nugu.sdk.core.interfaces.capability.delegation
  * Usually, used when external app interacts with NUGU
  */
 interface DelegationAgentInterface {
+    /**
+     * Enum class for Error
+     */
     enum class Error {
+        /**
+         * Timeout for request
+         */
         TIMEOUT,
+        /**
+         * Failed to request
+         */
         UNKNOWN
     }
 
+    /**
+     * The listener for request
+     */
     interface OnRequestListener {
+        /**
+         * Request handled successfully
+         */
         fun onSuccess()
+
+        /**
+         * error occurs
+         */
         fun onError(error: Error)
     }
 
@@ -34,7 +53,8 @@ interface DelegationAgentInterface {
      * Sends a request to NUGU.
      * @param playServiceId the identifier for play which sends request
      * @param data the data structured JSON
+     * @param listener the listener to be notified request finished (success or error)
      * @return the dialogRequestId for request
      */
-    fun request(playServiceId: String, data: String, errorListener: OnRequestListener?): String
+    fun request(playServiceId: String, data: String, listener: OnRequestListener?): String
 }
