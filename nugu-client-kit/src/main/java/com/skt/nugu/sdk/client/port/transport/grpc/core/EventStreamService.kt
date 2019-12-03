@@ -108,6 +108,7 @@ internal class EventStreamService(
                     lock.withLock {
                         streamObserver = null
                     }
+                    observer.onServerSideDisconnect()
                 }
 
                 override fun onCompleted() {
