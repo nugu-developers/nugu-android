@@ -37,7 +37,7 @@ internal interface GrpcServiceListener {
      */
     fun onConnectTimeout()
     /**
-     * Notification that a connect timed out.
+     * Notification that a disconnect from the DeviceGateway.
      */
     fun onServerSideDisconnect()
     /**
