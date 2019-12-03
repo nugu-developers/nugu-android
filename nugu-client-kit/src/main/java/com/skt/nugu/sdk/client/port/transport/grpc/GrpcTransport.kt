@@ -89,7 +89,6 @@ internal class GrpcTransport(
         /// disconnected by DeviceGateway
         SERVER_SIDE_DISCONNECT,
         /// disconnected
-        /// disconnected
         DISCONNECTING,
         /// shutdown
         SHUTDOWN
@@ -120,7 +119,7 @@ internal class GrpcTransport(
             State.AUTHORIZING -> allowed =
                 State.INIT == state || State.WAITING_TO_RETRY_CONNECTING == state
             State.CONNECTING -> allowed =
-                State.AUTHORIZING == state || State.WAITING_TO_RETRY_CONNECTING == state
+                State.INIT == state || State.AUTHORIZING == state || State.WAITING_TO_RETRY_CONNECTING == state
             State.WAITING_TO_RETRY_CONNECTING -> allowed = State.CONNECTING == state
             State.POST_CONNECTING -> allowed = State.CONNECTING == state
             State.CONNECTED -> allowed = true
@@ -148,12 +147,21 @@ internal class GrpcTransport(
                 performSendMessage()
             }
             State.SERVER_SIDE_DISCONNECT -> {
-                transportObserver.onServerSideDisconnect(this)
+                if (state == State.CONNECTED) {
+                    transportObserver.onDisconnected(
+                        this,
+                        ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT
+                    )
+                } else if (state == State.POST_CONNECTING) {
+                    transportObserver.onDisconnected(
+                        this,
+                        ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT
+                    )
+                }
             }
             State.DISCONNECTING,
             State.SHUTDOWN -> {
-                transportObserver.onDisconnected(this,
-                    ConnectionStatusListener.ChangedReason.CLIENT_REQUEST)
+                transportObserver.onDisconnected(this, ConnectionStatusListener.ChangedReason.NONE)
             }
         }
 
@@ -165,9 +173,6 @@ internal class GrpcTransport(
      * connect from DeviceGateway.
      */
     override fun connect(): Boolean {
-        if (state != State.WAITING_TO_RETRY_CONNECTING) {
-            state = State.AUTHORIZING
-        }
         setState(State.CONNECTING)
 
         val authorization = authDelegate.getAuthorization()
@@ -221,6 +226,8 @@ internal class GrpcTransport(
     private fun reconnect() {
         if (this.reconnecting) return
 
+        setState(State.WAITING_TO_RETRY_CONNECTING)
+
         val delay = this.channel.getBackoff().duration()
         Logger.d(
             TAG,
@@ -238,7 +245,6 @@ internal class GrpcTransport(
                     reconnecting = false
 
                     if (!isConnected()) {
-                        setState(State.WAITING_TO_RETRY_CONNECTING)
                         connect()
                     }
                 }
@@ -293,6 +299,13 @@ internal class GrpcTransport(
      */
     override fun isConnected(): Boolean {
         return State.CONNECTED == state
+    }
+
+    override fun onServerSideDisconnect() {
+        if (isConnected()) {
+            setState(State.SERVER_SIDE_DISCONNECT)
+            reconnect()
+        }
     }
 
     /*unused code*/
@@ -461,6 +474,7 @@ internal class GrpcTransport(
             val connecting = state == State.POST_CONNECTING
             if (isConnected() || connecting) {
                 setState(State.SERVER_SIDE_DISCONNECT)
+                disconnect()
                 reconnect()
             }
         } else {
@@ -539,7 +553,7 @@ internal class GrpcTransport(
         }
 
         this.registryFinished = true
-
+        setState(State.WAITING_TO_RETRY_CONNECTING)
         connect()
     }
 
