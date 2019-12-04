@@ -83,8 +83,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFacto
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundAgentFactory
-import com.skt.nugu.sdk.core.interfaces.capability.sound.SoundProvider
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentFactory
@@ -128,7 +126,6 @@ class NuguClient private constructor(
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
         internal var batteryStatusProvider: BatteryStatusProvider? = null
-        internal var soundProvider: SoundProvider? = null
         internal var light: Light? = null
 
         // Agent Factory
@@ -140,7 +137,6 @@ class NuguClient private constructor(
         internal var extensionAgentFactory: ExtensionAgentFactory = DefaultExtensionAgent.FACTORY
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultDisplayAgent.FACTORY
         internal var locationAgentFactory: LocationAgentFactory? = DefaultLocationAgent.FACTORY
-        internal var soundAgentFactory: SoundAgentFactory = DefaultSoundAgent.FACTORY
         internal var delegationAgentFactory: DelegationAgentFactory? = DefaultDelegationAgent.FACTORY
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
@@ -161,8 +157,6 @@ class NuguClient private constructor(
         fun batteryStatusProvider(batteryStatusProvider: BatteryStatusProvider?) =
             apply { this.batteryStatusProvider = batteryStatusProvider }
 
-        fun soundProvider(provider: SoundProvider?) = apply { this.soundProvider = provider }
-
         fun light(light: Light?) = apply { this.light = light }
 
         fun audioPlayerAgentFactory(factory: AudioPlayerAgentFactory) =
@@ -179,7 +173,6 @@ class NuguClient private constructor(
         fun locationAgentFactory(factory: LocationAgentFactory) =
             apply { locationAgentFactory = factory }
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
-        fun soundAgentFactory(factory: SoundAgentFactory) = apply { soundAgentFactory = factory }
         fun delegationAgentFactory(factory: DelegationAgentFactory?) = apply { delegationAgentFactory = factory }
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
@@ -442,15 +435,6 @@ class NuguClient private constructor(
                             networkManager,
                             it
                         )
-                    )
-                }
-                soundProvider?.let {
-                    addDirectiveHandler(
-                        soundAgentFactory.create(
-                            playerFactory.createBeepPlayer(),
-                            contextManager,
-                            networkManager,
-                            it)
                     )
                 }
             }
