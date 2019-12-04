@@ -33,7 +33,6 @@ import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
-import com.skt.nugu.sampleapp.provider.SoundContentProvider
 
 /**
  * This class manage everything related to NUGU.
@@ -148,8 +147,6 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                     Context.MODE_PRIVATE
                 ).absolutePath + File.separator + "skt_epd_model.raw"
             )
-        ).soundProvider(
-            SoundContentProvider(context)
         ).build()
 
         client.addAudioPlayerListener(this)
