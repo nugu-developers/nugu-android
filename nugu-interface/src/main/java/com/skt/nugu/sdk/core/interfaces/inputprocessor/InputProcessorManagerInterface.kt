@@ -15,16 +15,12 @@
  */
 package com.skt.nugu.sdk.core.interfaces.inputprocessor
 
-import com.skt.nugu.sdk.core.interfaces.message.Header
-
 interface InputProcessorManagerInterface {
     interface OnResponseTimeoutListener {
         fun onResponseTimeout(dialogRequestId: String)
     }
 
     fun onRequested(inputProcessor: InputProcessor, dialogRequestId: String)
-    fun receiveResponse(dialogRequestId: String, header: Header)
-
     fun addResponseTimeoutListener(listener: OnResponseTimeoutListener)
     fun removeResponseTimeoutListener(listener: OnResponseTimeoutListener)
 }

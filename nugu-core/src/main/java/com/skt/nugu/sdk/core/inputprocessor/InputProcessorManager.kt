@@ -57,14 +57,21 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
         requests[dialogRequestId] = inputProcessor
         timeoutFutureMap[dialogRequestId]?.cancel(true)
         timeoutFutureMap[dialogRequestId] = timeoutScheduler.schedule({
-            inputProcessor.onResponseTimeout(dialogRequestId)
-            responseTimeoutListeners.forEach {
-                it.onResponseTimeout(dialogRequestId)
-            }
+            onResponseTimeout(inputProcessor, dialogRequestId)
         }, 10, TimeUnit.SECONDS)
     }
 
-    override fun receiveResponse(dialogRequestId: String, header: Header) {
+    private fun onResponseTimeout(inputProcessor: InputProcessor, dialogRequestId: String) {
+        Logger.d(TAG, "[onResponseTimeout] $inputProcessor, $dialogRequestId")
+        requests.remove(dialogRequestId)
+        timeoutFutureMap.remove(dialogRequestId)
+        inputProcessor.onResponseTimeout(dialogRequestId)
+        responseTimeoutListeners.forEach {
+            it.onResponseTimeout(dialogRequestId)
+        }
+    }
+
+    private fun onReceiveResponse(dialogRequestId: String, header: Header) {
         val inputProcessor = requests[dialogRequestId]
         if (inputProcessor != null) {
             inputProcessor.onReceiveResponse(dialogRequestId, header)
@@ -76,6 +83,7 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
     private fun onReceiveDirectives(jsonObject: JsonObject) {
         val directives = jsonObject.getAsJsonArray(KEY_DIRECTIVES)
 
+        var removedDialogRequestId = ""
         var timeoutFutureRemoved = false
         for (directive in directives) {
             try {
@@ -83,14 +91,19 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
                 if(!timeoutFutureRemoved && header.namespace != AbstractASRAgent.NAMESPACE) {
                     timeoutFutureRemoved = true
                     header.dialogRequestId.let {
+                        removedDialogRequestId = it
                         timeoutFutureMap[it]?.cancel(true)
                         timeoutFutureMap.remove(it)
                     }
                 }
-                receiveResponse(header.dialogRequestId, header)
+                onReceiveResponse(header.dialogRequestId, header)
             } catch (th: Throwable) {
                 // ignore
             }
+        }
+
+        if(timeoutFutureRemoved && !removedDialogRequestId.isNullOrBlank()) {
+            requests.remove(removedDialogRequestId)
         }
     }
 
