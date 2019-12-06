@@ -29,5 +29,8 @@ data class AudioFormat(
      * Utility function to convert time(ms) to size
      * @return the number of byte per millisecond
      */
+    // fun getBytesPerMillis(): Int = ((sampleRateHz / 1000) * (bitsPerSample / 8) * numChannels)
     fun getBytesPerMillis(): Int = (sampleRateHz * bitsPerSample * numChannels) / 1000 / 8
+
+    fun getBytesPerSample(): Int = bitsPerSample / 8
 }

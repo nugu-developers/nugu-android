@@ -44,7 +44,7 @@ abstract class AbstractSpeechProcessor(
             speechToTextConverter.enablePartialResult = value
         }
 
-    override var enableSpeakerRecognition: Boolean = false
+    override var enableSpeakerRecognition: Boolean = true
         set(value) {
             if (field == value) {
                 return
@@ -56,9 +56,8 @@ abstract class AbstractSpeechProcessor(
 
     protected var audioInputStream: SharedDataStream? = null
     protected var audioFormat: AudioFormat? = null
-    protected var wakewordStartPosition: Long? = null
-    protected var wakewordEndPosition: Long? = null
     protected var context: String? = null
+    protected var wakeupBoundary: WakeupBoundary? = null
     protected var payload: ExpectSpeechPayload? = null
 
     abstract val speechToTextConverter: SpeechToTextConverterImpl
@@ -73,20 +72,18 @@ abstract class AbstractSpeechProcessor(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
         context: String,
-        wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?,
+        wakeupBoundary: WakeupBoundary?,
         payload: ExpectSpeechPayload?
     ) {
         this.context = context
         this.audioInputStream = audioInputStream
         this.audioFormat = audioFormat
-        this.wakewordStartPosition = wakewordStartPosition
-        this.wakewordEndPosition = wakewordEndPosition
+        this.wakeupBoundary = wakeupBoundary
         this.payload = payload
 
         Logger.d(
             TAG,
-            "[startProcessor] wakewordStartPosition:$wakewordStartPosition, wakewordEndPosition:$wakewordEndPosition, currentInputPosition: ${audioInputStream?.getPosition()}"
+            "[startProcessor] wakeupBoundary:$wakeupBoundary, currentInputPosition: ${audioInputStream?.getPosition()}, enableSpeakerRecognition: $enableSpeakerRecognition"
         )
 
         if (audioInputStream == null) {

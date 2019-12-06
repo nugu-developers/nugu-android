@@ -508,17 +508,20 @@ class NuguClient private constructor(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
         wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?
+        wakewordEndPosition: Long?,
+        wakewordDetectPosition: Long?
     ): Future<Boolean> {
         Logger.d(
             TAG,
-            "[startRecognition] wakewordStartPosition: $wakewordStartPosition , wakewordEndPosition:$wakewordEndPosition"
+            "[startRecognition] wakewordStartPosition: $wakewordStartPosition , wakewordEndPosition:$wakewordEndPosition, wakewordDetectPosition:$wakewordDetectPosition"
         )
+
         return asrAgent.startRecognition(
             audioInputStream,
             audioFormat,
             wakewordStartPosition,
-            wakewordEndPosition
+            wakewordEndPosition,
+            wakewordDetectPosition
         )
     }
 

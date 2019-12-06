@@ -141,8 +141,7 @@ object DefaultASRAgent {
 
         private var audioInputStream: SharedDataStream? = null
         private var audioFormat: AudioFormat? = null
-        private var wakewordStartPosition: Long? = null
-        private var wakewordEndPosition: Long? = null
+        private var wakeupBoundary: WakeupBoundary? = null
         private var expectSpeechPayload: ExpectSpeechPayload? = null
 
         private var contextForRecognitionOnForegroundFocus: String? = null
@@ -359,7 +358,7 @@ object DefaultASRAgent {
             }
 
             setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-            executeStartRecognition(audioInputStream, audioFormat, null, null, expectSpeechPayload)
+            executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload)
             setHandlingCompleted(info)
         }
 
@@ -527,8 +526,7 @@ object DefaultASRAgent {
                 audioInputStream,
                 audioFormat,
                 context,
-                wakewordStartPosition,
-                wakewordEndPosition,
+                wakeupBoundary,
                 expectSpeechPayload
             )
 
@@ -662,16 +660,28 @@ object DefaultASRAgent {
             audioInputStream: SharedDataStream?,
             audioFormat: AudioFormat?,
             wakewordStartPosition: Long?,
-            wakewordEndPosition: Long?
+            wakewordEndPosition: Long?,
+            wakewordDetectPosition: Long?
         ): Future<Boolean> {
             Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
             return executor.submit(Callable<Boolean> {
                 if (audioInputStream != null && audioFormat != null) {
+                    val wakeupBoundary =
+                        if (wakewordDetectPosition != null && wakewordEndPosition != null && wakewordStartPosition != null) {
+                            val bytesPerSample = audioFormat.getBytesPerSample()
+                            WakeupBoundary(
+                                wakewordDetectPosition / bytesPerSample,
+                                wakewordStartPosition / bytesPerSample,
+                                wakewordEndPosition / bytesPerSample
+                            )
+                        } else {
+                            null
+                        }
+
                     executeStartRecognition(
                         audioInputStream,
                         audioFormat,
-                        wakewordStartPosition,
-                        wakewordEndPosition,
+                        wakeupBoundary,
                         expectSpeechPayload
                     )
                 } else {
@@ -700,7 +710,6 @@ object DefaultASRAgent {
                     executeStartRecognition(
                         newAudioInputStream,
                         newAudioFormat,
-                        null,
                         null,
                         expectSpeechPayload
                     )
@@ -754,8 +763,7 @@ object DefaultASRAgent {
         private fun executeStartRecognition(
             audioInputStream: SharedDataStream,
             audioFormat: AudioFormat,
-            wakewordStartPosition: Long?,
-            wakewordEndPosition: Long?,
+            wakeupBoundary: WakeupBoundary?,
             payload: ExpectSpeechPayload?
         ): Boolean {
             Logger.d(TAG, "[executeStartRecognition] state: $state")
@@ -767,8 +775,7 @@ object DefaultASRAgent {
                 return false
             }
 
-            this.wakewordStartPosition = wakewordStartPosition
-            this.wakewordEndPosition = wakewordEndPosition
+            this.wakeupBoundary = wakeupBoundary
             this.audioInputStream = audioInputStream
             this.audioFormat = audioFormat
             this.expectSpeechPayload = payload

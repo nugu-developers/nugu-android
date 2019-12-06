@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import kotlin.math.max
 
 class DefaultClientSideSpeechProcessor(
     defaultAudioProvider: AudioProvider,
@@ -34,7 +35,13 @@ class DefaultClientSideSpeechProcessor(
         private const val TAG = "DefaultClientSideSpeechProcessor"
     }
 
-    override val speechToTextConverter = SpeechToTextConverterImpl(enablePartialResult, enableSpeakerRecognition, false, messageSender, audioEncoder)
+    override val speechToTextConverter = SpeechToTextConverterImpl(
+        enablePartialResult,
+        enableSpeakerRecognition,
+        false,
+        messageSender,
+        audioEncoder
+    )
 
     init {
         endPointDetector.addListener(this)
@@ -43,7 +50,7 @@ class DefaultClientSideSpeechProcessor(
 
     override fun onStateChanged(state: AudioEndPointDetector.State) {
         if (state == AudioEndPointDetector.State.SPEECH_START) {
-            if(!startSpeechToTextConverter()) {
+            if (!startSpeechToTextConverter()) {
                 endPointDetector.stopDetector()
             }
         }
@@ -54,39 +61,56 @@ class DefaultClientSideSpeechProcessor(
         val recognizeContext = context
         val inputStream = audioInputStream
         val inputFormat = audioFormat
+        val inputWakeupBoundary = wakeupBoundary
 
-        if(recognizeContext == null) {
+        if (recognizeContext == null) {
             Logger.w(TAG, "[startSpeechToTextConverter] failed: context is null")
             return false
         }
 
-        if(inputStream == null) {
+        if (inputStream == null) {
             Logger.w(TAG, "[startSpeechToTextConverter] failed: audioInputStream is null")
             return false
         }
 
-        if(inputFormat == null) {
+        if (inputFormat == null) {
             Logger.w(TAG, "[startSpeechToTextConverter] failed: inputFormat is null")
             return false
         }
 
-        var sendPosition = if (enableSpeakerRecognition) {
-            // 화자인식 ON : wakeword 음성도 전송한다.
-            wakewordStartPosition ?: endPointDetector.getSpeechStartPosition()
+        var sendPosition: Long?
+        var sendWakeupBoundary: WakeupBoundary?
+        if (enableSpeakerRecognition && inputWakeupBoundary != null) {
+            // 화자인식 ON && wakeup에 의한 시작 : wakeword 음성도 전송한다.
+            // send stream before 500ms to ready at server ASR
+            val offsetPosition = 500 * inputFormat.getBytesPerMillis()
+            val wakewordStartPosition = inputWakeupBoundary.startSamplePosition * inputFormat.getBytesPerSample()
+            sendPosition = max(wakewordStartPosition - offsetPosition, 0)
+            val sendSamplePosition = sendPosition / inputFormat.getBytesPerSample()
+            sendWakeupBoundary = WakeupBoundary(
+                inputWakeupBoundary.detectSamplePosition - sendSamplePosition,
+                inputWakeupBoundary.startSamplePosition - sendSamplePosition,
+                inputWakeupBoundary.endSamplePosition - sendSamplePosition
+            )
         } else {
             // 화자인식 OFF : SPEECH_START 부터 전송한다.
-            endPointDetector.getSpeechStartPosition()
+            sendPosition = endPointDetector.getSpeechStartPosition()
+            sendWakeupBoundary = null
         }
+
+        Logger.d(
+            TAG,
+            "[startSpeechToTextConverter] send position : $sendPosition / send wakeupBoundary $sendWakeupBoundary / wakeupBoundary : $wakeupBoundary / bytesPerMillis : ${inputFormat.getBytesPerMillis()}"
+        )
 
         speechToTextConverter.startSpeechToTextConverter(
             inputStream.createReader(sendPosition),
             inputFormat,
             recognizeContext,
+            sendWakeupBoundary,
             payload,
             speechToTextConverterEventObserver
         )
-
-        Logger.d(TAG, "[startSpeechToTextConverter] success")
         return true
     }
 
