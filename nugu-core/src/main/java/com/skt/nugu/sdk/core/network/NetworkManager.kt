@@ -121,9 +121,7 @@ class NetworkManager private constructor(
      * Send message
     * @param messageRequest the messageRequest to be sent
     */
-    override fun sendMessage(messageRequest: MessageRequest) {
-        messageRouter.sendMessage(messageRequest)
-    }
+    override fun sendMessage(messageRequest: MessageRequest): Boolean = messageRouter.sendMessage(messageRequest)
 
     /**
      * Receives the connection status changes.
