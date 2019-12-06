@@ -40,7 +40,7 @@ interface Transport {
     /**
      * Sends an message request.
      */
-    fun send(request: MessageRequest)
+    fun send(request: MessageRequest): Boolean
 
     /** unused code */
     fun sendCompleted()

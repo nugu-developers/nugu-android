@@ -316,8 +316,9 @@ internal class GrpcTransport(
     /**
      * Send a message request. it blocks until the message can be sent.
      */
-    override fun send(request: MessageRequest) {
+    override fun send(request: MessageRequest): Boolean {
         enqueueRequest(request, false)
+        return true
     }
 
     /*unused code*/

@@ -150,9 +150,7 @@ class MessageRouter(
     /**
      * Expect to have the message sent to the transport.
      */
-    override fun sendMessage(messageRequest: MessageRequest) {
-        activeTransport?.send(messageRequest)
-    }
+    override fun sendMessage(messageRequest: MessageRequest): Boolean = activeTransport?.send(messageRequest) ?: false
 
     /**
      * Notify the connection observer when the status has changed.

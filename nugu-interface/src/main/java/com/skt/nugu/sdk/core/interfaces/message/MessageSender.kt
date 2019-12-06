@@ -23,5 +23,5 @@ interface MessageSender {
      * Send message
      * @param messageRequest the messageRequest to be sent
      */
-    fun sendMessage(messageRequest: MessageRequest)
+    fun sendMessage(messageRequest: MessageRequest): Boolean
 }
