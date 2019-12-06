@@ -148,11 +148,12 @@ class VoiceChromeView : FrameLayout {
             Animation.WAITING -> setAnimation(R.raw.lp, LottieDrawable.INFINITE)
             Animation.LISTENING -> setAnimation(R.raw.la, LottieDrawable.INFINITE)
             Animation.SPEAKING -> {
-                addAnimation(R.raw.sp_01_start, 0)
-                addAnimation(R.raw.sp_02)
+                addAnimation(R.raw.sp_02, LottieDrawable.INFINITE)
+            }
+            Animation.SPEAKING_ERROR -> {
+                addAnimation(R.raw.esp_02, LottieDrawable.INFINITE)
             }
             Animation.THINKING -> {
-                addAnimation(R.raw.pc_01_start, 0)
                 addAnimation(R.raw.pc_02, LottieDrawable.INFINITE)
             }
         }
@@ -167,23 +168,28 @@ class VoiceChromeView : FrameLayout {
 
     /**
      * The status of a voice animation
+     * @see [https://developers-doc.nugu.co.kr/nugu-sdk/sdk-design-guide/voice-chrome#nugu-voice-chrome-1]
      */
     enum class Animation {
         /**
-         * waiting animation
+         * waiting(listening-passive) animation
          **/
         WAITING,
         /**
-         * listening animation
+         * listening(listening-active)  animation
          **/
         LISTENING,
+        /**
+         * thinking(processing) animation
+         **/
+        THINKING,
         /**
          * speaking animation
          **/
         SPEAKING,
         /**
-         * thinking animation
+         * speaking error animation
          **/
-        THINKING
+        SPEAKING_ERROR
     }
 }
