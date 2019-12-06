@@ -299,13 +299,15 @@ class NuguAndroidClient private constructor(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
         wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?
+        wakewordEndPosition: Long?,
+        wakewordDetectPosition: Long?
     ): Future<Boolean> {
         return client.startRecognition(
             audioInputStream,
             audioFormat,
             wakewordStartPosition,
-            wakewordEndPosition
+            wakewordEndPosition,
+            wakewordDetectPosition
         )
     }
 

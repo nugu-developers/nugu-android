@@ -49,6 +49,7 @@ class SpeechToTextConverterImpl(
         reader: SharedDataStream.Reader,
         format: AudioFormat,
         context: String,
+        wakeupBoundary: WakeupBoundary?,
         payload: ExpectSpeechPayload?,
         observer: ASRAgentInterface.OnResultListener
     ) {
@@ -79,7 +80,7 @@ class SpeechToTextConverterImpl(
             audioEncoder
         ) {
             override fun createRecognizeEvent(): EventMessageRequest {
-                val event = this@SpeechToTextConverterImpl.createRecognizeEvent(context, payload)
+                val event = this@SpeechToTextConverterImpl.createRecognizeEvent(context, wakeupBoundary, payload)
                 dialogRequestId = event.dialogRequestId
                 return event
             }
@@ -102,7 +103,7 @@ class SpeechToTextConverterImpl(
         senderThread?.requestFinish()
     }
 
-    fun createRecognizeEvent(context: String, payload: ExpectSpeechPayload?): EventMessageRequest = EventMessageRequest.Builder(
+    fun createRecognizeEvent(context: String, wakeupBoundary: WakeupBoundary?, payload: ExpectSpeechPayload?): EventMessageRequest = EventMessageRequest.Builder(
         context,
         DefaultASRAgent.RECOGNIZE.namespace,
         DefaultASRAgent.RECOGNIZE.name,
@@ -115,7 +116,8 @@ class SpeechToTextConverterImpl(
             property = payload?.property,
             domainTypes = payload?.domainTypes,
             endpointing = if(enableServerEpd) AsrRecognizeEventPayload.ENDPOINTING_SERVER else AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
-            encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
+            encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
+            wakeupBoundary = if(enableSpeakerRecognition) wakeupBoundary else null
         ).toJsonString()
     ).build()
 

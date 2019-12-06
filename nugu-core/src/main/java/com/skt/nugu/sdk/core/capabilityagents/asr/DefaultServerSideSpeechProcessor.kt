@@ -80,7 +80,7 @@ class DefaultServerSideSpeechProcessor(
             timeoutInSeconds: Int
         ): Boolean {
             val recognitionContext = context ?: return false
-            speechToTextConverter.startSpeechToTextConverter(reader, audioFormat, recognitionContext, payload, speechToTextConverterEventObserver)
+            speechToTextConverter.startSpeechToTextConverter(reader, audioFormat, recognitionContext, wakeupBoundary, payload, speechToTextConverterEventObserver)
             state = AudioEndPointDetector.State.EXPECTING_SPEECH
             timeoutFuture?.cancel(true)
             timeoutFuture = timeoutScheduler.schedule({

@@ -73,6 +73,7 @@ class SpeechRecognizerAggregator(
     private var audioFormat: com.skt.nugu.sdk.core.interfaces.audio.AudioFormat? = null
     private var keywordStartPosition: Long? = null
     private var keywordEndPosition: Long? = null
+    private var keywordDetectPosition: Long? = null
 
     init {
         keywordDetector.addDetectorStateObserver(object : KeywordDetectorStateObserver {
@@ -139,7 +140,7 @@ class SpeechRecognizerAggregator(
                                 "[onDetected] start: ${keywordDetector.getKeywordStartOffset()} , end : ${keywordDetector.getKeywordEndOffset()}"
                             )
                             setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
-                            startListeningInternal(audioProvider.getFormat(), keywordDetector.getKeywordStartOffset(), keywordDetector.getKeywordEndOffset())
+                            startListeningInternal(audioProvider.getFormat(), keywordDetector.getKeywordStartOffset(), keywordDetector.getKeywordEndOffset(), keywordDetector.getKeywordDetectOffset())
                             it.release()
                             audioProvider.releaseAudioInputStream(keywordDetector)
                         }
@@ -147,7 +148,7 @@ class SpeechRecognizerAggregator(
                         override fun onStopped() {
                             Log.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
                             if (isTriggerStoppingByStartListening) {
-                                startListeningInternal(audioFormat, keywordStartPosition, keywordEndPosition)
+                                startListeningInternal(audioFormat, keywordStartPosition, keywordEndPosition, keywordDetectPosition)
                                 isTriggerStoppingByStartListening = false
                             } else if(state == SpeechRecognizerAggregatorInterface.State.WAITING){
                                 setState(SpeechRecognizerAggregatorInterface.State.STOP)
@@ -169,11 +170,12 @@ class SpeechRecognizerAggregator(
 
     override fun startListening(
         keywordStartPosition: Long?,
-        keywordEndPosition: Long?
+        keywordEndPosition: Long?,
+        keywordDetectPosition: Long?
     ) {
         Log.d(
             TAG,
-            "[startListening] keywordStartPosition: $keywordStartPosition, keywordEndPosition: $keywordEndPosition, state: $state, keywordDetectorState: $keywordDetectorState"
+            "[startListening] keywordStartPosition: $keywordStartPosition, keywordEndPosition: $keywordEndPosition, keywordDetectPosition: $keywordDetectPosition, state: $state, keywordDetectorState: $keywordDetectorState"
         )
 
         if (state == SpeechRecognizerAggregatorInterface.State.WAITING || keywordDetectorState == KeywordDetectorStateObserver.State.ACTIVE) {
@@ -188,13 +190,14 @@ class SpeechRecognizerAggregator(
             return
         }
 
-        startListeningInternal(audioProvider.getFormat(), keywordStartPosition, keywordEndPosition)
+        startListeningInternal(audioProvider.getFormat(), keywordStartPosition, keywordEndPosition, keywordDetectPosition)
     }
 
     private fun startListeningInternal(
         audioFormat: com.skt.nugu.sdk.core.interfaces.audio.AudioFormat,
         keywordStartPosition: Long?,
-        keywordEndPosition: Long?
+        keywordEndPosition: Long?,
+        keywordDetectPosition: Long?
     ) {
 //        if (speechProcessor.useSelfSource()) {
 //            audioProvider.reset()
@@ -202,7 +205,7 @@ class SpeechRecognizerAggregator(
 
         val inputStream = audioProvider.acquireAudioInputStream(speechProcessor)
         if (inputStream != null) {
-            val result = speechProcessor.start(inputStream, audioFormat, keywordStartPosition, keywordEndPosition)
+            val result = speechProcessor.start(inputStream, audioFormat, keywordStartPosition, keywordEndPosition, keywordDetectPosition)
             executor.submit {
                 if(result.get() == false) {
                     setState(SpeechRecognizerAggregatorInterface.State.ERROR)

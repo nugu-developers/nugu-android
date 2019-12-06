@@ -41,9 +41,9 @@ class SpeechProcessorDelegate(
     /**
      * Request starting epd to [ASRAgentInterface]
      */
-    fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakewordStartPosition: Long?, wakewordEndPosition: Long?): Future<Boolean> {
+    fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakewordStartPosition: Long?, wakewordEndPosition: Long?, wakewordDetectPosition: Long?): Future<Boolean> {
         Log.d(TAG, "[startDetector]")
-        return asrAgent.startRecognition(audioInputStream, audioFormat, wakewordStartPosition, wakewordEndPosition)
+        return asrAgent.startRecognition(audioInputStream, audioFormat, wakewordStartPosition, wakewordEndPosition, wakewordDetectPosition)
     }
 
     /**

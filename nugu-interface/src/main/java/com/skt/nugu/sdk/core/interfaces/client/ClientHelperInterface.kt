@@ -131,13 +131,15 @@ interface ClientHelperInterface {
      * @param audioFormat the format of [audioInputStream]
      * @param wakewordStartPosition the start position of wakeword at [audioInputStream] if exist.
      * @param wakewordEndPosition the end position of wakeword at [audioInputStream] if exist.
+     * @param wakewordDetectPosition the detect position of wakeword at [audioInputStream], null if not exist.
      * @return the boolean future, true: if recognize started, false: otherwise
      */
     fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
         wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?
+        wakewordEndPosition: Long?,
+        wakewordDetectPosition: Long?
     ): Future<Boolean>
 
     /**

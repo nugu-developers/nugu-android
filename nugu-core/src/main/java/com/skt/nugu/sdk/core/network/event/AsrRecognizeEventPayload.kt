@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.network.event
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.core.capabilityagents.asr.WakeupBoundary
 
 data class AsrRecognizeEventPayload(
     private val codec: String,
@@ -26,7 +27,8 @@ data class AsrRecognizeEventPayload(
     private val domainTypes: Array<String>? = null,
     private val language: String? = null,
     private val endpointing: String,
-    private val encoding: String? = null
+    private val encoding: String? = null,
+    private val wakeupBoundary: WakeupBoundary? = null
 ) {
     companion object {
         const val CODEC_SPEEX = "SPEEX"
@@ -68,6 +70,14 @@ data class AsrRecognizeEventPayload(
         addProperty("endpointing", endpointing)
         encoding?.let {
             addProperty("encoding", encoding)
+        }
+
+        wakeupBoundary?.let {
+            add("wakeupBoundary", JsonObject().apply {
+                addProperty("detection", it.detectSamplePosition)
+                addProperty("start", it.startSamplePosition)
+                addProperty("end", it.endSamplePosition)
+            })
         }
     }.toString()
 }

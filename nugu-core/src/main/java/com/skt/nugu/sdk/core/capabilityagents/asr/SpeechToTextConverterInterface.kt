@@ -37,7 +37,7 @@ interface SpeechToTextConverterInterface {
     var enablePartialResult: Boolean
     var enableSpeakerRecognition: Boolean
 
-    fun startSpeechToTextConverter(reader: SharedDataStream.Reader, format: AudioFormat, context: String, payload: ExpectSpeechPayload?, observer: ASRAgentInterface.OnResultListener)
+    fun startSpeechToTextConverter(reader: SharedDataStream.Reader, format: AudioFormat, context: String, wakeupBoundary: WakeupBoundary?, payload: ExpectSpeechPayload?, observer: ASRAgentInterface.OnResultListener)
     fun stopSpeechToTextConverter()
 
     fun getState(): State

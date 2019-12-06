@@ -86,8 +86,9 @@ interface SpeechRecognizerAggregatorInterface {
      * Start keyword detector.
      * @param keywordStartPosition start position of keyword at input
      * @param keywordEndPosition end position of keyword at input
+     * @param keywordDetectPosition detect position of keyword at input
      */
-    fun startListening(keywordStartPosition: Long? = null, keywordEndPosition: Long? = null)
+    fun startListening(keywordStartPosition: Long? = null, keywordEndPosition: Long? = null, keywordDetectPosition: Long? = null)
 
     /**
      * Stop Recognizing
