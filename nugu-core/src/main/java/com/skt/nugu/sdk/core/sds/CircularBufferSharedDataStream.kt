@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.sds
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.utils.Logger
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -52,17 +53,19 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
 
     override fun createWriter(): SharedDataStream.Writer {
         writerCount++
-        Logger.d(TAG, "[createWriter] $writerCount")
-        return MyWriter()
+        return MyWriter().also {
+            Logger.d(TAG, "[createWriter] refCount: $writerCount / created writer: $it / refStream: $this")
+        }
     }
 
     override fun createReader(initialPosition: Long?): SharedDataStream.Reader {
         readerCount++
-        Logger.d(TAG, "[createReader] $readerCount")
         return if (initialPosition == null) {
             MyReader()
         } else {
             MyReader(initialPosition)
+        }.also {
+            Logger.d(TAG, "[createReader] refCount: $readerCount / created reader: $it / refStream: $this")
         }
     }
 
@@ -80,7 +83,13 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
                 val writeSizeInBytes = Math.min(leftSizeInBytes, writableBufferSizeAtOnce)
 
                 lock.write {
-                    System.arraycopy(bytes, currentOffsetInBytes, buffer, writeOffset, writeSizeInBytes)
+                    System.arraycopy(
+                        bytes,
+                        currentOffsetInBytes,
+                        buffer,
+                        writeOffset,
+                        writeSizeInBytes
+                    )
 
                     writeOffset += writeSizeInBytes
 
@@ -98,7 +107,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
         }
 
         override fun close() {
-            if(isClosing) {
+            if (isClosing) {
                 return
             }
             isClosing = true
@@ -128,8 +137,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
         private var readPosition: Long = getPosition()
     ) : SharedDataStream.Reader, BufferEventListener {
         private val TAG = "MyReader"
-        @Volatile
-        private var isClosing = false
+        private val isClosing = AtomicBoolean(false)
         private var isReading = false
 
         @Volatile
@@ -152,16 +160,23 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
         }
 
         override fun read(dstBytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int {
-            return readInternal(offsetInBytes, sizeInBytes) { readOffset, dstOffsetInBytes, readSize ->
+            return readInternal(
+                offsetInBytes,
+                sizeInBytes
+            ) { readOffset, dstOffsetInBytes, readSize ->
                 System.arraycopy(buffer, readOffset, dstBytes, dstOffsetInBytes, readSize)
             }
         }
 
-        private fun readInternal(offsetInBytes: Int, sizeInBytes: Int, readFunction: (Int, Int, Int) -> Unit): Int {
+        private fun readInternal(
+            offsetInBytes: Int,
+            sizeInBytes: Int,
+            readFunction: (Int, Int, Int) -> Unit
+        ): Int {
             var dstOffsetInBytes = offsetInBytes
             var leftSizeInBytes = sizeInBytes
 
-            while (leftSizeInBytes > 0 && !isClosing) {
+            while (leftSizeInBytes > 0 && !isClosing.get()) {
                 isReading = true
                 var read = 0
                 lock.read {
@@ -200,12 +215,14 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
                     }
                 }
 
-                if (read == 0 && !isClosing) {
+                if (read == 0 && !isClosing.get()) {
                     synchronized(waitLock) {
-                        waitLock.wait(50L)
+                        if (!isClosing.get()) {
+                            waitLock.wait()
+                        }
                     }
 
-                    if(isBufferFullFilled) {
+                    if (isBufferFullFilled) {
                         isReading = false
                         return 0
                     }
@@ -219,19 +236,18 @@ open class CircularBufferSharedDataStream(private val capacity: Int) : SharedDat
         override fun position(): Long = readPosition
 
         override fun close() {
-            if (!isClosing) {
+            if (isClosing.compareAndSet(false, true)) {
                 readerCount--
                 synchronized(bufferEventListeners) {
                     bufferEventListeners.remove(this)
                 }
-                isClosing = true
                 Logger.d(TAG, "[close] $this, readerCount : $readerCount")
             }
             wakeLock()
         }
 
         override fun isClosed(): Boolean {
-            return !isReading && isClosing
+            return !isReading && isClosing.get()
         }
 
         override fun onBufferFilled() {
