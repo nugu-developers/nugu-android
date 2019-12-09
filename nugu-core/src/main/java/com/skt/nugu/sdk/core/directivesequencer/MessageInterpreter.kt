@@ -27,13 +27,13 @@ import com.skt.nugu.sdk.core.utils.Logger
 
 /**
  * Class that convert an message to [Directive] or [AttachmentMessage],
- * and directives will be passed to [DirectiveSequencerInterface],
+ * and then directives will be passed to [DirectiveGroupProcessor],
  * attachments will be handled by [AttachmentManagerInterface].
  */
 class MessageInterpreter(
     private val directiveGroupProcessor: DirectiveGroupProcessor,
     private val attachmentManager: AttachmentManagerInterface
-) : MessageInterpreterInterface, MessageObserver {
+) : MessageObserver {
     companion object {
         private const val TAG = "MessageInterpreter"
         private const val KEY_DIRECTIVES = "directives"
@@ -60,7 +60,7 @@ class MessageInterpreter(
         var directives = ArrayList<Directive>()
 
         for (jsonElement in jsonArray) {
-            if(jsonElement.isJsonObject) {
+            if (jsonElement.isJsonObject) {
                 convertJsonToDirective(jsonElement.asJsonObject)?.let {
                     directives.add(it)
                 }
@@ -74,7 +74,7 @@ class MessageInterpreter(
 
     private fun convertJsonToDirective(jsonObject: JsonObject): Directive? {
         val directive = MessageFactory.createDirective(attachmentManager, jsonObject)
-        return if(directive != null) {
+        return if (directive != null) {
             directive
         } else {
             Logger.e(TAG, "[convertJsonToDirective] failed to create Directive from: $jsonObject")
@@ -85,7 +85,7 @@ class MessageInterpreter(
     private fun onReceiveAttachment(jsonObject: JsonObject) {
         val jsonAttachment = jsonObject.getAsJsonObject(KEY_ATTACHMENT)
         val attachment = MessageFactory.createAttachmentMessage(jsonAttachment)
-        if(attachment != null) {
+        if (attachment != null) {
             // change jsonAttachment to brief log
             try {
                 jsonAttachment.remove("content")
