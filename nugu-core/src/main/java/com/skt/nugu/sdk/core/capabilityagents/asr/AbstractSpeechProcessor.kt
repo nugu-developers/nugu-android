@@ -44,7 +44,7 @@ abstract class AbstractSpeechProcessor(
             speechToTextConverter.enablePartialResult = value
         }
 
-    override var enableSpeakerRecognition: Boolean = true
+    override var includeWakeupBoundary: Boolean = false
         set(value) {
             if (field == value) {
                 return
@@ -83,7 +83,7 @@ abstract class AbstractSpeechProcessor(
 
         Logger.d(
             TAG,
-            "[startProcessor] wakeupBoundary:$wakeupBoundary, currentInputPosition: ${audioInputStream?.getPosition()}, enableSpeakerRecognition: $enableSpeakerRecognition"
+            "[startProcessor] wakeupBoundary:$wakeupBoundary, currentInputPosition: ${audioInputStream?.getPosition()}, includeWakeupBoundary: $includeWakeupBoundary"
         )
 
         if (audioInputStream == null) {
