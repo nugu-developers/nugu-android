@@ -37,7 +37,7 @@ class DefaultClientSideSpeechProcessor(
 
     override val speechToTextConverter = SpeechToTextConverterImpl(
         enablePartialResult,
-        enableSpeakerRecognition,
+        includeWakeupBoundary,
         false,
         messageSender,
         audioEncoder
@@ -80,7 +80,7 @@ class DefaultClientSideSpeechProcessor(
 
         var sendPosition: Long?
         var sendWakeupBoundary: WakeupBoundary?
-        if (enableSpeakerRecognition && inputWakeupBoundary != null) {
+        if (includeWakeupBoundary && inputWakeupBoundary != null) {
             // 화자인식 ON && wakeup에 의한 시작 : wakeword 음성도 전송한다.
             // send stream before 500ms to ready at server ASR
             val offsetPosition = 500 * inputFormat.getBytesPerMillis()

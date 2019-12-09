@@ -40,7 +40,7 @@ interface SpeechProcessorInterface {
 
     val defaultAudioProvider: AudioProvider?
     var enablePartialResult: Boolean
-    var enableSpeakerRecognition: Boolean
+    var includeWakeupBoundary: Boolean
 
     fun startProcessor(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, context: String, wakeupBoundary: WakeupBoundary?, payload: ExpectSpeechPayload?)
     fun stopProcessor()

@@ -38,7 +38,7 @@ class DefaultServerSideSpeechProcessor(
     }
 
     override val endPointDetector = EndPointDetectorImpl()
-    override val speechToTextConverter = SpeechToTextConverterImpl(enablePartialResult, enableSpeakerRecognition, true, messageSender, audioEncoder)
+    override val speechToTextConverter = SpeechToTextConverterImpl(enablePartialResult, includeWakeupBoundary, true, messageSender, audioEncoder)
 
     private val timeoutScheduler = ScheduledThreadPoolExecutor(1)
     private var timeoutFuture: ScheduledFuture<*>? = null
