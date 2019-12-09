@@ -16,6 +16,5 @@
 package com.skt.nugu.sdk.core.directivesequencer
 
 interface MessageInterpreterInterface {
-    fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
-    fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
+
 }

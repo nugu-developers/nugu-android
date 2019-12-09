@@ -58,14 +58,11 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
 import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.context.PlayStackContextManager
-import com.skt.nugu.sdk.core.directivesequencer.DirectiveSequencer
-import com.skt.nugu.sdk.core.directivesequencer.AudioPlayerDirectivePreProcessor
-import com.skt.nugu.sdk.core.directivesequencer.MessageInterpreter
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.client.client.DisplayAggregator
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
-import com.skt.nugu.sdk.core.directivesequencer.TimeoutResponseHandler
+import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
@@ -170,10 +167,13 @@ class NuguClient private constructor(
 
         fun displayAgentFactory(factory: DisplayAgentFactory) =
             apply { displayAgentFactory = factory }
+
         fun locationAgentFactory(factory: LocationAgentFactory) =
             apply { locationAgentFactory = factory }
+
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
         fun delegationAgentFactory(factory: DelegationAgentFactory?) = apply { delegationAgentFactory = factory }
+
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun build() = NuguClient(this)
@@ -218,16 +218,20 @@ class NuguClient private constructor(
             Logger.logger = logger
             SdkVersion.currentVersion = sdkVersion
             val messageInterpreter =
-                MessageInterpreter(directiveSequencer, AttachmentManager()).apply {
-                    addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
-                    if (displayAgentFactory != null) {
-                        addDirectiveGroupPreprocessor(AudioPlayerDirectivePreProcessor())
-                    }
-                }
+                MessageInterpreter(
+                    DirectiveGroupProcessor(
+                        inputProcessorManager,
+                        directiveSequencer
+                    ).apply {
+                        addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
+                        if (displayAgentFactory != null) {
+                            addDirectiveGroupPreprocessor(AudioPlayerDirectivePreProcessor())
+                        }
+                    }, AttachmentManager()
+                )
 
             networkManager = NetworkManager.create(messageRouter).apply {
                 addMessageObserver(messageInterpreter)
-                addMessageObserver(inputProcessorManager)
             }
 
             val contextManager = ContextManager()
@@ -314,7 +318,12 @@ class NuguClient private constructor(
             }
 
             delegationAgent = delegationClient?.let {
-                delegationAgentFactory?.create(contextManager, networkManager, inputProcessorManager, it)?.apply {
+                delegationAgentFactory?.create(
+                    contextManager,
+                    networkManager,
+                    inputProcessorManager,
+                    it
+                )?.apply {
                     contextManager.setStateProvider(namespaceAndName, this)
                     // update delegate initial state
                     contextManager.setState(
@@ -477,7 +486,8 @@ class NuguClient private constructor(
         return speakerManager.removeSpeakerManagerObserver(listener)
     }
 
-    override fun getPlaybackRouter(): com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter = playbackRouter
+    override fun getPlaybackRouter(): com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter =
+        playbackRouter
 
     override fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
         audioPlayerAgent.addListener(listener)

@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.core.utils.Logger
  * attachments will be handled by [AttachmentManagerInterface].
  */
 class MessageInterpreter(
-    private val directiveSequencer: DirectiveSequencerInterface,
+    private val directiveGroupProcessor: DirectiveGroupProcessor,
     private val attachmentManager: AttachmentManagerInterface
 ) : MessageInterpreterInterface, MessageObserver {
     companion object {
@@ -39,8 +39,6 @@ class MessageInterpreter(
         private const val KEY_DIRECTIVES = "directives"
         private const val KEY_ATTACHMENT = "attachment"
     }
-
-    private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
 
     override fun receive(message: String) {
         // message의 parsing을 담당.
@@ -71,13 +69,7 @@ class MessageInterpreter(
             }
         }
 
-        directiveGroupPreprocessors.forEach {
-            directives = it.preprocess(directives)
-        }
-
-        directives.forEach {
-            directiveSequencer.onDirective(it)
-        }
+        directiveGroupProcessor.onReceiveDirectives(directives)
     }
 
     private fun convertJsonToDirective(jsonObject: JsonObject): Directive? {
@@ -110,13 +102,5 @@ class MessageInterpreter(
 
     private fun onReceiveUnknownMessage(message: String) {
         Logger.e(TAG, "[onReceiveUnknownMessage] $message")
-    }
-
-    override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
-        directiveGroupPreprocessors.add(directiveGroupPreprocessor)
-    }
-
-    override fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
-        directiveGroupPreprocessors.remove(directiveGroupPreprocessor)
     }
 }
