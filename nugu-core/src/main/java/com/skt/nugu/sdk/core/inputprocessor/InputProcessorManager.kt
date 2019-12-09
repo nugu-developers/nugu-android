@@ -15,22 +15,18 @@
  */
 package com.skt.nugu.sdk.core.inputprocessor
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupHandler
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
-import com.skt.nugu.sdk.core.message.MessageFactory
-import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
 
-class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
+class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupHandler {
     companion object {
         private const val TAG = "InputProcessorManager"
-        private const val KEY_DIRECTIVES = "directives"
-        private const val KEY_ATTACHMENT = "attachment"
     }
 
     private val responseTimeoutListeners = HashSet<InputProcessorManagerInterface.OnResponseTimeoutListener>()
@@ -38,17 +34,28 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
     private val timeoutFutureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
     private val timeoutScheduler = Executors.newSingleThreadScheduledExecutor()
 
-    override fun receive(message: String) {
-        // message의 parsing을 담당.
-        try {
-            val jsonObject = JsonParser().parse(message).asJsonObject
-            when {
-                jsonObject.has(KEY_DIRECTIVES) -> onReceiveDirectives(jsonObject)
-                jsonObject.has(KEY_ATTACHMENT) -> onReceiveAttachment(jsonObject)
-                else -> onReceiveUnknownMessage(message)
+    override fun onReceiveDirectives(directives: List<Directive>) {
+        var removedDialogRequestId = ""
+        var timeoutFutureRemoved = false
+        for (directive in directives) {
+            try {
+                val header = directive.header
+                if(!timeoutFutureRemoved && header.namespace != AbstractASRAgent.NAMESPACE) {
+                    timeoutFutureRemoved = true
+                    header.dialogRequestId.let {
+                        removedDialogRequestId = it
+                        timeoutFutureMap[it]?.cancel(true)
+                        timeoutFutureMap.remove(it)
+                    }
+                }
+                onReceiveResponse(header.dialogRequestId, header)
+            } catch (th: Throwable) {
+                // ignore
             }
-        } catch (e: Exception) {
-            onReceiveUnknownMessage(message)
+        }
+
+        if(timeoutFutureRemoved && !removedDialogRequestId.isNullOrBlank()) {
+            requests.remove(removedDialogRequestId)
         }
     }
 
@@ -78,41 +85,6 @@ class InputProcessorManager : InputProcessorManagerInterface, MessageObserver {
         } else {
             Logger.w(TAG, "[receiveResponse] no input processor for $dialogRequestId")
         }
-    }
-
-    private fun onReceiveDirectives(jsonObject: JsonObject) {
-        val directives = jsonObject.getAsJsonArray(KEY_DIRECTIVES)
-
-        var removedDialogRequestId = ""
-        var timeoutFutureRemoved = false
-        for (directive in directives) {
-            try {
-                val header = MessageFactory.createHeader(directive.asJsonObject.getAsJsonObject("header"))
-                if(!timeoutFutureRemoved && header.namespace != AbstractASRAgent.NAMESPACE) {
-                    timeoutFutureRemoved = true
-                    header.dialogRequestId.let {
-                        removedDialogRequestId = it
-                        timeoutFutureMap[it]?.cancel(true)
-                        timeoutFutureMap.remove(it)
-                    }
-                }
-                onReceiveResponse(header.dialogRequestId, header)
-            } catch (th: Throwable) {
-                // ignore
-            }
-        }
-
-        if(timeoutFutureRemoved && !removedDialogRequestId.isNullOrBlank()) {
-            requests.remove(removedDialogRequestId)
-        }
-    }
-
-    private fun onReceiveAttachment(jsonObject: JsonObject) {
-        Logger.d(TAG, "[onReceiveAttachment] ignore attachment")
-    }
-
-    private fun onReceiveUnknownMessage(message: String) {
-        Logger.e(TAG, "[onReceiveUnknownMessage] $message")
     }
 
     override fun addResponseTimeoutListener(listener: InputProcessorManagerInterface.OnResponseTimeoutListener) {

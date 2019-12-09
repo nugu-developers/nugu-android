@@ -28,7 +28,7 @@ import java.lang.StringBuilder
  */
 data class Directive (
     private val attachmentManager: AttachmentManagerInterface?,
-    private val header: Header,
+    val header: Header,
     val payload: String
 ) {
     //    private val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()

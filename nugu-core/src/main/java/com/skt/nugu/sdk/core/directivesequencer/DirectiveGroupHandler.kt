@@ -17,6 +17,6 @@ package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 
-interface DirectiveGroupPreprocessor {
-    fun preprocess(directives: List<Directive>): MutableList<Directive>
+interface DirectiveGroupHandler {
+    fun onReceiveDirectives(directives: List<Directive>)
 }

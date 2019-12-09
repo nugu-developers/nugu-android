@@ -36,10 +36,12 @@ class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterfa
         inputProcessorManager.addResponseTimeoutListener(this)
     }
 
-    override fun preprocess(directives: ArrayList<Directive>): ArrayList<Directive> {
+    override fun preprocess(directives: List<Directive>): MutableList<Directive> {
+        val processedDirectives = ArrayList(directives)
+
         val handledDialogRequestIds = HashSet<String>()
         lock.withLock {
-            directives.removeAll {
+            processedDirectives.removeAll {
                 if(responseTimeoutDialogRequestIds.contains(it.getDialogRequestId())){
                     handledDialogRequestIds.add(it.getDialogRequestId())
                     true
@@ -51,7 +53,7 @@ class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterfa
             responseTimeoutDialogRequestIds.removeAll(handledDialogRequestIds)
         }
 
-        return directives
+        return processedDirectives
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {
