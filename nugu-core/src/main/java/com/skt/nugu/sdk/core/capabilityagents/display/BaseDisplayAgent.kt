@@ -31,7 +31,11 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.*
 
 abstract class BaseDisplayAgent(
@@ -39,12 +43,14 @@ abstract class BaseDisplayAgent(
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
+    inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : AbstractDisplayAgent(
     focusManager,
     contextManager,
     messageSender,
     playSynchronizer,
+    inputProcessorManager,
     channelName
 ),
     ChannelObserver {
@@ -78,6 +84,8 @@ abstract class BaseDisplayAgent(
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
+
+    private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
 
     protected data class TemplatePayload(
         @SerializedName("playServiceId")
@@ -330,30 +338,44 @@ abstract class BaseDisplayAgent(
         return false
     }
 
-    override fun setElementSelected(templateId: String, token: String) {
+    override fun setElementSelected(
+        templateId: String,
+        token: String,
+        callback: DisplayInterface.OnElementSelectedCallback?
+    ) {
         val directiveInfo = templateDirectiveInfoMap[templateId] ?: return
 
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                messageSender.sendMessage(
-                    EventMessageRequest.Builder(
-                        jsonContext,
-                        getNamespace(),
-                        EVENT_NAME_ELEMENT_SELECTED,
-                        getVersion()
-                    ).payload(
-                        JsonObject().apply {
-                            addProperty(KEY_TOKEN, token)
-                            directiveInfo.payload.playServiceId
-                                ?.let {
-                                    addProperty(KEY_PLAY_SERVICE_ID, it)
-                                }
-                        }.toString()
-                    ).build()
-                )
+                val dialogRequestId = UUIDGeneration.timeUUID().toString()
+                if (messageSender.sendMessage(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            getNamespace(),
+                            EVENT_NAME_ELEMENT_SELECTED,
+                            getVersion()
+                        ).dialogRequestId(dialogRequestId).payload(
+                            JsonObject().apply {
+                                addProperty(KEY_TOKEN, token)
+                                directiveInfo.payload.playServiceId
+                                    ?.let {
+                                        addProperty(KEY_PLAY_SERVICE_ID, it)
+                                    }
+                            }.toString()
+                        ).build()
+                    )
+                ) {
+                    callback?.let {
+                        eventCallbacks.put(dialogRequestId, callback)
+                    }
+                    onSendEventFinished(dialogRequestId)
+                } else {
+                    callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
+                }
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                callback?.onError(null, DisplayInterface.ErrorType.REQUEST_FAIL)
             }
         }, namespaceAndName)
     }
@@ -363,7 +385,7 @@ abstract class BaseDisplayAgent(
     protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
 
     override fun stopRenderingTimer(templateId: String) {
-        if(stoppedTimerTemplateIdMap[templateId] == true){
+        if (stoppedTimerTemplateIdMap[templateId] == true) {
             Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId - already called")
             return
         }
@@ -387,8 +409,11 @@ abstract class BaseDisplayAgent(
         templateId: String,
         timeout: Long = 7000L
     ) {
-        if(stoppedTimerTemplateIdMap[templateId] == true) {
-            Logger.d(TAG, "[restartClearTimer] not restart because of stopped by stopRenderingTimer() - templateId: $templateId, timeout: $timeout")
+        if (stoppedTimerTemplateIdMap[templateId] == true) {
+            Logger.d(
+                TAG,
+                "[restartClearTimer] not restart because of stopped by stopRenderingTimer() - templateId: $templateId, timeout: $timeout"
+            )
             return
         }
 
@@ -426,4 +451,16 @@ abstract class BaseDisplayAgent(
     }
 
     protected fun getRenderer(): DisplayAgentInterface.Renderer? = renderer
+
+    override fun onSendEventFinished(dialogRequestId: String) {
+        inputProcessorManager.onRequested(this, dialogRequestId)
+    }
+
+    override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+        eventCallbacks.remove(dialogRequestId)?.onSuccess(dialogRequestId)
+    }
+
+    override fun onResponseTimeout(dialogRequestId: String) {
+        eventCallbacks.remove(dialogRequestId)?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
+    }
 }

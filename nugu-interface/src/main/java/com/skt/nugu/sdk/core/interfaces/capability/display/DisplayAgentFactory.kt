@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.interfaces.capability.display
 
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
@@ -26,6 +27,7 @@ interface DisplayAgentFactory {
         contextManager: ContextManagerInterface,
         messageSender: MessageSender,
         playSynchronizer: PlaySynchronizerInterface,
+        inputProcessorManager: InputProcessorManagerInterface,
         channelName: String
     ): AbstractDisplayAgent
 }

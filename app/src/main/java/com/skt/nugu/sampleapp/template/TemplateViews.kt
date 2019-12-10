@@ -39,6 +39,7 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayText
 import com.skt.nugu.sampleapp.template.view.BaseView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
+import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 
 class TemplateViews {
     companion object {
@@ -227,7 +228,18 @@ class TemplateViews {
 
                                     holder.view.setOnClickListener {
                                         ClientManager.getClient().getDisplay()
-                                            ?.setElementSelected(displayId, item.token)
+                                            ?.setElementSelected(displayId, item.token, object: DisplayInterface.OnElementSelectedCallback {
+                                                override fun onSuccess(dialogRequestId: String) {
+                                                    Log.d(TAG, "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId")
+                                                }
+
+                                                override fun onError(
+                                                    dialogRequestId: String?,
+                                                    errorType: DisplayInterface.ErrorType
+                                                ) {
+                                                    Log.d(TAG, "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType")
+                                                }
+                                            })
                                     }
                                 }
                             }

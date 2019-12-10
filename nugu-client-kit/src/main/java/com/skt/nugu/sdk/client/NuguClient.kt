@@ -352,6 +352,7 @@ class NuguClient private constructor(
                     contextManager,
                     networkManager,
                     playSynchronizer,
+                    inputProcessorManager,
                     DefaultFocusChannel.DIALOG_CHANNEL_NAME
                 )
 
@@ -360,6 +361,7 @@ class NuguClient private constructor(
                     contextManager,
                     networkManager,
                     playSynchronizer,
+                    inputProcessorManager,
                     DefaultFocusChannel.CONTENT_CHANNEL_NAME
                 )
 
