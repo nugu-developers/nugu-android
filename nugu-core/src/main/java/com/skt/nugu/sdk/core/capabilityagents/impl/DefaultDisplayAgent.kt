@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.message.MessageFactory
@@ -45,12 +46,14 @@ object DefaultDisplayAgent {
             contextManager: ContextManagerInterface,
             messageSender: MessageSender,
             playSynchronizer: PlaySynchronizerInterface,
+            inputProcessorManager: InputProcessorManagerInterface,
             channelName: String
         ): AbstractDisplayAgent = Impl(
             focusManager,
             contextManager,
             messageSender,
             playSynchronizer,
+            inputProcessorManager,
             channelName
         )
     }
@@ -60,12 +63,14 @@ object DefaultDisplayAgent {
         contextManager: ContextManagerInterface,
         messageSender: MessageSender,
         playSynchronizer: PlaySynchronizerInterface,
+        inputProcessorManager: InputProcessorManagerInterface,
         channelName: String
     ) : BaseDisplayAgent(
         focusManager,
         contextManager,
         messageSender,
         playSynchronizer,
+        inputProcessorManager,
         channelName
     ) {
         companion object {

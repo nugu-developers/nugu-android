@@ -38,6 +38,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
+import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -1192,8 +1193,12 @@ object DefaultAudioPlayerAgent {
 
         private var displayAgent: DisplayAgentInterface? = null
 
-        override fun setElementSelected(templateId: String, token: String) {
-            displayAgent?.setElementSelected(templateId, token)
+        override fun setElementSelected(
+            templateId: String,
+            token: String,
+            callback: DisplayInterface.OnElementSelectedCallback?
+        ) {
+            displayAgent?.setElementSelected(templateId, token, callback)
         }
 
         override fun displayCardRendered(templateId: String) {

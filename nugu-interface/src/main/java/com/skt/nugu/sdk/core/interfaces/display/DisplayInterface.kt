@@ -1,9 +1,24 @@
 package com.skt.nugu.sdk.core.interfaces.display
 
+import com.skt.nugu.sdk.core.interfaces.common.EventCallback
+
 /**
  * The basic interface for display
  */
 interface DisplayInterface<Renderer> {
+    /**
+     * enum class for ErrorType
+     */
+    enum class ErrorType {
+        REQUEST_FAIL,
+        RESPONSE_TIMEOUT
+    }
+
+    /**
+     * callback interface for [setElementSelected]
+     */
+    interface OnElementSelectedCallback : EventCallback<ErrorType>
+
     /**
      * Each element has it's own token.
      *
@@ -11,8 +26,9 @@ interface DisplayInterface<Renderer> {
      *
      * @param templateId the unique identifier for the template card
      * @param token the unique identifier for the element
+     * @param callback the result callback for element selected event
      */
-    fun setElementSelected(templateId: String, token: String)
+    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback?)
 
     /**
      * Notifies the display that has been rendered.

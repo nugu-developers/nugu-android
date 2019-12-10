@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.util.HashMap
 
@@ -30,8 +31,9 @@ class DisplayAudioPlayerAgent(
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizer,
+    inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
-) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, channelName),
+) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, inputProcessorManager, channelName),
     AudioPlayerAgentInterface.Listener {
     companion object {
         const val NAMESPACE = "AudioPlayer"

@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.client.client
 
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -78,10 +79,20 @@ class DisplayAggregator(
         })
     }
 
-    override fun setElementSelected(templateId: String, token: String) {
-        lock.withLock {
+    override fun setElementSelected(
+        templateId: String,
+        token: String,
+        callback: DisplayInterface.OnElementSelectedCallback?
+    ) {
+        val agent: DisplayAgentInterface? = lock.withLock {
             requestAgentMap[templateId]
-        }?.setElementSelected(templateId, token)
+        }
+
+        if(agent != null) {
+            agent.setElementSelected(templateId, token, callback)
+        } else {
+            callback?.onError(null, DisplayInterface.ErrorType.REQUEST_FAIL)
+        }
     }
 
     override fun displayCardRendered(templateId: String) {
