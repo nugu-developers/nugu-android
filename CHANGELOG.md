@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+Version 0.6.9 *(2019-12-10)*
+----------------------------
+ * New: Add callback for setElementSelected (#129)
+ * Fix: missing call for reader's close (#120)
+ * Fix: leak at inputProcessorManager (#111)
+ * Fix: Remove sound interface (#101)
+ * Fix: Remove unused resources from VoiceChromeView
+ * Fix: Remove unused dependencies (#115)
+ * Improve: Update Keensense to v0.1.3
+ * Improve: Update SilverTray to v4.1.7
+ * Improve: Improve shared circulr buffer's thread wait (#119)
+
 Version 0.6.8 *(2019-12-03)*
 ----------------------------
  * New: Implement request event of delegation (#91)
