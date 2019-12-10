@@ -256,10 +256,10 @@ object DefaultSystemAgent {
         internal data class HandoffConnectionPayload(
             @SerializedName("protocol")
             val protocol: String,
-            @SerializedName("domain")
-            val domain: String,
             @SerializedName("hostname")
             val hostname: String,
+            @SerializedName("address")
+            val address: String,
             @SerializedName("port")
             val port: Int,
             @SerializedName("retryCountLimit")
@@ -284,7 +284,7 @@ object DefaultSystemAgent {
             }
 
             executor.submit {
-                connectionManager.handoffConnection(payload.protocol, payload.domain, payload.hostname, payload.port, payload.retryCountLimit, payload.connectionTimeout, payload.charge)
+                connectionManager.handoffConnection(payload.protocol, payload.hostname, payload.address, payload.port, payload.retryCountLimit, payload.connectionTimeout, payload.charge)
             }
         }
 
