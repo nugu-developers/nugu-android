@@ -144,14 +144,14 @@ class NetworkManager private constructor(
      */
     override fun handoffConnection(
         protocol: String,
-        domain: String,
         hostname: String,
+        address: String,
         port: Int,
         retryCountLimit: Int,
         connectionTimeout: Int,
         charge: String
     ) {
-        messageRouter.onHandoffConnection(protocol, domain, hostname, port, retryCountLimit, connectionTimeout, charge)
+        messageRouter.onHandoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
     }
 
 }

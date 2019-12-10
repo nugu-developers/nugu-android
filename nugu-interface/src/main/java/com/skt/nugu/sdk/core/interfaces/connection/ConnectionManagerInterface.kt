@@ -48,16 +48,16 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
      * the device to disconnect and connect
      * Registry Connection Handoff from SystemCapabilityAgent#handleHandoffConnection
      * @param protocol is only H2
-     * @param domain is address
-     * @param hostname is ipaddress
+     * @param hostname the hostname
+     * @param address the address
      * @param port the port
      * @param retryCountLimit Maximum count of retries
      * @param charge (internal option)
      */
     fun handoffConnection(
         protocol: String,
-        domain: String,
         hostname: String,
+        address: String,
         port: Int,
         retryCountLimit: Int,
         connectionTimeout: Int,
