@@ -39,7 +39,6 @@ abstract class RecognizeSenderThread(
 
     @Volatile
     private var isStopping = false
-    private var eventRequest: EventMessageRequest? = null
     private var currentAttachmentSequenceNumber: Int = 0
 
     override fun run() {
@@ -54,7 +53,7 @@ abstract class RecognizeSenderThread(
             var encodedBuffer: ByteArray?
             var read: Int
 
-            eventRequest = sendRecognizeEvent()
+            val recognizeRequest = sendRecognizeEvent()
 
             while (true) {
                 if (isStopping) {
@@ -78,15 +77,15 @@ abstract class RecognizeSenderThread(
 
                 // 3. send data
                 if (encodedBuffer != null) {
-                    sendAttachment(encodedBuffer)
+                    sendAttachment(encodedBuffer, recognizeRequest)
                 }
             }
 
             if (isStopping) {
-                sendStopRecognizeEvent()
+                sendStopRecognizeEvent(recognizeRequest)
                 observer.onStop()
             } else {
-                sendAttachment(null)
+                sendAttachment(null, recognizeRequest)
             }
         } catch (e: Exception) {
             Logger.w(TAG, "[exception]", e)
@@ -107,9 +106,9 @@ abstract class RecognizeSenderThread(
         messageSender.sendMessage(this)
     }
 
-    private fun sendStopRecognizeEvent() {
+    private fun sendStopRecognizeEvent(request: EventMessageRequest) {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        eventRequest?.let {
+        request.let {
             messageSender.sendMessage(
                 EventMessageRequest.Builder(
                     it.context,
@@ -121,28 +120,25 @@ abstract class RecognizeSenderThread(
         }
     }
 
-    private fun sendAttachment(encoded: ByteArray?) {
-        val request = eventRequest
-        if (request != null) {
-            val attachmentMessage = AttachmentMessageRequest(
-                UUIDGeneration.shortUUID().toString(),
-                request.dialogRequestId,
-                request.context,
-                AbstractASRAgent.NAMESPACE,
-                DefaultASRAgent.NAME_RECOGNIZE,
-                AbstractASRAgent.VERSION,
-                currentAttachmentSequenceNumber,
-                encoded == null,
-                encoded
-            )
+    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest) {
+        val attachmentMessage = AttachmentMessageRequest(
+            UUIDGeneration.shortUUID().toString(),
+            request.dialogRequestId,
+            request.context,
+            AbstractASRAgent.NAMESPACE,
+            DefaultASRAgent.NAME_RECOGNIZE,
+            AbstractASRAgent.VERSION,
+            currentAttachmentSequenceNumber,
+            encoded == null,
+            encoded
+        )
 
-            Logger.d(
-                TAG,
-                "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
-            )
-            currentAttachmentSequenceNumber++
-            messageSender.sendMessage(attachmentMessage)
-        }
+        Logger.d(
+            TAG,
+            "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
+        )
+        currentAttachmentSequenceNumber++
+        messageSender.sendMessage(attachmentMessage)
     }
 
     fun requestStop() {
