@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.capabilityagents.asr
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultASRAgent
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
+import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.network.request.AttachmentMessageRequest
@@ -45,7 +46,7 @@ abstract class RecognizeSenderThread(
         try {
             Logger.d(TAG, "[run] start")
             if (!audioEncoder.startEncoding(inputFormat)) {
-                observer.onError(Exception("Not Supported Input Format: $inputFormat"))
+                observer.onError(ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT)
                 return
             }
 
@@ -89,7 +90,7 @@ abstract class RecognizeSenderThread(
             }
         } catch (e: Exception) {
             Logger.w(TAG, "[exception]", e)
-            observer.onError(e)
+            observer.onError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
         } finally {
             Logger.d(TAG, "[run] end")
             audioEncoder.stopEncoding()
