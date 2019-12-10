@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.core.capabilityagents.asr
 
+import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+
 interface RecognizeSenderObserver {
     fun onStop()
-    fun onError(e: Exception)
+    fun onError(errorType: ASRAgentInterface.ErrorType)
 }

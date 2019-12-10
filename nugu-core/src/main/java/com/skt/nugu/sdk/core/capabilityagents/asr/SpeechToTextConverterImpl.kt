@@ -71,9 +71,9 @@ class SpeechToTextConverterImpl(
                     setStateToInActive()
                 }
 
-                override fun onError(e: Exception) {
-                    Logger.e(TAG, "[startSpeechToTextConverter] onError", e)
-                    observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
+                override fun onError(errorType: ASRAgentInterface.ErrorType) {
+                    Logger.e(TAG, "[startSpeechToTextConverter] onError - $errorType")
+                    observer.onError(errorType)
                     setStateToInActive()
                 }
             },
