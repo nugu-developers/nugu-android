@@ -1198,7 +1198,12 @@ object DefaultAudioPlayerAgent {
             token: String,
             callback: DisplayInterface.OnElementSelectedCallback?
         ) {
-            displayAgent?.setElementSelected(templateId, token, callback)
+            val agent = displayAgent
+            if(agent != null) {
+                agent.setElementSelected(templateId, token, callback)
+            } else {
+                callback?.onError(null, DisplayInterface.ErrorType.REQUEST_FAIL)
+            }
         }
 
         override fun displayCardRendered(templateId: String) {
