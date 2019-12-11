@@ -240,7 +240,8 @@ class SpeechRecognizerAggregator(
             SpeechRecognizerAggregatorInterface.State.WAITING -> keywordDetector.stopDetect()
             SpeechRecognizerAggregatorInterface.State.WAKEUP,
             SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
-            SpeechRecognizerAggregatorInterface.State.SPEECH_START -> speechProcessor.stop()
+            SpeechRecognizerAggregatorInterface.State.SPEECH_START,
+            SpeechRecognizerAggregatorInterface.State.SPEECH_END -> speechProcessor.stop()
             else -> {
             }
         }
