@@ -28,7 +28,7 @@ interface DisplayInterface<Renderer> {
      * @param token the unique identifier for the element
      * @param callback the result callback for element selected event
      */
-    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback?)
+    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback? = null)
 
     /**
      * Notifies the display that has been rendered.
