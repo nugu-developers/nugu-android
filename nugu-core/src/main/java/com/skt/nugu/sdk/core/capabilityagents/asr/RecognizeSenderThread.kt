@@ -54,7 +54,12 @@ abstract class RecognizeSenderThread(
             var encodedBuffer: ByteArray?
             var read: Int
 
-            val recognizeRequest = sendRecognizeEvent()
+            val recognizeRequest = createRecognizeEvent()
+
+            if(!sendRecognizeEvent(recognizeRequest)) {
+                observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
+                return
+            }
 
             while (true) {
                 if (isStopping) {
@@ -78,15 +83,23 @@ abstract class RecognizeSenderThread(
 
                 // 3. send data
                 if (encodedBuffer != null) {
-                    sendAttachment(encodedBuffer, recognizeRequest)
+                    if(!sendAttachment(encodedBuffer, recognizeRequest)) {
+                        observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
+                        return
+                    }
                 }
             }
 
             if (isStopping) {
-                sendStopRecognizeEvent(recognizeRequest)
-                observer.onStop()
+                if(!sendStopRecognizeEvent(recognizeRequest)) {
+                    observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
+                }  else {
+                    observer.onStop()
+                }
             } else {
-                sendAttachment(null, recognizeRequest)
+                if(!sendAttachment(null, recognizeRequest)) {
+                    observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
+                }
             }
         } catch (e: Exception) {
             Logger.w(TAG, "[exception]", e)
@@ -102,14 +115,11 @@ abstract class RecognizeSenderThread(
     abstract fun onFinished()
     abstract fun createRecognizeEvent(): EventMessageRequest
 
-    private fun sendRecognizeEvent(): EventMessageRequest = createRecognizeEvent().apply {
-        Logger.d(TAG, "[sendRecognizeEvent] $this")
-        messageSender.sendMessage(this)
-    }
+    private fun sendRecognizeEvent(request: EventMessageRequest): Boolean = messageSender.sendMessage(request)
 
-    private fun sendStopRecognizeEvent(request: EventMessageRequest) {
+    private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        request.let {
+        return request.let {
             messageSender.sendMessage(
                 EventMessageRequest.Builder(
                     it.context,
@@ -121,7 +131,12 @@ abstract class RecognizeSenderThread(
         }
     }
 
-    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest) {
+    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest): Boolean {
+        Logger.d(
+            TAG,
+            "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
+        )
+
         val attachmentMessage = AttachmentMessageRequest(
             UUIDGeneration.shortUUID().toString(),
             request.dialogRequestId,
@@ -134,12 +149,8 @@ abstract class RecognizeSenderThread(
             encoded
         )
 
-        Logger.d(
-            TAG,
-            "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
-        )
         currentAttachmentSequenceNumber++
-        messageSender.sendMessage(attachmentMessage)
+        return messageSender.sendMessage(attachmentMessage)
     }
 
     fun requestStop() {
