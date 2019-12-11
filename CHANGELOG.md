@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.6.10 *(2019-12-11)*
+----------------------------
+ * Fix: TTS not stopped after stop called. (#137) (Update silverTray to v4.1.8) 
+ * Fix: Not stop asr on busy (#133)
+ * Improve: Send correct error type for ASRAgentInterface.OnResultListener.onError()
+ * Improve: Set null as default for setElementSelected's callback .
+
+
 Version 0.6.9 *(2019-12-10)*
 ----------------------------
  * New: Add callback for setElementSelected (#129)
