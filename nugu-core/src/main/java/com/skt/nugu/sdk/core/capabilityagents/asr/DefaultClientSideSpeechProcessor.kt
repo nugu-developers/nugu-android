@@ -78,8 +78,8 @@ class DefaultClientSideSpeechProcessor(
             return false
         }
 
-        var sendPosition: Long?
-        var sendWakeupBoundary: WakeupBoundary?
+        val sendPosition: Long?
+        val sendWakeupBoundary: WakeupBoundary?
         if (includeWakeupBoundary && inputWakeupBoundary != null) {
             // 화자인식 ON && wakeup에 의한 시작 : wakeword 음성도 전송한다.
             // send stream before 500ms to ready at server ASR
