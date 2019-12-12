@@ -83,17 +83,10 @@ class DisplayAggregator(
         templateId: String,
         token: String,
         callback: DisplayInterface.OnElementSelectedCallback?
-    ) {
-        val agent: DisplayAgentInterface? = lock.withLock {
-            requestAgentMap[templateId]
-        }
-
-        if(agent != null) {
-            agent.setElementSelected(templateId, token, callback)
-        } else {
-            callback?.onError(null, DisplayInterface.ErrorType.REQUEST_FAIL)
-        }
-    }
+    ): String = lock.withLock {
+        requestAgentMap[templateId]
+    }?.setElementSelected(templateId, token, callback)
+        ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
     override fun displayCardRendered(templateId: String) {
         lock.withLock {

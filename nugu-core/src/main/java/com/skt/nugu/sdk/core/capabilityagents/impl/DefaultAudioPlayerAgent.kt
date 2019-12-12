@@ -1197,14 +1197,8 @@ object DefaultAudioPlayerAgent {
             templateId: String,
             token: String,
             callback: DisplayInterface.OnElementSelectedCallback?
-        ) {
-            val agent = displayAgent
-            if(agent != null) {
-                agent.setElementSelected(templateId, token, callback)
-            } else {
-                callback?.onError(null, DisplayInterface.ErrorType.REQUEST_FAIL)
-            }
-        }
+        ): String = displayAgent?.setElementSelected(templateId, token, callback)
+            ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
 
         override fun displayCardRendered(templateId: String) {
             displayAgent?.displayCardRendered(templateId)

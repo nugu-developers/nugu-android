@@ -227,19 +227,33 @@ class TemplateViews {
                                     }
 
                                     holder.view.setOnClickListener {
-                                        ClientManager.getClient().getDisplay()
-                                            ?.setElementSelected(displayId, item.token, object: DisplayInterface.OnElementSelectedCallback {
-                                                override fun onSuccess(dialogRequestId: String) {
-                                                    Log.d(TAG, "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId")
-                                                }
+                                        try {
+                                            ClientManager.getClient().getDisplay()
+                                                ?.setElementSelected(
+                                                    displayId,
+                                                    item.token,
+                                                    object :
+                                                        DisplayInterface.OnElementSelectedCallback {
+                                                        override fun onSuccess(dialogRequestId: String) {
+                                                            Log.d(
+                                                                TAG,
+                                                                "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId"
+                                                            )
+                                                        }
 
-                                                override fun onError(
-                                                    dialogRequestId: String?,
-                                                    errorType: DisplayInterface.ErrorType
-                                                ) {
-                                                    Log.d(TAG, "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType")
-                                                }
-                                            })
+                                                        override fun onError(
+                                                            dialogRequestId: String,
+                                                            errorType: DisplayInterface.ErrorType
+                                                        ) {
+                                                            Log.d(
+                                                                TAG,
+                                                                "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType"
+                                                            )
+                                                        }
+                                                    })
+                                        } catch (e: IllegalStateException) {
+                                            Log.w(TAG, "[setElementSelected]", e)
+                                        }
                                     }
                                 }
                             }
