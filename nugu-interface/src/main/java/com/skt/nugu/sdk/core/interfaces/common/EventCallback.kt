@@ -30,5 +30,5 @@ interface EventCallback<ErrorType> {
      * @param dialogRequestId the dialogRequestId for event request. If request event failed before send network, return null.
      * @param errorType the error type for event request.
      */
-    fun onError(dialogRequestId: String?, errorType: ErrorType)
+    fun onError(dialogRequestId: String, errorType: ErrorType)
 }

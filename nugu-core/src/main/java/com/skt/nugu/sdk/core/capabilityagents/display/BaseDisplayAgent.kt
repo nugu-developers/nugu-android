@@ -342,12 +342,13 @@ abstract class BaseDisplayAgent(
         templateId: String,
         token: String,
         callback: DisplayInterface.OnElementSelectedCallback?
-    ) {
-        val directiveInfo = templateDirectiveInfoMap[templateId] ?: return
+    ): String {
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+        val directiveInfo = templateDirectiveInfoMap[templateId] ?:
+        throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                val dialogRequestId = UUIDGeneration.timeUUID().toString()
                 if (messageSender.sendMessage(
                         EventMessageRequest.Builder(
                             jsonContext,
@@ -375,9 +376,11 @@ abstract class BaseDisplayAgent(
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                callback?.onError(null, DisplayInterface.ErrorType.REQUEST_FAIL)
+                callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
             }
         }, namespaceAndName)
+
+        return dialogRequestId
     }
 
     protected abstract fun getDisplayType(): DisplayAggregatorInterface.Type
@@ -461,6 +464,7 @@ abstract class BaseDisplayAgent(
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {
-        eventCallbacks.remove(dialogRequestId)?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
+        eventCallbacks.remove(dialogRequestId)
+            ?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 }

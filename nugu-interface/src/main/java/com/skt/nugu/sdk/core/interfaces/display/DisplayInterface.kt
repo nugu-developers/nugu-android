@@ -27,8 +27,11 @@ interface DisplayInterface<Renderer> {
      * @param templateId the unique identifier for the template card
      * @param token the unique identifier for the element
      * @param callback the result callback for element selected event
+     * @throws IllegalStateException when received invalid call.
+     * for example, when display for given [templateId] is invalid (maybe cleared or not rendered)
+     * @return the dialogRequestId for request
      */
-    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback? = null)
+    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback? = null): String
 
     /**
      * Notifies the display that has been rendered.
