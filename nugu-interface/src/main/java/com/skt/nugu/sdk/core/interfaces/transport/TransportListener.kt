@@ -24,7 +24,7 @@ interface TransportListener {
     /**
      * Called when a connecting to DeviceGateway is established.
      */
-    fun onConnecting(transport: Transport)
+    fun onConnecting(transport: Transport, reason: ConnectionStatusListener.ChangedReason)
     /**
      * Called when a connection to DeviceGateway is established.
      */

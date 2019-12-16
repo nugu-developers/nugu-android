@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * This class which specifies the interface to manage an connection over DeviceGateway.
@@ -50,7 +51,7 @@ class MessageRouter(
     private var isEnabled: Boolean = false
     /** The current connection status. */
     var status: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
-
+    var reason: ConnectionStatusListener.ChangedReason = ConnectionStatusListener.ChangedReason.NONE
     /**
      * lock for create transport
      */
@@ -62,11 +63,12 @@ class MessageRouter(
     override fun enable() {
         isEnabled = true
 
+        disconnectAllTransport()
+
         val isConnected = activeTransport?.isConnected() ?: false
-        if (activeTransport == null || !isConnected) {
-            resetActiveTransport()
+        if (!isConnected) {
             setConnectionStatus(
-                ConnectionStatusListener.Status.PENDING,
+                ConnectionStatusListener.Status.CONNECTING,
                 ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
             )
             createActiveTransport()
@@ -74,50 +76,51 @@ class MessageRouter(
     }
 
     /**
-     * reset transport
+     * disconnect all transport
      */
-    fun resetActiveTransport() {
-        try {
-            lock.lock()
-
-            activeTransport?.let {
-                for (transport in transports) {
-                    if (transport == it) {
-                        transports.remove(transport)
-                    }
-                }
+    fun disconnectAllTransport() {
+        lock.withLock {
+            for (transport in transports) {
+                transport.shutdown()
+                transports.remove(transport)
             }
-            activeTransport?.shutdown()
             activeTransport = null
-        } finally {
-            lock.unlock()
         }
     }
 
     /**
+     * disconnect all transport
+     */
+    fun disconnectTransport(transport: Transport) {
+        lock.withLock {
+            transports.filter { it == transport }.forEach {
+                it.shutdown()
+                transports.remove(it)
+            }
+            if (transport == activeTransport) {
+                activeTransport = null
+            }
+        }
+    }
+    /**
      * create a new transport
      */
     private fun createActiveTransport() {
-        try {
-            lock.lock()
-
+        lock.withLock {
             val transport = transportFactory.createTransport(authDelegate, this, this)
             if (transport.connect()) {
                 transports.add(transport)
-                Logger.d(TAG, "createActiveTransport ${transports.size}")
                 activeTransport = transport
+                Logger.d(TAG, "createActiveTransport ${transports.size}")
                 return
             }
-        } finally {
-            lock.unlock()
         }
 
-        resetActiveTransport()
+        disconnectAllTransport()
         setConnectionStatus(
             ConnectionStatusListener.Status.DISCONNECTED,
             ConnectionStatusListener.ChangedReason.INTERNAL_ERROR
         )
-
     }
 
     /**
@@ -125,7 +128,8 @@ class MessageRouter(
      */
     override fun disable() {
         isEnabled = false
-        resetActiveTransport()
+
+        disconnectAllTransport()
         setConnectionStatus(
             ConnectionStatusListener.Status.DISCONNECTED,
             ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
@@ -149,13 +153,25 @@ class MessageRouter(
 
     /**
      * Expect to have the message sent to the transport.
+     * @param messageRequest the messageRequest to be sent
+     * @return true is success, otherwise false
      */
-    override fun sendMessage(messageRequest: MessageRequest): Boolean = activeTransport?.send(messageRequest) ?: false
+    override fun sendMessage(messageRequest: MessageRequest) : Boolean {
+        if(!isEnabled) {
+            Logger.d(TAG, "[sendMessage] isConnected : ${activeTransport?.isConnected()}")
+            setConnectionStatus(
+                ConnectionStatusListener.Status.DISCONNECTED,
+                ConnectionStatusListener.ChangedReason.DISABLED
+            )
+            return false
+        }
+        return activeTransport?.send(messageRequest) ?: false
+    }
 
     /**
      * Notify the connection observer when the status has changed.
      */
-    fun notifyObserverOnConnectionStatusChanged(
+    private fun notifyObserverOnConnectionStatusChanged(
         status: ConnectionStatusListener.Status,
         reason: ConnectionStatusListener.ChangedReason
     ) {
@@ -166,13 +182,13 @@ class MessageRouter(
     /**
      * Notify the receive observer when the message has changed.
      */
-    fun notifyObserverOnReceived(message: String) {
+    private fun notifyObserverOnReceived(message: String) {
         val observer = getObserver()
         observer?.receive(message)
     }
 
     /**
-     * Queries the status of the connection.
+     * Get the status of the connection.
      */
     override fun getConnectionStatus(): ConnectionStatusListener.Status {
         return this.status
@@ -187,6 +203,7 @@ class MessageRouter(
     ) {
         if (status != this.status) {
             this.status = status
+            this.reason = reason
             notifyObserverOnConnectionStatusChanged(status, reason)
         }
     }
@@ -198,10 +215,15 @@ class MessageRouter(
      */
     override fun onConnected(transport: Transport) {
         Logger.d(TAG, "[onConnected] $transport")
+
         setConnectionStatus(
             ConnectionStatusListener.Status.CONNECTED,
-            ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
+            ConnectionStatusListener.ChangedReason.SUCCESS
         )
+        // for handoffConnection
+        if( activeTransport == transport) {
+            disconnectAllExceptTransport(transport)
+        }
     }
 
     /**
@@ -214,7 +236,9 @@ class MessageRouter(
         reason: ConnectionStatusListener.ChangedReason
     ) {
         Logger.d(TAG, "[onDisconnected] $transport / $reason")
+        //disconnectTransport(transport)
         setConnectionStatus(ConnectionStatusListener.Status.DISCONNECTED, reason)
+
     }
 
     /**
@@ -222,15 +246,18 @@ class MessageRouter(
      * @see [setConnectionStatus]
      * @param transport is Interface
      */
-    override fun onConnecting(transport: Transport) {
+    override fun onConnecting(
+        transport: Transport,
+        reason: ConnectionStatusListener.ChangedReason
+    ) {
         setConnectionStatus(
-            ConnectionStatusListener.Status.PENDING,
-            ConnectionStatusListener.ChangedReason.SUCCESS
+            ConnectionStatusListener.Status.CONNECTING,
+            reason
         )
     }
 
     /**
-     * receive the message from transport, then notify it to observer
+     * receive the message from transport, then it is notify
      * @see [setConnectionStatus]
      * @param message the message received
      */
@@ -239,9 +266,21 @@ class MessageRouter(
     }
 
     /**
+     * Processing after handoffConnection
+     */
+    private fun disconnectAllExceptTransport(transport: Transport) {
+        lock.withLock {
+            transports.filter { it != transport }.forEach {
+                it.shutdown()
+                transports.remove(it)
+            }
+        }
+    }
+
+    /**
      * forwarding Handoff to transport
      */
-    override fun onHandoffConnection(
+    override fun handoffConnection(
         protocol: String,
         domain: String,
         hostname: String,
@@ -250,6 +289,13 @@ class MessageRouter(
         connectionTimeout: Int,
         charge: String
     ) {
-        activeTransport?.onHandoffConnection(protocol, domain, hostname, port, retryCountLimit, connectionTimeout, charge)
+        activeTransport?.let { disconnectAllExceptTransport(it) }
+
+        lock.withLock {
+            transportFactory.createTransport(authDelegate, this, this).apply {
+                transports.add(this)
+                activeTransport = this
+            }.handoffConnection(protocol, domain, hostname, port, retryCountLimit, connectionTimeout, charge)
+        }
     }
 }

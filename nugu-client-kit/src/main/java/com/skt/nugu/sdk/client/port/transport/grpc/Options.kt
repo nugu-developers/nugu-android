@@ -20,17 +20,21 @@ package com.skt.nugu.sdk.client.port.transport.grpc
  */
 data class Options(
     /** Returns the address. */
-    val address: String = "reg-grpc.sktnugu.com",
+    val address: String = "reg-http.sktnugu.com",
     /** Returns the hostname. */
     val hostname: String = "",
     /** Returns the port. */
     val port: Int = 443,
     /** Returns count of retry. */
-    val retryCountLimit: Int = 100,
+    val retryCountLimit: Int = 0,
     /** Returns the connection timeout. */
-    val connectionTimeout: Int = 1000 * 10,
+    val connectionTimeout: Int = 0,
     /** Returns the enable of compression.*/
     val compressedConnection: Boolean = false,
     /** Returns the enable of debug */
-    val debug: Boolean = true
+    val debug: Boolean = true,
+    /** Returns the charge */
+    val charge: String = "Normal",
+    /** Returns the protocol */
+    val protocol: String = "H2_GRPC"
 )
