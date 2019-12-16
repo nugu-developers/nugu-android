@@ -127,6 +127,9 @@ internal class NuguOAuthClient(
      * @return [AuthFlowState.STOPPING]
      */
     private fun handleStopping(): AuthFlowState {
+        if(credential.accessToken.isBlank()) {
+            throw ExceptionInInitializerError("accessToken is empty")
+        }
         return AuthFlowState.STOPPING
     }
 
@@ -151,10 +154,6 @@ internal class NuguOAuthClient(
                 AuthFlowState.REQUEST_ISSUE_TOKEN -> handleRequestToken(authCode, refreshToken)
                 AuthFlowState.STOPPING -> handleStopping()
             }
-        }
-
-        if(credential.accessToken.isBlank()) {
-            throw ExceptionInInitializerError("accessToken is empty")
         }
     }
 
