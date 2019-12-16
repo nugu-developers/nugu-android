@@ -75,6 +75,7 @@ class NuguOAuthCallbackActivity : Activity() {
                     return false
                 } else if (newState == AuthStateListener.State.UNRECOVERABLE_ERROR /* Authentication error */) {
                     auth.setResult(false)
+                    finish()
                     return false
                 }
                 return true

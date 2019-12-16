@@ -95,11 +95,9 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                         }
 
                         override fun onError(reason: String) {
-                            Log.e(TAG, reason)
                             // please try again in a few minutes
-                            Snackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.authorization_failure_message)
-                                .show()
+                            Log.e(TAG, reason)
+                            finish()
                         }
                     })
                 else -> authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
