@@ -34,8 +34,8 @@ internal class NuguOAuthClient(
     private var credential: Credentials
     private var options: NuguOAuthOptions
 
-    var timeoutMs = 500L
-    var retriesAttempted = 0
+    private var timeoutMs = 500L
+    private var retriesAttempted = 0
 
     enum class AuthFlowState {
         STARTING,

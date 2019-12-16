@@ -100,7 +100,7 @@ class NuguOAuth private constructor(
     /** Oauth default options @see [NuguOAuthOptions] **/
     lateinit var options: NuguOAuthOptions
 
-    private var loginListener: NuguOAuthInterface.OnLoginListener? = null
+    private var onceListener: NuguOAuthInterface.OnLoginListener? = null
 
     private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize" + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s"
 
@@ -169,9 +169,13 @@ class NuguOAuth private constructor(
             } catch (e: Throwable) {
                 // If UnAuthenticatedException in AuthorizationFlow,
                 // remove existing token from cache.
-                lastErrorReason = e.cause.toString()
-
+                lastErrorReason = if (e is UnAuthenticatedException) {
+                    e.reason
+                } else {
+                    e.message.toString()
+                }
                 setAuthState(AuthStateListener.State.UNRECOVERABLE_ERROR)
+
                 if (e is UnAuthenticatedException) {
                     clearAuthorization()
                 }
@@ -180,14 +184,14 @@ class NuguOAuth private constructor(
     }
 
     private fun notifyOnLoginListener(result: Boolean, reason: String = "") {
-        loginListener?.let {
+        onceListener?.let {
             if (result) {
                 it.onSuccess(client.getCredentials())
             } else {
                 it.onError(reason)
             }
         }
-        loginListener = null
+        onceListener = null
     }
 
     /**
@@ -327,7 +331,7 @@ class NuguOAuth private constructor(
         listener: NuguOAuthInterface.OnLoginListener
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.loginListener = listener
+        this.onceListener = listener
         this.refreshToken = ""
         this.authCode = ""
 
@@ -354,7 +358,7 @@ class NuguOAuth private constructor(
      */
     override fun login(listener: NuguOAuthInterface.OnLoginListener) {
         this.options.grantType = NuguOAuthOptions.CLIENT_CREDENTIALS
-        this.loginListener = listener
+        this.onceListener = listener
 
         checkClientId()
         checkClientSecret()
@@ -381,7 +385,7 @@ class NuguOAuth private constructor(
         listener: NuguOAuthInterface.OnLoginListener
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.loginListener = listener
+        this.onceListener = listener
         this.authCode = authCode
         this.refreshToken = ""
 
@@ -407,7 +411,7 @@ class NuguOAuth private constructor(
      */
     override fun loginSilently(refreshToken: String, listener: NuguOAuthInterface.OnLoginListener) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.loginListener = listener
+        this.onceListener = listener
         this.refreshToken = refreshToken
 
         checkClientId()

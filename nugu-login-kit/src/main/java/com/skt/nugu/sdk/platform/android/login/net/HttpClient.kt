@@ -88,7 +88,7 @@ class HttpClient(private val baseUrl: String) {
         } catch (e : SSLException) {
             return Response(HTTP_CLIENT_ERROR, "SSLException")
         } catch (e: IOException) {
-            return Response(HTTP_CLIENT_ERROR, "IOException")
+            return Response(HTTP_CLIENT_ERROR, e.message.toString())
         } finally {
             connection.disconnect()
         }
