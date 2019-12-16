@@ -143,7 +143,7 @@ internal class NuguOAuthClient(
      * Authorization flow
      * @param refreshAccessToken true is skip the LinkDevice
      * */
-    fun handleAuthorizationFlow(authCode: String?, refreshToken: String?): Boolean {
+    fun handleAuthorizationFlow(authCode: String?, refreshToken: String?) {
         var flowState = AuthFlowState.STARTING
         while (flowState != AuthFlowState.STOPPING) {
             flowState = when (flowState) {
@@ -152,7 +152,10 @@ internal class NuguOAuthClient(
                 AuthFlowState.STOPPING -> handleStopping()
             }
         }
-        return credential.accessToken != ""
+
+        if(credential.accessToken.isBlank()) {
+            throw ExceptionInInitializerError("accessToken is empty")
+        }
     }
 
     fun setRefreshToken(refreshToken: String) {
