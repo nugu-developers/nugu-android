@@ -43,12 +43,12 @@ interface MessageRouterInterface : MessageSender {
     fun getConnectionStatus(): ConnectionStatusListener.Status
 
     /**
-     *  Redirecting connection from SystemCapability
+     *  handoff connection from SystemCapability
      */
-    fun onHandoffConnection(
+    fun handoffConnection(
         protocol: String,
-        domain: String,
         hostname: String,
+        address: String,
         port: Int,
         retryCountLimit: Int,
         connectionTimeout: Int,

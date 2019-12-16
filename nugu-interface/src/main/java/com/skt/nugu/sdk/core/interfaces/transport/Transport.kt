@@ -39,14 +39,10 @@ interface Transport {
 
     /**
      * Sends an message request.
+     * @param request the messageRequest to be sent
+     * @return true is success, otherwise false
      */
-    fun send(request: MessageRequest): Boolean
-
-    /** unused code */
-    fun sendCompleted()
-
-    /** unused code */
-    fun sendPostConnectMessage(request: MessageRequest)
+    fun send(request: MessageRequest) : Boolean
 
     /**
      *  Explicitly clean up client resources.
@@ -54,13 +50,13 @@ interface Transport {
     fun shutdown()
 
     /**
-     *  Redirecting connection from SystemCapability
+     *  handoff connection from SystemCapability
      */
-    fun onHandoffConnection(protocol: String,
-                            domain: String,
-                            hostname: String,
-                            port: Int,
-                            retryCountLimit: Int,
-                            connectionTimeout: Int,
-                            charge: String)
+    fun handoffConnection(protocol: String,
+                          hostname: String,
+                          address: String,
+                          port: Int,
+                          retryCountLimit: Int,
+                          connectionTimeout: Int,
+                          charge: String) {}
 }

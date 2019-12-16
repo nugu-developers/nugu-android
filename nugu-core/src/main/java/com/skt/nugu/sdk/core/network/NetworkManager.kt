@@ -140,7 +140,7 @@ class NetworkManager private constructor(
         messageObservers.forEach { it.receive(message) }
     }
     /**
-     *  Redirecting connection from SystemCapability
+     *  handoff connection from SystemCapability
      */
     override fun handoffConnection(
         protocol: String,
@@ -151,7 +151,7 @@ class NetworkManager private constructor(
         connectionTimeout: Int,
         charge: String
     ) {
-        messageRouter.onHandoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
+        messageRouter.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
     }
 
 }

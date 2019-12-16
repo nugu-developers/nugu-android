@@ -26,7 +26,7 @@ interface ConnectionStatusListener {
         /** not connected to server*/
         DISCONNECTED,
         /** attempting to establish a connection to server*/
-        PENDING,
+        CONNECTING,
         /**  connected to server.*/
         CONNECTED
     }
@@ -43,11 +43,11 @@ interface ConnectionStatusListener {
         /** The status changed to due to a successful operation.*/
         SUCCESS,
 
+        /** The connection status changed due to the client interacting.*/
+        CLIENT_REQUEST,
+
         /** The status changed due to an error from which there is no recovery.*/
         UNRECOVERABLE_ERROR,
-
-        /** The connection status changed due to the client interacting with the Connection public api.*/
-        CLIENT_REQUEST,
 
         /** The connection attempt failed due to the Connection object being disabled.*/
         DISABLED,
@@ -58,25 +58,16 @@ interface ConnectionStatusListener {
         /** The connection attempt failed due to timeout.*/
         CONNECTION_TIMEDOUT,
 
-        /** The connection attempt failed due to excessive load on the server.*/
-        CONNECTION_THROTTLED,
-
         /** The access credentials provided to server were invalid.*/
         INVALID_AUTH,
 
         /** There was a timeout sending a ping request.*/
         PING_TIMEDOUT,
 
-        /** There was a timeout writing to server.*/
-        WRITE_TIMEDOUT,
-
-        /** There was a timeout reading from server.*/
-        READ_TIMEDOUT,
-
         /** There was an underlying protocol error.*/
         FAILURE_PROTOCOL_ERROR,
 
-        /** There was an internal error within server.*/
+        /** There was an internal error on the client.*/
         INTERNAL_ERROR,
 
         /** There was an internal error on the server.*/
