@@ -34,8 +34,8 @@ internal class NuguOAuthClient(
     private var credential: Credentials
     private var options: NuguOAuthOptions
 
-    var timeoutMs = 500L
-    var retriesAttempted = 0
+    private var timeoutMs = 500L
+    private var retriesAttempted = 0
 
     enum class AuthFlowState {
         STARTING,
@@ -127,6 +127,9 @@ internal class NuguOAuthClient(
      * @return [AuthFlowState.STOPPING]
      */
     private fun handleStopping(): AuthFlowState {
+        if(credential.accessToken.isBlank()) {
+            throw ExceptionInInitializerError("accessToken is empty")
+        }
         return AuthFlowState.STOPPING
     }
 
@@ -143,7 +146,7 @@ internal class NuguOAuthClient(
      * Authorization flow
      * @param refreshAccessToken true is skip the LinkDevice
      * */
-    fun handleAuthorizationFlow(authCode: String?, refreshToken: String?): Boolean {
+    fun handleAuthorizationFlow(authCode: String?, refreshToken: String?) {
         var flowState = AuthFlowState.STARTING
         while (flowState != AuthFlowState.STOPPING) {
             flowState = when (flowState) {
@@ -152,7 +155,6 @@ internal class NuguOAuthClient(
                 AuthFlowState.STOPPING -> handleStopping()
             }
         }
-        return credential.accessToken != ""
     }
 
     fun setRefreshToken(refreshToken: String) {

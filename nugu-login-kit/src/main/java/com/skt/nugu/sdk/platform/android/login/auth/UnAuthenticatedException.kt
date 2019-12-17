@@ -18,4 +18,4 @@ package com.skt.nugu.sdk.platform.android.login.auth
 /**
  * Thrown when authentication fails.
  */
-class UnAuthenticatedException(@Suppress("UNUSED_PARAMETER") reason: String) : Throwable()
+class UnAuthenticatedException(val reason: String) : Throwable()

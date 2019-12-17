@@ -62,16 +62,12 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loading)
-    }
-
-    override fun onResume() {
-        super.onResume()
         /** Add observer When initialized, [onInitialized] is called **/
         ClientManager.observer = this
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
         /** remove observer **/
         ClientManager.observer = null
     }
@@ -95,7 +91,7 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                         }
 
                         override fun onError(reason: String) {
-                            Log.e(TAG, reason)
+                            Log.e(TAG, "error($reason)\nPlease check the clientSecret, clientId, redirectUri")
                             // please try again in a few minutes
                             Snackbar.with(findViewById(R.id.baseLayout))
                                 .message(R.string.authorization_failure_message)
@@ -176,6 +172,13 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
     private fun startIntroActivity() {
         runOnUiThread {
             IntroActivity.invokeActivity(this@LoadingActivity, "YOUR_POC_ID_HERE", getDeviceUniqueId())
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == IntroActivity.requestCode) {
+            startMainActivity()
         }
     }
 }

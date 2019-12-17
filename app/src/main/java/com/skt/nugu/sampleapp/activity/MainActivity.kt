@@ -286,7 +286,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-        if (newState == AuthStateListener.State.UNINITIALIZED) {
+        if (newState == AuthStateListener.State.UNRECOVERABLE_ERROR) {
             runOnUiThread {
                 Snackbar.with(findViewById(R.id.drawer_layout))
                     .message(R.string.device_not_connected)
