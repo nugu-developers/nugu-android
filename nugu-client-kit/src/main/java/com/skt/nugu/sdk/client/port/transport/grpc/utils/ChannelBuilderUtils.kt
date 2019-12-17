@@ -21,7 +21,6 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import io.grpc.*
 import java.util.concurrent.TimeUnit
-import java.util.logging.Level
 
 /**
  * Create the gRPC channel and initialization.
@@ -42,13 +41,6 @@ class ChannelBuilderUtils {
             if (!options.hostname.isBlank()) {
                 channelBuilder.overrideAuthority(options.hostname)
             }
-            if (options.debug) {
-                // adb shell setprop log.tag.io.grpc.ChannelLogger DEBUG
-                channelBuilder.maxTraceEvents(100)
-                val logger = java.util.logging.Logger.getLogger(ChannelLogger::class.java.name)
-                logger.level = Level.ALL
-            }
-
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
                     authorization ?: ""

@@ -38,6 +38,11 @@ interface Transport {
     fun isConnected(): Boolean
 
     /**
+     * Returns whether this object is currently connecting or connected to DeviceGateway.
+     */
+    fun isConnectedOrConnecting(): Boolean
+
+    /**
      * Sends an message request.
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false

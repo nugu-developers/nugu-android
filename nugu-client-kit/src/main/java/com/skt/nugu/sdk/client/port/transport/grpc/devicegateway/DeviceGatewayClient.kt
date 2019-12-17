@@ -41,7 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                           private var messageConsumer: MessageConsumer?,
                           private var transportObserver: Observer?,
-                          private val authorization: String?)
+                          private val authorization: String?,
+                          val isHandOff: Boolean)
     : Transport
     , PingService.Observer
     , EventStreamService.Observer {
@@ -104,7 +105,9 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                 retryCountLimit= this.retryCountLimit,
                 port = this.port,
                 connectionTimeout = this.connectionTimeout,
-                hostname = this.hostName
+                hostname = this.hostName,
+                charge = this.charge.toString(),
+                protocol = this.protocol.toString()
             )
 
             currentChannel = ChannelBuilderUtils.createChannelBuilderWith(option, authorization).build()
@@ -141,6 +144,11 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
      * Returns whether this object is currently connected to DeviceGateway.
      */
     override fun isConnected(): Boolean = isConnected.get()
+
+    override fun isConnectedOrConnecting(): Boolean {
+        throw NotImplementedError("not implemented")
+    }
+
     /**
      * Sends an message request.
      * @param request the messageRequest to be sent

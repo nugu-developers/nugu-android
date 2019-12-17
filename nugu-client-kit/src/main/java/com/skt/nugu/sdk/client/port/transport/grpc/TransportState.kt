@@ -23,7 +23,7 @@ import java.util.*
 /**
  * Class to manage the transport state.
  */
-class TransportState {
+internal class TransportState {
     companion object {
         private const val TAG = "TransportState"
         private val stateMap = EnumMap<DetailedState, Status>(DetailedState::class.java)
@@ -41,8 +41,6 @@ class TransportState {
         IDLE,
         /** The connection state is connecting. */
         CONNECTING,
-        /** performing authentication.  */
-        AUTHENTICATING,
         /** Awaiting response from registry server in order to policy information.  */
         CONNECTING_REGISTRY,
         /** Connecting to devicegateway */
@@ -72,7 +70,6 @@ class TransportState {
     init {
         stateMap[DetailedState.IDLE] = Status.DISCONNECTED
         stateMap[DetailedState.CONNECTING] = Status.CONNECTING
-        stateMap[DetailedState.AUTHENTICATING] = Status.CONNECTING
         stateMap[DetailedState.CONNECTING_REGISTRY] = Status.CONNECTING
         stateMap[DetailedState.CONNECTING_DEVICEGATEWAY] = Status.CONNECTING
         stateMap[DetailedState.RECONNECTING] = Status.CONNECTING

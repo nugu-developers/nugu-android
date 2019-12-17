@@ -26,16 +26,17 @@ import devicegateway.grpc.PolicyResponse
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
 import com.squareup.okhttp.HttpUrl
+import devicegateway.grpc.Charge
+import devicegateway.grpc.Protocol
 import java.io.IOException
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
-import javax.net.ssl.SSLException
 
 /**
  *  Implementation of registry
  **/
-internal class RegistryClient(private val opts: Options) : Transport {
+internal class RegistryClient(private var address: String, private val charge: String) : Transport {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: PolicyResponse? = null
@@ -54,19 +55,17 @@ internal class RegistryClient(private val opts: Options) : Transport {
             Logger.w(TAG, "[getPolicy] already shutdown")
             return
         }
-
         executor.submit {
             val client = OkHttpClient()
             client.connectTimeout
             val httpUrl = HttpUrl.Builder()
                 .scheme("https")
-                .host(opts.address)
+                .host(address)
                 .addPathSegment("v1")
                 .addPathSegment("policies")
-                .addQueryParameter("protocol", opts.protocol)
-                .addQueryParameter("charge", opts.charge)
+                .addQueryParameter("protocol", "H2_GRPC")
+                .addQueryParameter("charge", charge)
                 .build()
-
 
             val request = Request.Builder().url(httpUrl)
                 .header("Accept", "application/json")
@@ -96,27 +95,20 @@ internal class RegistryClient(private val opts: Options) : Transport {
                                     .setTtlMax(asJsonObject.get("ttlMax").asInt)
                             )
                         }
-
                         jsonObject.get("serverPolicies").asJsonArray.forEach {
                             policyBuilder.addServerPolicy(
                                 PolicyResponse.ServerPolicy.newBuilder()
-                                    .setChargeValue(
-                                        if (it.asJsonObject.get("protocol").asString.contains(
-                                                devicegateway.grpc.Protocol.H2_GRPC.toString()
-                                                ,ignoreCase = true)
-                                        ) 0 else 1
+                                    .setProtocolValue(
+                                        Protocol.valueOf(it.asJsonObject.get("protocol").asString.toUpperCase()).ordinal
                                     )
                                     .setChargeValue(
-                                        if (it.asJsonObject.get("charge").asString.contains(
-                                                devicegateway.grpc.Charge.NORMAL.toString()
-                                            ,ignoreCase = true)
-                                        ) 0 else 1
+                                        Charge.valueOf(it.asJsonObject.get("charge").asString.toUpperCase()).ordinal
                                     )
                                     .setPort(it.asJsonObject.get("port").asInt)
                                     .setHostName(it.asJsonObject.get("hostname").asString)
                                     .setAddress(it.asJsonObject.get("address").asString)
-                                    .setRetryCountLimit(if(opts.retryCountLimit == 0) it.asJsonObject.get("retryCountLimit").asInt else opts.retryCountLimit)
-                                    .setConnectionTimeout(if(opts.connectionTimeout == 0) it.asJsonObject.get("connectionTimeout").asInt else opts.connectionTimeout)
+                                    .setRetryCountLimit(it.asJsonObject.get("retryCountLimit").asInt)
+                                    .setConnectionTimeout(it.asJsonObject.get("connectionTimeout").asInt)
                             )
                         }
                         notifyPolicy(policyBuilder.build(), observer)
@@ -160,6 +152,10 @@ internal class RegistryClient(private val opts: Options) : Transport {
     }
 
     override fun send(request: MessageRequest): Boolean {
+        throw NotImplementedError()
+    }
+
+    override fun isConnectedOrConnecting(): Boolean {
         throw NotImplementedError()
     }
 
