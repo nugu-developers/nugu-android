@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.client.port.transport.grpc
 
 import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
-import com.skt.nugu.sdk.core.interfaces.auth.AuthStateListener
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
@@ -29,16 +28,15 @@ import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
 import devicegateway.grpc.PolicyResponse
 import java.util.concurrent.Executors
 
-
 /**
  * Class to create and manage an gRPC transport
  */
 internal class GrpcTransport private constructor(
-    registryOptions: Options,
+    address: String, charge:String,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
-) : Transport, AuthStateListener {
+) : Transport {
     /**
      * Transport Constructor.
      */
@@ -46,13 +44,13 @@ internal class GrpcTransport private constructor(
         private const val TAG = "GrpcTransport"
 
         fun create(
-            opts: Options,
+            address: String, charge:String,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
         ): Transport {
             return GrpcTransport(
-                opts,
+                address,charge,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -61,20 +59,14 @@ internal class GrpcTransport private constructor(
     }
 
     private var state: TransportState = TransportState()
-    private fun getDetailedState() = state.getDetailedState()
     private var deviceGatewayClient: DeviceGatewayClient? = null
-    private var registryClient: RegistryClient = RegistryClient(registryOptions)
+    private var registryClient: RegistryClient = RegistryClient(address = address, charge = charge)
+    private val executor = Executors.newSingleThreadExecutor()
 
     /** @return the bearer token **/
     private fun getAuthorization() = authDelegate.getAuthorization()?:""
-    private val executor = Executors.newSingleThreadExecutor()
-
-    /**
-     * Transport Initialize.
-     */
-    init {
-        authDelegate.addAuthStateListener(this)
-    }
+    /** @return the detail state **/
+    private fun getDetailedState() = state.getDetailedState()
 
     /**
      * connect from deviceGatewayClient and registryClient.
@@ -82,8 +74,7 @@ internal class GrpcTransport private constructor(
     override fun connect(): Boolean {
         if(state.isConnectedOrConnecting()) {
             when(getDetailedState()) {
-                DetailedState.AUTHENTICATING,
-                DetailedState.RECONNECTING -> {}
+                DetailedState.RECONNECTING -> {/*skip*/}
                 else  -> return false
             }
         }
@@ -99,13 +90,15 @@ internal class GrpcTransport private constructor(
      */
     private fun tryGetPolicy(): Boolean {
         checkAuthorizationIfEmpty {
-            setState(DetailedState.AUTHENTICATING,ChangedReason.INVALID_AUTH)
+            setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
 
         if(DetailedState.CONNECTING_REGISTRY == getDetailedState()) {
+            Logger.w(TAG,"[tryGetPolicy] Duplicate status")
             return false
         }
         setState(DetailedState.CONNECTING_REGISTRY)
+
         registryClient.getPolicy(getAuthorization(), object : RegistryClient.Observer {
             override fun onCompleted(policy: PolicyResponse?) {
                 // succeeded, then it should be connection to DeviceGateway
@@ -117,7 +110,7 @@ internal class GrpcTransport private constructor(
             override fun onError(reason: ChangedReason) {
                 when (reason) {
                     ChangedReason.INVALID_AUTH -> {
-                        setState(DetailedState.AUTHENTICATING,ChangedReason.INVALID_AUTH)
+                        setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
                     }
                     else -> {
                         setState(DetailedState.FAILED, reason)
@@ -130,6 +123,7 @@ internal class GrpcTransport private constructor(
     }
 
     private val deviceGatewayObserver = object : DeviceGatewayClient.Observer {
+
         override fun onConnected() {
             setState(DetailedState.CONNECTED)
         }
@@ -137,11 +131,11 @@ internal class GrpcTransport private constructor(
         override fun onError(reason: ChangedReason) {
             when (reason) {
                 ChangedReason.SUCCESS -> { /* nothing to do */}
-                ChangedReason.INVALID_AUTH -> setState(DetailedState.AUTHENTICATING,reason)
+                ChangedReason.INVALID_AUTH -> setState(DetailedState.FAILED,reason)
                 else -> {
-                    // If registryClient is not shutdown, try again. Otherwise fail
-                    // because if the handoffConnection fails, the registry must be retry.
-                    if(RegistryClient.cachedPolicy != null) {
+                    // if the handoffConnection fails, the registry must be retry.
+                    val isHandOff = deviceGatewayClient?.isHandOff ?: false
+                    if(!isHandOff) {
                         setState(DetailedState.FAILED, reason)
                     } else {
                         setState(DetailedState.RECONNECTING, reason)
@@ -163,18 +157,20 @@ internal class GrpcTransport private constructor(
      */
     private fun tryConnectToDeviceGateway(policy: PolicyResponse): Boolean {
         checkAuthorizationIfEmpty {
-            setState(DetailedState.AUTHENTICATING,ChangedReason.INVALID_AUTH)
+            setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
+
+        val isHandOff = getDetailedState() == DetailedState.HANDOFF
 
         setState(DetailedState.CONNECTING_DEVICEGATEWAY)
 
         deviceGatewayClient?.shutdown()
-
         DeviceGatewayClient(
             policy,
             messageConsumer,
             deviceGatewayObserver,
-            getAuthorization()
+            getAuthorization(),
+            isHandOff
         ).let {
             deviceGatewayClient = it
             return it.connect()
@@ -205,6 +201,8 @@ internal class GrpcTransport private constructor(
         }
         deviceGatewayClient?.disconnect()
         registryClient.disconnect()
+
+        setState(DetailedState.DISCONNECTING, ChangedReason.CLIENT_REQUEST)
     }
 
     /**
@@ -212,6 +210,14 @@ internal class GrpcTransport private constructor(
      * @return true is CONNECTED.
      */
     override fun isConnected(): Boolean = state.isConnected()
+
+    /**
+     * Returns whether this object is currently connecting or connected.
+     * @return true is CONNECTING or CONNECTED.
+     */
+    override fun isConnectedOrConnecting(): Boolean {
+        return state.isConnectedOrConnecting()
+    }
 
     override fun send(request: MessageRequest) : Boolean {
         if (!state.isConnected()) {
@@ -226,20 +232,19 @@ internal class GrpcTransport private constructor(
      */
     override fun shutdown() {
         Logger.d(TAG, "[shutdown] $this")
+
+        registryClient.shutdown()
+
+        deviceGatewayClient?.shutdown()
+        deviceGatewayClient = null
+
+        executor.shutdown()
+
         // remove observer
         transportObserver = null
-        // remove AuthStateListener
-        authDelegate.removeAuthStateListener(this)
-
-        executor.execute {
-            registryClient.shutdown()
-
-            deviceGatewayClient?.shutdown()
-            deviceGatewayClient = null
-            // only internal
-            setState(DetailedState.DISCONNECTED)
-            executor.shutdown()
-        }
+        // only internal
+        // DISCONNECTED is not deliver because it's delivering state from DISCONNECTING
+        setState(DetailedState.DISCONNECTED)
     }
 
     /**
@@ -261,46 +266,21 @@ internal class GrpcTransport private constructor(
             setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
             return
         }
-        // Important: Should be clear the cached to retry the connection to the registry after a handoff failure.
-        RegistryClient.cachedPolicy = null
 
-        // create PolicyResponse
-        val policy = PolicyResponse.newBuilder()
-            .setHealthCheckPolicy(healthCheckPolicy)
-            .addServerPolicy(
-                PolicyResponse.ServerPolicy.newBuilder()
-                    .setPort(port)
-                    .setHostName(hostname)
-                    .setAddress(address)
-                    .setRetryCountLimit(retryCountLimit)
-                    .setConnectionTimeout(connectionTimeout)
-            ).build()
         executor.submit{
+            // create PolicyResponse
+            val policy = PolicyResponse.newBuilder()
+                .setHealthCheckPolicy(healthCheckPolicy)
+                .addServerPolicy(
+                    PolicyResponse.ServerPolicy.newBuilder()
+                        .setPort(port)
+                        .setHostName(hostname)
+                        .setAddress(address)
+                        .setRetryCountLimit(retryCountLimit)
+                        .setConnectionTimeout(connectionTimeout)
+                ).build()
             tryConnectToDeviceGateway(policy)
         }
-    }
-
-    /**
-     * Notification that an authorization state has changed.
-     */
-    override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-        when (newState) {
-            AuthStateListener.State.UNINITIALIZED,
-            AuthStateListener.State.EXPIRED -> {
-                setState(DetailedState.AUTHENTICATING)
-                disconnect()
-            }
-            AuthStateListener.State.REFRESHED -> {
-                setState(DetailedState.AUTHENTICATING)
-                disconnect()
-                connect()
-            }
-            AuthStateListener.State.UNRECOVERABLE_ERROR -> {
-                disconnect()
-                setState(DetailedState.FAILED, ChangedReason.INVALID_AUTH)
-            }
-        }
-        return true
     }
 
     /**
@@ -319,13 +299,10 @@ internal class GrpcTransport private constructor(
                 allowed = false
             }
             DetailedState.CONNECTING -> {
-                allowed = DetailedState.IDLE == getDetailedState() || DetailedState.AUTHENTICATING == getDetailedState()
-            }
-            DetailedState.AUTHENTICATING -> {
-                allowed = DetailedState.FAILED != getDetailedState() && DetailedState.DISCONNECTED != getDetailedState()
+                allowed = DetailedState.IDLE == getDetailedState()
             }
             DetailedState.CONNECTING_REGISTRY -> {
-                allowed = DetailedState.CONNECTING == getDetailedState() || DetailedState.AUTHENTICATING == getDetailedState()
+                allowed = DetailedState.CONNECTING == getDetailedState()
             }
             DetailedState.CONNECTING_DEVICEGATEWAY -> {
                 allowed = getDetailedState() == DetailedState.CONNECTING_REGISTRY || getDetailedState() == DetailedState.HANDOFF
@@ -340,7 +317,7 @@ internal class GrpcTransport private constructor(
                 allowed = getDetailedState() == DetailedState.CONNECTING || getDetailedState() == DetailedState.CONNECTED
             }
             DetailedState.DISCONNECTED -> {
-                allowed = getDetailedState() == DetailedState.CONNECTED
+                allowed = getDetailedState() == DetailedState.CONNECTED || getDetailedState() == DetailedState.DISCONNECTING
             }
             DetailedState.RECONNECTING -> {
                 allowed = getDetailedState() == DetailedState.CONNECTING_DEVICEGATEWAY || getDetailedState() == DetailedState.CONNECTED
@@ -358,11 +335,7 @@ internal class GrpcTransport private constructor(
         // Perform status processing for Observer delivery
         when (TransportState.fromDetailedState(newDetailedState)) {
             ConnectionStatusListener.Status.CONNECTING -> {
-                var newReason = reason
-                if(DetailedState.AUTHENTICATING == newDetailedState) {
-                    newReason = ChangedReason.INVALID_AUTH
-                }
-                transportObserver?.onConnecting(this, newReason)
+                transportObserver?.onConnecting(this, reason)
             }
             ConnectionStatusListener.Status.CONNECTED -> {
                 transportObserver?.onConnected(this)
@@ -374,11 +347,6 @@ internal class GrpcTransport private constructor(
 
         // Update state
         state.setDetailedState(newDetailedState, reason)
-
-        // If new state is AUTHENTICATING, call onAuthFailure
-        if(DetailedState.AUTHENTICATING == newDetailedState && reason == ChangedReason.INVALID_AUTH) {
-            authDelegate.onAuthFailure(getAuthorization())
-        }
         return true
     }
 }

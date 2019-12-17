@@ -49,9 +49,6 @@ interface ConnectionStatusListener {
         /** The status changed due to an error from which there is no recovery.*/
         UNRECOVERABLE_ERROR,
 
-        /** The connection attempt failed due to the Connection object being disabled.*/
-        DISABLED,
-
         /** The connection attempt failed due to DNS resolution timeout.*/
         DNS_TIMEDOUT,
 
