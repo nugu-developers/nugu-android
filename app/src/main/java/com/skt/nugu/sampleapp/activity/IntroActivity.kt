@@ -16,6 +16,7 @@
 package com.skt.nugu.sampleapp.activity
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -32,16 +33,17 @@ import android.widget.RelativeLayout
  */
 class IntroActivity : AppCompatActivity() {
     companion object {
+        const val requestCode = 101
         const val EXTRA_KEY_POCID = "key_poc_id"
         const val EXTRA_KEY_DEVICE_UNIQUEID = "key_device_unique_id"
         private const val BASE_USING_URL = "https://webview.sktnugu.com/v2/3pp/confirm.html?poc_id=%s&device_unique_id=%s"
 
-        fun invokeActivity(context: Context, pocId: String, deviceUniqueId: String) {
-            context.startActivity(
-                Intent(context, IntroActivity::class.java)
+        fun invokeActivity(activity: Activity, pocId: String, deviceUniqueId: String) {
+            activity.startActivityForResult(
+                Intent(activity, IntroActivity::class.java)
                     .putExtra(EXTRA_KEY_POCID, pocId)
                     .putExtra(EXTRA_KEY_DEVICE_UNIQUEID, deviceUniqueId)
-            )
+            , requestCode)
         }
     }
 
