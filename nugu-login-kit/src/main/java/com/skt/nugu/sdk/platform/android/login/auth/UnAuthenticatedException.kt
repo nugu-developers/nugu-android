@@ -18,4 +18,4 @@ package com.skt.nugu.sdk.platform.android.login.auth
 /**
  * Thrown when authentication fails.
  */
-class UnAuthenticatedException(val reason: String) : Throwable()
+class UnAuthenticatedException(message: String) : Throwable(message)

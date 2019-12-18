@@ -20,23 +20,26 @@ import java.net.HttpURLConnection
 import com.skt.nugu.sdk.platform.android.login.net.HttpClient
 import org.json.JSONObject
 import com.skt.nugu.sdk.platform.android.login.net.FormEncodingBuilder
+import java.io.IOException
+import kotlin.math.min
 
 /**
  * NuguOAuthClient is a client for work with Authorization.
  * that manages and persists end-user credentials.
  * @see NuguOAuth
  */
-internal class NuguOAuthClient(
-    private val baseUrl: String
-) {
+internal class NuguOAuthClient(private val baseUrl: String) {
+    // The http client
     private val client = HttpClient(baseUrl)
     // The current Credentials for the app
     private var credential: Credentials
+    // The current OAuthOptions
     private var options: NuguOAuthOptions
-
-    private var timeoutMs = 500L
+    // Retry attempts
     private var retriesAttempted = 0
-
+    /**
+     * Enum class of AuthFlowState
+     */
     enum class AuthFlowState {
         STARTING,
         REQUEST_ISSUE_TOKEN,
@@ -50,10 +53,12 @@ internal class NuguOAuthClient(
 
     companion object {
         private const val TAG = "NuguOAuthClient"
-        private val maxDelayBeforeRefresh: Int = 0
-        private val maxDelayForRetry: Long = 15L * 1000L /*second in ms*/
+        private const val maxDelayBeforeRefresh: Int = 0
+        private const val maxDelayForRetry: Long = 15L * 1000L /*second in ms*/
         /** Max number of times a request is retried before failing.  */
-        private val maxRetries = 5
+        private const val maxRetries = 5
+        /** The default timeout in milliseconds*/
+        private const val initialTimeoutMs = 300L
     }
 
     init {
@@ -64,6 +69,10 @@ internal class NuguOAuthClient(
     /**
      * Request the accessToken and expiresInSecond for authentication
      * @return next [AuthFlowState]
+     * @throws IOException if the request could not be executed due to
+     *     cancellation, a connectivity problem or timeout. Because networks can
+     *     fail during an exchange, it is possible that the remote server
+     *     accepted the request before the failure.
      */
     private fun handleRequestToken(authCode: String?, refreshToken: String?): AuthFlowState {
         val grantType = options.grantType
@@ -90,24 +99,32 @@ internal class NuguOAuthClient(
             }
         }
 
-        val response = client.newCall("$baseUrl/v1/auth/oauth/token", form)
-        when (response.code) {
-            HttpURLConnection.HTTP_OK -> {
-                credential = Credentials.parse(response.body)
-                return AuthFlowState.STOPPING
-            }
-            HttpURLConnection.HTTP_UNAUTHORIZED,
-            HttpURLConnection.HTTP_BAD_REQUEST -> {
-                val json = if (response.body.isEmpty()) JSONObject() else JSONObject(response.body)
-                val error = if (json.has("error")) json.get("error").toString() else ""
-                val resultMessage = json.get("error_description").toString()
-                throw UnAuthenticatedException("${error} : ${resultMessage}")
-            }
-            else -> {
-                if (shouldRetry(retriesAttempted++, response.code)) {
-                    return AuthFlowState.REQUEST_ISSUE_TOKEN
+        try {
+            val response = client.newCall("$baseUrl/v1/auth/oauth/token", form)
+            when (response.code) {
+                HttpURLConnection.HTTP_OK -> {
+                    credential = Credentials.parse(response.body)
+                    return AuthFlowState.STOPPING
+                }
+                HttpURLConnection.HTTP_UNAUTHORIZED,
+                HttpURLConnection.HTTP_BAD_REQUEST -> {
+                    val json =
+                        if (response.body.isEmpty()) JSONObject() else JSONObject(response.body)
+                    val error = if (json.has("error")) json.get("error").toString() else "unknown error"
+                    val resultMessage = if (json.has("error_description")) json.get("error_description").toString() else "unknown description"
+                    throw UnAuthenticatedException("${error} : ${resultMessage}")
+                }
+                else -> {
+                    if (shouldRetry(retriesAttempted = ++retriesAttempted, statusCode = response.code)) {
+                        return AuthFlowState.REQUEST_ISSUE_TOKEN
+                    }
                 }
             }
+        } catch (e: Throwable) {
+            if (shouldRetry(retriesAttempted = ++retriesAttempted , throwable = e)) {
+                return AuthFlowState.REQUEST_ISSUE_TOKEN
+            }
+            throw e
         }
         credential.clear()
         return AuthFlowState.STOPPING
@@ -125,10 +142,11 @@ internal class NuguOAuthClient(
     /**
      * Handle the [AuthFlowState.STOPPING] AuthFlowState
      * @return [AuthFlowState.STOPPING]
+     * @throws Throwable if the token is empty
      */
     private fun handleStopping(): AuthFlowState {
         if(credential.accessToken.isBlank()) {
-            throw ExceptionInInitializerError("accessToken is empty")
+            throw Throwable("accessToken is empty")
         }
         return AuthFlowState.STOPPING
     }
@@ -138,7 +156,8 @@ internal class NuguOAuthClient(
      * @return [AuthFlowState.REQUEST_ISSUE_TOKEN]
      */
     private fun handleStarting(): AuthFlowState {
-        resetRetriesAttempted()
+        //reset retrys
+        retriesAttempted = 0
         return AuthFlowState.REQUEST_ISSUE_TOKEN
     }
 
@@ -178,27 +197,17 @@ internal class NuguOAuthClient(
     /**
      * Simple retry condition that allows retries up to a certain max number of retries.
      */
-    private fun shouldRetry(retriesAttempted: Int, statusCode: Int): Boolean {
+    private fun shouldRetry(retriesAttempted: Int, statusCode: Int? = null, throwable : Throwable? = null): Boolean {
         if (retriesAttempted >= maxRetries) {
             return false
         }
-
-        if (statusCode in 400..499) {
-            Thread.sleep(timeoutMs)
+        if (statusCode in 400..499 || throwable is IOException) {
             // Exponential back-off.
-            timeoutMs = Math.min(timeoutMs * 2, maxDelayForRetry)
+            val sleepMillis= min(Math.pow(retriesAttempted.toDouble() + 1 , 2.0).toLong() * initialTimeoutMs, maxDelayForRetry)
+            Thread.sleep(sleepMillis)
             return true
         }
-
         return false
-    }
-
-    /**
-     * reset retrys
-     */
-    private fun resetRetriesAttempted() {
-        timeoutMs = 500
-        retriesAttempted = 0
     }
 }
 

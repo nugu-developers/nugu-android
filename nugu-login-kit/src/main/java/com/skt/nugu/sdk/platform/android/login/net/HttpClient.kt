@@ -57,6 +57,11 @@ class HttpClient(private val baseUrl: String) {
 
     /**
      * Prepare the request, Invokes the request immediately
+     *
+     * @throws IOException if the request could not be executed due to
+     *     cancellation, a connectivity problem or timeout. Because networks can
+     *     fail during an exchange, it is possible that the remote server
+     *     accepted the request before the failure.
      */
     fun newCall(uri: String, form: FormEncodingBuilder): Response {
         val connection = getConnection(uri)
@@ -83,12 +88,6 @@ class HttpClient(private val baseUrl: String) {
                     }
                 }
             }
-        } catch (e : UnknownHostException) {
-            return Response(HTTP_CLIENT_ERROR, "UnknownHostException")
-        } catch (e : SSLException) {
-            return Response(HTTP_CLIENT_ERROR, "SSLException")
-        } catch (e: IOException) {
-            return Response(HTTP_CLIENT_ERROR, e.message.toString())
         } finally {
             connection.disconnect()
         }

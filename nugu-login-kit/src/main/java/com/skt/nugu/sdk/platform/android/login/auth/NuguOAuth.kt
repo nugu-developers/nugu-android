@@ -164,12 +164,9 @@ class NuguOAuth private constructor(
             }.onFailure {
                 // If UnAuthenticatedException in AuthorizationFlow,
                 // remove existing token from cache.
-                lastErrorReason = if (it is UnAuthenticatedException) {
-                    it.reason
-                } else {
-                    it.message.toString()
-                }
+                lastErrorReason = it.message.toString()
                 setAuthState(AuthStateListener.State.UNRECOVERABLE_ERROR)
+
                 if (it is UnAuthenticatedException) {
                     clearAuthorization()
                 }
