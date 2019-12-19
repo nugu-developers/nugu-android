@@ -36,10 +36,12 @@ import java.util.concurrent.Executors
 /**
  *  Implementation of registry
  **/
-internal class RegistryClient(private var address: String, private val charge: String) : Transport {
+internal class RegistryClient(private var address: String) : Transport {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: PolicyResponse? = null
+        const val GRPC_PROTOCOL = "H2_GRPC"
+        const val HTTPS_SCHEME = "https"
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -59,12 +61,11 @@ internal class RegistryClient(private var address: String, private val charge: S
             val client = OkHttpClient()
             client.connectTimeout
             val httpUrl = HttpUrl.Builder()
-                .scheme("https")
+                .scheme(HTTPS_SCHEME)
                 .host(address)
                 .addPathSegment("v1")
                 .addPathSegment("policies")
-                .addQueryParameter("protocol", "H2_GRPC")
-                .addQueryParameter("charge", charge)
+                .addQueryParameter("protocol", GRPC_PROTOCOL)
                 .build()
 
             val request = Request.Builder().url(httpUrl)
