@@ -35,45 +35,43 @@ interface ConnectionStatusListener {
      * This enum expresses the reasons a connection status may change.
      */
     enum class ChangedReason {
-        /**
-         * The non-reason, to be used when no reason is specified
-         */
+        /** The non-reason, to be used when no reason is specified. */
         NONE,
 
-        /** The status changed to due to a successful operation.*/
+        /** The status changed to due to a successful operation. */
         SUCCESS,
 
-        /** The connection status changed due to the client interacting.*/
+        /** The connection status changed due to the client interacting. */
         CLIENT_REQUEST,
 
-        /** The status changed due to an error from which there is no recovery.*/
+        /** The status changed due to an error from which there is no recovery. */
         UNRECOVERABLE_ERROR,
 
-        /** The connection attempt failed due to DNS resolution timeout.*/
+        /** The connection attempt failed due to DNS resolution timeout. */
         DNS_TIMEDOUT,
 
-        /** The connection attempt failed due to timeout.*/
+        /** The connection attempt failed due to timeout. */
         CONNECTION_TIMEDOUT,
 
-        /** The access credentials provided to server were invalid.*/
+        /** The access credentials provided to server were invalid. */
         INVALID_AUTH,
 
-        /** There was a timeout sending a ping request.*/
+        /** There was a timeout sending a ping request. */
         PING_TIMEDOUT,
 
-        /** There was an underlying protocol error.*/
+        /** There was an underlying protocol error. */
         FAILURE_PROTOCOL_ERROR,
 
-        /** There was an internal error on the client.*/
+        /** There was an internal error on the client. */
         INTERNAL_ERROR,
 
-        /** There was an internal error on the server.*/
+        /** There was an internal error on the server. */
         SERVER_INTERNAL_ERROR,
 
-        /** The server asked the client to reconnect.*/
+        /** The connection is disconnected from server. */
         SERVER_SIDE_DISCONNECT,
 
-        /** The server endpoint has changed.*/
+        /** The server endpoint has changed. */
         SERVER_ENDPOINT_CHANGED
     }
 
