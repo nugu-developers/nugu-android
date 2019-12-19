@@ -32,7 +32,7 @@ import java.util.concurrent.Executors
  * Class to create and manage an gRPC transport
  */
 internal class GrpcTransport private constructor(
-    address: String, charge:String,
+    address: String,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
@@ -44,13 +44,13 @@ internal class GrpcTransport private constructor(
         private const val TAG = "GrpcTransport"
 
         fun create(
-            address: String, charge:String,
+            address: String,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
         ): Transport {
             return GrpcTransport(
-                address,charge,
+                address,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -60,7 +60,7 @@ internal class GrpcTransport private constructor(
 
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayClient? = null
-    private var registryClient: RegistryClient = RegistryClient(address = address, charge = charge)
+    private var registryClient: RegistryClient = RegistryClient(address = address)
     private val executor = Executors.newSingleThreadExecutor()
 
     /** @return the bearer token **/
