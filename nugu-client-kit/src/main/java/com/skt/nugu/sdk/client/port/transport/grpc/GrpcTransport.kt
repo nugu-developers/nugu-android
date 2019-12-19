@@ -73,14 +73,9 @@ internal class GrpcTransport private constructor(
      */
     override fun connect(): Boolean {
         if(state.isConnectedOrConnecting()) {
-            when(getDetailedState()) {
-                DetailedState.RECONNECTING -> {/*skip*/}
-                else  -> return false
-            }
+            return false
         }
-
         setState(DetailedState.CONNECTING)
-
         return tryGetPolicy()
     }
 
@@ -123,9 +118,14 @@ internal class GrpcTransport private constructor(
     }
 
     private val deviceGatewayObserver = object : DeviceGatewayClient.Observer {
-
         override fun onConnected() {
             setState(DetailedState.CONNECTED)
+
+            val isHandOff = deviceGatewayClient?.isHandOff ?: false
+            if(isHandOff) {
+                deviceGatewayClient?.isHandOff = false
+                Logger.d(TAG,"[onConnected] Handoff changed : $isHandOff")
+            }
         }
 
         override fun onError(reason: ChangedReason) {
@@ -139,7 +139,7 @@ internal class GrpcTransport private constructor(
                         setState(DetailedState.FAILED, reason)
                     } else {
                         setState(DetailedState.RECONNECTING, reason)
-                        connect()
+                        tryGetPolicy()
                     }
                 }
             }
@@ -164,7 +164,11 @@ internal class GrpcTransport private constructor(
 
         setState(DetailedState.CONNECTING_DEVICEGATEWAY)
 
+        if( deviceGatewayClient != null ) {
+            Logger.w(TAG,"[tryConnectToDeviceGateway] deviceGatewayClient is not null")
+        }
         deviceGatewayClient?.shutdown()
+
         DeviceGatewayClient(
             policy,
             messageConsumer,
@@ -199,10 +203,11 @@ internal class GrpcTransport private constructor(
             Logger.d(TAG, "[disconnect], Status : ($state)")
             return
         }
-        deviceGatewayClient?.disconnect()
-        registryClient.disconnect()
+            deviceGatewayClient?.disconnect()
+            registryClient.disconnect()
 
-        setState(DetailedState.DISCONNECTING, ChangedReason.CLIENT_REQUEST)
+            // disconnect() was executed first because DetailedState.DISCONNECTED is called after DetailedState.DISCONNECTING.
+            setState(DetailedState.DISCONNECTING, ChangedReason.CLIENT_REQUEST)
     }
 
     /**
@@ -233,18 +238,18 @@ internal class GrpcTransport private constructor(
     override fun shutdown() {
         Logger.d(TAG, "[shutdown] $this")
 
-        registryClient.shutdown()
+        executor.submit{
+            registryClient.shutdown()
 
-        deviceGatewayClient?.shutdown()
-        deviceGatewayClient = null
+            deviceGatewayClient?.shutdown()
+            deviceGatewayClient = null
 
-        executor.shutdown()
-
-        // remove observer
-        transportObserver = null
-        // only internal
-        // DISCONNECTED is not deliver because it's delivering state from DISCONNECTING
-        setState(DetailedState.DISCONNECTED)
+            // remove observer
+            transportObserver = null
+            // only internal
+            // DISCONNECTED is not deliver because it's delivering state from DISCONNECTING
+            setState(DetailedState.DISCONNECTED)
+        }
     }
 
     /**
@@ -302,7 +307,7 @@ internal class GrpcTransport private constructor(
                 allowed = DetailedState.IDLE == getDetailedState()
             }
             DetailedState.CONNECTING_REGISTRY -> {
-                allowed = DetailedState.CONNECTING == getDetailedState()
+                allowed = DetailedState.CONNECTING == getDetailedState() || DetailedState.RECONNECTING == getDetailedState()
             }
             DetailedState.CONNECTING_DEVICEGATEWAY -> {
                 allowed = getDetailedState() == DetailedState.CONNECTING_REGISTRY || getDetailedState() == DetailedState.HANDOFF

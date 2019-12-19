@@ -42,7 +42,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                           private var messageConsumer: MessageConsumer?,
                           private var transportObserver: Observer?,
                           private val authorization: String?,
-                          val isHandOff: Boolean)
+                          var isHandOff: Boolean)
     : Transport
     , PingService.Observer
     , EventStreamService.Observer {

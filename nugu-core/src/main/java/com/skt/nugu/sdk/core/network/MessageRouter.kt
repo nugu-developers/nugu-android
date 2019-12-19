@@ -44,11 +44,7 @@ class MessageRouter(
 
     /** The observer object.*/
     private var observer: MessageRouterObserverInterface? = null
-    /**
-     * Returns the enabled status of MessageRouter
-     * @return True if this MessageRouter is enabled, false otherwise.
-     */
-    private var isEnabled: Boolean = false
+
     /** The current connection status. */
     private var status: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
     private var reason: ConnectionStatusListener.ChangedReason = ConnectionStatusListener.ChangedReason.NONE
@@ -61,12 +57,6 @@ class MessageRouter(
      * Begin the process of establishing an DeviceGateway connection.
      */
     override fun enable() {
-        if(isEnabled) {
-            Logger.w(TAG, "[enable] Already enabled")
-            return
-        }
-        isEnabled = true
-
         val isConnectedOrConnecting = activeTransport?.isConnectedOrConnecting() ?: false
         if (!isConnectedOrConnecting) {
             setConnectionStatus(
@@ -83,9 +73,7 @@ class MessageRouter(
     private fun disconnectAllTransport() {
         lock.withLock {
             activeTransport?.disconnect()
-            activeTransport = null
             handoffTransport?.disconnect()
-            handoffTransport = null
         }
     }
 
@@ -96,20 +84,14 @@ class MessageRouter(
         lock.withLock {
             transportFactory.createTransport(authDelegate, this, this).apply {
                 activeTransport = this
-            }.connect()
-        }
+            }
+        }.connect()
     }
 
     /**
      * Close the DeviceGateway connection.
      */
     override fun disable() {
-        if(!isEnabled) {
-            Logger.w(TAG, "[enable] Already disabled")
-            return
-        }
-        isEnabled = false
-
         disconnectAllTransport()
     }
 
@@ -118,14 +100,6 @@ class MessageRouter(
      */
     override fun setObserver(observer: MessageRouterObserverInterface) {
         this.observer = observer
-    }
-
-    /**
-     * Get the observer.
-     * @return observer
-     */
-    private fun getObserver(): MessageRouterObserverInterface? {
-        return this.observer
     }
 
     /**
@@ -144,7 +118,6 @@ class MessageRouter(
         status: ConnectionStatusListener.Status,
         reason: ConnectionStatusListener.ChangedReason
     ) {
-        val observer = getObserver()
         observer?.onConnectionStatusChanged(status, reason)
     }
 
@@ -152,7 +125,6 @@ class MessageRouter(
      * Notify the receive observer when the message has changed.
      */
     private fun notifyObserverOnReceived(message: String) {
-        val observer = getObserver()
         observer?.receive(message)
     }
 
@@ -263,7 +235,7 @@ class MessageRouter(
         lock.withLock {
             transportFactory.createTransport(authDelegate, this, this).apply {
                 handoffTransport = this
-            }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
-        }
+            }
+        }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
     }
 }
