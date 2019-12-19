@@ -220,7 +220,7 @@ object DefaultASRAgent {
                 null
             }
 
-            val initialSpeechProcessor = serverEpdSpeechRecognizer
+            val initialSpeechProcessor = clientEpdSpeechRecognizer ?: serverEpdSpeechRecognizer
             currentSpeechRecognizer = initialSpeechProcessor
             nextStartSpeechRecognizer = initialSpeechProcessor
 
