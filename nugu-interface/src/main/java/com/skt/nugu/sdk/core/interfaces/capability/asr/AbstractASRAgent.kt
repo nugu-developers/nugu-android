@@ -33,14 +33,13 @@ abstract class AbstractASRAgent(
     protected val messageSender: MessageSender,
     protected val contextManager: ContextManagerInterface,
     protected val dialogSessionManager: DialogSessionManagerInterface,
-    audioProvider: AudioProvider,
+    protected val audioProvider: AudioProvider,
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
     defaultEpdTimeoutMillis: Long,
     protected val channelName: String
 ) : CapabilityAgent(),
     ASRAgentInterface,
-    InputProcessor,
     DialogUXStateAggregatorInterface.Listener,
     DialogSessionManagerInterface.OnSessionStateChangeListener {
     companion object {
