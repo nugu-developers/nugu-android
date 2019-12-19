@@ -15,17 +15,16 @@
  */
 package com.skt.nugu.sdk.core.capabilityagents.asr
 
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
+import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 
-interface SpeechProcessorInterface {
+interface SpeechRecognizer {
     enum class State {
         EXPECTING_SPEECH,
         SPEECH_START,
         SPEECH_END,
-        STOP,
-        TIMEOUT;
+        STOP;
 
         fun isActive(): Boolean = when (this) {
             EXPECTING_SPEECH,
@@ -38,17 +37,13 @@ interface SpeechProcessorInterface {
         fun onStateChanged(state: State)
     }
 
-    val defaultAudioProvider: AudioProvider?
     var enablePartialResult: Boolean
-    var includeWakeupBoundary: Boolean
 
-    fun startProcessor(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, context: String, wakeupBoundary: WakeupBoundary?, payload: ExpectSpeechPayload?)
-    fun stopProcessor()
+    fun start(audioInputStream: SharedDataStream, audioFormat: AudioFormat, context: String, wakeupBoundary: WakeupBoundary?, payload: ExpectSpeechPayload?, resultListener: ASRAgentInterface.OnResultListener?)
+    fun stop()
 
     fun addListener(listener: OnStateChangeListener)
     fun removeListener(listener: OnStateChangeListener)
 
     fun notifyResult(state: String, result: String?)
-    fun notifyError(description: String)
-    fun release()
 }

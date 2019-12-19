@@ -34,8 +34,6 @@ data class AsrNotifyResultPayload(
         SOS,
         @SerializedName("EOS")
         EOS,
-        @SerializedName("RESET")
-        RESET,
         @SerializedName("FA")
         FA,
         @SerializedName("ERROR")

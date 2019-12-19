@@ -13,29 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.capabilityagents.asr
+package com.skt.nugu.sdk.core.capabilityagents.asr.impl
 
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultASRAgent
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.network.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
-abstract class RecognizeSenderThread(
+class SpeechRecognizeAttachmentSenderThread(
     private val reader: SharedDataStream.Reader,
     private val inputFormat: AudioFormat,
     private val messageSender: MessageSender,
     private val observer: RecognizeSenderObserver,
-    private val audioEncoder: Encoder
+    private val audioEncoder: Encoder,
+    private val recognizeEvent: EventMessageRequest
 ) : Thread() {
     companion object {
-        private const val TAG = "RecognizeSenderThread"
+        private const val TAG = "SpeechRecognizeAttachmentSenderThread"
+    }
+
+    interface RecognizeSenderObserver {
+        fun onFinish()
+        fun onStop()
+        fun onError(errorType: ASRAgentInterface.ErrorType)
     }
 
     @Volatile
@@ -53,13 +60,6 @@ abstract class RecognizeSenderThread(
             val buffer = ByteArray(140 * inputFormat.getBytesPerMillis())
             var encodedBuffer: ByteArray?
             var read: Int
-
-            val recognizeRequest = createRecognizeEvent()
-
-            if(!sendRecognizeEvent(recognizeRequest)) {
-                observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
-                return
-            }
 
             while (true) {
                 if (isStopping) {
@@ -83,7 +83,7 @@ abstract class RecognizeSenderThread(
 
                 // 3. send data
                 if (encodedBuffer != null) {
-                    if(!sendAttachment(encodedBuffer, recognizeRequest)) {
+                    if (!sendAttachment(encodedBuffer, recognizeEvent)) {
                         observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
                         return
                     }
@@ -91,14 +91,12 @@ abstract class RecognizeSenderThread(
             }
 
             if (isStopping) {
-                if(!sendStopRecognizeEvent(recognizeRequest)) {
-                    observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
-                }  else {
-                    observer.onStop()
-                }
+                observer.onStop()
             } else {
-                if(!sendAttachment(null, recognizeRequest)) {
+                if (!sendAttachment(null, recognizeEvent)) {
                     observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
+                } else {
+                    observer.onFinish()
                 }
             }
         } catch (e: Exception) {
@@ -107,27 +105,7 @@ abstract class RecognizeSenderThread(
         } finally {
             Logger.d(TAG, "[run] end")
             audioEncoder.stopEncoding()
-            onFinished()
             reader.close()
-        }
-    }
-
-    abstract fun onFinished()
-    abstract fun createRecognizeEvent(): EventMessageRequest
-
-    private fun sendRecognizeEvent(request: EventMessageRequest): Boolean = messageSender.sendMessage(request)
-
-    private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
-        Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        return request.let {
-            messageSender.sendMessage(
-                EventMessageRequest.Builder(
-                    it.context,
-                    AbstractASRAgent.NAMESPACE,
-                    DefaultASRAgent.EVENT_STOP_RECOGNIZE,
-                    AbstractASRAgent.VERSION
-                ).referrerDialogRequestId(it.dialogRequestId).build()
-            )
         }
     }
 

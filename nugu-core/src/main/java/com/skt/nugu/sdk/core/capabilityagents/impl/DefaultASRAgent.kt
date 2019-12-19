@@ -18,6 +18,9 @@ package com.skt.nugu.sdk.core.capabilityagents.impl
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.capabilityagents.asr.*
+import com.skt.nugu.sdk.core.capabilityagents.asr.impl.DefaultClientSpeechRecognizer
+import com.skt.nugu.sdk.core.capabilityagents.asr.impl.DefaultServerSpeechRecognizer
+import com.skt.nugu.sdk.core.capabilityagents.asr.SpeechRecognizer
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
@@ -28,7 +31,6 @@ import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.network.event.AsrNotifyResultPayload
@@ -129,7 +131,7 @@ object DefaultASRAgent {
         endPointDetector,
         defaultEpdTimeoutMillis,
         channelName
-    ), SpeechProcessorInterface.OnStateChangeListener, ChannelObserver {
+    ), SpeechRecognizer.OnStateChangeListener, ChannelObserver {
         private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
         private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
         private val onMultiturnListeners = HashSet<ASRAgentInterface.OnMultiturnListener>()
@@ -151,10 +153,10 @@ object DefaultASRAgent {
         private var currentAudioProvider: AudioProvider? = null
         private val speechProcessorLock = ReentrantLock()
 
-        private var currentSpeechProcessor: SpeechProcessorInterface
-        private var nextStartSpeechProcessor: SpeechProcessorInterface
-        private val serverEpdSpeechProcessor: SpeechProcessorInterface
-        private val clientEpdSpeechProcessor: SpeechProcessorInterface?
+        private var currentSpeechRecognizer: SpeechRecognizer
+        private var nextStartSpeechRecognizer: SpeechRecognizer
+        private val serverEpdSpeechRecognizer: SpeechRecognizer
+        private val clientEpdSpeechRecognizer: SpeechRecognizer?
 
         private val speechToTextConverterEventObserver =
             object : ASRAgentInterface.OnResultListener {
@@ -199,18 +201,16 @@ object DefaultASRAgent {
             )
 
         init {
-            serverEpdSpeechProcessor = DefaultServerSideSpeechProcessor(
-                audioProvider,
-                speechToTextConverterEventObserver,
+            serverEpdSpeechRecognizer = DefaultServerSpeechRecognizer(
+                inputProcessorManager,
                 audioEncoder,
                 messageSender,
                 defaultEpdTimeoutMillis
             )
 
-            clientEpdSpeechProcessor = if (endPointDetector != null) {
-                DefaultClientSideSpeechProcessor(
-                    audioProvider,
-                    speechToTextConverterEventObserver,
+            clientEpdSpeechRecognizer = if (endPointDetector != null) {
+                DefaultClientSpeechRecognizer(
+                    inputProcessorManager,
                     audioEncoder,
                     messageSender,
                     endPointDetector,
@@ -220,14 +220,11 @@ object DefaultASRAgent {
                 null
             }
 
-            val initialSpeechProcessor = clientEpdSpeechProcessor ?: serverEpdSpeechProcessor
-            currentSpeechProcessor = initialSpeechProcessor
-            nextStartSpeechProcessor = initialSpeechProcessor
+            val initialSpeechProcessor = serverEpdSpeechRecognizer
+            currentSpeechRecognizer = initialSpeechProcessor
+            nextStartSpeechRecognizer = initialSpeechProcessor
 
             initialSpeechProcessor.addListener(this)
-            if (initialSpeechProcessor is AbstractSpeechProcessor) {
-                initialSpeechProcessor.inputProcessor = this
-            }
             contextManager.setStateProvider(namespaceAndName, this)
             contextManager.setState(namespaceAndName, buildContext(), StateRefreshPolicy.NEVER)
         }
@@ -293,16 +290,13 @@ object DefaultASRAgent {
         private fun executeSelectSpeechProcessor() {
             Logger.d(TAG, "[executeSelectSpeechProcessor]")
             val speechProcessorToStart = speechProcessorLock.withLock {
-                nextStartSpeechProcessor
+                nextStartSpeechRecognizer
             }
 
-            if (speechProcessorToStart != currentSpeechProcessor) {
-                currentSpeechProcessor.removeListener(this)
-                currentSpeechProcessor = speechProcessorToStart
-                currentSpeechProcessor.addListener(this)
-                if (speechProcessorToStart is AbstractSpeechProcessor) {
-                    speechProcessorToStart.inputProcessor = this
-                }
+            if (speechProcessorToStart != currentSpeechRecognizer) {
+                currentSpeechRecognizer.removeListener(this)
+                currentSpeechRecognizer = speechProcessorToStart
+                currentSpeechRecognizer.addListener(this)
             }
         }
 
@@ -320,19 +314,7 @@ object DefaultASRAgent {
                 return
             }
 
-            val audioProvider = currentSpeechProcessor.defaultAudioProvider
             currentAudioProvider = audioProvider
-            if (audioProvider == null) {
-                Logger.w(
-                    TAG,
-                    "[executeHandleExpectSpeechDirective] defaultAudioProvider is null"
-                )
-                setHandlingExpectSpeechFailed(
-                    info,
-                    "[executeHandleExpectSpeechDirective] defaultAudioProvider is null"
-                )
-                return
-            }
 
             val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
             val audioFormat: AudioFormat = audioProvider.getFormat()
@@ -403,7 +385,7 @@ object DefaultASRAgent {
             val result = notifyResultPayload.result
 
             executor.submit {
-                currentSpeechProcessor.notifyResult(state.name, result)
+                currentSpeechRecognizer.notifyResult(state.name, result)
                 setHandlingCompleted(info)
             }
         }
@@ -521,13 +503,52 @@ object DefaultASRAgent {
 
         private fun executeInternalStartRecognition(context: String) {
             Logger.d(TAG, "[executeInternalStartRecognition]")
+
+            val inputStream = audioInputStream
+            if (inputStream == null) {
+                Logger.e(TAG, "[executeInternalStartRecognition] audioInputProcessor is null")
+                return
+            }
+
+            val inputFormat = audioFormat
+            if (inputFormat == null) {
+                Logger.e(TAG, "[executeInternalStartRecognition] audioFormat is null")
+                return
+            }
+
             executeSelectSpeechProcessor()
-            currentSpeechProcessor.startProcessor(
-                audioInputStream,
-                audioFormat,
+            currentSpeechRecognizer.start(
+                inputStream,
+                inputFormat,
                 context,
                 wakeupBoundary,
-                expectSpeechPayload
+                expectSpeechPayload,
+                object : ASRAgentInterface.OnResultListener {
+                    override fun onNoneResult() {
+                        speechToTextConverterEventObserver.onNoneResult()
+                    }
+
+                    override fun onPartialResult(result: String) {
+                        speechToTextConverterEventObserver.onPartialResult(result)
+                    }
+
+                    override fun onCompleteResult(result: String) {
+                        speechToTextConverterEventObserver.onCompleteResult(result)
+                    }
+
+                    override fun onError(type: ASRAgentInterface.ErrorType) {
+                        if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
+                            sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
+                        } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
+                            sendListenTimeout()
+                        }
+                        speechToTextConverterEventObserver.onError(type)
+                    }
+
+                    override fun onCancel() {
+                        speechToTextConverterEventObserver.onCancel()
+                    }
+                }
             )
 
             clearPreHandledExpectSpeech()
@@ -621,34 +642,22 @@ object DefaultASRAgent {
             }
         }
 
-        override fun onStateChanged(state: SpeechProcessorInterface.State) {
+        override fun onStateChanged(state: SpeechRecognizer.State) {
             Logger.d(TAG, "[SpeechProcessorInterface] state: $state")
             executor.submit {
                 val aipState = when (state) {
-                    SpeechProcessorInterface.State.EXPECTING_SPEECH -> {
+                    SpeechRecognizer.State.EXPECTING_SPEECH -> {
                         ASRAgentInterface.State.LISTENING
                     }
-                    SpeechProcessorInterface.State.SPEECH_START -> ASRAgentInterface.State.RECOGNIZING
-                    SpeechProcessorInterface.State.SPEECH_END -> {
+                    SpeechRecognizer.State.SPEECH_START -> ASRAgentInterface.State.RECOGNIZING
+                    SpeechRecognizer.State.SPEECH_END -> {
                         currentAudioProvider?.releaseAudioInputStream(this)
                         currentAudioProvider = null
                         ASRAgentInterface.State.BUSY
                     }
-                    SpeechProcessorInterface.State.TIMEOUT -> {
+                    SpeechRecognizer.State.STOP -> {
                         currentAudioProvider?.releaseAudioInputStream(this)
                         currentAudioProvider = null
-                        onResultListeners.forEach {
-                            it.onError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
-                        }
-                        sendListenTimeout()
-                        ASRAgentInterface.State.IDLE
-                    }
-                    SpeechProcessorInterface.State.STOP -> {
-                        currentAudioProvider?.releaseAudioInputStream(this)
-                        currentAudioProvider = null
-                        onResultListeners.forEach {
-                            it.onCancel()
-                        }
                         ASRAgentInterface.State.IDLE
                     }
                 }
@@ -685,16 +694,7 @@ object DefaultASRAgent {
                         expectSpeechPayload
                     )
                 } else {
-                    val audioProvider = currentSpeechProcessor.defaultAudioProvider
                     currentAudioProvider = audioProvider
-                    if (audioProvider == null) {
-                        Logger.w(
-                            TAG,
-                            "[startRecognition] defaultAudioProvider is null"
-                        )
-                        return@Callable false
-                    }
-
                     val newAudioInputStream: SharedDataStream? =
                         audioProvider.acquireAudioInputStream(this)
                     val newAudioFormat: AudioFormat = audioProvider.getFormat()
@@ -724,15 +724,15 @@ object DefaultASRAgent {
             }
         }
 
-        fun setSpeechProcessor(speechProcessor: SpeechProcessorInterface) {
-            speechProcessorLock.withLock {
-                nextStartSpeechProcessor = speechProcessor
-            }
-        }
-
-        fun getSpeechProcessor() = speechProcessorLock.withLock {
-            nextStartSpeechProcessor
-        }
+//        fun setSpeechProcessor(speechProcessor: SpeechProcessorInterface) {
+//            speechProcessorLock.withLock {
+//                nextStartSpeechProcessor = speechProcessor
+//            }
+//        }
+//
+//        fun getSpeechProcessor() = speechProcessorLock.withLock {
+//            nextStartSpeechProcessor
+//        }
 
         private fun setState(state: ASRAgentInterface.State) {
             if (this.state == state) {
@@ -801,44 +801,12 @@ object DefaultASRAgent {
         }
 
         private fun executeStopRecognition() {
-            currentSpeechProcessor.stopProcessor()
+            currentSpeechRecognizer.stop()
         }
 
         private fun canRecognizing(): Boolean {
             // ASR은 IDLE이나 BUSY 상태일 경우에만 가능하다.
             return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
-        }
-
-        override fun onSendEventFinished(dialogRequestId: String) {
-            inputProcessorManager.onRequested(this, dialogRequestId)
-        }
-
-        override fun onReceiveResponse(dialogRequestId: String, header: Header) {
-            if (header.namespace != NAMESPACE) {
-                Logger.d(TAG, "[onReceiveResponse] $header")
-                executor.submit {
-                    // BUSY 상태를 해제한다.
-                    if (state == ASRAgentInterface.State.BUSY) {
-                        setState(ASRAgentInterface.State.IDLE)
-                    }
-                }
-            }
-        }
-
-        override fun onResponseTimeout(dialogRequestId: String) {
-            executor.submit {
-                Logger.d(TAG, "[onResponseTimeout] dialogRequestId: $dialogRequestId")
-                onResultListeners.forEach {
-                    it.onError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
-                }
-
-                currentSpeechProcessor.notifyError(DESCRIPTION_NOTIFY_ERROR_RESPONSE_TIMEOUT)
-                sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
-                // BUSY 상태를 해제한다.
-                if (state == ASRAgentInterface.State.BUSY) {
-                    setState(ASRAgentInterface.State.IDLE)
-                }
-            }
         }
 
         private fun sendListenFailed() {
