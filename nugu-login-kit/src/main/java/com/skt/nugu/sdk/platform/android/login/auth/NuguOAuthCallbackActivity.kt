@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.platform.android.login.auth
 import android.app.Activity
 import android.os.Bundle
 import android.content.Intent
-import com.skt.nugu.sdk.core.interfaces.auth.AuthStateListener
 
 /**
  * Getting an authentication result as callback from an Activity
@@ -67,7 +66,8 @@ class NuguOAuthCallbackActivity : Activity() {
      * Perform a login.
      */
     private fun signIn() {
-        auth.login(object : AuthStateListener {
+        auth.login(object :
+            AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     auth.setResult(true)

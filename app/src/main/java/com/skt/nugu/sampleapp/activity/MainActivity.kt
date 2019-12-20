@@ -26,7 +26,7 @@ import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
-import com.skt.nugu.sdk.core.interfaces.auth.AuthStateListener
+import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguFloatingActionButton

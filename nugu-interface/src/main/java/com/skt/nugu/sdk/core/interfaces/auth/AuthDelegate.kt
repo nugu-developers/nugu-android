@@ -20,16 +20,6 @@ package com.skt.nugu.sdk.core.interfaces.auth
  */
 interface AuthDelegate {
     /**
-     * addAuthStateListener adds an [AuthStateListener] on the given was changed
-     * @param listener the listener that added
-     */
-    fun addAuthStateListener(listener: AuthStateListener)
-    /**
-     * Removes an [AuthStateListener]
-     * @param listener the listener that removed
-     */
-    fun removeAuthStateListener(listener: AuthStateListener)
-    /**
      * Gets an authorization from cache
      * @return authorization ( auth_type + access_token )
     */
