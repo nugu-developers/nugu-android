@@ -284,7 +284,6 @@ class NuguClient private constructor(
                 networkManager,
                 networkManager,
                 contextManager,
-                authDelegate,
                 batteryStatusProvider
             )
 

@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.core.interfaces.capability.system
 
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
-import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -27,7 +26,6 @@ abstract class AbstractSystemAgent (
     protected val messageSender: MessageSender,
     protected val connectionManager: ConnectionManagerInterface,
     protected val contextManager: ContextManagerInterface,
-    protected val authDelegate: AuthDelegate,
     protected val batteryStatusProvider: BatteryStatusProvider? = null
 ) : CapabilityAgent(),
     ConnectionStatusListener, SystemAgentInterface, ContextRequester {

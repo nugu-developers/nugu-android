@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.capability.system.*
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -49,14 +48,12 @@ object DefaultSystemAgent {
             messageSender: MessageSender,
             connectionManager: ConnectionManagerInterface,
             contextManager: ContextManagerInterface,
-            authDelegate: AuthDelegate,
             batteryStatusProvider: BatteryStatusProvider?
         ): AbstractSystemAgent =
             Impl(
                 messageSender,
                 connectionManager,
                 contextManager,
-                authDelegate,
                 batteryStatusProvider
             )
     }
@@ -75,13 +72,11 @@ object DefaultSystemAgent {
         messageSender: MessageSender,
         connectionManager: ConnectionManagerInterface,
         contextManager: ContextManagerInterface,
-        authDelegate: AuthDelegate,
         batteryStatusProvider: BatteryStatusProvider? = null
     ) : AbstractSystemAgent(
         messageSender,
         connectionManager,
         contextManager,
-        authDelegate,
         batteryStatusProvider
     ) {
         companion object {
@@ -296,8 +291,6 @@ object DefaultSystemAgent {
             Logger.d(TAG, "[handleTurnOff] $info")
             executor.submit {
                 executeDisconnectEvent()
-                connectionManager.disable()
-
                 observers.forEach { it.onTurnOff() }
             }
         }
