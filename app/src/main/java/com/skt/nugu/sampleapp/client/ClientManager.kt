@@ -140,7 +140,8 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             context,
             NuguOAuth.create(context),
             audioSourceManager
-        ).defaultEpdTimeoutMillis(7000L).endPointDetector(
+        ).defaultEpdTimeoutMillis(7000L)
+            .endPointDetector(
             EndPointDetector(
                 context.getDir(
                     "skt_nugu_assets",
