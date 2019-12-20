@@ -209,18 +209,6 @@ class NuguOAuth private constructor(
     }
 
     /**
-     * Receive authentication failure events from the devicegateway.
-     * @param token Failed token means
-     */
-    override fun onAuthFailure(token: String?) {
-        if (token.isNullOrEmpty() || getAuthorization() == token) {
-            Log.d(TAG, "Authentication failed because the authorization was invalid : $token")
-            setAuthState(AuthStateListener.State.EXPIRED)
-            executeAuthorization()
-        }
-    }
-
-    /**
      * Check whether a user is authenticated or not
      * @return trus is authorized, otherwise not authorized
      */

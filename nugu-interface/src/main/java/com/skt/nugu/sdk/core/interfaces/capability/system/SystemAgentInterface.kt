@@ -21,7 +21,8 @@ package com.skt.nugu.sdk.core.interfaces.capability.system
 interface SystemAgentInterface {
     enum class ExceptionCode {
         PLAY_ROUTER_PROCESSING_EXCEPTION,
-        TTS_SPEAKING_EXCEPTION
+        TTS_SPEAKING_EXCEPTION,
+        UNAUTHORIZED_REQUEST_EXCEPTION
     }
 
     /**

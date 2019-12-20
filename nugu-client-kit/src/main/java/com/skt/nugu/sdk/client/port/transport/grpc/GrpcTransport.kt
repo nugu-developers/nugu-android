@@ -203,11 +203,11 @@ internal class GrpcTransport private constructor(
             Logger.d(TAG, "[disconnect], Status : ($state)")
             return
         }
-            deviceGatewayClient?.disconnect()
-            registryClient.disconnect()
+        deviceGatewayClient?.disconnect()
+        registryClient.disconnect()
 
-            // disconnect() was executed first because DetailedState.DISCONNECTED is called after DetailedState.DISCONNECTING.
-            setState(DetailedState.DISCONNECTING, ChangedReason.CLIENT_REQUEST)
+        // disconnect() was executed first because DetailedState.DISCONNECTED is called after DetailedState.DISCONNECTING.
+        setState(DetailedState.DISCONNECTING, ChangedReason.CLIENT_REQUEST)
     }
 
     /**
