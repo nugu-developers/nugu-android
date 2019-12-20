@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.network
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
@@ -32,7 +33,7 @@ import kotlin.concurrent.withLock
 class MessageRouter(
     private val transportFactory: TransportFactory,
     private val authDelegate: AuthDelegate
-) : MessageRouterInterface, TransportListener, MessageConsumer {
+) : MessageRouterInterface, TransportListener, MessageConsumer, SystemAgentInterface.Listener {
     companion object {
         private const val TAG = "MessageRouter"
     }
@@ -109,6 +110,7 @@ class MessageRouter(
      */
     override fun sendMessage(messageRequest: MessageRequest) : Boolean {
         return activeTransport?.send(messageRequest) ?: false
+
     }
 
     /**
@@ -237,5 +239,19 @@ class MessageRouter(
                 handoffTransport = this
             }
         }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
+    }
+
+    override fun onTurnOff() {
+        disconnectAllTransport()
+    }
+
+    override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
+        if(code == SystemAgentInterface.ExceptionCode.UNAUTHORIZED_REQUEST_EXCEPTION) {
+            setConnectionStatus(ConnectionStatusListener.Status.DISCONNECTED, ConnectionStatusListener.ChangedReason.INVALID_AUTH)
+            activeTransport?.shutdown()
+            handoffTransport?.shutdown()
+            activeTransport = null
+            handoffTransport = null
+        }
     }
 }

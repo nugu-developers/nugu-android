@@ -18,14 +18,12 @@ package com.skt.nugu.sdk.core.interfaces.capability.system
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 
 interface SystemAgentFactory {
     fun create(
         messageSender: MessageSender,
         connectionManager: ConnectionManagerInterface,
         contextManager: ContextManagerInterface,
-        authDelegate: AuthDelegate,
         batteryStatusProvider: BatteryStatusProvider?
     ): AbstractSystemAgent
 }
