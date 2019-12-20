@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.auth
+package com.skt.nugu.sdk.platform.android.login.auth
 
 /**
  * This interface is used to observe changes to the state of authorization.

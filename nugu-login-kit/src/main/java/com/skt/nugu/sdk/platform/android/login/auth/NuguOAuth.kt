@@ -21,7 +21,6 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
-import com.skt.nugu.sdk.core.interfaces.auth.AuthStateListener
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -342,7 +341,8 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.login(object :
+            AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     setResult(true)
@@ -371,7 +371,8 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.login(object :
+            AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     setResult(true)
@@ -396,7 +397,8 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.login(object :
+            AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     setResult(true)

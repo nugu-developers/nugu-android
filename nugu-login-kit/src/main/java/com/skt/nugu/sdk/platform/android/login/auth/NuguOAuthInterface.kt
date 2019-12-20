@@ -92,4 +92,15 @@ interface NuguOAuthInterface {
          */
         fun onError(reason: String)
     }
+
+    /**
+     * addAuthStateListener adds an [AuthStateListener] on the given was changed
+     * @param listener the listener that added
+     */
+    fun addAuthStateListener(listener: AuthStateListener)
+    /**
+     * Removes an [AuthStateListener]
+     * @param listener the listener that removed
+     */
+    fun removeAuthStateListener(listener: AuthStateListener)
 }
