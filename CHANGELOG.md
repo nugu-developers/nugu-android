@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.7.0 *(2019-12-20)*
+----------------------------
+ * Fix: issue where reason of authentication error not delivered in OAuth (#128)
+ * Improve: Reimplement(Refactor) ASRAgent (#144)
+ * Improve: Change network management and logic
+     * (Caution) Previously, when the auth was refreshed, the connection was attempted automatically at SDK, but not now.
+
 Version 0.6.11 *(2019-12-12)*
 ----------------------------
  * Improve: Return id for setElementSelected's request.
