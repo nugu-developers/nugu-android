@@ -34,9 +34,4 @@ interface AuthDelegate {
      * @return authorization ( auth_type + access_token )
     */
     fun getAuthorization(): String?
-    /**
-     * Receive authentication failure events
-     * @param token Failed token means
-     */
-    fun onAuthFailure(token: String?)
 }

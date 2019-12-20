@@ -323,9 +323,7 @@ object DefaultSystemAgent {
                 val payload = MessageFactory.create(info.directive.payload, ExceptionPayload::class.java)
                 if(payload != null) {
                     when (payload.code) {
-                        CODE_UNAUTHORIZED_REQUEST_EXCEPTION -> {
-                            authDelegate.onAuthFailure(authDelegate.getAuthorization())
-                        }
+                        CODE_UNAUTHORIZED_REQUEST_EXCEPTION,
                         CODE_PLAY_ROUTER_PROCESSING_EXCEPTION,
                         CODE_TTS_SPEAKING_EXCEPTION -> {
                             val exceptionCode = try {
