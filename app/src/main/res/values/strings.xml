@@ -10,7 +10,10 @@
 
     <string name="button_close_description">close button</string>
     <string name="button_fab_description">start listening</string>
-    <string name="device_not_connected">device not connected.</string>
+
+    <string name="authentication_failed">Authentication failed.</string>
+    <string name="connection_failed">Connection to server failed.</string>
+    <string name="reconnecting">Reconnecting</string>
 
     <string name="menu_setting">setting</string>
     <string name="setting_enable_nugu">인공지능 NUGU 사용하기</string>

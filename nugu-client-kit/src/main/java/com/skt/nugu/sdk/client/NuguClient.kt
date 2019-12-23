@@ -285,7 +285,9 @@ class NuguClient private constructor(
                 networkManager,
                 contextManager,
                 batteryStatusProvider
-            )
+            ).apply {
+                addListener(messageRouter)
+            }
 
             val audioEncoder = audioEncoder// SpeexEncoder()
 
