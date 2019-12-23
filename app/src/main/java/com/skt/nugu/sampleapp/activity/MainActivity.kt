@@ -44,7 +44,6 @@ import com.skt.nugu.sampleapp.widget.BottomSheetController
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener
-    , AuthStateListener
     , ConnectionStatusListener
     , AudioPlayerAgentInterface.Listener {
     companion object {
@@ -131,7 +130,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             speechRecognizerAggregator.changeKeywordResource(ClientManager.tinkerbellResource)
         }
         speechRecognizerAggregator.addListener(this)
-        NuguOAuth.getClient().addAuthStateListener(this)
 
         // Check Permission
         if (!PermissionUtils.checkPermissions(this, permissions)) {
@@ -169,7 +167,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         Log.d(TAG, "[onPause]")
         speechRecognizerAggregator.removeListener(this)
         speechRecognizerAggregator.stop()
-        NuguOAuth.getClient().removeAuthStateListener(this)
         super.onPause()
     }
 
@@ -273,30 +270,12 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
             speechRecognizerAggregatorState = state
         }
-
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_setting -> {
                 SettingsActivity.invokeActivity(this)
-            }
-        }
-        return true
-    }
-
-    override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-        if (newState == AuthStateListener.State.UNRECOVERABLE_ERROR) {
-            runOnUiThread {
-                Snackbar.with(findViewById(R.id.drawer_layout))
-                    .message(R.string.device_not_connected)
-                    .duration(Snackbar.LENGTH_LONG)
-                    .callback(object : Snackbar.Callback() {
-                        override fun onDismissed() {
-                            LoadingActivity.invokeActivity(this@MainActivity)
-                            finishAffinity()
-                        }
-                    }).show()
             }
         }
         return true
@@ -329,6 +308,81 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         if (connectionStatus != status) {
             connectionStatus = status
             updateView()
+        }
+
+        if(status == ConnectionStatusListener.Status.CONNECTING) {
+            when(reason) {
+                ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR,
+                ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT ,
+                ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT ,
+                ConnectionStatusListener.ChangedReason.PING_TIMEDOUT,
+                ConnectionStatusListener.ChangedReason.FAILURE_PROTOCOL_ERROR,
+                ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
+                ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR ,
+                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT ,
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
+                    /** checking connection status for debugging. **/
+                    Snackbar.with(findViewById(R.id.drawer_layout))
+                        .message(R.string.reconnecting)
+                        .duration(Snackbar.LENGTH_SHORT)
+                        .show()
+                }
+                else -> { /* nothing to do */ }
+            }
+        } else if(status == ConnectionStatusListener.Status.DISCONNECTED) {
+            when(reason) {
+                ConnectionStatusListener.ChangedReason.NONE,
+                ConnectionStatusListener.ChangedReason.SUCCESS,
+                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST -> { /** no error **/ }
+                ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR,
+                ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT ,
+                ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT ,
+                ConnectionStatusListener.ChangedReason.PING_TIMEDOUT,
+                ConnectionStatusListener.ChangedReason.FAILURE_PROTOCOL_ERROR,
+                ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
+                ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR ,
+                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT ,
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
+                    /** If you want to reconnect to the server, run the code below.
+                        But it can be recursive, so you need to manage the count of attempts.
+                        if(attempts++ < maxAttempts) {
+                            ClientManager.getClient().connect()
+                        }
+                     **/
+                    Snackbar.with(findViewById(R.id.drawer_layout))
+                        .message(R.string.connection_failed)
+                        .duration(Snackbar.LENGTH_LONG)
+                        .show()
+                }
+                ConnectionStatusListener.ChangedReason.INVALID_AUTH -> {
+                    /** Authentication failed Please refresh your access_token. **/
+                    NuguOAuth.getClient().login(object : AuthStateListener {
+                        override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
+                            when(newState) {
+                                AuthStateListener.State.REFRESHED -> {
+                                    Log.d(TAG, "Connect to the server")
+                                    ClientManager.getClient().connect()
+                                    return false
+                                }
+                                AuthStateListener.State.UNRECOVERABLE_ERROR -> {
+                                    Log.d(TAG, "Authentication failed")
+                                    Snackbar.with(findViewById(R.id.drawer_layout))
+                                        .message(R.string.authentication_failed)
+                                        .duration(Snackbar.LENGTH_LONG)
+                                        .show()
+                                    return false
+                                }
+                                AuthStateListener.State.UNINITIALIZED,
+                                AuthStateListener.State.EXPIRED -> {
+                                    Log.d(TAG, "Authentication in progress")
+                                }
+                            }
+
+                            return true
+                        }
+                    })
+                }
+            }
         }
     }
 
