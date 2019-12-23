@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.7.1 *(2019-12-23)*
+----------------------------
+ * Improve: Mapping errors using ChangedReason (#147)
+
 Version 0.7.0 *(2019-12-20)*
 ----------------------------
  * Fix: issue where reason of authentication error not delivered in OAuth (#128)
