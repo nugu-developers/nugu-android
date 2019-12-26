@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 0.7.2 *(2019-12-26)*
+----------------------------
+ * Fix: StartListening not work after stopTrigger (#152)
+ * Fix: Fix invalid transit to IDLE state of DialogUXStateAggregator (#154)
+ 
 Version 0.7.1 *(2019-12-23)*
 ----------------------------
  * Improve: Mapping errors using ChangedReason (#147)
