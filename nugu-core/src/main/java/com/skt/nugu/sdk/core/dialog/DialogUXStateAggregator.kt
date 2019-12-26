@@ -42,7 +42,7 @@ class DialogUXStateAggregator :
     private val listeners: MutableSet<DialogUXStateAggregatorInterface.Listener> = HashSet()
     private var currentState: DialogUXStateAggregatorInterface.DialogUXState =
         DialogUXStateAggregatorInterface.DialogUXState.IDLE
-    private var isTtsPrepareing = false
+    private var isTtsPreparing = false
     private var ttsState = TTSAgentInterface.State.FINISHED
     private var asrState: ASRAgentInterface.State =
         ASRAgentInterface.State.IDLE
@@ -55,7 +55,7 @@ class DialogUXStateAggregator :
     private val tryEnterIdleStateRunnable: Runnable = Runnable {
         executor.submit {
             if (currentState != DialogUXStateAggregatorInterface.DialogUXState.IDLE &&
-                !asrState.isRecognizing() && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && !isTtsPrepareing
+                !asrState.isRecognizing() && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && !isTtsPreparing
             ) {
                 Logger.d(TAG, "[tryEnterIdleStateRunnable]")
                 setState(DialogUXStateAggregatorInterface.DialogUXState.IDLE)
@@ -78,7 +78,7 @@ class DialogUXStateAggregator :
 
     override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
         Logger.d(TAG, "[onStateChanged-TTS] State: $state")
-        isTtsPrepareing = false
+        isTtsPreparing = false
         ttsState = state
 
         executor.submit {
@@ -96,7 +96,7 @@ class DialogUXStateAggregator :
 
     override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
         Logger.d(TAG, "[onReceiveTTSText] text: $text, dialogRequestId: $dialogRequestId")
-        isTtsPrepareing = true
+        isTtsPreparing = true
     }
 
     override fun onStateChanged(state: ASRAgentInterface.State) {
