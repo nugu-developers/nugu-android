@@ -68,6 +68,7 @@ class SpeechRecognizerAggregator(
     private var state = SpeechRecognizerAggregatorInterface.State.STOP
     private var endPointDetectorState = AudioEndPointDetector.State.STOP
     private var keywordDetectorState = KeywordDetectorStateObserver.State.INACTIVE
+    private var keywordDetectorResultRunnable: Runnable? = null
 
     private var isTriggerStoppingByStartListening = false
 
@@ -84,6 +85,13 @@ class SpeechRecognizerAggregator(
                 if (state == KeywordDetectorStateObserver.State.ACTIVE) {
                     setState(SpeechRecognizerAggregatorInterface.State.WAITING)
                 } else {
+                    val resultRunnable = keywordDetectorResultRunnable
+                    if(resultRunnable != null) {
+                        keywordDetectorResultRunnable = null
+                        resultRunnable.run()
+                    } else {
+                        Log.e(TAG, "[KeywordDetectorStateObserver] keywordDetectorResultRunnable is null!!!")
+                    }
                     isTriggerStoppingByStartListening = false
                 }
             }
@@ -145,29 +153,35 @@ class SpeechRecognizerAggregator(
                                     TAG,
                                     "[onDetected] start: ${keywordDetector.getKeywordStartOffset()} , end : ${keywordDetector.getKeywordEndOffset()}"
                                 )
-                                setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
-                                startListeningInternal(audioProvider.getFormat(), keywordDetector.getKeywordStartOffset(), keywordDetector.getKeywordEndOffset(), keywordDetector.getKeywordDetectOffset())
-                                it.release()
-                                audioProvider.releaseAudioInputStream(keywordDetector)
+                                keywordDetectorResultRunnable = Runnable {
+                                    setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
+                                    startListeningInternal(audioProvider.getFormat(), keywordDetector.getKeywordStartOffset(), keywordDetector.getKeywordEndOffset(), keywordDetector.getKeywordDetectOffset())
+                                    it.release()
+                                    audioProvider.releaseAudioInputStream(keywordDetector)
+                                }
                             }
 
                             override fun onStopped() {
                                 Log.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
-                                if (isTriggerStoppingByStartListening) {
-                                    startListeningInternal(audioFormat, keywordStartPosition, keywordEndPosition, keywordDetectPosition)
-                                    isTriggerStoppingByStartListening = false
-                                } else if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
-                                    setState(SpeechRecognizerAggregatorInterface.State.STOP)
+                                keywordDetectorResultRunnable = Runnable {
+                                    if (isTriggerStoppingByStartListening) {
+                                        startListeningInternal(audioFormat, keywordStartPosition, keywordEndPosition, keywordDetectPosition)
+                                        isTriggerStoppingByStartListening = false
+                                    } else if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
+                                        setState(SpeechRecognizerAggregatorInterface.State.STOP)
+                                    }
+                                    it.release()
+                                    audioProvider.releaseAudioInputStream(keywordDetector)
                                 }
-                                it.release()
-                                audioProvider.releaseAudioInputStream(keywordDetector)
                             }
 
                             override fun onError(errorType: KeywordDetectorObserver.ErrorType) {
-                                Log.d(TAG, "[onError]")
-                                setState(SpeechRecognizerAggregatorInterface.State.ERROR)
-                                it.release()
-                                audioProvider.releaseAudioInputStream(keywordDetector)
+                                Log.d(TAG, "[onError] errorType: $errorType")
+                                keywordDetectorResultRunnable = Runnable {
+                                    setState(SpeechRecognizerAggregatorInterface.State.ERROR)
+                                    it.release()
+                                    audioProvider.releaseAudioInputStream(keywordDetector)
+                                }
                             }
                         })
 
