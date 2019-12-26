@@ -3,6 +3,6 @@ ext {
     jademarbleVersion="0.1.3"
     silvertrayVersion="4.1.8"
 
-    nuguVersionCode=702
-    nuguVersionName="0.7.2"
+    nuguVersionCode=703
+    nuguVersionName="0.7.3"
 }
