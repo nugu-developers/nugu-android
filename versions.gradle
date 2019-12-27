@@ -1,5 +1,5 @@
 ext {
-    keensenseVersion="0.1.3"
+    keensenseVersion="0.1.4"
     jademarbleVersion="0.1.4"
     silvertrayVersion="4.1.8"
 
