@@ -82,6 +82,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterfa
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
+import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentFactory
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -591,5 +592,13 @@ class NuguClient private constructor(
         stateProvider: ContextStateProvider?
     ) {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, stateProvider)
+    }
+
+    override fun addSystemAgentListener(listener: SystemAgentInterface.Listener) {
+        systemAgent.addListener(listener)
+    }
+
+    override fun removeSystemAgentListener(listener: SystemAgentInterface.Listener) {
+        systemAgent.removeListener(listener)
     }
 }

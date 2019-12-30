@@ -17,6 +17,8 @@ package com.skt.nugu.sampleapp.activity
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.widget.DrawerLayout
@@ -41,11 +43,13 @@ import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.BottomSheetController
+import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener
     , ConnectionStatusListener
-    , AudioPlayerAgentInterface.Listener {
+    , AudioPlayerAgentInterface.Listener
+    , SystemAgentInterface.Listener {
     companion object {
         private const val TAG = "MainActivity"
         private val permissions = arrayOf(
@@ -100,7 +104,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.getClient().addConnectionListener(this)
         // add observer for audioplayer
         ClientManager.getClient().addAudioPlayerListener(this)
+        // Set a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(templateRenderer)
+        // add listener for system agent.
+        ClientManager.getClient().addSystemAgentListener(this)
 
         bottomSheetController = BottomSheetController(this, object : BottomSheetController.OnBottomSheetCallback {
             override fun onExpandStarted() {
@@ -180,9 +187,12 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         SoundPoolCompat.release()
         MusicPlayerService.stopService(this)
 
+        // clear a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(null)
         // remove observer for connection
         ClientManager.getClient().removeConnectionListener(this)
+        // remove listener for systemagent
+        ClientManager.getClient().removeSystemAgentListener(this)
         // shutdown a server
         ClientManager.getClient().shutdown()
         super.onDestroy()
@@ -353,6 +363,14 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                         .message(R.string.connection_failed)
                         .duration(Snackbar.LENGTH_LONG)
                         .show()
+
+                    val cm = this.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                    val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
+                    if(activeNetwork?.isConnected == true) {
+                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
+                    } else {
+                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
+                    }
                 }
                 ConnectionStatusListener.ChangedReason.INVALID_AUTH -> {
                     /** Authentication failed Please refresh your access_token. **/
@@ -370,6 +388,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                                         .message(R.string.authentication_failed)
                                         .duration(Snackbar.LENGTH_LONG)
                                         .show()
+                                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_UNAUTHORIZED_ERROR)
                                     return false
                                 }
                                 AuthStateListener.State.UNINITIALIZED,
@@ -390,6 +409,20 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         runOnUiThread {
             if (activity == AudioPlayerAgentInterface.State.PLAYING) {
                 MusicPlayerService.startService(this, context)
+            }
+        }
+    }
+
+    override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
+        when(code) {
+            SystemAgentInterface.ExceptionCode.PLAY_ROUTER_PROCESSING_EXCEPTION -> {
+                SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_PLAY_ROUTER_ERROR)
+            }
+            SystemAgentInterface.ExceptionCode.TTS_SPEAKING_EXCEPTION -> {
+                SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_TTS_ERROR)
+            }
+            SystemAgentInterface.ExceptionCode.UNAUTHORIZED_REQUEST_EXCEPTION -> {
+                /** Nothing to do because handle on [onConnectionStatusChanged] **/
             }
         }
     }

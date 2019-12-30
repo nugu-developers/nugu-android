@@ -185,10 +185,26 @@ class BottomSheetController(
         // no-op
     }
 
-    override fun onError(errorType: ASRAgentInterface.ErrorType) {
-        bottomSheet.post {
-            if(PreferenceHelper.enableRecognitionBeep(activity)) {
-                SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
+    override fun onError(type: ASRAgentInterface.ErrorType) {
+        when(type) {
+            ASRAgentInterface.ErrorType.ERROR_NETWORK ,
+            ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT ,
+            ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT -> {
+                bottomSheet.post {
+                    if (PreferenceHelper.enableRecognitionBeep(activity)) {
+                        SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
+                    }
+                }
+            }
+            ASRAgentInterface.ErrorType.ERROR_UNKNOWN -> {
+                bottomSheet.post {
+                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NOTACCEPTABLE_ERROR)
+                }
+            }
+            ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT -> {
+                bottomSheet.post {
+                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_REQUEST_TIMEOUT_ERROR)
+                }
             }
         }
     }

@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import java.util.concurrent.Future
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
@@ -209,4 +210,17 @@ interface ClientHelperInterface {
     fun shutdown()
 
     fun setStateProvider(namespaceAndName: NamespaceAndName, stateProvider: ContextStateProvider?)
+
+    // SystemAgent Listener
+    /**
+     * Add listener to be notified when receive an event from the System Capability agent
+     * @param listener the listener that will add
+     */
+    fun addSystemAgentListener(listener : SystemAgentInterface.Listener)
+
+    /**
+     * Remove listener
+     * @param listener the listener that will removed
+     */
+    fun removeSystemAgentListener(listener : SystemAgentInterface.Listener)
 }

@@ -350,4 +350,12 @@ class NuguAndroidClient private constructor(
     ) {
         client.setStateProvider(namespaceAndName, stateProvider)
     }
+
+    override fun addSystemAgentListener(listener: SystemAgentInterface.Listener) {
+        client.addSystemAgentListener(listener)
+    }
+
+    override fun removeSystemAgentListener(listener: SystemAgentInterface.Listener) {
+        client.removeSystemAgentListener(listener)
+    }
 }
