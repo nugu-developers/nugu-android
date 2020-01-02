@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     NavigationView.OnNavigationItemSelectedListener
     , ConnectionStatusListener
     , AudioPlayerAgentInterface.Listener
-    , SystemAgentInterface.Listener {
+    , SystemAgentInterfaceListener {
     companion object {
         private const val TAG = "MainActivity"
         private val permissions = arrayOf(

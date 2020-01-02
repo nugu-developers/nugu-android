@@ -32,7 +32,7 @@ interface SystemAgentInterface {
         /**
          * After receiving an event, turn off immediately.
          */
-        fun onTurnOff() {/* default implementation */}
+        fun onTurnOff()
 
         /**
          * Called on receive exception.
