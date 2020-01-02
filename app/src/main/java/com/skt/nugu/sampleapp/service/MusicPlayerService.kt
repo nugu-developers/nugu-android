@@ -219,7 +219,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                     with(JSONObject(it)) {
                         optJSONObject("title")?.let { title ->
                             setTextViewText(R.id.tv_title, title.optString("text", ""))
-                            title.optString("logo")?.let {
+                            title.optString("iconUrl")?.let {
                                 val notificationTarget = NotificationTarget(applicationContext, R.id.iv_logo, this@apply, getNotification(this@apply), SERVICE_ID)
                                 Glide.with(applicationContext).asBitmap().load(it).into(notificationTarget)
                             }
