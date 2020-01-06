@@ -65,6 +65,7 @@ import com.skt.nugu.sdk.core.interfaces.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
+import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractorFactory
 import java.util.concurrent.Future
 
 /**
@@ -133,57 +134,69 @@ class NuguAndroidClient private constructor(
         internal var defaultEpdTimeoutMillis: Long = 10000L
         internal var transportFactory: TransportFactory = GrpcTransportFactory()
         internal var endPointDetector: AudioEndPointDetector? = null
-        internal var batteryStatusProvider: BatteryStatusProvider? = AndroidBatteryStatusProvider(context)
+        internal var batteryStatusProvider: BatteryStatusProvider? =
+            AndroidBatteryStatusProvider(context)
         internal var defaultMicrophone: Microphone? = null
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
         internal var light: Light? = null
+        internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
+            AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
 
         /**
          * @param factory the player factory to create players used at NUGU
          */
         fun playerFactory(factory: PlayerFactory) = apply { playerFactory = factory }
+
         /**
          * @param factory the speaker factory to create speakers controlled by NUGU
          */
         fun speakerFactory(factory: SpeakerFactory) =
             apply { speakerFactory = factory }
+
         /**
          * @param epdTimeoutMillis the default timeout of EPD
          */
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
+
         /**
          * @param endPointDetector the end point detector used to speech recognizing at NUGU
          */
         fun endPointDetector(endPointDetector: AudioEndPointDetector?) =
             apply { this.endPointDetector = endPointDetector }
+
         /**
          * @param batteryStatusProvider the batter status provider
          */
         fun batteryStatusProvider(batteryStatusProvider: BatteryStatusProvider?) =
             apply { this.batteryStatusProvider = batteryStatusProvider }
+
         /**
          * @param microphone the default microphone which controlled by NUGU
          */
         fun defaultMicrophone(microphone: Microphone?) =
             apply { defaultMicrophone = microphone }
+
         /**
          * @param client the client which delegate directive of Delegate
          */
         fun delegationClient(client: DelegationClient?) =
             apply { delegationClient = client }
+
         /**
          * @param client the client which do directive of Extension
          */
         fun extensionClient(client: ExtensionAgentInterface.Client?) =
             apply { extensionClient = client }
+
         /**
          * @param controller the controller which control move directive
          */
         fun movementController(controller: MovementController?) =
             apply { movementController = controller }
+
         /**
          * @param light the light to be controlled by NUGU
          */
@@ -193,6 +206,11 @@ class NuguAndroidClient private constructor(
          * @param factory the transport factory for network
          */
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
+
+        /**
+         * @param factory the audio focus interactor factory
+         */
+        fun audioFocusInteractorFactory(factory: AudioFocusInteractorFactory?) = apply {audioFocusInteractorFactory = factory}
 
         fun build() = NuguAndroidClient(this)
     }
@@ -227,10 +245,10 @@ class NuguAndroidClient private constructor(
     override val systemAgent: SystemAgentInterface = client.systemAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
 
-    private val audioFocusInteractor: AudioFocusInteractor
+    private val audioFocusInteractor: AudioFocusInteractor?
 
     init {
-        audioFocusInteractor = AndroidAudioFocusInteractor.Factory(builder.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager).create(client.audioFocusManager)
+        audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.audioFocusManager)
     }
 
     override fun connect() {
