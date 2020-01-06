@@ -63,6 +63,8 @@ import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterfa
 import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
+import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
+import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
 import java.util.concurrent.Future
 
 /**
@@ -225,13 +227,10 @@ class NuguAndroidClient private constructor(
     override val systemAgent: SystemAgentInterface = client.systemAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
 
-    private val externalAudioPlayer: ExternalAudioPlayer
+    private val audioFocusInteractor: AudioFocusInteractor
 
     init {
-        externalAudioPlayer = ExternalAudioPlayer(
-            builder.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager,
-            client.audioFocusManager
-        )
+        audioFocusInteractor = AndroidAudioFocusInteractor.Factory(builder.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager).create(client.audioFocusManager)
     }
 
     override fun connect() {
