@@ -36,7 +36,7 @@ object DefaultAgentFactory {
             return with(container) {
                 DefaultASRAgent(
                     getInputManagerProcessor(),
-                    getFocusManager(),
+                    getAudioFocusManager(),
                     getMessageSender(),
                     getContextManager(),
                     getDialogSessionManager(),
@@ -92,21 +92,21 @@ object DefaultAgentFactory {
 
 
     val TEMPLATE = object : DisplayAgentFactory {
-        override fun create(
-            focusManager: FocusManagerInterface,
-            contextManager: ContextManagerInterface,
-            messageSender: MessageSender,
-            playSynchronizer: PlaySynchronizerInterface,
-            inputProcessorManager: InputProcessorManagerInterface,
-            channelName: String
-        ): AbstractDisplayAgent = DefaultDisplayAgent(
-            focusManager,
-            contextManager,
-            messageSender,
-            playSynchronizer,
-            inputProcessorManager,
-            channelName
-        )
+        override fun create(container: SdkContainer): AbstractDisplayAgent? = with(container) {
+            val focusManager = getVisualFocusManager()
+            if(focusManager != null) {
+                DefaultDisplayAgent(
+                    focusManager,
+                    getContextManager(),
+                    getMessageSender(),
+                    getPlaySynchronizer(),
+                    getInputManagerProcessor(),
+                    DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                )
+            } else {
+                null
+            }
+        }
     }
 
     val EXTENSION = object : ExtensionAgentFactory {

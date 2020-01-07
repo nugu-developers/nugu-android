@@ -82,6 +82,7 @@ import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.playstack.AudioPlayStackProvider
 import com.skt.nugu.sdk.core.playstack.DisplayPlayStackProvider
 import java.util.concurrent.Future
@@ -239,16 +240,33 @@ class NuguClient private constructor(
 
             val dialogSessionManager = DialogSessionManager()
 
+            val tempDisplayAgentFactory = displayAgentFactory
+            if (tempDisplayAgentFactory != null) {
+                visualFocusManager =
+                    FocusManager(
+                        DefaultFocusChannel.getDefaultVisualChannels(),
+                        "Visual"
+                    )
+            } else {
+                visualFocusManager = null
+            }
+
+            val playSynchronizer = PlaySynchronizer()
+
             bean = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface = inputProcessorManager
 
-                override fun getFocusManager(): FocusManagerInterface = audioFocusManager
+                override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
+
+                override fun getVisualFocusManager(): FocusManagerInterface? = visualFocusManager
 
                 override fun getMessageSender(): MessageSender = networkManager
 
                 override fun getContextManager(): ContextManagerInterface = contextManager
 
                 override fun getDialogSessionManager(): DialogSessionManagerInterface = dialogSessionManager
+
+                override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
 
                 override fun getAudioProvider(): AudioProvider = defaultAudioProvider
 
@@ -279,8 +297,6 @@ class NuguClient private constructor(
                     contextManager,
                     defaultMicrophone
                 )
-
-            val playSynchronizer = PlaySynchronizer()
 
             // CA
             ttsAgent = ttsAgentFactory.create(
@@ -338,23 +354,9 @@ class NuguClient private constructor(
             dialogSessionManager.addListener(asrAgent)
             dialogSessionManager.addListener(textAgent)
 
-            val tempDisplayAgentFactory = displayAgentFactory
-            if (tempDisplayAgentFactory != null) {
-                visualFocusManager =
-                    FocusManager(
-                        DefaultFocusChannel.getDefaultVisualChannels(),
-                        "Visual"
-                    )
+            val displayTemplateAgent = tempDisplayAgentFactory?.create(bean)
 
-                val displayTemplateAgent = tempDisplayAgentFactory.create(
-                    visualFocusManager,
-                    contextManager,
-                    networkManager,
-                    playSynchronizer,
-                    inputProcessorManager,
-                    DefaultFocusChannel.DIALOG_CHANNEL_NAME
-                )
-
+            if (displayTemplateAgent != null && visualFocusManager != null) {
                 val displayAudioPlayerAgent = DisplayAudioPlayerAgent(
                     visualFocusManager,
                     contextManager,
@@ -387,7 +389,6 @@ class NuguClient private constructor(
             } else {
                 displayAggregator = null
                 displayAgent = null
-                visualFocusManager = null
 
                 audioPlayerAgent = audioPlayerAgentFactory.create(
                     playerFactory.createAudioPlayer(),

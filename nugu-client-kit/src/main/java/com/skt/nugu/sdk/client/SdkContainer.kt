@@ -24,13 +24,16 @@ import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
 interface SdkContainer {
     fun getInputManagerProcessor(): InputProcessorManagerInterface
-    fun getFocusManager(): FocusManagerInterface
+    fun getAudioFocusManager(): FocusManagerInterface
+    fun getVisualFocusManager(): FocusManagerInterface?
     fun getMessageSender(): MessageSender
     fun getContextManager(): ContextManagerInterface
     fun getDialogSessionManager(): DialogSessionManagerInterface
+    fun getPlaySynchronizer(): PlaySynchronizerInterface
 
     // ASR only
     fun getAudioProvider(): AudioProvider
