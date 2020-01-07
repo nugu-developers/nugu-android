@@ -334,8 +334,7 @@ class NuguClient private constructor(
 
             asrAgent.addOnStateChangeListener(dialogUXStateAggregator)
 
-            textAgent =
-                textAgentFactory.create(networkManager, contextManager, inputProcessorManager)
+            textAgent = textAgentFactory.create(sdkContainer)
 
             extensionAgent = extensionClient?.let {
                 extensionAgentFactory.create(sdkContainer).apply {

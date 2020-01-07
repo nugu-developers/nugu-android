@@ -16,14 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.text.AbstractTextAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface TextAgentFactory {
-    fun create(
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        inputProcessorManager: InputProcessorManagerInterface
-    ) : AbstractTextAgent
-}
+interface TextAgentFactory: AgentFactory<AbstractTextAgent>
