@@ -16,14 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.movement.AbstractMovementAgent
-import com.skt.nugu.sdk.core.interfaces.capability.movement.MovementController
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface MovementAgentFactory {
-    fun create(
-        contextManager: ContextManagerInterface,
-        messageSender: MessageSender,
-        movementController: MovementController
-    ): AbstractMovementAgent
-}
+interface MovementAgentFactory : AgentFactory<AbstractMovementAgent?>

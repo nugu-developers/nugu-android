@@ -281,6 +281,8 @@ class NuguClient private constructor(
                 override fun getLight(): Light? = light
 
                 override fun getMicrophone(): Microphone? = defaultMicrophone
+
+                override fun getMovementController(): MovementController? = movementController
             }
 
             speakerManager =
@@ -433,14 +435,8 @@ class NuguClient private constructor(
                     addDirectiveHandler(it)
                 }
 
-                movementController?.let {
-                    addDirectiveHandler(
-                        DefaultAgentFactory.MOVEMENT.create(
-                            contextManager,
-                            networkManager,
-                            it
-                        )
-                    )
+                DefaultAgentFactory.MOVEMENT.create(sdkContainer)?.let {
+                    addDirectiveHandler(it)
                 }
             }
         }
