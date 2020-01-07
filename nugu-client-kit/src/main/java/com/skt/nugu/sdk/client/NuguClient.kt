@@ -277,6 +277,8 @@ class NuguClient private constructor(
                 override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
 
                 override fun getDelegationClient(): DelegationClient? = delegationClient
+
+                override fun getLight(): Light? = light
             }
 
             speakerManager =
@@ -418,15 +420,10 @@ class NuguClient private constructor(
                 addDirectiveHandler(speakerManager)
                 addDirectiveHandler(audioPlayerAgent)
                 addDirectiveHandler(ttsAgent)
-                light?.let {
-                    addDirectiveHandler(
-                        DefaultAgentFactory.LIGHT.create(
-                            networkManager,
-                            contextManager,
-                            it
-                        )
-                    )
+                DefaultAgentFactory.LIGHT.create(sdkContainer)?.let {
+                    addDirectiveHandler(it)
                 }
+
                 addDirectiveHandler(textAgent)
                 addDirectiveHandler(asrAgent)
                 addDirectiveHandler(systemAgent)
