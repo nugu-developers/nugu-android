@@ -145,20 +145,21 @@ object DefaultAgentFactory {
                 getMicrophone()
             )
         }
-
     }
 
     val MOVEMENT = object : MovementAgentFactory {
-        override fun create(
-            contextManager: ContextManagerInterface,
-            messageSender: MessageSender,
-            movementController: MovementController
-        ): AbstractMovementAgent =
-            DefaultMovementAgent(
-                contextManager,
-                messageSender,
-                movementController
-            )
+        override fun create(container: SdkContainer): AbstractMovementAgent? = with(container) {
+            val controller = getMovementController()
+            if(controller != null) {
+                DefaultMovementAgent(
+                    getContextManager(),
+                    getMessageSender(),
+                    controller
+                )
+            } else {
+                null
+            }
+        }
     }
 
     val SPEAKER = object : SpeakerAgentFactory {
