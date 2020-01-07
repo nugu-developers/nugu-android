@@ -16,14 +16,6 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.Microphone
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface MicrophoneAgentFactory {
-    fun create(
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        defaultMicrophone: Microphone?
-    ) : AbstractMicrophoneAgent
-}
+interface MicrophoneAgentFactory: AgentFactory<AbstractMicrophoneAgent>
+

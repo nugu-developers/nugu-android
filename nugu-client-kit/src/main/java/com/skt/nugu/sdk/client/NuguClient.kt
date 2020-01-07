@@ -279,6 +279,8 @@ class NuguClient private constructor(
                 override fun getDelegationClient(): DelegationClient? = delegationClient
 
                 override fun getLight(): Light? = light
+
+                override fun getMicrophone(): Microphone? = defaultMicrophone
             }
 
             speakerManager =
@@ -293,12 +295,7 @@ class NuguClient private constructor(
                     }
                 }
 
-            micManager =
-                DefaultAgentFactory.MICROPHONE.create(
-                    networkManager,
-                    contextManager,
-                    defaultMicrophone
-                )
+            micManager = DefaultAgentFactory.MICROPHONE.create(sdkContainer)
 
             // CA
             ttsAgent = ttsAgentFactory.create(
