@@ -187,15 +187,13 @@ object DefaultAgentFactory {
     }
 
     val TEXT = object : TextAgentFactory {
-        override fun create(
-            messageSender: MessageSender,
-            contextManager: ContextManagerInterface,
-            inputProcessorManager: InputProcessorManagerInterface
-        ): AbstractTextAgent = DefaultTextAgent(
-            messageSender,
-            contextManager,
-            inputProcessorManager
-        )
+        override fun create(container: SdkContainer): AbstractTextAgent = with(container) {
+            DefaultTextAgent(
+                getMessageSender(),
+                getContextManager(),
+                getInputManagerProcessor()
+            )
+        }
     }
 
     val TTS = object : TTSAgentFactory {
