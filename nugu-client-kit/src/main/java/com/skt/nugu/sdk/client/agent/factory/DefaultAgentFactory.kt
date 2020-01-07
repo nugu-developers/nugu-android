@@ -138,16 +138,14 @@ object DefaultAgentFactory {
     }
 
     val MICROPHONE = object : MicrophoneAgentFactory {
-        override fun create(
-            messageSender: MessageSender,
-            contextManager: ContextManagerInterface,
-            defaultMicrophone: Microphone?
-        ): AbstractMicrophoneAgent =
+        override fun create(container: SdkContainer): AbstractMicrophoneAgent = with(container) {
             DefaultMicrophoneAgent(
-                messageSender,
-                contextManager,
-                defaultMicrophone
+                getMessageSender(),
+                getContextManager(),
+                getMicrophone()
             )
+        }
+
     }
 
     val MOVEMENT = object : MovementAgentFactory {

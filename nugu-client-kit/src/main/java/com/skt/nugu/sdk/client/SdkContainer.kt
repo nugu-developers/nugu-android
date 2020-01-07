@@ -19,6 +19,7 @@ import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.capability.light.Light
+import com.skt.nugu.sdk.core.interfaces.capability.microphone.Microphone
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
@@ -47,4 +48,7 @@ interface SdkContainer {
 
     // Light only
     fun getLight(): Light?
+
+    // Mic only
+    fun getMicrophone(): Microphone?
 }
