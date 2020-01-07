@@ -77,8 +77,12 @@ import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.playstack.AudioPlayStackProvider
 import com.skt.nugu.sdk.core.playstack.DisplayPlayStackProvider
 import java.util.concurrent.Future
@@ -174,7 +178,7 @@ class NuguClient private constructor(
     private val inputProcessorManager = InputProcessorManager()
     private val directiveSequencer: DirectiveSequencer = DirectiveSequencer()
 
-    private val playbackRouter: com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
+    private val playbackRouter: com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter = PlaybackRouter()
 
     // CA
     private val speakerManager: AbstractSpeakerAgent
@@ -188,7 +192,10 @@ class NuguClient private constructor(
 
     // CA internal Object (ref)
 
-    val audioFocusManager: FocusManagerInterface
+    val audioFocusManager: FocusManagerInterface = FocusManager(
+        DefaultFocusChannel.getDefaultAudioChannels(),
+        "Audio"
+    )
     val visualFocusManager: FocusManagerInterface?
     private val messageRouter: MessageRouter =
         MessageRouter(builder.transportFactory, builder.authDelegate)
@@ -204,6 +211,8 @@ class NuguClient private constructor(
     var useServerSideEndPointDetector: Boolean = false
 
     private val contextStateProviderRegistry: ContextStateProviderRegistry
+
+    private val bean: NuguBean
 
     init {
         with(builder) {
@@ -229,6 +238,28 @@ class NuguClient private constructor(
             val contextManager = ContextManager()
             contextStateProviderRegistry = contextManager
 
+            val dialogSessionManager = DialogSessionManager()
+
+            bean = object : NuguBean {
+                override fun getInputManagerProcessor(): InputProcessorManagerInterface = inputProcessorManager
+
+                override fun getFocusManager(): FocusManagerInterface = audioFocusManager
+
+                override fun getMessageSender(): MessageSender = networkManager
+
+                override fun getContextManager(): ContextManagerInterface = contextManager
+
+                override fun getDialogSessionManager(): DialogSessionManagerInterface = dialogSessionManager
+
+                override fun getAudioProvider(): AudioProvider = defaultAudioProvider
+
+                override fun getAudioEncoder(): Encoder = audioEncoder
+
+                override fun getEndPointDetector(): AudioEndPointDetector? = endPointDetector
+
+                override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
+            }
+
             speakerManager =
                 DefaultAgentFactory.SPEAKER.create(contextManager, networkManager).apply {
                     addSpeaker(speakerFactory.createNuguSpeaker())
@@ -247,14 +278,6 @@ class NuguClient private constructor(
                     contextManager,
                     defaultMicrophone
                 )
-
-            audioFocusManager =
-                FocusManager(
-                    DefaultFocusChannel.getDefaultAudioChannels(),
-                    "Audio"
-                )
-
-            playbackRouter = PlaybackRouter()
 
             val playSynchronizer = PlaySynchronizer()
 
@@ -283,20 +306,7 @@ class NuguClient private constructor(
 
             val audioEncoder = audioEncoder// SpeexEncoder()
 
-            val dialogSessionManager = DialogSessionManager()
-
-            asrAgent = asrAgentFactory.create(
-                inputProcessorManager,
-                audioFocusManager,
-                networkManager,
-                contextManager,
-                dialogSessionManager,
-                defaultAudioProvider,
-                audioEncoder,
-                endPointDetector,
-                defaultEpdTimeoutMillis,
-                DefaultFocusChannel.DIALOG_CHANNEL_NAME
-            )
+            asrAgent = asrAgentFactory.create(bean)
             dialogUXStateAggregator.addListener(asrAgent)
 
             asrAgent.addOnStateChangeListener(dialogUXStateAggregator)

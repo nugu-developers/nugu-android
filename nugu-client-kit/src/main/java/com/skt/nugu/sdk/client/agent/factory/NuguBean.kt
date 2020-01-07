@@ -15,5 +15,25 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
+import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
+import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
+import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+
 interface NuguBean {
+    fun getInputManagerProcessor(): InputProcessorManagerInterface
+    fun getFocusManager(): FocusManagerInterface
+    fun getMessageSender(): MessageSender
+    fun getContextManager(): ContextManagerInterface
+    fun getDialogSessionManager(): DialogSessionManagerInterface
+
+    // ASR only
+    fun getAudioProvider(): AudioProvider
+    fun getAudioEncoder(): Encoder
+    fun getEndPointDetector(): AudioEndPointDetector?
+    fun getEpdTimeoutMillis(): Long
 }
