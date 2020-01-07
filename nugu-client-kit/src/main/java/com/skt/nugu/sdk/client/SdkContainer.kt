@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
+import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
@@ -36,4 +37,7 @@ interface SdkContainer {
     fun getAudioEncoder(): Encoder
     fun getEndPointDetector(): AudioEndPointDetector?
     fun getEpdTimeoutMillis(): Long
+
+    // Delegation only
+    fun getDelegationClient(): DelegationClient?
 }

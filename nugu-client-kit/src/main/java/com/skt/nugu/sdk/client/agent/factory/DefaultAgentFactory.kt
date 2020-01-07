@@ -6,7 +6,6 @@ import com.skt.nugu.sdk.core.capabilityagents.impl.*
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
@@ -23,7 +22,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.capability.text.AbstractTextAgent
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -77,18 +75,19 @@ object DefaultAgentFactory {
     }
 
     val DELEGATION = object : DelegationAgentFactory {
-        override fun create(
-            contextGetter: ContextGetterInterface,
-            messageSender: MessageSender,
-            inputProcessorManager: InputProcessorManagerInterface,
-            defaultClient: DelegationClient
-        ): AbstractDelegationAgent =
-            DefaultDelegationAgent(
-                contextGetter,
-                messageSender,
-                inputProcessorManager,
-                defaultClient
-            )
+        override fun create(container: SdkContainer): AbstractDelegationAgent? = with(container) {
+            val client = getDelegationClient()
+            if(client != null) {
+                DefaultDelegationAgent(
+                    getContextManager(),
+                    getMessageSender(),
+                    getInputManagerProcessor(),
+                    client
+                )
+            } else {
+                null
+            }
+        }
     }
 
 

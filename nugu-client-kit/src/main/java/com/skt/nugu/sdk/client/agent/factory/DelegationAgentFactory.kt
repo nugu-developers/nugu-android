@@ -16,16 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
-import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface DelegationAgentFactory {
-    fun create(
-        contextGetter: ContextGetterInterface,
-        messageSender: MessageSender,
-        inputProcessorManager: InputProcessorManagerInterface,
-        defaultClient: DelegationClient
-    ): AbstractDelegationAgent
-}
+interface DelegationAgentFactory: AgentFactory<AbstractDelegationAgent?>
