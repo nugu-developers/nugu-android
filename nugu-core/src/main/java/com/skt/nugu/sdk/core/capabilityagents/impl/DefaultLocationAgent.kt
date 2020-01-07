@@ -17,54 +17,49 @@ package com.skt.nugu.sdk.core.capabilityagents.impl
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.interfaces.capability.location.AbstractLocationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.location.LocationProvider
 
-object DefaultLocationAgent {
-    private const val TAG = "DefaultLocationAgent"
-
-    val FACTORY = object : LocationAgentFactory {
-        override fun create(): AbstractLocationAgent = Impl()
+class DefaultLocationAgent : AbstractLocationAgent() {
+    companion object {
+        private const val TAG = "DefaultLocationAgent"
     }
 
-    internal class Impl : AbstractLocationAgent() {
-        private var locationProvider: LocationProvider? = null
+    private var locationProvider: LocationProvider? = null
 
-        override val namespaceAndName: NamespaceAndName =
-            NamespaceAndName("supportedInterfaces", NAMESPACE)
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
-        override fun setLocationProvider(provider: LocationProvider) {
-            locationProvider = provider
-        }
-
-        override fun provideState(
-            contextSetter: ContextSetterInterface,
-            namespaceAndName: NamespaceAndName,
-            stateRequestToken: Int
-        ) {
-            contextSetter.setState(
-                namespaceAndName,
-                buildContext(),
-                StateRefreshPolicy.ALWAYS,
-                stateRequestToken
-            )
-        }
-
-        private fun buildContext(): String = JsonObject().apply {
-            addProperty(
-                "version",
-                VERSION
-            )
-            val location = locationProvider?.getLocation()
-            if (location != null) {
-                add("current", JsonObject().apply {
-                    addProperty("latitude", location.latitude)
-                    addProperty("longitude", location.longitude)
-                })
-            }
-        }.toString()
+    override fun setLocationProvider(provider: LocationProvider) {
+        locationProvider = provider
     }
+
+    override fun provideState(
+        contextSetter: ContextSetterInterface,
+        namespaceAndName: NamespaceAndName,
+        stateRequestToken: Int
+    ) {
+        contextSetter.setState(
+            namespaceAndName,
+            buildContext(),
+            StateRefreshPolicy.ALWAYS,
+            stateRequestToken
+        )
+    }
+
+    private fun buildContext(): String = JsonObject().apply {
+        addProperty(
+            "version",
+            VERSION
+        )
+        val location = locationProvider?.getLocation()
+        if (location != null) {
+            add("current", JsonObject().apply {
+                addProperty("latitude", location.latitude)
+                addProperty("longitude", location.longitude)
+            })
+        }
+    }.toString()
 }

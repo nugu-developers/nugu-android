@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.text
+package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface TextAgentFactory {
+interface ExtensionAgentFactory {
     fun create(
-        messageSender: MessageSender,
         contextManager: ContextManagerInterface,
-        inputProcessorManager: InputProcessorManagerInterface
-    ) : AbstractTextAgent
+        messageSender: MessageSender
+    ): AbstractExtensionAgent
 }

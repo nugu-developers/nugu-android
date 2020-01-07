@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.core.capabilityagents.impl
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.MicrophoneAgentFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -28,27 +27,15 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import java.util.concurrent.Executors
 
-object DefaultMicrophoneAgent {
-    private const val TAG = "MicrophoneAgent"
-
-    val FACTORY = object : MicrophoneAgentFactory {
-        override fun create(
-            messageSender: MessageSender,
-            contextManager: ContextManagerInterface,
-            defaultMicrophone: Microphone?
-        ): AbstractMicrophoneAgent =
-            Impl(
-                messageSender,
-                contextManager,
-                defaultMicrophone
-            )
-    }
-
+class DefaultMicrophoneAgent(
+    messageSender: MessageSender,
+    contextManager: ContextManagerInterface,
+    defaultMicrophone: Microphone?
+) : AbstractMicrophoneAgent(messageSender, contextManager, defaultMicrophone) {
     internal data class SetMicPayload(
         @SerializedName("playServiceId")
         val playServiceId: String?,
@@ -56,157 +43,153 @@ object DefaultMicrophoneAgent {
         val status: String
     )
 
-    internal class Impl(
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        defaultMicrophone: Microphone?
-    ) : AbstractMicrophoneAgent(messageSender, contextManager, defaultMicrophone) {
-        companion object {
-            const val NAME_SET_MIC = "SetMic"
-            private const val NAME_SET_MIC_SUCCEEDED = "SetMicSucceeded"
-            private const val NAME_SET_MIC_FAILED = "SetMicFailed"
+    companion object {
+        private const val TAG = "MicrophoneAgent"
 
-            val SET_MIC = NamespaceAndName(
-                NAMESPACE,
-                NAME_SET_MIC
-            )
+        const val NAME_SET_MIC = "SetMic"
+        private const val NAME_SET_MIC_SUCCEEDED = "SetMicSucceeded"
+        private const val NAME_SET_MIC_FAILED = "SetMicFailed"
 
-            const val KEY_STATUS = "status"
+        val SET_MIC = NamespaceAndName(
+            NAMESPACE,
+            NAME_SET_MIC
+        )
+
+        const val KEY_STATUS = "status"
+    }
+
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName("supportedInterfaces", NAMESPACE)
+    private val executor = Executors.newSingleThreadExecutor()
+
+    init {
+        defaultMicrophone?.addListener(this)
+        contextManager.setStateProvider(namespaceAndName, this)
+    }
+
+    override fun onSettingsChanged(settings: Microphone.Settings) {
+        provideState(contextManager, namespaceAndName, 0)
+    }
+
+    override fun preHandleDirective(info: DirectiveInfo) {
+        // no-op
+    }
+
+    override fun handleDirective(info: DirectiveInfo) {
+        when (info.directive.getNamespaceAndName()) {
+            SET_MIC -> handleSetMic(info)
+        }
+    }
+
+    private fun handleSetMic(info: DirectiveInfo) {
+        val directive = info.directive
+        val payload = MessageFactory.create(directive.payload, SetMicPayload::class.java)
+        if (payload == null) {
+            Logger.e(TAG, "[handleSetMic] invalid payload: ${directive.payload}")
+            setHandlingFailed(info, "[handleSetMic] invalid payload: ${directive.payload}")
+            return
         }
 
-        override val namespaceAndName: NamespaceAndName =
-            NamespaceAndName("supportedInterfaces", NAMESPACE)
-        private val executor = Executors.newSingleThreadExecutor()
+        val status = payload.status.toUpperCase()
 
-        init {
-            defaultMicrophone?.addListener(this)
-            contextManager.setStateProvider(namespaceAndName, this)
+        if (status != "ON" && status != "OFF") {
+            Logger.e(TAG, "[handleSetMic] invalid status: $status")
+            setHandlingFailed(info, "[handleSetMic] invalid status: $status")
+            return
         }
 
-        override fun onSettingsChanged(settings: Microphone.Settings) {
-            provideState(contextManager, namespaceAndName, 0)
-        }
-
-        override fun preHandleDirective(info: DirectiveInfo) {
-            // no-op
-        }
-
-        override fun handleDirective(info: DirectiveInfo) {
-            when (info.directive.getNamespaceAndName()) {
-                SET_MIC -> handleSetMic(info)
-            }
-        }
-
-        private fun handleSetMic(info: DirectiveInfo) {
-            val directive = info.directive
-            val payload = MessageFactory.create(directive.payload, SetMicPayload::class.java)
-            if (payload == null) {
-                Logger.e(TAG, "[handleSetMic] invalid payload: ${directive.payload}")
-                setHandlingFailed(info, "[handleSetMic] invalid payload: ${directive.payload}")
-                return
-            }
-
-            val status = payload.status.toUpperCase()
-
-            if (status != "ON" && status != "OFF") {
-                Logger.e(TAG, "[handleSetMic] invalid status: $status")
-                setHandlingFailed(info, "[handleSetMic] invalid status: $status")
-                return
-            }
-
-            setHandlingCompleted(info)
-            executor.submit {
-                if (executeHandleSetMic(status)) {
-                    sendSetMicSucceededEvent()
-                } else {
-                    sendSetMicFailedEvent()
-                }
-            }
-        }
-
-        private fun sendSetMicSucceededEvent() {
-            sendEvent(NAME_SET_MIC_SUCCEEDED)
-        }
-
-        private fun sendSetMicFailedEvent() {
-            sendEvent(NAME_SET_MIC_FAILED)
-        }
-
-        private fun sendEvent(eventName: String) {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    messageSender.sendMessage(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            NAMESPACE,
-                            eventName,
-                            VERSION
-                        ).build()
-                    )
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-
-                }
-            })
-        }
-
-        private fun executeHandleSetMic(status: String): Boolean {
-            return when (status) {
-                "ON" -> defaultMicrophone?.on() ?: false
-                "OFF" -> defaultMicrophone?.off() ?: false
-                else -> false
-            }
-        }
-
-        private fun setHandlingCompleted(info: DirectiveInfo) {
-            info.result.setCompleted()
-            removeDirective(info)
-        }
-
-        private fun setHandlingFailed(info: DirectiveInfo, description: String) {
-            info.result.setFailed(description)
-            removeDirective(info)
-        }
-
-        override fun cancelDirective(info: DirectiveInfo) {
-            removeDirective(info)
-        }
-
-        override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-            val nonBlockingPolicy = BlockingPolicy()
-
-            val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-            configuration[SET_MIC] = nonBlockingPolicy
-
-            return configuration
-        }
-
-        override fun provideState(
-            contextSetter: ContextSetterInterface,
-            namespaceAndName: NamespaceAndName,
-            stateRequestToken: Int
-        ) {
-            Logger.d(TAG, "[provideState]")
-            val micStatus = if (defaultMicrophone == null) {
-                "OFF"
+        setHandlingCompleted(info)
+        executor.submit {
+            if (executeHandleSetMic(status)) {
+                sendSetMicSucceededEvent()
             } else {
-                if (defaultMicrophone.getSettings().onOff) {
-                    "ON"
-                } else {
-                    "OFF"
-                }
+                sendSetMicFailedEvent()
+            }
+        }
+    }
+
+    private fun sendSetMicSucceededEvent() {
+        sendEvent(NAME_SET_MIC_SUCCEEDED)
+    }
+
+    private fun sendSetMicFailedEvent() {
+        sendEvent(NAME_SET_MIC_FAILED)
+    }
+
+    private fun sendEvent(eventName: String) {
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        eventName,
+                        VERSION
+                    ).build()
+                )
             }
 
-            contextSetter.setState(namespaceAndName, JsonObject().apply {
-                addProperty("version", VERSION)
-                addProperty("micStatus", micStatus)
-            }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+
+            }
+        })
+    }
+
+    private fun executeHandleSetMic(status: String): Boolean {
+        return when (status) {
+            "ON" -> defaultMicrophone?.on() ?: false
+            "OFF" -> defaultMicrophone?.off() ?: false
+            else -> false
+        }
+    }
+
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        info.result.setCompleted()
+        removeDirective(info)
+    }
+
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info)
+    }
+
+    override fun cancelDirective(info: DirectiveInfo) {
+        removeDirective(info)
+    }
+
+    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+        val nonBlockingPolicy = BlockingPolicy()
+
+        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+
+        configuration[SET_MIC] = nonBlockingPolicy
+
+        return configuration
+    }
+
+    override fun provideState(
+        contextSetter: ContextSetterInterface,
+        namespaceAndName: NamespaceAndName,
+        stateRequestToken: Int
+    ) {
+        Logger.d(TAG, "[provideState]")
+        val micStatus = if (defaultMicrophone == null) {
+            "OFF"
+        } else {
+            if (defaultMicrophone.getSettings().onOff) {
+                "ON"
+            } else {
+                "OFF"
+            }
         }
 
-        private fun removeDirective(info: DirectiveInfo) {
-            removeDirective(info.directive.getMessageId())
-        }
+        contextSetter.setState(namespaceAndName, JsonObject().apply {
+            addProperty("version", VERSION)
+            addProperty("micStatus", micStatus)
+        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+    }
+
+    private fun removeDirective(info: DirectiveInfo) {
+        removeDirective(info.directive.getMessageId())
     }
 }

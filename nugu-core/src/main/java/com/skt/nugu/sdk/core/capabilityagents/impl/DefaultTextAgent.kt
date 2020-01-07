@@ -23,7 +23,6 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.message.Header
@@ -36,21 +35,11 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.util.concurrent.Executors
 
-object DefaultTextAgent {
-    private const val TAG = "TextAgent"
-
-    val FACTORY = object : TextAgentFactory {
-        override fun create(
-            messageSender: MessageSender,
-            contextManager: ContextManagerInterface,
-            inputProcessorManager: InputProcessorManagerInterface
-        ): AbstractTextAgent = Impl(
-            messageSender,
-            contextManager,
-            inputProcessorManager
-        )
-    }
-
+class DefaultTextAgent(
+    messageSender: MessageSender,
+    contextManager: ContextManagerInterface,
+    inputProcessorManager: InputProcessorManagerInterface
+) : AbstractTextAgent(messageSender, contextManager, inputProcessorManager) {
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
@@ -60,217 +49,213 @@ object DefaultTextAgent {
         val token: String
     )
 
-    internal class Impl(
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        inputProcessorManager: InputProcessorManagerInterface
-    ) : AbstractTextAgent(messageSender, contextManager, inputProcessorManager) {
-        companion object {
-            const val NAME_TEXT_SOURCE = "TextSource"
+    companion object {
+        private const val TAG = "TextAgent"
 
-            val TEXT_SOURCE = NamespaceAndName(
-                NAMESPACE,
-                NAME_TEXT_SOURCE
+        const val NAME_TEXT_SOURCE = "TextSource"
+
+        val TEXT_SOURCE = NamespaceAndName(
+            NAMESPACE,
+            NAME_TEXT_SOURCE
+        )
+
+        const val KEY_TEXT = "text"
+        const val KEY_TOKEN = "token"
+
+        const val NAME_TEXT_INPUT = "TextInput"
+    }
+
+    private val requestListeners = HashMap<String, TextAgentInterface.RequestListener>()
+    private val executor = Executors.newSingleThreadExecutor()
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName("supportedInterfaces", NAMESPACE)
+
+    init {
+        contextManager.setStateProvider(namespaceAndName, this)
+    }
+
+    override fun preHandleDirective(info: DirectiveInfo) {
+        // no-op
+        Logger.d(TAG, "[preHandleDirective] info: $info")
+    }
+
+    override fun handleDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleDirective] info: $info")
+        executor.submit {
+            executeHandleDirective(info)
+        }
+    }
+
+    private fun executeHandleDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[executeHandleDirective] info: $info")
+        val directive = info.directive
+
+        val payload =
+            MessageFactory.create(info.directive.payload, TextSourcePayload::class.java)
+        if (payload == null) {
+            Logger.d(TAG, "[executeHandleDirective] invalid payload: ${info.directive.payload}")
+            executeSetHandlingFailed(
+                info,
+                "[executeHandleDirective] invalid payload: ${info.directive.payload}"
             )
-
-            const val KEY_TEXT = "text"
-            const val KEY_TOKEN = "token"
-
-            const val NAME_TEXT_INPUT = "TextInput"
+            return
         }
 
-        private val requestListeners = HashMap<String, TextAgentInterface.RequestListener>()
-        private val executor = Executors.newSingleThreadExecutor()
-        override val namespaceAndName: NamespaceAndName =
-            NamespaceAndName("supportedInterfaces", NAMESPACE)
+        executeSendTextInputEvent(payload.text, payload.token, info, null)
+    }
 
-        init {
-            contextManager.setStateProvider(namespaceAndName, this)
-        }
+    private fun executeSetHandlingCompleted(info: DirectiveInfo) {
+        Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
+        info.result.setCompleted()
+        removeDirective(info)
+    }
 
-        override fun preHandleDirective(info: DirectiveInfo) {
-            // no-op
-            Logger.d(TAG, "[preHandleDirective] info: $info")
-        }
+    private fun executeSetHandlingFailed(info: DirectiveInfo, msg: String) {
+        Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
+        info.result.setFailed(msg)
+        removeDirective(info)
+    }
 
-        override fun handleDirective(info: DirectiveInfo) {
-            Logger.d(TAG, "[handleDirective] info: $info")
-            executor.submit {
-                executeHandleDirective(info)
-            }
-        }
+    override fun cancelDirective(info: DirectiveInfo) {
+        removeDirective(info)
+    }
 
-        private fun executeHandleDirective(info: DirectiveInfo) {
-            Logger.d(TAG, "[executeHandleDirective] info: $info")
-            val directive = info.directive
+    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+        val nonBlockingPolicy = BlockingPolicy()
 
-            val payload =
-                MessageFactory.create(info.directive.payload, TextSourcePayload::class.java)
-            if (payload == null) {
-                Logger.d(TAG, "[executeHandleDirective] invalid payload: ${info.directive.payload}")
-                executeSetHandlingFailed(
-                    info,
-                    "[executeHandleDirective] invalid payload: ${info.directive.payload}"
-                )
-                return
-            }
+        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-            executeSendTextInputEvent(payload.text, payload.token, info, null)
-        }
+        configuration[TEXT_SOURCE] = nonBlockingPolicy
 
-        private fun executeSetHandlingCompleted(info: DirectiveInfo) {
-            Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
-            info.result.setCompleted()
-            removeDirective(info)
-        }
+        return configuration
+    }
 
-        private fun executeSetHandlingFailed(info: DirectiveInfo, msg: String) {
-            Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
-            info.result.setFailed(msg)
-            removeDirective(info)
-        }
+    private fun removeDirective(info: DirectiveInfo) {
+        removeDirective(info.directive.getMessageId())
+    }
 
-        override fun cancelDirective(info: DirectiveInfo) {
-            removeDirective(info)
-        }
+    override fun provideState(
+        contextSetter: ContextSetterInterface,
+        namespaceAndName: NamespaceAndName,
+        stateRequestToken: Int
+    ) {
+        contextSetter.setState(namespaceAndName, JsonObject().apply {
+            addProperty("version", VERSION)
+        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+    }
 
-        override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-            val nonBlockingPolicy = BlockingPolicy()
+    override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
+        Logger.d(TAG, "[requestTextInput] text: $text")
+        executeSendTextInputEventInternal(text, null, listener)
+    }
 
-            val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+    private fun createMessage(text: String, context: String, token: String? = null) =
+        EventMessageRequest.Builder(
+            context,
+            NAMESPACE,
+            NAME_TEXT_INPUT,
+            VERSION
+        ).payload(
+            JsonObject().apply
+            {
+                addProperty("text", text)
+                token?.let {
+                    addProperty("token", it)
+                }
 
-            configuration[TEXT_SOURCE] = nonBlockingPolicy
-
-            return configuration
-        }
-
-        private fun removeDirective(info: DirectiveInfo) {
-            removeDirective(info.directive.getMessageId())
-        }
-
-        override fun provideState(
-            contextSetter: ContextSetterInterface,
-            namespaceAndName: NamespaceAndName,
-            stateRequestToken: Int
-        ) {
-            contextSetter.setState(namespaceAndName, JsonObject().apply {
-                addProperty("version", VERSION)
-            }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
-        }
-
-        override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
-            Logger.d(TAG, "[requestTextInput] text: $text")
-            executeSendTextInputEventInternal(text, null, listener)
-        }
-
-        private fun createMessage(text: String, context: String, token: String? = null) =
-            EventMessageRequest.Builder(
-                context,
-                NAMESPACE,
-                NAME_TEXT_INPUT,
-                VERSION
-            ).payload(
-                JsonObject().apply
-                {
-                    addProperty("text", text)
-                    token?.let {
-                        addProperty("token", it)
+                dialogSessionInfo?.let { info ->
+                    addProperty("sessionId", info.sessionId)
+                    info.playServiceId?.let {
+                        addProperty("playServiceId", it)
+                    }
+                    info.property?.let {
+                        addProperty("property", it)
                     }
 
-                    dialogSessionInfo?.let { info ->
-                        addProperty("sessionId", info.sessionId)
-                        info.playServiceId?.let {
-                            addProperty("playServiceId", it)
-                        }
-                        info.property?.let {
-                            addProperty("property", it)
-                        }
-
-                        info.domainTypes?.let { domainTypes ->
-                            add("domainTypes", JsonArray().apply {
-                                domainTypes.forEach {
-                                    add(it)
-                                }
-                            })
-                        }
-                    }
-                }.toString()
-            ).build()
-
-        private fun executeSendTextInputEvent(
-            text: String,
-            token: String,
-            info: DirectiveInfo,
-            listener: TextAgentInterface.RequestListener?
-        ) {
-            Logger.d(TAG, "[executeSendTextInputEvent] text: $text, token: $token")
-            executeSetHandlingCompleted(info)
-            executeSendTextInputEventInternal(text, token, listener)
-        }
-
-        private fun executeSendTextInputEventInternal(
-            text: String,
-            token: String?,
-            listener: TextAgentInterface.RequestListener?
-        ) {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
-                    executor.submit {
-                        createMessage(text, jsonContext, token).let {
-                            messageSender.sendMessage(it)
-                            if (listener != null) {
-                                requestListeners[it.dialogRequestId] = listener
+                    info.domainTypes?.let { domainTypes ->
+                        add("domainTypes", JsonArray().apply {
+                            domainTypes.forEach {
+                                add(it)
                             }
-                            onSendEventFinished(it.dialogRequestId)
-                        }
+                        })
                     }
                 }
+            }.toString()
+        ).build()
 
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    Logger.d(TAG, "[onContextFailure] error: $error")
+    private fun executeSendTextInputEvent(
+        text: String,
+        token: String,
+        info: DirectiveInfo,
+        listener: TextAgentInterface.RequestListener?
+    ) {
+        Logger.d(TAG, "[executeSendTextInputEvent] text: $text, token: $token")
+        executeSetHandlingCompleted(info)
+        executeSendTextInputEventInternal(text, token, listener)
+    }
+
+    private fun executeSendTextInputEventInternal(
+        text: String,
+        token: String?,
+        listener: TextAgentInterface.RequestListener?
+    ) {
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
+                executor.submit {
+                    createMessage(text, jsonContext, token).let {
+                        messageSender.sendMessage(it)
+                        if (listener != null) {
+                            requestListeners[it.dialogRequestId] = listener
+                        }
+                        onSendEventFinished(it.dialogRequestId)
+                    }
                 }
-            })
-        }
-
-        override fun onSendEventFinished(dialogRequestId: String) {
-            inputProcessorManager.onRequested(this, dialogRequestId)
-        }
-
-        override fun onReceiveResponse(dialogRequestId: String, header: Header) {
-            Logger.d(TAG, "[onReceiveResponse] $header")
-            executor.submit {
-                requestListeners.remove(dialogRequestId)?.onReceiveResponse()
             }
-        }
 
-        override fun onResponseTimeout(dialogRequestId: String) {
-            Logger.d(TAG, "[onResponseTimeout] $dialogRequestId")
-            executor.submit {
-                requestListeners.remove(dialogRequestId)
-                    ?.onError(TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                Logger.d(TAG, "[onContextFailure] error: $error")
             }
-        }
+        })
+    }
 
-        private var dialogSessionInfo: DialogSessionManagerInterface.DialogSessionInfo? = null
+    override fun onSendEventFinished(dialogRequestId: String) {
+        inputProcessorManager.onRequested(this, dialogRequestId)
+    }
 
-        override fun onSessionOpened(
-            sessionId: String,
-            property: String?,
-            domainTypes: Array<String>?,
-            playServiceId: String?
-        ) {
-            dialogSessionInfo =
-                DialogSessionManagerInterface.DialogSessionInfo(
-                    sessionId,
-                    property,
-                    domainTypes,
-                    playServiceId
-                )
+    override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+        Logger.d(TAG, "[onReceiveResponse] $header")
+        executor.submit {
+            requestListeners.remove(dialogRequestId)?.onReceiveResponse()
         }
+    }
 
-        override fun onSessionClosed(sessionId: String) {
-            dialogSessionInfo = null
+    override fun onResponseTimeout(dialogRequestId: String) {
+        Logger.d(TAG, "[onResponseTimeout] $dialogRequestId")
+        executor.submit {
+            requestListeners.remove(dialogRequestId)
+                ?.onError(TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
         }
+    }
+
+    private var dialogSessionInfo: DialogSessionManagerInterface.DialogSessionInfo? = null
+
+    override fun onSessionOpened(
+        sessionId: String,
+        property: String?,
+        domainTypes: Array<String>?,
+        playServiceId: String?
+    ) {
+        dialogSessionInfo =
+            DialogSessionManagerInterface.DialogSessionInfo(
+                sessionId,
+                property,
+                domainTypes,
+                playServiceId
+            )
+    }
+
+    override fun onSessionClosed(sessionId: String) {
+        dialogSessionInfo = null
     }
 }

@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.asr
+package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
-import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
 
-interface ASRAgentFactory {
-    fun create(
-        inputProcessorManager: InputProcessorManagerInterface,
-        focusManager: FocusManagerInterface,
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        dialogSessionManager: DialogSessionManagerInterface,
-        audioProvider: AudioProvider,
-        audioEncoder: Encoder,
-        endPointDetector: AudioEndPointDetector?,
-        defaultEpdTimeoutMillis: Long,
-        channelName: String
-    ): AbstractASRAgent
+interface TTSAgentFactory {
+    fun create(speechPlayer: MediaPlayerInterface,
+               messageSender: MessageSender,
+               focusManager: FocusManagerInterface,
+               contextManager: ContextManagerInterface,
+               playSynchronizer: PlaySynchronizerInterface,
+               inputProcessorManager: InputProcessorManagerInterface,
+               channelName: String): AbstractTTSAgent
 }

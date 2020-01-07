@@ -19,7 +19,6 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -39,23 +38,12 @@ import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
-object DefaultDelegationAgent {
-    private const val TAG = "DelegationAgent"
-
-    val FACTORY = object : DelegationAgentFactory {
-        override fun create(
-            contextGetter: ContextGetterInterface,
-            messageSender: MessageSender,
-            inputProcessorManager: InputProcessorManagerInterface,
-            defaultClient: DelegationClient
-        ): AbstractDelegationAgent =
-            Impl(
-                contextGetter,
-                messageSender,
-                inputProcessorManager,
-                defaultClient
-            )
-    }
+class DefaultDelegationAgent(
+    contextGetter: ContextGetterInterface,
+    messageSender: MessageSender,
+    inputProcessorManager: InputProcessorManagerInterface,
+    defaultClient: DelegationClient
+) : AbstractDelegationAgent(contextGetter, messageSender, inputProcessorManager, defaultClient) {
 
     internal data class DelegatePayload(
         @SerializedName("appId")
@@ -66,165 +54,162 @@ object DefaultDelegationAgent {
         val data: JsonObject
     )
 
-    internal class Impl(
-        contextGetter: ContextGetterInterface,
-        messageSender: MessageSender,
-        inputProcessorManager: InputProcessorManagerInterface,
-        defaultClient: DelegationClient
-    ) : AbstractDelegationAgent(contextGetter, messageSender, inputProcessorManager, defaultClient) {
-        companion object {
-            private const val NAME_DELEGATE = "Delegate"
-            private const val NAME_REQUEST = "Request"
+    companion object {
+        private const val TAG = "DelegationAgent"
 
-            private val DELEGATE = NamespaceAndName(
-                NAMESPACE,
-                NAME_DELEGATE
+        private const val NAME_DELEGATE = "Delegate"
+        private const val NAME_REQUEST = "Request"
+
+        private val DELEGATE = NamespaceAndName(
+            NAMESPACE,
+            NAME_DELEGATE
+        )
+    }
+
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName("supportedInterfaces", NAMESPACE)
+
+    private val executor = Executors.newSingleThreadExecutor()
+
+    private val requestListenerMap =
+        ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
+
+    override fun preHandleDirective(info: DirectiveInfo) {
+        // no-op
+    }
+
+    override fun handleDirective(info: DirectiveInfo) {
+        when (info.directive.getName()) {
+            NAME_DELEGATE -> handleDelegate(info)
+        }
+    }
+
+    private fun handleDelegate(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleDelegate] info: $info")
+        val payload = MessageFactory.create(info.directive.payload, DelegatePayload::class.java)
+        if (payload == null) {
+            Logger.d(TAG, "[handleDelegate] invalid payload: ${info.directive.payload}")
+            setHandlingFailed(
+                info,
+                "[handleDelegate] invalid payload: ${info.directive.payload}"
+            )
+            return
+        }
+
+        executor.submit {
+            defaultClient.onReceive(
+                payload.appId,
+                payload.playServiceId,
+                payload.data.toString()
+            )
+            setHandlingCompleted(info)
+        }
+    }
+
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        info.result.setCompleted()
+        removeDirective(info)
+    }
+
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info)
+    }
+
+    override fun cancelDirective(info: DirectiveInfo) {
+        removeDirective(info)
+    }
+
+    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+        val nonBlockingPolicy = BlockingPolicy()
+
+        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+
+        configuration[DELEGATE] = nonBlockingPolicy
+
+        return configuration
+    }
+
+    override fun provideState(
+        contextSetter: ContextSetterInterface,
+        namespaceAndName: NamespaceAndName,
+        stateRequestToken: Int
+    ) {
+        executor.submit {
+            contextSetter.setState(
+                namespaceAndName, buildContext(defaultClient.getAppContext())?.toString() ?: "",
+                StateRefreshPolicy.SOMETIMES, stateRequestToken
             )
         }
+    }
 
-        override val namespaceAndName: NamespaceAndName =
-            NamespaceAndName("supportedInterfaces", NAMESPACE)
-
-        private val executor = Executors.newSingleThreadExecutor()
-
-        private val requestListenerMap = ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
-
-        override fun preHandleDirective(info: DirectiveInfo) {
-            // no-op
+    private fun buildContext(appContext: DelegationClient.Context?): JsonObject? {
+        if (appContext == null) {
+            return null
         }
 
-        override fun handleDirective(info: DirectiveInfo) {
-            when (info.directive.getName()) {
-                NAME_DELEGATE -> handleDelegate(info)
-            }
+        val jsonData = try {
+            JsonParser().parse(appContext.data).asJsonObject
+        } catch (e: Exception) {
+            Logger.e(TAG, "[buildContext] invalid : ${appContext.data}", e)
+            null
+        } ?: return null
+
+        return JsonObject().apply {
+            addProperty("version", VERSION)
+            addProperty("playServiceId", appContext.playServiceId)
+            add("data", jsonData)
+        }
+    }
+
+    private fun removeDirective(info: DirectiveInfo) {
+        removeDirective(info.directive.getMessageId())
+    }
+
+    override fun request(
+        playServiceId: String,
+        data: String,
+        listener: DelegationAgentInterface.OnRequestListener?
+    ): String {
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+
+        listener?.let {
+            requestListenerMap[dialogRequestId] = it
         }
 
-        private fun handleDelegate(info: DirectiveInfo) {
-            Logger.d(TAG, "[handleDelegate] info: $info")
-            val payload = MessageFactory.create(info.directive.payload, DelegatePayload::class.java)
-            if (payload == null) {
-                Logger.d(TAG, "[handleDelegate] invalid payload: ${info.directive.payload}")
-                setHandlingFailed(
-                    info,
-                    "[handleDelegate] invalid payload: ${info.directive.payload}"
-                )
-                return
-            }
+        executor.submit {
+            contextGetter.getContext(object : ContextRequester {
+                override fun onContextAvailable(jsonContext: String) {
+                    messageSender.sendMessage(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            NAME_REQUEST,
+                            VERSION
+                        ).dialogRequestId(dialogRequestId).build()
+                    )
+                    onSendEventFinished(dialogRequestId)
+                }
 
-            executor.submit {
-                defaultClient.onReceive(
-                    payload.appId,
-                    payload.playServiceId,
-                    payload.data.toString()
-                )
-                setHandlingCompleted(info)
-            }
+                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                    requestListenerMap.remove(dialogRequestId)
+                        ?.onError(DelegationAgentInterface.Error.UNKNOWN)
+                }
+            })
         }
 
-        private fun setHandlingCompleted(info: DirectiveInfo) {
-            info.result.setCompleted()
-            removeDirective(info)
-        }
+        return dialogRequestId
+    }
 
-        private fun setHandlingFailed(info: DirectiveInfo, description: String) {
-            info.result.setFailed(description)
-            removeDirective(info)
-        }
+    override fun onSendEventFinished(dialogRequestId: String) {
+        inputProcessorManager.onRequested(this, dialogRequestId)
+    }
 
-        override fun cancelDirective(info: DirectiveInfo) {
-            removeDirective(info)
-        }
+    override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+        requestListenerMap.remove(dialogRequestId)?.onSuccess()
+    }
 
-        override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-            val nonBlockingPolicy = BlockingPolicy()
-
-            val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-            configuration[DELEGATE] = nonBlockingPolicy
-
-            return configuration
-        }
-
-        override fun provideState(
-            contextSetter: ContextSetterInterface,
-            namespaceAndName: NamespaceAndName,
-            stateRequestToken: Int
-        ) {
-            executor.submit {
-                contextSetter.setState(
-                    namespaceAndName, buildContext(defaultClient.getAppContext())?.toString() ?: "",
-                    StateRefreshPolicy.SOMETIMES, stateRequestToken
-                )
-            }
-        }
-
-        private fun buildContext(appContext: DelegationClient.Context?): JsonObject? {
-            if (appContext == null) {
-                return null
-            }
-
-            val jsonData = try {
-                JsonParser().parse(appContext.data).asJsonObject
-            } catch (e: Exception) {
-                Logger.e(TAG, "[buildContext] invalid : ${appContext.data}", e)
-                null
-            } ?: return null
-
-            return JsonObject().apply {
-                addProperty("version", VERSION)
-                addProperty("playServiceId", appContext.playServiceId)
-                add("data", jsonData)
-            }
-        }
-
-        private fun removeDirective(info: DirectiveInfo) {
-            removeDirective(info.directive.getMessageId())
-        }
-
-        override fun request(
-            playServiceId: String,
-            data: String,
-            listener: DelegationAgentInterface.OnRequestListener?
-        ): String {
-            val dialogRequestId = UUIDGeneration.timeUUID().toString()
-
-            listener?.let {
-                requestListenerMap[dialogRequestId] = it
-            }
-
-            executor.submit {
-                contextGetter.getContext(object : ContextRequester {
-                    override fun onContextAvailable(jsonContext: String) {
-                        messageSender.sendMessage(
-                            EventMessageRequest.Builder(
-                                jsonContext,
-                                NAMESPACE,
-                                NAME_REQUEST,
-                                VERSION
-                            ).dialogRequestId(dialogRequestId).build()
-                        )
-                        onSendEventFinished(dialogRequestId)
-                    }
-
-                    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                        requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.UNKNOWN)
-                    }
-                })
-            }
-
-            return dialogRequestId
-        }
-
-        override fun onSendEventFinished(dialogRequestId: String) {
-            inputProcessorManager.onRequested(this, dialogRequestId)
-        }
-
-        override fun onReceiveResponse(dialogRequestId: String, header: Header) {
-            requestListenerMap.remove(dialogRequestId)?.onSuccess()
-        }
-
-        override fun onResponseTimeout(dialogRequestId: String) {
-            requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.TIMEOUT)
-        }
+    override fun onResponseTimeout(dialogRequestId: String) {
+        requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.TIMEOUT)
     }
 }

@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.light
+package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
+import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface LightAgentFactory {
+interface SystemAgentFactory {
     fun create(
         messageSender: MessageSender,
+        connectionManager: ConnectionManagerInterface,
         contextManager: ContextManagerInterface,
-        light: Light
-    ): AbstractLightAgent
+        batteryStatusProvider: BatteryStatusProvider?
+    ): AbstractSystemAgent
 }

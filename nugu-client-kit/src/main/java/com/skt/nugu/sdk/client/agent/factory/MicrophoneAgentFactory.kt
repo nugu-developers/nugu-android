@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.display
+package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.core.interfaces.capability.microphone.Microphone
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
-interface DisplayAgentFactory {
+interface MicrophoneAgentFactory {
     fun create(
-        focusManager: FocusManagerInterface,
-        contextManager: ContextManagerInterface,
         messageSender: MessageSender,
-        playSynchronizer: PlaySynchronizerInterface,
-        inputProcessorManager: InputProcessorManagerInterface,
-        channelName: String
-    ): AbstractDisplayAgent
+        contextManager: ContextManagerInterface,
+        defaultMicrophone: Microphone?
+    ) : AbstractMicrophoneAgent
 }

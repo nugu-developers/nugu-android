@@ -19,7 +19,6 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
-import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -29,25 +28,15 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import java.util.HashMap
 import java.util.concurrent.Executors
 
-object DefaultExtensionAgent {
-    private const val TAG = "DefaultExtensionAgent"
-
-    val FACTORY = object : ExtensionAgentFactory {
-        override fun create(
-            contextManager: ContextManagerInterface,
-            messageSender: MessageSender
-        ): AbstractExtensionAgent =
-            Impl(
-                contextManager,
-                messageSender
-            )
-    }
+class DefaultExtensionAgent(
+    contextManager: ContextManagerInterface,
+    messageSender: MessageSender
+) : AbstractExtensionAgent(contextManager, messageSender) {
 
     internal data class ExtensionPayload(
         @SerializedName("playServiceId")
@@ -56,156 +45,153 @@ object DefaultExtensionAgent {
         val data: JsonObject
     )
 
-    internal class Impl constructor(
-        contextManager: ContextManagerInterface,
-        messageSender: MessageSender
-    ) : AbstractExtensionAgent(contextManager, messageSender) {
-        companion object {
-            private const val NAME_ACTION = "Action"
-            private const val NAME_ACTION_SUCCEEDED = "ActionSucceeded"
-            private const val NAME_ACTION_FAILED = "ActionFailed"
+    companion object {
+        private const val TAG = "DefaultExtensionAgent"
 
-            private val ACTION = NamespaceAndName(
-                NAMESPACE,
-                NAME_ACTION
+        private const val NAME_ACTION = "Action"
+        private const val NAME_ACTION_SUCCEEDED = "ActionSucceeded"
+        private const val NAME_ACTION_FAILED = "ActionFailed"
+
+        private val ACTION = NamespaceAndName(
+            NAMESPACE,
+            NAME_ACTION
+        )
+        private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
+        private const val PAYLOAD_DATA = "data"
+    }
+
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName("supportedInterfaces", NAMESPACE)
+    private val executor = Executors.newSingleThreadExecutor()
+
+    private var client: ExtensionAgentInterface.Client? = null
+
+    private val jsonParser = JsonParser()
+
+    init {
+        contextManager.setStateProvider(namespaceAndName, this)
+    }
+
+    override fun setClient(client: ExtensionAgentInterface.Client) {
+        this.client = client
+    }
+
+    private fun buildContext(): String = JsonObject().apply {
+        addProperty("version", VERSION)
+        client?.getData()?.let {
+            try {
+                add("data", jsonParser.parse(it).asJsonObject)
+            } catch (th: Throwable) {
+                Logger.e(TAG, "[buildContext] error to create data json object.", th)
+            }
+        }
+    }.toString()
+
+    override fun provideState(
+        contextSetter: ContextSetterInterface,
+        namespaceAndName: NamespaceAndName,
+        stateRequestToken: Int
+    ) {
+        contextSetter.setState(
+            namespaceAndName,
+            buildContext(),
+            StateRefreshPolicy.ALWAYS,
+            stateRequestToken
+        )
+    }
+
+    override fun preHandleDirective(info: DirectiveInfo) {
+    }
+
+    override fun handleDirective(info: DirectiveInfo) {
+        when (info.directive.getName()) {
+            NAME_ACTION -> handleActionDirective(info)
+        }
+    }
+
+    private fun handleActionDirective(info: DirectiveInfo) {
+        val payload =
+            MessageFactory.create(info.directive.payload, ExtensionPayload::class.java)
+        if (payload == null) {
+            Logger.d(TAG, "[handleActionDirective] invalid payload: ${info.directive.payload}")
+            setHandlingFailed(
+                info,
+                "[handleActionDirective] invalid payload: ${info.directive.payload}"
             )
-            private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
-            private const val PAYLOAD_DATA = "data"
+            return
         }
 
-        override val namespaceAndName: NamespaceAndName =
-            NamespaceAndName("supportedInterfaces", NAMESPACE)
-        private val executor = Executors.newSingleThreadExecutor()
+        val data = payload.data
+        val playServiceId = payload.playServiceId
 
-        private var client: ExtensionAgentInterface.Client? = null
-
-        private val jsonParser = JsonParser()
-
-        init {
-            contextManager.setStateProvider(namespaceAndName, this)
-        }
-
-        override fun setClient(client: ExtensionAgentInterface.Client) {
-            this.client = client
-        }
-
-        private fun buildContext(): String = JsonObject().apply {
-            addProperty("version", VERSION)
-            client?.getData()?.let {
-                try {
-                    add("data", jsonParser.parse(it).asJsonObject)
-                } catch (th: Throwable) {
-                    Logger.e(TAG, "[buildContext] error to create data json object.", th)
-                }
-            }
-        }.toString()
-
-        override fun provideState(
-            contextSetter: ContextSetterInterface,
-            namespaceAndName: NamespaceAndName,
-            stateRequestToken: Int
-        ) {
-            contextSetter.setState(
-                namespaceAndName,
-                buildContext(),
-                StateRefreshPolicy.ALWAYS,
-                stateRequestToken
-            )
-        }
-
-        override fun preHandleDirective(info: DirectiveInfo) {
-        }
-
-        override fun handleDirective(info: DirectiveInfo) {
-            when (info.directive.getName()) {
-                NAME_ACTION -> handleActionDirective(info)
-            }
-        }
-
-        private fun handleActionDirective(info: DirectiveInfo) {
-            val payload =
-                MessageFactory.create(info.directive.payload, ExtensionPayload::class.java)
-            if (payload == null) {
-                Logger.d(TAG, "[handleActionDirective] invalid payload: ${info.directive.payload}")
-                setHandlingFailed(
-                    info,
-                    "[handleActionDirective] invalid payload: ${info.directive.payload}"
-                )
-                return
-            }
-
-            val data = payload.data
-            val playServiceId = payload.playServiceId
-
-            executor.submit {
-                val currentClient = client
-                if (currentClient != null) {
-                    if (currentClient.action(data.toString(), playServiceId)) {
-                        sendActionSucceededEvent(playServiceId)
-                    } else {
-                        sendActionFailedEvent(playServiceId)
-                    }
+        executor.submit {
+            val currentClient = client
+            if (currentClient != null) {
+                if (currentClient.action(data.toString(), playServiceId)) {
+                    sendActionSucceededEvent(playServiceId)
                 } else {
-                    Logger.w(
-                        TAG,
-                        "[handleActionDirective] no current client. set client using setClient()."
-                    )
+                    sendActionFailedEvent(playServiceId)
                 }
+            } else {
+                Logger.w(
+                    TAG,
+                    "[handleActionDirective] no current client. set client using setClient()."
+                )
             }
-            setHandlingCompleted(info)
         }
+        setHandlingCompleted(info)
+    }
 
-        private fun setHandlingCompleted(info: DirectiveInfo) {
-            info.result.setCompleted()
-            removeDirective(info)
-        }
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        info.result.setCompleted()
+        removeDirective(info)
+    }
 
-        private fun setHandlingFailed(info: DirectiveInfo, description: String) {
-            info.result.setFailed(description)
-            removeDirective(info)
-        }
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info)
+    }
 
-        override fun cancelDirective(info: DirectiveInfo) {
-            removeDirective(info)
-        }
+    override fun cancelDirective(info: DirectiveInfo) {
+        removeDirective(info)
+    }
 
-        override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-            val nonBlockingPolicy = BlockingPolicy()
+    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+        val nonBlockingPolicy = BlockingPolicy()
 
-            val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-            configuration[ACTION] = nonBlockingPolicy
+        configuration[ACTION] = nonBlockingPolicy
 
-            return configuration
-        }
+        return configuration
+    }
 
-        private fun removeDirective(info: DirectiveInfo) {
-            removeDirective(info.directive.getMessageId())
-        }
+    private fun removeDirective(info: DirectiveInfo) {
+        removeDirective(info.directive.getMessageId())
+    }
 
-        private fun sendActionSucceededEvent(playServiceId: String) {
-            sendEvent(NAME_ACTION_SUCCEEDED, playServiceId)
-        }
+    private fun sendActionSucceededEvent(playServiceId: String) {
+        sendEvent(NAME_ACTION_SUCCEEDED, playServiceId)
+    }
 
-        private fun sendActionFailedEvent(playServiceId: String) {
-            sendEvent(NAME_ACTION_FAILED, playServiceId)
-        }
+    private fun sendActionFailedEvent(playServiceId: String) {
+        sendEvent(NAME_ACTION_FAILED, playServiceId)
+    }
 
-        private fun sendEvent(name: String, playServiceId: String) {
-            Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
-                        .payload(JsonObject().apply {
-                            addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
-                        }.toString()).build()
+    private fun sendEvent(name: String, playServiceId: String) {
+        Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                    .payload(JsonObject().apply {
+                        addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
+                    }.toString()).build()
 
-                    messageSender.sendMessage(request)
-                }
+                messageSender.sendMessage(request)
+            }
 
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                }
-            }, namespaceAndName)
-        }
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+            }
+        }, namespaceAndName)
     }
 }
