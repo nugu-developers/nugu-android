@@ -21,6 +21,8 @@ import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.capability.light.Light
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.Microphone
 import com.skt.nugu.sdk.core.interfaces.capability.movement.MovementController
+import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
@@ -34,6 +36,7 @@ interface SdkContainer {
     fun getAudioFocusManager(): FocusManagerInterface
     fun getVisualFocusManager(): FocusManagerInterface?
     fun getMessageSender(): MessageSender
+    fun getConnectionManager(): ConnectionManagerInterface
     fun getContextManager(): ContextManagerInterface
     fun getDialogSessionManager(): DialogSessionManagerInterface
     fun getPlaySynchronizer(): PlaySynchronizerInterface
@@ -55,4 +58,7 @@ interface SdkContainer {
 
     // Movement only
     fun getMovementController(): MovementController?
+
+    // System only
+    fun getBatteryStatusProvider(): BatteryStatusProvider?
 }

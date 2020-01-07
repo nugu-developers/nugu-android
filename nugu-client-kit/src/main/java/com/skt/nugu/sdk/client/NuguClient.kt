@@ -75,6 +75,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophone
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -123,14 +124,16 @@ class NuguClient private constructor(
         internal var light: Light? = null
 
         // Agent Factory
-        internal var audioPlayerAgentFactory: AudioPlayerAgentFactory = DefaultAgentFactory.AUDIO_PLAYER
+        internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
+            DefaultAgentFactory.AUDIO_PLAYER
         internal var asrAgentFactory: ASRAgentFactory = DefaultAgentFactory.ASR
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
         internal var textAgentFactory: TextAgentFactory = DefaultAgentFactory.TEXT
         internal var extensionAgentFactory: ExtensionAgentFactory = DefaultAgentFactory.EXTENSION
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
         internal var locationAgentFactory: LocationAgentFactory? = DefaultAgentFactory.LOCATION
-        internal var delegationAgentFactory: DelegationAgentFactory? = DefaultAgentFactory.DELEGATION
+        internal var delegationAgentFactory: DelegationAgentFactory? =
+            DefaultAgentFactory.DELEGATION
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
@@ -168,7 +171,8 @@ class NuguClient private constructor(
             apply { locationAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
-        fun delegationAgentFactory(factory: DelegationAgentFactory?) = apply { delegationAgentFactory = factory }
+        fun delegationAgentFactory(factory: DelegationAgentFactory?) =
+            apply { delegationAgentFactory = factory }
 
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
@@ -178,7 +182,8 @@ class NuguClient private constructor(
     private val inputProcessorManager = InputProcessorManager()
     private val directiveSequencer: DirectiveSequencer = DirectiveSequencer()
 
-    private val playbackRouter: com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter = PlaybackRouter()
+    private val playbackRouter: com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter =
+        PlaybackRouter()
 
     // CA
     private val speakerManager: AbstractSpeakerAgent
@@ -254,17 +259,20 @@ class NuguClient private constructor(
             val playSynchronizer = PlaySynchronizer()
 
             sdkContainer = object : SdkContainer {
-                override fun getInputManagerProcessor(): InputProcessorManagerInterface = inputProcessorManager
+                override fun getInputManagerProcessor(): InputProcessorManagerInterface =
+                    inputProcessorManager
 
                 override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
 
                 override fun getVisualFocusManager(): FocusManagerInterface? = visualFocusManager
 
                 override fun getMessageSender(): MessageSender = networkManager
+                override fun getConnectionManager(): ConnectionManagerInterface = networkManager
 
                 override fun getContextManager(): ContextManagerInterface = contextManager
 
-                override fun getDialogSessionManager(): DialogSessionManagerInterface = dialogSessionManager
+                override fun getDialogSessionManager(): DialogSessionManagerInterface =
+                    dialogSessionManager
 
                 override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
 
@@ -283,6 +291,8 @@ class NuguClient private constructor(
                 override fun getMicrophone(): Microphone? = defaultMicrophone
 
                 override fun getMovementController(): MovementController? = movementController
+
+                override fun getBatteryStatusProvider(): BatteryStatusProvider? = batteryStatusProvider
             }
 
             speakerManager =
@@ -313,12 +323,7 @@ class NuguClient private constructor(
             dialogUXStateAggregator.addListener(ttsAgent)
             ttsAgent.addListener(dialogUXStateAggregator)
 
-            systemAgent = DefaultAgentFactory.SYSTEM.create(
-                networkManager,
-                networkManager,
-                contextManager,
-                batteryStatusProvider
-            ).apply {
+            systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer).apply {
                 addListener(messageRouter)
             }
 
