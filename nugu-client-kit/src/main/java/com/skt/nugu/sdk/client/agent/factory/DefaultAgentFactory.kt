@@ -176,18 +176,14 @@ object DefaultAgentFactory {
          * Create an instance of Impl
          * initializing is performed at default initializer
          */
-        override fun create(
-            messageSender: MessageSender,
-            connectionManager: ConnectionManagerInterface,
-            contextManager: ContextManagerInterface,
-            batteryStatusProvider: BatteryStatusProvider?
-        ): AbstractSystemAgent =
+        override fun create(container: SdkContainer): AbstractSystemAgent = with(container) {
             DefaultSystemAgent(
-                messageSender,
-                connectionManager,
-                contextManager,
-                batteryStatusProvider
+                getMessageSender(),
+                getConnectionManager(),
+                getContextManager(),
+                getBatteryStatusProvider()
             )
+        }
     }
 
     val TEXT = object : TextAgentFactory {

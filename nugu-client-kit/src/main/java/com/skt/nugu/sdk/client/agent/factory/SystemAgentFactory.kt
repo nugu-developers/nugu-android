@@ -16,16 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
-import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface SystemAgentFactory {
-    fun create(
-        messageSender: MessageSender,
-        connectionManager: ConnectionManagerInterface,
-        contextManager: ContextManagerInterface,
-        batteryStatusProvider: BatteryStatusProvider?
-    ): AbstractSystemAgent
-}
+interface SystemAgentFactory: AgentFactory<AbstractSystemAgent>
