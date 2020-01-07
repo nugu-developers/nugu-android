@@ -1,5 +1,6 @@
 package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.capabilityagents.impl.*
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
@@ -33,19 +34,21 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 
 object DefaultAgentFactory {
     val ASR = object : ASRAgentFactory {
-        override fun create(bean: NuguBean): AbstractASRAgent {
-            return DefaultASRAgent(
-                bean.getInputManagerProcessor(),
-                bean.getFocusManager(),
-                bean.getMessageSender(),
-                bean.getContextManager(),
-                bean.getDialogSessionManager(),
-                bean.getAudioProvider(),
-                bean.getAudioEncoder(),
-                bean.getEndPointDetector(),
-                bean.getEpdTimeoutMillis(),
-                DefaultFocusChannel.DIALOG_CHANNEL_NAME
-            )
+        override fun create(container: SdkContainer): AbstractASRAgent {
+            return with(container) {
+                DefaultASRAgent(
+                    getInputManagerProcessor(),
+                    getFocusManager(),
+                    getMessageSender(),
+                    getContextManager(),
+                    getDialogSessionManager(),
+                    getAudioProvider(),
+                    getAudioEncoder(),
+                    getEndPointDetector(),
+                    getEpdTimeoutMillis(),
+                    DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                )
+            }
         }
     }
 
