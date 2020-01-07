@@ -17,6 +17,4 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.location.AbstractLocationAgent
 
-interface LocationAgentFactory {
-    fun create(): AbstractLocationAgent
-}
+interface LocationAgentFactory: AgentFactory<AbstractLocationAgent>
