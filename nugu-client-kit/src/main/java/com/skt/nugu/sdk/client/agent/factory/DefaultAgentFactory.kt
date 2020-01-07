@@ -2,6 +2,7 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
+import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.capabilityagents.impl.*
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
@@ -51,27 +52,31 @@ object DefaultAgentFactory {
     }
 
     val AUDIO_PLAYER = object : AudioPlayerAgentFactory {
-        override fun create(
-            mediaPlayer: MediaPlayerInterface,
-            messageSender: MessageSender,
-            focusManager: FocusManagerInterface,
-            contextManager: ContextManagerInterface,
-            playbackRouter: PlaybackRouter,
-            playSynchronizer: PlaySynchronizerInterface,
-            channelName: String,
-            displayAgent: DisplayAgentInterface?
-        ): AbstractAudioPlayerAgent =
+        override fun create(container: SdkContainer): AbstractAudioPlayerAgent = with(container) {
             DefaultAudioPlayerAgent(
-                mediaPlayer,
-                messageSender,
-                focusManager,
-                contextManager,
-                playbackRouter,
-                playSynchronizer,
-                channelName
+                getPlayerFactory().createAudioPlayer(),
+                getMessageSender(),
+                getAudioFocusManager(),
+                getContextManager(),
+                getPlaybackRouter(),
+                getPlaySynchronizer(),
+                DefaultFocusChannel.CONTENT_CHANNEL_NAME
             ).apply {
-                setDisplayAgent(displayAgent)
+                getVisualFocusManager()?.let {
+                    val displayAudioPlayerAgent = DisplayAudioPlayerAgent(
+                        it,
+                        getContextManager(),
+                        getMessageSender(),
+                        getPlaySynchronizer(),
+                        getInputManagerProcessor(),
+                        DefaultFocusChannel.CONTENT_CHANNEL_NAME
+                    )
+                    setDisplayAgent(displayAudioPlayerAgent)
+                    addListener(displayAudioPlayerAgent)
+                    getDirectiveSequencer().addDirectiveHandler(displayAudioPlayerAgent)
+                }
             }
+        }
     }
 
     val DELEGATION = object : DelegationAgentFactory {

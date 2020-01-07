@@ -16,23 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
 
-interface AudioPlayerAgentFactory {
-    fun create(
-        mediaPlayer: MediaPlayerInterface,
-        messageSender: MessageSender,
-        focusManager: FocusManagerInterface,
-        contextManager: ContextManagerInterface,
-        playbackRouter: PlaybackRouter,
-        playSynchronizer: PlaySynchronizerInterface,
-        channelName: String,
-        displayAgent: DisplayAgentInterface?
-    ): AbstractAudioPlayerAgent
-}
+interface AudioPlayerAgentFactory : AgentFactory<AbstractAudioPlayerAgent>

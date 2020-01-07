@@ -50,7 +50,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerObserve
 import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.capabilityagents.asr.*
-import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.capabilityagents.playbackcontroller.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
@@ -275,6 +274,7 @@ class NuguClient private constructor(
                     dialogSessionManager
 
                 override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
+                override fun getDirectiveSequencer(): DirectiveSequencerInterface = directiveSequencer
 
                 override fun getAudioProvider(): AudioProvider = defaultAudioProvider
 
@@ -294,6 +294,7 @@ class NuguClient private constructor(
 
                 override fun getBatteryStatusProvider(): BatteryStatusProvider? = batteryStatusProvider
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
+                override fun getPlaybackRouter(): com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter = playbackRouter
             }
 
             speakerManager =
@@ -355,49 +356,20 @@ class NuguClient private constructor(
             val displayTemplateAgent = tempDisplayAgentFactory?.create(sdkContainer)
 
             if (displayTemplateAgent != null && visualFocusManager != null) {
-                val displayAudioPlayerAgent = DisplayAudioPlayerAgent(
-                    visualFocusManager,
-                    contextManager,
-                    networkManager,
-                    playSynchronizer,
-                    inputProcessorManager,
-                    DefaultFocusChannel.CONTENT_CHANNEL_NAME
-                )
+                audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
 
-                audioPlayerAgent = audioPlayerAgentFactory.create(
-                    playerFactory.createAudioPlayer(),
-                    networkManager,
-                    audioFocusManager,
-                    contextManager,
-                    playbackRouter,
-                    playSynchronizer,
-                    DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                    displayAudioPlayerAgent
-                )
-                audioPlayerAgent.addListener(displayAudioPlayerAgent)
-
-                directiveSequencer.addDirectiveHandler(displayAudioPlayerAgent)
                 directiveSequencer.addDirectiveHandler(displayTemplateAgent)
 
                 displayAgent = displayTemplateAgent
                 displayAggregator = DisplayAggregator(
                     displayTemplateAgent,
-                    displayAudioPlayerAgent
+                    audioPlayerAgent
                 )
             } else {
                 displayAggregator = null
                 displayAgent = null
 
-                audioPlayerAgent = audioPlayerAgentFactory.create(
-                    playerFactory.createAudioPlayer(),
-                    networkManager,
-                    audioFocusManager,
-                    contextManager,
-                    playbackRouter,
-                    playSynchronizer,
-                    DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                    null
-                )
+                audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
             }
 
             locationAgent = locationAgentFactory?.create(sdkContainer)?.apply {
