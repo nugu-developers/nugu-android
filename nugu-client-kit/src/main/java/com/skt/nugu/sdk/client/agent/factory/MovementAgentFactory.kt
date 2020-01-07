@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.system
+package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
+import com.skt.nugu.sdk.core.interfaces.capability.movement.AbstractMovementAgent
+import com.skt.nugu.sdk.core.interfaces.capability.movement.MovementController
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface SystemAgentFactory {
+interface MovementAgentFactory {
     fun create(
-        messageSender: MessageSender,
-        connectionManager: ConnectionManagerInterface,
         contextManager: ContextManagerInterface,
-        batteryStatusProvider: BatteryStatusProvider?
-    ): AbstractSystemAgent
+        messageSender: MessageSender,
+        movementController: MovementController
+    ): AbstractMovementAgent
 }

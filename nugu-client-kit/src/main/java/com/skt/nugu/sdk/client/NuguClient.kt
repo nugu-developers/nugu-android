@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client
 
+import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
@@ -49,7 +50,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerObserve
 import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.capabilityagents.asr.*
-import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultDisplayAgent
 import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.capabilityagents.impl.*
 import com.skt.nugu.sdk.core.capabilityagents.playbackcontroller.PlaybackRouter
@@ -63,27 +63,19 @@ import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.client.client.DisplayAggregator
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.directivesequencer.*
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentFactory
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
-import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentFactory
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
-import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentFactory
-import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentFactory
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -127,15 +119,14 @@ class NuguClient private constructor(
         internal var light: Light? = null
 
         // Agent Factory
-        internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
-            DefaultAudioPlayerAgent.FACTORY
-        internal var asrAgentFactory: ASRAgentFactory = DefaultASRAgent.FACTORY
-        internal var ttsAgentFactory: TTSAgentFactory = DefaultTTSAgent.FACTORY
-        internal var textAgentFactory: TextAgentFactory = DefaultTextAgent.FACTORY
-        internal var extensionAgentFactory: ExtensionAgentFactory = DefaultExtensionAgent.FACTORY
-        internal var displayAgentFactory: DisplayAgentFactory? = DefaultDisplayAgent.FACTORY
-        internal var locationAgentFactory: LocationAgentFactory? = DefaultLocationAgent.FACTORY
-        internal var delegationAgentFactory: DelegationAgentFactory? = DefaultDelegationAgent.FACTORY
+        internal var audioPlayerAgentFactory: AudioPlayerAgentFactory = DefaultAgentFactory.AUDIO_PLAYER
+        internal var asrAgentFactory: ASRAgentFactory = DefaultAgentFactory.ASR
+        internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
+        internal var textAgentFactory: TextAgentFactory = DefaultAgentFactory.TEXT
+        internal var extensionAgentFactory: ExtensionAgentFactory = DefaultAgentFactory.EXTENSION
+        internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
+        internal var locationAgentFactory: LocationAgentFactory? = DefaultAgentFactory.LOCATION
+        internal var delegationAgentFactory: DelegationAgentFactory? = DefaultAgentFactory.DELEGATION
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
@@ -239,7 +230,7 @@ class NuguClient private constructor(
             contextStateProviderRegistry = contextManager
 
             speakerManager =
-                DefaultSpeakerAgent.FACTORY.create(contextManager, networkManager).apply {
+                DefaultAgentFactory.SPEAKER.create(contextManager, networkManager).apply {
                     addSpeaker(speakerFactory.createNuguSpeaker())
                     addSpeaker(speakerFactory.createAlarmSpeaker())
                     speakerFactory.createCallSpeaker()?.let {
@@ -251,7 +242,7 @@ class NuguClient private constructor(
                 }
 
             micManager =
-                DefaultMicrophoneAgent.FACTORY.create(
+                DefaultAgentFactory.MICROPHONE.create(
                     networkManager,
                     contextManager,
                     defaultMicrophone
@@ -281,7 +272,7 @@ class NuguClient private constructor(
             dialogUXStateAggregator.addListener(ttsAgent)
             ttsAgent.addListener(dialogUXStateAggregator)
 
-            systemAgent = DefaultSystemAgent.FACTORY.create(
+            systemAgent = DefaultAgentFactory.SYSTEM.create(
                 networkManager,
                 networkManager,
                 contextManager,
@@ -422,7 +413,7 @@ class NuguClient private constructor(
                 addDirectiveHandler(ttsAgent)
                 light?.let {
                     addDirectiveHandler(
-                        DefaultLightAgent.FACTORY.create(
+                        DefaultAgentFactory.LIGHT.create(
                             networkManager,
                             contextManager,
                             it
@@ -443,7 +434,7 @@ class NuguClient private constructor(
 
                 movementController?.let {
                     addDirectiveHandler(
-                        DefaultMovementAgent.FACTORY.create(
+                        DefaultAgentFactory.MOVEMENT.create(
                             contextManager,
                             networkManager,
                             it

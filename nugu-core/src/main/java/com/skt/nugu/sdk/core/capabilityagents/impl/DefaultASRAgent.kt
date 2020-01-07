@@ -21,7 +21,6 @@ import com.skt.nugu.sdk.core.capabilityagents.asr.*
 import com.skt.nugu.sdk.core.capabilityagents.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.core.capabilityagents.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.core.capabilityagents.asr.SpeechRecognizer
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
@@ -51,678 +50,651 @@ import java.util.concurrent.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-object DefaultASRAgent {
-    private const val TAG = "DefaultASRAgent"
+class DefaultASRAgent(
+    inputProcessorManager: InputProcessorManagerInterface,
+    focusManager: FocusManagerInterface,
+    messageSender: MessageSender,
+    contextManager: ContextManagerInterface,
+    dialogSessionManager: DialogSessionManagerInterface,
+    audioProvider: AudioProvider,
+    audioEncoder: Encoder,
+    endPointDetector: AudioEndPointDetector?,
+    defaultEpdTimeoutMillis: Long,
+    channelName: String
+) : AbstractASRAgent(
+    inputProcessorManager,
+    focusManager,
+    messageSender,
+    contextManager,
+    dialogSessionManager,
+    audioProvider,
+    audioEncoder,
+    endPointDetector,
+    defaultEpdTimeoutMillis,
+    channelName
+), SpeechRecognizer.OnStateChangeListener, ChannelObserver {
+    companion object {
+        private const val TAG = "DefaultASRAgent"
 
-    const val NAME_EXPECT_SPEECH = "ExpectSpeech"
-    const val NAME_RECOGNIZE = "Recognize"
-    private const val NAME_NOTIFY_RESULT = "NotifyResult"
+        const val NAME_EXPECT_SPEECH = "ExpectSpeech"
+        const val NAME_RECOGNIZE = "Recognize"
+        private const val NAME_NOTIFY_RESULT = "NotifyResult"
 
-    private const val NAME_LISTEN_TIMEOUT = "ListenTimeout"
-    private const val NAME_LISTEN_FAILED = "ListenFailed"
-    private const val NAME_RESPONSE_TIMEOUT = "ResponseTimeout"
+        private const val NAME_LISTEN_TIMEOUT = "ListenTimeout"
+        private const val NAME_LISTEN_FAILED = "ListenFailed"
+        private const val NAME_RESPONSE_TIMEOUT = "ResponseTimeout"
 
-    const val DESCRIPTION_NOTIFY_ERROR_RESPONSE_TIMEOUT = "Response timeout"
+        const val DESCRIPTION_NOTIFY_ERROR_RESPONSE_TIMEOUT = "Response timeout"
 
-    const val EVENT_STOP_RECOGNIZE = "StopRecognize"
+        const val EVENT_STOP_RECOGNIZE = "StopRecognize"
 
-    val EXPECT_SPEECH = NamespaceAndName(
-        AbstractASRAgent.NAMESPACE,
-        NAME_EXPECT_SPEECH
-    )
-    val RECOGNIZE = NamespaceAndName(
-        AbstractASRAgent.NAMESPACE,
-        NAME_RECOGNIZE
-    )
-    val NOTIFY_RESULT = NamespaceAndName(
-        AbstractASRAgent.NAMESPACE,
-        NAME_NOTIFY_RESULT
-    )
+        val EXPECT_SPEECH = NamespaceAndName(
+            AbstractASRAgent.NAMESPACE,
+            NAME_EXPECT_SPEECH
+        )
+        val RECOGNIZE = NamespaceAndName(
+            AbstractASRAgent.NAMESPACE,
+            NAME_RECOGNIZE
+        )
+        val NOTIFY_RESULT = NamespaceAndName(
+            AbstractASRAgent.NAMESPACE,
+            NAME_NOTIFY_RESULT
+        )
 
-    private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
+        private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
+    }
 
-    val FACTORY = object : ASRAgentFactory {
-        override fun create(
-            inputProcessorManager: InputProcessorManagerInterface,
-            focusManager: FocusManagerInterface,
-            messageSender: MessageSender,
-            contextManager: ContextManagerInterface,
-            dialogSessionManager: DialogSessionManagerInterface,
-            audioProvider: AudioProvider,
-            audioEncoder: Encoder,
-            endPointDetector: AudioEndPointDetector?,
-            defaultEpdTimeoutMillis: Long,
-            channelName: String
-        ): AbstractASRAgent {
-            return Impl(
+    private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
+    private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
+    private val onMultiturnListeners = HashSet<ASRAgentInterface.OnMultiturnListener>()
+
+    private val executor = Executors.newSingleThreadExecutor()
+    private var state = ASRAgentInterface.State.IDLE
+
+    private var focusState = FocusState.NONE
+
+    private var audioInputStream: SharedDataStream? = null
+    private var audioFormat: AudioFormat? = null
+    private var wakeupBoundary: WakeupBoundary? = null
+    private var expectSpeechPayload: ExpectSpeechPayload? = null
+
+    private var contextForRecognitionOnForegroundFocus: String? = null
+
+    private var initialDialogUXStateReceived: Boolean = false
+
+    private var currentAudioProvider: AudioProvider? = null
+    private val speechProcessorLock = ReentrantLock()
+
+    private var currentSpeechRecognizer: SpeechRecognizer
+    private var nextStartSpeechRecognizer: SpeechRecognizer
+    private val serverEpdSpeechRecognizer: SpeechRecognizer
+    private val clientEpdSpeechRecognizer: SpeechRecognizer?
+
+    private val speechToTextConverterEventObserver =
+        object : ASRAgentInterface.OnResultListener {
+            override fun onNoneResult() {
+                onResultListeners.forEach {
+                    it.onNoneResult()
+                }
+            }
+
+            override fun onPartialResult(result: String) {
+                Logger.d(TAG, "[onPartialResult] $result")
+                onResultListeners.forEach {
+                    it.onPartialResult(result)
+                }
+            }
+
+            override fun onCompleteResult(result: String) {
+                onResultListeners.forEach {
+                    it.onCompleteResult(result)
+                }
+            }
+
+            override fun onError(errorType: ASRAgentInterface.ErrorType) {
+                Logger.w(TAG, "[onError] $errorType")
+                onResultListeners.forEach {
+                    it.onError(errorType)
+                }
+            }
+
+            override fun onCancel() {
+                Logger.d(TAG, "[onCancel]")
+                onResultListeners.forEach {
+                    it.onCancel()
+                }
+            }
+        }
+
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName(
+            "supportedInterfaces",
+            NAMESPACE
+        )
+
+    init {
+        serverEpdSpeechRecognizer = DefaultServerSpeechRecognizer(
+            inputProcessorManager,
+            audioEncoder,
+            messageSender,
+            defaultEpdTimeoutMillis
+        )
+
+        clientEpdSpeechRecognizer = if (endPointDetector != null) {
+            DefaultClientSpeechRecognizer(
                 inputProcessorManager,
-                focusManager,
-                messageSender,
-                contextManager,
-                dialogSessionManager,
-                audioProvider,
                 audioEncoder,
+                messageSender,
                 endPointDetector,
-                defaultEpdTimeoutMillis,
-                channelName
+                defaultEpdTimeoutMillis
             )
+        } else {
+            null
+        }
+
+        val initialSpeechProcessor = clientEpdSpeechRecognizer ?: serverEpdSpeechRecognizer
+        currentSpeechRecognizer = initialSpeechProcessor
+        nextStartSpeechRecognizer = initialSpeechProcessor
+
+        initialSpeechProcessor.addListener(this)
+        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setState(namespaceAndName, buildContext(), StateRefreshPolicy.NEVER)
+    }
+
+    override fun preHandleDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[preHandleDirective] $info")
+        when (info.directive.getNamespaceAndName()) {
+            EXPECT_SPEECH -> preHandleExpectSpeech(info)
         }
     }
 
-    internal class Impl constructor(
-        inputProcessorManager: InputProcessorManagerInterface,
-        focusManager: FocusManagerInterface,
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        dialogSessionManager: DialogSessionManagerInterface,
-        audioProvider: AudioProvider,
-        audioEncoder: Encoder,
-        endPointDetector: AudioEndPointDetector?,
-        defaultEpdTimeoutMillis: Long,
-        channelName: String
-    ) : AbstractASRAgent(
-        inputProcessorManager,
-        focusManager,
-        messageSender,
-        contextManager,
-        dialogSessionManager,
-        audioProvider,
-        audioEncoder,
-        endPointDetector,
-        defaultEpdTimeoutMillis,
-        channelName
-    ), SpeechRecognizer.OnStateChangeListener, ChannelObserver {
-        private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
-        private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
-        private val onMultiturnListeners = HashSet<ASRAgentInterface.OnMultiturnListener>()
+    private fun preHandleExpectSpeech(info: DirectiveInfo) {
+        Logger.d(TAG, "[preHandleExpectSpeech] $info")
 
-        private val executor = Executors.newSingleThreadExecutor()
-        private var state = ASRAgentInterface.State.IDLE
-
-        private var focusState = FocusState.NONE
-
-        private var audioInputStream: SharedDataStream? = null
-        private var audioFormat: AudioFormat? = null
-        private var wakeupBoundary: WakeupBoundary? = null
-        private var expectSpeechPayload: ExpectSpeechPayload? = null
-
-        private var contextForRecognitionOnForegroundFocus: String? = null
-
-        private var initialDialogUXStateReceived: Boolean = false
-
-        private var currentAudioProvider: AudioProvider? = null
-        private val speechProcessorLock = ReentrantLock()
-
-        private var currentSpeechRecognizer: SpeechRecognizer
-        private var nextStartSpeechRecognizer: SpeechRecognizer
-        private val serverEpdSpeechRecognizer: SpeechRecognizer
-        private val clientEpdSpeechRecognizer: SpeechRecognizer?
-
-        private val speechToTextConverterEventObserver =
-            object : ASRAgentInterface.OnResultListener {
-                override fun onNoneResult() {
-                    onResultListeners.forEach {
-                        it.onNoneResult()
-                    }
-                }
-
-                override fun onPartialResult(result: String) {
-                    Logger.d(TAG, "[onPartialResult] $result")
-                    onResultListeners.forEach {
-                        it.onPartialResult(result)
-                    }
-                }
-
-                override fun onCompleteResult(result: String) {
-                    onResultListeners.forEach {
-                        it.onCompleteResult(result)
-                    }
-                }
-
-                override fun onError(errorType: ASRAgentInterface.ErrorType) {
-                    Logger.w(TAG, "[onError] $errorType")
-                    onResultListeners.forEach {
-                        it.onError(errorType)
-                    }
-                }
-
-                override fun onCancel() {
-                    Logger.d(TAG, "[onCancel]")
-                    onResultListeners.forEach {
-                        it.onCancel()
-                    }
-                }
-            }
-
-        override val namespaceAndName: NamespaceAndName =
-            NamespaceAndName(
-                "supportedInterfaces",
-                NAMESPACE
-            )
-
-        init {
-            serverEpdSpeechRecognizer = DefaultServerSpeechRecognizer(
-                inputProcessorManager,
-                audioEncoder,
-                messageSender,
-                defaultEpdTimeoutMillis
-            )
-
-            clientEpdSpeechRecognizer = if (endPointDetector != null) {
-                DefaultClientSpeechRecognizer(
-                    inputProcessorManager,
-                    audioEncoder,
-                    messageSender,
-                    endPointDetector,
-                    defaultEpdTimeoutMillis
+        executor.submit {
+            val payload = parseExpectSpeechPayload(info.directive)
+            if (payload == null) {
+                setHandlingExpectSpeechFailed(
+                    info,
+                    "[executePreHandleExpectSpeechDirective] invalid payload"
+                )
+            } else if (state != ASRAgentInterface.State.IDLE && state != ASRAgentInterface.State.BUSY) {
+                setHandlingExpectSpeechFailed(
+                    info,
+                    "[executePreHandleExpectSpeechDirective] not allowed state($state)"
                 )
             } else {
-                null
-            }
-
-            val initialSpeechProcessor = clientEpdSpeechRecognizer ?: serverEpdSpeechRecognizer
-            currentSpeechRecognizer = initialSpeechProcessor
-            nextStartSpeechRecognizer = initialSpeechProcessor
-
-            initialSpeechProcessor.addListener(this)
-            contextManager.setStateProvider(namespaceAndName, this)
-            contextManager.setState(namespaceAndName, buildContext(), StateRefreshPolicy.NEVER)
-        }
-
-        override fun preHandleDirective(info: DirectiveInfo) {
-            Logger.d(TAG, "[preHandleDirective] $info")
-            when (info.directive.getNamespaceAndName()) {
-                EXPECT_SPEECH -> preHandleExpectSpeech(info)
+                executePreHandleExpectSpeechInternal(payload)
             }
         }
+    }
 
-        private fun preHandleExpectSpeech(info: DirectiveInfo) {
-            Logger.d(TAG, "[preHandleExpectSpeech] $info")
+    private fun executePreHandleExpectSpeechInternal(payload: ExpectSpeechPayload) {
+        Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, payload: $payload")
+        expectSpeechPayload = payload
+        dialogSessionManager.openSession(
+            payload.sessionId,
+            payload.property,
+            payload.domainTypes,
+            payload.playServiceId
+        )
+    }
 
-            executor.submit {
-                val payload = parseExpectSpeechPayload(info.directive)
-                if (payload == null) {
-                    setHandlingExpectSpeechFailed(
-                        info,
-                        "[executePreHandleExpectSpeechDirective] invalid payload"
-                    )
-                } else if (state != ASRAgentInterface.State.IDLE && state != ASRAgentInterface.State.BUSY) {
-                    setHandlingExpectSpeechFailed(
-                        info,
-                        "[executePreHandleExpectSpeechDirective] not allowed state($state)"
-                    )
-                } else {
-                    executePreHandleExpectSpeechInternal(payload)
-                }
+    override fun handleDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleDirective] $info")
+        when (info.directive.getNamespaceAndName()) {
+            EXPECT_SPEECH -> handleExpectSpeechDirective(info)
+            NOTIFY_RESULT -> handleNotifyResult(info)
+            else -> {
+                handleDirectiveException(info)
             }
         }
+    }
 
-        private fun executePreHandleExpectSpeechInternal(payload: ExpectSpeechPayload) {
-            Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, payload: $payload")
-            expectSpeechPayload = payload
-            dialogSessionManager.openSession(
-                payload.sessionId,
-                payload.property,
-                payload.domainTypes,
-                payload.playServiceId
+    private fun handleExpectSpeechDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleExpectSpeechDirective] $info")
+
+        executor.submit {
+            executeHandleExpectSpeechDirective(info)
+        }
+    }
+
+    private fun executeSelectSpeechProcessor() {
+        Logger.d(TAG, "[executeSelectSpeechProcessor]")
+        val speechProcessorToStart = speechProcessorLock.withLock {
+            nextStartSpeechRecognizer
+        }
+
+        if (speechProcessorToStart != currentSpeechRecognizer) {
+            currentSpeechRecognizer.removeListener(this)
+            currentSpeechRecognizer = speechProcessorToStart
+            currentSpeechRecognizer.addListener(this)
+        }
+    }
+
+
+    private fun executeHandleExpectSpeechDirective(info: DirectiveInfo) {
+        if (!canRecognizing()) {
+            Logger.w(
+                TAG,
+                "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
             )
+            setHandlingExpectSpeechFailed(
+                info,
+                "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
+            )
+            return
         }
 
-        override fun handleDirective(info: DirectiveInfo) {
-            Logger.d(TAG, "[handleDirective] $info")
-            when (info.directive.getNamespaceAndName()) {
-                EXPECT_SPEECH -> handleExpectSpeechDirective(info)
-                NOTIFY_RESULT -> handleNotifyResult(info)
-                else -> {
-                    handleDirectiveException(info)
-                }
-            }
+        currentAudioProvider = audioProvider
+
+        val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
+        val audioFormat: AudioFormat = audioProvider.getFormat()
+
+        if (audioInputStream == null) {
+            Logger.w(
+                TAG,
+                "[executeHandleExpectSpeechDirective] audioInputStream is null"
+            )
+            setHandlingExpectSpeechFailed(
+                info,
+                "[executeHandleExpectSpeechDirective] audioInputStream is null"
+            )
+            return
         }
 
-        private fun handleExpectSpeechDirective(info: DirectiveInfo) {
-            Logger.d(TAG, "[handleExpectSpeechDirective] $info")
-
-            executor.submit {
-                executeHandleExpectSpeechDirective(info)
-            }
+        // Here we do not check validation of payload due to checked at preHandleExpectSpeech already.
+        if (expectSpeechPayload == null) {
+            Logger.e(TAG, "[executeHandleExpectSpeechDirective] re-parse payload due to loss")
+            // re parse payload here.
+            val payload = parseExpectSpeechPayload(info.directive)
+            expectSpeechPayload = payload
         }
 
-        private fun executeSelectSpeechProcessor() {
-            Logger.d(TAG, "[executeSelectSpeechProcessor]")
-            val speechProcessorToStart = speechProcessorLock.withLock {
-                nextStartSpeechRecognizer
-            }
+        setState(ASRAgentInterface.State.EXPECTING_SPEECH)
+        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload)
+        setHandlingCompleted(info)
+    }
 
-            if (speechProcessorToStart != currentSpeechRecognizer) {
-                currentSpeechRecognizer.removeListener(this)
-                currentSpeechRecognizer = speechProcessorToStart
-                currentSpeechRecognizer.addListener(this)
-            }
+    private fun parseExpectSpeechPayload(directive: Directive): ExpectSpeechPayload? {
+        return try {
+            MessageFactory.create(directive.payload, ExpectSpeechPayload::class.java)
+        } catch (e: Exception) {
+            Logger.w(
+                TAG,
+                "[executeHandleExpectSpeechDirective] invalid payload (${directive.payload})"
+            )
+            return null
+        }
+    }
+
+
+    private fun handleNotifyResult(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleNotifyResult] $info")
+        val directive = info.directive
+
+        val notifyResultPayload =
+            MessageFactory.create(directive.payload, AsrNotifyResultPayload::class.java)
+        if (notifyResultPayload == null) {
+            Logger.e(TAG, "[handleNotifyResult] invalid payload: ${directive.payload}")
+            setHandlingFailed(
+                info,
+                "[handleNotifyResult] invalid payload: ${directive.payload}"
+            )
+            return
         }
 
+        if (!notifyResultPayload.isValidPayload()) {
+            Logger.e(TAG, "[handleNotifyResult] invalid payload : $notifyResultPayload")
+            setHandlingFailed(
+                info,
+                "[handleNotifyResult] invalid payload : $notifyResultPayload"
+            )
+            return
+        }
 
-        private fun executeHandleExpectSpeechDirective(info: DirectiveInfo) {
-            if (!canRecognizing()) {
-                Logger.w(
-                    TAG,
-                    "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
-                )
-                setHandlingExpectSpeechFailed(
-                    info,
-                    "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
-                )
-                return
-            }
+        val state = notifyResultPayload.state
+        val result = notifyResultPayload.result
 
-            currentAudioProvider = audioProvider
-
-            val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
-            val audioFormat: AudioFormat = audioProvider.getFormat()
-
-            if (audioInputStream == null) {
-                Logger.w(
-                    TAG,
-                    "[executeHandleExpectSpeechDirective] audioInputStream is null"
-                )
-                setHandlingExpectSpeechFailed(
-                    info,
-                    "[executeHandleExpectSpeechDirective] audioInputStream is null"
-                )
-                return
-            }
-
-            // Here we do not check validation of payload due to checked at preHandleExpectSpeech already.
-            if (expectSpeechPayload == null) {
-                Logger.e(TAG, "[executeHandleExpectSpeechDirective] re-parse payload due to loss")
-                // re parse payload here.
-                val payload = parseExpectSpeechPayload(info.directive)
-                expectSpeechPayload = payload
-            }
-
-            setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-            executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload)
+        executor.submit {
+            currentSpeechRecognizer.notifyResult(state.name, result)
             setHandlingCompleted(info)
         }
+    }
 
-        private fun parseExpectSpeechPayload(directive: Directive): ExpectSpeechPayload? {
-            return try {
-                MessageFactory.create(directive.payload, ExpectSpeechPayload::class.java)
-            } catch (e: Exception) {
-                Logger.w(
-                    TAG,
-                    "[executeHandleExpectSpeechDirective] invalid payload (${directive.payload})"
-                )
-                return null
-            }
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
+        info.result.setCompleted()
+        removeDirective(info)
+    }
+
+    private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
+        Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
+        info.result.setFailed(msg)
+        removeDirective(info)
+    }
+
+    private fun setHandlingExpectSpeechFailed(info: DirectiveInfo, msg: String) {
+        setHandlingFailed(info, msg)
+        sendListenFailed()
+    }
+
+    private fun handleDirectiveException(info: DirectiveInfo) {
+        setHandlingFailed(info, "invalid directive")
+    }
+
+    override fun cancelDirective(info: DirectiveInfo) {
+        if (info.directive.getName() == NAME_EXPECT_SPEECH) {
+            clearPreHandledExpectSpeech()
         }
+        removeDirective(info)
+    }
 
+    override fun provideState(
+        contextSetter: ContextSetterInterface,
+        namespaceAndName: NamespaceAndName,
+        stateRequestToken: Int
+    ) {
+        contextSetter.setState(
+            namespaceAndName,
+            buildContext(),
+            StateRefreshPolicy.NEVER,
+            stateRequestToken
+        )
+    }
 
-        private fun handleNotifyResult(info: DirectiveInfo) {
-            Logger.d(TAG, "[handleNotifyResult] $info")
-            val directive = info.directive
+    private fun buildContext(): String = JsonObject().apply {
+        addProperty(
+            "version",
+            VERSION
+        )
+    }.toString()
 
-            val notifyResultPayload =
-                MessageFactory.create(directive.payload, AsrNotifyResultPayload::class.java)
-            if (notifyResultPayload == null) {
-                Logger.e(TAG, "[handleNotifyResult] invalid payload: ${directive.payload}")
-                setHandlingFailed(
-                    info,
-                    "[handleNotifyResult] invalid payload: ${directive.payload}"
-                )
-                return
-            }
-
-            if (!notifyResultPayload.isValidPayload()) {
-                Logger.e(TAG, "[handleNotifyResult] invalid payload : $notifyResultPayload")
-                setHandlingFailed(
-                    info,
-                    "[handleNotifyResult] invalid payload : $notifyResultPayload"
-                )
-                return
-            }
-
-            val state = notifyResultPayload.state
-            val result = notifyResultPayload.result
-
-            executor.submit {
-                currentSpeechRecognizer.notifyResult(state.name, result)
-                setHandlingCompleted(info)
-            }
+    override fun onFocusChanged(newFocus: FocusState) {
+        executor.submit {
+            executeOnFocusChanged(newFocus)
         }
+    }
 
-        private fun setHandlingCompleted(info: DirectiveInfo) {
-            Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
-            info.result.setCompleted()
-            removeDirective(info)
-        }
-
-        private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
-            Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
-            info.result.setFailed(msg)
-            removeDirective(info)
-        }
-
-        private fun setHandlingExpectSpeechFailed(info: DirectiveInfo, msg: String) {
-            setHandlingFailed(info, msg)
-            sendListenFailed()
-        }
-
-        private fun handleDirectiveException(info: DirectiveInfo) {
-            setHandlingFailed(info, "invalid directive")
-        }
-
-        override fun cancelDirective(info: DirectiveInfo) {
-            if (info.directive.getName() == NAME_EXPECT_SPEECH) {
-                clearPreHandledExpectSpeech()
-            }
-            removeDirective(info)
-        }
-
-        override fun provideState(
-            contextSetter: ContextSetterInterface,
-            namespaceAndName: NamespaceAndName,
-            stateRequestToken: Int
-        ) {
-            contextSetter.setState(
-                namespaceAndName,
-                buildContext(),
-                StateRefreshPolicy.NEVER,
-                stateRequestToken
-            )
-        }
-
-        private fun buildContext(): String = JsonObject().apply {
-            addProperty(
-                "version",
-                VERSION
-            )
-        }.toString()
-
-        override fun onFocusChanged(newFocus: FocusState) {
-            executor.submit {
-                executeOnFocusChanged(newFocus)
-            }
-        }
-
-        private fun executeStartRecognitionOnContextAvailable(jsonContext: String): Boolean {
-            Logger.d(
+    private fun executeStartRecognitionOnContextAvailable(jsonContext: String): Boolean {
+        Logger.d(
+            TAG,
+            "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState"
+        )
+        if (state == ASRAgentInterface.State.RECOGNIZING) {
+            Logger.e(
                 TAG,
-                "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState"
+                "[executeStartRecognitionOnContextAvailable] Not permmited in current state: $state"
             )
-            if (state == ASRAgentInterface.State.RECOGNIZING) {
+            return false
+        }
+
+        if (focusState != FocusState.FOREGROUND) {
+            if (!focusManager.acquireChannel(
+                    channelName, this,
+                    NAMESPACE, null
+                )
+            ) {
                 Logger.e(
                     TAG,
-                    "[executeStartRecognitionOnContextAvailable] Not permmited in current state: $state"
+                    "[executeStartRecognitionOnContextAvailable] Unable to acquire channel"
                 )
                 return false
             }
+            contextForRecognitionOnForegroundFocus = jsonContext
+        }
 
-            if (focusState != FocusState.FOREGROUND) {
-                if (!focusManager.acquireChannel(
-                        channelName, this,
-                        NAMESPACE, null
-                    )
-                ) {
-                    Logger.e(
-                        TAG,
-                        "[executeStartRecognitionOnContextAvailable] Unable to acquire channel"
-                    )
-                    return false
+        if (focusState == FocusState.FOREGROUND) {
+            executeInternalStartRecognition(jsonContext)
+        }
+
+        return true
+    }
+
+    private fun executeStartRecognitionOnContextFailure(error: ContextRequester.ContextRequestError) {
+        Logger.w(TAG, "[executeStartRecognitionOnContextFailure] error: $error")
+    }
+
+    private fun executeOnFocusChanged(newFocus: FocusState) {
+        Logger.d(TAG, "[executeOnFocusChanged] newFocus: $newFocus")
+
+        focusState = newFocus
+
+        when (newFocus) {
+            FocusState.FOREGROUND -> {
+                val context = contextForRecognitionOnForegroundFocus
+                contextForRecognitionOnForegroundFocus = null
+                if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
+                    executeInternalStartRecognition(context)
                 }
-                contextForRecognitionOnForegroundFocus = jsonContext
             }
+            FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
+            FocusState.NONE -> executeStopRecognition()
+        }
+    }
 
-            if (focusState == FocusState.FOREGROUND) {
-                executeInternalStartRecognition(jsonContext)
-            }
+    private fun executeInternalStartRecognition(context: String) {
+        Logger.d(TAG, "[executeInternalStartRecognition]")
 
-            return true
+        val inputStream = audioInputStream
+        if (inputStream == null) {
+            Logger.e(TAG, "[executeInternalStartRecognition] audioInputProcessor is null")
+            return
         }
 
-        private fun executeStartRecognitionOnContextFailure(error: ContextRequester.ContextRequestError) {
-            Logger.w(TAG, "[executeStartRecognitionOnContextFailure] error: $error")
+        val inputFormat = audioFormat
+        if (inputFormat == null) {
+            Logger.e(TAG, "[executeInternalStartRecognition] audioFormat is null")
+            return
         }
 
-        private fun executeOnFocusChanged(newFocus: FocusState) {
-            Logger.d(TAG, "[executeOnFocusChanged] newFocus: $newFocus")
-
-            focusState = newFocus
-
-            when (newFocus) {
-                FocusState.FOREGROUND -> {
-                    val context = contextForRecognitionOnForegroundFocus
-                    contextForRecognitionOnForegroundFocus = null
-                    if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
-                        executeInternalStartRecognition(context)
-                    }
+        executeSelectSpeechProcessor()
+        currentSpeechRecognizer.start(
+            inputStream,
+            inputFormat,
+            context,
+            wakeupBoundary,
+            expectSpeechPayload,
+            object : ASRAgentInterface.OnResultListener {
+                override fun onNoneResult() {
+                    speechToTextConverterEventObserver.onNoneResult()
                 }
-                FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
-                FocusState.NONE -> executeStopRecognition()
-            }
-        }
 
-        private fun executeInternalStartRecognition(context: String) {
-            Logger.d(TAG, "[executeInternalStartRecognition]")
-
-            val inputStream = audioInputStream
-            if (inputStream == null) {
-                Logger.e(TAG, "[executeInternalStartRecognition] audioInputProcessor is null")
-                return
-            }
-
-            val inputFormat = audioFormat
-            if (inputFormat == null) {
-                Logger.e(TAG, "[executeInternalStartRecognition] audioFormat is null")
-                return
-            }
-
-            executeSelectSpeechProcessor()
-            currentSpeechRecognizer.start(
-                inputStream,
-                inputFormat,
-                context,
-                wakeupBoundary,
-                expectSpeechPayload,
-                object : ASRAgentInterface.OnResultListener {
-                    override fun onNoneResult() {
-                        speechToTextConverterEventObserver.onNoneResult()
-                    }
-
-                    override fun onPartialResult(result: String) {
-                        speechToTextConverterEventObserver.onPartialResult(result)
-                    }
-
-                    override fun onCompleteResult(result: String) {
-                        speechToTextConverterEventObserver.onCompleteResult(result)
-                    }
-
-                    override fun onError(type: ASRAgentInterface.ErrorType) {
-                        if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                            sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
-                        } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                            sendListenTimeout()
-                        }
-                        speechToTextConverterEventObserver.onError(type)
-                    }
-
-                    override fun onCancel() {
-                        speechToTextConverterEventObserver.onCancel()
-                    }
+                override fun onPartialResult(result: String) {
+                    speechToTextConverterEventObserver.onPartialResult(result)
                 }
-            )
 
-            clearPreHandledExpectSpeech()
-        }
-
-        private fun removeDirective(info: DirectiveInfo) {
-            removeDirective(info.directive.getMessageId())
-        }
-
-        override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-            val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-            configuration[EXPECT_SPEECH] = BlockingPolicy(
-                BlockingPolicy.MEDIUM_AUDIO,
-                true
-            )
-            configuration[NOTIFY_RESULT] = BlockingPolicy()
-
-            return configuration
-        }
-
-        override fun onDialogUXStateChanged(
-            newState: DialogUXStateAggregatorInterface.DialogUXState,
-            dialogMode: Boolean
-        ) {
-            Logger.d(TAG, "[onDialogUXStateChanged] newState: $newState")
-            executor.submit {
-                executeOnDialogUXStateChanged(newState)
-            }
-        }
-
-        private fun executeOnDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState) {
-            Logger.d(TAG, "[executeOnDialogUXStateChanged] newState: $newState")
-
-            if (initialDialogUXStateReceived) {
-                initialDialogUXStateReceived = true
-                return
-            }
-
-            if (newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
-                return
-            }
-
-            if (focusState != FocusState.NONE) {
-                focusManager.releaseChannel(channelName, this)
-                focusState = FocusState.NONE
-            }
-
-            setState(ASRAgentInterface.State.IDLE)
-        }
-
-        override fun addOnStateChangeListener(listener: ASRAgentInterface.OnStateChangeListener) {
-            Logger.d(TAG, "[addOnStateChangeListener] listener: $listener")
-            executor.submit {
-                onStateChangeListeners.add(listener)
-            }
-        }
-
-        override fun removeOnStateChangeListener(listener: ASRAgentInterface.OnStateChangeListener) {
-            Logger.d(TAG, "[removeOnStateChangeListener] listener: $listener")
-            executor.submit {
-                onStateChangeListeners.remove(listener)
-            }
-        }
-
-        override fun addOnResultListener(listener: ASRAgentInterface.OnResultListener) {
-            Logger.d(TAG, "[addOnResultListener] listener: $listener")
-            executor.submit {
-                onResultListeners.add(listener)
-            }
-        }
-
-        override fun removeOnResultListener(listener: ASRAgentInterface.OnResultListener) {
-            Logger.d(TAG, "[removeOnResultListener] listener: $listener")
-            executor.submit {
-                onResultListeners.remove(listener)
-            }
-        }
-
-        override fun addOnMultiturnListener(listener: ASRAgentInterface.OnMultiturnListener) {
-            Logger.d(TAG, "[addOnMultiturnListener] listener: $listener")
-            executor.submit {
-                onMultiturnListeners.add(listener)
-            }
-        }
-
-        override fun removeOnMultiturnListener(listener: ASRAgentInterface.OnMultiturnListener) {
-            Logger.d(TAG, "[removeOnMultiturnListener] listener: $listener")
-            executor.submit {
-                onMultiturnListeners.remove(listener)
-            }
-        }
-
-        override fun onStateChanged(state: SpeechRecognizer.State) {
-            Logger.d(TAG, "[SpeechProcessorInterface] state: $state")
-            executor.submit {
-                val aipState = when (state) {
-                    SpeechRecognizer.State.EXPECTING_SPEECH -> {
-                        ASRAgentInterface.State.LISTENING
-                    }
-                    SpeechRecognizer.State.SPEECH_START -> ASRAgentInterface.State.RECOGNIZING
-                    SpeechRecognizer.State.SPEECH_END -> {
-                        currentAudioProvider?.releaseAudioInputStream(this)
-                        currentAudioProvider = null
-                        ASRAgentInterface.State.BUSY
-                    }
-                    SpeechRecognizer.State.STOP -> {
-                        currentAudioProvider?.releaseAudioInputStream(this)
-                        currentAudioProvider = null
-                        ASRAgentInterface.State.IDLE
-                    }
+                override fun onCompleteResult(result: String) {
+                    speechToTextConverterEventObserver.onCompleteResult(result)
                 }
-                setState(aipState)
+
+                override fun onError(type: ASRAgentInterface.ErrorType) {
+                    if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
+                        sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
+                    } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
+                        sendListenTimeout()
+                    }
+                    speechToTextConverterEventObserver.onError(type)
+                }
+
+                override fun onCancel() {
+                    speechToTextConverterEventObserver.onCancel()
+                }
             }
+        )
+
+        clearPreHandledExpectSpeech()
+    }
+
+    private fun removeDirective(info: DirectiveInfo) {
+        removeDirective(info.directive.getMessageId())
+    }
+
+    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+
+        configuration[EXPECT_SPEECH] = BlockingPolicy(
+            BlockingPolicy.MEDIUM_AUDIO,
+            true
+        )
+        configuration[NOTIFY_RESULT] = BlockingPolicy()
+
+        return configuration
+    }
+
+    override fun onDialogUXStateChanged(
+        newState: DialogUXStateAggregatorInterface.DialogUXState,
+        dialogMode: Boolean
+    ) {
+        Logger.d(TAG, "[onDialogUXStateChanged] newState: $newState")
+        executor.submit {
+            executeOnDialogUXStateChanged(newState)
+        }
+    }
+
+    private fun executeOnDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState) {
+        Logger.d(TAG, "[executeOnDialogUXStateChanged] newState: $newState")
+
+        if (initialDialogUXStateReceived) {
+            initialDialogUXStateReceived = true
+            return
         }
 
-        override fun startRecognition(
-            audioInputStream: SharedDataStream?,
-            audioFormat: AudioFormat?,
-            wakewordStartPosition: Long?,
-            wakewordEndPosition: Long?,
-            wakewordDetectPosition: Long?
-        ): Future<Boolean> {
-            Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
-            return executor.submit(Callable<Boolean> {
-                if (audioInputStream != null && audioFormat != null) {
-                    val wakeupBoundary =
-                        if (wakewordDetectPosition != null && wakewordEndPosition != null && wakewordStartPosition != null) {
-                            val bytesPerSample = audioFormat.getBytesPerSample()
-                            WakeupBoundary(
-                                wakewordDetectPosition / bytesPerSample,
-                                wakewordStartPosition / bytesPerSample,
-                                wakewordEndPosition / bytesPerSample
-                            )
-                        } else {
-                            null
-                        }
+        if (newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+            return
+        }
 
-                    executeStartRecognition(
-                        audioInputStream,
-                        audioFormat,
-                        wakeupBoundary,
-                        expectSpeechPayload
-                    )
-                } else {
-                    currentAudioProvider = audioProvider
-                    val newAudioInputStream: SharedDataStream? =
-                        audioProvider.acquireAudioInputStream(this)
-                    val newAudioFormat: AudioFormat = audioProvider.getFormat()
+        if (focusState != FocusState.NONE) {
+            focusManager.releaseChannel(channelName, this)
+            focusState = FocusState.NONE
+        }
 
-                    if (newAudioInputStream == null) {
-                        Logger.w(
-                            TAG,
-                            "[startRecognition] audioInputStream is null"
+        setState(ASRAgentInterface.State.IDLE)
+    }
+
+    override fun addOnStateChangeListener(listener: ASRAgentInterface.OnStateChangeListener) {
+        Logger.d(TAG, "[addOnStateChangeListener] listener: $listener")
+        executor.submit {
+            onStateChangeListeners.add(listener)
+        }
+    }
+
+    override fun removeOnStateChangeListener(listener: ASRAgentInterface.OnStateChangeListener) {
+        Logger.d(TAG, "[removeOnStateChangeListener] listener: $listener")
+        executor.submit {
+            onStateChangeListeners.remove(listener)
+        }
+    }
+
+    override fun addOnResultListener(listener: ASRAgentInterface.OnResultListener) {
+        Logger.d(TAG, "[addOnResultListener] listener: $listener")
+        executor.submit {
+            onResultListeners.add(listener)
+        }
+    }
+
+    override fun removeOnResultListener(listener: ASRAgentInterface.OnResultListener) {
+        Logger.d(TAG, "[removeOnResultListener] listener: $listener")
+        executor.submit {
+            onResultListeners.remove(listener)
+        }
+    }
+
+    override fun addOnMultiturnListener(listener: ASRAgentInterface.OnMultiturnListener) {
+        Logger.d(TAG, "[addOnMultiturnListener] listener: $listener")
+        executor.submit {
+            onMultiturnListeners.add(listener)
+        }
+    }
+
+    override fun removeOnMultiturnListener(listener: ASRAgentInterface.OnMultiturnListener) {
+        Logger.d(TAG, "[removeOnMultiturnListener] listener: $listener")
+        executor.submit {
+            onMultiturnListeners.remove(listener)
+        }
+    }
+
+    override fun onStateChanged(state: SpeechRecognizer.State) {
+        Logger.d(TAG, "[SpeechProcessorInterface] state: $state")
+        executor.submit {
+            val aipState = when (state) {
+                SpeechRecognizer.State.EXPECTING_SPEECH -> {
+                    ASRAgentInterface.State.LISTENING
+                }
+                SpeechRecognizer.State.SPEECH_START -> ASRAgentInterface.State.RECOGNIZING
+                SpeechRecognizer.State.SPEECH_END -> {
+                    currentAudioProvider?.releaseAudioInputStream(this)
+                    currentAudioProvider = null
+                    ASRAgentInterface.State.BUSY
+                }
+                SpeechRecognizer.State.STOP -> {
+                    currentAudioProvider?.releaseAudioInputStream(this)
+                    currentAudioProvider = null
+                    ASRAgentInterface.State.IDLE
+                }
+            }
+            setState(aipState)
+        }
+    }
+
+    override fun startRecognition(
+        audioInputStream: SharedDataStream?,
+        audioFormat: AudioFormat?,
+        wakewordStartPosition: Long?,
+        wakewordEndPosition: Long?,
+        wakewordDetectPosition: Long?
+    ): Future<Boolean> {
+        Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
+        return executor.submit(Callable<Boolean> {
+            if (audioInputStream != null && audioFormat != null) {
+                val wakeupBoundary =
+                    if (wakewordDetectPosition != null && wakewordEndPosition != null && wakewordStartPosition != null) {
+                        val bytesPerSample = audioFormat.getBytesPerSample()
+                        WakeupBoundary(
+                            wakewordDetectPosition / bytesPerSample,
+                            wakewordStartPosition / bytesPerSample,
+                            wakewordEndPosition / bytesPerSample
                         )
-                        return@Callable false
+                    } else {
+                        null
                     }
 
-                    executeStartRecognition(
-                        newAudioInputStream,
-                        newAudioFormat,
-                        null,
-                        expectSpeechPayload
-                    )
-                }
-            })
-        }
+                executeStartRecognition(
+                    audioInputStream,
+                    audioFormat,
+                    wakeupBoundary,
+                    expectSpeechPayload
+                )
+            } else {
+                currentAudioProvider = audioProvider
+                val newAudioInputStream: SharedDataStream? =
+                    audioProvider.acquireAudioInputStream(this)
+                val newAudioFormat: AudioFormat = audioProvider.getFormat()
 
-        override fun stopRecognition() {
-            Logger.d(TAG, "[stopRecognition]")
-            executor.submit {
-                executeStopRecognition()
+                if (newAudioInputStream == null) {
+                    Logger.w(
+                        TAG,
+                        "[startRecognition] audioInputStream is null"
+                    )
+                    return@Callable false
+                }
+
+                executeStartRecognition(
+                    newAudioInputStream,
+                    newAudioFormat,
+                    null,
+                    expectSpeechPayload
+                )
             }
+        })
+    }
+
+    override fun stopRecognition() {
+        Logger.d(TAG, "[stopRecognition]")
+        executor.submit {
+            executeStopRecognition()
         }
+    }
 
 //        fun setSpeechProcessor(speechProcessor: SpeechProcessorInterface) {
 //            speechProcessorLock.withLock {
@@ -734,136 +706,135 @@ object DefaultASRAgent {
 //            nextStartSpeechProcessor
 //        }
 
-        private fun setState(state: ASRAgentInterface.State) {
-            if (this.state == state) {
-                return
-            }
+    private fun setState(state: ASRAgentInterface.State) {
+        if (this.state == state) {
+            return
+        }
 
-            Logger.d(TAG, "[setState] $state")
-            if (state == ASRAgentInterface.State.IDLE && expectSpeechPayload == null) {
-                currentSessionId?.let {
-                    dialogSessionManager.closeSession()
-                }
+        Logger.d(TAG, "[setState] $state")
+        if (state == ASRAgentInterface.State.IDLE && expectSpeechPayload == null) {
+            currentSessionId?.let {
+                dialogSessionManager.closeSession()
             }
+        }
 
 //        if (!state.isRecognizing()) {
 //            clearPreHandledExpectSpeech()
 //        }
-            this.state = state
+        this.state = state
 
-            for (listener in onStateChangeListeners) {
-                listener.onStateChanged(state)
-            }
+        for (listener in onStateChangeListeners) {
+            listener.onStateChanged(state)
         }
+    }
 
-        private fun clearPreHandledExpectSpeech() {
-            expectSpeechPayload = null
-        }
+    private fun clearPreHandledExpectSpeech() {
+        expectSpeechPayload = null
+    }
 
-        private fun executeStartRecognition(
-            audioInputStream: SharedDataStream,
-            audioFormat: AudioFormat,
-            wakeupBoundary: WakeupBoundary?,
-            payload: ExpectSpeechPayload?
-        ): Boolean {
-            Logger.d(TAG, "[executeStartRecognition] state: $state")
-            if (!canRecognizing()) {
-                Logger.w(
-                    TAG,
-                    "[executeStartRecognition] StartRecognizing allowed in IDLE or BUSY state."
-                )
-                return false
-            }
-
-            this.wakeupBoundary = wakeupBoundary
-            this.audioInputStream = audioInputStream
-            this.audioFormat = audioFormat
-            this.expectSpeechPayload = payload
-
-
-            val waitResult = CountDownLatch(1)
-            var result = true
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
-                    Logger.d(TAG, "[onContextAvailable]")
-                    result = executeStartRecognitionOnContextAvailable(jsonContext)
-                    waitResult.countDown()
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    executeStartRecognitionOnContextFailure(error)
-                    result = false
-                    waitResult.countDown()
-                }
-            })
-            waitResult.await()
-            return result
-        }
-
-        private fun executeStopRecognition() {
-            currentSpeechRecognizer.stop()
-        }
-
-        private fun canRecognizing(): Boolean {
-            // ASR은 IDLE이나 BUSY 상태일 경우에만 가능하다.
-            return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
-        }
-
-        private fun sendListenFailed() {
-            JsonObject().apply {
-                expectSpeechPayload?.let {
-                    addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
-                }
-            }.apply {
-                sendEvent(NAME_LISTEN_FAILED, this)
-            }
-        }
-
-        private fun sendListenTimeout() {
-            JsonObject().apply {
-                expectSpeechPayload?.let {
-                    addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
-                }
-            }.apply {
-                sendEvent(NAME_LISTEN_TIMEOUT, this)
-            }
-        }
-
-        private fun sendEvent(name: String, payload: JsonObject) {
-            messageSender.sendMessage(
-                EventMessageRequest.Builder(
-                    contextManager.getContextWithoutUpdate(
-                        namespaceAndName
-                    ), NAMESPACE, name, VERSION
-                ).payload(payload.toString()).build()
+    private fun executeStartRecognition(
+        audioInputStream: SharedDataStream,
+        audioFormat: AudioFormat,
+        wakeupBoundary: WakeupBoundary?,
+        payload: ExpectSpeechPayload?
+    ): Boolean {
+        Logger.d(TAG, "[executeStartRecognition] state: $state")
+        if (!canRecognizing()) {
+            Logger.w(
+                TAG,
+                "[executeStartRecognition] StartRecognizing allowed in IDLE or BUSY state."
             )
+            return false
         }
 
-        private var currentSessionId: String? = null
+        this.wakeupBoundary = wakeupBoundary
+        this.audioInputStream = audioInputStream
+        this.audioFormat = audioFormat
+        this.expectSpeechPayload = payload
 
-        override fun onSessionOpened(
-            sessionId: String,
-            property: String?,
-            domainTypes: Array<String>?,
-            playServiceId: String?
-        ) {
-            currentSessionId = sessionId
-            executor.submit {
-                onMultiturnListeners.forEach {
-                    it.onMultiturnStateChanged(true)
-                }
+
+        val waitResult = CountDownLatch(1)
+        var result = true
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                Logger.d(TAG, "[onContextAvailable]")
+                result = executeStartRecognitionOnContextAvailable(jsonContext)
+                waitResult.countDown()
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                executeStartRecognitionOnContextFailure(error)
+                result = false
+                waitResult.countDown()
+            }
+        })
+        waitResult.await()
+        return result
+    }
+
+    private fun executeStopRecognition() {
+        currentSpeechRecognizer.stop()
+    }
+
+    private fun canRecognizing(): Boolean {
+        // ASR은 IDLE이나 BUSY 상태일 경우에만 가능하다.
+        return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
+    }
+
+    private fun sendListenFailed() {
+        JsonObject().apply {
+            expectSpeechPayload?.let {
+                addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
+            }
+        }.apply {
+            sendEvent(NAME_LISTEN_FAILED, this)
+        }
+    }
+
+    private fun sendListenTimeout() {
+        JsonObject().apply {
+            expectSpeechPayload?.let {
+                addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
+            }
+        }.apply {
+            sendEvent(NAME_LISTEN_TIMEOUT, this)
+        }
+    }
+
+    private fun sendEvent(name: String, payload: JsonObject) {
+        messageSender.sendMessage(
+            EventMessageRequest.Builder(
+                contextManager.getContextWithoutUpdate(
+                    namespaceAndName
+                ), NAMESPACE, name, VERSION
+            ).payload(payload.toString()).build()
+        )
+    }
+
+    private var currentSessionId: String? = null
+
+    override fun onSessionOpened(
+        sessionId: String,
+        property: String?,
+        domainTypes: Array<String>?,
+        playServiceId: String?
+    ) {
+        currentSessionId = sessionId
+        executor.submit {
+            onMultiturnListeners.forEach {
+                it.onMultiturnStateChanged(true)
             }
         }
+    }
 
-        override fun onSessionClosed(sessionId: String) {
-            if (currentSessionId != sessionId) {
-                Logger.e(TAG, "[onSessionClosed] current: $currentSessionId, closed: $sessionId")
-            }
-            currentSessionId = null
-            executor.submit {
-                onMultiturnListeners.forEach {
-                    it.onMultiturnStateChanged(false)
-                }
+    override fun onSessionClosed(sessionId: String) {
+        if (currentSessionId != sessionId) {
+            Logger.e(TAG, "[onSessionClosed] current: $currentSessionId, closed: $sessionId")
+        }
+        currentSessionId = null
+        executor.submit {
+            onMultiturnListeners.forEach {
+                it.onMultiturnStateChanged(false)
             }
         }
     }

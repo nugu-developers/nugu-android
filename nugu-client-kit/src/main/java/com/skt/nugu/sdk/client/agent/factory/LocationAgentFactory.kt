@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.extension
+package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.capability.location.AbstractLocationAgent
 
-interface ExtensionAgentFactory {
-    fun create(
-        contextManager: ContextManagerInterface,
-        messageSender: MessageSender
-    ): AbstractExtensionAgent
+interface LocationAgentFactory {
+    fun create(): AbstractLocationAgent
 }

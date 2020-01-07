@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.tts
+package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
 
-interface TTSAgentFactory {
-    fun create(speechPlayer: MediaPlayerInterface,
-               messageSender: MessageSender,
-               focusManager: FocusManagerInterface,
-               contextManager: ContextManagerInterface,
-               playSynchronizer: PlaySynchronizerInterface,
-               inputProcessorManager: InputProcessorManagerInterface,
-               channelName: String): AbstractTTSAgent
+interface DisplayAgentFactory {
+    fun create(
+        focusManager: FocusManagerInterface,
+        contextManager: ContextManagerInterface,
+        messageSender: MessageSender,
+        playSynchronizer: PlaySynchronizerInterface,
+        inputProcessorManager: InputProcessorManagerInterface,
+        channelName: String
+    ): AbstractDisplayAgent
 }

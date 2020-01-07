@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability.speaker
+package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
+import com.skt.nugu.sdk.core.interfaces.capability.light.Light
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface SpeakerAgentFactory {
+interface LightAgentFactory {
     fun create(
+        messageSender: MessageSender,
         contextManager: ContextManagerInterface,
-        messageSender: MessageSender
-    ): AbstractSpeakerAgent
+        light: Light
+    ): AbstractLightAgent
 }
