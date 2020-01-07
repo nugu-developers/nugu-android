@@ -134,7 +134,7 @@ object DefaultAgentFactory {
     }
 
     val LOCATION = object : LocationAgentFactory {
-        override fun create(): AbstractLocationAgent = DefaultLocationAgent()
+        override fun create(container: SdkContainer): AbstractLocationAgent = DefaultLocationAgent()
     }
 
     val MICROPHONE = object : MicrophoneAgentFactory {

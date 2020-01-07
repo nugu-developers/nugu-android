@@ -404,7 +404,7 @@ class NuguClient private constructor(
                 )
             }
 
-            locationAgent = locationAgentFactory?.create()?.apply {
+            locationAgent = locationAgentFactory?.create(sdkContainer)?.apply {
                 contextManager.setStateProvider(namespaceAndName, this)
             }
 
