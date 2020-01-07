@@ -286,7 +286,7 @@ class NuguClient private constructor(
             }
 
             speakerManager =
-                DefaultAgentFactory.SPEAKER.create(contextManager, networkManager).apply {
+                DefaultAgentFactory.SPEAKER.create(sdkContainer).apply {
                     addSpeaker(speakerFactory.createNuguSpeaker())
                     addSpeaker(speakerFactory.createAlarmSpeaker())
                     speakerFactory.createCallSpeaker()?.let {

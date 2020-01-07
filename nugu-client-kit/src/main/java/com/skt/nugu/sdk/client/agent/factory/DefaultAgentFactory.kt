@@ -163,13 +163,12 @@ object DefaultAgentFactory {
     }
 
     val SPEAKER = object : SpeakerAgentFactory {
-        override fun create(
-            contextManager: ContextManagerInterface,
-            messageSender: MessageSender
-        ): AbstractSpeakerAgent = DefaultSpeakerAgent(
-            contextManager,
-            messageSender
-        )
+        override fun create(container: SdkContainer): AbstractSpeakerAgent = with(container) {
+            DefaultSpeakerAgent(
+                getContextManager(),
+                getMessageSender()
+            )
+        }
     }
 
     val SYSTEM = object : SystemAgentFactory {

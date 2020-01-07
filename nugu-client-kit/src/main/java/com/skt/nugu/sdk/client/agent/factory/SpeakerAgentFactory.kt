@@ -16,12 +16,6 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface SpeakerAgentFactory {
-    fun create(
-        contextManager: ContextManagerInterface,
-        messageSender: MessageSender
-    ): AbstractSpeakerAgent
-}
+interface SpeakerAgentFactory : AgentFactory<AbstractSpeakerAgent>
+
