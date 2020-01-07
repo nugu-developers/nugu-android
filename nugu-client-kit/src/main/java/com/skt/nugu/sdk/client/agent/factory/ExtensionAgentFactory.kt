@@ -17,4 +17,4 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 
-interface ExtensionAgentFactory : AgentFactory<AbstractExtensionAgent>
+interface ExtensionAgentFactory : AgentFactory<AbstractExtensionAgent?>

@@ -191,7 +191,7 @@ class NuguClient private constructor(
     override val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
     override val systemAgent: AbstractSystemAgent
-    override var displayAgent: DisplayAgentInterface? = null
+    override val displayAgent: DisplayAgentInterface?
     override var locationAgent: LocationAgentInterface? = null
 
     // CA internal Object (ref)
@@ -201,8 +201,7 @@ class NuguClient private constructor(
         "Audio"
     )
     val visualFocusManager: FocusManagerInterface?
-    private val messageRouter: MessageRouter =
-        MessageRouter(builder.transportFactory, builder.authDelegate)
+    private val messageRouter: MessageRouter = MessageRouter(builder.transportFactory, builder.authDelegate)
     private val dialogUXStateAggregator = DialogUXStateAggregator()
     override val asrAgent: AbstractASRAgent
     override val textAgent: TextAgentInterface
@@ -255,8 +254,6 @@ class NuguClient private constructor(
                 visualFocusManager = null
             }
 
-            val playSynchronizer = PlaySynchronizer()
-
             sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
                     inputProcessorManager
@@ -273,8 +270,9 @@ class NuguClient private constructor(
                 override fun getDialogSessionManager(): DialogSessionManagerInterface =
                     dialogSessionManager
 
-                override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
+                override fun getPlaySynchronizer(): PlaySynchronizerInterface = PlaySynchronizer()
                 override fun getDirectiveSequencer(): DirectiveSequencerInterface = directiveSequencer
+                override fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface = dialogUXStateAggregator
 
                 override fun getAudioProvider(): AudioProvider = defaultAudioProvider
 
@@ -293,87 +291,40 @@ class NuguClient private constructor(
                 override fun getMovementController(): MovementController? = movementController
 
                 override fun getBatteryStatusProvider(): BatteryStatusProvider? = batteryStatusProvider
+                override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
+
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
+                override fun getSpeakerFactory(): SpeakerFactory = speakerFactory
+
                 override fun getPlaybackRouter(): com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter = playbackRouter
             }
 
-            speakerManager =
-                DefaultAgentFactory.SPEAKER.create(sdkContainer).apply {
-                    addSpeaker(speakerFactory.createNuguSpeaker())
-                    addSpeaker(speakerFactory.createAlarmSpeaker())
-                    speakerFactory.createCallSpeaker()?.let {
-                        addSpeaker(it)
-                    }
-                    speakerFactory.createExternalSpeaker()?.let {
-                        addSpeaker(it)
-                    }
-                }
-
+            speakerManager = DefaultAgentFactory.SPEAKER.create(sdkContainer)
             micManager = DefaultAgentFactory.MICROPHONE.create(sdkContainer)
-
-            // CA
             ttsAgent = ttsAgentFactory.create(sdkContainer)
-
-            dialogUXStateAggregator.addListener(ttsAgent)
-            ttsAgent.addListener(dialogUXStateAggregator)
-
-            systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer).apply {
-                addListener(messageRouter)
-            }
-
-            val audioEncoder = audioEncoder// SpeexEncoder()
-
+            locationAgent = locationAgentFactory?.create(sdkContainer)
+            DefaultAgentFactory.LIGHT.create(sdkContainer)
+            DefaultAgentFactory.MOVEMENT.create(sdkContainer)
             asrAgent = asrAgentFactory.create(sdkContainer)
-            dialogUXStateAggregator.addListener(asrAgent)
-
-            asrAgent.addOnStateChangeListener(dialogUXStateAggregator)
-
             textAgent = textAgentFactory.create(sdkContainer)
+            extensionAgent = extensionAgentFactory.create(sdkContainer)
+            delegationAgent = delegationAgentFactory?.create(sdkContainer)
+            audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
+            displayAgent = tempDisplayAgentFactory?.create(sdkContainer)
+            systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
-            extensionAgent = extensionClient?.let {
-                extensionAgentFactory.create(sdkContainer).apply {
-                    setClient(it)
-                }
-            }
-
-            delegationAgent = delegationClient?.let {
-                delegationAgentFactory?.create(sdkContainer)?.apply {
-                    contextManager.setStateProvider(namespaceAndName, this)
-                    // update delegate initial state
-                    contextManager.setState(
-                        namespaceAndName,
-                        "",
-                        StateRefreshPolicy.SOMETIMES,
-                        0
-                    )
-                }
-            }
-
+            systemAgent.addListener(messageRouter)
+            ttsAgent.addListener(dialogUXStateAggregator)
+            asrAgent.addOnStateChangeListener(dialogUXStateAggregator)
             dialogSessionManager.addListener(dialogUXStateAggregator)
-            dialogSessionManager.addListener(asrAgent)
-            dialogSessionManager.addListener(textAgent)
 
-            val displayTemplateAgent = tempDisplayAgentFactory?.create(sdkContainer)
-
-            if (displayTemplateAgent != null && visualFocusManager != null) {
-                audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
-
-                directiveSequencer.addDirectiveHandler(displayTemplateAgent)
-
-                displayAgent = displayTemplateAgent
-                displayAggregator = DisplayAggregator(
-                    displayTemplateAgent,
+            displayAggregator = if (displayAgent != null) {
+                DisplayAggregator(
+                    displayAgent,
                     audioPlayerAgent
                 )
             } else {
-                displayAggregator = null
-                displayAgent = null
-
-                audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
-            }
-
-            locationAgent = locationAgentFactory?.create(sdkContainer)?.apply {
-                contextManager.setStateProvider(namespaceAndName, this)
+                null
             }
 
             PlayStackContextManager(
@@ -383,31 +334,6 @@ class NuguClient private constructor(
                     DisplayPlayStackProvider(it)
                 }
             )
-
-            with(directiveSequencer) {
-                addDirectiveHandler(speakerManager)
-                addDirectiveHandler(audioPlayerAgent)
-                addDirectiveHandler(ttsAgent)
-                DefaultAgentFactory.LIGHT.create(sdkContainer)?.let {
-                    addDirectiveHandler(it)
-                }
-
-                addDirectiveHandler(textAgent)
-                addDirectiveHandler(asrAgent)
-                addDirectiveHandler(systemAgent)
-
-                extensionAgent?.let {
-                    addDirectiveHandler(it)
-                }
-
-                delegationAgent?.let {
-                    addDirectiveHandler(it)
-                }
-
-                DefaultAgentFactory.MOVEMENT.create(sdkContainer)?.let {
-                    addDirectiveHandler(it)
-                }
-            }
         }
     }
 

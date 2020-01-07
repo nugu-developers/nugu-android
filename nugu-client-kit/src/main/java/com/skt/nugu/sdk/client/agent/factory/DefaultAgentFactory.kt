@@ -8,28 +8,16 @@ import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
-import com.skt.nugu.sdk.core.interfaces.capability.light.Light
 import com.skt.nugu.sdk.core.interfaces.capability.location.AbstractLocationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.Microphone
 import com.skt.nugu.sdk.core.interfaces.capability.movement.AbstractMovementAgent
-import com.skt.nugu.sdk.core.interfaces.capability.movement.MovementController
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
-import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.capability.text.AbstractTextAgent
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 
 object DefaultAgentFactory {
     val ASR = object : ASRAgentFactory {
@@ -46,7 +34,11 @@ object DefaultAgentFactory {
                     getEndPointDetector(),
                     getEpdTimeoutMillis(),
                     DefaultFocusChannel.DIALOG_CHANNEL_NAME
-                )
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                    getDialogSessionManager().addListener(this)
+                    getDialogUXStateAggregator().addListener(this)
+                }
             }
         }
     }
@@ -75,6 +67,8 @@ object DefaultAgentFactory {
                     addListener(displayAudioPlayerAgent)
                     getDirectiveSequencer().addDirectiveHandler(displayAudioPlayerAgent)
                 }
+
+                getDirectiveSequencer().addDirectiveHandler(this)
             }
         }
     }
@@ -88,7 +82,17 @@ object DefaultAgentFactory {
                     getMessageSender(),
                     getInputManagerProcessor(),
                     client
-                )
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                    getContextManager().setStateProvider(namespaceAndName, this)
+                    // update delegate initial state
+                    getContextManager().setState(
+                        namespaceAndName,
+                        "",
+                        StateRefreshPolicy.SOMETIMES,
+                        0
+                    )
+                }
             } else {
                 null
             }
@@ -107,7 +111,9 @@ object DefaultAgentFactory {
                     getPlaySynchronizer(),
                     getInputManagerProcessor(),
                     DefaultFocusChannel.DIALOG_CHANNEL_NAME
-                )
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                }
             } else {
                 null
             }
@@ -115,11 +121,19 @@ object DefaultAgentFactory {
     }
 
     val EXTENSION = object : ExtensionAgentFactory {
-        override fun create(container: SdkContainer): AbstractExtensionAgent = with(container){
-            DefaultExtensionAgent(
-                getContextManager(),
-                getMessageSender()
-            )
+        override fun create(container: SdkContainer): AbstractExtensionAgent? = with(container){
+            val client = getExtensionClient()
+            if(client != null) {
+                DefaultExtensionAgent(
+                    getContextManager(),
+                    getMessageSender()
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                    setClient(client)
+                }
+            } else {
+                null
+            }
         }
     }
 
@@ -131,7 +145,9 @@ object DefaultAgentFactory {
                     getMessageSender(),
                     getContextManager(),
                     light
-                )
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                }
             } else {
                 null
             }
@@ -139,7 +155,11 @@ object DefaultAgentFactory {
     }
 
     val LOCATION = object : LocationAgentFactory {
-        override fun create(container: SdkContainer): AbstractLocationAgent = DefaultLocationAgent()
+        override fun create(container: SdkContainer): AbstractLocationAgent = with(container) {
+            DefaultLocationAgent().apply {
+                getContextManager().setStateProvider(namespaceAndName, this)
+            }
+        }
     }
 
     val MICROPHONE = object : MicrophoneAgentFactory {
@@ -160,7 +180,9 @@ object DefaultAgentFactory {
                     getContextManager(),
                     getMessageSender(),
                     controller
-                )
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                }
             } else {
                 null
             }
@@ -172,7 +194,19 @@ object DefaultAgentFactory {
             DefaultSpeakerAgent(
                 getContextManager(),
                 getMessageSender()
-            )
+            ).apply {
+                getDirectiveSequencer().addDirectiveHandler(this)
+                getSpeakerFactory().let {
+                    addSpeaker(it.createNuguSpeaker())
+                    addSpeaker(it.createAlarmSpeaker())
+                    it.createCallSpeaker()?.let {speaker->
+                        addSpeaker(speaker)
+                    }
+                    it.createExternalSpeaker()?.let {speaker->
+                        addSpeaker(speaker)
+                    }
+                }
+            }
         }
     }
 
@@ -187,7 +221,9 @@ object DefaultAgentFactory {
                 getConnectionManager(),
                 getContextManager(),
                 getBatteryStatusProvider()
-            )
+            ).apply {
+                getDirectiveSequencer().addDirectiveHandler(this)
+            }
         }
     }
 
@@ -197,7 +233,10 @@ object DefaultAgentFactory {
                 getMessageSender(),
                 getContextManager(),
                 getInputManagerProcessor()
-            )
+            ).apply {
+                getDirectiveSequencer().addDirectiveHandler(this)
+                getDialogSessionManager().addListener(this)
+            }
         }
     }
 
@@ -211,7 +250,10 @@ object DefaultAgentFactory {
                 getPlaySynchronizer(),
                 getInputManagerProcessor(),
                 DefaultFocusChannel.DIALOG_CHANNEL_NAME
-            )
+            ).apply {
+                getDirectiveSequencer().addDirectiveHandler(this)
+                getDialogUXStateAggregator().addListener(this)
+            }
         }
     }
 }
