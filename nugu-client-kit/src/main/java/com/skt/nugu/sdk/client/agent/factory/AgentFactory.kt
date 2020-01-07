@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.client.SdkContainer
+
 interface AgentFactory<T> {
-    fun create(bean: NuguBean): T
+    fun create(container: SdkContainer): T
 }

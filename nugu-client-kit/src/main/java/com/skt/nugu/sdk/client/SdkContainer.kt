@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.agent.factory
+package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
@@ -24,7 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface NuguBean {
+interface SdkContainer {
     fun getInputManagerProcessor(): InputProcessorManagerInterface
     fun getFocusManager(): FocusManagerInterface
     fun getMessageSender(): MessageSender

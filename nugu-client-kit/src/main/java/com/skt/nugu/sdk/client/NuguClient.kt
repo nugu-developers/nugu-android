@@ -51,7 +51,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.capabilityagents.asr.*
 import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
-import com.skt.nugu.sdk.core.capabilityagents.impl.*
 import com.skt.nugu.sdk.core.capabilityagents.playbackcontroller.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
@@ -212,7 +211,7 @@ class NuguClient private constructor(
 
     private val contextStateProviderRegistry: ContextStateProviderRegistry
 
-    private val bean: NuguBean
+    private val bean: SdkContainer
 
     init {
         with(builder) {
@@ -240,7 +239,7 @@ class NuguClient private constructor(
 
             val dialogSessionManager = DialogSessionManager()
 
-            bean = object : NuguBean {
+            bean = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface = inputProcessorManager
 
                 override fun getFocusManager(): FocusManagerInterface = audioFocusManager
