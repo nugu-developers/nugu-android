@@ -212,7 +212,7 @@ class NuguClient private constructor(
 
     private val contextStateProviderRegistry: ContextStateProviderRegistry
 
-    private val bean: SdkContainer
+    private val sdkContainer: SdkContainer
 
     init {
         with(builder) {
@@ -253,7 +253,7 @@ class NuguClient private constructor(
 
             val playSynchronizer = PlaySynchronizer()
 
-            bean = object : SdkContainer {
+            sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface = inputProcessorManager
 
                 override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
@@ -323,7 +323,7 @@ class NuguClient private constructor(
 
             val audioEncoder = audioEncoder// SpeexEncoder()
 
-            asrAgent = asrAgentFactory.create(bean)
+            asrAgent = asrAgentFactory.create(sdkContainer)
             dialogUXStateAggregator.addListener(asrAgent)
 
             asrAgent.addOnStateChangeListener(dialogUXStateAggregator)
@@ -332,13 +332,13 @@ class NuguClient private constructor(
                 textAgentFactory.create(networkManager, contextManager, inputProcessorManager)
 
             extensionAgent = extensionClient?.let {
-                extensionAgentFactory.create(contextManager, networkManager).apply {
+                extensionAgentFactory.create(sdkContainer).apply {
                     setClient(it)
                 }
             }
 
             delegationAgent = delegationClient?.let {
-                delegationAgentFactory?.create(bean)?.apply {
+                delegationAgentFactory?.create(sdkContainer)?.apply {
                     contextManager.setStateProvider(namespaceAndName, this)
                     // update delegate initial state
                     contextManager.setState(
@@ -354,7 +354,7 @@ class NuguClient private constructor(
             dialogSessionManager.addListener(asrAgent)
             dialogSessionManager.addListener(textAgent)
 
-            val displayTemplateAgent = tempDisplayAgentFactory?.create(bean)
+            val displayTemplateAgent = tempDisplayAgentFactory?.create(sdkContainer)
 
             if (displayTemplateAgent != null && visualFocusManager != null) {
                 val displayAudioPlayerAgent = DisplayAudioPlayerAgent(

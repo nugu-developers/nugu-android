@@ -16,12 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface ExtensionAgentFactory {
-    fun create(
-        contextManager: ContextManagerInterface,
-        messageSender: MessageSender
-    ): AbstractExtensionAgent
-}
+interface ExtensionAgentFactory : AgentFactory<AbstractExtensionAgent>

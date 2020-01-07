@@ -110,14 +110,12 @@ object DefaultAgentFactory {
     }
 
     val EXTENSION = object : ExtensionAgentFactory {
-        override fun create(
-            contextManager: ContextManagerInterface,
-            messageSender: MessageSender
-        ): AbstractExtensionAgent =
+        override fun create(container: SdkContainer): AbstractExtensionAgent = with(container){
             DefaultExtensionAgent(
-                contextManager,
-                messageSender
+                getContextManager(),
+                getMessageSender()
             )
+        }
     }
 
     val LIGHT = object : LightAgentFactory {
