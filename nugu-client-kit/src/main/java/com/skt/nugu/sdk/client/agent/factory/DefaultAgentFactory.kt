@@ -119,15 +119,18 @@ object DefaultAgentFactory {
     }
 
     val LIGHT = object : LightAgentFactory {
-        override fun create(
-            messageSender: MessageSender,
-            contextManager: ContextManagerInterface,
-            light: Light
-        ): AbstractLightAgent = DefaultLightAgent(
-            messageSender,
-            contextManager,
-            light
-        )
+        override fun create(container: SdkContainer): AbstractLightAgent? = with(container) {
+            val light = getLight()
+            if(light != null) {
+                DefaultLightAgent(
+                    getMessageSender(),
+                    getContextManager(),
+                    light
+                )
+            } else {
+                null
+            }
+        }
     }
 
     val LOCATION = object : LocationAgentFactory {

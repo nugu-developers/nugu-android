@@ -16,14 +16,5 @@
 package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
-import com.skt.nugu.sdk.core.interfaces.capability.light.Light
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface LightAgentFactory {
-    fun create(
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        light: Light
-    ): AbstractLightAgent
-}
+interface LightAgentFactory : AgentFactory<AbstractLightAgent?>
