@@ -257,6 +257,8 @@ class NuguClient private constructor(
                 override fun getEndPointDetector(): AudioEndPointDetector? = endPointDetector
 
                 override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
+
+                override fun getDelegationClient(): DelegationClient? = delegationClient
             }
 
             speakerManager =
@@ -320,12 +322,7 @@ class NuguClient private constructor(
             }
 
             delegationAgent = delegationClient?.let {
-                delegationAgentFactory?.create(
-                    contextManager,
-                    networkManager,
-                    inputProcessorManager,
-                    it
-                )?.apply {
+                delegationAgentFactory?.create(bean)?.apply {
                     contextManager.setStateProvider(namespaceAndName, this)
                     // update delegate initial state
                     contextManager.setState(
