@@ -197,22 +197,16 @@ object DefaultAgentFactory {
     }
 
     val TTS = object : TTSAgentFactory {
-        override fun create(
-            speechPlayer: MediaPlayerInterface,
-            messageSender: MessageSender,
-            focusManager: FocusManagerInterface,
-            contextManager: ContextManagerInterface,
-            playSynchronizer: PlaySynchronizerInterface,
-            inputProcessorManager: InputProcessorManagerInterface,
-            channelName: String
-        ): AbstractTTSAgent = DefaultTTSAgent(
-            speechPlayer,
-            messageSender,
-            focusManager,
-            contextManager,
-            playSynchronizer,
-            inputProcessorManager,
-            channelName
-        )
+        override fun create(container: SdkContainer): AbstractTTSAgent = with(container) {
+            DefaultTTSAgent(
+                getPlayerFactory().createSpeakPlayer(),
+                getMessageSender(),
+                getAudioFocusManager(),
+                getContextManager(),
+                getPlaySynchronizer(),
+                getInputManagerProcessor(),
+                DefaultFocusChannel.DIALOG_CHANNEL_NAME
+            )
+        }
     }
 }

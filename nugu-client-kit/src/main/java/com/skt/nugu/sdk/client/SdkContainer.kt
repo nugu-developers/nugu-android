@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
@@ -61,4 +62,6 @@ interface SdkContainer {
 
     // System only
     fun getBatteryStatusProvider(): BatteryStatusProvider?
+
+    fun getPlayerFactory(): PlayerFactory
 }

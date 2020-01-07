@@ -293,6 +293,7 @@ class NuguClient private constructor(
                 override fun getMovementController(): MovementController? = movementController
 
                 override fun getBatteryStatusProvider(): BatteryStatusProvider? = batteryStatusProvider
+                override fun getPlayerFactory(): PlayerFactory = playerFactory
             }
 
             speakerManager =
@@ -310,15 +311,7 @@ class NuguClient private constructor(
             micManager = DefaultAgentFactory.MICROPHONE.create(sdkContainer)
 
             // CA
-            ttsAgent = ttsAgentFactory.create(
-                playerFactory.createSpeakPlayer(),
-                networkManager,
-                audioFocusManager,
-                contextManager,
-                playSynchronizer,
-                inputProcessorManager,
-                DefaultFocusChannel.DIALOG_CHANNEL_NAME
-            )
+            ttsAgent = ttsAgentFactory.create(sdkContainer)
 
             dialogUXStateAggregator.addListener(ttsAgent)
             ttsAgent.addListener(dialogUXStateAggregator)
