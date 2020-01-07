@@ -24,13 +24,14 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import java.util.HashMap
 
 class DisplayAudioPlayerAgent(
     focusManager: FocusManagerInterface,
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
-    playSynchronizer: PlaySynchronizer,
+    playSynchronizer: PlaySynchronizerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, inputProcessorManager, channelName),
