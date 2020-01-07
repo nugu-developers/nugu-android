@@ -15,27 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
-import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
-interface ASRAgentFactory {
-    fun create(
-        inputProcessorManager: InputProcessorManagerInterface,
-        focusManager: FocusManagerInterface,
-        messageSender: MessageSender,
-        contextManager: ContextManagerInterface,
-        dialogSessionManager: DialogSessionManagerInterface,
-        audioProvider: AudioProvider,
-        audioEncoder: Encoder,
-        endPointDetector: AudioEndPointDetector?,
-        defaultEpdTimeoutMillis: Long,
-        channelName: String
-    ): AbstractASRAgent
-}
+interface ASRAgentFactory: AgentFactory<AbstractASRAgent>
