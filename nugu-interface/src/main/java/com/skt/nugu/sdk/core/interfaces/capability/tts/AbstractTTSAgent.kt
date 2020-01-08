@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.tts
 
-import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
@@ -34,7 +34,7 @@ abstract class AbstractTTSAgent(
     protected val playSynchronizer: PlaySynchronizerInterface,
     protected val inputProcessorManager: InputProcessorManagerInterface,
     protected val channelName: String
-) : CapabilityAgent()
+) : AbstractCapabilityAgent()
     , ChannelObserver
     , DialogUXStateAggregatorInterface.Listener
     , TTSAgentInterface

@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.core.interfaces.capability.asr
 
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -37,7 +37,7 @@ abstract class AbstractASRAgent(
     endPointDetector: AudioEndPointDetector?,
     defaultEpdTimeoutMillis: Long,
     protected val channelName: String
-) : CapabilityAgent(),
+) : AbstractCapabilityAgent(),
     ASRAgentInterface,
     DialogUXStateAggregatorInterface.Listener,
     DialogSessionManagerInterface.OnSessionStateChangeListener {

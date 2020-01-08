@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.display
 
-import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
@@ -30,4 +30,4 @@ abstract class AbstractDisplayAgent(
     protected val playSynchronizer: PlaySynchronizerInterface,
     protected val inputProcessorManager: InputProcessorManagerInterface,
     protected val channelName: String
-) : CapabilityAgent(), DisplayAgentInterface, InputProcessor
+) : AbstractCapabilityAgent(), DisplayAgentInterface, InputProcessor

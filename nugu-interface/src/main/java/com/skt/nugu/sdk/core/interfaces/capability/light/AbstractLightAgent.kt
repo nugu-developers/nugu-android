@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.light
 
-import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
@@ -23,7 +23,7 @@ abstract class AbstractLightAgent(
     protected val messageSender: MessageSender,
     protected val contextManager: ContextManagerInterface,
     protected val light: Light
-) : CapabilityAgent() {
+) : AbstractCapabilityAgent() {
     companion object {
         const val VERSION = "1.0"
         const val NAMESPACE = "Light"
