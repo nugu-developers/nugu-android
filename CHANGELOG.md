@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.7.3 *(2020-01-08)*
+----------------------------
+ * New: Support plugin agent (#164)
+ * Fix: Invalid opus player status changes (#157)
+ * Improve: Replacable 'AudioFocusInteractor' (#162)
+ * Improve: Update keensense v0.1.4
+ * Improve: Update jademarble v0.1.4
+
 Version 0.7.2 *(2019-12-26)*
 ----------------------------
  * Fix: StartListening not work after stopTrigger (#152)
