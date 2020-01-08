@@ -45,6 +45,7 @@ import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
 import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
+import com.skt.nugu.sdk.client.agent.factory.AgentFactory
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
@@ -144,6 +145,8 @@ class NuguAndroidClient private constructor(
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
 
+        internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
+
         /**
          * @param factory the player factory to create players used at NUGU
          */
@@ -212,7 +215,11 @@ class NuguAndroidClient private constructor(
          */
         fun audioFocusInteractorFactory(factory: AudioFocusInteractorFactory?) = apply {audioFocusInteractorFactory = factory}
 
-        fun build() = NuguAndroidClient(this)
+        fun addAgentFactory(namespace: String, factory: AgentFactory<*>) = apply { agentFactoryMap[namespace] = factory }
+
+        fun build(): NuguAndroidClient   {
+            return NuguAndroidClient(this)
+        }
     }
 
     private val client: NuguClient = NuguClient.Builder(
@@ -232,6 +239,11 @@ class NuguAndroidClient private constructor(
         .light(builder.light)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
+        .apply {
+            builder.agentFactoryMap.forEach {
+                addAgentFactory(it.key, it.value)
+            }
+        }
         .build()
 
     override val audioPlayerAgent: AudioPlayerAgentInterface? = client.audioPlayerAgent

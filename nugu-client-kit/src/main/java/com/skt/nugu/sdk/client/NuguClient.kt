@@ -77,7 +77,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -134,6 +133,8 @@ class NuguClient private constructor(
         internal var delegationAgentFactory: DelegationAgentFactory? =
             DefaultAgentFactory.DELEGATION
 
+        internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
+
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
 
@@ -172,6 +173,8 @@ class NuguClient private constructor(
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
         fun delegationAgentFactory(factory: DelegationAgentFactory?) =
             apply { delegationAgentFactory = factory }
+
+        fun addAgentFactory(namespace: String, factory: AgentFactory<*>) = apply { agentFactoryMap[namespace] = factory }
 
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
@@ -312,6 +315,10 @@ class NuguClient private constructor(
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
             displayAgent = tempDisplayAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
+
+            agentFactoryMap.forEach {
+                it.value.create(sdkContainer)
+            }
 
             systemAgent.addListener(messageRouter)
             ttsAgent.addListener(dialogUXStateAggregator)
