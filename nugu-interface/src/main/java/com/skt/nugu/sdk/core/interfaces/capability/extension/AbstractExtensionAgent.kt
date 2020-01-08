@@ -15,14 +15,14 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.extension
 
-import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
 abstract class AbstractExtensionAgent(
     protected val contextManager: ContextManagerInterface,
     protected val messageSender: MessageSender
-) : CapabilityAgent()
+) : AbstractCapabilityAgent()
     , ExtensionAgentInterface {
     companion object {
         const val NAMESPACE = "Extension"

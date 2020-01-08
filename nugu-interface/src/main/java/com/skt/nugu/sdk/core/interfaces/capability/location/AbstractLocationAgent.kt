@@ -15,9 +15,10 @@
  */
 package com.skt.nugu.sdk.core.interfaces.capability.location
 
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 
-abstract class AbstractLocationAgent : LocationAgentInterface, ContextStateProvider {
+abstract class AbstractLocationAgent : CapabilityAgent, LocationAgentInterface, ContextStateProvider {
     companion object {
         const val NAMESPACE = "Location"
         const val VERSION = "1.0"
