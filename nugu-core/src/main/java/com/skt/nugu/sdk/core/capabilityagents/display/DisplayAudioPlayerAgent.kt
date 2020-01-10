@@ -15,10 +15,8 @@
  */
 package com.skt.nugu.sdk.core.capabilityagents.display
 
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
-import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -34,8 +32,7 @@ class DisplayAudioPlayerAgent(
     playSynchronizer: PlaySynchronizerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
-) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, inputProcessorManager, channelName),
-    AudioPlayerAgentInterface.Listener {
+) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, inputProcessorManager, channelName) {
     companion object {
         const val NAMESPACE = "AudioPlayer"
         const val VERSION = "1.0"
@@ -48,9 +45,6 @@ class DisplayAudioPlayerAgent(
         private val AUDIOPLAYER_TEMPLATE2 =
             NamespaceAndName(NAMESPACE, NAME_AUDIOPLAYER_TEMPLATE2)
     }
-
-    private var playerActivity: AudioPlayerAgentInterface.State =
-        AudioPlayerAgentInterface.State.IDLE
 
     override fun getNamespace(): String = NAMESPACE
 
@@ -70,30 +64,6 @@ class DisplayAudioPlayerAgent(
         configuration[AUDIOPLAYER_TEMPLATE2] = nonBlockingPolicy
 
         return configuration
-    }
-
-    override fun onStateChanged(
-        activity: AudioPlayerAgentInterface.State,
-        context: AudioPlayerAgentInterface.Context
-    ) {
-        executor.submit {
-            if (activity == playerActivity) {
-                return@submit
-            }
-
-            val templateId = currentInfo?.getTemplateId()
-            if(templateId.isNullOrBlank()) {
-                return@submit
-            }
-
-            playerActivity = activity
-
-            when (activity) {
-                AudioPlayerAgentInterface.State.PAUSED -> restartClearTimer(templateId,10 * 60 * 1000L)
-                else -> {
-                }
-            }
-        }
     }
 
     override fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
