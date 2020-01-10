@@ -257,6 +257,8 @@ class NuguClient private constructor(
                 visualFocusManager = null
             }
 
+            val playSynchronizer = PlaySynchronizer()
+
             sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
                     inputProcessorManager
@@ -273,7 +275,7 @@ class NuguClient private constructor(
                 override fun getDialogSessionManager(): DialogSessionManagerInterface =
                     dialogSessionManager
 
-                override fun getPlaySynchronizer(): PlaySynchronizerInterface = PlaySynchronizer()
+                override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
                 override fun getDirectiveSequencer(): DirectiveSequencerInterface = directiveSequencer
                 override fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface = dialogUXStateAggregator
 
