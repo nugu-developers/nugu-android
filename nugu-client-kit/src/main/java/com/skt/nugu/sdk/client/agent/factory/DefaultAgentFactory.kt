@@ -64,7 +64,6 @@ object DefaultAgentFactory {
                         DefaultFocusChannel.CONTENT_CHANNEL_NAME
                     )
                     setDisplayAgent(displayAudioPlayerAgent)
-                    addListener(displayAudioPlayerAgent)
                     getDirectiveSequencer().addDirectiveHandler(displayAudioPlayerAgent)
                 }
 
