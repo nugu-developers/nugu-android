@@ -58,6 +58,9 @@ internal class EventStreamService(
                             if (it.directivesCount > 0) {
                                 observer.onReceiveDirectives(toJson(downstream.directiveMessage))
                             }
+                            if(checkIfDirectiveIsUnauthorizedRequestException(it)) {
+                                observer.onError(Status.UNAUTHENTICATED)
+                            }
                         }
                     }
                     Downstream.MessageCase.ATTACHMENT_MESSAGE -> {
@@ -117,6 +120,21 @@ internal class EventStreamService(
                 override fun shouldSkipClass(clazz: Class<*>): Boolean {
                     return false
                 }
+            }
+
+            private fun checkIfDirectiveIsUnauthorizedRequestException(directiveMessage: DirectiveMessage): Boolean {
+                val namespace = "System"
+                val name = "Exception"
+                val code = "UNAUTHORIZED_REQUEST_EXCEPTION"
+
+                directiveMessage.directivesOrBuilderList.forEach {
+                    if (it.header.namespace == namespace && it.header.name == name) {
+                        if (it.payload.contains(code)) {
+                            return true
+                        }
+                    }
+                }
+                return false
             }
         })
     }
