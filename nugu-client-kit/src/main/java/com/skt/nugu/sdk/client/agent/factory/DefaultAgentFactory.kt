@@ -52,6 +52,7 @@ object DefaultAgentFactory {
                 getContextManager(),
                 getPlaybackRouter(),
                 getPlaySynchronizer(),
+                getAudioPlayStackManager(),
                 DefaultFocusChannel.CONTENT_CHANNEL_NAME
             ).apply {
                 getVisualFocusManager()?.let {
@@ -247,6 +248,7 @@ object DefaultAgentFactory {
                 getAudioFocusManager(),
                 getContextManager(),
                 getPlaySynchronizer(),
+                getAudioPlayStackManager(),
                 getInputManagerProcessor(),
                 DefaultFocusChannel.DIALOG_CHANNEL_NAME
             ).apply {

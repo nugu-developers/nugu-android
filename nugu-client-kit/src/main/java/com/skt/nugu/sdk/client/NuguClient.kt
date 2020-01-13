@@ -77,12 +77,13 @@ import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import com.skt.nugu.sdk.core.playstack.AudioPlayStackProvider
+import com.skt.nugu.sdk.core.playstack.PlayStackManager
 import com.skt.nugu.sdk.core.playstack.DisplayPlayStackProvider
 import java.util.concurrent.Future
 
@@ -218,6 +219,8 @@ class NuguClient private constructor(
 
     private val contextStateProviderRegistry: ContextStateProviderRegistry
 
+    private val audioPlayStackManager: PlayStackManager = PlayStackManager("Audio")
+
     private val sdkContainer: SdkContainer
 
     init {
@@ -264,8 +267,9 @@ class NuguClient private constructor(
                     inputProcessorManager
 
                 override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
-
                 override fun getVisualFocusManager(): FocusManagerInterface? = visualFocusManager
+
+                override fun getAudioPlayStackManager(): PlayStackManagerInterface = audioPlayStackManager
 
                 override fun getMessageSender(): MessageSender = networkManager
                 override fun getConnectionManager(): ConnectionManagerInterface = networkManager
@@ -338,7 +342,7 @@ class NuguClient private constructor(
 
             PlayStackContextManager(
                 contextManager,
-                AudioPlayStackProvider(audioFocusManager, audioPlayerAgent, ttsAgent),
+                audioPlayStackManager,
                 visualFocusManager?.let {
                     DisplayPlayStackProvider(it)
                 }

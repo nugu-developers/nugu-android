@@ -31,6 +31,7 @@ data class Channel(
         val name: String,
         var focusState: FocusState = FocusState.NONE,
         var interfaceName: String = "",
+
         var playServiceId: String? = null
     )
 

@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackHandler
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
@@ -33,6 +34,7 @@ abstract class AbstractAudioPlayerAgent(
     protected val contextManager: ContextManagerInterface,
     protected val playbackRouter: PlaybackRouter,
     protected val playSynchronizer: PlaySynchronizerInterface,
+    protected val playStackManager: PlayStackManagerInterface,
     protected val channelName: String
 ) : AbstractCapabilityAgent()
     , ChannelObserver
