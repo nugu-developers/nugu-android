@@ -291,6 +291,7 @@ class DefaultSystemAgent(
         Logger.d(TAG, "[handleTurnOff] $info")
         executor.submit {
             executeDisconnectEvent()
+            connectionManager.disable()
             observers.forEach { it.onTurnOff() }
         }
     }

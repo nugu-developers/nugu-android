@@ -33,7 +33,7 @@ import kotlin.concurrent.withLock
 class MessageRouter(
     private val transportFactory: TransportFactory,
     private val authDelegate: AuthDelegate
-) : MessageRouterInterface, TransportListener, MessageConsumer, SystemAgentInterface.Listener {
+) : MessageRouterInterface, TransportListener, MessageConsumer{
     companion object {
         private const val TAG = "MessageRouter"
     }
@@ -239,19 +239,5 @@ class MessageRouter(
                 handoffTransport = this
             }
         }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
-    }
-
-    override fun onTurnOff() {
-        disconnectAllTransport()
-    }
-
-    override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
-        if(code == SystemAgentInterface.ExceptionCode.UNAUTHORIZED_REQUEST_EXCEPTION) {
-            setConnectionStatus(ConnectionStatusListener.Status.DISCONNECTED, ConnectionStatusListener.ChangedReason.INVALID_AUTH)
-            activeTransport?.shutdown()
-            handoffTransport?.shutdown()
-            activeTransport = null
-            handoffTransport = null
-        }
     }
 }
