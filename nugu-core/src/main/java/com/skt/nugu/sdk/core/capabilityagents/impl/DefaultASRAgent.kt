@@ -542,36 +542,6 @@ class DefaultASRAgent(
         return configuration
     }
 
-    override fun onDialogUXStateChanged(
-        newState: DialogUXStateAggregatorInterface.DialogUXState,
-        dialogMode: Boolean
-    ) {
-        Logger.d(TAG, "[onDialogUXStateChanged] newState: $newState")
-        executor.submit {
-            executeOnDialogUXStateChanged(newState)
-        }
-    }
-
-    private fun executeOnDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState) {
-        Logger.d(TAG, "[executeOnDialogUXStateChanged] newState: $newState")
-
-        if (initialDialogUXStateReceived) {
-            initialDialogUXStateReceived = true
-            return
-        }
-
-        if (newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
-            return
-        }
-
-        if (focusState != FocusState.NONE) {
-            focusManager.releaseChannel(channelName, this)
-            focusState = FocusState.NONE
-        }
-
-        setState(ASRAgentInterface.State.IDLE)
-    }
-
     override fun addOnStateChangeListener(listener: ASRAgentInterface.OnStateChangeListener) {
         Logger.d(TAG, "[addOnStateChangeListener] listener: $listener")
         executor.submit {
@@ -709,6 +679,10 @@ class DefaultASRAgent(
     private fun setState(state: ASRAgentInterface.State) {
         if (this.state == state) {
             return
+        }
+
+        if(state == ASRAgentInterface.State.IDLE && focusState != FocusState.NONE) {
+            focusManager.releaseChannel(channelName, this)
         }
 
         Logger.d(TAG, "[setState] $state")
