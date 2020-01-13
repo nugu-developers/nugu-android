@@ -322,7 +322,6 @@ class NuguClient private constructor(
                 it.value.create(sdkContainer)
             }
 
-            systemAgent.addListener(messageRouter)
             ttsAgent.addListener(dialogUXStateAggregator)
             asrAgent.addOnStateChangeListener(dialogUXStateAggregator)
             dialogSessionManager.addListener(dialogUXStateAggregator)
