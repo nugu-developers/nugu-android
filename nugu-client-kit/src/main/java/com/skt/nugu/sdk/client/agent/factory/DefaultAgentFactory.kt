@@ -255,7 +255,6 @@ object DefaultAgentFactory {
                 DefaultFocusChannel.DIALOG_CHANNEL_NAME
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
-                getDialogUXStateAggregator().addListener(this)
             }
         }
     }

@@ -38,7 +38,6 @@ abstract class AbstractTTSAgent(
     protected val channelName: String
 ) : AbstractCapabilityAgent()
     , ChannelObserver
-    , DialogUXStateAggregatorInterface.Listener
     , TTSAgentInterface
     , InputProcessor {
 
