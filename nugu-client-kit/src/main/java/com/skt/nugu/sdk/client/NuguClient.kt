@@ -84,7 +84,6 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
-import com.skt.nugu.sdk.core.playstack.DisplayPlayStackProvider
 import java.util.concurrent.Future
 
 class NuguClient private constructor(
@@ -220,6 +219,7 @@ class NuguClient private constructor(
     private val contextStateProviderRegistry: ContextStateProviderRegistry
 
     private val audioPlayStackManager: PlayStackManager = PlayStackManager("Audio")
+    private val displayPlayStackManager: PlayStackManager = PlayStackManager("Display")
 
     private val sdkContainer: SdkContainer
 
@@ -248,7 +248,6 @@ class NuguClient private constructor(
             contextStateProviderRegistry = contextManager
 
             val dialogSessionManager = DialogSessionManager()
-
             val tempDisplayAgentFactory = displayAgentFactory
             if (tempDisplayAgentFactory != null) {
                 visualFocusManager =
@@ -270,6 +269,7 @@ class NuguClient private constructor(
                 override fun getVisualFocusManager(): FocusManagerInterface? = visualFocusManager
 
                 override fun getAudioPlayStackManager(): PlayStackManagerInterface = audioPlayStackManager
+                override fun getDisplayPlayStackManager(): PlayStackManagerInterface = displayPlayStackManager
 
                 override fun getMessageSender(): MessageSender = networkManager
                 override fun getConnectionManager(): ConnectionManagerInterface = networkManager
@@ -343,9 +343,7 @@ class NuguClient private constructor(
             PlayStackContextManager(
                 contextManager,
                 audioPlayStackManager,
-                visualFocusManager?.let {
-                    DisplayPlayStackProvider(it)
-                }
+                displayPlayStackManager
             )
         }
     }

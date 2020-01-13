@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
+import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
@@ -43,6 +44,7 @@ abstract class BaseDisplayAgent(
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
+    playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : AbstractDisplayAgent(
@@ -50,6 +52,7 @@ abstract class BaseDisplayAgent(
     contextManager,
     messageSender,
     playSynchronizer,
+    playStackManager,
     inputProcessorManager,
     channelName
 ),
@@ -79,6 +82,7 @@ abstract class BaseDisplayAgent(
 
     protected abstract fun getNamespace(): String
     protected abstract fun getVersion(): String
+    protected abstract fun getContextPriority(): Int
 
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
@@ -128,6 +132,10 @@ abstract class BaseDisplayAgent(
                 "LONG" -> 30000L
                 else -> 7000L
             }
+        }
+
+        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
+            PlayStackManagerInterface.PlayContext(it, getContextPriority())
         }
     }
 
@@ -213,6 +221,9 @@ abstract class BaseDisplayAgent(
 
     private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
+        info.playContext?.let {
+            playStackManager.remove(it)
+        }
     }
 
     private fun requestFocusForRender(info: TemplateDirectiveInfo) {
@@ -290,6 +301,9 @@ abstract class BaseDisplayAgent(
                         override fun onDenied() {
                         }
                     })
+                it.playContext?.let {playContext->
+                    playStackManager.add(playContext)
+                }
             }
         }
     }

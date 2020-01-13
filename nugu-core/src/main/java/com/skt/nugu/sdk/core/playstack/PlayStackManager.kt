@@ -72,6 +72,8 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
                 playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.priority))
             }
 
+            Logger.d(TAG, "[getPlayStack] $playStackContext")
+
             return playStackContext
         }
     }

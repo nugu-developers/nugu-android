@@ -43,6 +43,7 @@ interface SdkContainer {
     fun getAudioFocusManager(): FocusManagerInterface
     fun getVisualFocusManager(): FocusManagerInterface?
     fun getAudioPlayStackManager(): PlayStackManagerInterface
+    fun getDisplayPlayStackManager(): PlayStackManagerInterface
     fun getMessageSender(): MessageSender
     fun getConnectionManager(): ConnectionManagerInterface
     fun getContextManager(): ContextManagerInterface

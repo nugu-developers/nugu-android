@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.capabilityagents.display
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -30,9 +31,10 @@ class DisplayAudioPlayerAgent(
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
+    playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
-) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, inputProcessorManager, channelName) {
+) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, playStackManager, inputProcessorManager, channelName) {
     companion object {
         const val NAMESPACE = "AudioPlayer"
         const val VERSION = "1.0"
@@ -49,6 +51,8 @@ class DisplayAudioPlayerAgent(
     override fun getNamespace(): String = NAMESPACE
 
     override fun getVersion(): String = VERSION
+
+    override fun getContextPriority(): Int = 300
 
     override fun getDisplayType(): DisplayAggregatorInterface.Type = DisplayAggregatorInterface.Type.AUDIO_PLAYER
 
