@@ -61,6 +61,7 @@ object DefaultAgentFactory {
                         getContextManager(),
                         getMessageSender(),
                         getPlaySynchronizer(),
+                        getDisplayPlayStackManager(),
                         getInputManagerProcessor(),
                         DefaultFocusChannel.CONTENT_CHANNEL_NAME
                     )
@@ -109,6 +110,7 @@ object DefaultAgentFactory {
                     getContextManager(),
                     getMessageSender(),
                     getPlaySynchronizer(),
+                    getDisplayPlayStackManager(),
                     getInputManagerProcessor(),
                     DefaultFocusChannel.DIALOG_CHANNEL_NAME
                 ).apply {

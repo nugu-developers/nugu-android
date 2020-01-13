@@ -19,11 +19,8 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.capabilityagents.display.BaseDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -40,6 +37,7 @@ class DefaultDisplayAgent(
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
+    playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : BaseDisplayAgent(
@@ -47,6 +45,7 @@ class DefaultDisplayAgent(
     contextManager,
     messageSender,
     playSynchronizer,
+    playStackManager,
     inputProcessorManager,
     channelName
 ) {
@@ -201,6 +200,8 @@ class DefaultDisplayAgent(
     override fun getNamespace(): String = NAMESPACE
 
     override fun getVersion(): String = VERSION
+
+    override fun getContextPriority(): Int = 100
 
     override fun getDisplayType(): DisplayAggregatorInterface.Type =
         DisplayAggregatorInterface.Type.INFOMATION
