@@ -23,8 +23,6 @@ import com.skt.nugu.sdk.core.capabilityagents.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
@@ -33,10 +31,9 @@ import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
@@ -57,6 +54,7 @@ class DefaultAudioPlayerAgent(
     contextManager: ContextManagerInterface,
     playbackRouter: PlaybackRouter,
     playSynchronizer: PlaySynchronizerInterface,
+    playStackManager: PlayStackManagerInterface,
     channelName: String
 ) : AbstractAudioPlayerAgent(
     mediaPlayer,
@@ -65,6 +63,7 @@ class DefaultAudioPlayerAgent(
     contextManager,
     playbackRouter,
     playSynchronizer,
+    playStackManager,
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener {
 
@@ -158,15 +157,21 @@ class DefaultAudioPlayerAgent(
     ) : PlaySynchronizerInterface.SynchronizeObject {
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
-                if (focus != FocusState.NONE) {
-                    if (currentItem == this@AudioInfo) {
-                        focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
+                executor.submit {
+                    if (focus != FocusState.NONE) {
+                        if (currentItem == this@AudioInfo) {
+                            focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
+                        }
                     }
                 }
             }
 
             override fun onDenied() {
             }
+        }
+
+        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
+            PlayStackManagerInterface.PlayContext(it, 300)
         }
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
@@ -190,6 +195,9 @@ class DefaultAudioPlayerAgent(
             executeStop()
         } else {
             playSynchronizer.releaseSyncImmediately(audioInfo, audioInfo.onReleaseCallback)
+            audioInfo.playContext?.let {
+                playStackManager.remove(it)
+            }
         }
     }
 
@@ -264,6 +272,9 @@ class DefaultAudioPlayerAgent(
         Logger.d(TAG, "[executeCancelNextItem] cancel next item : $item")
 
         playSynchronizer.releaseSyncImmediately(item, item.onReleaseCallback)
+        item.playContext?.let {
+            playStackManager.remove(it)
+        }
     }
 
     private fun handlePauseDirective(info: DirectiveInfo) {
@@ -290,6 +301,9 @@ class DefaultAudioPlayerAgent(
 
         if (info.directive.getMessageId() == item.directive.getMessageId()) {
             playSynchronizer.releaseSyncImmediately(item, item.onReleaseCallback)
+            item.playContext?.let {
+                playStackManager.remove(it)
+            }
         }
     }
 
@@ -756,8 +770,14 @@ class DefaultAudioPlayerAgent(
 
         if (byStop) {
             playSynchronizer.releaseSyncImmediately(syncObject, syncObject.onReleaseCallback)
+            syncObject.playContext?.let {
+                playStackManager.remove(it)
+            }
         } else {
             playSynchronizer.releaseSync(syncObject, syncObject.onReleaseCallback)
+            syncObject.playContext?.let {
+                playStackManager.removeDelayed(it, 7000L)
+            }
         }
     }
 
@@ -857,8 +877,11 @@ class DefaultAudioPlayerAgent(
         }
 
         currentPlayItem.let {
-            currentItem?.let {
-                playSynchronizer.releaseSyncImmediately(it, it.onReleaseCallback)
+            currentItem?.let { info ->
+                playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
+                info.playContext?.let { playContext ->
+                    playStackManager.remove(playContext)
+                }
             }
             currentItem = it
             nextItem = null
@@ -903,6 +926,9 @@ class DefaultAudioPlayerAgent(
                         override fun onDenied() {
                         }
                     })
+                it.playContext?.let { playContext ->
+                    playStackManager.add(playContext)
+                }
 
                 progressTimer.init(
                     it.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
@@ -939,6 +965,9 @@ class DefaultAudioPlayerAgent(
                                 override fun onDenied() {
                                 }
                             })
+                        it.playContext?.let { playContext ->
+                            playStackManager.add(playContext)
+                        }
                     }
                 }
             }

@@ -20,12 +20,11 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.ErrorType
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
@@ -33,8 +32,6 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.TimeoutCondition
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -56,6 +53,7 @@ class DefaultTTSAgent(
     focusManager: FocusManagerInterface,
     contextManager: ContextManagerInterface,
     playSynchronizer: PlaySynchronizerInterface,
+    playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : AbstractTTSAgent(
@@ -64,6 +62,7 @@ class DefaultTTSAgent(
     focusManager,
     contextManager,
     playSynchronizer,
+    playStackManager,
     inputProcessorManager,
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener {
@@ -147,6 +146,10 @@ class DefaultTTSAgent(
             override fun onDenied() {
                 // nothing to do
             }
+        }
+
+        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
+            PlayStackManagerInterface.PlayContext(it, 100)
         }
 
         fun clear() {
@@ -462,6 +465,9 @@ class DefaultTTSAgent(
                 override fun onDenied() {
                 }
             })
+        info.playContext?.let {
+            playStackManager.add(it)
+        }
     }
 
     private fun executeStateChange() {
@@ -606,10 +612,16 @@ class DefaultTTSAgent(
 
     private fun releaseSync(info: SpeakDirectiveInfo) {
         playSynchronizer.releaseSync(info, info.onReleaseCallback)
+        info.playContext?.let {
+            playStackManager.removeDelayed(it, 7000L)
+        }
     }
 
     private fun releaseSyncImmediately(info: SpeakDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
+        info.playContext?.let {
+            playStackManager.remove(it)
+        }
     }
 
     override fun provideState(
