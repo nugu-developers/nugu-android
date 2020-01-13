@@ -432,7 +432,7 @@ class DefaultASRAgent(
         if (focusState != FocusState.FOREGROUND) {
             if (!focusManager.acquireChannel(
                     channelName, this,
-                    NAMESPACE, null
+                    NAMESPACE
                 )
             ) {
                 Logger.e(

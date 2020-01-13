@@ -227,11 +227,10 @@ abstract class BaseDisplayAgent(
     }
 
     private fun requestFocusForRender(info: TemplateDirectiveInfo) {
-        val pushPlayServiceId = info.payload.playStackControl?.getPushPlayServiceId()
-        Logger.d(TAG, "[requestFocusForRender] playServiceId: $pushPlayServiceId")
+        Logger.d(TAG, "[requestFocusForRender] $info")
         focusManager.acquireChannel(
             channelName, this,
-            getNamespace(), pushPlayServiceId
+            getNamespace()
         )
     }
 

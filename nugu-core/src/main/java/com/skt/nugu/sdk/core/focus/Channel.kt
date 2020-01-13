@@ -30,9 +30,7 @@ data class Channel(
     data class State(
         val name: String,
         var focusState: FocusState = FocusState.NONE,
-        var interfaceName: String = "",
-
-        var playServiceId: String? = null
+        var interfaceName: String = ""
     )
 
     val state = State(name)
@@ -63,13 +61,7 @@ data class Channel(
         state.interfaceName = interfaceName
     }
 
-    fun setPlayerServiceId(playServiceId: String?) {
-        state.playServiceId = playServiceId
-    }
-
     fun getInterfaceName() = state.interfaceName
-
-    fun getPlayServiceId() = state.playServiceId
 
     fun doesObserverOwnChannel(observer: ChannelObserver): Boolean = this.observer == observer
 
