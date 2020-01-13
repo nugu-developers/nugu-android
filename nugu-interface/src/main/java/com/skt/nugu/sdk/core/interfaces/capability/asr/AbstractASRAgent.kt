@@ -39,7 +39,6 @@ abstract class AbstractASRAgent(
     protected val channelName: String
 ) : AbstractCapabilityAgent(),
     ASRAgentInterface,
-    DialogUXStateAggregatorInterface.Listener,
     DialogSessionManagerInterface.OnSessionStateChangeListener {
     companion object {
         const val NAMESPACE = "ASR"

@@ -37,7 +37,6 @@ object DefaultAgentFactory {
                 ).apply {
                     getDirectiveSequencer().addDirectiveHandler(this)
                     getDialogSessionManager().addListener(this)
-                    getDialogUXStateAggregator().addListener(this)
                 }
             }
         }
