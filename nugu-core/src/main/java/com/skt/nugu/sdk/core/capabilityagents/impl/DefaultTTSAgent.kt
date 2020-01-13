@@ -580,35 +580,6 @@ class DefaultTTSAgent(
         return configuration
     }
 
-    override fun onDialogUXStateChanged(
-        newState: DialogUXStateAggregatorInterface.DialogUXState,
-        dialogMode: Boolean
-    ) {
-        executor.submit {
-            executeOnDialogUXStateChanged(newState)
-        }
-    }
-
-    private fun executeOnDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState) {
-        Logger.d(
-            TAG,
-            "[executeOnDialogUXStateChanged] newState: $newState, focusState: $currentFocus, currentState: $currentState, currentInfo: $currentInfo"
-        )
-        if (!initialDialogUXStateReceived) {
-            initialDialogUXStateReceived = true
-            return
-        }
-
-        if (newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
-            return
-        }
-
-        if (currentFocus == FocusState.BACKGROUND) {
-            val info = currentInfo ?: return
-            releaseSync(info)
-        }
-    }
-
     private fun releaseSync(info: SpeakDirectiveInfo) {
         playSynchronizer.releaseSync(info, info.onReleaseCallback)
         info.playContext?.let {
