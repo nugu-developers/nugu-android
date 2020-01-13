@@ -418,8 +418,7 @@ class DefaultTTSAgent(
             if (!focusManager.acquireChannel(
                     channelName,
                     this,
-                    NAMESPACE,
-                    speakInfo.payload.playStackControl?.getPushPlayServiceId()
+                    NAMESPACE
                 )
             ) {
                 Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")

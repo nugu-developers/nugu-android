@@ -334,8 +334,7 @@ class DefaultAudioPlayerAgent(
             if (!focusManager.acquireChannel(
                     channelName,
                     this,
-                    NAMESPACE,
-                    nextItem?.payload?.playStackControl?.getPushPlayServiceId()
+                    NAMESPACE
                 )
             ) {
                 progressTimer.stop()

@@ -61,8 +61,7 @@ class FocusManager(
     override fun acquireChannel(
         channelName: String,
         channelObserver: ChannelObserver,
-        interfaceName: String,
-        playServiceId: String?
+        interfaceName: String
     ): Boolean {
         val channelToAcquire = getChannel(channelName)
 
@@ -71,7 +70,7 @@ class FocusManager(
         }
 
         executor.submit {
-            acquireChannelHelper(channelToAcquire, channelObserver, interfaceName, playServiceId)
+            acquireChannelHelper(channelToAcquire, channelObserver, interfaceName)
         }
 
         return true
@@ -116,8 +115,7 @@ class FocusManager(
     private fun acquireChannelHelper(
         channelToAcquire: Channel,
         channelObserver: ChannelObserver,
-        interfaceName: String,
-        playServiceId: String?
+        interfaceName: String
     ) {
         val shouldReleaseChannelFocus =
             !(activeChannels.contains(channelToAcquire) && channelToAcquire.getInterfaceName() == interfaceName)
@@ -129,10 +127,9 @@ class FocusManager(
         val foregroundChannel = getHighestPriorityActiveChannel()
         Logger.d(
             TAG,
-            "[acquireChannelHelper] ${channelToAcquire.name}, $interfaceName , foreground: ${foregroundChannel?.name}, $playServiceId"
+            "[acquireChannelHelper] ${channelToAcquire.name}, $interfaceName , foreground: ${foregroundChannel?.name}"
         )
         channelToAcquire.setInterfaceName(interfaceName)
-        channelToAcquire.setPlayerServiceId(playServiceId)
         synchronized(activeChannels) {
             activeChannels.add(channelToAcquire)
         }
@@ -196,7 +193,7 @@ class FocusManager(
             return
         }
 
-        listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName, channel.state.playServiceId) }
+        listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName) }
     }
 
     private fun getChannel(channelName: String): Channel? = allChannels[channelName]

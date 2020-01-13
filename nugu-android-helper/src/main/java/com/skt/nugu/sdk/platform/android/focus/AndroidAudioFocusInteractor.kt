@@ -60,8 +60,7 @@ object AndroidAudioFocusInteractor {
         override fun onFocusChanged(
             channelConfiguration: FocusManagerInterface.ChannelConfiguration,
             newFocus: FocusState,
-            interfaceName: String,
-            playServiceId: String?
+            interfaceName: String
         ) {
             if (interfaceName == TAG) {
                 // do not acquire/release AAFM when ExternalAudioPlayer focus changed.
