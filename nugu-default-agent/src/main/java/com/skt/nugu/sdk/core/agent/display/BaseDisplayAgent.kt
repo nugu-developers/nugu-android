@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.core.agent.display
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.common.payload.PlayStackControl
+import com.skt.nugu.sdk.core.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
