@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.directivesequencer
+package com.skt.nugu.sdk.core.agent.audioplayer
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultAudioPlayerAgent
+import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.message.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
-class AudioPlayerDirectivePreProcessor : DirectiveGroupPreprocessor {
+class AudioPlayerDirectivePreProcessor :
+    DirectiveGroupPreprocessor {
     companion object {
         private const val TAG = "AudioPlayerDirectivePreProcessor"
     }

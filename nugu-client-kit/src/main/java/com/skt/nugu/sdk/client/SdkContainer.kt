@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client
 
+import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.directivesequencer.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
@@ -50,6 +51,7 @@ interface SdkContainer {
     fun getDialogSessionManager(): DialogSessionManagerInterface
     fun getPlaySynchronizer(): PlaySynchronizerInterface
     fun getDirectiveSequencer(): DirectiveSequencerInterface
+    fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface
     fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface
 
     // ASR only

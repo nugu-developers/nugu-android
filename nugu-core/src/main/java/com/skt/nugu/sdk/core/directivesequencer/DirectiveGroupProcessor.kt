@@ -20,7 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 class DirectiveGroupProcessor(
     private val inputProcessorManager: DirectiveGroupHandler,
     private val directiveSequencer: DirectiveSequencerInterface
-) : DirectiveGroupHandler {
+) : DirectiveGroupHandler, DirectiveGroupProcessorInterface {
     private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
@@ -36,11 +36,11 @@ class DirectiveGroupProcessor(
         }
     }
 
-    fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
+    override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
         directiveGroupPreprocessors.add(directiveGroupPreprocessor)
     }
 
-    fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
+    override fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
         directiveGroupPreprocessors.remove(directiveGroupPreprocessor)
     }
 }

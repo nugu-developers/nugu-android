@@ -228,18 +228,14 @@ class NuguClient private constructor(
         with(builder) {
             Logger.logger = logger
             SdkVersion.currentVersion = sdkVersion
+            val directiveGroupProcessor = DirectiveGroupProcessor(
+                inputProcessorManager,
+                directiveSequencer
+            ).apply {
+                addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
+            }
             val messageInterpreter =
-                MessageInterpreter(
-                    DirectiveGroupProcessor(
-                        inputProcessorManager,
-                        directiveSequencer
-                    ).apply {
-                        addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
-                        if (displayAgentFactory != null) {
-                            addDirectiveGroupPreprocessor(AudioPlayerDirectivePreProcessor())
-                        }
-                    }, AttachmentManager()
-                )
+                MessageInterpreter(directiveGroupProcessor, AttachmentManager())
 
             networkManager = NetworkManager.create(messageRouter).apply {
                 addMessageObserver(messageInterpreter)
@@ -282,6 +278,8 @@ class NuguClient private constructor(
 
                 override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
                 override fun getDirectiveSequencer(): DirectiveSequencerInterface = directiveSequencer
+                override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface = directiveGroupProcessor
+
                 override fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface = dialogUXStateAggregator
 
                 override fun getAudioProvider(): AudioProvider = defaultAudioProvider
