@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.asr.impl
 
-import com.skt.nugu.sdk.core.agent.asr.*
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.asr.AsrNotifyResultPayload
 import com.skt.nugu.sdk.agent.asr.AsrRecognizeEventPayload

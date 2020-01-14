@@ -15,7 +15,6 @@ import com.skt.nugu.sdk.agent.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.DefaultTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
-import com.skt.nugu.sdk.core.agent.*
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
