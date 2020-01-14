@@ -19,7 +19,7 @@ import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.core.agent.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupPreprocessor
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.util.MessageFactory

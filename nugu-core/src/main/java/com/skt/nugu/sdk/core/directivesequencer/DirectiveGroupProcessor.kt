@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 class DirectiveGroupProcessor(

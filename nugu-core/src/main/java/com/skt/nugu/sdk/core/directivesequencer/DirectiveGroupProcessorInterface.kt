@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
+
 interface DirectiveGroupProcessorInterface {
     fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
     fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
