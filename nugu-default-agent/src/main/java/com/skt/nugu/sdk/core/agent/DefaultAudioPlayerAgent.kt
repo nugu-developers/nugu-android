@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.agent.audioplayer
+package com.skt.nugu.sdk.core.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.core.agent.audioplayer.AudioItem
+import com.skt.nugu.sdk.core.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
@@ -129,7 +131,8 @@ class DefaultAudioPlayerAgent(
     private var stopCalled = false
     private var pauseCalled = false
     private var pauseReason: PauseReason? = null
-    private var progressTimer = ProgressTimer()
+    private var progressTimer =
+        ProgressTimer()
     private val progressProvider = object :
         ProgressTimer.ProgressProvider {
         override fun getProgress(): Long = getOffsetInMilliseconds()

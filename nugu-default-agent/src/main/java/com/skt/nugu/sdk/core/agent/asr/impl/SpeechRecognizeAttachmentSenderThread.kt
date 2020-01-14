@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.agent.asr.impl
 
-import com.skt.nugu.sdk.core.agent.asr.DefaultASRAgent
+import com.skt.nugu.sdk.core.agent.DefaultASRAgent
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
