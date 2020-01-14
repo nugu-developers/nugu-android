@@ -15,13 +15,14 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
+import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
 import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.message.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 
 
@@ -39,6 +40,8 @@ class MessageInterpreter(
         private const val KEY_DIRECTIVES = "directives"
         private const val KEY_ATTACHMENT = "attachment"
     }
+
+    private val gson = Gson()
 
     override fun receive(message: String) {
         // message의 parsing을 담당.
@@ -73,7 +76,7 @@ class MessageInterpreter(
     }
 
     private fun convertJsonToDirective(jsonObject: JsonObject): Directive? {
-        val directive = MessageFactory.createDirective(attachmentManager, jsonObject)
+        val directive = createDirective(attachmentManager, jsonObject)
         return if (directive != null) {
             directive
         } else {
@@ -84,7 +87,7 @@ class MessageInterpreter(
 
     private fun onReceiveAttachment(jsonObject: JsonObject) {
         val jsonAttachment = jsonObject.getAsJsonObject(KEY_ATTACHMENT)
-        val attachment = MessageFactory.createAttachmentMessage(jsonAttachment)
+        val attachment = createAttachmentMessage(jsonAttachment)
         if (attachment != null) {
             // change jsonAttachment to brief log
             try {
@@ -97,10 +100,47 @@ class MessageInterpreter(
         } else {
             Logger.e(TAG, "[onReceiveAttachment] failed to create Attachment from: $jsonObject")
         }
-
     }
 
     private fun onReceiveUnknownMessage(message: String) {
         Logger.e(TAG, "[onReceiveUnknownMessage] $message")
     }
+
+    private fun createDirective(attachmentManager: AttachmentManagerInterface?, json: JsonObject): Directive? {
+        return try {
+            val header = createHeader(json.getAsJsonObject("header"))
+            val payload = json.getAsJsonPrimitive("payload").asString
+            Directive(
+                attachmentManager,
+                header,
+                payload/*JsonParser().parse(payload).asJsonObject*/
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun createAttachmentMessage(json: JsonObject): AttachmentMessage? {
+        return try {
+            val content = createContent(json.getAsJsonObject("content"))
+            val header = createHeader(json.getAsJsonObject("header"))
+            val isEnd = json["isEnd"].asBoolean
+            val parentMessageId = json["parentMessageId"].asString
+            val seq = json["seq"].asInt
+
+            AttachmentMessage(content, header, isEnd, parentMessageId, seq)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun createHeader(jsonObject: JsonObject) = Header(
+        jsonObject["dialogRequestId"].asString,
+        jsonObject["messageId"].asString,
+        jsonObject["name"].asString,
+        jsonObject["namespace"].asString,
+        jsonObject["version"].asString
+    )
+
+    private fun createContent(jsonObject: JsonObject): ByteArray = gson.fromJson(jsonObject["bytes"].asJsonArray, ByteArray::class.java)
 }
