@@ -24,7 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
-import com.skt.nugu.sdk.core.message.MessageFactory
+import com.skt.nugu.sdk.core.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest

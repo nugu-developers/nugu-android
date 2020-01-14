@@ -27,7 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.message.MessageFactory
+import com.skt.nugu.sdk.core.util.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
