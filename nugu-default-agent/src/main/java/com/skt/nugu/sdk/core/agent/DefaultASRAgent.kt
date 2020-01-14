@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.agent.asr
+package com.skt.nugu.sdk.core.agent
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.core.agent.asr.AsrNotifyResultPayload
+import com.skt.nugu.sdk.core.agent.asr.ExpectSpeechPayload
+import com.skt.nugu.sdk.core.agent.asr.SpeechRecognizer
+import com.skt.nugu.sdk.core.agent.asr.WakeupBoundary
 import com.skt.nugu.sdk.core.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.core.agent.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent

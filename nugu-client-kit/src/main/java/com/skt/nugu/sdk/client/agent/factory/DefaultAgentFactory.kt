@@ -2,11 +2,9 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
-import com.skt.nugu.sdk.core.agent.asr.DefaultASRAgent
+import com.skt.nugu.sdk.core.agent.*
 import com.skt.nugu.sdk.core.agent.audioplayer.AudioPlayerDirectivePreProcessor
-import com.skt.nugu.sdk.core.agent.audioplayer.DefaultAudioPlayerAgent
-import com.skt.nugu.sdk.core.capabilityagents.display.DisplayAudioPlayerAgent
-import com.skt.nugu.sdk.core.capabilityagents.impl.*
+import com.skt.nugu.sdk.core.agent.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent

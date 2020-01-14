@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.capabilityagents.impl
+package com.skt.nugu.sdk.core.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.capabilityagents.display.BaseDisplayAgent
+import com.skt.nugu.sdk.core.agent.display.BaseDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
@@ -197,9 +197,11 @@ class DefaultDisplayAgent(
         contextManager.setStateProvider(namespaceAndName, this)
     }
 
-    override fun getNamespace(): String = NAMESPACE
+    override fun getNamespace(): String =
+        NAMESPACE
 
-    override fun getVersion(): String = VERSION
+    override fun getVersion(): String =
+        VERSION
 
     override fun getContextPriority(): Int = 100
 
