@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.capabilityagents.audioplayer
+package com.skt.nugu.sdk.core.agent.audioplayer
 
 import com.skt.nugu.sdk.core.utils.Logger
 
