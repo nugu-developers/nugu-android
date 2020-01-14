@@ -22,10 +22,10 @@ import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
-import com.skt.nugu.sdk.core.network.request.AttachmentMessageRequest
-import com.skt.nugu.sdk.core.network.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
 
 class SpeechRecognizeAttachmentSenderThread(
     private val reader: SharedDataStream.Reader,
@@ -115,17 +115,18 @@ class SpeechRecognizeAttachmentSenderThread(
             "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
         )
 
-        val attachmentMessage = AttachmentMessageRequest(
-            UUIDGeneration.shortUUID().toString(),
-            request.dialogRequestId,
-            request.context,
-            AbstractASRAgent.NAMESPACE,
-            DefaultASRAgent.NAME_RECOGNIZE,
-            AbstractASRAgent.VERSION,
-            currentAttachmentSequenceNumber,
-            encoded == null,
-            encoded
-        )
+        val attachmentMessage =
+            AttachmentMessageRequest(
+                UUIDGeneration.shortUUID().toString(),
+                request.dialogRequestId,
+                request.context,
+                AbstractASRAgent.NAMESPACE,
+                DefaultASRAgent.NAME_RECOGNIZE,
+                AbstractASRAgent.VERSION,
+                currentAttachmentSequenceNumber,
+                encoded == null,
+                encoded
+            )
 
         currentAttachmentSequenceNumber++
         return messageSender.sendMessage(attachmentMessage)

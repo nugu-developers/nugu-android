@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.network.request
+package com.skt.nugu.sdk.core.interfaces.message.request
 
-import com.google.gson.JsonObject
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 
 /**
@@ -56,7 +55,7 @@ data class EventMessageRequest(
     ) {
         private var messageId: String = UUIDGeneration.shortUUID().toString()
         private var dialogRequestId: String = UUIDGeneration.timeUUID().toString()
-        private var payload: String = JsonObject().toString()
+        private var payload: String = "{}"
         private var referrerDialogRequestId: String? = null
 
         /**
@@ -88,15 +87,16 @@ data class EventMessageRequest(
         /**
          * Create a EventMessageRequest applied given params.
          */
-        fun build(): EventMessageRequest = EventMessageRequest(
-            messageId,
-            dialogRequestId,
-            context,
-            namespace,
-            name,
-            version,
-            payload,
-            referrerDialogRequestId
-        )
+        fun build(): EventMessageRequest =
+            EventMessageRequest(
+                messageId,
+                dialogRequestId,
+                context,
+                namespace,
+                name,
+                version,
+                payload,
+                referrerDialogRequestId
+            )
     }
 }

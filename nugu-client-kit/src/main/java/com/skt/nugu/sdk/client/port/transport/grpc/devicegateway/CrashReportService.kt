@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
-import com.skt.nugu.sdk.core.network.request.CrashReportMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.Status

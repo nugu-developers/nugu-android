@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.utils
+package com.skt.nugu.sdk.core.interfaces.utils
 
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -131,13 +131,18 @@ class UUIDGeneration {
             val time = (Date().time - BASE_TIME) / 100
             var msb = time shl 32 or (randomWithHeader.toLong() and 0xFFFFFFFFL)
 
-            System.arraycopy(getHash(key), 0, uuidBytes, 8, 8)
+            System.arraycopy(
+                getHash(
+                    key
+                ), 0, uuidBytes, 8, 8)
 
             for (i in 7 downTo 0) {
                 uuidBytes[i] = (msb and 0xFF).toByte()
                 msb = msb shr 8
             }
-            return UUIDGeneration(uuidBytes)
+            return UUIDGeneration(
+                uuidBytes
+            )
         }
 
         /**
