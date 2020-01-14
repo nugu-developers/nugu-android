@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.capabilityagents.asr.impl
+package com.skt.nugu.sdk.core.agent.asr.impl
 
-import com.skt.nugu.sdk.core.capabilityagents.asr.ExpectSpeechPayload
-import com.skt.nugu.sdk.core.capabilityagents.asr.SpeechRecognizer
-import com.skt.nugu.sdk.core.capabilityagents.asr.WakeupBoundary
-import com.skt.nugu.sdk.core.capabilityagents.impl.DefaultASRAgent
+import com.skt.nugu.sdk.core.agent.asr.ExpectSpeechPayload
+import com.skt.nugu.sdk.core.agent.asr.SpeechRecognizer
+import com.skt.nugu.sdk.core.agent.asr.WakeupBoundary
+import com.skt.nugu.sdk.core.agent.asr.DefaultASRAgent
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
@@ -28,8 +28,8 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
-import com.skt.nugu.sdk.core.network.event.AsrNotifyResultPayload
-import com.skt.nugu.sdk.core.network.event.AsrRecognizeEventPayload
+import com.skt.nugu.sdk.core.agent.asr.AsrNotifyResultPayload
+import com.skt.nugu.sdk.core.agent.asr.AsrRecognizeEventPayload
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.ScheduledFuture
@@ -202,7 +202,11 @@ class DefaultServerSpeechRecognizer(
 
     override fun notifyResult(state: String, result: String?) {
         val enumState = AsrNotifyResultPayload.State.values().find { it.name == state }
-        val payload = AsrNotifyResultPayload(enumState!!, result)
+        val payload =
+            AsrNotifyResultPayload(
+                enumState!!,
+                result
+            )
         val request = currentRequest ?: return
 
         Logger.d(TAG, "[notifyResult] state: $state, result: $result, listener: $request")

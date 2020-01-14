@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.network.event
+package com.skt.nugu.sdk.core.agent.asr
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.core.capabilityagents.asr.WakeupBoundary
 
 data class AsrRecognizeEventPayload(
     private val codec: String,

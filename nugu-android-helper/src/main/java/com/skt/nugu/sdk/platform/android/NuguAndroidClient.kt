@@ -45,7 +45,9 @@ import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
 import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
+import com.skt.nugu.sdk.client.agent.factory.ASRAgentFactory
 import com.skt.nugu.sdk.client.agent.factory.AgentFactory
+import com.skt.nugu.sdk.client.agent.factory.DefaultAgentFactory
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
@@ -146,6 +148,7 @@ class NuguAndroidClient private constructor(
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
+        internal var asrAgentFactory: ASRAgentFactory = DefaultAgentFactory.ASR
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -243,6 +246,7 @@ class NuguAndroidClient private constructor(
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
             }
+            asrAgentFactory(builder.asrAgentFactory)
         }
         .build()
 
