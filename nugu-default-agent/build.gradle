@@ -8,10 +8,8 @@ dependencies {
 
     if (isReleaseMode) {
         implementation "com.skt.nugu.sdk:nugu-interface:$version"
-        implementation "com.skt.nugu.sdk:nugu-core:$version"
     } else {
         implementation project(':nugu-interface')
-        implementation project(':nugu-core')
     }
 
     implementation "com.google.code.gson:gson:2.8.6"
