@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import devicegateway.grpc.PingRequest
 import devicegateway.grpc.PolicyResponse
 import devicegateway.grpc.VoiceServiceGrpc

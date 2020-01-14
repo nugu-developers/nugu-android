@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.Status
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import java.util.*
 
 /**

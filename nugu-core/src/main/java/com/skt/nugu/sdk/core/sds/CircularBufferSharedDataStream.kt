@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.core.sds
 
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock

@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.core.attachment
 
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock

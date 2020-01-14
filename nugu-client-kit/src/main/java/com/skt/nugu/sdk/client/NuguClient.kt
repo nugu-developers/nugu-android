@@ -36,7 +36,7 @@ import com.skt.nugu.sdk.core.interfaces.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerFactory
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface

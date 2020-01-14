@@ -19,15 +19,12 @@ import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
 import com.google.gson.FieldNamingStrategy
 import com.google.gson.GsonBuilder
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import java.lang.reflect.Field
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 /**
  * This class is designed to manage eventstream of DeviceGateway
