@@ -131,10 +131,6 @@ class UUIDGeneration {
             val time = (Date().time - BASE_TIME) / 100
             var msb = time shl 32 or (randomWithHeader.toLong() and 0xFFFFFFFFL)
 
-            Logger.d(
-                TAG,
-                "[timeUUID] key: $key"
-            )
             System.arraycopy(getHash(key), 0, uuidBytes, 8, 8)
 
             for (i in 7 downTo 0) {

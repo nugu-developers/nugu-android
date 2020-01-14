@@ -49,7 +49,6 @@ import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerInterfa
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.core.interfaces.capability.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
-import com.skt.nugu.sdk.core.capabilityagents.asr.*
 import com.skt.nugu.sdk.core.capabilityagents.playbackcontroller.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
@@ -60,6 +59,7 @@ import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.client.client.DisplayAggregator
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
+import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
@@ -84,6 +84,7 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
+import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
 import java.util.concurrent.Future
 
 class NuguClient private constructor(
@@ -124,7 +125,7 @@ class NuguClient private constructor(
         // Agent Factory
         internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
             DefaultAgentFactory.AUDIO_PLAYER
-        internal var asrAgentFactory: ASRAgentFactory = DefaultAgentFactory.ASR
+        internal var asrAgentFactory: ASRAgentFactory? = null
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
         internal var textAgentFactory: TextAgentFactory = DefaultAgentFactory.TEXT
         internal var extensionAgentFactory: ExtensionAgentFactory = DefaultAgentFactory.EXTENSION
@@ -206,7 +207,7 @@ class NuguClient private constructor(
     val visualFocusManager: FocusManagerInterface?
     private val messageRouter: MessageRouter = MessageRouter(builder.transportFactory, builder.authDelegate)
     private val dialogUXStateAggregator = DialogUXStateAggregator()
-    override val asrAgent: AbstractASRAgent
+    override val asrAgent: AbstractASRAgent?
     override val textAgent: TextAgentInterface
     override val extensionAgent: AbstractExtensionAgent?
     override val delegationAgent: AbstractDelegationAgent?
@@ -314,7 +315,7 @@ class NuguClient private constructor(
             locationAgent = locationAgentFactory?.create(sdkContainer)
             DefaultAgentFactory.LIGHT.create(sdkContainer)
             DefaultAgentFactory.MOVEMENT.create(sdkContainer)
-            asrAgent = asrAgentFactory.create(sdkContainer)
+            asrAgent = asrAgentFactory?.create(sdkContainer)
             textAgent = textAgentFactory.create(sdkContainer)
             extensionAgent = extensionAgentFactory.create(sdkContainer)
             delegationAgent = delegationAgentFactory?.create(sdkContainer)
@@ -327,7 +328,7 @@ class NuguClient private constructor(
             }
 
             ttsAgent.addListener(dialogUXStateAggregator)
-            asrAgent.addOnStateChangeListener(dialogUXStateAggregator)
+            asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
             dialogSessionManager.addListener(dialogUXStateAggregator)
 
             displayAggregator = if (displayAgent != null) {
@@ -404,11 +405,11 @@ class NuguClient private constructor(
 
     // AIP
     override fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
-        asrAgent.addOnStateChangeListener(listener)
+        asrAgent?.addOnStateChangeListener(listener)
     }
 
     override fun removeASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
-        asrAgent.removeOnStateChangeListener(listener)
+        asrAgent?.removeOnStateChangeListener(listener)
     }
 
     override fun startRecognition(
@@ -423,26 +424,26 @@ class NuguClient private constructor(
             "[startRecognition] wakewordStartPosition: $wakewordStartPosition , wakewordEndPosition:$wakewordEndPosition, wakewordDetectPosition:$wakewordDetectPosition"
         )
 
-        return asrAgent.startRecognition(
+        return asrAgent?.startRecognition(
             audioInputStream,
             audioFormat,
             wakewordStartPosition,
             wakewordEndPosition,
             wakewordDetectPosition
-        )
+        ) ?: ImmediateBooleanFuture(false)
     }
 
     override fun stopRecognition() {
         Logger.d(TAG, "[stopRecognition]")
-        asrAgent.stopRecognition()
+        asrAgent?.stopRecognition()
     }
 
     override fun addASRResultListener(listener: ASRAgentInterface.OnResultListener) {
-        asrAgent.addOnResultListener(listener)
+        asrAgent?.addOnResultListener(listener)
     }
 
     override fun removeASRResultListener(listener: ASRAgentInterface.OnResultListener) {
-        asrAgent.removeOnResultListener(listener)
+        asrAgent?.removeOnResultListener(listener)
     }
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {

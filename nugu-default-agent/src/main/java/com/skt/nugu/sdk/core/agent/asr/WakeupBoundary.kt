@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.capabilityagents.asr
+package com.skt.nugu.sdk.core.agent.asr
 
 /**
  * @param detectSamplePosition the detection position of wakeword

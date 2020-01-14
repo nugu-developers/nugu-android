@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.capabilityagents.impl
+package com.skt.nugu.sdk.core.agent.asr
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.core.agent.asr.impl.DefaultClientSpeechRecognizer
+import com.skt.nugu.sdk.core.agent.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
-import com.skt.nugu.sdk.core.capabilityagents.asr.*
-import com.skt.nugu.sdk.core.capabilityagents.asr.impl.DefaultClientSpeechRecognizer
-import com.skt.nugu.sdk.core.capabilityagents.asr.impl.DefaultServerSpeechRecognizer
-import com.skt.nugu.sdk.core.capabilityagents.asr.SpeechRecognizer
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
@@ -32,12 +30,10 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.network.request.EventMessageRequest
-import com.skt.nugu.sdk.core.network.event.AsrNotifyResultPayload
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver

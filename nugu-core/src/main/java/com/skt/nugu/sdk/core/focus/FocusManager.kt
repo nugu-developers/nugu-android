@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.context.PlayStackProvider
 import com.skt.nugu.sdk.core.utils.DequeSingleThreadExecutor
+import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
 import java.util.*
 import java.util.concurrent.*
 import kotlin.collections.LinkedHashSet
@@ -80,16 +81,8 @@ class FocusManager(
         Logger.d(TAG, "[releaseChannel] ${channelName}")
         val channelToRelease = getChannel(channelName)
 
-        val returnValue = object : Future<Boolean> {
-            override fun isDone(): Boolean = true
-            override fun get(): Boolean = false
-            override fun get(timeout: Long, unit: TimeUnit?): Boolean = false
-            override fun cancel(mayInterruptIfRunning: Boolean): Boolean = false
-            override fun isCancelled(): Boolean = false
-        }
-
         if (channelToRelease == null) {
-            return returnValue
+            return ImmediateBooleanFuture(false)
         }
 
         return executor.submit(Callable<Boolean> {
