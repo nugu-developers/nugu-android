@@ -19,7 +19,7 @@ import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import com.squareup.okhttp.OkHttpClient
 import com.squareup.okhttp.Request
 import devicegateway.grpc.PolicyResponse

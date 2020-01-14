@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.core.directivesequencer
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

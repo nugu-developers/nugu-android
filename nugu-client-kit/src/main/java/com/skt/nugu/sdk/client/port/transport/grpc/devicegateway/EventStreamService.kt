@@ -19,7 +19,7 @@ import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
 import com.google.gson.FieldNamingStrategy
 import com.google.gson.GsonBuilder
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.Status
 import io.grpc.stub.StreamObserver

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.utils
+package com.skt.nugu.sdk.core.utils
 
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
