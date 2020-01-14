@@ -20,7 +20,7 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.agent.audioplayer.AudioItem
 import com.skt.nugu.sdk.core.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.common.payload.PlayStackControl
+import com.skt.nugu.sdk.core.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.*

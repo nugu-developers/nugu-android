@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.core.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.common.payload.PlayStackControl
+import com.skt.nugu.sdk.core.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.ErrorType

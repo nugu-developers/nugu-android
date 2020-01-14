@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.core.context
 
 import com.google.gson.JsonArray
-import com.skt.nugu.sdk.core.common.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -25,7 +24,6 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashSet
 
 /**

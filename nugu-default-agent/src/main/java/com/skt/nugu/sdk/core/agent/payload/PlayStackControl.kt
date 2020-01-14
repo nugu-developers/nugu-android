@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.common.payload
+package com.skt.nugu.sdk.core.agent.payload
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
