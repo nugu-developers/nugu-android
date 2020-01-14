@@ -32,7 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.util.MessageFactory
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
 import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap

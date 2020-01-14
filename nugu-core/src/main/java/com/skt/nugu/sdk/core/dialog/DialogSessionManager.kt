@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.dialog
 
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 
 class DialogSessionManager : DialogSessionManagerInterface {

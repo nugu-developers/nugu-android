@@ -24,7 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
 
 class SpeechRecognizeAttachmentSenderThread(

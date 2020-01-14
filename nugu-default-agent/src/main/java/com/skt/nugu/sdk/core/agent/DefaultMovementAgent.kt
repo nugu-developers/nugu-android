@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.movement.MovementController
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Executors

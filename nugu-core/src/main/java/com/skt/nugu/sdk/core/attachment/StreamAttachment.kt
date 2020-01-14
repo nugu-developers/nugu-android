@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.core.attachment
 
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.ArrayList
 import kotlin.concurrent.read

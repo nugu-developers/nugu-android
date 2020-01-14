@@ -18,13 +18,11 @@ package com.skt.nugu.sdk.core.focus
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.context.PlayStackProvider
+import com.skt.nugu.sdk.core.interfaces.utils.Logger
 import com.skt.nugu.sdk.core.utils.DequeSingleThreadExecutor
 import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
 import java.util.*
 import java.util.concurrent.*
-import kotlin.collections.LinkedHashSet
 
 class FocusManager(
     channelConfigurations: List<FocusManagerInterface.ChannelConfiguration>,
