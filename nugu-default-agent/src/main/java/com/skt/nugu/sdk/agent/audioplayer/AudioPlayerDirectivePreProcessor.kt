@@ -23,8 +23,8 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
-import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
+import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
 class AudioPlayerDirectivePreProcessor :
     DirectiveGroupPreprocessor {

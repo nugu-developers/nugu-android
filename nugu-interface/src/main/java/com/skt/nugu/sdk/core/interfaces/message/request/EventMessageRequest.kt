@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.message.request
 
-import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 
 /**

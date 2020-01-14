@@ -27,8 +27,8 @@ import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.message.Header
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
-import com.skt.nugu.sdk.core.interfaces.utils.UUIDGeneration
+import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface

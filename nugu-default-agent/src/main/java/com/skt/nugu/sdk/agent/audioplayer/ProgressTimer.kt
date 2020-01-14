@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer
 
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 
 class ProgressTimer {
     interface ProgressListener {

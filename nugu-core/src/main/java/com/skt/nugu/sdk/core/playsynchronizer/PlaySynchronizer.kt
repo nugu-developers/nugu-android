@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.playsynchronizer
 
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import java.util.*
 import java.util.concurrent.Executors

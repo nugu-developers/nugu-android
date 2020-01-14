@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock

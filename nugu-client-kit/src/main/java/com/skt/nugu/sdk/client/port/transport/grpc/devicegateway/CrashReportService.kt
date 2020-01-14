@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.Status
 import java.util.concurrent.TimeUnit

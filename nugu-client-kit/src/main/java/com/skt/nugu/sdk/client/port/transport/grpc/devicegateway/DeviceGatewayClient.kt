@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.ManagedChannel
 import io.grpc.Status

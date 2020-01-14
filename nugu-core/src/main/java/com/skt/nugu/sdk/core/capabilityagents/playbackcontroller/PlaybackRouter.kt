@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.core.capabilityagents.playbackcontroller
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackHandler
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 
 class PlaybackRouter : PlaybackRouter {
     companion object {

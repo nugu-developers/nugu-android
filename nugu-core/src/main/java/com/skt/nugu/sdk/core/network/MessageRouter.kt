@@ -22,7 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
-import com.skt.nugu.sdk.core.interfaces.utils.Logger
+import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.Status
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
