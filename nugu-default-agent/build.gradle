@@ -1,0 +1,21 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    if (isReleaseMode) {
+        implementation "com.skt.nugu.sdk:nugu-interface:$version"
+        implementation "com.skt.nugu.sdk:nugu-core:$version"
+    } else {
+        implementation project(':nugu-interface')
+        implementation project(':nugu-core')
+    }
+
+    implementation "com.google.code.gson:gson:2.8.6"
+}
+
+sourceCompatibility = "8"
+targetCompatibility = "8"
