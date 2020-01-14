@@ -1,10 +1,23 @@
 package com.skt.nugu.sdk.client.agent.factory
 
+import com.skt.nugu.sdk.agent.DefaultASRAgent
+import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
+import com.skt.nugu.sdk.agent.DefaultDelegationAgent
+import com.skt.nugu.sdk.agent.DefaultDisplayAgent
+import com.skt.nugu.sdk.agent.DefaultExtensionAgent
+import com.skt.nugu.sdk.agent.DefaultLightAgent
+import com.skt.nugu.sdk.agent.DefaultLocationAgent
+import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
+import com.skt.nugu.sdk.agent.DefaultMovementAgent
+import com.skt.nugu.sdk.agent.DefaultSpeakerAgent
+import com.skt.nugu.sdk.agent.DefaultSystemAgent
+import com.skt.nugu.sdk.agent.DefaultTTSAgent
+import com.skt.nugu.sdk.agent.DefaultTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.agent.*
-import com.skt.nugu.sdk.core.agent.audioplayer.AudioPlayerDirectivePreProcessor
-import com.skt.nugu.sdk.core.agent.display.DisplayAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
+import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
@@ -56,18 +69,21 @@ object DefaultAgentFactory {
                 DefaultFocusChannel.CONTENT_CHANNEL_NAME
             ).apply {
                 getVisualFocusManager()?.let {
-                    val displayAudioPlayerAgent = DisplayAudioPlayerAgent(
-                        it,
-                        getContextManager(),
-                        getMessageSender(),
-                        getPlaySynchronizer(),
-                        getDisplayPlayStackManager(),
-                        getInputManagerProcessor(),
-                        DefaultFocusChannel.CONTENT_CHANNEL_NAME
-                    )
+                    val displayAudioPlayerAgent =
+                        DisplayAudioPlayerAgent(
+                            it,
+                            getContextManager(),
+                            getMessageSender(),
+                            getPlaySynchronizer(),
+                            getDisplayPlayStackManager(),
+                            getInputManagerProcessor(),
+                            DefaultFocusChannel.CONTENT_CHANNEL_NAME
+                        )
                     setDisplayAgent(displayAudioPlayerAgent)
                     getDirectiveSequencer().addDirectiveHandler(displayAudioPlayerAgent)
-                    getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(AudioPlayerDirectivePreProcessor())
+                    getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
+                        AudioPlayerDirectivePreProcessor()
+                    )
                 }
 
                 getDirectiveSequencer().addDirectiveHandler(this)
