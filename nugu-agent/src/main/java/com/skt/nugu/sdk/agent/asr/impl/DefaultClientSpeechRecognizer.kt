@@ -23,8 +23,8 @@ import com.skt.nugu.sdk.agent.asr.SpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.WakeupBoundary
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface

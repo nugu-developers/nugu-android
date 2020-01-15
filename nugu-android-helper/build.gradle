@@ -32,11 +32,9 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
     if(isReleaseMode) {
-        api "com.skt.nugu.sdk:nugu-interface:$version"
-        implementation "com.skt.nugu.sdk:nugu-client-kit:$version"
+        api "com.skt.nugu.sdk:nugu-client-kit:$version"
     } else {
-        api project(':nugu-interface')
-        implementation project(':nugu-client-kit')
+        api project(':nugu-client-kit')
     }
 
     implementation "com.skt.nugu:silvertray:$silvertrayVersion-RELEASE@aar"

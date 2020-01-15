@@ -19,9 +19,9 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioItem
 import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface

@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.client
 
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import java.util.concurrent.locks.ReentrantLock

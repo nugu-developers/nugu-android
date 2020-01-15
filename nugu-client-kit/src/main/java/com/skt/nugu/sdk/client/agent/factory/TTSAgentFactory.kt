@@ -15,6 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
+import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 
 interface TTSAgentFactory: AgentFactory<AbstractTTSAgent>

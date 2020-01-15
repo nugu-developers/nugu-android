@@ -16,11 +16,11 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.core.interfaces.capability.location.AbstractLocationAgent
+import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.location.LocationProvider
+import com.skt.nugu.sdk.agent.location.LocationProvider
 
 class DefaultLocationAgent : AbstractLocationAgent() {
     companion object {

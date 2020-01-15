@@ -17,7 +17,7 @@ package com.skt.nugu.sampleapp.client
 
 import android.content.Context
 import android.util.Log
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy

@@ -18,12 +18,12 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
+import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.ErrorType
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.SourceId
-import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.message.Header

@@ -18,11 +18,11 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
+import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.capability.light.Light
+import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester

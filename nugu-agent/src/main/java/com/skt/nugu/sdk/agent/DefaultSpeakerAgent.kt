@@ -17,13 +17,13 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
+import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.Speaker
+import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger

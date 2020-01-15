@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
+import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 
 interface SpeakerAgentFactory : AgentFactory<AbstractSpeakerAgent>
 

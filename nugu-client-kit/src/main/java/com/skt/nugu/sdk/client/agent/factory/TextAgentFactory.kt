@@ -15,6 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.text.AbstractTextAgent
+import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 
 interface TextAgentFactory: AgentFactory<AbstractTextAgent>

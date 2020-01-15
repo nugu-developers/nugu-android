@@ -15,6 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
+import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 
 interface LightAgentFactory : AgentFactory<AbstractLightAgent?>

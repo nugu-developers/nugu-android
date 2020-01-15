@@ -17,11 +17,11 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.Microphone
+import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester

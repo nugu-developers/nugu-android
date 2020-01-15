@@ -18,9 +18,9 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
+import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
+import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
+import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface

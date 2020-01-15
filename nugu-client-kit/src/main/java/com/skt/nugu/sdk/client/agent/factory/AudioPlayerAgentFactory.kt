@@ -15,6 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 
 interface AudioPlayerAgentFactory : AgentFactory<AbstractAudioPlayerAgent>

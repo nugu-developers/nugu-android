@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sampleapp.utils
 
-import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 
 /**
  * This interface is used by the SystemAgentInterface.Listener

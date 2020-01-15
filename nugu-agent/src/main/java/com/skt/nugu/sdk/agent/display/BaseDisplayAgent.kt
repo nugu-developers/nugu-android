@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent.display
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -28,7 +27,6 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
