@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.platform.android.speaker
 import android.content.Context
 import android.media.AudioManager
 import android.os.Build
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.Speaker
+import com.skt.nugu.sdk.agent.speaker.Speaker
 
 /**
  * Default Implementation of [Speaker] for android

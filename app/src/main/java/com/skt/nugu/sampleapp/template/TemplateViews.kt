@@ -30,7 +30,7 @@ import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
 import com.skt.nugu.sampleapp.template.view.ItemTextList2
 import com.skt.nugu.sampleapp.template.view.viewholder.TemplateViewHolder

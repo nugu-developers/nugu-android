@@ -25,14 +25,14 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     if (isReleaseMode) {
-        implementation "com.skt.nugu.sdk:nugu-interface:$version"
+        api "com.skt.nugu.sdk:nugu-interface:$version"
         implementation "com.skt.nugu.sdk:nugu-core:$version"
     } else {
-        implementation project(':nugu-interface')
+        api project(':nugu-interface')
         implementation project(':nugu-core')
     }
 
-    implementation project(':nugu-agent')
+    api project(':nugu-agent')
 
     implementation "io.grpc:grpc-protobuf-lite:${protobuf_version}"
     implementation "io.grpc:grpc-stub:${grpc_version}"

@@ -15,6 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
+import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 
 interface ASRAgentFactory: AgentFactory<AbstractASRAgent>

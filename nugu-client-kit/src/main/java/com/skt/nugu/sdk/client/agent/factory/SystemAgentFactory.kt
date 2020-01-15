@@ -15,6 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
+import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 
 interface SystemAgentFactory: AgentFactory<AbstractSystemAgent>

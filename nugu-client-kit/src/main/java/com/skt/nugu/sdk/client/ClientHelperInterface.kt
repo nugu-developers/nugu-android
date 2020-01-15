@@ -15,9 +15,9 @@
  */
 package com.skt.nugu.sdk.client
 
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
@@ -25,12 +25,12 @@ import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerInterface
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerManagerObserver
-import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
+import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import java.util.concurrent.Future
-import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
+import com.skt.nugu.sdk.agent.text.TextAgentInterface
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 
 /**
  * This is an utility interface that gathers simplified APIs in one place and provides them to clients.

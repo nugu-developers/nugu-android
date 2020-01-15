@@ -22,8 +22,8 @@ import com.skt.nugu.sdk.agent.asr.SpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.WakeupBoundary
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive

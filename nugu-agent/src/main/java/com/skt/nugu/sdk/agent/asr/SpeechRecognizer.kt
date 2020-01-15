@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.agent.asr
 
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 
 interface SpeechRecognizer {

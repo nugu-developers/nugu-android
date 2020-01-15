@@ -17,19 +17,19 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
-import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
-import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
-import com.skt.nugu.sdk.core.interfaces.capability.location.    AbstractLocationAgent
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.core.interfaces.capability.movement.AbstractMovementAgent
-import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent
-import com.skt.nugu.sdk.core.interfaces.capability.system.AbstractSystemAgent
-import com.skt.nugu.sdk.core.interfaces.capability.text.AbstractTextAgent
-import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
+import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
+import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
+import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
+import com.skt.nugu.sdk.agent.light.AbstractLightAgent
+import com.skt.nugu.sdk.agent.location.    AbstractLocationAgent
+import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
+import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
+import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
+import com.skt.nugu.sdk.agent.text.AbstractTextAgent
+import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 
 object DefaultAgentFactory {

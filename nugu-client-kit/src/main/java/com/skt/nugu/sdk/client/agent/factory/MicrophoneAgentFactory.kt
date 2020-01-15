@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 
 interface MicrophoneAgentFactory: AgentFactory<AbstractMicrophoneAgent>
 

@@ -29,7 +29,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguFloatingActionButton
 import com.skt.nugu.sdk.platform.android.ux.widget.Snackbar
@@ -43,7 +43,7 @@ import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.BottomSheetController
-import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener

@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.platform.android.speechrecognizer
 
 import android.util.Log
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream

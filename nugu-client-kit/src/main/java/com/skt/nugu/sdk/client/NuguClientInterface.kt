@@ -15,16 +15,16 @@
  */
 package com.skt.nugu.sdk.client
 
-import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
-import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
-import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
+import com.skt.nugu.sdk.agent.location.LocationAgentInterface
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.text.TextAgentInterface
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 
 /**
  * This is an utility interface which is exposed to application that interact with NUGU

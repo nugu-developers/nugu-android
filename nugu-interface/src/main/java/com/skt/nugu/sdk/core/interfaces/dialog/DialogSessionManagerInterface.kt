@@ -18,9 +18,7 @@ package com.skt.nugu.sdk.core.interfaces.dialog
 /**
  * Sometimes, NUGU ask you to get more information to know about you requested.
  * In that situation, we call "dialog session" or "multiturn".
- * This manage dialog session
- * @see [com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface.State.EXPECTING_SPEECH]
- * @see [com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface.OnMultiturnListener]
+ * This manage dialog session.
  */
 interface DialogSessionManagerInterface {
     data class DialogSessionInfo(
