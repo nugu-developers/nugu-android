@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.client.ClientHelperInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.microphone.Microphone

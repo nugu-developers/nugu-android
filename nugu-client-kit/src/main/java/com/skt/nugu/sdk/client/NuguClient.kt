@@ -37,7 +37,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.light.Light
@@ -55,7 +55,7 @@ import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.context.PlayStackContextManager
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
-import com.skt.nugu.sdk.client.client.DisplayAggregator
+import com.skt.nugu.sdk.client.display.DisplayAggregator
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
