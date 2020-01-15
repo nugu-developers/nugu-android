@@ -5,6 +5,7 @@ An SDK for application to integrate NUGU service at Android based on Kotlin or J
 The SDK consist of following components. Look at diagram.
 * Nugu Interface : Provide common interfaces to communicate with NUGU SDK.
 * Nugu Core : This component implements core business logic for NUGU service.
+* Nugu Agent : Provide default agent implementation such as ASRAgent, TTSAgent etc.
 * Nugu Android Helper : Provide a default android client to help you integrate into the application simply.
 * Nugu UX kit : Provide an UX components that follow NUGU's design guide.
 * Nugu Login kit : Provide helpers for NUGU Login.
