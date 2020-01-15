@@ -15,8 +15,8 @@
  */
 package com.skt.nugu.sdk.client.audio
 
-import com.skt.nugu.sdk.core.sds.CircularBufferSharedDataStream
-import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
+import com.skt.nugu.sdk.client.sds.CircularBufferSharedDataStream
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 
 class AudioInputStream private constructor(capacity: Int): CircularBufferSharedDataStream(capacity) {
     companion object {

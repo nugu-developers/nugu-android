@@ -17,9 +17,9 @@ package com.skt.nugu.sdk.platform.android.audiosource
 
 import android.util.Log
 import com.skt.nugu.sdk.client.audio.AudioInputStream
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

@@ -16,16 +16,20 @@
 package com.skt.nugu.sdk.external.silvertray
 
 import android.util.Log
+import com.skt.nugu.sdk.agent.mediaplayer.AttachmentPlayablePlayer
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.silvertray.player.EventListener
 import com.skt.nugu.silvertray.player.Player
 import com.skt.nugu.silvertray.player.Status
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
 
 /**
  * Porting class silvertray's [Player] to use in NUGU SDK
  */
-class NuguOpusPlayer(private val streamType: Int) : AttachmentPlayablePlayer {
+class NuguOpusPlayer(private val streamType: Int) :
+    AttachmentPlayablePlayer {
     companion object {
         private const val TAG = "NuguOpusPlayer"
     }
@@ -129,11 +133,11 @@ class NuguOpusPlayer(private val streamType: Int) : AttachmentPlayablePlayer {
     }
 
     override fun getOffset(id: SourceId): Long {
-        return MEDIA_PLAYER_INVALID_OFFSET
+        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     override fun getDuration(id: SourceId): Long {
-        return MEDIA_PLAYER_INVALID_OFFSET
+        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {

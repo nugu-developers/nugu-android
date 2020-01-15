@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.display
 
-import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
+import com.skt.nugu.sdk.agent.display.DisplayInterface
 
 /**
  * There are some displays to be render.

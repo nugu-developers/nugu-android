@@ -19,9 +19,10 @@ import android.util.Log
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
 import com.skt.nugu.keensense.tyche.TycheKeywordDetector
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
-import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
-import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -72,7 +73,7 @@ class SpeechRecognizerAggregator(
 
     private var isTriggerStoppingByStartListening = false
 
-    private var audioFormat: com.skt.nugu.sdk.core.interfaces.audio.AudioFormat? = null
+    private var audioFormat: AudioFormat? = null
     private var keywordStartPosition: Long? = null
     private var keywordEndPosition: Long? = null
     private var keywordDetectPosition: Long? = null
@@ -226,7 +227,7 @@ class SpeechRecognizerAggregator(
     }
 
     private fun startListeningInternal(
-        audioFormat: com.skt.nugu.sdk.core.interfaces.audio.AudioFormat,
+        audioFormat: AudioFormat,
         keywordStartPosition: Long?,
         keywordEndPosition: Long?,
         keywordDetectPosition: Long?

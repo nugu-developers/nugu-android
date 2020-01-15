@@ -17,8 +17,8 @@ package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.directivesequencer.DirectiveSequencerInterface
-import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
+import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.light.Light
@@ -31,12 +31,12 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
+import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.PlayerFactory
+import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
 interface SdkContainer {

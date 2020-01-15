@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.client.display
 
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
-import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
+import com.skt.nugu.sdk.agent.display.DisplayInterface
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

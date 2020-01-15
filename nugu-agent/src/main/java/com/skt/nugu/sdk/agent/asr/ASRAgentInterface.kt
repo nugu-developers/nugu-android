@@ -15,8 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.asr
 
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import java.util.concurrent.Future
 
 /**

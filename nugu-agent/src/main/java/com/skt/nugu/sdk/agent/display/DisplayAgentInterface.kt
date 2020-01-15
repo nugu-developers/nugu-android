@@ -15,12 +15,11 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
-
 /**
  * The public interface for DisplayAgent
  */
-interface DisplayAgentInterface: DisplayInterface<DisplayAgentInterface.Renderer> {
+interface DisplayAgentInterface:
+    DisplayInterface<DisplayAgentInterface.Renderer> {
     /**
      * The renderer of display agent.
      * When receive an directive for display, the agent will request the renderer to render it.

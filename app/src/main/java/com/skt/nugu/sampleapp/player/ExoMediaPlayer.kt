@@ -29,14 +29,18 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
+import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import java.lang.ref.WeakReference
 import java.net.URI
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 
 
-class ExoMediaPlayer(private val context: Context) : UriSourcePlayablePlayer {
+class ExoMediaPlayer(private val context: Context) :
+    UriSourcePlayablePlayer {
     companion object {
         private const val TAG = "ExoMediaPlayer"
 
@@ -123,7 +127,8 @@ class ExoMediaPlayer(private val context: Context) : UriSourcePlayablePlayer {
 
         player.prepare(buildMediaSource(Uri.parse(uri.toString())))
 
-        return SourceId(++sourceId.id).also { sourceId = it }
+        return SourceId(++sourceId.id)
+            .also { sourceId = it }
     }
 
     @AnyThread
@@ -241,7 +246,7 @@ class ExoMediaPlayer(private val context: Context) : UriSourcePlayablePlayer {
             Log.d(TAG, "[getOffset] id: $id")
         }
 
-        return await(FuncMessage.GET_OFFSET, id) { it as? Long } ?: MEDIA_PLAYER_INVALID_OFFSET
+        return await(FuncMessage.GET_OFFSET, id) { it as? Long } ?: com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @MainThread
@@ -250,7 +255,7 @@ class ExoMediaPlayer(private val context: Context) : UriSourcePlayablePlayer {
             return player.currentPosition
         }
 
-        return MEDIA_PLAYER_INVALID_OFFSET
+        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @AnyThread
@@ -261,10 +266,11 @@ class ExoMediaPlayer(private val context: Context) : UriSourcePlayablePlayer {
 
         var duration = await(FuncMessage.GET_DURATION, id) { it as? Long }
         if(duration == C.TIME_UNSET) {
-            duration = MEDIA_PLAYER_INVALID_OFFSET
+            duration =
+                com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
         }
 
-        return duration ?: MEDIA_PLAYER_INVALID_OFFSET
+        return duration ?: com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @MainThread
@@ -273,7 +279,7 @@ class ExoMediaPlayer(private val context: Context) : UriSourcePlayablePlayer {
             return player.duration
         }
 
-        return MEDIA_PLAYER_INVALID_OFFSET
+        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @AnyThread

@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.platform.android.audiosource.audiorecord
 
 import android.media.MediaRecorder
 import android.util.Log
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceFactory
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSource
 
@@ -44,7 +44,11 @@ class AudioRecordSourceFactory(
         )
 
     override fun getFormat(): AudioFormat {
-        return AudioFormat(sampleRate, getBitsPerSample(), getNumChannels())
+        return AudioFormat(
+            sampleRate,
+            getBitsPerSample(),
+            getNumChannels()
+        )
     }
 
     private fun getBitsPerSample(): Int {
