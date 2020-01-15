@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
-import com.skt.nugu.sdk.core.interfaces.client.ClientHelperInterface
+import com.skt.nugu.sdk.client.ClientHelperInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
@@ -51,7 +51,7 @@ import com.skt.nugu.sdk.client.agent.factory.DefaultAgentFactory
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.DelegationAgentInterface
-import com.skt.nugu.sdk.core.interfaces.client.NuguClientInterface
+import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
 import com.skt.nugu.sdk.platform.android.battery.AndroidBatteryStatusProvider
@@ -60,7 +60,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.extension.ExtensionAgentInter
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.system.SystemAgentInterface

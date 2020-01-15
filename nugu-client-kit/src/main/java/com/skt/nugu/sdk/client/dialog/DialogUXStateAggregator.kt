@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.dialog
+package com.skt.nugu.sdk.client.dialog
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.capability.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
