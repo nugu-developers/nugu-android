@@ -359,11 +359,14 @@ class DefaultClientSpeechRecognizer(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
         if (header.namespace != AbstractASRAgent.NAMESPACE) {
             Logger.d(TAG, "[onReceiveResponse] $header")
             handleFinish()
+            return true
         }
+
+        return false
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {

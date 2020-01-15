@@ -19,6 +19,6 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
 
 interface InputProcessor {
     fun onSendEventFinished(dialogRequestId: String)
-    fun onReceiveResponse(dialogRequestId: String, header: Header)
+    fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean
     fun onResponseTimeout(dialogRequestId: String)
 }

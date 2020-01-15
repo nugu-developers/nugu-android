@@ -205,8 +205,9 @@ class DefaultDelegationAgent(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
         requestListenerMap.remove(dialogRequestId)?.onSuccess()
+        return true
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {
