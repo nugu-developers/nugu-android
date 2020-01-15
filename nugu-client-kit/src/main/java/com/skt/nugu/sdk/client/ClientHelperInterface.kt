@@ -22,7 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.display
+package com.skt.nugu.sdk.client.display
+
+import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 
 /**
  * There are some displays to be render.
@@ -22,7 +24,8 @@ package com.skt.nugu.sdk.core.interfaces.display
  *
  * @see [com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface]
  */
-interface DisplayAggregatorInterface: DisplayInterface<DisplayAggregatorInterface.Renderer> {
+interface DisplayAggregatorInterface:
+    DisplayInterface<DisplayAggregatorInterface.Renderer> {
     /**
      * Enum class for display types
      */
