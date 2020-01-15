@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.dialog
+package com.skt.nugu.sdk.client.dialog
 
 interface DialogUXStateAggregatorInterface {
     fun addListener(listener: Listener)

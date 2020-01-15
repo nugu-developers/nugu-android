@@ -30,7 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface

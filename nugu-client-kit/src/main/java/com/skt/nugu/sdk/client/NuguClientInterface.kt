@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.client
+package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AudioPlayerAgentInterface

@@ -29,10 +29,8 @@ import com.skt.nugu.sdk.core.network.NetworkManager
 import com.skt.nugu.sdk.core.network.MessageRouter
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.capability.text.TextAgentInterface
-import com.skt.nugu.sdk.core.dialog.DialogUXStateAggregator
+import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
-import com.skt.nugu.sdk.core.interfaces.client.ClientHelperInterface
-import com.skt.nugu.sdk.core.interfaces.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.SpeakerFactory
@@ -66,7 +64,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.tts.AbstractTTSAgent
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.core.interfaces.capability.location.LocationAgentInterface
@@ -206,7 +204,8 @@ class NuguClient private constructor(
     )
     val visualFocusManager: FocusManagerInterface?
     private val messageRouter: MessageRouter = MessageRouter(builder.transportFactory, builder.authDelegate)
-    private val dialogUXStateAggregator = DialogUXStateAggregator()
+    private val dialogUXStateAggregator =
+        DialogUXStateAggregator()
     override val asrAgent: AbstractASRAgent?
     override val textAgent: TextAgentInterface
     override val extensionAgent: AbstractExtensionAgent?
