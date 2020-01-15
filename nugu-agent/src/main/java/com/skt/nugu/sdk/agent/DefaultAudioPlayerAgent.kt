@@ -1163,11 +1163,6 @@ class DefaultAudioPlayerAgent(
     override fun onButtonPressed(button: PlaybackButton) {
         executor.submit {
             Logger.w(TAG, "[onButtonPressed] button: $button, state : $currentActivity")
-            if (!currentActivity.isActive()) {
-                Logger.w(TAG, "[onButtonPressed] not allowed in this state")
-                return@submit
-            }
-
             when (button) {
                 PlaybackButton.PLAY -> {
                     executeResume()
@@ -1180,9 +1175,6 @@ class DefaultAudioPlayerAgent(
                 PlaybackButton.STOP -> sendStopCommandIssued()
                 PlaybackButton.NEXT -> sendNextCommandIssued()
                 PlaybackButton.PREVIOUS -> sendPreviousCommandIssued()
-                else -> {
-                    Logger.w(TAG, "[onButtonPressed] not supported -  $button")
-                }
             }
         }
     }
