@@ -15,12 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.mediaplayer
 
-import com.skt.nugu.sdk.agent.mediaplayer.AttachmentPlayablePlayer
-import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
-import com.skt.nugu.sdk.agent.mediaplayer.SourceId
-import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
+import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import java.net.URI
 
@@ -64,9 +59,9 @@ class IntegratedMediaPlayer(
 
     override fun seekTo(id: SourceId, offsetInMilliseconds: Long): Boolean = activePlayer?.seekTo(id, offsetInMilliseconds) ?: false
 
-    override fun getOffset(id: SourceId): Long = activePlayer?.getOffset(id) ?: com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+    override fun getOffset(id: SourceId): Long = activePlayer?.getOffset(id) ?: MEDIA_PLAYER_INVALID_OFFSET
 
-    override fun getDuration(id: SourceId): Long = activePlayer?.getDuration(id) ?: com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+    override fun getDuration(id: SourceId): Long = activePlayer?.getDuration(id) ?: MEDIA_PLAYER_INVALID_OFFSET
 
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
         playbackEventListener = listener

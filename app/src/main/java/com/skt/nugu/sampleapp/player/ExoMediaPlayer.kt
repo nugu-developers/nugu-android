@@ -29,10 +29,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
-import com.skt.nugu.sdk.agent.mediaplayer.SourceId
-import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
+import com.skt.nugu.sdk.agent.mediaplayer.*
 import java.lang.ref.WeakReference
 import java.net.URI
 import java.util.concurrent.CountDownLatch
@@ -246,7 +243,7 @@ class ExoMediaPlayer(private val context: Context) :
             Log.d(TAG, "[getOffset] id: $id")
         }
 
-        return await(FuncMessage.GET_OFFSET, id) { it as? Long } ?: com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+        return await(FuncMessage.GET_OFFSET, id) { it as? Long } ?: MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @MainThread
@@ -255,7 +252,7 @@ class ExoMediaPlayer(private val context: Context) :
             return player.currentPosition
         }
 
-        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+        return MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @AnyThread
@@ -267,10 +264,10 @@ class ExoMediaPlayer(private val context: Context) :
         var duration = await(FuncMessage.GET_DURATION, id) { it as? Long }
         if(duration == C.TIME_UNSET) {
             duration =
-                com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+                MEDIA_PLAYER_INVALID_OFFSET
         }
 
-        return duration ?: com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+        return duration ?: MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @MainThread
@@ -279,7 +276,7 @@ class ExoMediaPlayer(private val context: Context) :
             return player.duration
         }
 
-        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+        return MEDIA_PLAYER_INVALID_OFFSET
     }
 
     @AnyThread
