@@ -19,5 +19,12 @@ dependencies {
     testImplementation "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
 }
 
+repositories {
+    mavenCentral()
+}
+
 sourceCompatibility = "8"
 targetCompatibility = "8"
+
+apply from: '../javadoc.gradle'
+apply from: '../publish.gradle'
