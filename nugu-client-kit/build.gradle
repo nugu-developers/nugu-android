@@ -26,13 +26,13 @@ dependencies {
 
     if (isReleaseMode) {
         api "com.skt.nugu.sdk:nugu-interface:$version"
+        api "com.skt.nugu.sdk:nugu-agent:$version"
         implementation "com.skt.nugu.sdk:nugu-core:$version"
     } else {
         api project(':nugu-interface')
+        api project(':nugu-agent')
         implementation project(':nugu-core')
     }
-
-    api project(':nugu-agent')
 
     implementation "io.grpc:grpc-protobuf-lite:${protobuf_version}"
     implementation "io.grpc:grpc-stub:${grpc_version}"
