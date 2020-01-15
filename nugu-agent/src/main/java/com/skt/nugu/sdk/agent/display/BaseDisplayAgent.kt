@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
-import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -394,7 +393,7 @@ abstract class BaseDisplayAgent(
         return dialogRequestId
     }
 
-    protected abstract fun getDisplayType(): DisplayAggregatorInterface.Type
+
 
     protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
 

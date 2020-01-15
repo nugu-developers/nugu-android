@@ -20,7 +20,6 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.display.BaseDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -204,9 +203,6 @@ class DefaultDisplayAgent(
         VERSION
 
     override fun getContextPriority(): Int = 100
-
-    override fun getDisplayType(): DisplayAggregatorInterface.Type =
-        DisplayAggregatorInterface.Type.INFOMATION
 
     override fun preHandleDirective(info: DirectiveInfo) {
         if (info.directive.getNamespaceAndName() != CLOSE) {

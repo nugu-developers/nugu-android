@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.agent.display
 
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -61,8 +60,6 @@ class DisplayAudioPlayerAgent(
         VERSION
 
     override fun getContextPriority(): Int = 300
-
-    override fun getDisplayType(): DisplayAggregatorInterface.Type = DisplayAggregatorInterface.Type.AUDIO_PLAYER
 
     override fun executeOnFocusBackground(info: DirectiveInfo) {
         // no-op
