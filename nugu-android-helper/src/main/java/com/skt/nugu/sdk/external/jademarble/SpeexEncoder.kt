@@ -17,8 +17,8 @@ package com.skt.nugu.sdk.external.jademarble
 
 import com.skt.nugu.jademarblelib.EpdEngine
 import com.skt.nugu.jademarblelib.TycheSpeexEncoder
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.asr.audio.Encoder
 
 /**
  * Porting class for [TycheSpeexEncoder] to use in NUGU SDK

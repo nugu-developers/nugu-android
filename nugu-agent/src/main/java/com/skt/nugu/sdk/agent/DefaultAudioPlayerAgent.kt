@@ -23,9 +23,8 @@ import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.playback.PlaybackButton
+import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
@@ -33,7 +32,11 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
+import com.skt.nugu.sdk.agent.display.DisplayInterface
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -125,7 +128,8 @@ class DefaultAudioPlayerAgent(
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
-    private var duration: Long = MEDIA_PLAYER_INVALID_OFFSET
+    private var duration: Long =
+        com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     private var playNextItemAfterStopped: Boolean = false
     private var playCalled = false
     private var stopCalled = false
@@ -500,7 +504,7 @@ class DefaultAudioPlayerAgent(
     private fun getOffsetInMilliseconds(): Long {
         if (!sourceId.isError()) {
             val offset = mediaPlayer.getOffset(sourceId)
-            if (offset != MEDIA_PLAYER_INVALID_OFFSET) {
+            if (offset != com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET) {
                 this.offset = offset
             }
         }
@@ -511,7 +515,7 @@ class DefaultAudioPlayerAgent(
     private fun getDurationInMilliseconds(): Long {
         if (!sourceId.isError()) {
             val temp = mediaPlayer.getDuration(sourceId)
-            if (temp != MEDIA_PLAYER_INVALID_OFFSET) {
+            if (temp != com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET) {
                 duration = temp
             }
         }
@@ -1021,7 +1025,7 @@ class DefaultAudioPlayerAgent(
                 addProperty("token", token)
             }
             addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-            if (getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
+            if (getDurationInMilliseconds() != com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET) {
                 addProperty("durationInMilliseconds", getDurationInMilliseconds())
             }
         }.toString(), policy, stateRequestToken)

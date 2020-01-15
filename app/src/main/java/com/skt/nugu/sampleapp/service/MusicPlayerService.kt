@@ -31,7 +31,7 @@ import android.widget.RemoteViews
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.NotificationTarget
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
+import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.application.SampleApplication
 import com.skt.nugu.sampleapp.client.ClientManager

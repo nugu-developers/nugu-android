@@ -23,9 +23,9 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.MediaPlayerInterface
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackHandler
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.agent.playback.PlaybackHandler
+import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 
 abstract class AbstractAudioPlayerAgent(
     protected val mediaPlayer: MediaPlayerInterface,

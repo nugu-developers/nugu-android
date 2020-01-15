@@ -16,12 +16,12 @@
 package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.client.agent.factory.*
-import com.skt.nugu.sdk.core.interfaces.audio.AudioProvider
-import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
+import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.microphone.Microphone
-import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
@@ -32,13 +32,13 @@ import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.PlayerFactory
+import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
-import com.skt.nugu.sdk.core.interfaces.encoder.Encoder
+import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
@@ -47,7 +47,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.system.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
-import com.skt.nugu.sdk.core.capabilityagents.playbackcontroller.PlaybackRouter
+import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
@@ -183,7 +183,7 @@ class NuguClient private constructor(
     private val inputProcessorManager = InputProcessorManager()
     private val directiveSequencer: DirectiveSequencer = DirectiveSequencer()
 
-    private val playbackRouter: com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter =
+    private val playbackRouter: com.skt.nugu.sdk.agent.playback.PlaybackRouter =
         PlaybackRouter()
 
     // CA
@@ -303,7 +303,7 @@ class NuguClient private constructor(
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
                 override fun getSpeakerFactory(): SpeakerFactory = speakerFactory
 
-                override fun getPlaybackRouter(): com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter = playbackRouter
+                override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter = playbackRouter
             }
 
             speakerManager = DefaultAgentFactory.SPEAKER.create(sdkContainer)
@@ -381,7 +381,7 @@ class NuguClient private constructor(
         return speakerManager.removeSpeakerManagerObserver(listener)
     }
 
-    override fun getPlaybackRouter(): com.skt.nugu.sdk.core.interfaces.playback.PlaybackRouter =
+    override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
         playbackRouter
 
     override fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {

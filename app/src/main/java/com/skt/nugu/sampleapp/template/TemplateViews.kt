@@ -31,7 +31,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.playback.PlaybackButton
+import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sampleapp.template.view.ItemTextList2
 import com.skt.nugu.sampleapp.template.view.viewholder.TemplateViewHolder
 import com.skt.nugu.sampleapp.R
@@ -39,7 +39,7 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayText
 import com.skt.nugu.sampleapp.template.view.BaseView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
-import com.skt.nugu.sdk.core.interfaces.display.DisplayInterface
+import com.skt.nugu.sdk.agent.display.DisplayInterface
 
 class TemplateViews {
     companion object {
@@ -133,19 +133,23 @@ class TemplateViews {
                         }
 
                         prev.setOnClickListener {
-                            ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.PREVIOUS)
+                            ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                                PlaybackButton.PREVIOUS)
                         }
 
                         play.setOnClickListener {
                             if(ClientManager.playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
-                                ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.PAUSE)
+                                ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                                    PlaybackButton.PAUSE)
                             } else {
-                                ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.PLAY)
+                                ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                                    PlaybackButton.PLAY)
                             }
                         }
 
                         next.setOnClickListener {
-                            ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.NEXT)
+                            ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                                PlaybackButton.NEXT)
                         }
                     }
                 }

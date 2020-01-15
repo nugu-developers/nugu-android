@@ -20,9 +20,9 @@ import com.skt.nugu.jademarblelib.TycheEdgePointDetectorStateObserver
 import com.skt.nugu.jademarblelib.TycheEndPointDetector
 import com.skt.nugu.jademarblelib.TycheEndPointDetectorInterface
 import com.skt.nugu.jademarblelib.core.AudioInput
-import com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
-import com.skt.nugu.sdk.core.interfaces.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 
 /**
  * Porting class for [TycheEndPointDetector] to use in NUGU SDK

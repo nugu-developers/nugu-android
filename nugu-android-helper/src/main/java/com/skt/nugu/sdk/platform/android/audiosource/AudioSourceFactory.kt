@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.audiosource
 
-import com.skt.nugu.sdk.core.interfaces.audio.AudioFormat
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 
 /**
  * The factory interface to create [AudioSource] and the format

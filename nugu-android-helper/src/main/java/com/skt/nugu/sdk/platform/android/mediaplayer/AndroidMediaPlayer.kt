@@ -20,7 +20,10 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.util.Log
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.mediaplayer.*
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
+import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import java.net.URI
 
 /**
@@ -146,7 +149,7 @@ class AndroidMediaPlayer(
             return player.currentPosition.toLong()
         }
 
-        return MEDIA_PLAYER_INVALID_OFFSET
+        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     override fun getDuration(id: SourceId): Long {
@@ -154,7 +157,7 @@ class AndroidMediaPlayer(
             return player.duration.toLong()
         }
 
-        return MEDIA_PLAYER_INVALID_OFFSET
+        return com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
     }
 
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
