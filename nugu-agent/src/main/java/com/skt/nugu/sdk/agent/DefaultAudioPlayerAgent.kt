@@ -33,10 +33,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.display.DisplayInterface
-import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
-import com.skt.nugu.sdk.agent.mediaplayer.SourceId
+import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -129,7 +126,7 @@ class DefaultAudioPlayerAgent(
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
     private var duration: Long =
-        com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET
+        MEDIA_PLAYER_INVALID_OFFSET
     private var playNextItemAfterStopped: Boolean = false
     private var playCalled = false
     private var stopCalled = false
@@ -504,7 +501,7 @@ class DefaultAudioPlayerAgent(
     private fun getOffsetInMilliseconds(): Long {
         if (!sourceId.isError()) {
             val offset = mediaPlayer.getOffset(sourceId)
-            if (offset != com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET) {
+            if (offset != MEDIA_PLAYER_INVALID_OFFSET) {
                 this.offset = offset
             }
         }
@@ -515,7 +512,7 @@ class DefaultAudioPlayerAgent(
     private fun getDurationInMilliseconds(): Long {
         if (!sourceId.isError()) {
             val temp = mediaPlayer.getDuration(sourceId)
-            if (temp != com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET) {
+            if (temp != MEDIA_PLAYER_INVALID_OFFSET) {
                 duration = temp
             }
         }
@@ -1025,7 +1022,7 @@ class DefaultAudioPlayerAgent(
                 addProperty("token", token)
             }
             addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-            if (getDurationInMilliseconds() != com.skt.nugu.sdk.agent.mediaplayer.MEDIA_PLAYER_INVALID_OFFSET) {
+            if (getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
                 addProperty("durationInMilliseconds", getDurationInMilliseconds())
             }
         }.toString(), policy, stateRequestToken)
