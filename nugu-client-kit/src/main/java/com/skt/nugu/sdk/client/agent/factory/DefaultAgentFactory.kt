@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.delegation.AbstractDelegation
 import com.skt.nugu.sdk.core.interfaces.capability.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.core.interfaces.capability.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.core.interfaces.capability.light.AbstractLightAgent
-import com.skt.nugu.sdk.core.interfaces.capability.location.AbstractLocationAgent
+import com.skt.nugu.sdk.core.interfaces.capability.location.    AbstractLocationAgent
 import com.skt.nugu.sdk.core.interfaces.capability.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.core.interfaces.capability.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.core.interfaces.capability.speaker.AbstractSpeakerAgent

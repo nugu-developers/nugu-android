@@ -223,11 +223,12 @@ class DefaultTextAgent(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveResponse(dialogRequestId: String, header: Header) {
+    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
         Logger.d(TAG, "[onReceiveResponse] $header")
         executor.submit {
             requestListeners.remove(dialogRequestId)?.onReceiveResponse()
         }
+        return true
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {

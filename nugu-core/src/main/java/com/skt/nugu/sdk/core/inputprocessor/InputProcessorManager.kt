@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.core.inputprocessor
 
 import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupHandler
-import com.skt.nugu.sdk.core.interfaces.capability.asr.AbstractASRAgent
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -40,7 +39,7 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupHand
         for (directive in directives) {
             try {
                 val header = directive.header
-                if(!timeoutFutureRemoved && header.namespace != AbstractASRAgent.NAMESPACE) {
+                if(onReceiveDirective(header.dialogRequestId, header) && !timeoutFutureRemoved) {
                     timeoutFutureRemoved = true
                     header.dialogRequestId.let {
                         removedDialogRequestId = it
@@ -48,7 +47,6 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupHand
                         timeoutFutureMap.remove(it)
                     }
                 }
-                onReceiveResponse(header.dialogRequestId, header)
             } catch (th: Throwable) {
                 // ignore
             }
@@ -78,12 +76,13 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupHand
         }
     }
 
-    private fun onReceiveResponse(dialogRequestId: String, header: Header) {
+    private fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
         val inputProcessor = requests[dialogRequestId]
-        if (inputProcessor != null) {
-            inputProcessor.onReceiveResponse(dialogRequestId, header)
+        return if (inputProcessor != null) {
+            inputProcessor.onReceiveDirective(dialogRequestId, header)
         } else {
             Logger.w(TAG, "[receiveResponse] no input processor for $dialogRequestId")
+            false
         }
     }
 
