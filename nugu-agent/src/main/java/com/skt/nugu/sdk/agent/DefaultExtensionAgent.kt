@@ -29,14 +29,20 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 class DefaultExtensionAgent(
     contextManager: ContextManagerInterface,
-    messageSender: MessageSender
-) : AbstractExtensionAgent(contextManager, messageSender) {
+    messageSender: MessageSender,
+    private val inputProcessorManager: InputProcessorManagerInterface
+) : AbstractExtensionAgent(contextManager, messageSender), InputProcessor {
 
     internal data class ExtensionPayload(
         @SerializedName("playServiceId")
@@ -51,11 +57,13 @@ class DefaultExtensionAgent(
         private const val NAME_ACTION = "Action"
         private const val NAME_ACTION_SUCCEEDED = "ActionSucceeded"
         private const val NAME_ACTION_FAILED = "ActionFailed"
+        private const val NAME_COMMAND_ISSUED = "CommandIssued"
 
         private val ACTION = NamespaceAndName(
             NAMESPACE,
             NAME_ACTION
         )
+
         private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
         private const val PAYLOAD_DATA = "data"
     }
@@ -63,10 +71,10 @@ class DefaultExtensionAgent(
     override val namespaceAndName: NamespaceAndName =
         NamespaceAndName("supportedInterfaces", NAMESPACE)
     private val executor = Executors.newSingleThreadExecutor()
+    private val issueCommandCallbackMap = ConcurrentHashMap<String, ExtensionAgentInterface.OnCommandIssuedCallback>()
 
     private var client: ExtensionAgentInterface.Client? = null
 
-    private val jsonParser = JsonParser()
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
@@ -80,7 +88,7 @@ class DefaultExtensionAgent(
         addProperty("version", VERSION)
         client?.getData()?.let {
             try {
-                add("data", jsonParser.parse(it).asJsonObject)
+                add("data", JsonParser.parseString(it).asJsonObject)
             } catch (th: Throwable) {
                 Logger.e(TAG, "[buildContext] error to create data json object.", th)
             }
@@ -193,5 +201,59 @@ class DefaultExtensionAgent(
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
+    }
+
+    override fun issueCommand(
+        playServiceId: String,
+        data: String,
+        callback: ExtensionAgentInterface.OnCommandIssuedCallback?
+    ): String {
+        Logger.d(TAG, "[issueCommand] playServiceId: $playServiceId, data: $data, callback: $callback")
+        val jsonData = try {
+            JsonParser.parseString(data).asJsonObject
+        } catch(th: Throwable) {
+            throw IllegalArgumentException(th)
+        }
+
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, NAME_COMMAND_ISSUED, VERSION)
+                    .dialogRequestId(dialogRequestId)
+                    .payload(JsonObject().apply {
+                        addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
+                        add(PAYLOAD_DATA, jsonData)
+                    }.toString()).build()
+
+                if(!messageSender.sendMessage(request)) {
+                    callback?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.REQUEST_FAIL)
+                } else {
+                    callback?.let {
+                        issueCommandCallbackMap[dialogRequestId]
+                    }
+                    onSendEventFinished(dialogRequestId)
+                }
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                callback?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.REQUEST_FAIL)
+            }
+        }, namespaceAndName)
+
+        return dialogRequestId
+    }
+
+    override fun onSendEventFinished(dialogRequestId: String) {
+        inputProcessorManager.onRequested(this, dialogRequestId)
+    }
+
+    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
+        issueCommandCallbackMap.remove(dialogRequestId)?.onSuccess(dialogRequestId)
+        return true
+    }
+
+    override fun onResponseTimeout(dialogRequestId: String) {
+        issueCommandCallbackMap.remove(dialogRequestId)?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 }

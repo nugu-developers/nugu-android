@@ -159,7 +159,8 @@ object DefaultAgentFactory {
             if(client != null) {
                 DefaultExtensionAgent(
                     getContextManager(),
-                    getMessageSender()
+                    getMessageSender(),
+                    getInputManagerProcessor()
                 ).apply {
                     getDirectiveSequencer().addDirectiveHandler(this)
                     setClient(client)
