@@ -26,6 +26,6 @@ abstract class AbstractExtensionAgent(
     , ExtensionAgentInterface {
     companion object {
         const val NAMESPACE = "Extension"
-        const val VERSION = "1.0"
+        const val VERSION = "1.1"
     }
 }

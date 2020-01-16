@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.extension
 
+import com.skt.nugu.sdk.core.interfaces.common.EventCallback
+
 /**
  * The public interface for ExtensionAgent
  */
@@ -40,8 +42,28 @@ interface ExtensionAgentInterface {
     }
 
     /**
+     * enum class for ErrorType
+     */
+    enum class ErrorType {
+        REQUEST_FAIL,
+        RESPONSE_TIMEOUT
+    }
+
+    /**
+     * callback interface for [issueCommand]
+     */
+    interface OnCommandIssuedCallback : EventCallback<ErrorType>
+
+    /**
      * Set the client which interact with agent
      * @param client the client which interact with agent
      */
     fun setClient(client: Client)
+
+    /** Issue command to NUGU
+     * @param playServiceId the playServiceId at which command delivered.
+     * @param data a data string in structured JSON
+     * @return the dialogRequestId for request
+     */
+    fun issueCommand(playServiceId: String, data: String, callback: OnCommandIssuedCallback?): String
 }
