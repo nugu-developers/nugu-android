@@ -18,22 +18,20 @@ package com.skt.nugu.sdk.core.utils
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
-import java.util.*
+import java.util.Date
 
 /**
  * A class that represents an immutable universally unique identifier.
  * A UUID represents a 128-bit value.
  */
-class UUIDGeneration {
+class UUIDGeneration(data: ByteArray) {
     private var mostSigBits: Long = 0
     private var leastSigBits: Long = 0
 
-    private constructor (data: ByteArray) {
+    init {
         var msb: Long = 0
         var lsb: Long = 0
-
         assert(data.size == 16 || data.size == 8) { "data must be 16 or 8 bytes in length" }
-
         for (i in 0..7) {
             if (data.size > i) {
                 msb = msb shl 8 or (data[i].toLong() and 0xff)
@@ -44,7 +42,6 @@ class UUIDGeneration {
                 lsb = lsb shl 8 or (data[i].toLong() and 0xff)
             }
         }
-
         this.mostSigBits = msb
         this.leastSigBits = lsb
     }
@@ -77,10 +74,10 @@ class UUIDGeneration {
     /**
      * Indicates whether some other object is "equal to" this one.
      */
-    override fun equals(obj: Any?): Boolean {
-        if (null == obj || obj.javaClass != UUIDGeneration::class.java)
+    override fun equals(other: Any?): Boolean {
+        if (null == other || other.javaClass != UUIDGeneration::class.java)
             return false
-        val id = obj as UUIDGeneration
+        val id = other as UUIDGeneration
         return mostSigBits == id.mostSigBits && leastSigBits == id.leastSigBits
     }
 
@@ -96,7 +93,7 @@ class UUIDGeneration {
     companion object {
         private const val TAG = "UUIDGeneration"
 
-        private val VERSION = 0
+        private val VERSION = 0x01
         // 2019/1/1 AM 12:00:00.000
         private val BASE_TIME = 1546300800000L
 
@@ -106,64 +103,67 @@ class UUIDGeneration {
          * the key is unique id.
          * generate random if key is null
          */
-        var key: String? = null
-        /**
-         * Phases that can be used
-         */
-        var phase: Int = 0
+        private var key: String? = null
 
-        /** 16byte base16 hexa string (8bytes binary) */
+        /**
+         * 64-bit(8bytes) base16 hexa string  (16-digit string)
+         */
         fun shortUUID(): UUIDGeneration {
-            UUID.randomUUID()
             val bytes = ByteArray(8)
             numberGenerator.nextBytes(bytes)
             return UUIDGeneration(bytes)
         }
 
-        /** 32byte base16 hexa string (16bytes binary) */
+        /**
+         * 128-bit(16 bytes) base16 hexa string (32-digit string)
+        +------------+-------+
+        | field name | bytes |
+        +--------------------+
+        | time       |   5   |
+        | version    |   1   |
+        | hash       |   6   |
+        | random     |   4   |
+        +--------------------+
+         **/
         fun timeUUID(): UUIDGeneration {
             val uuidBytes = ByteArray(16)
 
-            val header = (VERSION shl 6 or phase).toByte()
-            val random = numberGenerator.nextInt()
-
-            val randomWithHeader = random and 0x00FFFFFF or (header.toInt() shl 24)
-            val time = (Date().time - BASE_TIME) / 100
-            var msb = time shl 32 or (randomWithHeader.toLong() and 0xFFFFFFFFL)
-
-            System.arraycopy(
-                getHash(
-                    key
-                ), 0, uuidBytes, 8, 8)
-
-            for (i in 7 downTo 0) {
-                uuidBytes[i] = (msb and 0xFF).toByte()
-                msb = msb shr 8
+            /* time : 5 byte  */
+            var time = Date().time - BASE_TIME
+            for (i in 4 downTo 0) {
+                uuidBytes[i] = (time and 0xFF).toByte()
+                time = time shr 8
             }
-            return UUIDGeneration(
-                uuidBytes
-            )
+
+            /* version : 1 byte  */
+            uuidBytes[5] = VERSION.toByte()
+
+            /* hash : 6 byte  */
+            System.arraycopy(hashKey(), 0, uuidBytes, 6, 6)
+
+            /* random : 4 byte  */
+            var random = numberGenerator.nextInt()
+            for (i in 15 downTo 12) {
+                uuidBytes[i] = (random and 0xFF).toByte()
+                random = random shr 8
+            }
+
+            return UUIDGeneration(uuidBytes)
         }
 
         /**
          * Generate a hash string.
          * @return a hash as an ByteArray.
          * */
-        private fun getHash(key: String?): ByteArray {
-            if (key == null) {
-                // if deviceId null, Makes a random
-                val bytes = ByteArray(8)
-                numberGenerator.nextBytes(bytes)
-                return bytes
-            }
-            val data = key.toByteArray(charset("UTF-8"))
-            val md: MessageDigest
+        private fun hashKey(): ByteArray {
+            this.key = this.key ?: shortUUID().toString()
             try {
-                md = MessageDigest.getInstance("SHA-1")
+                val md = MessageDigest.getInstance("SHA-1")
+                val bytes = key!!.toByteArray(charset("UTF-8"))
+                return md.digest(bytes)
             } catch (e: NoSuchAlgorithmException) {
                 throw Exception("SHA-1 not supported", e)
             }
-            return md.digest(data)
         }
     }
 }
