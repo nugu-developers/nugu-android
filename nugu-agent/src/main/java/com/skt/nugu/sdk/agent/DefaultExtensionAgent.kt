@@ -230,7 +230,7 @@ class DefaultExtensionAgent(
                     callback?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.REQUEST_FAIL)
                 } else {
                     callback?.let {
-                        issueCommandCallbackMap[dialogRequestId]
+                        issueCommandCallbackMap[dialogRequestId] = it
                     }
                     onSendEventFinished(dialogRequestId)
                 }
