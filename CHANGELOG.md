@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.8.0 *(2020-01-16)*
+----------------------------
+ * Fix: not work play synchronization properly (#157) (side effect for #164)
+ * Fix: Allow plaback button efvent at any state (#183)
+ * Improve: Core module independent of capability agent (#168)
+     * implementaion of agents are separated into new nugu-agent module.
+     * (Caution) Many components have been relocated. Check import carefully on update.
+	 
 Version 0.7.3 *(2020-01-08)*
 ----------------------------
  * New: Support plugin agent (#164)
