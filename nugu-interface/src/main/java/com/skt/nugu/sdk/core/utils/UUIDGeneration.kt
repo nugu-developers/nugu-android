@@ -24,7 +24,7 @@ import java.util.Date
  * A class that represents an immutable universally unique identifier.
  * A UUID represents a 128-bit value.
  */
-class UUIDGeneration(data: ByteArray) {
+class UUIDGeneration(private data: ByteArray) {
     private var mostSigBits: Long = 0
     private var leastSigBits: Long = 0
 
