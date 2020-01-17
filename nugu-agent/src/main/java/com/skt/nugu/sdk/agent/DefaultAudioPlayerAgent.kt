@@ -191,14 +191,35 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeCancelAudioInfo(audioInfo: AudioInfo) {
-        if (nextItem == audioInfo) {
-            executeCancelNextItem()
-        } else if (currentItem == audioInfo) {
-            executeStop()
-        } else {
-            playSynchronizer.releaseSyncImmediately(audioInfo, audioInfo.onReleaseCallback)
-            audioInfo.playContext?.let {
-                playStackManager.remove(it)
+        when {
+            nextItem == audioInfo -> {
+                Logger.d(TAG, "[executeCancelAudioInfo] cancel next item")
+                executeCancelNextItem()
+            }
+            currentItem == audioInfo -> {
+                Logger.d(TAG, "[executeCancelAudioInfo] cancel current item")
+                executeStop()
+            }
+            else -> {
+                Logger.d(TAG, "[executeCancelAudioInfo] cancel outdated item")
+                notifyOnReleaseAudioInfo(audioInfo)
+            }
+        }
+    }
+
+    private fun notifyOnReleaseAudioInfo(info: AudioInfo, delay: Long? = null) {
+        Logger.d(TAG, "[notifyOnReleaseAudioInfo] $info")
+        with(info) {
+            if(delay == null) {
+                playSynchronizer.releaseSyncImmediately(this, onReleaseCallback)
+                playContext?.let {
+                    playStackManager.remove(it)
+                }
+            } else {
+                playSynchronizer.releaseSync(this, this.onReleaseCallback)
+                playContext?.let {
+                    playStackManager.removeDelayed(it, delay)
+                }
             }
         }
     }
@@ -220,7 +241,7 @@ class DefaultAudioPlayerAgent(
         }
 
         val playServiceId = playPayload.playServiceId
-        if (playServiceId.isNullOrBlank()) {
+        if (playServiceId.isBlank()) {
             Logger.w(TAG, "[preHandlePlayDirective] playServiceId is empty")
             setHandlingFailed(info, "[preHandlePlayDirective] playServiceId is empty")
             return
@@ -272,11 +293,7 @@ class DefaultAudioPlayerAgent(
             return
         }
         Logger.d(TAG, "[executeCancelNextItem] cancel next item : $item")
-
-        playSynchronizer.releaseSyncImmediately(item, item.onReleaseCallback)
-        item.playContext?.let {
-            playStackManager.remove(it)
-        }
+        notifyOnReleaseAudioInfo(item)
     }
 
     private fun handlePauseDirective(info: DirectiveInfo) {
@@ -302,10 +319,7 @@ class DefaultAudioPlayerAgent(
         val item = nextItem ?: return
 
         if (info.directive.getMessageId() == item.directive.getMessageId()) {
-            playSynchronizer.releaseSyncImmediately(item, item.onReleaseCallback)
-            item.playContext?.let {
-                playStackManager.remove(it)
-            }
+            notifyOnReleaseAudioInfo(item)
         }
     }
 
@@ -319,16 +333,13 @@ class DefaultAudioPlayerAgent(
             return
         }
 
-        if (needStopCurrentPlayer(currentItem, nextItem)) {
-            if (currentItem != null && currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-                pauseReason =
-                    PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY
-            }
-            executeStop(true)
-        } else {
-            if (currentItem != null && currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-                pauseReason =
-                    PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME
+        val hasSameToken = hasSameToken(currentItem, nextItem)
+
+        if (currentItem != null && currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
+            pauseReason = if(hasSameToken) {
+                PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME
+            } else {
+                PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY
             }
         }
 
@@ -345,9 +356,14 @@ class DefaultAudioPlayerAgent(
                     "Could not acquire $channelName for $NAMESPACE"
                 )
             }
-            return
+        } else if(currentActivity == AudioPlayerAgentInterface.State.PLAYING){
+            if(hasSameToken) {
+                executePlayNextItem()
+            } else {
+                executeStop(true)
+            }
         } else {
-            executePlayNextItem()
+            executeOnForegroundFocus()
         }
     }
 
@@ -365,19 +381,15 @@ class DefaultAudioPlayerAgent(
         return cacheNextItem.directive.getMessageId() == info.directive.getMessageId()
     }
 
-    private fun needStopCurrentPlayer(
+    private fun hasSameToken(
         currentItem: AudioInfo?,
         nextItem: AudioInfo?
     ): Boolean {
-        if (currentItem == null) {
+        if (currentItem == null || nextItem == null) {
             return false
         }
 
-        if (nextItem == null) {
-            return false
-        }
-
-        return currentItem.payload.audioItem.stream.token != nextItem.payload.audioItem.stream.token
+        return currentItem.payload.audioItem.stream.token == nextItem.payload.audioItem.stream.token
     }
 
     private fun executeResume() {
@@ -690,7 +702,7 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnPlaybackStopped(id: SourceId, isError: Boolean = false) {
-        Logger.d(TAG, "[executeOnPlaybackStopped] nextItem : $nextItem, $isError: $isError")
+        Logger.d(TAG, "[executeOnPlaybackStopped] nextItem : $nextItem, isError: $isError")
         if (id.id != sourceId.id) {
             Logger.e(TAG, "[executeOnPlaybackStopped] nextItem : $nextItem")
             return
@@ -770,15 +782,9 @@ class DefaultAudioPlayerAgent(
         val syncObject = currentItem ?: return
 
         if (byStop) {
-            playSynchronizer.releaseSyncImmediately(syncObject, syncObject.onReleaseCallback)
-            syncObject.playContext?.let {
-                playStackManager.remove(it)
-            }
+            notifyOnReleaseAudioInfo(syncObject)
         } else {
-            playSynchronizer.releaseSync(syncObject, syncObject.onReleaseCallback)
-            syncObject.playContext?.let {
-                playStackManager.removeDelayed(it, 7000L)
-            }
+            notifyOnReleaseAudioInfo(syncObject, 7000L)
         }
     }
 
@@ -795,73 +801,93 @@ class DefaultAudioPlayerAgent(
 
         when (newFocus) {
             FocusState.FOREGROUND -> {
-                when (currentActivity) {
-                    AudioPlayerAgentInterface.State.IDLE,
-                    AudioPlayerAgentInterface.State.STOPPED,
-                    AudioPlayerAgentInterface.State.FINISHED -> {
-                        if (nextItem != null) {
-                            executePlayNextItem()
-                        }
-                        return
-                    }
-                    AudioPlayerAgentInterface.State.PAUSED -> {
-                        if (pauseReason == PauseReason.BY_PAUSE_DIRECTIVE || pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY) {
-                            Logger.d(
-                                TAG,
-                                "[executeOnFocusChanged] skip resume, because player has been paused :$pauseReason."
-                            )
-                            return
-                        }
-
-                        if (pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME) {
-                            Logger.d(
-                                TAG,
-                                "[executeOnFocusChanged] will be resume by next item"
-                            )
-                            executePlayNextItem()
-                            return
-                        }
-
-                        if (!mediaPlayer.resume(sourceId)) {
-                            focusManager.releaseChannel(channelName, this)
-                            return
-                        }
-                        return
-                    }
-                    else -> {
-                    }
-                }
+                executeOnForegroundFocus()
             }
             FocusState.BACKGROUND -> {
-                when (currentActivity) {
-                    AudioPlayerAgentInterface.State.STOPPED -> {
-                        if (playNextItemAfterStopped && nextItem != null) {
-                            playNextItemAfterStopped = false
-                            return
-                        }
-                    }
-                    AudioPlayerAgentInterface.State.FINISHED,
-                    AudioPlayerAgentInterface.State.IDLE,
-                    AudioPlayerAgentInterface.State.PAUSED,
-                    AudioPlayerAgentInterface.State.PLAYING -> {
-                        if (!sourceId.isError()) {
-                            mediaPlayer.pause(sourceId)
-                        }
-                        return
-                    }
-                }
+                executeOnBackgroundFocus()
             }
             FocusState.NONE -> {
-                when (currentActivity) {
-                    AudioPlayerAgentInterface.State.PAUSED,
-                    AudioPlayerAgentInterface.State.PLAYING -> {
-                        executeCancelNextItem()
-                        executeStop()
-                        return
-                    }
+                executeOnNoneFocus()
+            }
+        }
+    }
+
+    private fun executeOnForegroundFocus() {
+        Logger.d(
+            TAG,
+            "[executeOnForegroundFocus] currentActivity :$currentActivity."
+        )
+        when (currentActivity) {
+            AudioPlayerAgentInterface.State.IDLE,
+            AudioPlayerAgentInterface.State.STOPPED,
+            AudioPlayerAgentInterface.State.FINISHED -> {
+                if (nextItem != null) {
+                    executePlayNextItem()
                 }
                 return
             }
+            AudioPlayerAgentInterface.State.PAUSED -> {
+                if (pauseReason == PauseReason.BY_PAUSE_DIRECTIVE) {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] skip resume, because player has been paused :$pauseReason."
+                    )
+                    return
+                }
+
+                if(pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY) {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] will be start next item after stop current item completely."
+                    )
+                    executeStop(true)
+                    return
+                }
+
+                if (pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME) {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] will be resume by next item"
+                    )
+                    executePlayNextItem()
+                    return
+                }
+
+                if (!mediaPlayer.resume(sourceId)) {
+                    focusManager.releaseChannel(channelName, this)
+                    return
+                }
+                return
+            }
+            else -> {
+            }
+        }
+    }
+
+    private fun executeOnBackgroundFocus() {
+        when (currentActivity) {
+            AudioPlayerAgentInterface.State.STOPPED -> {
+                if (playNextItemAfterStopped && nextItem != null) {
+                    playNextItemAfterStopped = false
+                    return
+                }
+            }
+            AudioPlayerAgentInterface.State.FINISHED,
+            AudioPlayerAgentInterface.State.IDLE,
+            AudioPlayerAgentInterface.State.PAUSED,
+            AudioPlayerAgentInterface.State.PLAYING -> {
+                if (!sourceId.isError()) {
+                    mediaPlayer.pause(sourceId)
+                }
+                return
+            }
+        }
+    }
+
+    private fun executeOnNoneFocus() {
+        if(currentActivity.isActive()) {
+            executeCancelNextItem()
+            executeStop()
         }
     }
 
@@ -879,10 +905,7 @@ class DefaultAudioPlayerAgent(
 
         currentPlayItem.let {
             currentItem?.let { info ->
-                playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
-                info.playContext?.let { playContext ->
-                    playStackManager.remove(playContext)
-                }
+                notifyOnReleaseAudioInfo(info)
             }
             currentItem = it
             nextItem = null

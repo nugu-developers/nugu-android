@@ -28,6 +28,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
+import com.skt.nugu.sdk.core.utils.Logger
 
 internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener {
     companion object {
@@ -124,6 +125,7 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
     }
 
     override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
+        Log.d(TAG, "[onStateChanged] activity: $activity")
         updatePlayButton(activity)
     }
 
