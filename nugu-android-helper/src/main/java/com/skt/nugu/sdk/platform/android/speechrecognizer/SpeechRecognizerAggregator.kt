@@ -133,7 +133,12 @@ class SpeechRecognizerAggregator(
     private val isStartListeningWithTriggering = AtomicBoolean(false)
 
     override fun startListeningWithTrigger() {
-        if(isStartListeningWithTriggering.compareAndSet(false, true) && keywordDetectorState == KeywordDetectorStateObserver.State.INACTIVE) {
+        if(isStartListeningWithTriggering.compareAndSet(false, true)) {
+            if(keywordDetectorState == KeywordDetectorStateObserver.State.ACTIVE) {
+                isStartListeningWithTriggering.compareAndSet(true, false)
+                return
+            }
+
             val inputStream = audioProvider.acquireAudioInputStream(keywordDetector)
             Log.d(TAG, "[startListeningWithTrigger] start with input stream - $inputStream")
 
@@ -190,11 +195,11 @@ class SpeechRecognizerAggregator(
                         if(!result.get()) {
                             it.release()
                         }
-                        isStartListeningWithTriggering.set(false)
+                        isStartListeningWithTriggering.compareAndSet(true, false)
                     }
                 }
             } else {
-                isStartListeningWithTriggering.set(false)
+                isStartListeningWithTriggering.compareAndSet(true, false)
             }
         } else {
             Log.d(TAG, "[startListeningWithTrigger] failed - already executing")
