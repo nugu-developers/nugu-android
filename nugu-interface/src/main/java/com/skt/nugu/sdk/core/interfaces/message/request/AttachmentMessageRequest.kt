@@ -36,6 +36,7 @@ data class AttachmentMessageRequest(
     val namespace: String,
     val name: String,
     val version: String,
+    val referrerDialogRequestId: String,
     val seq: Int,
     val isEnd: Boolean,
     var byteArray: ByteArray?

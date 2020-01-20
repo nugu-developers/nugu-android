@@ -22,12 +22,14 @@ package com.skt.nugu.sdk.core.interfaces.message
  * @param name the name of directive
  * @param namespace the namespace of directive
  * @param version the version
+ * @param referrerDialogRequestId the referrer dialog request Id
  */
 data class Header(
     val dialogRequestId: String,
     val messageId: String,
     val name: String,
     val namespace: String,
-    val version: String
+    val version: String,
+    val referrerDialogRequestId: String
 )
 

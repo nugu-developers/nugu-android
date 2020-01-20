@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.*
@@ -207,6 +208,7 @@ class DefaultSystemAgent(
      */
     override fun handleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[handleDirective] $info")
+
         when (info.directive.getName()) {
             NAME_RESET_USER_INACTIVITY -> handleResetUserInactivity(info)
             NAME_HANDOFF_CONNECTION -> handleHandoffConnection(info)
@@ -303,7 +305,15 @@ class DefaultSystemAgent(
     private fun handleUpdateState(info: DirectiveInfo) {
         Logger.d(TAG, "[handleUpdateState] $info")
         executor.submit {
-            executeSynchronizeStateEvent()
+            with(info.directive.header) {
+                executeSynchronizeStateEvent(
+                    if (referrerDialogRequestId.isBlank()) {
+                        dialogRequestId
+                    } else {
+                        referrerDialogRequestId
+                    }
+                )
+            }
         }
     }
 
@@ -359,10 +369,14 @@ class DefaultSystemAgent(
      * @see [onEcho]
      */
     private fun executeEchoEvent() {
-        sendEvent(EVENT_NAME_ECHO, VERSION)
+        sendEvent(EVENT_NAME_ECHO)
     }
 
-    private fun sendEvent(name: String, payload: String? = null) {
+    private fun sendEvent(
+        name: String,
+        referrerDialogRequestId: String? = null,
+        payload: String? = null
+    ) {
         val tempNamespaceAndName = if (name == EVENT_NAME_SYNCHRONIZE_STATE) {
             null
         } else {
@@ -375,6 +389,10 @@ class DefaultSystemAgent(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).also {
                         if (payload != null) {
                             it.payload(payload)
+                        }
+
+                        if(referrerDialogRequestId != null) {
+                            it.referrerDialogRequestId(referrerDialogRequestId)
                         }
                     }.build()
                 )
@@ -446,8 +464,8 @@ class DefaultSystemAgent(
     /**
      * Executes a synchronize state in thread.
      */
-    private fun executeSynchronizeStateEvent() {
-        sendEvent(EVENT_NAME_SYNCHRONIZE_STATE)
+    private fun executeSynchronizeStateEvent(referrerDialogRequestId: String? = null) {
+        sendEvent(EVENT_NAME_SYNCHRONIZE_STATE, referrerDialogRequestId)
     }
 
     /**
