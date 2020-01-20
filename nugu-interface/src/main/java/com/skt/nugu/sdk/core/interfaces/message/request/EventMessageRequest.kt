@@ -37,7 +37,7 @@ data class EventMessageRequest(
     val name: String,
     val version: String,
     val payload: String,
-    val referrerDialogRequestId: String?
+    val referrerDialogRequestId: String
 ) : MessageRequest {
 
     /**
@@ -56,7 +56,7 @@ data class EventMessageRequest(
         private var messageId: String = UUIDGeneration.shortUUID().toString()
         private var dialogRequestId: String = UUIDGeneration.timeUUID().toString()
         private var payload: String = "{}"
-        private var referrerDialogRequestId: String? = null
+        private var referrerDialogRequestId: String = ""
 
         /**
          * Set messageId

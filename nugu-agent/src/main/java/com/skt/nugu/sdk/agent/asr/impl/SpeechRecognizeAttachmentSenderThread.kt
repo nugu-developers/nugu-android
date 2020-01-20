@@ -123,6 +123,7 @@ class SpeechRecognizeAttachmentSenderThread(
                 AbstractASRAgent.NAMESPACE,
                 DefaultASRAgent.NAME_RECOGNIZE,
                 AbstractASRAgent.VERSION,
+                request.dialogRequestId,
                 currentAttachmentSequenceNumber,
                 encoded == null,
                 encoded

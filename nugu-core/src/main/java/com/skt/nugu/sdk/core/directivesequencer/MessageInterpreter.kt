@@ -139,7 +139,8 @@ class MessageInterpreter(
         jsonObject["messageId"].asString,
         jsonObject["name"].asString,
         jsonObject["namespace"].asString,
-        jsonObject["version"].asString
+        jsonObject["version"].asString,
+        jsonObject["referrerDialogRequestId"].asString
     )
 
     private fun createContent(jsonObject: JsonObject): ByteArray = gson.fromJson(jsonObject["bytes"].asJsonArray, ByteArray::class.java)

@@ -76,7 +76,7 @@ class AudioPlayerDirectivePreProcessor :
             return processedDirectives
         }
 
-        val audioDisplayDirective = createAudioDisplayDirective(metaData.template, audioPlayerPlayDirective.getDialogRequestId(), playPayload)
+        val audioDisplayDirective = createAudioDisplayDirective(metaData.template, audioPlayerPlayDirective.header, playPayload)
 
         if (audioDisplayDirective == null) {
             Logger.d(TAG, "[preprocess] metaData template is null.")
@@ -91,7 +91,7 @@ class AudioPlayerDirectivePreProcessor :
 
     private fun createAudioDisplayDirective(
         template: JsonObject,
-        dialogRequestId: String,
+        header: Header,
         playPayload: DefaultAudioPlayerAgent.PlayPayload
     ): Directive? {
         return try {
@@ -107,11 +107,12 @@ class AudioPlayerDirectivePreProcessor :
 
             MessageFactory.createDirective(
                 null, Header(
-                    dialogRequestId,
+                    header.dialogRequestId,
                     UUIDGeneration.shortUUID().toString(),
                     name,
                     namespace,
-                    DisplayAudioPlayerAgent.VERSION
+                    DisplayAudioPlayerAgent.VERSION,
+                    header.referrerDialogRequestId
                 ), template
             )
         } catch (th: Throwable) {
