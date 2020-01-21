@@ -158,6 +158,8 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
         val event = eventStreamService
         val crash = crashReportService
 
+        Logger.d(TAG, "sendMessage : ${toStringMessage(request)}")
+
         when(request) {
             is AttachmentMessageRequest -> return event?.sendAttachmentMessage(toProtobufMessage(request)) ?: return false
             is EventMessageRequest -> return event?.sendEventMessage(toProtobufMessage(request)) ?: return false
@@ -327,6 +329,17 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                 .setContext(context)
                 .setEvent(event)
                 .build()
+        }
+    }
+
+    private fun toStringMessage(request: MessageRequest) : String {
+        return when(request) {
+            is AttachmentMessageRequest -> {
+                val temp = request.copy()
+                temp.byteArray = null
+                temp.toString()
+            }
+            else -> request.toString()
         }
     }
 }
