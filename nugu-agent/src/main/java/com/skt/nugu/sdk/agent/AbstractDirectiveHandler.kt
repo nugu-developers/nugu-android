@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.capability
+package com.skt.nugu.sdk.agent
 
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * This is a base class for CapabilityAgent which should perform following roles:
- * * should provide configurations for directives which can handle
- * * should handle directives which provided
- * * should provide an capability context's state
- */
-abstract class AbstractCapabilityAgent : CapabilityAgent
-    , DirectiveHandler
-    , ContextStateProvider {
-
+abstract class AbstractDirectiveHandler: DirectiveHandler {
     /**
      * The wrapping interface for [Directive] & [DirectiveHandlerResult]
      * @property directive the directive
@@ -87,21 +75,16 @@ abstract class AbstractCapabilityAgent : CapabilityAgent
         cancelDirective(info)
     }
 
-    override fun provideState(
-        contextSetter: ContextSetterInterface,
-        namespaceAndName: NamespaceAndName,
-        stateRequestToken: Int
-    ) {
-        // default no op
-    }
-
     private fun getDirectiveInfo(messageId: String) = directiveInfoMap[messageId]
 
     private fun createDirectiveInfo(
         directive: Directive,
         result: DirectiveHandlerResult
     ) =
-        DirectiveInfoImpl(directive, result)
+        DirectiveInfoImpl(
+            directive,
+            result
+        )
 
     /**
      * Convenient wrapper for [DirectiveHandler.preHandleDirective]

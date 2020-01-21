@@ -1,6 +1,6 @@
 package com.skt.nugu.sdk.agent.movement
 
-import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
+import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 

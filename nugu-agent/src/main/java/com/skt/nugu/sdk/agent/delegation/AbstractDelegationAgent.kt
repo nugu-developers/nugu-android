@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.delegation
 
-import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
+import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
