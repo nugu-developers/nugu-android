@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer
 
-import com.skt.nugu.sdk.core.interfaces.capability.AbstractCapabilityAgent
+import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -38,8 +38,7 @@ abstract class AbstractAudioPlayerAgent(
     protected val channelName: String
 ) : AbstractCapabilityAgent()
     , ChannelObserver
-    ,
-    AudioPlayerAgentInterface
+    , AudioPlayerAgentInterface
     , PlaybackHandler {
     companion object {
         const val NAMESPACE = "AudioPlayer"
