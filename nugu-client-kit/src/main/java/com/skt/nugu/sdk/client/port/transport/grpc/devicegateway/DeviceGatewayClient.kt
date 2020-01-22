@@ -158,14 +158,15 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
         val event = eventStreamService
         val crash = crashReportService
 
-        Logger.d(TAG, "sendMessage : ${toStringMessage(request)}")
+        val result = when(request) {
+            is AttachmentMessageRequest -> event?.sendAttachmentMessage(toProtobufMessage(request))
+            is EventMessageRequest -> event?.sendEventMessage(toProtobufMessage(request))
+            is CrashReportMessageRequest -> crash?.sendCrashReport(request)
+            else -> false
+        } ?: false
 
-        when(request) {
-            is AttachmentMessageRequest -> return event?.sendAttachmentMessage(toProtobufMessage(request)) ?: return false
-            is EventMessageRequest -> return event?.sendEventMessage(toProtobufMessage(request)) ?: return false
-            is CrashReportMessageRequest -> return crash?.sendCrashReport(request) ?: return false
-            else -> { return false }
-        }
+        Logger.d(TAG, "sendMessage : ${toStringMessage(request)}, result : $result")
+        return result
     }
 
     /**
