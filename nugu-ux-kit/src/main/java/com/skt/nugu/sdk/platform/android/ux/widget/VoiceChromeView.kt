@@ -100,9 +100,7 @@ class VoiceChromeView : FrameLayout {
      * resid, 0 means draw transparent screen
      */
     private fun resetAnimation() {
-        this.post {
-            this.addAnimation(0,LottieDrawable.INFINITE)
-        }
+        this.addAnimation(0,LottieDrawable.INFINITE)
     }
 
     /**
@@ -115,7 +113,8 @@ class VoiceChromeView : FrameLayout {
         this.post {
             lottieView.cancelAnimation()
             queue.clear()
-            this.addAnimation(resId, count)
+            queue.add(AnimationInfo(resId, count))
+            nextAnimation()
         }
     }
 
