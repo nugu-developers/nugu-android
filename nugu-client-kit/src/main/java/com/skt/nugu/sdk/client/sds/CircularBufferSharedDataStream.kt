@@ -219,7 +219,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
 
                 if (read == 0 && !isClosing.get()) {
                     synchronized(waitLock) {
-                        if (!isClosing.get()) {
+                        if (!isClosing.get() && !isBufferFullFilled) {
                             waitLock.wait()
                         }
                     }
