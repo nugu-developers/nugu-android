@@ -53,7 +53,6 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
     private var isBufferFullFilled = false
 
     private val isWriterCreated = AtomicBoolean(false)
-    private lateinit var writer: SharedDataStream.Writer
 
     // get absolute position at stream
     override fun getPosition(): Long = fillCount * capacity + writeOffset
@@ -61,16 +60,15 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
     override fun createWriter(): SharedDataStream.Writer {
         if (isWriterCreated.compareAndSet(false, true)) {
             writerCount++
-            writer = MyWriter()
-            Logger.d(
-                TAG,
-                "[createWriter] refCount: $writerCount / created writer: $writer / refStream: $this"
-            )
+            return MyWriter().also {
+                Logger.d(
+                    TAG,
+                    "[createWriter] refCount: $writerCount / created writer: $it / refStream: $this"
+                )
+            }
         } else {
-            writer
+            throw IllegalStateException("Already the writer created. only a writer allowed.")
         }
-
-        return writer
     }
 
     override fun createReader(initialPosition: Long?): SharedDataStream.Reader {
