@@ -57,6 +57,10 @@ class DisplayAggregator(
         override fun clear(templateId: String, force: Boolean) {
             observer?.clear(templateId, force)
         }
+
+        override fun update(templateId: String, templateContent: String) {
+            observer?.update(templateId, templateContent)
+        }
     }
 
     private var observer: DisplayAggregatorInterface.Renderer? = null

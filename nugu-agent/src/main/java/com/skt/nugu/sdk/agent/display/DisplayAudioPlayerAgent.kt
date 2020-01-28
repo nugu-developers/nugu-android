@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.display
 
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
@@ -23,6 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.HashMap
 
 class DisplayAudioPlayerAgent(
@@ -33,8 +35,18 @@ class DisplayAudioPlayerAgent(
     playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
-) : BaseDisplayAgent(focusManager, contextManager, messageSender, playSynchronizer, playStackManager, inputProcessorManager, channelName) {
+) : BaseDisplayAgent(
+    focusManager,
+    contextManager,
+    messageSender,
+    playSynchronizer,
+    playStackManager,
+    inputProcessorManager,
+    channelName
+)
+    , AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
+        private const val TAG = "DisplayAudioPlayerAgent"
         const val NAMESPACE = "AudioPlayer"
         const val VERSION = "1.0"
 
@@ -77,5 +89,30 @@ class DisplayAudioPlayerAgent(
 
     override fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
         // nothing
+    }
+
+    override fun onMetadataUpdate(playServiceId: String, jsonMetaData: String) {
+        executor.submit {
+            val info = currentInfo
+            Logger.d(
+                TAG,
+                "[onMetadataUpdate] playServiceId: $playServiceId, jsonMetadata: $jsonMetaData"
+            )
+            if (info == null) {
+                Logger.w(TAG, "[onMetadataUpdate] skip - currentInfo is null (no display)")
+                return@submit
+            }
+
+            val currentPlayServiceId = info.payload.playServiceId
+            if (currentPlayServiceId != playServiceId) {
+                Logger.w(
+                    TAG,
+                    "[onMetadataUpdate] skip - playServiceId does not matched with current (current: $currentPlayServiceId)"
+                )
+                return@submit
+            }
+
+            getRenderer()?.update(info.getTemplateId(), jsonMetaData)
+        }
     }
 }

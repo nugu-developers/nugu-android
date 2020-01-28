@@ -103,6 +103,8 @@ object DefaultAgentFactory {
                     getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
                         AudioPlayerDirectivePreProcessor()
                     )
+
+                    audioPlayerMetadataDirectiveHandler.addListener(displayAudioPlayerAgent)
                 }
 
                 getDirectiveSequencer().addDirectiveHandler(this)
