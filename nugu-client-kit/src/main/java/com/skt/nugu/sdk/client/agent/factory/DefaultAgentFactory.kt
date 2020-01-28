@@ -209,7 +209,9 @@ object DefaultAgentFactory {
                 getMessageSender(),
                 getContextManager(),
                 getMicrophone()
-            )
+            ).apply {
+                getDirectiveSequencer().addDirectiveHandler(this)
+            }
         }
     }
 
