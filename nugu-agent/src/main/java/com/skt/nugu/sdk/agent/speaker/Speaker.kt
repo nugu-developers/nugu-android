@@ -28,6 +28,10 @@ interface Speaker {
         EXTERNAL
     }
 
+    enum class Rate {
+        SLOW, FAST
+    }
+
     data class SpeakerSettings(
         /**
          * current volume which range in ([getMinVolume] .. [getMaxVolume])
@@ -51,7 +55,7 @@ interface Speaker {
      * @param volume amount of volume range in ([getMinVolume] .. [getMaxVolume])
      * @return success or not
      */
-    fun setVolume(volume: Int): Boolean
+    fun setVolume(volume: Int, rate: Rate = Rate.FAST): Boolean
 
     /**
      * Set the mute of the speaker.
