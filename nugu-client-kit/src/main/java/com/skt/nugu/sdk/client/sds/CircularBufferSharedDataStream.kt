@@ -48,6 +48,8 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
     private var readerCount = 0
     @Volatile
     private var writerCount = 0
+    @Volatile
+    private var isBufferFullFilled = false
 
     // get absolute position at stream
     override fun getPosition(): Long = fillCount * capacity + writeOffset
@@ -127,6 +129,8 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
     }
 
     private fun notifyBufferFullFilled() {
+        isBufferFullFilled = true
+
         synchronized(bufferEventListeners) {
             bufferEventListeners.forEach {
                 it.onBufferFullFilled()
@@ -141,9 +145,6 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
         private val TAG = "MyReader"
         private val isClosing = AtomicBoolean(false)
         private var isReading = false
-
-        @Volatile
-        private var isBufferFullFilled = false
 
         private val waitLock = Object()
 
@@ -257,7 +258,6 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
         }
 
         override fun onBufferFullFilled() {
-            isBufferFullFilled = true
             wakeLock()
         }
 
