@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.client.sds
 
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.utils.Logger
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -51,14 +52,25 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
     @Volatile
     private var isBufferFullFilled = false
 
+    private val isWriterCreated = AtomicBoolean(false)
+    private lateinit var writer: SharedDataStream.Writer
+
     // get absolute position at stream
     override fun getPosition(): Long = fillCount * capacity + writeOffset
 
     override fun createWriter(): SharedDataStream.Writer {
-        writerCount++
-        return MyWriter().also {
-            Logger.d(TAG, "[createWriter] refCount: $writerCount / created writer: $it / refStream: $this")
+        if (isWriterCreated.compareAndSet(false, true)) {
+            writerCount++
+            writer = MyWriter()
+            Logger.d(
+                TAG,
+                "[createWriter] refCount: $writerCount / created writer: $writer / refStream: $this"
+            )
+        } else {
+            writer
         }
+
+        return writer
     }
 
     override fun createReader(initialPosition: Long?): SharedDataStream.Reader {
@@ -68,7 +80,10 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
         } else {
             MyReader(initialPosition)
         }.also {
-            Logger.d(TAG, "[createReader] refCount: $readerCount / created reader: $it / refStream: $this")
+            Logger.d(
+                TAG,
+                "[createReader] refCount: $readerCount / created reader: $it / refStream: $this"
+            )
         }
     }
 
@@ -78,6 +93,10 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
         private var isClosing = false
 
         override fun write(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int) {
+            if (isClosing) {
+                throw IOException("the writer has been closed.")
+            }
+
             var currentOffsetInBytes = offsetInBytes
             var leftSizeInBytes = sizeInBytes
 
