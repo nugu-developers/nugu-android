@@ -22,7 +22,7 @@ import com.skt.nugu.sdk.agent.display.DisplayInterface
  *
  * This is a helper interface to aggregate those displays to handle at one place.
  *
- * @see [com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface]
+ * @see [com.skt.nugu.sdk.agent.display.DisplayAgentInterface]
  */
 interface DisplayAggregatorInterface:
     DisplayInterface<DisplayAggregatorInterface.Renderer> {
@@ -38,7 +38,7 @@ interface DisplayAggregatorInterface:
 
     /**
      * The renderer for DisplayAggregator
-     * Similar to [com.skt.nugu.sdk.core.interfaces.capability.display.DisplayAgentInterface.Renderer]
+     * Similar to [com.skt.nugu.sdk.agent.display.DisplayAgentInterface.Renderer]
      */
     interface Renderer {
         /**
@@ -63,8 +63,16 @@ interface DisplayAggregatorInterface:
          * the renderer should call [displayCardRendered] after display cleared.
          *
          * @param templateId the unique identifier for the template card
-         * @param force the display should be cleared.
+         * @param force true: the display should be cleared, false: recommend to clear.
          */
         fun clear(templateId: String, force: Boolean)
+
+        /**
+         * Used to notify the renderer when display should be updated. .
+         *
+         * @param templateId the unique identifier for the template card
+         * @param templateContent the content of template in structured JSON which should be updated. The content consist of partial or full elements for templateContent of [render]
+         */
+        fun update(templateId: String, templateContent: String)
     }
 }

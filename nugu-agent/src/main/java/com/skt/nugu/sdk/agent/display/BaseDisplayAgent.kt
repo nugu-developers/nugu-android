@@ -291,6 +291,8 @@ abstract class BaseDisplayAgent(
                             } else {
                                 stopClearTimer(templateId)
                             }
+
+                            onDisplayCardRendererd(it)
                         }
 
                         override fun onDenied() {
@@ -335,6 +337,7 @@ abstract class BaseDisplayAgent(
         }
     }
 
+    protected open fun onDisplayCardRendererd(templateDirectiveInfo: TemplateDirectiveInfo) {}
     protected abstract fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo)
 
     private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {

@@ -23,6 +23,7 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sdk.agent.util.deepMerge
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -82,6 +83,33 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
 
         countDownLatch.await(10,  TimeUnit.SECONDS)
         return rendered.get()
+    }
+
+    override fun update(templateId: String, templateContent: String) {
+        Log.d(TAG, "[update] templateId: $templateId, templateContent: $templateContent")
+
+        handler.post {
+            fragmentManagerRef.get()?.let { fragmentManager ->
+                val fragment = fragmentManager.fragments.find {
+                    it is TemplateFragment && it.getTemplateId() == templateId
+                }
+
+                if(fragment is TemplateFragment) {
+                    kotlin.runCatching {
+                        val jsonContent =
+                            com.google.gson.JsonParser.parseString(fragment.getTemplate())
+                                .asJsonObject
+                        val changeJsonContent =
+                            com.google.gson.JsonParser.parseString(templateContent)
+                                .asJsonObject
+
+                        jsonContent.deepMerge(changeJsonContent)
+
+                        fragment.updateView(fragment.getName(), templateId, jsonContent.toString())
+                    }
+                }
+            }
+        }
     }
 
     override fun clear(templateId: String, force: Boolean) {
