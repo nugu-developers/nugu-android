@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
@@ -24,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
@@ -37,32 +39,54 @@ class DefaultSpeakerAgent(
     contextManager: ContextManagerInterface,
     messageSender: MessageSender
 ) : AbstractSpeakerAgent(contextManager, messageSender) {
-
     companion object {
         private const val TAG = "SpeakerManager"
 
-        const val NAME_SET_VOLUME = "SetVolume"
-        const val NAME_SET_VOLUME_SUCCEEDED = "SetVolumeSucceeded"
-        const val NAME_SET_VOLUME_FAILED = "SetVolumeFailed"
-        const val NAME_SET_MUTE = "SetMute"
-        const val NAME_SET_MUTE_SUCCEEDED = "SetMuteSucceeded"
-        const val NAME_SET_MUTE_FAILED = "SetMuteFailed"
+        private const val NAME_SET_VOLUME = "SetVolume"
+        private const val NAME_SET_VOLUME_SUCCEEDED = "SetVolumeSucceeded"
+        private const val NAME_SET_VOLUME_FAILED = "SetVolumeFailed"
 
-        val SET_VOLUME = NamespaceAndName(
+        private const val NAME_SET_MUTE = "SetMute"
+        private const val NAME_SET_MUTE_SUCCEEDED = "SetMuteSucceeded"
+        private const val NAME_SET_MUTE_FAILED = "SetMuteFailed"
+
+        private val SET_VOLUME = NamespaceAndName(
             NAMESPACE,
             NAME_SET_VOLUME
         )
-        val SET_MUTE = NamespaceAndName(
+
+        private val SET_MUTE = NamespaceAndName(
             NAMESPACE,
             NAME_SET_MUTE
         )
 
         const val KEY_PLAY_SERVICE_ID = "playServiceId"
-        const val KEY_NAME = "name"
-        const val KEY_VOLUME = "volume"
-        const val KEY_MUTE = "mute"
-        const val KEY_STATUS = "status"
     }
+
+    internal data class SetVolumePayload(
+        @SerializedName("playServiceId")
+        val playServiceId: String,
+        @SerializedName("rate")
+        val rate: Speaker.Rate?,
+        @SerializedName("volumes")
+        val volumes: Array<Volume>
+    )
+
+    internal data class SetMutePayload(
+        @SerializedName("playServiceId")
+        val playServiceId: String,
+        @SerializedName("volumes")
+        val volumes: Array<Volume>
+    )
+
+    internal data class Volume(
+        @SerializedName("name")
+        val name: Speaker.Type,
+        @SerializedName("volume")
+        val volume: Long?,
+        @SerializedName("mute")
+        val mute: Boolean?
+    )
 
     private val settingObservers: MutableSet<SpeakerManagerObserver> = HashSet()
     private val speakerMap: MutableMap<Speaker.Type, Speaker> = HashMap()
@@ -86,6 +110,7 @@ class DefaultSpeakerAgent(
             executeSetVolume(
                 type,
                 volume,
+                Speaker.Rate.FAST,
                 SpeakerManagerObserver.Source.LOCAL_API,
                 forceNoNotifications
             )
@@ -111,6 +136,7 @@ class DefaultSpeakerAgent(
     private fun executeSetVolume(
         type: Speaker.Type,
         volume: Int,
+        rate: Speaker.Rate,
         source: SpeakerManagerObserver.Source,
         forceNoNotifications: Boolean = false
     ): Boolean {
@@ -192,113 +218,71 @@ class DefaultSpeakerAgent(
     }
 
     private fun handleSetVolume(info: DirectiveInfo) {
-        // TODO : XXX
-        setHandlingFailed(info, "[handleSetVolume] not implemented yet")
-        /*
-        val directive = info.directive
-        val volume = directive.retrieveValueAsLong(KEY_VOLUME)
+        val payload = MessageFactory.create(info.directive.payload, SetVolumePayload::class.java)
+        if(payload == null) {
+            Logger.d(TAG, "[handleSetVolume] invalid payload")
+            setHandlingFailed(info, "[handleSetVolume] invalid payload")
+            return
+        }
 
-        val playServiceId = info.directive.retrieveValueAsString(KEY_PLAY_SERVICE_ID)
-        if (playServiceId.isNullOrBlank()) {
+        if (payload.playServiceId.isBlank()) {
             Logger.d(TAG, "[handleExecute] missing field: playServiceId")
             setHandlingFailed(info, "[handleExecute] missing field: playServiceId")
             return
         }
 
-        if (volume == null) {
-            Logger.w(TAG, "[handleSetVolume] volume field is null")
-            setHandlingFailed(info, "[handleSetVolume] volume field is null")
-            return
-        }
-
-        val name = directive.retrieveValueAsString(KEY_NAME)
-        if (name.isNullOrBlank()) {
-            Logger.w(TAG, "[handleSetVolume] name field is null")
-            setHandlingFailed(info, "[handleSetVolume] name field is null")
-            return
-        }
-
-        val type = try {
-            Speaker.Type.valueOf(name)
-        } catch (th: Throwable) {
-            null
-        }
-
-        if (type == null) {
-            Logger.w(TAG, "[handleSetVolume] invalid name: $name")
-            setHandlingFailed(info, "[handleSetVolume] invalid name: $name")
-            return
-        }
-
-
         executor.submit {
-            if (executeSetVolume(
-                    type,
-                    volume.toInt(),
-                    SpeakerManagerObserver.Source.DIRECTIVE
-                )
-            ) {
-                sendSetVolumeSucceededEvent(playServiceId, name)
-            } else {
-                sendSetVolumeFailedEvent(playServiceId, name)
+            var success = true
+            payload.volumes.forEach {
+                val volume = it.volume
+                if(volume != null) {
+                    if(!executeSetVolume(it.name, it.volume.toInt(), payload.rate ?: Speaker.Rate.FAST, SpeakerManagerObserver.Source.DIRECTIVE)) {
+                        success = false
+                    }
+                }
             }
+
+            if (success) {
+                sendSetVolumeSucceededEvent(payload.playServiceId)
+            } else {
+                sendSetVolumeFailedEvent(payload.playServiceId)
+            }
+
             executeSetHandlingCompleted(info)
         }
-         */
     }
 
     private fun handleSetMute(info: DirectiveInfo) {
-        // TODO : XXX
-        setHandlingFailed(info, "[handleSetMute] not implemented yet")
-        /*
-        val directive = info.directive
-        val mute = directive.retrieveValueAsBoolean(KEY_MUTE)
-
-        val playServiceId = info.directive.retrieveValueAsString(KEY_PLAY_SERVICE_ID)
-        if (playServiceId.isNullOrBlank()) {
-            Logger.d(TAG, "[handleExecute] missing field: playServiceId")
-            setHandlingFailed(info, "[handleExecute] missing field: playServiceId")
+        val payload = MessageFactory.create(info.directive.payload, SetMutePayload::class.java)
+        if(payload == null) {
+            Logger.d(TAG, "[handleSetMute] invalid payload")
+            setHandlingFailed(info, "[handleSetMute] invalid payload")
             return
         }
 
-        if (mute == null) {
-            Logger.d(TAG, "[handleSetMute] mute field is null")
-            return
-        }
-
-        val name = directive.retrieveValueAsString(KEY_NAME)
-        if (name.isNullOrBlank()) {
-            Logger.w(TAG, "[handleSetMute] name field is null")
-            setHandlingFailed(info, "[handleSetMute] name field is null")
-            return
-        }
-
-        val type = try {
-            Speaker.Type.valueOf(name)
-        } catch (th: Throwable) {
-            null
-        }
-
-        if (type == null) {
-            Logger.w(TAG, "[handleSetMute] invalid name: $name")
-            setHandlingFailed(info, "[handleSetMute] invalid name: $name")
+        if (payload.playServiceId.isBlank()) {
+            Logger.d(TAG, "[handleSetMute] missing field: playServiceId")
+            setHandlingFailed(info, "[handleSetMute] missing field: playServiceId")
             return
         }
 
         executor.submit {
-            if (executeSetMute(
-                    type,
-                    mute,
-                    SpeakerManagerObserver.Source.DIRECTIVE
-                )
-            ) {
-                sendSetMuteSucceededEvent(playServiceId, name)
-            } else {
-                sendSetMuteFailedEvent(playServiceId, name)
+            var success = true
+            payload.volumes.forEach {
+                val mute = it.mute
+                if(mute != null) {
+                    if(!executeSetMute(it.name, it.mute,SpeakerManagerObserver.Source.DIRECTIVE)) {
+                        success = false
+                    }
+                }
             }
-            executeSetHandlingCompleted(info)
+
+            if (success) {
+                sendSetMuteSucceededEvent(payload.playServiceId)
+            } else {
+                sendSetMuteFailedEvent(payload.playServiceId)
+            }
         }
-         */
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
@@ -341,7 +325,6 @@ class DefaultSpeakerAgent(
             add("volumes", JsonArray().apply {
                 speakerMap.forEach {
                     add(JsonObject().apply {
-                        // name으로 변경 필요
                         addProperty("name", it.key.name)
                         addProperty("minVolume", it.value.getMinVolume())
                         addProperty("maxVolume", it.value.getMaxVolume())
@@ -357,30 +340,29 @@ class DefaultSpeakerAgent(
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 
-    private fun sendSetVolumeSucceededEvent(playServiceId: String, name: String) {
-        sendSpeakerEvent(NAME_SET_VOLUME_SUCCEEDED, playServiceId, name)
+    private fun sendSetVolumeSucceededEvent(playServiceId: String) {
+        sendSpeakerEvent(NAME_SET_VOLUME_SUCCEEDED, playServiceId)
     }
 
-    private fun sendSetVolumeFailedEvent(playServiceId: String, name: String) {
-        sendSpeakerEvent(NAME_SET_VOLUME_FAILED, playServiceId, name)
+    private fun sendSetVolumeFailedEvent(playServiceId: String) {
+        sendSpeakerEvent(NAME_SET_VOLUME_FAILED, playServiceId)
     }
 
-    private fun sendSetMuteSucceededEvent(playServiceId: String, name: String) {
-        sendSpeakerEvent(NAME_SET_MUTE_SUCCEEDED, playServiceId, name)
+    private fun sendSetMuteSucceededEvent(playServiceId: String) {
+        sendSpeakerEvent(NAME_SET_MUTE_SUCCEEDED, playServiceId)
     }
 
-    private fun sendSetMuteFailedEvent(playServiceId: String, name: String) {
-        sendSpeakerEvent(NAME_SET_MUTE_FAILED, playServiceId, name)
+    private fun sendSetMuteFailedEvent(playServiceId: String) {
+        sendSpeakerEvent(NAME_SET_MUTE_FAILED, playServiceId)
     }
 
-    private fun sendSpeakerEvent(eventName: String, playServiceId: String, name: String) {
+    private fun sendSpeakerEvent(eventName: String, playServiceId: String) {
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 val request =
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, eventName, VERSION)
                         .payload(JsonObject().apply {
                             addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                            addProperty(KEY_NAME, name)
                         }.toString()).build()
                 messageSender.sendMessage(request)
             }
