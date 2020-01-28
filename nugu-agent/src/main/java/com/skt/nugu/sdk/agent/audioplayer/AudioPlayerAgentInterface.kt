@@ -106,4 +106,23 @@ interface AudioPlayerAgentInterface: DisplayAgentInterface {
      * @return the current duration in seconds
      */
     fun getDuration(): Long
+
+    /**
+     * Set the favorite property if supported.
+     */
+    fun setFavorite(favorite: Boolean)
+
+    enum class RepeatMode {
+        ALL, ONE, NONE
+    }
+
+    /**
+     * Set the repeat mode if supported.
+     */
+    fun setRepeatMode(mode: RepeatMode)
+
+    /**
+     * Set the shuffle if supported
+     */
+    fun setShuffle(shuffle: Boolean)
 }

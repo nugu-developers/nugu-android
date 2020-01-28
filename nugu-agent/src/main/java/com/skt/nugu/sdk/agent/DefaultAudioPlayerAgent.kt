@@ -94,6 +94,9 @@ class DefaultAudioPlayerAgent(
         private const val NAME_PLAY_COMMAND_ISSUED = "PlayCommandIssued"
         private const val NAME_PAUSE_COMMAND_ISSUED = "PauseCommandIssued"
         private const val NAME_STOP_COMMAND_ISSUED = "StopCommandIssued"
+        private const val NAME_FAVORITE_COMMAND_ISSUED = "FavoriteCommandIssued"
+        private const val NAME_REPEAT_COMMAND_ISSUED = "RepeatCommandIssued"
+        private const val NAME_SHUFFLE_COMMAND_ISSUED = "ShuffleCommandIssued"
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
@@ -530,6 +533,87 @@ class DefaultAudioPlayerAgent(
         }
 
         return duration
+    }
+
+    override fun setFavorite(favorite: Boolean) {
+        contextManager.getContext(object: ContextRequester{
+            override fun onContextAvailable(jsonContext: String) {
+                executor.submit{
+                    currentItem?.apply {
+                        val messageRequest = EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            NAME_FAVORITE_COMMAND_ISSUED,
+                            VERSION
+                        ).payload(
+                            JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                                addProperty("favorite", favorite)
+                            }.toString()
+                        ).build()
+
+                        messageSender.sendMessage(messageRequest)
+                    }
+                }
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+            }
+        }, namespaceAndName)
+    }
+
+    override fun setRepeatMode(mode: AudioPlayerAgentInterface.RepeatMode) {
+        contextManager.getContext(object: ContextRequester{
+            override fun onContextAvailable(jsonContext: String) {
+                executor.submit{
+                    currentItem?.apply {
+                        val messageRequest = EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            NAME_REPEAT_COMMAND_ISSUED,
+                            VERSION
+                        ).payload(
+                            JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                                addProperty("repeat", mode.name)
+                            }.toString()
+                        ).build()
+
+                        messageSender.sendMessage(messageRequest)
+                    }
+                }
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+            }
+        }, namespaceAndName)
+    }
+
+    override fun setShuffle(shuffle: Boolean) {
+        contextManager.getContext(object: ContextRequester{
+            override fun onContextAvailable(jsonContext: String) {
+                executor.submit{
+                    currentItem?.apply {
+                        val messageRequest = EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            NAME_SHUFFLE_COMMAND_ISSUED,
+                            VERSION
+                        ).payload(
+                            JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                                addProperty("shuffle", shuffle)
+                            }.toString()
+                        ).build()
+
+                        messageSender.sendMessage(messageRequest)
+                    }
+                }
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+            }
+        }, namespaceAndName)
     }
 
     override fun onPlaybackStarted(id: SourceId) {
