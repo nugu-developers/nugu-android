@@ -15,10 +15,21 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer.lyrics
 
+/**
+ * The interface to control paging for lyrics.
+ */
 interface LyricsPageController {
+    /**
+     * The direction of paging
+     */
     enum class Direction {
         PREVIOUS, NEXT
     }
 
+    /**
+     * Control paging to given direction
+     * @param direction the direction to which paging
+     * @return true: success, false: failure
+     */
     fun controlPage(playServiceId: String, direction: Direction): Boolean
 }
