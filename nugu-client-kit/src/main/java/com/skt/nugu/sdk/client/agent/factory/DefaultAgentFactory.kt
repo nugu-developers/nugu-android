@@ -89,7 +89,7 @@ object DefaultAgentFactory {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
 
-                AudioPlayerLyricsDirectiveHandler(getContextManager(), getMessageSender(), this).apply {
+                AudioPlayerLyricsDirectiveHandler(getContextManager(), getMessageSender(), this, this).apply {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
 

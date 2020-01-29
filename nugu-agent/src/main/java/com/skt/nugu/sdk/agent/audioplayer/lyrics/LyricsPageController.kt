@@ -15,6 +15,10 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer.lyrics
 
-interface LyricsPresenter: LyricsVisibilityController, LyricsPageController {
-    fun getVisibility(): Boolean
+interface LyricsPageController {
+    enum class Direction {
+        PREVIOUS, NEXT
+    }
+
+    fun controlPage(playServiceId: String, direction: Direction): Boolean
 }

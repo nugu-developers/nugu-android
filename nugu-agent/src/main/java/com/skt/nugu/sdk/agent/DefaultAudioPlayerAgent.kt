@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPageController
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsVisibilityController
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -68,7 +69,8 @@ class DefaultAudioPlayerAgent(
     playStackManager,
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener
-    , LyricsVisibilityController {
+    , LyricsVisibilityController
+    , LyricsPageController{
 
     internal data class PlayPayload(
         @SerializedName("playServiceId")
@@ -1342,5 +1344,12 @@ class DefaultAudioPlayerAgent(
 
     override fun hide(playServiceId: String): Boolean {
         return lyricsPresenter?.hide(playServiceId) ?: false
+    }
+
+    override fun controlPage(
+        playServiceId: String,
+        direction: LyricsPageController.Direction
+    ): Boolean {
+        return lyricsPresenter?.controlPage(playServiceId, direction) ?: false
     }
 }
