@@ -31,7 +31,8 @@ import com.skt.nugu.sdk.core.utils.Logger
 class AudioPlayerLyricsDirectiveHandler(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
-    private val visibilityController: LyricsVisibilityController
+    private val visibilityController: LyricsVisibilityController,
+    private val pageController: LyricsPageController
 ): AbstractDirectiveHandler() {
     companion object {
         private const val TAG = "AudioPlayerLyricsDirectiveHandler"
@@ -44,6 +45,7 @@ class AudioPlayerLyricsDirectiveHandler(
         // v1.1
         private const val NAME_SHOW_LYRICS = "ShowLyrics"
         private const val NAME_HIDE_LYRICS = "HideLyrics"
+        private const val NAME_CONTROL_LYRICS_PAGE = "ControlLyricsPage"
 
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
@@ -59,11 +61,24 @@ class AudioPlayerLyricsDirectiveHandler(
                 NAMESPACE,
                 NAME_HIDE_LYRICS
             )
+
+        private val CONTROL_LYRICS_PAGE =
+            NamespaceAndName(
+                NAMESPACE,
+                NAME_CONTROL_LYRICS_PAGE
+            )
     }
 
-    private data class LyricsPayload(
+    private data class VisibilityLyricsPayload(
         @SerializedName("playServiceId")
         val playServiceId: String
+    )
+
+    private data class PageControlLyricsPayload(
+        @SerializedName("playServiceId")
+        val playServiceId: String,
+        @SerializedName("direction")
+        val direction: LyricsPageController.Direction
     )
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -71,28 +86,46 @@ class AudioPlayerLyricsDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, LyricsPayload::class.java)
-        if(payload == null) {
-            Logger.d(TAG, "[handleDirective] invalid payload")
-            setHandlingFailed(info, "[handleDirective] invalid payload")
-            return
-        }
-
-        val playServiceId = payload.playServiceId
-
         when(info.directive.getNamespaceAndName()) {
-            SHOW_LYRICS -> {
-                if(visibilityController.show(playServiceId)) {
-                    sendEvent("$NAME_SHOW_LYRICS$NAME_SUCCEEDED", playServiceId)
+            SHOW_LYRICS,
+            HIDE_LYRICS -> {
+                val payload = MessageFactory.create(info.directive.payload, VisibilityLyricsPayload::class.java)
+                if(payload == null) {
+                    Logger.d(TAG, "[handleDirective] invalid payload")
+                    setHandlingFailed(info, "[handleDirective] invalid payload")
+                    return
+                }
+
+                val playServiceId = payload.playServiceId
+
+                if(SHOW_LYRICS == info.directive.getNamespaceAndName()) {
+                    if (visibilityController.show(playServiceId)) {
+                        sendVisibilityEvent("$NAME_SHOW_LYRICS$NAME_SUCCEEDED", playServiceId)
+                    } else {
+                        sendVisibilityEvent("$NAME_SHOW_LYRICS$NAME_FAILED", playServiceId)
+                    }
                 } else {
-                    sendEvent("$NAME_SHOW_LYRICS$NAME_FAILED", playServiceId)
+                    if (visibilityController.hide(playServiceId)) {
+                        sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_SUCCEEDED", playServiceId)
+                    } else {
+                        sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId)
+                    }
                 }
             }
-            HIDE_LYRICS -> {
-                if(visibilityController.hide(playServiceId)) {
-                    sendEvent("$NAME_HIDE_LYRICS$NAME_SUCCEEDED", playServiceId)
-                } else {
-                    sendEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId)
+            CONTROL_LYRICS_PAGE -> {
+                val payload = MessageFactory.create(info.directive.payload, PageControlLyricsPayload::class.java)
+                if(payload == null) {
+                    Logger.d(TAG, "[handleDirective] invalid payload")
+                    setHandlingFailed(info, "[handleDirective] invalid payload")
+                    return
+                }
+
+                with(payload) {
+                    if(pageController.controlPage(playServiceId, direction)) {
+                        sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_SUCCEEDED", playServiceId, direction)
+                    } else {
+                        sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_FAILED", playServiceId, direction)
+                    }
                 }
             }
         }
@@ -100,13 +133,29 @@ class AudioPlayerLyricsDirectiveHandler(
         setHandlingCompleted(info)
     }
 
-    private fun sendEvent(name: String, playServiceId: String) {
+    private fun sendVisibilityEvent(name: String, playServiceId: String) {
         contextManager.getContext(object: ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(
                   JsonObject().apply {
                       addProperty("playServiceId", playServiceId)
                   }.toString()
+                ).build())
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+            }
+        }, NamespaceAndName("supportedInterfaces", NAMESPACE))
+    }
+
+    private fun sendPageControlEvent(name: String, playServiceId: String, direction: LyricsPageController.Direction) {
+        contextManager.getContext(object: ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                messageSender.sendMessage(EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(
+                    JsonObject().apply {
+                        addProperty("playServiceId", playServiceId)
+                        addProperty("direction", direction.name)
+                    }.toString()
                 ).build())
             }
 
@@ -125,6 +174,7 @@ class AudioPlayerLyricsDirectiveHandler(
 
         configuration[SHOW_LYRICS] = nonBlockingPolicy
         configuration[HIDE_LYRICS] = nonBlockingPolicy
+        configuration[CONTROL_LYRICS_PAGE] = nonBlockingPolicy
 
         return configuration
     }
