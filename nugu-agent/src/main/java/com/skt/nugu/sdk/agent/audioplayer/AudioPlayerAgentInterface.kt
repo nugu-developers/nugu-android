@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer
 
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 
 /**
@@ -61,6 +62,11 @@ interface AudioPlayerAgentInterface: DisplayAgentInterface {
      * @param listener the listener that removed
      */
     fun removeListener(listener: Listener)
+
+    /** Set a presenter for lyrics
+     * @param presenter the presenter to be set
+     */
+    fun setLyricsPresenter(presenter: LyricsPresenter?)
 
     /**
      * Starts or resumes playback.
