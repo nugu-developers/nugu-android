@@ -1,6 +1,25 @@
 Change Log
 ==========
 
+Version 0.8.1 *(2020-01-29)*
+----------------------------
+ * New: Support CommandIssued event for extension interface (#186)
+ * New: Prototype speaker interface v1.0 (218)
+ * New: Support AudioPlayer v1.1
+     * UpdateMetadata directive (#190)
+     * (Favorite/Repeat/Shffle) directive (#193)
+ * Fix: not notify audio player state changes sometimes (#194)
+ * Fix: use http v1.1 protocol to connect Registry
+ * Fix: not work voice chrome animation somethimes
+ * Fix: blocking issue when read at SDS'reader (#211)
+ * Fix: add missed mic directive handler (#215)
+ * Fix: refactor SpeechRecognizerAggregator (#200)
+     * multi thread issue
+     * release resource before state noti
+     * notify state through handler
+ * Improve: Apply timeUUID v2 spec
+ * Improve: Send referrerDialogRequestId on SynchronizeState event (#198)
+
 Version 0.8.0 *(2020-01-16)*
 ----------------------------
  * Fix: not work play synchronization properly (#157) (side effect for #164)
