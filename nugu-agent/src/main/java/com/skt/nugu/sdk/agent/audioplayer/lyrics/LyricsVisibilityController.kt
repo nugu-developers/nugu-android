@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer.lyrics
 
-interface LyricsPresenter: LyricsVisibilityController {
-    fun getVisibility(): Boolean
+interface LyricsVisibilityController {
+    fun show(playServiceId: String): Boolean
+    fun hide(playServiceId: String): Boolean
 }
