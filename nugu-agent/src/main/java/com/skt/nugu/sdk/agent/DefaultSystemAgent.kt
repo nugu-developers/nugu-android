@@ -434,7 +434,7 @@ class DefaultSystemAgent(
             TAG,
             "[executeInactivityReport] inactiveTimeInSeconds = $inactiveTimeInSeconds"
         )
-        sendEvent(EVENT_NAME_USER_INACTIVITY_REPORT, JsonObject().apply {
+        sendEvent(EVENT_NAME_USER_INACTIVITY_REPORT, null, JsonObject().apply {
             addProperty(KEY_INACTIVITY_EVENT_PAYLOAD, inactiveTimeInSeconds)
         }.toString())
     }
