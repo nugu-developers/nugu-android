@@ -15,7 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerMetadataDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
@@ -47,8 +48,8 @@ class DisplayAudioPlayerAgent(
     , AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
         private const val TAG = "DisplayAudioPlayerAgent"
-        const val NAMESPACE = "AudioPlayer"
-        const val VERSION = "1.0"
+        const val NAMESPACE = AbstractAudioPlayerAgent.NAMESPACE
+        const val VERSION = AbstractAudioPlayerAgent.VERSION
 
         private const val NAME_AUDIOPLAYER_TEMPLATE1 = "Template1"
         private const val NAME_AUDIOPLAYER_TEMPLATE2 = "Template2"

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent.audioplayer
+package com.skt.nugu.sdk.agent.audioplayer.metadata
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -25,8 +26,10 @@ import java.util.concurrent.CopyOnWriteArraySet
 
 class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     companion object {
-        const val NAMESPACE = AbstractAudioPlayerAgent.NAMESPACE
-        const val VERSION = AbstractAudioPlayerAgent.VERSION
+        const val NAMESPACE =
+            AbstractAudioPlayerAgent.NAMESPACE
+        const val VERSION =
+            AbstractAudioPlayerAgent.VERSION
 
         // v1.1
         private const val NAME_UPDATE_METADATA = "UpdateMetadata"
