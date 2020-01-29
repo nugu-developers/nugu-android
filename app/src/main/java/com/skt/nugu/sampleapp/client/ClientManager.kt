@@ -16,6 +16,8 @@
 package com.skt.nugu.sampleapp.client
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -161,7 +163,8 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         speechRecognizerAggregator = SpeechRecognizerAggregator(
             keywordResourceProvider.provideAria(),
             SpeechProcessorDelegate(asrAgent),
-            audioSourceManager
+            audioSourceManager,
+            Handler(Looper.getMainLooper())
         )
 
         val wakeupWordStateProvider = object : ContextStateProvider {
