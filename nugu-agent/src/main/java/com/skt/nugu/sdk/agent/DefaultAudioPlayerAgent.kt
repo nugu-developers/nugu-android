@@ -22,6 +22,8 @@ import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
@@ -65,7 +67,8 @@ class DefaultAudioPlayerAgent(
     playSynchronizer,
     playStackManager,
     channelName
-), MediaPlayerControlInterface.PlaybackEventListener {
+), MediaPlayerControlInterface.PlaybackEventListener
+    , LyricsPresenter {
 
     internal data class PlayPayload(
         @SerializedName("playServiceId")
@@ -1322,5 +1325,19 @@ class DefaultAudioPlayerAgent(
 
     fun setDisplayAgent(displayAgent: DisplayAgentInterface?) {
         this.displayAgent = displayAgent
+    }
+
+    private var lyricsPresenter: LyricsPresenter? = null
+
+    override fun setLyricsPresenter(presenter: LyricsPresenter?) {
+        lyricsPresenter = presenter
+    }
+
+    override fun show(playServiceId: String): Boolean {
+        return lyricsPresenter?.show(playServiceId) ?: false
+    }
+
+    override fun hide(playServiceId: String): Boolean {
+        return lyricsPresenter?.hide(playServiceId) ?: false
     }
 }

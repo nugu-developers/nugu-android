@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 class AudioPlayerLyricsDirectiveHandler(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
-    private val visibilityController: LyricsVisibilityController
+    private val presenter: LyricsPresenter
 ): AbstractDirectiveHandler() {
     companion object {
         private const val TAG = "AudioPlayerLyricsDirectiveHandler"
@@ -61,11 +61,6 @@ class AudioPlayerLyricsDirectiveHandler(
             )
     }
 
-    interface LyricsVisibilityController {
-        fun show(playServiceId: String): Boolean
-        fun hide(playServiceId: String): Boolean
-    }
-
     private data class LyricsPayload(
         @SerializedName("playServiceId")
         val playServiceId: String
@@ -87,14 +82,14 @@ class AudioPlayerLyricsDirectiveHandler(
 
         when(info.directive.getNamespaceAndName()) {
             SHOW_LYRICS -> {
-                if(visibilityController.show(playServiceId)) {
+                if(presenter.show(playServiceId)) {
                     sendEvent("$NAME_SHOW_LYRICS$NAME_SUCCEEDED", playServiceId)
                 } else {
                     sendEvent("$NAME_SHOW_LYRICS$NAME_FAILED", playServiceId)
                 }
             }
             HIDE_LYRICS -> {
-                if(visibilityController.hide(playServiceId)) {
+                if(presenter.hide(playServiceId)) {
                     sendEvent("$NAME_HIDE_LYRICS$NAME_SUCCEEDED", playServiceId)
                 } else {
                     sendEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId)
