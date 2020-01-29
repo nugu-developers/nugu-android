@@ -16,5 +16,9 @@
 package com.skt.nugu.sdk.agent.audioplayer.lyrics
 
 interface LyricsPresenter: LyricsVisibilityController, LyricsPageController {
+    /**
+     * Returns the visibility for lyrics
+     * @return true: visible, false: invisible
+     */
     fun getVisibility(): Boolean
 }

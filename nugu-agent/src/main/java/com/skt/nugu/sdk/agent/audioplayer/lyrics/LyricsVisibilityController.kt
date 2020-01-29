@@ -15,7 +15,19 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer.lyrics
 
+/**
+ * The interface to control visibility for lyrics.
+ */
 interface LyricsVisibilityController {
+    /**
+     * Display the lyrics on screen.
+     * @return true: success, false: failure.
+     */
     fun show(playServiceId: String): Boolean
+
+    /**
+     * Hide the lyrics.
+     * @return true: success, false: failure
+     */
     fun hide(playServiceId: String): Boolean
 }
