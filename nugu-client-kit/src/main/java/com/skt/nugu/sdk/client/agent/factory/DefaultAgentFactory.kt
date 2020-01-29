@@ -34,7 +34,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerMetadataDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
@@ -83,7 +83,8 @@ object DefaultAgentFactory {
                 getAudioPlayStackManager(),
                 DefaultFocusChannel.CONTENT_CHANNEL_NAME
             ).apply {
-                val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler().apply {
+                val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler()
+                    .apply {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
 

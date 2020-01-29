@@ -42,7 +42,7 @@ abstract class AbstractAudioPlayerAgent(
     , PlaybackHandler {
     companion object {
         const val NAMESPACE = "AudioPlayer"
-        const val VERSION = "1.0"
+        const val VERSION = "1.1"
 
         const val NAME_PLAY = "Play"
         const val NAME_STOP = "Stop"
