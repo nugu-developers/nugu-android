@@ -22,8 +22,8 @@ import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsVisibilityController
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
@@ -68,7 +68,7 @@ class DefaultAudioPlayerAgent(
     playStackManager,
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener
-    , LyricsPresenter {
+    , LyricsVisibilityController {
 
     internal data class PlayPayload(
         @SerializedName("playServiceId")
@@ -1134,6 +1134,9 @@ class DefaultAudioPlayerAgent(
             addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
             if (getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
                 addProperty("durationInMilliseconds", getDurationInMilliseconds())
+            }
+            lyricsPresenter?.getVisibility()?.let {
+                addProperty("lyricsVisible", it)
             }
         }.toString(), policy, stateRequestToken)
     }
