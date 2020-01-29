@@ -73,8 +73,8 @@ class AudioPlayerLyricsDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, LyricsPayload::class.java)
         if(payload == null) {
-            Logger.d(TAG, "[handleSetVolume] invalid payload")
-            setHandlingFailed(info, "[handleSetVolume] invalid payload")
+            Logger.d(TAG, "[handleDirective] invalid payload")
+            setHandlingFailed(info, "[handleDirective] invalid payload")
             return
         }
 
@@ -124,6 +124,7 @@ class AudioPlayerLyricsDirectiveHandler(
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configuration[SHOW_LYRICS] = nonBlockingPolicy
+        configuration[HIDE_LYRICS] = nonBlockingPolicy
 
         return configuration
     }
