@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPageController
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsVisibilityController
@@ -69,8 +70,8 @@ class DefaultAudioPlayerAgent(
     playStackManager,
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener
-    , LyricsVisibilityController
-    , LyricsPageController{
+    , AudioPlayerLyricsDirectiveHandler.VisibilityController
+    , AudioPlayerLyricsDirectiveHandler.PagingController{
 
     internal data class PlayPayload(
         @SerializedName("playServiceId")
@@ -1339,17 +1340,29 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun show(playServiceId: String): Boolean {
-        return lyricsPresenter?.show(playServiceId) ?: false
+        return if (currentItem?.playServiceId == playServiceId) {
+            lyricsPresenter?.show() ?: false
+        } else {
+            false
+        }
     }
 
     override fun hide(playServiceId: String): Boolean {
-        return lyricsPresenter?.hide(playServiceId) ?: false
+        return if (currentItem?.playServiceId == playServiceId) {
+            lyricsPresenter?.hide() ?: false
+        } else {
+            false
+        }
     }
 
     override fun controlPage(
         playServiceId: String,
         direction: LyricsPageController.Direction
     ): Boolean {
-        return lyricsPresenter?.controlPage(playServiceId, direction) ?: false
+        return if (currentItem?.playServiceId == playServiceId) {
+            lyricsPresenter?.controlPage(direction) ?: false
+        } else {
+            false
+        }
     }
 }

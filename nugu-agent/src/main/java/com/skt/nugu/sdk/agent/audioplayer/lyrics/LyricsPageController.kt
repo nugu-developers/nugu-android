@@ -31,5 +31,5 @@ interface LyricsPageController {
      * @param direction the direction to which paging
      * @return true: success, false: failure
      */
-    fun controlPage(playServiceId: String, direction: Direction): Boolean
+    fun controlPage(direction: Direction): Boolean
 }

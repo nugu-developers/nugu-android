@@ -23,11 +23,11 @@ interface LyricsVisibilityController {
      * Display the lyrics on screen.
      * @return true: success, false: failure.
      */
-    fun show(playServiceId: String): Boolean
+    fun show(): Boolean
 
     /**
      * Hide the lyrics.
      * @return true: success, false: failure
      */
-    fun hide(playServiceId: String): Boolean
+    fun hide(): Boolean
 }
