@@ -31,8 +31,8 @@ import com.skt.nugu.sdk.core.utils.Logger
 class AudioPlayerLyricsDirectiveHandler(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
-    private val visibilityController: LyricsVisibilityController,
-    private val pageController: LyricsPageController
+    private val visibilityController: VisibilityController,
+    private val pageController: PagingController
 ): AbstractDirectiveHandler() {
     companion object {
         private const val TAG = "AudioPlayerLyricsDirectiveHandler"
@@ -67,6 +67,15 @@ class AudioPlayerLyricsDirectiveHandler(
                 NAMESPACE,
                 NAME_CONTROL_LYRICS_PAGE
             )
+    }
+
+    interface PagingController {
+        fun controlPage(playServiceId: String, direction: LyricsPageController.Direction): Boolean
+    }
+
+    interface VisibilityController {
+        fun show(playServiceId: String): Boolean
+        fun hide(playServiceId: String): Boolean
     }
 
     private data class VisibilityLyricsPayload(
