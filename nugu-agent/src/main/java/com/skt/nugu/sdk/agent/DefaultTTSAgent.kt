@@ -214,8 +214,16 @@ class DefaultTTSAgent(
     override fun preHandleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[preHandleDirective] info: $info")
         if (info.directive.getNamespaceAndName() == SPEAK) {
+            val speakInfo = createValidateSpeakInfo(info)
+
+            if (speakInfo == null) {
+                setHandlingInvalidSpeakDirectiveReceived(info)
+                return
+            }
+
+            playSynchronizer.prepareSync(speakInfo)
             executor.submit {
-                executePreHandleSpeakDirective(info)
+                executePreHandleSpeakDirective(speakInfo)
             }
         }
     }
@@ -234,16 +242,9 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun executePreHandleSpeakDirective(info: DirectiveInfo) {
+    private fun executePreHandleSpeakDirective(info: SpeakDirectiveInfo) {
         Logger.d(TAG, "[executePreHandleSpeakDirective] info: $info")
-        val speakInfo = createValidateSpeakInfo(info)
-
-        if (speakInfo == null) {
-            setHandlingInvalidSpeakDirectiveReceived(info)
-            return
-        }
-
-        executePrepareSpeakInfo(speakInfo)
+        executePrepareSpeakInfo(info)
     }
 
     private fun setHandlingInvalidSpeakDirectiveReceived(info: DirectiveInfo) {
@@ -355,7 +356,6 @@ class DefaultTTSAgent(
         executeCancelAllSpeakInfo()
 
         with(speakInfo) {
-            playSynchronizer.prepareSync(this)
             preparedSpeakInfo = this
         }
     }
