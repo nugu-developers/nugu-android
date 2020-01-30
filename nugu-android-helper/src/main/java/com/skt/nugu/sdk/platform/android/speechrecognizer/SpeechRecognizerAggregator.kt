@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.speechrecognizer
 
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
@@ -31,7 +32,7 @@ class SpeechRecognizerAggregator(
     private var keywordResources: KeywordResources,
     private val speechProcessor: SpeechProcessorDelegate,
     private val audioProvider: AudioProvider,
-    private val handler: Handler = Handler()
+    private val handler: Handler = Handler(Looper.getMainLooper())
 ) : SpeechRecognizerAggregatorInterface {
     companion object {
         // const val TAG = "SpeechRecognizerAggregator"
