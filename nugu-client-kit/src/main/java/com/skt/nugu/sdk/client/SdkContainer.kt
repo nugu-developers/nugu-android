@@ -42,7 +42,6 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 interface SdkContainer {
     fun getInputManagerProcessor(): InputProcessorManagerInterface
     fun getAudioFocusManager(): FocusManagerInterface
-    fun getVisualFocusManager(): FocusManagerInterface?
     fun getAudioPlayStackManager(): PlayStackManagerInterface
     fun getDisplayPlayStackManager(): PlayStackManagerInterface
     fun getMessageSender(): MessageSender

@@ -29,7 +29,6 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.HashMap
 
 class DisplayAudioPlayerAgent(
-    focusManager: FocusManagerInterface,
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
@@ -37,7 +36,6 @@ class DisplayAudioPlayerAgent(
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : BaseDisplayAgent(
-    focusManager,
     contextManager,
     messageSender,
     playSynchronizer,
@@ -73,10 +71,6 @@ class DisplayAudioPlayerAgent(
         VERSION
 
     override fun getContextPriority(): Int = 300
-
-    override fun executeOnFocusBackground(info: DirectiveInfo) {
-        // no-op
-    }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val nonBlockingPolicy = BlockingPolicy()

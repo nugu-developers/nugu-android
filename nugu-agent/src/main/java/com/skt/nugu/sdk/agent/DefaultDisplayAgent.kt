@@ -32,7 +32,6 @@ import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 
 class DefaultDisplayAgent(
-    focusManager: FocusManagerInterface,
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
@@ -40,7 +39,6 @@ class DefaultDisplayAgent(
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : BaseDisplayAgent(
-    focusManager,
     contextManager,
     messageSender,
     playSynchronizer,
@@ -296,10 +294,6 @@ class DefaultDisplayAgent(
 
     private fun sendCloseFailed(info: DirectiveInfo, playServiceId: String) {
         sendCloseEvent(NAME_CLOSE_FAILED, info, playServiceId)
-    }
-
-    override fun executeOnFocusBackground(info: DirectiveInfo) {
-        getRenderer()?.clear(info.directive.getMessageId(), true)
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

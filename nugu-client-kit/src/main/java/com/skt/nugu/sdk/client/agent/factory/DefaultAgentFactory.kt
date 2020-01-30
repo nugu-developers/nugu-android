@@ -93,25 +93,22 @@ object DefaultAgentFactory {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
 
-                getVisualFocusManager()?.let {
-                    val displayAudioPlayerAgent =
-                        DisplayAudioPlayerAgent(
-                            it,
-                            getContextManager(),
-                            getMessageSender(),
-                            getPlaySynchronizer(),
-                            getDisplayPlayStackManager(),
-                            getInputManagerProcessor(),
-                            DefaultFocusChannel.CONTENT_CHANNEL_NAME
-                        )
-                    setDisplayAgent(displayAudioPlayerAgent)
-                    getDirectiveSequencer().addDirectiveHandler(displayAudioPlayerAgent)
+                DisplayAudioPlayerAgent(
+                    getContextManager(),
+                    getMessageSender(),
+                    getPlaySynchronizer(),
+                    getDisplayPlayStackManager(),
+                    getInputManagerProcessor(),
+                    DefaultFocusChannel.CONTENT_CHANNEL_NAME
+                ).apply {
+                    setDisplayAgent(this)
+                    getDirectiveSequencer().addDirectiveHandler(this)
                     getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
                         AudioPlayerDirectivePreProcessor()
                     )
-
-                    audioPlayerMetadataDirectiveHandler.addListener(displayAudioPlayerAgent)
+                    audioPlayerMetadataDirectiveHandler.addListener(this)
                 }
+
 
                 getDirectiveSequencer().addDirectiveHandler(this)
             }
@@ -147,21 +144,15 @@ object DefaultAgentFactory {
 
     val TEMPLATE = object : DisplayAgentFactory {
         override fun create(container: SdkContainer): AbstractDisplayAgent? = with(container) {
-            val focusManager = getVisualFocusManager()
-            if(focusManager != null) {
-                DefaultDisplayAgent(
-                    focusManager,
-                    getContextManager(),
-                    getMessageSender(),
-                    getPlaySynchronizer(),
-                    getDisplayPlayStackManager(),
-                    getInputManagerProcessor(),
-                    DefaultFocusChannel.DIALOG_CHANNEL_NAME
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
-            } else {
-                null
+            DefaultDisplayAgent(
+                getContextManager(),
+                getMessageSender(),
+                getPlaySynchronizer(),
+                getDisplayPlayStackManager(),
+                getInputManagerProcessor(),
+                DefaultFocusChannel.DIALOG_CHANNEL_NAME
+            ).apply {
+                getDirectiveSequencer().addDirectiveHandler(this)
             }
         }
     }
