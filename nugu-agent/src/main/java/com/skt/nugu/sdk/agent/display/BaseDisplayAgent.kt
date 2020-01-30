@@ -18,9 +18,7 @@ package com.skt.nugu.sdk.agent.display
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
@@ -36,7 +34,6 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.*
 
 abstract class BaseDisplayAgent(
-    focusManager: FocusManagerInterface,
     contextManager: ContextManagerInterface,
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
@@ -44,15 +41,13 @@ abstract class BaseDisplayAgent(
     inputProcessorManager: InputProcessorManagerInterface,
     channelName: String
 ) : AbstractDisplayAgent(
-    focusManager,
     contextManager,
     messageSender,
     playSynchronizer,
     playStackManager,
     inputProcessorManager,
     channelName
-),
-    ChannelObserver {
+) {
     companion object {
         private const val TAG = "BaseDisplayAgent"
 
@@ -62,7 +57,6 @@ abstract class BaseDisplayAgent(
         private const val KEY_TOKEN = "token"
     }
 
-    private var focusState: FocusState = FocusState.NONE
     private var pendingInfo: TemplateDirectiveInfo? = null
     protected var currentInfo: TemplateDirectiveInfo? = null
 
@@ -207,11 +201,7 @@ abstract class BaseDisplayAgent(
 
             pendingInfo = null
             currentInfo = templateInfo
-            if (focusState == FocusState.FOREGROUND) {
-                executeRender(templateInfo)
-            } else {
-                requestFocusForRender(templateInfo)
-            }
+            executeRender(templateInfo)
         }
     }
 
@@ -219,34 +209,6 @@ abstract class BaseDisplayAgent(
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
         info.playContext?.let {
             playStackManager.remove(it)
-        }
-    }
-
-    private fun requestFocusForRender(info: TemplateDirectiveInfo) {
-        Logger.d(TAG, "[requestFocusForRender] $info")
-        focusManager.acquireChannel(
-            channelName, this,
-            getNamespace()
-        )
-    }
-
-    final override fun onFocusChanged(newFocus: FocusState) {
-        Logger.d(TAG, "[onFocusChanged] $newFocus / $channelName")
-        executor.submit {
-            this.focusState = newFocus
-            val templateInfo = currentInfo ?: return@submit
-
-            when (newFocus) {
-                FocusState.NONE -> {
-                    // no-op
-                }
-                FocusState.BACKGROUND -> {
-                    executeOnFocusBackground(templateInfo)
-                }
-                FocusState.FOREGROUND -> {
-                    executeRender(templateInfo)
-                }
-            }
         }
     }
 
@@ -264,10 +226,7 @@ abstract class BaseDisplayAgent(
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
             stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
-
-            if (clearInfoIfCurrent(info)) {
-                focusManager.releaseChannel(channelName, this)
-            }
+            clearInfoIfCurrent(info)
         }
     }
 
@@ -320,18 +279,13 @@ abstract class BaseDisplayAgent(
                 if (clearInfoIfCurrent(it)) {
                     val nextInfo = pendingInfo
                     pendingInfo = null
+                    currentInfo = nextInfo
 
-                    if (nextInfo == null) {
-                        focusManager.releaseChannel(channelName, this)
+                    if(nextInfo == null) {
                         return@submit
                     }
 
-                    currentInfo = nextInfo
-                    if (focusState == FocusState.FOREGROUND) {
-                        executeRender(nextInfo)
-                    } else {
-                        requestFocusForRender(nextInfo)
-                    }
+                    executeRender(nextInfo)
                 }
             }
         }
@@ -396,8 +350,6 @@ abstract class BaseDisplayAgent(
     }
 
 
-
-    protected abstract fun executeOnFocusBackground(info: DirectiveInfo)
 
     override fun stopRenderingTimer(templateId: String) {
         if (stoppedTimerTemplateIdMap[templateId] == true) {

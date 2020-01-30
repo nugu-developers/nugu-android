@@ -18,14 +18,12 @@ package com.skt.nugu.sdk.agent.display
 import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
 abstract class AbstractDisplayAgent(
-    protected val focusManager: FocusManagerInterface,
     protected val contextManager: ContextManagerInterface,
     protected val messageSender: MessageSender,
     protected val playSynchronizer: PlaySynchronizerInterface,

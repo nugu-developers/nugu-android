@@ -202,7 +202,6 @@ class NuguClient private constructor(
         DefaultFocusChannel.getDefaultAudioChannels(),
         "Audio"
     )
-    val visualFocusManager: FocusManagerInterface?
     private val messageRouter: MessageRouter = MessageRouter(builder.transportFactory, builder.authDelegate)
     private val dialogUXStateAggregator =
         DialogUXStateAggregator()
@@ -244,16 +243,6 @@ class NuguClient private constructor(
             contextStateProviderRegistry = contextManager
 
             val dialogSessionManager = DialogSessionManager()
-            val tempDisplayAgentFactory = displayAgentFactory
-            if (tempDisplayAgentFactory != null) {
-                visualFocusManager =
-                    FocusManager(
-                        DefaultFocusChannel.getDefaultVisualChannels(),
-                        "Visual"
-                    )
-            } else {
-                visualFocusManager = null
-            }
 
             val playSynchronizer = PlaySynchronizer()
 
@@ -262,7 +251,6 @@ class NuguClient private constructor(
                     inputProcessorManager
 
                 override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
-                override fun getVisualFocusManager(): FocusManagerInterface? = visualFocusManager
 
                 override fun getAudioPlayStackManager(): PlayStackManagerInterface = audioPlayStackManager
                 override fun getDisplayPlayStackManager(): PlayStackManagerInterface = displayPlayStackManager
@@ -317,7 +305,7 @@ class NuguClient private constructor(
             extensionAgent = extensionAgentFactory.create(sdkContainer)
             delegationAgent = delegationAgentFactory?.create(sdkContainer)
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
-            displayAgent = tempDisplayAgentFactory?.create(sdkContainer)
+            displayAgent = displayAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
             agentFactoryMap.forEach {
