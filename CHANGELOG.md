@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.8.2 *(2020-01-30)*
+----------------------------
+ * New: Support AudioPlayer v1.1
+     * Support lyrics spec (#191, #192, #224)
+ * Fix: Crash when create SpeechRecognizerAggregator (#229)
+ * Improve: discard management for display (#217)
+     * In application, Renderer's render() will be called only once per templateId.
+
 Version 0.8.1 *(2020-01-29)*
 ----------------------------
  * New: Support CommandIssued event for extension interface (#186)
