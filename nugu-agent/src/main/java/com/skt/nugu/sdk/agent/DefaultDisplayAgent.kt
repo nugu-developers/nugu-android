@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,22 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.display.BaseDisplayAgent
+import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.display.DisplayInterface
+import com.skt.nugu.sdk.agent.payload.PlayStackControl
+import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.HashMap
-import java.util.concurrent.ConcurrentHashMap
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import java.util.concurrent.*
 
 class DefaultDisplayAgent(
     contextManager: ContextManagerInterface,
@@ -36,13 +40,7 @@ class DefaultDisplayAgent(
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface
-) : BaseDisplayAgent(
-    contextManager,
-    messageSender,
-    playSynchronizer,
-    playStackManager,
-    inputProcessorManager
-) {
+) : AbstractDisplayAgent(contextManager, messageSender, playSynchronizer, playStackManager, inputProcessorManager) {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
 
@@ -64,6 +62,8 @@ class DefaultDisplayAgent(
         private const val NAME_IMAGELIST2 = "ImageList2"
         private const val NAME_IMAGELIST3 = "ImageList3"
         private const val NAME_CUSTOMTEMPLATE = "CustomTemplate"
+
+        private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
 
         // supported types for v1.1
         private const val NAME_WEATHER_1 = "Weather1"
@@ -180,70 +180,315 @@ class DefaultDisplayAgent(
             NAMESPACE,
             NAME_CLOSE_FAILED
         )
+
+        private const val KEY_PLAY_SERVICE_ID = "playServiceId"
+        private const val KEY_TOKEN = "token"
     }
+
+    private data class TemplatePayload(
+        @SerializedName("playServiceId")
+        val playServiceId: String?,
+        @SerializedName("token")
+        val token: String?,
+        @SerializedName("duration")
+        val duration: String?,
+        @SerializedName("playStackControl")
+        val playStackControl: PlayStackControl?
+    )
 
     private data class ClosePayload(
         @SerializedName("playServiceId")
         val playServiceId: String
     )
 
+    private inner class TemplateDirectiveInfo(
+        info: DirectiveInfo,
+        val payload: TemplatePayload
+    ) : PlaySynchronizerInterface.SynchronizeObject
+        , DirectiveInfo by info {
+        val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
+            override fun onGranted() {
+                Logger.d(TAG, "[onReleaseCallback] granted : $this")
+            }
+
+            override fun onDenied() {
+            }
+        }
+
+        override fun getDialogRequestId(): String = directive.getDialogRequestId()
+
+        override fun requestReleaseSync(immediate: Boolean) {
+            executor.submit {
+                executeCancelUnknownInfo(this, immediate)
+            }
+        }
+
+        fun getTemplateId(): String = directive.getMessageId()
+
+        fun getDuration(): Long {
+            return when (payload.duration) {
+                "MID" -> 15000L
+                "LONG" -> 30000L
+                else -> 7000L
+            }
+        }
+
+        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
+            PlayStackManagerInterface.PlayContext(it, 100)
+        }
+    }
+
+    private var pendingInfo: TemplateDirectiveInfo? = null
+    private var currentInfo: TemplateDirectiveInfo? = null
+
+    private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+
+    private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
+    private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
+    private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
+    private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
+    private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
+    private var renderer: DisplayAgentInterface.Renderer? = null
+
+    override val namespaceAndName: NamespaceAndName = NamespaceAndName(
+        "supportedInterfaces",
+        NAMESPACE
+    )
+
     init {
         contextManager.setStateProvider(namespaceAndName, this)
     }
 
-    override fun getNamespace(): String =
-        NAMESPACE
-
-    override fun getVersion(): String =
-        VERSION
-
-    override fun getContextPriority(): Int = 100
-
     override fun preHandleDirective(info: DirectiveInfo) {
-        if (info.directive.getNamespaceAndName() != CLOSE) {
-            super.preHandleDirective(info)
+        if(info.directive.getNamespaceAndName() != CLOSE) {
+            val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
+            if (payload == null) {
+                setHandlingFailed(info, "[preHandleDirective] invalid Payload")
+                return
+            }
+
+            executor.submit {
+                executeCancelPendingInfo()
+                executePreparePendingInfo(info, payload)
+            }
         }
     }
 
-    override fun handleDirective(info: DirectiveInfo) {
-        if (info.directive.getNamespaceAndName() != CLOSE) {
-            super.handleDirective(info)
-        } else {
-            executor.submit {
-                val closePayload =
-                    MessageFactory.create(info.directive.payload, ClosePayload::class.java)
-                if (closePayload == null) {
-                    Logger.w(TAG, "[handleDirective] (Close) no playServiceId at Payload.")
-                    sendCloseFailed(info, "")
-                    return@submit
-                }
+    private fun executePreparePendingInfo(info: DirectiveInfo, payload: TemplatePayload) {
+        TemplateDirectiveInfo(info, payload).apply {
+            templateDirectiveInfoMap[getTemplateId()] = this
+            pendingInfo = this
+            playSynchronizer.prepareSync(this)
+        }
+    }
 
-                val currentRenderedInfo = currentInfo ?: return@submit
-                val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
-                if (currentPlayServiceId.isNullOrBlank()) {
+    protected fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
+        Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
+        if (info.directive.getMessageId() == currentInfo?.getTemplateId()) {
+            Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
+            val templateId = info.directive.getMessageId()
+            if (immediate) {
+                stopClearTimer(templateId)
+                renderer?.clear(info.directive.getMessageId(), true)
+            } else {
+                restartClearTimer(templateId)
+            }
+        } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
+            executeCancelPendingInfo()
+        } else {
+            templateDirectiveInfoMap[info.directive.getMessageId()]?.let {
+                executeCancelInfoInternal(it)
+            }
+        }
+    }
+
+    private fun executeCancelPendingInfo() {
+        val info = pendingInfo
+        pendingInfo = null
+
+        if (info == null) {
+            Logger.d(TAG, "[executeCancelPendingInfo] pendingInfo is null.")
+            return
+        }
+
+        executeCancelInfoInternal(info)
+    }
+
+    private fun executeCancelInfoInternal(info: TemplateDirectiveInfo) {
+        Logger.d(TAG, "[executeCancelInfoInternal] cancel pendingInfo : $info")
+
+        setHandlingFailed(info, "Canceled by the other display info")
+        templateDirectiveInfoMap.remove(info.directive.getMessageId())
+        stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
+        releaseSyncImmediately(info)
+    }
+
+    override fun handleDirective(info: DirectiveInfo) {
+        executor.submit {
+            when(info.directive.getNamespaceAndName()) {
+                CLOSE -> {
+                    val closePayload =
+                        MessageFactory.create(info.directive.payload, ClosePayload::class.java)
+                    if (closePayload == null) {
+                        Logger.w(TAG, "[handleDirective] (Close) no playServiceId at Payload.")
+                        sendCloseFailed(info, "")
+                        return@submit
+                    }
+
+                    val currentRenderedInfo = currentInfo ?: return@submit
+                    val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
+                    if (currentPlayServiceId.isNullOrBlank()) {
+                        Logger.w(
+                            TAG,
+                            "[handleDirective] (Close) no current info (maybe already closed)."
+                        )
+                        sendCloseSucceeded(info, closePayload.playServiceId)
+                        return@submit
+                    }
+
                     Logger.w(
                         TAG,
-                        "[handleDirective] (Close) no current info (maybe already closed)."
+                        "[handleDirective] (Close) current : $currentPlayServiceId / close : ${closePayload.playServiceId}"
                     )
-                    sendCloseSucceeded(info, closePayload.playServiceId)
-                    return@submit
+                    if (currentPlayServiceId == closePayload.playServiceId) {
+                        executeCancelUnknownInfo(currentRenderedInfo, true)
+                        sendCloseEventWhenClosed(currentRenderedInfo, info)
+                    } else {
+                        sendCloseSucceeded(info, closePayload.playServiceId)
+                    }
                 }
+                else -> {
+                    val templateInfo = pendingInfo
+                    if (templateInfo == null || (info.directive.getMessageId() != templateInfo.getTemplateId())) {
+                        Logger.d(TAG, "[handleDirective] skip, maybe canceled display info")
+                        return@submit
+                    }
 
-                Logger.w(
-                    TAG,
-                    "[handleDirective] (Close) current : $currentPlayServiceId / close : ${closePayload.playServiceId}"
-                )
-                if (currentPlayServiceId == closePayload.playServiceId) {
-                    executeCancelUnknownInfo(currentRenderedInfo, true)
-                    sendCloseEventWhenClosed(currentRenderedInfo, info)
-                } else {
-                    sendCloseSucceeded(info, closePayload.playServiceId)
+                    pendingInfo = null
+                    currentInfo = templateInfo
+                    executeRender(templateInfo)
                 }
             }
         }
     }
 
-    override fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
+    private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
+        playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
+        info.playContext?.let {
+            playStackManager.remove(it)
+        }
+    }
+
+    private fun executeRender(info: TemplateDirectiveInfo) {
+        val template = info.directive
+        val willBeRender = renderer?.render(
+            template.getMessageId(),
+            "${template.getNamespace()}.${template.getName()}",
+            template.payload,
+            info.getDialogRequestId()
+        ) ?: false
+        if (!willBeRender) {
+            // the renderer denied to render
+            setHandlingCompleted(info)
+            templateDirectiveInfoMap.remove(info.directive.getMessageId())
+            stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
+            playSynchronizer.releaseWithoutSync(info)
+            clearInfoIfCurrent(info)
+        }
+    }
+
+    override fun cancelDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[cancelDirective] info: $info")
+        executor.submit {
+            executeCancelUnknownInfo(info, true)
+        }
+    }
+
+    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+        val nonBlockingPolicy = BlockingPolicy()
+
+        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+
+        configuration[FULLTEXT1] = nonBlockingPolicy
+        configuration[FULLTEXT2] = nonBlockingPolicy
+        configuration[IMAGETEXT1] = nonBlockingPolicy
+        configuration[IMAGETEXT2] = nonBlockingPolicy
+        configuration[IMAGETEXT3] = nonBlockingPolicy
+        configuration[IMAGETEXT4] = nonBlockingPolicy
+        configuration[TEXTLIST1] = nonBlockingPolicy
+        configuration[TEXTLIST2] = nonBlockingPolicy
+        configuration[TEXTLIST3] = nonBlockingPolicy
+        configuration[TEXTLIST4] = nonBlockingPolicy
+        configuration[IMAGELIST1] = nonBlockingPolicy
+        configuration[IMAGELIST2] = nonBlockingPolicy
+        configuration[IMAGELIST3] = nonBlockingPolicy
+        configuration[CUSTOM_TEMPLATE] = nonBlockingPolicy
+
+        configuration[WEATHER1] = nonBlockingPolicy
+        configuration[WEATHER2] = nonBlockingPolicy
+        configuration[WEATHER3] = nonBlockingPolicy
+        configuration[WEATHER4] = nonBlockingPolicy
+        configuration[WEATHER5] = nonBlockingPolicy
+        configuration[FULLIMAGE] = nonBlockingPolicy
+
+        configuration[CLOSE] = nonBlockingPolicy
+
+        return configuration
+    }
+
+    override fun displayCardRendered(templateId: String) {
+        executor.submit {
+            templateDirectiveInfoMap[templateId]?.let {
+                Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
+                playSynchronizer.startSync(
+                    it,
+                    object : PlaySynchronizerInterface.OnRequestSyncListener {
+                        override fun onGranted() {
+                            if (!playSynchronizer.existOtherSyncObject(it)) {
+                                restartClearTimer(templateId, it.getDuration())
+                            } else {
+                                stopClearTimer(templateId)
+                            }
+                        }
+
+                        override fun onDenied() {
+                        }
+                    })
+                it.playContext?.let {playContext->
+                    playStackManager.add(playContext)
+                }
+            }
+        }
+    }
+
+    override fun displayCardCleared(templateId: String) {
+        executor.submit {
+            templateDirectiveInfoMap[templateId]?.let {
+                Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
+                stopClearTimer(templateId)
+                setHandlingCompleted(it)
+                templateDirectiveInfoMap.remove(templateId)
+                stoppedTimerTemplateIdMap.remove(templateId)
+                releaseSyncImmediately(it)
+
+                onDisplayCardCleared(it)
+
+                if (clearInfoIfCurrent(it)) {
+                    val nextInfo = pendingInfo
+                    pendingInfo = null
+                    currentInfo = nextInfo
+
+                    if(nextInfo == null) {
+                        return@submit
+                    }
+
+                    executeRender(nextInfo)
+                }
+            }
+        }
+    }
+
+    private fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
         val pendingCloseSucceededEvent = pendingCloseSucceededEvents[templateDirectiveInfo]
             ?: return
 
@@ -253,6 +498,143 @@ class DefaultDisplayAgent(
         ) ?: return
 
         sendCloseSucceeded(pendingCloseSucceededEvent, payload.playServiceId)
+    }
+
+    private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
+        Logger.d(TAG, "[clearInfoIfCurrent]")
+        if (currentInfo?.getTemplateId() == info.directive.getMessageId()) {
+            currentInfo = null
+            return true
+        }
+
+        return false
+    }
+
+    override fun setElementSelected(
+        templateId: String,
+        token: String,
+        callback: DisplayInterface.OnElementSelectedCallback?
+    ): String {
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+        val directiveInfo = templateDirectiveInfoMap[templateId] ?:
+        throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
+
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                if (messageSender.sendMessage(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            EVENT_NAME_ELEMENT_SELECTED,
+                            VERSION
+                        ).dialogRequestId(dialogRequestId).payload(
+                            JsonObject().apply {
+                                addProperty(KEY_TOKEN, token)
+                                directiveInfo.payload.playServiceId
+                                    ?.let {
+                                        addProperty(KEY_PLAY_SERVICE_ID, it)
+                                    }
+                            }.toString()
+                        ).build()
+                    )
+                ) {
+                    callback?.let {
+                        eventCallbacks.put(dialogRequestId, callback)
+                    }
+                    onSendEventFinished(dialogRequestId)
+                } else {
+                    callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
+                }
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
+            }
+        }, namespaceAndName)
+
+        return dialogRequestId
+    }
+
+
+
+    override fun stopRenderingTimer(templateId: String) {
+        if (stoppedTimerTemplateIdMap[templateId] == true) {
+            Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId - already called")
+            return
+        }
+        Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId")
+        stoppedTimerTemplateIdMap[templateId] = true
+        stopClearTimer(templateId)
+    }
+
+    private fun startClearTimer(
+        templateId: String,
+        timeout: Long = 7000L
+    ) {
+        Logger.d(TAG, "[startClearTimer] templateId: $templateId, timeout: $timeout")
+        clearTimeoutFutureMap[templateId] =
+            clearTimeoutScheduler.schedule({
+                renderer?.clear(templateId, false)
+            }, timeout, TimeUnit.MILLISECONDS)
+    }
+
+    protected fun restartClearTimer(
+        templateId: String,
+        timeout: Long = 7000L
+    ) {
+        if (stoppedTimerTemplateIdMap[templateId] == true) {
+            Logger.d(
+                TAG,
+                "[restartClearTimer] not restart because of stopped by stopRenderingTimer() - templateId: $templateId, timeout: $timeout"
+            )
+            return
+        }
+
+        Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
+        stopClearTimer(templateId)
+        startClearTimer(templateId, timeout)
+    }
+
+    protected fun stopClearTimer(templateId: String) {
+        val future = clearTimeoutFutureMap[templateId]
+        var canceled = false
+        if (future != null) {
+            canceled = future.cancel(true)
+            clearTimeoutFutureMap[templateId] = null
+        }
+
+        Logger.d(
+            TAG,
+            "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled"
+        )
+    }
+
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info.directive.getMessageId())
+    }
+
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        info.result.setCompleted()
+        removeDirective(info.directive.getMessageId())
+    }
+
+    override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
+        this.renderer = renderer
+    }
+
+    override fun onSendEventFinished(dialogRequestId: String) {
+        inputProcessorManager.onRequested(this, dialogRequestId)
+    }
+
+    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
+        eventCallbacks.remove(dialogRequestId)?.onSuccess(dialogRequestId)
+        return true
+    }
+
+    override fun onResponseTimeout(dialogRequestId: String) {
+        eventCallbacks.remove(dialogRequestId)
+            ?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 
     private val pendingCloseSucceededEvents =
@@ -291,38 +673,6 @@ class DefaultDisplayAgent(
 
     private fun sendCloseFailed(info: DirectiveInfo, playServiceId: String) {
         sendCloseEvent(NAME_CLOSE_FAILED, info, playServiceId)
-    }
-
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy()
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[FULLTEXT1] = nonBlockingPolicy
-        configuration[FULLTEXT2] = nonBlockingPolicy
-        configuration[IMAGETEXT1] = nonBlockingPolicy
-        configuration[IMAGETEXT2] = nonBlockingPolicy
-        configuration[IMAGETEXT3] = nonBlockingPolicy
-        configuration[IMAGETEXT4] = nonBlockingPolicy
-        configuration[TEXTLIST1] = nonBlockingPolicy
-        configuration[TEXTLIST2] = nonBlockingPolicy
-        configuration[TEXTLIST3] = nonBlockingPolicy
-        configuration[TEXTLIST4] = nonBlockingPolicy
-        configuration[IMAGELIST1] = nonBlockingPolicy
-        configuration[IMAGELIST2] = nonBlockingPolicy
-        configuration[IMAGELIST3] = nonBlockingPolicy
-        configuration[CUSTOM_TEMPLATE] = nonBlockingPolicy
-
-        configuration[WEATHER1] = nonBlockingPolicy
-        configuration[WEATHER2] = nonBlockingPolicy
-        configuration[WEATHER3] = nonBlockingPolicy
-        configuration[WEATHER4] = nonBlockingPolicy
-        configuration[WEATHER5] = nonBlockingPolicy
-        configuration[FULLIMAGE] = nonBlockingPolicy
-
-        configuration[CLOSE] = nonBlockingPolicy
-
-        return configuration
     }
 
     override fun provideState(
