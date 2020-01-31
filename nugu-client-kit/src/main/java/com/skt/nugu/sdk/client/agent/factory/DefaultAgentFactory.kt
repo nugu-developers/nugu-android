@@ -98,8 +98,7 @@ object DefaultAgentFactory {
                     getMessageSender(),
                     getPlaySynchronizer(),
                     getDisplayPlayStackManager(),
-                    getInputManagerProcessor(),
-                    DefaultFocusChannel.CONTENT_CHANNEL_NAME
+                    getInputManagerProcessor()
                 ).apply {
                     setDisplayAgent(this)
                     getDirectiveSequencer().addDirectiveHandler(this)
@@ -149,8 +148,7 @@ object DefaultAgentFactory {
                 getMessageSender(),
                 getPlaySynchronizer(),
                 getDisplayPlayStackManager(),
-                getInputManagerProcessor(),
-                DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                getInputManagerProcessor()
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
             }
