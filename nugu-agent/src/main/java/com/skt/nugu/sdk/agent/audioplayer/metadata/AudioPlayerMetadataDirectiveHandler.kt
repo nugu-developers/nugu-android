@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.audioplayer.metadata
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
+import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -36,7 +36,7 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
 
         private val UPDATE_METADATA =
             NamespaceAndName(
-                DisplayAudioPlayerAgent.NAMESPACE,
+                AudioPlayerTemplateHandler.NAMESPACE,
                 NAME_UPDATE_METADATA
             )
     }
