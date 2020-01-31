@@ -40,7 +40,7 @@ import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.light.AbstractLightAgent
-import com.skt.nugu.sdk.agent.location.    AbstractLocationAgent
+import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
