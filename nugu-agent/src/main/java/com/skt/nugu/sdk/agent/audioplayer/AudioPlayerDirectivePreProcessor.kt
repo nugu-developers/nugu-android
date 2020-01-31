@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
-import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
+import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
@@ -111,7 +111,7 @@ class AudioPlayerDirectivePreProcessor :
                     UUIDGeneration.shortUUID().toString(),
                     name,
                     namespace,
-                    DisplayAudioPlayerAgent.VERSION,
+                    AudioPlayerTemplateHandler.VERSION,
                     header.referrerDialogRequestId
                 ), template
             )

@@ -15,48 +15,27 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Header
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.*
 
-class DisplayAudioPlayerAgent(
-    contextManager: ContextManagerInterface,
-    messageSender: MessageSender,
-    playSynchronizer: PlaySynchronizerInterface,
-    playStackManager: PlayStackManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface
-) : AbstractDisplayAgent(
-    contextManager,
-    messageSender,
-    playSynchronizer,
-    playStackManager,
-    inputProcessorManager
-), AudioPlayerMetadataDirectiveHandler.Listener {
+class AudioPlayerTemplateHandler(
+    private val playSynchronizer: PlaySynchronizerInterface,
+    private val playStackManager: PlayStackManagerInterface
+) : AbstractDirectiveHandler(), DisplayAgentInterface, AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
-        private const val TAG = "DisplayAudioPlayerAgent"
+        private const val TAG = "AudioPlayerTemplateHandler"
         const val NAMESPACE = AbstractAudioPlayerAgent.NAMESPACE
         const val VERSION = AbstractAudioPlayerAgent.VERSION
-
-        private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
-
-        private const val KEY_PLAY_SERVICE_ID = "playServiceId"
-        private const val KEY_TOKEN = "token"
 
         private const val NAME_AUDIOPLAYER_TEMPLATE1 = "Template1"
         private const val NAME_AUDIOPLAYER_TEMPLATE2 = "Template2"
@@ -75,26 +54,18 @@ class DisplayAudioPlayerAgent(
     }
 
     private var pendingInfo: TemplateDirectiveInfo? = null
-    protected var currentInfo: TemplateDirectiveInfo? = null
+    private var currentInfo: TemplateDirectiveInfo? = null
 
     private var renderer: DisplayAgentInterface.Renderer? = null
 
-    protected var executor: ExecutorService = Executors.newSingleThreadExecutor()
-
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName(
-            "supportedInterfaces",
-            NAMESPACE
-        )
+    private var executor: ExecutorService = Executors.newSingleThreadExecutor()
 
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
 
-    private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
-
-    protected data class TemplatePayload(
+    private data class TemplatePayload(
         @SerializedName("playServiceId")
         val playServiceId: String?,
         @SerializedName("token")
@@ -105,7 +76,7 @@ class DisplayAudioPlayerAgent(
         val playStackControl: PlayStackControl?
     )
 
-    protected inner class TemplateDirectiveInfo(
+    private inner class TemplateDirectiveInfo(
         info: DirectiveInfo,
         val payload: TemplatePayload
     ) : PlaySynchronizerInterface.SynchronizeObject
@@ -163,7 +134,7 @@ class DisplayAudioPlayerAgent(
         }
     }
 
-    protected fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
+    private fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
         if (info.directive.getMessageId() == currentInfo?.getTemplateId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
@@ -243,7 +214,7 @@ class DisplayAudioPlayerAgent(
         }
     }
 
-    final override fun cancelDirective(info: DirectiveInfo) {
+    override fun cancelDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[cancelDirective] info: $info")
         executor.submit {
             executeCancelUnknownInfo(info, true)
@@ -315,47 +286,8 @@ class DisplayAudioPlayerAgent(
         token: String,
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
-        val dialogRequestId = UUIDGeneration.timeUUID().toString()
-        val directiveInfo = templateDirectiveInfoMap[templateId] ?:
-        throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
-
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
-                if (messageSender.sendMessage(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            NAMESPACE,
-                            EVENT_NAME_ELEMENT_SELECTED,
-                            VERSION
-                        ).dialogRequestId(dialogRequestId).payload(
-                            JsonObject().apply {
-                                addProperty(KEY_TOKEN, token)
-                                directiveInfo.payload.playServiceId
-                                    ?.let {
-                                        addProperty(KEY_PLAY_SERVICE_ID, it)
-                                    }
-                            }.toString()
-                        ).build()
-                    )
-                ) {
-                    callback?.let {
-                        eventCallbacks.put(dialogRequestId, callback)
-                    }
-                    onSendEventFinished(dialogRequestId)
-                } else {
-                    callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
-                }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
-            }
-        }, namespaceAndName)
-
-        return dialogRequestId
+        throw UnsupportedOperationException("setElementSelected not supported")
     }
-
-
 
     override fun stopRenderingTimer(templateId: String) {
         if (stoppedTimerTemplateIdMap[templateId] == true) {
@@ -378,7 +310,7 @@ class DisplayAudioPlayerAgent(
             }, timeout, TimeUnit.MILLISECONDS)
     }
 
-    protected fun restartClearTimer(
+    private fun restartClearTimer(
         templateId: String,
         timeout: Long = 7000L
     ) {
@@ -395,7 +327,7 @@ class DisplayAudioPlayerAgent(
         startClearTimer(templateId, timeout)
     }
 
-    protected fun stopClearTimer(templateId: String) {
+    private fun stopClearTimer(templateId: String) {
         val future = clearTimeoutFutureMap[templateId]
         var canceled = false
         if (future != null) {
@@ -421,22 +353,6 @@ class DisplayAudioPlayerAgent(
 
     override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
         this.renderer = renderer
-    }
-
-    protected fun getRenderer(): DisplayAgentInterface.Renderer? = renderer
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
-    }
-
-    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
-        eventCallbacks.remove(dialogRequestId)?.onSuccess(dialogRequestId)
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        eventCallbacks.remove(dialogRequestId)
-            ?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
@@ -470,7 +386,7 @@ class DisplayAudioPlayerAgent(
                 return@submit
             }
 
-            getRenderer()?.update(info.getTemplateId(), jsonMetaData)
+            renderer?.update(info.getTemplateId(), jsonMetaData)
         }
     }
 }

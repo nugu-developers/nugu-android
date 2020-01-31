@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.agent.DefaultTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
-import com.skt.nugu.sdk.agent.display.DisplayAudioPlayerAgent
+import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -93,12 +93,9 @@ object DefaultAgentFactory {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
 
-                DisplayAudioPlayerAgent(
-                    getContextManager(),
-                    getMessageSender(),
+                AudioPlayerTemplateHandler(
                     getPlaySynchronizer(),
-                    getDisplayPlayStackManager(),
-                    getInputManagerProcessor()
+                    getDisplayPlayStackManager()
                 ).apply {
                     setDisplayAgent(this)
                     getDirectiveSequencer().addDirectiveHandler(this)

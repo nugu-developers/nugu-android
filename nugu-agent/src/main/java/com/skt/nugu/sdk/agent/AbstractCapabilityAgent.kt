@@ -16,8 +16,6 @@
 package com.skt.nugu.sdk.agent
 
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 
 /**
@@ -28,13 +26,4 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
  */
 abstract class AbstractCapabilityAgent : CapabilityAgent
     , AbstractDirectiveHandler()
-    , ContextStateProvider {
-
-    override fun provideState(
-        contextSetter: ContextSetterInterface,
-        namespaceAndName: NamespaceAndName,
-        stateRequestToken: Int
-    ) {
-        // default no op
-    }
-}
+    , ContextStateProvider
