@@ -21,7 +21,6 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
@@ -33,17 +32,14 @@ class DisplayAudioPlayerAgent(
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface,
-    channelName: String
+    inputProcessorManager: InputProcessorManagerInterface
 ) : BaseDisplayAgent(
     contextManager,
     messageSender,
     playSynchronizer,
     playStackManager,
-    inputProcessorManager,
-    channelName
-)
-    , AudioPlayerMetadataDirectiveHandler.Listener {
+    inputProcessorManager
+), AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
         private const val TAG = "DisplayAudioPlayerAgent"
         const val NAMESPACE = AbstractAudioPlayerAgent.NAMESPACE

@@ -26,7 +26,6 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
-import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -38,15 +37,13 @@ abstract class BaseDisplayAgent(
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface,
-    channelName: String
+    inputProcessorManager: InputProcessorManagerInterface
 ) : AbstractDisplayAgent(
     contextManager,
     messageSender,
     playSynchronizer,
     playStackManager,
-    inputProcessorManager,
-    channelName
+    inputProcessorManager
 ) {
     companion object {
         private const val TAG = "BaseDisplayAgent"

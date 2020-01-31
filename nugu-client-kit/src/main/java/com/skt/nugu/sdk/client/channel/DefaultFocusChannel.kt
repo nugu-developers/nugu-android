@@ -55,25 +55,5 @@ class DefaultFocusChannel {
                 )
             )
         }
-
-        fun getDefaultVisualChannels(): List<FocusManagerInterface.ChannelConfiguration> {
-            return listOf(
-                FocusManagerInterface.ChannelConfiguration(
-                    INTRUSION_CHANNEL_NAME,
-                    INTRUSION_CHANNEL_PRIORITY, true),
-                FocusManagerInterface.ChannelConfiguration(
-                    DIALOG_CHANNEL_NAME,
-                    DIALOG_CHANNEL_PRIORITY, true),
-                FocusManagerInterface.ChannelConfiguration(
-                    COMMUNICATIONS_CHANNEL_NAME,
-                    COMMUNICATIONS_CHANNEL_PRIORITY, true),
-                FocusManagerInterface.ChannelConfiguration(
-                    ALERTS_CHANNEL_NAME,
-                    ALERTS_CHANNEL_PRIORITY, true),
-                FocusManagerInterface.ChannelConfiguration(
-                    CONTENT_CHANNEL_NAME,
-                    CONTENT_CHANNEL_PRIORITY, true)
-            )
-        }
     }
 }

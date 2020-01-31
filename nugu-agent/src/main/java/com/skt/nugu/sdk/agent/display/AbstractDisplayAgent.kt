@@ -28,6 +28,5 @@ abstract class AbstractDisplayAgent(
     protected val messageSender: MessageSender,
     protected val playSynchronizer: PlaySynchronizerInterface,
     protected val playStackManager: PlayStackManagerInterface,
-    protected val inputProcessorManager: InputProcessorManagerInterface,
-    protected val channelName: String
+    protected val inputProcessorManager: InputProcessorManagerInterface
 ) : AbstractCapabilityAgent(), DisplayAgentInterface, InputProcessor
