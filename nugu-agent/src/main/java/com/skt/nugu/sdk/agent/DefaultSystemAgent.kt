@@ -195,8 +195,14 @@ class DefaultSystemAgent(
         addProperty("version", VERSION)
         batteryStatusProvider?.let {
             val level = it.getBatteryLevel()
+            val charging = it.isCharging()
+
             if (level > 0) {
                 addProperty("battery", level)
+            }
+
+            if(charging != null) {
+                addProperty("charging", charging)
             }
         }
     }.toString()
@@ -204,7 +210,7 @@ class DefaultSystemAgent(
     /**
      * Handle the action specified by the directive
      * @param info The directive currently being handled.
-     * @see [com.skt.nugu.core.common.base.CapabilityAgent]
+     * @see [AbstractCapabilityAgent]
      */
     override fun handleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[handleDirective] $info")

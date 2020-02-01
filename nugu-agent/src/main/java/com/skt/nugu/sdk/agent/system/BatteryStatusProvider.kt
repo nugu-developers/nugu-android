@@ -24,4 +24,10 @@ interface BatteryStatusProvider {
      * @return the battery level which range in (1~100), -1: if unknown
      **/
     fun getBatteryLevel(): Int
+
+    /**
+     * Returns whether charging or not.
+     * @return true: charging, false: not charging, null: if not supported or unknown.
+     */
+    fun isCharging(): Boolean?
 }
