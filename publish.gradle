@@ -8,10 +8,12 @@ publishing {
 
     def userName = properties['maven.userName']
     def passWord = properties['maven.password']
+//    def mavenTarget = "maven-releases"
+    def mavenTarget = "maven-snapshots"
 
     repositories {
         maven {
-            url "http://223.39.117.163:8081/repository/maven-releases/"
+            url "http://223.39.117.163:8081/repository/$mavenTarget/"
             credentials {
                 username userName
                 password passWord
@@ -19,7 +21,7 @@ publishing {
         }
 
         maven {
-            url "http://223.39.117.164:8081/repository/maven-releases/"
+            url "http://223.39.117.164:8081/repository/$mavenTarget/"
             credentials {
                 username userName
                 password passWord
