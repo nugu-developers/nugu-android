@@ -15,19 +15,7 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.agent.DefaultASRAgent
-import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
-import com.skt.nugu.sdk.agent.DefaultDelegationAgent
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
-import com.skt.nugu.sdk.agent.DefaultExtensionAgent
-import com.skt.nugu.sdk.agent.DefaultLightAgent
-import com.skt.nugu.sdk.agent.DefaultLocationAgent
-import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
-import com.skt.nugu.sdk.agent.DefaultMovementAgent
-import com.skt.nugu.sdk.agent.DefaultSpeakerAgent
-import com.skt.nugu.sdk.agent.DefaultSystemAgent
-import com.skt.nugu.sdk.agent.DefaultTTSAgent
-import com.skt.nugu.sdk.agent.DefaultTextAgent
+import com.skt.nugu.sdk.agent.*
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
@@ -43,6 +31,7 @@ import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
+import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
@@ -288,6 +277,20 @@ object DefaultAgentFactory {
                 DefaultFocusChannel.DIALOG_CHANNEL_NAME
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
+            }
+        }
+    }
+
+    val SCREEN = object : ScreenAgentFactory {
+        override fun create(container: SdkContainer): AbstractScreenAgent? = with(container) {
+            getScreen()?.let {
+                DefaultScreenAgent(
+                    getContextManager(),
+                    getMessageSender(),
+                    it
+                ).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                }
             }
         }
     }

@@ -65,6 +65,7 @@ import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
+import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
@@ -144,6 +145,7 @@ class NuguAndroidClient private constructor(
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
         internal var light: Light? = null
+        internal var screen: Screen? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
 
@@ -209,6 +211,11 @@ class NuguAndroidClient private constructor(
         fun light(light: Light?) = apply { this.light = light }
 
         /**
+         * @param screen the screen to be controlled by NUGU
+         */
+        fun screen(screen: Screen?) = apply { this.screen = screen }
+
+        /**
          * @param factory the transport factory for network
          */
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
@@ -240,6 +247,7 @@ class NuguAndroidClient private constructor(
         .movementController(builder.movementController)
         .batteryStatusProvider(builder.batteryStatusProvider)
         .light(builder.light)
+        .screen(builder.screen)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {
