@@ -37,6 +37,7 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
 interface SdkContainer {
@@ -76,6 +77,9 @@ interface SdkContainer {
 
     // Extension only
     fun getExtensionClient(): ExtensionAgentInterface.Client?
+
+    // Screen only
+    fun getScreen(): Screen?
 
     fun getPlayerFactory(): PlayerFactory
     fun getSpeakerFactory(): SpeakerFactory

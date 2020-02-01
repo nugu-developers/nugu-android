@@ -69,6 +69,7 @@ import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -119,6 +120,7 @@ class NuguClient private constructor(
         internal var movementController: MovementController? = null
         internal var batteryStatusProvider: BatteryStatusProvider? = null
         internal var light: Light? = null
+        internal var screen: Screen? = null
 
         // Agent Factory
         internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
@@ -153,6 +155,7 @@ class NuguClient private constructor(
             apply { this.batteryStatusProvider = batteryStatusProvider }
 
         fun light(light: Light?) = apply { this.light = light }
+        fun screen(screen: Screen?) = apply { this.screen = screen }
 
         fun audioPlayerAgentFactory(factory: AudioPlayerAgentFactory) =
             apply { audioPlayerAgentFactory = factory }
@@ -173,7 +176,8 @@ class NuguClient private constructor(
         fun delegationAgentFactory(factory: DelegationAgentFactory?) =
             apply { delegationAgentFactory = factory }
 
-        fun addAgentFactory(namespace: String, factory: AgentFactory<*>) = apply { agentFactoryMap[namespace] = factory }
+        fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
+            apply { agentFactoryMap[namespace] = factory }
 
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
@@ -202,7 +206,8 @@ class NuguClient private constructor(
         DefaultFocusChannel.getDefaultAudioChannels(),
         "Audio"
     )
-    private val messageRouter: MessageRouter = MessageRouter(builder.transportFactory, builder.authDelegate)
+    private val messageRouter: MessageRouter =
+        MessageRouter(builder.transportFactory, builder.authDelegate)
     private val dialogUXStateAggregator =
         DialogUXStateAggregator()
     override val asrAgent: AbstractASRAgent?
@@ -252,8 +257,11 @@ class NuguClient private constructor(
 
                 override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
 
-                override fun getAudioPlayStackManager(): PlayStackManagerInterface = audioPlayStackManager
-                override fun getDisplayPlayStackManager(): PlayStackManagerInterface = displayPlayStackManager
+                override fun getAudioPlayStackManager(): PlayStackManagerInterface =
+                    audioPlayStackManager
+
+                override fun getDisplayPlayStackManager(): PlayStackManagerInterface =
+                    displayPlayStackManager
 
                 override fun getMessageSender(): MessageSender = networkManager
                 override fun getConnectionManager(): ConnectionManagerInterface = networkManager
@@ -264,10 +272,14 @@ class NuguClient private constructor(
                     dialogSessionManager
 
                 override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
-                override fun getDirectiveSequencer(): DirectiveSequencerInterface = directiveSequencer
-                override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface = directiveGroupProcessor
+                override fun getDirectiveSequencer(): DirectiveSequencerInterface =
+                    directiveSequencer
 
-                override fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface = dialogUXStateAggregator
+                override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface =
+                    directiveGroupProcessor
+
+                override fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface =
+                    dialogUXStateAggregator
 
                 override fun getAudioProvider(): AudioProvider = defaultAudioProvider
 
@@ -281,17 +293,22 @@ class NuguClient private constructor(
 
                 override fun getLight(): Light? = light
 
+                override fun getScreen(): Screen? = screen
+
                 override fun getMicrophone(): Microphone? = defaultMicrophone
 
                 override fun getMovementController(): MovementController? = movementController
 
-                override fun getBatteryStatusProvider(): BatteryStatusProvider? = batteryStatusProvider
+                override fun getBatteryStatusProvider(): BatteryStatusProvider? =
+                    batteryStatusProvider
+
                 override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
 
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
                 override fun getSpeakerFactory(): SpeakerFactory = speakerFactory
 
-                override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter = playbackRouter
+                override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
+                    playbackRouter
             }
 
             speakerManager = DefaultAgentFactory.SPEAKER.create(sdkContainer)
