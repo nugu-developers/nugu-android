@@ -227,9 +227,11 @@ class DefaultDisplayAgent(
 
         fun getDuration(): Long {
             return when (payload.duration) {
+                "NONE" -> 0L
                 "MID" -> 15000L
                 "LONG" -> 30000L
-                else -> 7000L
+                "LONGEST" -> 60 * 1000 * 10L // 10min
+                else -> 7000L // "SHORT" or Default
             }
         }
 
