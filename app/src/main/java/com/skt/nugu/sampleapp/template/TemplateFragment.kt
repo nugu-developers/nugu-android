@@ -155,4 +155,16 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
         Log.d(TAG, "[controlScroll] $direction (not implemented yet)")
         return false
     }
+
+    fun getFocusedItemToken(): String? {
+        // TODO : XXX
+        Log.d(TAG, "[getFocusedItemToken] (not implemented yet)")
+        return null
+    }
+
+    fun getVisibleTokenList(): List<String>? {
+        // TODO : XXX
+        Log.d(TAG, "[getVisibleTokenList] (not implemented yet)")
+        return null
+    }
 }
