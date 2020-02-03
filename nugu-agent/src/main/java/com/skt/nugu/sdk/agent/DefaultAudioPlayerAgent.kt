@@ -25,7 +25,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPageController
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
-import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsVisibilityController
+import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
@@ -34,7 +34,6 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
@@ -1304,33 +1303,33 @@ class DefaultAudioPlayerAgent(
 //        Logger.w(TAG, "[onTogglePressed] not supported - $toggle, $action")
 //    }
 
-    private var displayAgent: DisplayAgentInterface? = null
+    private var displayDelegate: AudioPlayerDisplayInterface? = null
 
     override fun setElementSelected(
         templateId: String,
         token: String,
         callback: DisplayInterface.OnElementSelectedCallback?
-    ): String = displayAgent?.setElementSelected(templateId, token, callback)
+    ): String = displayDelegate?.setElementSelected(templateId, token, callback)
         ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
 
     override fun displayCardRendered(templateId: String) {
-        displayAgent?.displayCardRendered(templateId)
+        displayDelegate?.displayCardRendered(templateId)
     }
 
     override fun displayCardCleared(templateId: String) {
-        displayAgent?.displayCardCleared(templateId)
+        displayDelegate?.displayCardCleared(templateId)
     }
 
-    override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
-        displayAgent?.setRenderer(renderer)
+    override fun setRenderer(renderer: AudioPlayerDisplayInterface.Renderer?) {
+        displayDelegate?.setRenderer(renderer)
     }
 
     override fun stopRenderingTimer(templateId: String) {
-        displayAgent?.stopRenderingTimer(templateId)
+        displayDelegate?.stopRenderingTimer(templateId)
     }
 
-    fun setDisplayAgent(displayAgent: DisplayAgentInterface?) {
-        this.displayAgent = displayAgent
+    fun setDisplay(display: AudioPlayerDisplayInterface?) {
+        this.displayDelegate = display
     }
 
     private var lyricsPresenter: LyricsPresenter? = null

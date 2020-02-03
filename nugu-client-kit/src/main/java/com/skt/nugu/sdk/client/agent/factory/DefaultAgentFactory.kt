@@ -97,7 +97,7 @@ object DefaultAgentFactory {
                     getPlaySynchronizer(),
                     getDisplayPlayStackManager()
                 ).apply {
-                    setDisplayAgent(this)
+                    setDisplay(this)
                     getDirectiveSequencer().addDirectiveHandler(this)
                     getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
                         AudioPlayerDirectivePreProcessor()

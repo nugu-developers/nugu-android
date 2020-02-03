@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-/**
- * The public interface for DisplayAgent
- */
-interface DisplayAgentInterface:
-    DisplayInterface<DisplayAgentInterface.Renderer> {
-    /**
-     * The renderer of display agent.
-     * When receive an directive for display, the agent will request the renderer to render it.
-     */
+interface AudioPlayerDisplayInterface : DisplayInterface<AudioPlayerDisplayInterface.Renderer> {
     interface Renderer {
         /**
          * Used to notify the renderer when received a display directive.
@@ -49,5 +41,13 @@ interface DisplayAgentInterface:
          * @param force true: the display should be cleared, false: recommend to clear.
          */
         fun clear(templateId: String, force: Boolean)
+
+        /**
+         * Used to notify the renderer when display should be updated. .
+         *
+         * @param templateId the unique identifier for the template card
+         * @param templateContent the content of template in structured JSON which should be updated. The content consist of partial or full elements for templateContent of [render]
+         */
+        fun update(templateId: String, templateContent: String)
     }
 }

@@ -16,12 +16,13 @@
 package com.skt.nugu.sdk.agent.audioplayer
 
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
+import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 
 /**
  * Interface for AudioPlayer Capability Agent
  */
-interface AudioPlayerAgentInterface: DisplayAgentInterface {
+interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     data class Context(
         val audioItemId: String,
         val audioItemTemplate: String?,
