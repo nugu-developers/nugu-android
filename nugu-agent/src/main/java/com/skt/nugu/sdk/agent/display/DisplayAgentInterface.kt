@@ -60,5 +60,14 @@ interface DisplayAgentInterface:
          * @return true: success, false: otherwise
          */
         fun controlFocus(templateId: String, direction: Direction): Boolean
+
+        /**
+         * Used to notify the renderer when display should scroll
+         *
+         * @param templateId the unique identifier for the template card
+         * @param direction the direction to which scroll
+         * @return true: success, false: otherwise
+         */
+        fun controlScroll(templateId: String, direction: Direction): Boolean
     }
 }

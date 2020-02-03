@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-   import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
@@ -28,30 +28,30 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 
-class ControlFocusDirectiveHandler(
+class ControlScrollDirectiveHandler(
     private val controller: Controller,
     private val contextGetter: ContextGetterInterface,
     private val messageSender: MessageSender,
     private val namespaceAndName: NamespaceAndName
-) : AbstractDirectiveHandler() {
+): AbstractDirectiveHandler() {
     companion object {
-        private const val TAG = "ControlFocusDirectiveHandler"
-        private const val NAME_CONTROL_FOCUS = "ControlFocus"
+        private const val TAG = "ControlScrollDirectiveHandler"
+        private const val NAME_CONTROL_SCROLL = "ControlScroll"
 
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
 
-        private val CONTROL_FOCUS = NamespaceAndName(
+        private val CONTROL_SCROLL = NamespaceAndName(
             DefaultDisplayAgent.NAMESPACE,
-            NAME_CONTROL_FOCUS
+            NAME_CONTROL_SCROLL
         )
     }
 
     interface Controller {
-        fun controlFocus(playServiceId: String, direction: Direction): Boolean
+        fun controlScroll(playServiceId: String, direction: Direction): Boolean
     }
 
-    private data class ControlFocusPayload(
+    private data class ControlScrollPayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("direction")
@@ -63,7 +63,7 @@ class ControlFocusDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, ControlFocusPayload::class.java)
+        val payload = MessageFactory.create(info.directive.payload, ControlScrollPayload::class.java)
         if (payload == null) {
             Logger.w(TAG, "[executeHandleControlFocusDirective] invalid payload")
             info.result.setFailed("[executeHandleControlFocusDirective] invalid payload")
@@ -71,10 +71,10 @@ class ControlFocusDirectiveHandler(
             return
         }
 
-        if(controller.controlFocus(payload.playServiceId, payload.direction)) {
-            sendControlFocusEvent(info.directive.payload, "$NAME_CONTROL_FOCUS$NAME_SUCCEEDED")
+        if(controller.controlScroll(payload.playServiceId, payload.direction)) {
+            sendControlScrollEvent(info.directive.payload, "${NAME_CONTROL_SCROLL}${NAME_SUCCEEDED}")
         } else {
-            sendControlFocusEvent(info.directive.payload, "$NAME_CONTROL_FOCUS$NAME_FAILED")
+            sendControlScrollEvent(info.directive.payload, "${NAME_CONTROL_SCROLL}${NAME_FAILED}")
         }
     }
 
@@ -82,7 +82,8 @@ class ControlFocusDirectiveHandler(
         removeDirective(info.directive.getMessageId())
     }
 
-    private fun sendControlFocusEvent(payload: String, name: String) {
+
+    private fun sendControlScrollEvent(payload: String, name: String) {
         contextGetter.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
@@ -105,7 +106,7 @@ class ControlFocusDirectiveHandler(
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[CONTROL_FOCUS] = nonBlockingPolicy
+        configuration[CONTROL_SCROLL] = nonBlockingPolicy
 
         return configuration
     }
