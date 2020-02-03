@@ -31,7 +31,7 @@ import java.util.concurrent.*
 class AudioPlayerTemplateHandler(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val playStackManager: PlayStackManagerInterface
-) : AbstractDirectiveHandler(), DisplayAgentInterface, AudioPlayerMetadataDirectiveHandler.Listener {
+) : AbstractDirectiveHandler(), AudioPlayerDisplayInterface, AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
         private const val TAG = "AudioPlayerTemplateHandler"
         const val NAMESPACE = AbstractAudioPlayerAgent.NAMESPACE
@@ -56,7 +56,7 @@ class AudioPlayerTemplateHandler(
     private var pendingInfo: TemplateDirectiveInfo? = null
     private var currentInfo: TemplateDirectiveInfo? = null
 
-    private var renderer: DisplayAgentInterface.Renderer? = null
+    private var renderer: AudioPlayerDisplayInterface.Renderer? = null
 
     private var executor: ExecutorService = Executors.newSingleThreadExecutor()
 
@@ -351,7 +351,7 @@ class AudioPlayerTemplateHandler(
         removeDirective(info.directive.getMessageId())
     }
 
-    override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
+    override fun setRenderer(renderer: AudioPlayerDisplayInterface.Renderer?) {
         this.renderer = renderer
     }
 

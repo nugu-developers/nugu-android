@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.display
 
+import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import java.util.concurrent.locks.ReentrantLock
@@ -22,13 +23,13 @@ import kotlin.concurrent.withLock
 
 class DisplayAggregator(
     private val templateAgent: DisplayAgentInterface,
-    private val audioPlayerAgent: DisplayAgentInterface
+    private val audioPlayerAgent: AudioPlayerDisplayInterface
 ) : DisplayAggregatorInterface {
-    private abstract inner class BaseRenderer : DisplayAgentInterface.Renderer {
-        protected abstract fun getAgent(): DisplayAgentInterface
+    private abstract inner class BaseRenderer {
+        protected abstract fun getAgent(): DisplayInterface<*>
         protected abstract fun getType(): DisplayAggregatorInterface.Type
 
-        override fun render(
+        fun render(
             templateId: String,
             templateType: String,
             templateContent: String,
@@ -54,31 +55,55 @@ class DisplayAggregator(
             return willRender
         }
 
-        override fun clear(templateId: String, force: Boolean) {
+        fun clear(templateId: String, force: Boolean) {
             observer?.clear(templateId, force)
-        }
-
-        override fun update(templateId: String, templateContent: String) {
-            observer?.update(templateId, templateContent)
         }
     }
 
     private var observer: DisplayAggregatorInterface.Renderer? = null
     private val lock = ReentrantLock()
-    private val requestAgentMap = HashMap<String, DisplayAgentInterface>()
+    private val requestAgentMap = HashMap<String, DisplayInterface<*>>()
 
     init {
-        templateAgent.setRenderer(object : BaseRenderer() {
-            override fun getAgent(): DisplayAgentInterface = templateAgent
+        templateAgent.setRenderer(object : DisplayAgentInterface.Renderer {
+            private val renderer = object : BaseRenderer() {
+                override fun getAgent() = templateAgent
+                override fun getType(): DisplayAggregatorInterface.Type =
+                    DisplayAggregatorInterface.Type.INFOMATION
+            }
 
-            override fun getType(): DisplayAggregatorInterface.Type =
-                DisplayAggregatorInterface.Type.INFOMATION
+            override fun render(
+                templateId: String,
+                templateType: String,
+                templateContent: String,
+                dialogRequestId: String
+            ): Boolean = renderer.render(templateId, templateType, templateContent, dialogRequestId)
+
+            override fun clear(templateId: String, force: Boolean) =
+                renderer.clear(templateId, force)
         })
-        audioPlayerAgent.setRenderer(object : BaseRenderer() {
-            override fun getAgent(): DisplayAgentInterface = audioPlayerAgent
 
-            override fun getType(): DisplayAggregatorInterface.Type =
-                DisplayAggregatorInterface.Type.AUDIO_PLAYER
+        audioPlayerAgent.setRenderer(object : AudioPlayerDisplayInterface.Renderer {
+            private val renderer = object : BaseRenderer() {
+                override fun getAgent() = audioPlayerAgent
+                override fun getType(): DisplayAggregatorInterface.Type =
+                    DisplayAggregatorInterface.Type.AUDIO_PLAYER
+            }
+
+            override fun render(
+                templateId: String,
+                templateType: String,
+                templateContent: String,
+                dialogRequestId: String
+            ): Boolean =
+                renderer.render(templateId, templateType, templateContent, dialogRequestId)
+
+            override fun clear(templateId: String, force: Boolean) =
+                renderer.clear(templateId, force)
+
+            override fun update(templateId: String, templateContent: String) {
+                observer?.update(templateId, templateContent)
+            }
         })
     }
 
