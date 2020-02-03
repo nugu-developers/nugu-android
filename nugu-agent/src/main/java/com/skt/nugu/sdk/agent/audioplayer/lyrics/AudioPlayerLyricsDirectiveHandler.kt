@@ -19,6 +19,7 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -70,7 +71,7 @@ class AudioPlayerLyricsDirectiveHandler(
     }
 
     interface PagingController {
-        fun controlPage(playServiceId: String, direction: LyricsPageController.Direction): Boolean
+        fun controlPage(playServiceId: String, direction: Direction): Boolean
     }
 
     interface VisibilityController {
@@ -87,7 +88,7 @@ class AudioPlayerLyricsDirectiveHandler(
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("direction")
-        val direction: LyricsPageController.Direction
+        val direction: Direction
     )
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -157,7 +158,7 @@ class AudioPlayerLyricsDirectiveHandler(
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
     }
 
-    private fun sendPageControlEvent(name: String, playServiceId: String, direction: LyricsPageController.Direction) {
+    private fun sendPageControlEvent(name: String, playServiceId: String, direction: Direction) {
         contextManager.getContext(object: ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(

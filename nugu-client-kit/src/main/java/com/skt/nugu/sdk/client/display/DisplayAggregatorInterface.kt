@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.display
 
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 
 /**
@@ -74,5 +75,14 @@ interface DisplayAggregatorInterface:
          * @param templateContent the content of template in structured JSON which should be updated. The content consist of partial or full elements for templateContent of [render]
          */
         fun update(templateId: String, templateContent: String)
+
+        /**
+         * Used to notify the renderer when display should change focus of item.
+         *
+         * @param templateId the unique identifier for the template card
+         * @param direction the direction to which change focus
+         * @return true: success, false: otherwise
+         */
+        fun controlFocus(templateId: String, direction: Direction): Boolean
     }
 }

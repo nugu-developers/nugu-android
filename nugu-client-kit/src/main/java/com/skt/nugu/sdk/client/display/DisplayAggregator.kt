@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.display
 
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayInterface
@@ -81,6 +82,8 @@ class DisplayAggregator(
 
             override fun clear(templateId: String, force: Boolean) =
                 renderer.clear(templateId, force)
+
+            override fun controlFocus(templateId: String, direction: Direction): Boolean = observer?.controlFocus(templateId, direction) ?: false
         })
 
         audioPlayerAgent.setRenderer(object : AudioPlayerDisplayInterface.Renderer {

@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent.audioplayer.lyrics
-
-import com.skt.nugu.sdk.agent.common.Direction
+package com.skt.nugu.sdk.agent.common
 
 /**
- * The interface to control paging for lyrics.
+ * The direction
  */
-interface LyricsPageController {
-    /**
-     * Control paging to given direction
-     * @param direction the direction to which paging
-     * @return true: success, false: failure
-     */
-    fun controlPage(direction: Direction): Boolean
+enum class Direction {
+    PREVIOUS, NEXT
 }

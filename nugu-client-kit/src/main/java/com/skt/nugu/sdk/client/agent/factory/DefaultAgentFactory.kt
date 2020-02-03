@@ -38,6 +38,7 @@ import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandl
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
+import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
@@ -148,6 +149,10 @@ object DefaultAgentFactory {
                 getInputManagerProcessor()
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
+
+                ControlFocusDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
+                    getDirectiveSequencer().addDirectiveHandler(this)
+                }
             }
         }
     }
