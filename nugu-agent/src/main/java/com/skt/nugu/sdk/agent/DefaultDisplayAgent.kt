@@ -81,6 +81,11 @@ class DefaultDisplayAgent(
         private const val NAME_CLOSE = "Close"
 
         // supported for v1.2
+        private const val NAME_SCORE_1 = "Score1"
+        private const val NAME_SCORE_2 = "Score2"
+        private const val NAME_SEARCH_LIST_1 = "SearchList1"
+        private const val NAME_SEARCH_LIST_2 = "SearchList2"
+
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
 
@@ -177,6 +182,26 @@ class DefaultDisplayAgent(
         private val CLOSE = NamespaceAndName(
             NAMESPACE,
             NAME_CLOSE
+        )
+
+        private val SCORE_1 = NamespaceAndName(
+            NAMESPACE,
+            NAME_SCORE_1
+        )
+
+        private val SCORE_2 = NamespaceAndName(
+            NAMESPACE,
+            NAME_SCORE_2
+        )
+
+        private val SEARCH_LIST_1 = NamespaceAndName(
+            NAMESPACE,
+            NAME_SEARCH_LIST_1
+        )
+
+        private val SEARCH_LIST_2 = NamespaceAndName(
+            NAMESPACE,
+            NAME_SEARCH_LIST_2
         )
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
@@ -440,6 +465,12 @@ class DefaultDisplayAgent(
         configuration[FULLIMAGE] = nonBlockingPolicy
 
         configuration[CLOSE] = nonBlockingPolicy
+
+        configuration[SCORE_1] = nonBlockingPolicy
+        configuration[SCORE_2] = nonBlockingPolicy
+        configuration[SEARCH_LIST_1] = nonBlockingPolicy
+        configuration[SEARCH_LIST_2] = nonBlockingPolicy
+
 
         return configuration
     }
