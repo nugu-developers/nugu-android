@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.display
 
+import com.skt.nugu.sdk.agent.common.Direction
+
 /**
  * The public interface for DisplayAgent
  */
@@ -49,5 +51,14 @@ interface DisplayAgentInterface:
          * @param force true: the display should be cleared, false: recommend to clear.
          */
         fun clear(templateId: String, force: Boolean)
+
+        /**
+         * Used to notify the renderer when display should change focus of item.
+         *
+         * @param templateId the unique identifier for the template card
+         * @param direction the direction to which change focus
+         * @return true: success, false: otherwise
+         */
+        fun controlFocus(templateId: String, direction: Direction): Boolean
     }
 }

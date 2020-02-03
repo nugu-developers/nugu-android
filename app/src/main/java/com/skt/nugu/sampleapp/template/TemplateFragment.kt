@@ -28,6 +28,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.core.utils.Logger
 
 internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener {
@@ -141,5 +142,11 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
                 }
             }
         }
+    }
+
+    fun controlFocus(direction: Direction): Boolean {
+        // TODO : XXX
+        Log.d(TAG, "[controlFocus] $direction (not implemented yet)")
+        return false
     }
 }

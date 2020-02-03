@@ -23,6 +23,7 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.deepMerge
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
@@ -90,9 +91,7 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
 
         handler.post {
             fragmentManagerRef.get()?.let { fragmentManager ->
-                val fragment = fragmentManager.fragments.find {
-                    it is TemplateFragment && it.getTemplateId() == templateId
-                }
+                val fragment = findFragmentByTemplateId(fragmentManager, templateId)
 
                 if(fragment is TemplateFragment) {
                     kotlin.runCatching {
@@ -110,6 +109,29 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
                 }
             }
         }
+    }
+
+    override fun controlFocus(templateId: String, direction: Direction): Boolean {
+        val countDownLatch = CountDownLatch(1)
+        var result = false
+
+        handler.post {
+            val fragmentManager = fragmentManagerRef.get()
+            if(fragmentManager == null) {
+                countDownLatch.countDown()
+                return@post // false
+            }
+            val fragment = findFragmentByTemplateId(fragmentManager, templateId)
+            if(fragment is TemplateFragment) {
+                result = fragment.controlFocus(direction)
+                countDownLatch.countDown()
+            } else {
+                countDownLatch.countDown()
+                return@post // false
+            }
+        }
+
+        return result
     }
 
     override fun clear(templateId: String, force: Boolean) {
@@ -157,6 +179,12 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         fragmentManager.fragments.lastOrNull()?.let {
             it.setMenuVisibility(true)
             it.userVisibleHint = true
+        }
+    }
+
+    private fun findFragmentByTemplateId(fragmentManager: FragmentManager, templateId: String): Fragment? {
+        return fragmentManager.fragments.find {
+            it is TemplateFragment && it.getTemplateId() == templateId
         }
     }
 }

@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPageController
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
@@ -1356,7 +1357,7 @@ class DefaultAudioPlayerAgent(
 
     override fun controlPage(
         playServiceId: String,
-        direction: LyricsPageController.Direction
+        direction: Direction
     ): Boolean {
         return if (currentItem?.playServiceId == playServiceId) {
             lyricsPresenter?.controlPage(direction) ?: false
