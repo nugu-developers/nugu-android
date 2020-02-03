@@ -51,7 +51,7 @@ class DefaultDisplayAgent(
         private const val TAG = "DisplayTemplateAgent"
 
         const val NAMESPACE = "Display"
-        const val VERSION = "1.1"
+        const val VERSION = "1.2"
 
         // supported types for v1.0
         private const val NAME_FULLTEXT1 = "FullText1"
