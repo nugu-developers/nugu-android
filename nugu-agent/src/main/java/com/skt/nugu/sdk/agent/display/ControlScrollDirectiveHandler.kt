@@ -65,9 +65,8 @@ class ControlScrollDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, ControlScrollPayload::class.java)
         if (payload == null) {
-            Logger.w(TAG, "[executeHandleControlFocusDirective] invalid payload")
-            info.result.setFailed("[executeHandleControlFocusDirective] invalid payload")
-            removeDirective(info.directive.getMessageId())
+            Logger.w(TAG, "[handleDirective] controlScroll - invalid payload")
+            setHandlingFailed(info,"[handleDirective] controlScroll - invalid payload")
             return
         }
 
@@ -76,12 +75,22 @@ class ControlScrollDirectiveHandler(
         } else {
             sendControlScrollEvent(info.directive.payload, "${NAME_CONTROL_SCROLL}${NAME_FAILED}")
         }
+        setHandlingCompleted(info)
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
         removeDirective(info.directive.getMessageId())
     }
 
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info.directive.getMessageId())
+    }
+
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        info.result.setCompleted()
+        removeDirective(info.directive.getMessageId())
+    }
 
     private fun sendControlScrollEvent(payload: String, name: String) {
         contextGetter.getContext(object : ContextRequester {
