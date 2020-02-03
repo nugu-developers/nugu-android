@@ -155,6 +155,8 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
             }
         }
 
+        countDownLatch.await(5000L, TimeUnit.MILLISECONDS)
+
         return result
     }
 

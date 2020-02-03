@@ -65,9 +65,8 @@ class ControlFocusDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, ControlFocusPayload::class.java)
         if (payload == null) {
-            Logger.w(TAG, "[executeHandleControlFocusDirective] invalid payload")
-            info.result.setFailed("[executeHandleControlFocusDirective] invalid payload")
-            removeDirective(info.directive.getMessageId())
+            Logger.w(TAG, "[handleDirective] controlFocus - invalid payload")
+            setHandlingFailed(info, "[handleDirective] controlFocus - invalid payload")
             return
         }
 
@@ -76,6 +75,17 @@ class ControlFocusDirectiveHandler(
         } else {
             sendControlFocusEvent(info.directive.payload, "$NAME_CONTROL_FOCUS$NAME_FAILED")
         }
+        setHandlingCompleted(info)
+    }
+
+    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
+        info.result.setFailed(description)
+        removeDirective(info.directive.getMessageId())
+    }
+
+    private fun setHandlingCompleted(info: DirectiveInfo) {
+        info.result.setCompleted()
+        removeDirective(info.directive.getMessageId())
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
