@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.Direction
@@ -704,6 +705,19 @@ class DefaultDisplayAgent(
         info?.payload?.let {
             addProperty("playServiceId", it.playServiceId)
             addProperty("token", it.token)
+            renderer?.let {
+                val templateId = info.getTemplateId()
+                it.getFocusedItemToken(templateId)?.let {focusedItemToken->
+                    addProperty("focusedItemToken", focusedItemToken)
+                }
+                it.getVisibleTokenList(templateId)?.let { visibleTokenList->
+                    add("visibleTokenList", JsonArray().apply {
+                        visibleTokenList.forEach {token->
+                            add(token)
+                        }
+                    })
+                }
+            }
         }
     }.toString()
 

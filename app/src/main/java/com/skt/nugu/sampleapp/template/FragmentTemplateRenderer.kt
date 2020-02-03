@@ -30,7 +30,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private val containerId: Int) : DisplayAggregatorInterface.Renderer {
+class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private val containerId: Int) :
+    DisplayAggregatorInterface.Renderer {
     companion object {
         private const val TAG = "TemplateRenderer"
     }
@@ -45,7 +46,10 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         dialogRequestId: String,
         displayType: DisplayAggregatorInterface.Type
     ): Boolean {
-        Log.d(TAG, "[render] templateType: $templateType, templateId: $templateId, templateContent: $templateContent, dialogRequestId: $dialogRequestId, displayType: $displayType")
+        Log.d(
+            TAG,
+            "[render] templateType: $templateType, templateId: $templateId, templateContent: $templateContent, dialogRequestId: $dialogRequestId, displayType: $displayType"
+        )
 
         val countDownLatch = CountDownLatch(1)
         val rendered = AtomicBoolean(false)
@@ -53,14 +57,18 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         handler.post {
             fragmentManagerRef.get()?.let { fragmentManager ->
                 val fragment = fragmentManager.findFragmentByTag(displayType.name)
-                if(fragment == null || fragment.isRemoving) {
+                if (fragment == null || fragment.isRemoving) {
                     Log.d(TAG, "[render] new fragment")
-                    addFragment(fragmentManager, TemplateFragment.newInstance(templateType, templateId, templateContent), displayType.name)
+                    addFragment(
+                        fragmentManager,
+                        TemplateFragment.newInstance(templateType, templateId, templateContent),
+                        displayType.name
+                    )
                 } else {
                     if (fragment is TemplateFragment) {
                         Log.d(TAG, "[render] update fragment")
                         val prevTemplateId = fragment.getTemplateId()
-                        if(prevTemplateId != templateId) {
+                        if (prevTemplateId != templateId) {
                             fragment.updateView(templateType, templateId, templateContent)
                             ClientManager.getClient().getDisplay()
                                 ?.displayCardCleared(prevTemplateId)
@@ -82,7 +90,7 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
             }
         }
 
-        countDownLatch.await(10,  TimeUnit.SECONDS)
+        countDownLatch.await(10, TimeUnit.SECONDS)
         return rendered.get()
     }
 
@@ -93,7 +101,7 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
             fragmentManagerRef.get()?.let { fragmentManager ->
                 val fragment = findFragmentByTemplateId(fragmentManager, templateId)
 
-                if(fragment is TemplateFragment) {
+                if (fragment is TemplateFragment) {
                     kotlin.runCatching {
                         val jsonContent =
                             com.google.gson.JsonParser.parseString(fragment.getTemplate())
@@ -111,46 +119,39 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         }
     }
 
-    override fun controlFocus(templateId: String, direction: Direction): Boolean {
-        val countDownLatch = CountDownLatch(1)
-        var result = false
+    override fun controlFocus(templateId: String, direction: Direction): Boolean = operate(templateId, false) {
+        it.controlFocus(direction)
+    } ?: false
 
-        handler.post {
-            val fragmentManager = fragmentManagerRef.get()
-            if(fragmentManager == null) {
-                countDownLatch.countDown()
-                return@post // false
-            }
-            val fragment = findFragmentByTemplateId(fragmentManager, templateId)
-            if(fragment is TemplateFragment) {
-                result = fragment.controlFocus(direction)
-                countDownLatch.countDown()
-            } else {
-                countDownLatch.countDown()
-                return@post // false
-            }
-        }
+    override fun controlScroll(templateId: String, direction: Direction): Boolean = operate(templateId, false) {
+        it.controlScroll(direction)
+    } ?: false
 
-        return result
+    override fun getFocusedItemToken(templateId: String): String? = operate(templateId, null) {
+        it.getFocusedItemToken()
     }
 
-    override fun controlScroll(templateId: String, direction: Direction): Boolean {
+    override fun getVisibleTokenList(templateId: String): List<String>? = operate(templateId, null) {
+        it.getVisibleTokenList()
+    }
+
+    private fun <T> operate(templateId: String, defaultReturn: T?, op: (fragment: TemplateFragment)->T?): T? {
         val countDownLatch = CountDownLatch(1)
-        var result = false
+        var result: T? = defaultReturn
 
         handler.post {
             val fragmentManager = fragmentManagerRef.get()
-            if(fragmentManager == null) {
+            if (fragmentManager == null) {
                 countDownLatch.countDown()
-                return@post // false
+                return@post
             }
             val fragment = findFragmentByTemplateId(fragmentManager, templateId)
-            if(fragment is TemplateFragment) {
-                result = fragment.controlScroll(direction)
+            if (fragment is TemplateFragment) {
+                result = op(fragment)
                 countDownLatch.countDown()
             } else {
                 countDownLatch.countDown()
-                return@post // false
+                return@post
             }
         }
 
@@ -162,9 +163,7 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
 
         handler.post {
             fragmentManagerRef.get()?.let { fragmentManager ->
-                val fragment = fragmentManager.fragments.find {
-                    it is TemplateFragment && it.getTemplateId() == templateId
-                }
+                val fragment = findFragmentByTemplateId(fragmentManager, templateId)
 
                 fragment?.let {
                     removeFragment(fragmentManager, it)
@@ -205,7 +204,10 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         }
     }
 
-    private fun findFragmentByTemplateId(fragmentManager: FragmentManager, templateId: String): Fragment? {
+    private fun findFragmentByTemplateId(
+        fragmentManager: FragmentManager,
+        templateId: String
+    ): Fragment? {
         return fragmentManager.fragments.find {
             it is TemplateFragment && it.getTemplateId() == templateId
         }

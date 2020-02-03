@@ -69,5 +69,17 @@ interface DisplayAgentInterface:
          * @return true: success, false: otherwise
          */
         fun controlScroll(templateId: String, direction: Direction): Boolean
+
+        /**
+         * Returns a token which has focus currently.
+         * @return the token if exist, otherwise  null.
+         */
+        fun getFocusedItemToken(templateId: String): String?
+
+        /**
+         * Return visible token list.
+         * @return the visible token list in order
+         */
+        fun getVisibleTokenList(templateId: String): List<String>?
     }
 }
