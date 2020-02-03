@@ -377,7 +377,7 @@ class DefaultDisplayAgent(
                 TAG,
                 "[executeHandleCloseDirective] (Close) no current info (maybe already closed)."
             )
-            sendCloseSucceeded(info, closePayload.playServiceId)
+            sendCloseFailed(info, closePayload.playServiceId)
             return
         }
 
@@ -389,7 +389,7 @@ class DefaultDisplayAgent(
             executeCancelUnknownInfo(currentRenderedInfo, true)
             sendCloseEventWhenClosed(currentRenderedInfo, info)
         } else {
-            sendCloseSucceeded(info, closePayload.playServiceId)
+            sendCloseFailed(info, closePayload.playServiceId)
         }
     }
 
