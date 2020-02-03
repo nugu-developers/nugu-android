@@ -134,6 +134,29 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         return result
     }
 
+    override fun controlScroll(templateId: String, direction: Direction): Boolean {
+        val countDownLatch = CountDownLatch(1)
+        var result = false
+
+        handler.post {
+            val fragmentManager = fragmentManagerRef.get()
+            if(fragmentManager == null) {
+                countDownLatch.countDown()
+                return@post // false
+            }
+            val fragment = findFragmentByTemplateId(fragmentManager, templateId)
+            if(fragment is TemplateFragment) {
+                result = fragment.controlScroll(direction)
+                countDownLatch.countDown()
+            } else {
+                countDownLatch.countDown()
+                return@post // false
+            }
+        }
+
+        return result
+    }
+
     override fun clear(templateId: String, force: Boolean) {
         Log.d(TAG, "[clear] templateId: $templateId, force: $force")
 

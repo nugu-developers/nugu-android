@@ -18,10 +18,7 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.Direction
-import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
-import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
-import com.skt.nugu.sdk.agent.display.DisplayInterface
+import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -48,7 +45,7 @@ class DefaultDisplayAgent(
     playSynchronizer,
     playStackManager,
     inputProcessorManager
-), ControlFocusDirectiveHandler.Controller {
+), ControlFocusDirectiveHandler.Controller, ControlScrollDirectiveHandler.Controller {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
 
@@ -729,6 +726,24 @@ class DefaultDisplayAgent(
             }
 
             renderer?.controlFocus(currentRenderedInfo.getTemplateId(), direction) ?: false
+        })
+
+        return result.get()
+    }
+
+    override fun controlScroll(playServiceId: String, direction: Direction): Boolean {
+        val result: Future<Boolean> = executor.submit(Callable<Boolean> {
+            val currentRenderedInfo = currentInfo ?: return@Callable false
+            val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
+            if (currentPlayServiceId.isNullOrBlank()) {
+                Logger.w(
+                    TAG,
+                    "[controlFocus] null playServiceId."
+                )
+                return@Callable false
+            }
+
+            renderer?.controlScroll(currentRenderedInfo.getTemplateId(), direction) ?: false
         })
 
         return result.get()

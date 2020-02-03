@@ -84,6 +84,7 @@ class DisplayAggregator(
                 renderer.clear(templateId, force)
 
             override fun controlFocus(templateId: String, direction: Direction): Boolean = observer?.controlFocus(templateId, direction) ?: false
+            override fun controlScroll(templateId: String, direction: Direction): Boolean = observer?.controlScroll(templateId, direction) ?: false
         })
 
         audioPlayerAgent.setRenderer(object : AudioPlayerDisplayInterface.Renderer {

@@ -149,4 +149,10 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
         Log.d(TAG, "[controlFocus] $direction (not implemented yet)")
         return false
     }
+
+    fun controlScroll(direction: Direction): Boolean {
+        // TODO : XXX
+        Log.d(TAG, "[controlScroll] $direction (not implemented yet)")
+        return false
+    }
 }
