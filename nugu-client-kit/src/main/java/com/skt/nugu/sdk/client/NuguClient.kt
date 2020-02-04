@@ -64,7 +64,6 @@ import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
-import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -110,7 +109,6 @@ class NuguClient private constructor(
         // Components for agent
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
-        internal var screen: Screen? = null
 
         // Agent Factory
         internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
@@ -134,8 +132,6 @@ class NuguClient private constructor(
 
         fun extensionClient(client: ExtensionAgentInterface.Client?) =
             apply { extensionClient = client }
-
-        fun screen(screen: Screen?) = apply { this.screen = screen }
 
         fun audioPlayerAgentFactory(factory: AudioPlayerAgentFactory) =
             apply { audioPlayerAgentFactory = factory }
@@ -269,8 +265,6 @@ class NuguClient private constructor(
                 override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
 
                 override fun getDelegationClient(): DelegationClient? = delegationClient
-
-                override fun getScreen(): Screen? = screen
 
                 override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
 

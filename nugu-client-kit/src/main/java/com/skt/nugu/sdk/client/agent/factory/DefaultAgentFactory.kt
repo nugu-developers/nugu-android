@@ -30,7 +30,6 @@ import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
-import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
@@ -236,20 +235,6 @@ object DefaultAgentFactory {
                 DefaultFocusChannel.DIALOG_CHANNEL_NAME
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
-            }
-        }
-    }
-
-    val SCREEN = object : ScreenAgentFactory {
-        override fun create(container: SdkContainer): AbstractScreenAgent? = with(container) {
-            getScreen()?.let {
-                DefaultScreenAgent(
-                    getContextManager(),
-                    getMessageSender(),
-                    it
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
             }
         }
     }

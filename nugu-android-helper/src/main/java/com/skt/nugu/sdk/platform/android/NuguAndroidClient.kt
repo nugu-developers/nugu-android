@@ -21,6 +21,7 @@ import android.media.MediaPlayer
 import com.skt.nugu.sdk.agent.DefaultLightAgent
 import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
 import com.skt.nugu.sdk.agent.DefaultMovementAgent
+import com.skt.nugu.sdk.agent.DefaultScreenAgent
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -69,6 +70,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
+import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
@@ -249,7 +251,6 @@ class NuguAndroidClient private constructor(
         .delegationClient(builder.delegationClient)
         .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
         .extensionClient(builder.extensionClient)
-        .screen(builder.screen)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {
@@ -300,6 +301,20 @@ class NuguAndroidClient private constructor(
                     }
                 })
             }
+            builder.screen?.let {
+                addAgentFactory(DefaultScreenAgent.NAMESPACE, object: ScreenAgentFactory {
+                    override fun create(container: SdkContainer): AbstractScreenAgent = with(container) {
+                        DefaultScreenAgent(
+                            getContextManager(),
+                            getMessageSender(),
+                            it
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+                    }
+                })
+            }
+
             asrAgentFactory(builder.asrAgentFactory)
         }
         .build()
