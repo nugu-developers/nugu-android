@@ -45,7 +45,7 @@ import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
-import com.skt.nugu.sdk.agent.system.BatteryStatusProvider
+import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion

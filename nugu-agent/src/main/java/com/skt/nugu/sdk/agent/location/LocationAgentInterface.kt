@@ -15,8 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.location
 
-import com.skt.nugu.sdk.agent.location.LocationProvider
-
 /**
  * The public interface for LocationAgent
  */

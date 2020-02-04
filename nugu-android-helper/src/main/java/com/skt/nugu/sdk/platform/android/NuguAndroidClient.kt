@@ -38,7 +38,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
-import com.skt.nugu.sdk.agent.system.BatteryStatusProvider
+import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.platform.android.log.AndroidLogger
 import com.skt.nugu.sdk.platform.android.mediaplayer.AndroidMediaPlayer
 import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
