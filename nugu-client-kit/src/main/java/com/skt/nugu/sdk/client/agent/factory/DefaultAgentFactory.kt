@@ -29,10 +29,7 @@ import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
-import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
-import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent

@@ -84,9 +84,7 @@ import java.util.concurrent.Future
 
 class NuguClient private constructor(
     builder: Builder
-) : ClientHelperInterface
-    , NuguClientInterface {
-
+): NuguClientInterface {
     companion object {
         private const val TAG = "NuguClient"
     }
@@ -319,11 +317,11 @@ class NuguClient private constructor(
         }
     }
 
-    override fun connect() {
+    fun connect() {
         networkManager.enable()
     }
 
-    override fun disconnect() {
+    fun disconnect() {
         networkManager.disable()
     }
 
@@ -335,55 +333,55 @@ class NuguClient private constructor(
 //        networkManager.removeMessageObserver(listener)
 //    }
 
-    override fun addConnectionListener(listener: ConnectionStatusListener) {
+    fun addConnectionListener(listener: ConnectionStatusListener) {
         networkManager.addConnectionStatusListener(listener)
     }
 
-    override fun removeConnectionListener(listener: ConnectionStatusListener) {
+    fun removeConnectionListener(listener: ConnectionStatusListener) {
         networkManager.removeConnectionStatusListener(listener)
     }
 
-    override fun getSpeakerManager(): SpeakerManagerInterface {
+    fun getSpeakerManager(): SpeakerManagerInterface {
         return speakerManager
     }
 
-    override fun addSpeakerListener(listener: SpeakerManagerObserver) {
+    fun addSpeakerListener(listener: SpeakerManagerObserver) {
         return speakerManager.addSpeakerManagerObserver(listener)
     }
 
-    override fun removeSpeakerListener(listener: SpeakerManagerObserver) {
+    fun removeSpeakerListener(listener: SpeakerManagerObserver) {
         return speakerManager.removeSpeakerManagerObserver(listener)
     }
 
-    override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
+    fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
         playbackRouter
 
-    override fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
+    fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
         audioPlayerAgent.addListener(listener)
     }
 
-    override fun removeAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
+    fun removeAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
         audioPlayerAgent.removeListener(listener)
     }
 
-    override fun addDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
+    fun addDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
         dialogUXStateAggregator.addListener(listener)
     }
 
-    override fun removeDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
+    fun removeDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
         dialogUXStateAggregator.removeListener(listener)
     }
 
     // AIP
-    override fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
+    fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
         asrAgent?.addOnStateChangeListener(listener)
     }
 
-    override fun removeASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
+    fun removeASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
         asrAgent?.removeOnStateChangeListener(listener)
     }
 
-    override fun startRecognition(
+    fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
         wakewordStartPosition: Long?,
@@ -404,31 +402,31 @@ class NuguClient private constructor(
         ) ?: ImmediateBooleanFuture(false)
     }
 
-    override fun stopRecognition() {
+    fun stopRecognition() {
         Logger.d(TAG, "[stopRecognition]")
         asrAgent?.stopRecognition()
     }
 
-    override fun addASRResultListener(listener: ASRAgentInterface.OnResultListener) {
+    fun addASRResultListener(listener: ASRAgentInterface.OnResultListener) {
         asrAgent?.addOnResultListener(listener)
     }
 
-    override fun removeASRResultListener(listener: ASRAgentInterface.OnResultListener) {
+    fun removeASRResultListener(listener: ASRAgentInterface.OnResultListener) {
         asrAgent?.removeOnResultListener(listener)
     }
 
-    override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
+    fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
         textAgent.requestTextInput(text, listener)
     }
 
-    override fun shutdown() {
+    fun shutdown() {
         systemAgent.shutdown()
         audioPlayerAgent.shutdown()
         ttsAgent.stopTTS(true)
         networkManager.disable()
     }
 
-    override fun requestTTS(
+    fun requestTTS(
         text: String,
         playServiceId: String,
         listener: TTSAgentInterface.OnPlaybackListener?
@@ -436,34 +434,34 @@ class NuguClient private constructor(
         ttsAgent.requestTTS(text, playServiceId, listener)
     }
 
-    override fun localStopTTS() {
+    fun localStopTTS() {
         ttsAgent.stopTTS(false)
     }
 
-    override fun cancelTTSAndOthers() {
+    fun cancelTTSAndOthers() {
         ttsAgent.stopTTS(true)
     }
 
-    override fun setDisplayRenderer(renderer: DisplayAggregatorInterface.Renderer?) {
+    fun setDisplayRenderer(renderer: DisplayAggregatorInterface.Renderer?) {
         displayAggregator?.setRenderer(renderer)
     }
 
-    override fun getDisplay(): DisplayAggregatorInterface? {
+    fun getDisplay(): DisplayAggregatorInterface? {
         return displayAggregator
     }
 
-    override fun setStateProvider(
+    fun setStateProvider(
         namespaceAndName: NamespaceAndName,
         stateProvider: ContextStateProvider?
     ) {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, stateProvider)
     }
 
-    override fun addSystemAgentListener(listener: SystemAgentInterface.Listener) {
+    fun addSystemAgentListener(listener: SystemAgentInterface.Listener) {
         systemAgent.addListener(listener)
     }
 
-    override fun removeSystemAgentListener(listener: SystemAgentInterface.Listener) {
+    fun removeSystemAgentListener(listener: SystemAgentInterface.Listener) {
         systemAgent.removeListener(listener)
     }
 }
