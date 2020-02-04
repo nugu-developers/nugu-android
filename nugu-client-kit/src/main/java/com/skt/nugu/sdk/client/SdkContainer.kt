@@ -60,9 +60,6 @@ interface SdkContainer {
     // Delegation only
     fun getDelegationClient(): DelegationClient?
 
-    // Movement only
-    fun getMovementController(): MovementController?
-
     // Extension only
     fun getExtensionClient(): ExtensionAgentInterface.Client?
 

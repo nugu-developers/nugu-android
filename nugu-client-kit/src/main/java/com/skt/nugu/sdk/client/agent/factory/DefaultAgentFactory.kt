@@ -176,23 +176,6 @@ object DefaultAgentFactory {
         }
     }
 
-    val MOVEMENT = object : MovementAgentFactory {
-        override fun create(container: SdkContainer): AbstractMovementAgent? = with(container) {
-            val controller = getMovementController()
-            if(controller != null) {
-                DefaultMovementAgent(
-                    getContextManager(),
-                    getMessageSender(),
-                    controller
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
-            } else {
-                null
-            }
-        }
-    }
-
     val SPEAKER = object : SpeakerAgentFactory {
         override fun create(container: SdkContainer): AbstractSpeakerAgent = with(container) {
             DefaultSpeakerAgent(
