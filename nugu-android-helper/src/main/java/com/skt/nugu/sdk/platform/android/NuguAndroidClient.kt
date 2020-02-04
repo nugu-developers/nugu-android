@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android
 import android.content.Context
 import android.media.AudioManager
 import android.media.MediaPlayer
+import com.skt.nugu.sdk.agent.DefaultLightAgent
 import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
@@ -64,12 +65,14 @@ import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.client.SdkContainer
+import com.skt.nugu.sdk.client.agent.factory.LightAgentFactory
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
@@ -248,7 +251,6 @@ class NuguAndroidClient private constructor(
         .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
         .extensionClient(builder.extensionClient)
         .movementController(builder.movementController)
-        .light(builder.light)
         .screen(builder.screen)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
@@ -265,6 +267,19 @@ class NuguAndroidClient private constructor(
                 addAgentFactory(AbstractMicrophoneAgent.NAMESPACE, object: AgentFactory<AbstractMicrophoneAgent> {
                     override fun create(container: SdkContainer): DefaultMicrophoneAgent = with(container) {
                         DefaultMicrophoneAgent(
+                            getMessageSender(),
+                            getContextManager(),
+                            it
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+                    }
+                })
+            }
+            builder.light?.let {
+                addAgentFactory(AbstractLightAgent.NAMESPACE, object: LightAgentFactory {
+                    override fun create(container: SdkContainer): AbstractLightAgent = with(container) {
+                        DefaultLightAgent(
                             getMessageSender(),
                             getContextManager(),
                             it

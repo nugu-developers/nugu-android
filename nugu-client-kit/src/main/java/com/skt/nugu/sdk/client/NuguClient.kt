@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
+import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -39,7 +40,6 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
@@ -115,7 +115,6 @@ class NuguClient private constructor(
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
-        internal var light: Light? = null
         internal var screen: Screen? = null
 
         // Agent Factory
@@ -144,7 +143,6 @@ class NuguClient private constructor(
         fun movementController(controller: MovementController?) =
             apply { movementController = controller }
 
-        fun light(light: Light?) = apply { this.light = light }
         fun screen(screen: Screen?) = apply { this.screen = screen }
 
         fun audioPlayerAgentFactory(factory: AudioPlayerAgentFactory) =
@@ -280,8 +278,6 @@ class NuguClient private constructor(
 
                 override fun getDelegationClient(): DelegationClient? = delegationClient
 
-                override fun getLight(): Light? = light
-
                 override fun getScreen(): Screen? = screen
 
                 override fun getMovementController(): MovementController? = movementController
@@ -298,7 +294,6 @@ class NuguClient private constructor(
             speakerManager = DefaultAgentFactory.SPEAKER.create(sdkContainer)
             ttsAgent = ttsAgentFactory.create(sdkContainer)
             locationAgent = locationAgentFactory?.create(sdkContainer)
-            DefaultAgentFactory.LIGHT.create(sdkContainer)
             DefaultAgentFactory.MOVEMENT.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
             textAgent = textAgentFactory.create(sdkContainer)

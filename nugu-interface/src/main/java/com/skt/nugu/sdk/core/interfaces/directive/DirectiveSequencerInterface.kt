@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.core.interfaces.directive
 
-import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 /**

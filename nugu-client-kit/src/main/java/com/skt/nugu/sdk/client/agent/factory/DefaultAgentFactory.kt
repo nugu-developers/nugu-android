@@ -168,23 +168,6 @@ object DefaultAgentFactory {
         }
     }
 
-    val LIGHT = object : LightAgentFactory {
-        override fun create(container: SdkContainer): AbstractLightAgent? = with(container) {
-            val light = getLight()
-            if(light != null) {
-                DefaultLightAgent(
-                    getMessageSender(),
-                    getContextManager(),
-                    light
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
-            } else {
-                null
-            }
-        }
-    }
-
     val LOCATION = object : LocationAgentFactory {
         override fun create(container: SdkContainer): AbstractLocationAgent = with(container) {
             DefaultLocationAgent().apply {

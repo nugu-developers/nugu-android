@@ -21,7 +21,6 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
@@ -60,9 +59,6 @@ interface SdkContainer {
 
     // Delegation only
     fun getDelegationClient(): DelegationClient?
-
-    // Light only
-    fun getLight(): Light?
 
     // Movement only
     fun getMovementController(): MovementController?
