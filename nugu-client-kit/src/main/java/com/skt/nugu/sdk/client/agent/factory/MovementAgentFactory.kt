@@ -17,4 +17,4 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 
-interface MovementAgentFactory : AgentFactory<AbstractMovementAgent?>
+interface MovementAgentFactory : AgentFactory<AbstractMovementAgent>

@@ -20,6 +20,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import com.skt.nugu.sdk.agent.DefaultLightAgent
 import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
+import com.skt.nugu.sdk.agent.DefaultMovementAgent
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -47,9 +48,6 @@ import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
 import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
-import com.skt.nugu.sdk.client.agent.factory.ASRAgentFactory
-import com.skt.nugu.sdk.client.agent.factory.AgentFactory
-import com.skt.nugu.sdk.client.agent.factory.DefaultAgentFactory
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
@@ -70,9 +68,10 @@ import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
+import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.client.SdkContainer
-import com.skt.nugu.sdk.client.agent.factory.LightAgentFactory
+import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
@@ -250,7 +249,6 @@ class NuguAndroidClient private constructor(
         .delegationClient(builder.delegationClient)
         .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
         .extensionClient(builder.extensionClient)
-        .movementController(builder.movementController)
         .screen(builder.screen)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
@@ -282,6 +280,19 @@ class NuguAndroidClient private constructor(
                         DefaultLightAgent(
                             getMessageSender(),
                             getContextManager(),
+                            it
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+                    }
+                })
+            }
+            builder.movementController?.let {
+                addAgentFactory(AbstractMovementAgent.NAMESPACE, object: MovementAgentFactory {
+                    override fun create(container: SdkContainer): AbstractMovementAgent = with(container) {
+                        DefaultMovementAgent(
+                            getContextManager(),
+                            getMessageSender(),
                             it
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
