@@ -48,6 +48,8 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
+import com.skt.nugu.sdk.agent.bluetooth.AbstractBluetoothAgent
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.display.*
@@ -161,7 +163,6 @@ class NuguAndroidClient private constructor(
         internal var screen: Screen? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
-
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -486,6 +487,16 @@ class NuguAndroidClient private constructor(
                     }
                 }
             })
+            addAgentFactory(AbstractBluetoothAgent.NAMESPACE, object: BluetoothAgentFactory {
+                override fun create(container: SdkContainer): AbstractBluetoothAgent = with(container) {
+                    DefaultBluetoothAgent(
+                        getMessageSender(),
+                        getContextManager()
+                    ).apply {
+                        getDirectiveSequencer().addDirectiveHandler(this)
+                    }
+                }
+            })
         }
         .build()
 
@@ -539,7 +550,12 @@ class NuguAndroidClient private constructor(
         }
     override val systemAgent: SystemAgentInterface = client.systemAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
-
+    override val bluetoothAgent: BluetoothAgentInterface?
+        get() = try {
+            client.getAgent(AbstractBluetoothAgent.NAMESPACE) as BluetoothAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     private val displayAggregator: DisplayAggregator?
 
     private val audioFocusInteractor: AudioFocusInteractor?

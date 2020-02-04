@@ -15,25 +15,6 @@
  */
 package com.skt.nugu.sdk.client.agent.factory
 
-import com.skt.nugu.sdk.agent.*
 import com.skt.nugu.sdk.agent.bluetooth.AbstractBluetoothAgent
-import com.skt.nugu.sdk.client.SdkContainer
-import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 
-object DefaultAgentFactory {
-    val SYSTEM = object : SystemAgentFactory {
-        /**
-         * Create an instance of Impl
-         * initializing is performed at default initializer
-         */
-        override fun create(container: SdkContainer): AbstractSystemAgent = with(container) {
-            DefaultSystemAgent(
-                getMessageSender(),
-                getConnectionManager(),
-                getContextManager()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-            }
-        }
-    }
-}
+interface BluetoothAgentFactory: AgentFactory<AbstractBluetoothAgent>

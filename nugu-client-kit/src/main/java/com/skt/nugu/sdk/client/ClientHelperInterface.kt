@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.client
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
