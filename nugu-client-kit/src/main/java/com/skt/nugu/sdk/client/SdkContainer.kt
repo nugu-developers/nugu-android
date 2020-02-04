@@ -72,9 +72,6 @@ interface SdkContainer {
     // Movement only
     fun getMovementController(): MovementController?
 
-    // System only
-    fun getBatteryStatusProvider(): BatteryStatusProvider?
-
     // Extension only
     fun getExtensionClient(): ExtensionAgentInterface.Client?
 

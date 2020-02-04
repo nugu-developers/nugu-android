@@ -50,6 +50,7 @@ import com.skt.nugu.sdk.client.agent.factory.AgentFactory
 import com.skt.nugu.sdk.client.agent.factory.DefaultAgentFactory
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -66,6 +67,7 @@ import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.screen.Screen
+import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
@@ -245,7 +247,6 @@ class NuguAndroidClient private constructor(
         .defaultMicrophone(builder.defaultMicrophone)
         .extensionClient(builder.extensionClient)
         .movementController(builder.movementController)
-        .batteryStatusProvider(builder.batteryStatusProvider)
         .light(builder.light)
         .screen(builder.screen)
         .transportFactory(builder.transportFactory)
@@ -253,6 +254,11 @@ class NuguAndroidClient private constructor(
         .apply {
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
+            }
+            builder.batteryStatusProvider?.let {
+                addAgentFactory(DefaultBatteryAgent.NAMESPACE, object: AgentFactory<DefaultBatteryAgent> {
+                    override fun create(container: SdkContainer): DefaultBatteryAgent = DefaultBatteryAgent(it, container.getContextManager())
+                })
             }
             asrAgentFactory(builder.asrAgentFactory)
         }

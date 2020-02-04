@@ -45,7 +45,6 @@ import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
-import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
@@ -118,7 +117,6 @@ class NuguClient private constructor(
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
-        internal var batteryStatusProvider: BatteryStatusProvider? = null
         internal var light: Light? = null
         internal var screen: Screen? = null
 
@@ -150,9 +148,6 @@ class NuguClient private constructor(
 
         fun movementController(controller: MovementController?) =
             apply { movementController = controller }
-
-        fun batteryStatusProvider(batteryStatusProvider: BatteryStatusProvider?) =
-            apply { this.batteryStatusProvider = batteryStatusProvider }
 
         fun light(light: Light?) = apply { this.light = light }
         fun screen(screen: Screen?) = apply { this.screen = screen }
@@ -298,9 +293,6 @@ class NuguClient private constructor(
                 override fun getMicrophone(): Microphone? = defaultMicrophone
 
                 override fun getMovementController(): MovementController? = movementController
-
-                override fun getBatteryStatusProvider(): BatteryStatusProvider? =
-                    batteryStatusProvider
 
                 override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
 
