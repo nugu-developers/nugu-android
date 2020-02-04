@@ -193,18 +193,6 @@ object DefaultAgentFactory {
         }
     }
 
-    val MICROPHONE = object : MicrophoneAgentFactory {
-        override fun create(container: SdkContainer): AbstractMicrophoneAgent = with(container) {
-            DefaultMicrophoneAgent(
-                getMessageSender(),
-                getContextManager(),
-                getMicrophone()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-            }
-        }
-    }
-
     val MOVEMENT = object : MovementAgentFactory {
         override fun create(container: SdkContainer): AbstractMovementAgent? = with(container) {
             val controller = getMovementController()

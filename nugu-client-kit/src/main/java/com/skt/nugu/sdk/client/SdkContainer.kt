@@ -16,16 +16,14 @@
 package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupProcessorInterface
-import com.skt.nugu.sdk.core.directivesequencer.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.light.Light
-import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
-import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
@@ -65,9 +63,6 @@ interface SdkContainer {
 
     // Light only
     fun getLight(): Light?
-
-    // Mic only
-    fun getMicrophone(): Microphone?
 
     // Movement only
     fun getMovementController(): MovementController?
