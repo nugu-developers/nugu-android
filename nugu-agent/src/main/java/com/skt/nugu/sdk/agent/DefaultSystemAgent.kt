@@ -40,13 +40,11 @@ import kotlin.collections.HashMap
 class DefaultSystemAgent(
     messageSender: MessageSender,
     connectionManager: ConnectionManagerInterface,
-    contextManager: ContextManagerInterface,
-    batteryStatusProvider: BatteryStatusProvider? = null
+    contextManager: ContextManagerInterface
 ) : AbstractSystemAgent(
     messageSender,
     connectionManager,
-    contextManager,
-    batteryStatusProvider
+    contextManager
 ) {
 
     internal data class ExceptionPayload(
@@ -193,18 +191,6 @@ class DefaultSystemAgent(
 
     private fun buildContext(): String = JsonObject().apply {
         addProperty("version", VERSION)
-        batteryStatusProvider?.let {
-            val level = it.getBatteryLevel()
-            val charging = it.isCharging()
-
-            if (level > 0) {
-                addProperty("battery", level)
-            }
-
-            if(charging != null) {
-                addProperty("charging", charging)
-            }
-        }
     }.toString()
 
     /**
