@@ -252,8 +252,7 @@ object DefaultAgentFactory {
             DefaultSystemAgent(
                 getMessageSender(),
                 getConnectionManager(),
-                getContextManager(),
-                getBatteryStatusProvider()
+                getContextManager()
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
             }

@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.agent.system
 
 import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
-import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -26,8 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 abstract class AbstractSystemAgent (
     protected val messageSender: MessageSender,
     protected val connectionManager: ConnectionManagerInterface,
-    protected val contextManager: ContextManagerInterface,
-    protected val batteryStatusProvider: BatteryStatusProvider? = null
+    protected val contextManager: ContextManagerInterface
 ) : AbstractCapabilityAgent(),
     ConnectionStatusListener, SystemAgentInterface, ContextRequester {
     companion object {
