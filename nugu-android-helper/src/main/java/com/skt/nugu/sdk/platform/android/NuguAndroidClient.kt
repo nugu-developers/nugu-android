@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android
 import android.content.Context
 import android.media.AudioManager
 import android.media.MediaPlayer
+import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -66,6 +67,7 @@ import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
+import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
@@ -244,7 +246,6 @@ class NuguAndroidClient private constructor(
     ).logger(AndroidLogger())
         .delegationClient(builder.delegationClient)
         .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
-        .defaultMicrophone(builder.defaultMicrophone)
         .extensionClient(builder.extensionClient)
         .movementController(builder.movementController)
         .light(builder.light)
@@ -258,6 +259,19 @@ class NuguAndroidClient private constructor(
             builder.batteryStatusProvider?.let {
                 addAgentFactory(DefaultBatteryAgent.NAMESPACE, object: AgentFactory<DefaultBatteryAgent> {
                     override fun create(container: SdkContainer): DefaultBatteryAgent = DefaultBatteryAgent(it, container.getContextManager())
+                })
+            }
+            builder.defaultMicrophone?.let {
+                addAgentFactory(AbstractMicrophoneAgent.NAMESPACE, object: AgentFactory<AbstractMicrophoneAgent> {
+                    override fun create(container: SdkContainer): DefaultMicrophoneAgent = with(container) {
+                        DefaultMicrophoneAgent(
+                            getMessageSender(),
+                            getContextManager(),
+                            it
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+                    }
                 })
             }
             asrAgentFactory(builder.asrAgentFactory)

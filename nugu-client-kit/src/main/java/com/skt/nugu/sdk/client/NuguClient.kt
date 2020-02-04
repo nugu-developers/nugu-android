@@ -20,7 +20,6 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -67,7 +66,6 @@ import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
-import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
@@ -77,6 +75,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -113,7 +112,6 @@ class NuguClient private constructor(
         internal var sdkVersion: String = "1.0"
 
         // Components for agent
-        internal var defaultMicrophone: Microphone? = null
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
@@ -136,9 +134,6 @@ class NuguClient private constructor(
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
-
-        fun defaultMicrophone(microphone: Microphone?) =
-            apply { defaultMicrophone = microphone }
 
         fun delegationClient(client: DelegationClient?) =
             apply { delegationClient = client }
@@ -187,7 +182,6 @@ class NuguClient private constructor(
 
     // CA
     private val speakerManager: AbstractSpeakerAgent
-    private val micManager: AbstractMicrophoneAgent
     override val audioPlayerAgent: AbstractAudioPlayerAgent
     override val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
@@ -290,8 +284,6 @@ class NuguClient private constructor(
 
                 override fun getScreen(): Screen? = screen
 
-                override fun getMicrophone(): Microphone? = defaultMicrophone
-
                 override fun getMovementController(): MovementController? = movementController
 
                 override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
@@ -304,7 +296,6 @@ class NuguClient private constructor(
             }
 
             speakerManager = DefaultAgentFactory.SPEAKER.create(sdkContainer)
-            micManager = DefaultAgentFactory.MICROPHONE.create(sdkContainer)
             ttsAgent = ttsAgentFactory.create(sdkContainer)
             locationAgent = locationAgentFactory?.create(sdkContainer)
             DefaultAgentFactory.LIGHT.create(sdkContainer)
