@@ -25,7 +25,7 @@ import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
-import com.skt.nugu.sdk.agent.system.BatteryStatusProvider
+import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface

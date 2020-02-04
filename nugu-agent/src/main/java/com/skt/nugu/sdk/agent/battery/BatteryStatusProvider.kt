@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent.system
+package com.skt.nugu.sdk.agent.battery
 
 /**
  * Interface providing battery status.

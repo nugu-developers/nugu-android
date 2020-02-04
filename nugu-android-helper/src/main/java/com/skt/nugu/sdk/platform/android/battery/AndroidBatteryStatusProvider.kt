@@ -20,8 +20,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
-import com.skt.nugu.sdk.agent.system.BatteryStatusProvider
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 
 /**
  * Default implementation of [BatteryStatusProvider] for Android Battery status.
