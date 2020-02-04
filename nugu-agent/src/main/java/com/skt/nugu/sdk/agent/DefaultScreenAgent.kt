@@ -38,7 +38,7 @@ class DefaultScreenAgent(
 ) : AbstractScreenAgent(contextManager, messageSender, screen) {
     companion object {
         private const val TAG = "ScreenAgent"
-        private const val NAMESPACE = "Screen"
+        const val NAMESPACE = "Screen"
         private const val VERSION = "1,0"
 
         private const val NAME_TURN_ON = "TurnOn"

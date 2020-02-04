@@ -17,4 +17,4 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 
-interface ScreenAgentFactory: AgentFactory<AbstractScreenAgent?>
+interface ScreenAgentFactory: AgentFactory<AbstractScreenAgent>
