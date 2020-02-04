@@ -127,8 +127,9 @@ class MessageInterpreter(
             val isEnd = json["isEnd"].asBoolean
             val parentMessageId = json["parentMessageId"].asString
             val seq = json["seq"].asInt
+            val mediaType = json["mediaType"].asString
 
-            AttachmentMessage(content, header, isEnd, parentMessageId, seq)
+            AttachmentMessage(content, header, isEnd, parentMessageId, seq, mediaType)
         } catch (e: Exception) {
             null
         }

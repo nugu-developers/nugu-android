@@ -22,13 +22,15 @@ package com.skt.nugu.sdk.core.interfaces.message
  * @param isEnd the end flag of attachment
  * @param parentMessageId the parent message id which associated with attachment
  * @param seq the sequence number
+ * @param mediaType the mime type for attachment
  */
 data class AttachmentMessage(
     val content: ByteArray,
     val header: Header,
     val isEnd: Boolean,
     val parentMessageId: String,
-    val seq: Int
+    val seq: Int,
+    val mediaType: String
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -41,6 +43,7 @@ data class AttachmentMessage(
         if (isEnd != other.isEnd) return false
         if (parentMessageId != other.parentMessageId) return false
         if (seq != other.seq) return false
+        if (mediaType != other.mediaType) return false
 
         return true
     }
@@ -51,6 +54,7 @@ data class AttachmentMessage(
         result = 31 * result + isEnd.hashCode()
         result = 31 * result + parentMessageId.hashCode()
         result = 31 * result + seq
+        result = 31 * result + mediaType.hashCode()
         return result
     }
 }
