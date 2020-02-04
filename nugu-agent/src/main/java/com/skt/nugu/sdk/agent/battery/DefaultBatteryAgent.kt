@@ -30,7 +30,7 @@ class DefaultBatteryAgent(
     companion object {
         private const val TAG = "BatteryAgent"
 
-        private const val NAMESPACE = "Battery"
+        const val NAMESPACE = "Battery"
         private const val VERSION = "1.0"
     }
 
