@@ -60,7 +60,7 @@ class DefaultBatteryAgent(
             val charging = it.isCharging()
 
             if (level > 0) {
-                addProperty("battery", level)
+                addProperty("level", level)
             }
 
             if(charging != null) {
