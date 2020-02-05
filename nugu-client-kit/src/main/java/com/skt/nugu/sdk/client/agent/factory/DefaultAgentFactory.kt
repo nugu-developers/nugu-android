@@ -93,7 +93,7 @@ object DefaultAgentFactory {
     }
 
     val TEMPLATE = object : DisplayAgentFactory {
-        override fun create(container: SdkContainer): AbstractDisplayAgent? = with(container) {
+        override fun create(container: SdkContainer): AbstractDisplayAgent = with(container) {
             DefaultDisplayAgent(
                 getContextManager(),
                 getMessageSender(),

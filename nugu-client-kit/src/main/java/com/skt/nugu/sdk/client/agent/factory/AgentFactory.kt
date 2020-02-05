@@ -18,6 +18,6 @@ package com.skt.nugu.sdk.client.agent.factory
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 
-interface AgentFactory<T: CapabilityAgent?> {
+interface AgentFactory<T: CapabilityAgent> {
     fun create(container: SdkContainer): T
 }
