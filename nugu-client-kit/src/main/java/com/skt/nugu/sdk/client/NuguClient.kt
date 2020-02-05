@@ -56,7 +56,6 @@ import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
-import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -105,7 +104,6 @@ class NuguClient private constructor(
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
         internal var textAgentFactory: TextAgentFactory = DefaultAgentFactory.TEXT
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
-        internal var locationAgentFactory: LocationAgentFactory? = DefaultAgentFactory.LOCATION
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -121,9 +119,6 @@ class NuguClient private constructor(
 
         fun displayAgentFactory(factory: DisplayAgentFactory) =
             apply { displayAgentFactory = factory }
-
-        fun locationAgentFactory(factory: LocationAgentFactory) =
-            apply { locationAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
@@ -147,7 +142,6 @@ class NuguClient private constructor(
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
     val systemAgent: AbstractSystemAgent
     val displayAgent: DisplayAgentInterface?
-    var locationAgent: LocationAgentInterface? = null
 
     // CA internal Object (ref)
 
@@ -243,7 +237,6 @@ class NuguClient private constructor(
             }
 
             ttsAgent = ttsAgentFactory.create(sdkContainer)
-            locationAgent = locationAgentFactory?.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
             textAgent = textAgentFactory.create(sdkContainer)
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)

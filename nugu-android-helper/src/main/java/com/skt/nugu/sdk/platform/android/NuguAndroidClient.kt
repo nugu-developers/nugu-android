@@ -60,6 +60,7 @@ import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.light.AbstractLightAgent
+import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
@@ -378,6 +379,13 @@ class NuguAndroidClient private constructor(
                         }
                 })
             }
+            addAgentFactory(AbstractLocationAgent.NAMESPACE, object: LocationAgentFactory {
+                override fun create(container: SdkContainer): AbstractLocationAgent = with(container) {
+                    DefaultLocationAgent().apply {
+                        getContextManager().setStateProvider(namespaceAndName, this)
+                    }
+                }
+            })
 
             asrAgentFactory(builder.asrAgentFactory)
         }
@@ -394,7 +402,12 @@ class NuguAndroidClient private constructor(
         }
     override val asrAgent: ASRAgentInterface? = client.asrAgent
     override val textAgent: TextAgentInterface? = client.textAgent
-    override val locationAgent: LocationAgentInterface? = client.locationAgent
+    override val locationAgent: LocationAgentInterface?
+        get() = try {
+            client.getAgent(AbstractLocationAgent.NAMESPACE) as LocationAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val delegationAgent: DelegationAgentInterface?
         get() = try {
             client.getAgent(AbstractDelegationAgent.NAMESPACE) as DelegationAgentInterface

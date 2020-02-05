@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveH
 import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
-import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
@@ -111,14 +110,6 @@ object DefaultAgentFactory {
                 ControlScrollDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
-            }
-        }
-    }
-
-    val LOCATION = object : LocationAgentFactory {
-        override fun create(container: SdkContainer): AbstractLocationAgent = with(container) {
-            DefaultLocationAgent().apply {
-                getContextManager().setStateProvider(namespaceAndName, this)
             }
         }
     }
