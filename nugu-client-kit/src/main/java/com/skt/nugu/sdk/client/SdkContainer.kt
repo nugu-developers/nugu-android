@@ -21,8 +21,6 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.agent.movement.MovementController
-import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
@@ -63,7 +61,6 @@ interface SdkContainer {
     fun getExtensionClient(): ExtensionAgentInterface.Client?
 
     fun getPlayerFactory(): PlayerFactory
-    fun getSpeakerFactory(): SpeakerFactory
 
     fun getPlaybackRouter(): PlaybackRouter
 }

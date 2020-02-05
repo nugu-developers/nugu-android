@@ -18,10 +18,7 @@ package com.skt.nugu.sdk.platform.android
 import android.content.Context
 import android.media.AudioManager
 import android.media.MediaPlayer
-import com.skt.nugu.sdk.agent.DefaultLightAgent
-import com.skt.nugu.sdk.agent.DefaultMicrophoneAgent
-import com.skt.nugu.sdk.agent.DefaultMovementAgent
-import com.skt.nugu.sdk.agent.DefaultScreenAgent
+import com.skt.nugu.sdk.agent.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -38,10 +35,6 @@ import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
-import com.skt.nugu.sdk.agent.speaker.Speaker
-import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
-import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.platform.android.log.AndroidLogger
 import com.skt.nugu.sdk.platform.android.mediaplayer.AndroidMediaPlayer
@@ -72,6 +65,7 @@ import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
+import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
@@ -242,7 +236,6 @@ class NuguAndroidClient private constructor(
 
     private val client: NuguClient = NuguClient.Builder(
         builder.playerFactory,
-        builder.speakerFactory,
         builder.authDelegate,
         builder.endPointDetector,
         builder.defaultAudioProvider,
@@ -257,6 +250,26 @@ class NuguAndroidClient private constructor(
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
             }
+            addAgentFactory(AbstractSpeakerAgent.NAMESPACE, object: SpeakerAgentFactory {
+                override fun create(container: SdkContainer): AbstractSpeakerAgent = with(container) {
+                    DefaultSpeakerAgent(
+                        getContextManager(),
+                        getMessageSender()
+                    ).apply {
+                        getDirectiveSequencer().addDirectiveHandler(this)
+                        builder.speakerFactory.let {
+                            addSpeaker(it.createNuguSpeaker())
+                            addSpeaker(it.createAlarmSpeaker())
+                            it.createCallSpeaker()?.let {speaker->
+                                addSpeaker(speaker)
+                            }
+                            it.createExternalSpeaker()?.let {speaker->
+                                addSpeaker(speaker)
+                            }
+                        }
+                    }
+                }
+            })
             builder.batteryStatusProvider?.let {
                 addAgentFactory(DefaultBatteryAgent.NAMESPACE, object: AgentFactory<DefaultBatteryAgent> {
                     override fun create(container: SdkContainer): DefaultBatteryAgent = DefaultBatteryAgent(it, container.getContextManager())
@@ -352,14 +365,20 @@ class NuguAndroidClient private constructor(
         client.removeConnectionListener(listener)
     }
 
-    override fun getSpeakerManager(): SpeakerManagerInterface = client.getSpeakerManager()
+    override fun getSpeakerManager(): SpeakerManagerInterface? {
+        return try {
+            client.getAgent(AbstractSpeakerAgent.NAMESPACE) as SpeakerManagerInterface
+        } catch (th: Throwable) {
+            null
+        }
+    }
 
     override fun addSpeakerListener(listener: SpeakerManagerObserver) {
-        client.addSpeakerListener(listener)
+        getSpeakerManager()?.addSpeakerManagerObserver(listener)
     }
 
     override fun removeSpeakerListener(listener: SpeakerManagerObserver) {
-        client.removeSpeakerListener(listener)
+        getSpeakerManager()?.removeSpeakerManagerObserver(listener)
     }
 
     override fun getPlaybackRouter(): PlaybackRouter = client.getPlaybackRouter()
