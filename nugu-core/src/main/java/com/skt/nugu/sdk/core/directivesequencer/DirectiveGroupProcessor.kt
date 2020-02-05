@@ -16,13 +16,15 @@
 package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 class DirectiveGroupProcessor(
     private val inputProcessorManager: DirectiveGroupHandler,
     private val directiveSequencer: DirectiveSequencerInterface
-) : DirectiveGroupHandler, DirectiveGroupProcessorInterface {
+) : DirectiveGroupHandler,
+    DirectiveGroupProcessorInterface {
     private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {

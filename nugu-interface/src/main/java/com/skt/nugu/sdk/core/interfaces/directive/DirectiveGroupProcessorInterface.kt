@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.directivesequencer
-
-import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
+package com.skt.nugu.sdk.core.interfaces.directive
 
 interface DirectiveGroupProcessorInterface {
     fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
