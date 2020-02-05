@@ -65,7 +65,7 @@ interface ClientHelperInterface {
      * Return [SpeakerManagerInterface] which can control volume & mute
      * @return speaker manager
      */
-    fun getSpeakerManager(): SpeakerManagerInterface
+    fun getSpeakerManager(): SpeakerManagerInterface?
 
     /**
      * Add listener to be notified when speaker status changed

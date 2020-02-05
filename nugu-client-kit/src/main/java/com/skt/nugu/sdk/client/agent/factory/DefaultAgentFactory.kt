@@ -172,27 +172,6 @@ object DefaultAgentFactory {
         }
     }
 
-    val SPEAKER = object : SpeakerAgentFactory {
-        override fun create(container: SdkContainer): AbstractSpeakerAgent = with(container) {
-            DefaultSpeakerAgent(
-                getContextManager(),
-                getMessageSender()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-                getSpeakerFactory().let {
-                    addSpeaker(it.createNuguSpeaker())
-                    addSpeaker(it.createAlarmSpeaker())
-                    it.createCallSpeaker()?.let {speaker->
-                        addSpeaker(speaker)
-                    }
-                    it.createExternalSpeaker()?.let {speaker->
-                        addSpeaker(speaker)
-                    }
-                }
-            }
-        }
-    }
-
     val SYSTEM = object : SystemAgentFactory {
         /**
          * Create an instance of Impl

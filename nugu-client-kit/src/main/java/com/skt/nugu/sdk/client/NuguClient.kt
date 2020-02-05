@@ -67,6 +67,7 @@ import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -90,7 +91,6 @@ class NuguClient private constructor(
 
     data class Builder(
         internal val playerFactory: PlayerFactory,
-        internal val speakerFactory: SpeakerFactory,
         internal val authDelegate: AuthDelegate,
         internal val endPointDetector: AudioEndPointDetector?,
         internal val defaultAudioProvider: AudioProvider,
@@ -167,7 +167,6 @@ class NuguClient private constructor(
         PlaybackRouter()
 
     // CA
-    private val speakerManager: AbstractSpeakerAgent
     override val audioPlayerAgent: AbstractAudioPlayerAgent
     override val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
@@ -269,13 +268,11 @@ class NuguClient private constructor(
                 override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
 
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
-                override fun getSpeakerFactory(): SpeakerFactory = speakerFactory
 
                 override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
                     playbackRouter
             }
 
-            speakerManager = DefaultAgentFactory.SPEAKER.create(sdkContainer)
             ttsAgent = ttsAgentFactory.create(sdkContainer)
             locationAgent = locationAgentFactory?.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
@@ -287,7 +284,9 @@ class NuguClient private constructor(
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
             agentFactoryMap.forEach {
-                it.value.create(sdkContainer)
+                it.value.create(sdkContainer)?.let {agent ->
+                    agentMap.put(it.key, agent)
+                }
             }
 
             ttsAgent.addListener(dialogUXStateAggregator)
@@ -311,6 +310,8 @@ class NuguClient private constructor(
         }
     }
 
+    private val agentMap = HashMap<String, CapabilityAgent>()
+
     fun connect() {
         networkManager.enable()
     }
@@ -333,18 +334,6 @@ class NuguClient private constructor(
 
     fun removeConnectionListener(listener: ConnectionStatusListener) {
         networkManager.removeConnectionStatusListener(listener)
-    }
-
-    fun getSpeakerManager(): SpeakerManagerInterface {
-        return speakerManager
-    }
-
-    fun addSpeakerListener(listener: SpeakerManagerObserver) {
-        return speakerManager.addSpeakerManagerObserver(listener)
-    }
-
-    fun removeSpeakerListener(listener: SpeakerManagerObserver) {
-        return speakerManager.removeSpeakerManagerObserver(listener)
     }
 
     fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
@@ -458,4 +447,6 @@ class NuguClient private constructor(
     fun removeSystemAgentListener(listener: SystemAgentInterface.Listener) {
         systemAgent.removeListener(listener)
     }
+
+    fun getAgent(namespace: String): CapabilityAgent? = agentMap[namespace]
 }
