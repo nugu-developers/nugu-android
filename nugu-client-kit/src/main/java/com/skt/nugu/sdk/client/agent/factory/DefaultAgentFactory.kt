@@ -17,33 +17,9 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.agent.*
 import com.skt.nugu.sdk.client.SdkContainer
-import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 
 object DefaultAgentFactory {
-    val ASR = object : ASRAgentFactory {
-        override fun create(container: SdkContainer): AbstractASRAgent {
-            return with(container) {
-                DefaultASRAgent(
-                    getInputManagerProcessor(),
-                    getAudioFocusManager(),
-                    getMessageSender(),
-                    getContextManager(),
-                    getDialogSessionManager(),
-                    getAudioProvider(),
-                    getAudioEncoder(),
-                    getEndPointDetector(),
-                    getEpdTimeoutMillis(),
-                    DefaultFocusChannel.DIALOG_CHANNEL_NAME
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                    getDialogSessionManager().addListener(this)
-                }
-            }
-        }
-    }
-
     val SYSTEM = object : SystemAgentFactory {
         /**
          * Create an instance of Impl

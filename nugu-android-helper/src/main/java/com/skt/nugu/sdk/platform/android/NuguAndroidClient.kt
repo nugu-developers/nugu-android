@@ -43,6 +43,7 @@ import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -80,6 +81,8 @@ import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
+import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractorFactory
@@ -163,7 +166,6 @@ class NuguAndroidClient private constructor(
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
-        internal var asrAgentFactory: ASRAgentFactory = DefaultAgentFactory.ASR
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -250,20 +252,40 @@ class NuguAndroidClient private constructor(
     private val dialogUXStateAggregator =
         DialogUXStateAggregator()
 
+    private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
+
     private val client: NuguClient = NuguClient.Builder(
         builder.playerFactory,
-        builder.authDelegate,
-        builder.endPointDetector,
-        builder.defaultAudioProvider,
-        SpeexEncoder()
+        builder.authDelegate
     ).logger(AndroidLogger())
-        .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
             }
+            addAgentFactory(AbstractASRAgent.NAMESPACE, object : ASRAgentFactory {
+                override fun create(container: SdkContainer): AbstractASRAgent {
+                    return with(container) {
+                        DefaultASRAgent(
+                            getInputManagerProcessor(),
+                            getAudioFocusManager(),
+                            getMessageSender(),
+                            getContextManager(),
+                            getDialogSessionManager(),
+                            builder.defaultAudioProvider,
+                            SpeexEncoder(),
+                            builder.endPointDetector,
+                            builder.defaultEpdTimeoutMillis,
+                            DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                            getDialogSessionManager().addListener(this)
+                        }
+                    }
+                }
+            })
+
             addAgentFactory(AbstractSpeakerAgent.NAMESPACE, object : SpeakerAgentFactory {
                 override fun create(container: SdkContainer): AbstractSpeakerAgent =
                     with(container) {
@@ -289,11 +311,11 @@ class NuguAndroidClient private constructor(
             addAgentFactory(AbstractAudioPlayerAgent.NAMESPACE, object: AudioPlayerAgentFactory {
                 override fun create(container: SdkContainer): AbstractAudioPlayerAgent = with(container) {
                     DefaultAudioPlayerAgent(
-                        getPlayerFactory().createAudioPlayer(),
+                        builder.playerFactory.createAudioPlayer(),
                         getMessageSender(),
                         getAudioFocusManager(),
                         getContextManager(),
-                        getPlaybackRouter(),
+                        playbackRouter,
                         getPlaySynchronizer(),
                         getAudioPlayStackManager(),
                         DefaultFocusChannel.CONTENT_CHANNEL_NAME
@@ -328,7 +350,7 @@ class NuguAndroidClient private constructor(
             addAgentFactory(AbstractTTSAgent.NAMESPACE, object : TTSAgentFactory {
                 override fun create(container: SdkContainer): AbstractTTSAgent = with(container) {
                     DefaultTTSAgent(
-                        getPlayerFactory().createSpeakPlayer(),
+                        builder.playerFactory.createSpeakPlayer(),
                         getMessageSender(),
                         getAudioFocusManager(),
                         getContextManager(),
@@ -486,8 +508,6 @@ class NuguAndroidClient private constructor(
                     }
                 }
             })
-
-            asrAgentFactory(builder.asrAgentFactory)
         }
         .build()
 
@@ -515,7 +535,12 @@ class NuguAndroidClient private constructor(
         } catch (th: Throwable) {
             null
         }
-    override val asrAgent: ASRAgentInterface? = client.asrAgent
+    override val asrAgent: ASRAgentInterface?
+        get() = try {
+            client.getAgent(AbstractASRAgent.NAMESPACE) as ASRAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val textAgent: TextAgentInterface?
         get() = try {
             client.getAgent(AbstractTextAgent.NAMESPACE) as TextAgentInterface
@@ -592,7 +617,7 @@ class NuguAndroidClient private constructor(
         getSpeakerManager()?.removeSpeakerManagerObserver(listener)
     }
 
-    override fun getPlaybackRouter(): PlaybackRouter = client.getPlaybackRouter()
+    override fun getPlaybackRouter(): PlaybackRouter = playbackRouter
 
     override fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
         audioPlayerAgent?.addListener(listener)
@@ -611,11 +636,11 @@ class NuguAndroidClient private constructor(
     }
 
     override fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
-        client.addASRListener(listener)
+        asrAgent?.addOnStateChangeListener(listener)
     }
 
     override fun removeASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
-        client.removeASRListener(listener)
+        asrAgent?.removeOnStateChangeListener(listener)
     }
 
     override fun startRecognition(
@@ -625,25 +650,31 @@ class NuguAndroidClient private constructor(
         wakewordEndPosition: Long?,
         wakewordDetectPosition: Long?
     ): Future<Boolean> {
-        return client.startRecognition(
+        Logger.d(
+            TAG,
+            "[startRecognition] wakewordStartPosition: $wakewordStartPosition , wakewordEndPosition:$wakewordEndPosition, wakewordDetectPosition:$wakewordDetectPosition"
+        )
+
+        return asrAgent?.startRecognition(
             audioInputStream,
             audioFormat,
             wakewordStartPosition,
             wakewordEndPosition,
             wakewordDetectPosition
-        )
+        ) ?: ImmediateBooleanFuture(false)
     }
 
     override fun stopRecognition() {
-        client.stopRecognition()
+        Logger.d(TAG, "[stopRecognition]")
+        asrAgent?.stopRecognition()
     }
 
     override fun addASRResultListener(listener: ASRAgentInterface.OnResultListener) {
-        client.addASRResultListener(listener)
+        asrAgent?.addOnResultListener(listener)
     }
 
     override fun removeASRResultListener(listener: ASRAgentInterface.OnResultListener) {
-        client.removeASRResultListener(listener)
+        asrAgent?.removeOnResultListener(listener)
     }
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {

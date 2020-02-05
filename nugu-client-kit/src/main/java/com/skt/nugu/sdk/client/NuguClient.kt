@@ -18,8 +18,6 @@ package com.skt.nugu.sdk.client
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
-import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
-import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.network.NetworkManager
@@ -44,8 +42,6 @@ import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -61,8 +57,6 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
-import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
-import java.util.concurrent.Future
 
 class NuguClient private constructor(
     builder: Builder
@@ -73,13 +67,8 @@ class NuguClient private constructor(
 
     data class Builder(
         internal val playerFactory: PlayerFactory,
-        internal val authDelegate: AuthDelegate,
-        internal val endPointDetector: AudioEndPointDetector?,
-        internal val defaultAudioProvider: AudioProvider,
-        internal val audioEncoder: Encoder
+        internal val authDelegate: AuthDelegate
     ) {
-        internal var defaultEpdTimeoutMillis: Long = 10000L
-
         internal var transportFactory: TransportFactory = GrpcTransportFactory()
 
         // Log
@@ -88,15 +77,7 @@ class NuguClient private constructor(
         // sdk version for userAgent
         internal var sdkVersion: String = "1.0"
 
-        // Agent Factory
-        internal var asrAgentFactory: ASRAgentFactory? = null
-
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
-
-        fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
-            apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
-
-        fun asrAgentFactory(factory: ASRAgentFactory) = apply { asrAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
@@ -111,9 +92,6 @@ class NuguClient private constructor(
     private val inputProcessorManager = InputProcessorManager()
     private val directiveSequencer: DirectiveSequencer = DirectiveSequencer()
 
-    private val playbackRouter: com.skt.nugu.sdk.agent.playback.PlaybackRouter =
-        PlaybackRouter()
-
     // CA
     val systemAgent: AbstractSystemAgent
 
@@ -125,7 +103,6 @@ class NuguClient private constructor(
     )
     private val messageRouter: MessageRouter =
         MessageRouter(builder.transportFactory, builder.authDelegate)
-    val asrAgent: AbstractASRAgent?
     val networkManager: NetworkManagerInterface
 
     var useServerSideEndPointDetector: Boolean = false
@@ -189,22 +166,8 @@ class NuguClient private constructor(
 
                 override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface =
                     directiveGroupProcessor
-
-                override fun getAudioProvider(): AudioProvider = defaultAudioProvider
-
-                override fun getAudioEncoder(): Encoder = audioEncoder
-
-                override fun getEndPointDetector(): AudioEndPointDetector? = endPointDetector
-
-                override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
-
-                override fun getPlayerFactory(): PlayerFactory = playerFactory
-
-                override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
-                    playbackRouter
             }
 
-            asrAgent = asrAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
             agentFactoryMap.forEach {
@@ -241,52 +204,6 @@ class NuguClient private constructor(
 
     fun removeConnectionListener(listener: ConnectionStatusListener) {
         networkManager.removeConnectionStatusListener(listener)
-    }
-
-    fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
-        playbackRouter
-
-    // AIP
-    fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
-        asrAgent?.addOnStateChangeListener(listener)
-    }
-
-    fun removeASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
-        asrAgent?.removeOnStateChangeListener(listener)
-    }
-
-    fun startRecognition(
-        audioInputStream: SharedDataStream?,
-        audioFormat: AudioFormat?,
-        wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?,
-        wakewordDetectPosition: Long?
-    ): Future<Boolean> {
-        Logger.d(
-            TAG,
-            "[startRecognition] wakewordStartPosition: $wakewordStartPosition , wakewordEndPosition:$wakewordEndPosition, wakewordDetectPosition:$wakewordDetectPosition"
-        )
-
-        return asrAgent?.startRecognition(
-            audioInputStream,
-            audioFormat,
-            wakewordStartPosition,
-            wakewordEndPosition,
-            wakewordDetectPosition
-        ) ?: ImmediateBooleanFuture(false)
-    }
-
-    fun stopRecognition() {
-        Logger.d(TAG, "[stopRecognition]")
-        asrAgent?.stopRecognition()
-    }
-
-    fun addASRResultListener(listener: ASRAgentInterface.OnResultListener) {
-        asrAgent?.addOnResultListener(listener)
-    }
-
-    fun removeASRResultListener(listener: ASRAgentInterface.OnResultListener) {
-        asrAgent?.removeOnResultListener(listener)
     }
 
     fun shutdown() {
