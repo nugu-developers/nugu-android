@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.client.ClientHelperInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.microphone.Microphone
@@ -48,6 +47,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
+import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
@@ -58,7 +58,6 @@ import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
@@ -73,7 +72,6 @@ import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
-import com.skt.nugu.sdk.agent.display.DisplayAggregator
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
@@ -402,13 +400,39 @@ class NuguAndroidClient private constructor(
                 }
             })
 
+            addAgentFactory(DefaultDisplayAgent.NAMESPACE, object: DisplayAgentFactory {
+                override fun create(container: SdkContainer): AbstractDisplayAgent = with(container) {
+                    DefaultDisplayAgent(
+                        getContextManager(),
+                        getMessageSender(),
+                        getPlaySynchronizer(),
+                        getDisplayPlayStackManager(),
+                        getInputManagerProcessor()
+                    ).apply {
+                        getDirectiveSequencer().addDirectiveHandler(this)
+
+                        ControlFocusDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+                        ControlScrollDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+                    }
+                }
+            })
+
             asrAgentFactory(builder.asrAgentFactory)
         }
         .build()
 
     override val audioPlayerAgent: AbstractAudioPlayerAgent? = client.audioPlayerAgent
     override val ttsAgent: TTSAgentInterface? = client.ttsAgent
-    override val displayAgent: DisplayAgentInterface? = client.displayAgent
+    override val displayAgent: DisplayAgentInterface?
+        get() = try {
+            client.getAgent(DefaultDisplayAgent.NAMESPACE) as DisplayAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val extensionAgent: ExtensionAgentInterface?
         get() = try {
             client.getAgent(AbstractExtensionAgent.NAMESPACE) as ExtensionAgentInterface
@@ -444,9 +468,10 @@ class NuguAndroidClient private constructor(
     init {
         audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.audioFocusManager)
 
-        displayAggregator = if (displayAgent != null && audioPlayerAgent != null) {
+        val tempDisplayAgent = displayAgent
+        displayAggregator = if (tempDisplayAgent != null && audioPlayerAgent != null) {
             DisplayAggregator(
-                displayAgent,
+                tempDisplayAgent,
                 audioPlayerAgent
             )
         } else {
