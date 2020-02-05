@@ -53,7 +53,7 @@ data class EventMessageRequest(
         private val name: String,
         private val version: String
     ) {
-        private var messageId: String = UUIDGeneration.shortUUID().toString()
+        private var messageId: String = UUIDGeneration.timeUUID().toString()
         private var dialogRequestId: String = UUIDGeneration.timeUUID().toString()
         private var payload: String = "{}"
         private var referrerDialogRequestId: String = ""

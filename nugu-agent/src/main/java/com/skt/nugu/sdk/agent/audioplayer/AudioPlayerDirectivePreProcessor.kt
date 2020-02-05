@@ -104,11 +104,11 @@ class AudioPlayerDirectivePreProcessor :
             playPayload.playStackControl?.let {
                 template.add("playStackControl", it.toJsonObject())
             }
-
+   
             MessageFactory.createDirective(
                 null, Header(
                     header.dialogRequestId,
-                    UUIDGeneration.shortUUID().toString(),
+                    UUIDGeneration.timeUUID().toString(),
                     name,
                     namespace,
                     AudioPlayerTemplateHandler.VERSION,
