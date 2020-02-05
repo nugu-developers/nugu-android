@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client
 
-import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider

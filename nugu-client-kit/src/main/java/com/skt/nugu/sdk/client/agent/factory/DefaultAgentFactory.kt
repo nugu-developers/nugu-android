@@ -18,12 +18,7 @@ package com.skt.nugu.sdk.client.agent.factory
 import com.skt.nugu.sdk.agent.*
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
-import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
-import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 
@@ -46,45 +41,6 @@ object DefaultAgentFactory {
                     getDirectiveSequencer().addDirectiveHandler(this)
                     getDialogSessionManager().addListener(this)
                 }
-            }
-        }
-    }
-
-    val AUDIO_PLAYER = object : AudioPlayerAgentFactory {
-        override fun create(container: SdkContainer): AbstractAudioPlayerAgent = with(container) {
-            DefaultAudioPlayerAgent(
-                getPlayerFactory().createAudioPlayer(),
-                getMessageSender(),
-                getAudioFocusManager(),
-                getContextManager(),
-                getPlaybackRouter(),
-                getPlaySynchronizer(),
-                getAudioPlayStackManager(),
-                DefaultFocusChannel.CONTENT_CHANNEL_NAME
-            ).apply {
-                val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler()
-                    .apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
-
-                AudioPlayerLyricsDirectiveHandler(getContextManager(), getMessageSender(), this, this).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
-
-                AudioPlayerTemplateHandler(
-                    getPlaySynchronizer(),
-                    getDisplayPlayStackManager()
-                ).apply {
-                    setDisplay(this)
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                    getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
-                        AudioPlayerDirectivePreProcessor()
-                    )
-                    audioPlayerMetadataDirectiveHandler.addListener(this)
-                }
-
-
-                getDirectiveSequencer().addDirectiveHandler(this)
             }
         }
     }

@@ -21,7 +21,6 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.focus.FocusManager
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.network.NetworkManager
 import com.skt.nugu.sdk.core.network.MessageRouter
@@ -49,7 +48,6 @@ import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
@@ -60,6 +58,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -94,8 +93,6 @@ class NuguClient private constructor(
         internal var sdkVersion: String = "1.0"
 
         // Agent Factory
-        internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
-            DefaultAgentFactory.AUDIO_PLAYER
         internal var asrAgentFactory: ASRAgentFactory? = null
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
 
@@ -103,9 +100,6 @@ class NuguClient private constructor(
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
-
-        fun audioPlayerAgentFactory(factory: AudioPlayerAgentFactory) =
-            apply { audioPlayerAgentFactory = factory }
 
         fun asrAgentFactory(factory: ASRAgentFactory) = apply { asrAgentFactory = factory }
         fun ttsAgentFactory(factory: TTSAgentFactory) = apply { ttsAgentFactory = factory }
@@ -127,7 +121,6 @@ class NuguClient private constructor(
         PlaybackRouter()
 
     // CA
-    val audioPlayerAgent: AbstractAudioPlayerAgent
     val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
     val systemAgent: AbstractSystemAgent
@@ -223,13 +216,10 @@ class NuguClient private constructor(
 
             ttsAgent = ttsAgentFactory.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
-            audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
             agentFactoryMap.forEach {
-                it.value.create(sdkContainer)?.let {agent ->
-                    agentMap.put(it.key, agent)
-                }
+                agentMap[it.key] = it.value.create(sdkContainer)
             }
 
             ttsAgent.addListener(dialogUXStateAggregator)
@@ -270,14 +260,6 @@ class NuguClient private constructor(
 
     fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
         playbackRouter
-
-    fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
-        audioPlayerAgent.addListener(listener)
-    }
-
-    fun removeAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
-        audioPlayerAgent.removeListener(listener)
-    }
 
     fun addDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
         dialogUXStateAggregator.addListener(listener)
@@ -332,7 +314,6 @@ class NuguClient private constructor(
 
     fun shutdown() {
         systemAgent.shutdown()
-        audioPlayerAgent.shutdown()
         ttsAgent.stopTTS(true)
         networkManager.disable()
     }

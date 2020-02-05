@@ -44,6 +44,9 @@ import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
@@ -72,6 +75,7 @@ import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
+import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
@@ -276,6 +280,46 @@ class NuguAndroidClient private constructor(
                         }
                     }
             })
+
+            addAgentFactory(AbstractAudioPlayerAgent.NAMESPACE, object: AudioPlayerAgentFactory {
+                override fun create(container: SdkContainer): AbstractAudioPlayerAgent = with(container) {
+                    DefaultAudioPlayerAgent(
+                        getPlayerFactory().createAudioPlayer(),
+                        getMessageSender(),
+                        getAudioFocusManager(),
+                        getContextManager(),
+                        getPlaybackRouter(),
+                        getPlaySynchronizer(),
+                        getAudioPlayStackManager(),
+                        DefaultFocusChannel.CONTENT_CHANNEL_NAME
+                    ).apply {
+                        val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler()
+                            .apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
+
+                        AudioPlayerLyricsDirectiveHandler(getContextManager(), getMessageSender(), this, this).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+
+                        AudioPlayerTemplateHandler(
+                            getPlaySynchronizer(),
+                            getDisplayPlayStackManager()
+                        ).apply {
+                            setDisplay(this)
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                            getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
+                                AudioPlayerDirectivePreProcessor()
+                            )
+                            audioPlayerMetadataDirectiveHandler.addListener(this)
+                        }
+
+
+                        getDirectiveSequencer().addDirectiveHandler(this)
+                    }
+                }
+            })
+
             builder.batteryStatusProvider?.let {
                 addAgentFactory(
                     DefaultBatteryAgent.NAMESPACE,
@@ -425,7 +469,12 @@ class NuguAndroidClient private constructor(
         }
         .build()
 
-    override val audioPlayerAgent: AbstractAudioPlayerAgent? = client.audioPlayerAgent
+    override val audioPlayerAgent: AbstractAudioPlayerAgent?
+        get() = try {
+            client.getAgent(AbstractAudioPlayerAgent.NAMESPACE) as AbstractAudioPlayerAgent
+        } catch (th: Throwable) {
+            null
+        }
     override val ttsAgent: TTSAgentInterface? = client.ttsAgent
     override val displayAgent: DisplayAgentInterface?
         get() = try {
@@ -469,10 +518,11 @@ class NuguAndroidClient private constructor(
         audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.audioFocusManager)
 
         val tempDisplayAgent = displayAgent
-        displayAggregator = if (tempDisplayAgent != null && audioPlayerAgent != null) {
+        val tempAudioPlayerAgent = audioPlayerAgent
+        displayAggregator = if (tempDisplayAgent != null && tempAudioPlayerAgent != null) {
             DisplayAggregator(
                 tempDisplayAgent,
-                audioPlayerAgent
+                tempAudioPlayerAgent
             )
         } else {
             null
@@ -514,11 +564,11 @@ class NuguAndroidClient private constructor(
     override fun getPlaybackRouter(): PlaybackRouter = client.getPlaybackRouter()
 
     override fun addAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
-        client.addAudioPlayerListener(listener)
+        audioPlayerAgent?.addListener(listener)
     }
 
     override fun removeAudioPlayerListener(listener: AudioPlayerAgentInterface.Listener) {
-        client.removeAudioPlayerListener(listener)
+        audioPlayerAgent?.removeListener(listener)
     }
 
     override fun addDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
@@ -592,6 +642,7 @@ class NuguAndroidClient private constructor(
     }
 
     override fun shutdown() {
+        audioPlayerAgent?.shutdown()
         client.shutdown()
     }
 
