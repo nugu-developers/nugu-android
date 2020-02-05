@@ -108,12 +108,11 @@ class UUIDGeneration(private val data: ByteArray) {
         /**
          * 64-bit(8bytes) base16 hexa string  (16-digit string)
          */
-        fun shortUUID(): UUIDGeneration {
+        private fun shortUUID(): UUIDGeneration {
             val bytes = ByteArray(8)
             numberGenerator.nextBytes(bytes)
             return UUIDGeneration(bytes)
         }
-
         /**
          * 128-bit(16 bytes) base16 hexa string (32-digit string)
         +------------+-------+

@@ -117,7 +117,7 @@ class SpeechRecognizeAttachmentSenderThread(
 
         val attachmentMessage =
             AttachmentMessageRequest(
-                UUIDGeneration.shortUUID().toString(),
+                UUIDGeneration.timeUUID().toString(),
                 request.dialogRequestId,
                 request.context,
                 AbstractASRAgent.NAMESPACE,
