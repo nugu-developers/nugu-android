@@ -24,17 +24,14 @@ import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
-import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
-import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 
 object DefaultAgentFactory {
     val ASR = object : ASRAgentFactory {
@@ -97,33 +94,6 @@ object DefaultAgentFactory {
             }
         }
     }
-
-    val DELEGATION = object : DelegationAgentFactory {
-        override fun create(container: SdkContainer): AbstractDelegationAgent? = with(container) {
-            val client = getDelegationClient()
-            if(client != null) {
-                DefaultDelegationAgent(
-                    getContextManager(),
-                    getMessageSender(),
-                    getInputManagerProcessor(),
-                    client
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                    getContextManager().setStateProvider(namespaceAndName, this)
-                    // update delegate initial state
-                    getContextManager().setState(
-                        namespaceAndName,
-                        "",
-                        StateRefreshPolicy.SOMETIMES,
-                        0
-                    )
-                }
-            } else {
-                null
-            }
-        }
-    }
-
 
     val TEMPLATE = object : DisplayAgentFactory {
         override fun create(container: SdkContainer): AbstractDisplayAgent? = with(container) {

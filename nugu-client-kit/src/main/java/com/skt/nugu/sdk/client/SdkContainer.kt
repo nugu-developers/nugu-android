@@ -54,9 +54,6 @@ interface SdkContainer {
     fun getEndPointDetector(): AudioEndPointDetector?
     fun getEpdTimeoutMillis(): Long
 
-    // Delegation only
-    fun getDelegationClient(): DelegationClient?
-
     // Extension only
     fun getExtensionClient(): ExtensionAgentInterface.Client?
 
