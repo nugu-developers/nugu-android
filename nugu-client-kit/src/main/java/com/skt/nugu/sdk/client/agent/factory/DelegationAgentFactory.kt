@@ -17,4 +17,4 @@ package com.skt.nugu.sdk.client.agent.factory
 
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 
-interface DelegationAgentFactory: AgentFactory<AbstractDelegationAgent?>
+interface DelegationAgentFactory: AgentFactory<AbstractDelegationAgent>

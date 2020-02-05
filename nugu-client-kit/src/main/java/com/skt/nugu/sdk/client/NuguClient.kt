@@ -19,7 +19,6 @@ import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
-import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -32,7 +31,6 @@ import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
-import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
@@ -40,8 +38,6 @@ import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
-import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
-import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
@@ -58,13 +54,11 @@ import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
-import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -107,7 +101,6 @@ class NuguClient private constructor(
         internal var sdkVersion: String = "1.0"
 
         // Components for agent
-        internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
 
         // Agent Factory
@@ -119,16 +112,11 @@ class NuguClient private constructor(
         internal var extensionAgentFactory: ExtensionAgentFactory = DefaultAgentFactory.EXTENSION
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
         internal var locationAgentFactory: LocationAgentFactory? = DefaultAgentFactory.LOCATION
-        internal var delegationAgentFactory: DelegationAgentFactory? =
-            DefaultAgentFactory.DELEGATION
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
-
-        fun delegationClient(client: DelegationClient?) =
-            apply { delegationClient = client }
 
         fun extensionClient(client: ExtensionAgentInterface.Client?) =
             apply { extensionClient = client }
@@ -149,8 +137,6 @@ class NuguClient private constructor(
             apply { locationAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
-        fun delegationAgentFactory(factory: DelegationAgentFactory?) =
-            apply { delegationAgentFactory = factory }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -187,7 +173,6 @@ class NuguClient private constructor(
     val asrAgent: AbstractASRAgent?
     val textAgent: TextAgentInterface
     val extensionAgent: AbstractExtensionAgent?
-    val delegationAgent: AbstractDelegationAgent?
     val networkManager: NetworkManagerInterface
 
     private val displayAggregator: DisplayAggregator?
@@ -263,8 +248,6 @@ class NuguClient private constructor(
 
                 override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
 
-                override fun getDelegationClient(): DelegationClient? = delegationClient
-
                 override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
 
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
@@ -278,7 +261,6 @@ class NuguClient private constructor(
             asrAgent = asrAgentFactory?.create(sdkContainer)
             textAgent = textAgentFactory.create(sdkContainer)
             extensionAgent = extensionAgentFactory.create(sdkContainer)
-            delegationAgent = delegationAgentFactory?.create(sdkContainer)
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
             displayAgent = displayAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)

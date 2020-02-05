@@ -45,6 +45,7 @@ import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
+import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -68,6 +69,7 @@ import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
@@ -225,11 +227,13 @@ class NuguAndroidClient private constructor(
         /**
          * @param factory the audio focus interactor factory
          */
-        fun audioFocusInteractorFactory(factory: AudioFocusInteractorFactory?) = apply {audioFocusInteractorFactory = factory}
+        fun audioFocusInteractorFactory(factory: AudioFocusInteractorFactory?) =
+            apply { audioFocusInteractorFactory = factory }
 
-        fun addAgentFactory(namespace: String, factory: AgentFactory<*>) = apply { agentFactoryMap[namespace] = factory }
+        fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
+            apply { agentFactoryMap[namespace] = factory }
 
-        fun build(): NuguAndroidClient   {
+        fun build(): NuguAndroidClient {
             return NuguAndroidClient(this)
         }
     }
@@ -241,7 +245,6 @@ class NuguAndroidClient private constructor(
         builder.defaultAudioProvider,
         SpeexEncoder()
     ).logger(AndroidLogger())
-        .delegationClient(builder.delegationClient)
         .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
         .extensionClient(builder.extensionClient)
         .transportFactory(builder.transportFactory)
@@ -250,81 +253,114 @@ class NuguAndroidClient private constructor(
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
             }
-            addAgentFactory(AbstractSpeakerAgent.NAMESPACE, object: SpeakerAgentFactory {
-                override fun create(container: SdkContainer): AbstractSpeakerAgent = with(container) {
-                    DefaultSpeakerAgent(
-                        getContextManager(),
-                        getMessageSender()
-                    ).apply {
-                        getDirectiveSequencer().addDirectiveHandler(this)
-                        builder.speakerFactory.let {
-                            addSpeaker(it.createNuguSpeaker())
-                            addSpeaker(it.createAlarmSpeaker())
-                            it.createCallSpeaker()?.let {speaker->
-                                addSpeaker(speaker)
-                            }
-                            it.createExternalSpeaker()?.let {speaker->
-                                addSpeaker(speaker)
+            addAgentFactory(AbstractSpeakerAgent.NAMESPACE, object : SpeakerAgentFactory {
+                override fun create(container: SdkContainer): AbstractSpeakerAgent =
+                    with(container) {
+                        DefaultSpeakerAgent(
+                            getContextManager(),
+                            getMessageSender()
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                            builder.speakerFactory.let {
+                                addSpeaker(it.createNuguSpeaker())
+                                addSpeaker(it.createAlarmSpeaker())
+                                it.createCallSpeaker()?.let { speaker ->
+                                    addSpeaker(speaker)
+                                }
+                                it.createExternalSpeaker()?.let { speaker ->
+                                    addSpeaker(speaker)
+                                }
                             }
                         }
                     }
-                }
             })
             builder.batteryStatusProvider?.let {
-                addAgentFactory(DefaultBatteryAgent.NAMESPACE, object: AgentFactory<DefaultBatteryAgent> {
-                    override fun create(container: SdkContainer): DefaultBatteryAgent = DefaultBatteryAgent(it, container.getContextManager())
-                })
+                addAgentFactory(
+                    DefaultBatteryAgent.NAMESPACE,
+                    object : AgentFactory<DefaultBatteryAgent> {
+                        override fun create(container: SdkContainer): DefaultBatteryAgent =
+                            DefaultBatteryAgent(it, container.getContextManager())
+                    })
             }
             builder.defaultMicrophone?.let {
-                addAgentFactory(AbstractMicrophoneAgent.NAMESPACE, object: AgentFactory<AbstractMicrophoneAgent> {
-                    override fun create(container: SdkContainer): DefaultMicrophoneAgent = with(container) {
-                        DefaultMicrophoneAgent(
-                            getMessageSender(),
-                            getContextManager(),
-                            it
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                        }
-                    }
-                })
+                addAgentFactory(
+                    AbstractMicrophoneAgent.NAMESPACE,
+                    object : AgentFactory<AbstractMicrophoneAgent> {
+                        override fun create(container: SdkContainer): DefaultMicrophoneAgent =
+                            with(container) {
+                                DefaultMicrophoneAgent(
+                                    getMessageSender(),
+                                    getContextManager(),
+                                    it
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                }
+                            }
+                    })
             }
             builder.light?.let {
-                addAgentFactory(AbstractLightAgent.NAMESPACE, object: LightAgentFactory {
-                    override fun create(container: SdkContainer): AbstractLightAgent = with(container) {
-                        DefaultLightAgent(
-                            getMessageSender(),
-                            getContextManager(),
-                            it
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(AbstractLightAgent.NAMESPACE, object : LightAgentFactory {
+                    override fun create(container: SdkContainer): AbstractLightAgent =
+                        with(container) {
+                            DefaultLightAgent(
+                                getMessageSender(),
+                                getContextManager(),
+                                it
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
                         }
-                    }
                 })
             }
             builder.movementController?.let {
-                addAgentFactory(AbstractMovementAgent.NAMESPACE, object: MovementAgentFactory {
-                    override fun create(container: SdkContainer): AbstractMovementAgent = with(container) {
-                        DefaultMovementAgent(
-                            getContextManager(),
-                            getMessageSender(),
-                            it
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(AbstractMovementAgent.NAMESPACE, object : MovementAgentFactory {
+                    override fun create(container: SdkContainer): AbstractMovementAgent =
+                        with(container) {
+                            DefaultMovementAgent(
+                                getContextManager(),
+                                getMessageSender(),
+                                it
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
                         }
-                    }
                 })
             }
             builder.screen?.let {
-                addAgentFactory(DefaultScreenAgent.NAMESPACE, object: ScreenAgentFactory {
-                    override fun create(container: SdkContainer): AbstractScreenAgent = with(container) {
-                        DefaultScreenAgent(
-                            getContextManager(),
-                            getMessageSender(),
-                            it
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(DefaultScreenAgent.NAMESPACE, object : ScreenAgentFactory {
+                    override fun create(container: SdkContainer): AbstractScreenAgent =
+                        with(container) {
+                            DefaultScreenAgent(
+                                getContextManager(),
+                                getMessageSender(),
+                                it
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
                         }
-                    }
+                })
+            }
+            builder.delegationClient?.let {
+                addAgentFactory(AbstractDelegationAgent.NAMESPACE, object : DelegationAgentFactory {
+                    override fun create(container: SdkContainer): AbstractDelegationAgent =
+                        with(container) {
+                            DefaultDelegationAgent(
+                                getContextManager(),
+                                getMessageSender(),
+                                getInputManagerProcessor(),
+                                it
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                                getContextManager().setStateProvider(namespaceAndName, this)
+                                // update delegate initial state
+                                getContextManager().setState(
+                                    namespaceAndName,
+                                    "",
+                                    StateRefreshPolicy.SOMETIMES,
+                                    0
+                                )
+                            }
+                        }
                 })
             }
 
@@ -339,7 +375,12 @@ class NuguAndroidClient private constructor(
     override val asrAgent: ASRAgentInterface? = client.asrAgent
     override val textAgent: TextAgentInterface? = client.textAgent
     override val locationAgent: LocationAgentInterface? = client.locationAgent
-    override val delegationAgent: DelegationAgentInterface? = client.delegationAgent
+    override val delegationAgent: DelegationAgentInterface?
+        get() = try {
+            client.getAgent(AbstractDelegationAgent.NAMESPACE) as DelegationAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val systemAgent: SystemAgentInterface = client.systemAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
 
