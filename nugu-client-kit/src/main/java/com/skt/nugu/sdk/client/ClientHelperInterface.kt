@@ -21,7 +21,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.sds.SharedDataStream

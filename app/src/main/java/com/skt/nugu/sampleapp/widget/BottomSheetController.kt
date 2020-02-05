@@ -24,7 +24,7 @@ import com.skt.nugu.sdk.platform.android.ux.widget.ChipTrayView
 import com.skt.nugu.sdk.platform.android.ux.widget.VoiceChromeView
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper

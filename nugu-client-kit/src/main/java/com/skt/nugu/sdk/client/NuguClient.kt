@@ -25,7 +25,6 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.network.NetworkManager
 import com.skt.nugu.sdk.core.network.MessageRouter
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
-import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
@@ -49,7 +48,6 @@ import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
-import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -133,8 +131,6 @@ class NuguClient private constructor(
     )
     private val messageRouter: MessageRouter =
         MessageRouter(builder.transportFactory, builder.authDelegate)
-    private val dialogUXStateAggregator =
-        DialogUXStateAggregator()
     val asrAgent: AbstractASRAgent?
     val networkManager: NetworkManagerInterface
 
@@ -222,10 +218,6 @@ class NuguClient private constructor(
                 agentMap[it.key] = it.value.create(sdkContainer)
             }
 
-            ttsAgent.addListener(dialogUXStateAggregator)
-            asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
-            dialogSessionManager.addListener(dialogUXStateAggregator)
-
             PlayStackContextManager(
                 contextManager,
                 audioPlayStackManager,
@@ -260,14 +252,6 @@ class NuguClient private constructor(
 
     fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
         playbackRouter
-
-    fun addDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
-        dialogUXStateAggregator.addListener(listener)
-    }
-
-    fun removeDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
-        dialogUXStateAggregator.removeListener(listener)
-    }
 
     // AIP
     fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
@@ -350,4 +334,5 @@ class NuguClient private constructor(
     }
 
     fun getAgent(namespace: String): CapabilityAgent? = agentMap[namespace]
+    fun getDialogSessionManager(): DialogSessionManagerInterface = sdkContainer.getDialogSessionManager()
 }
