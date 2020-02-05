@@ -77,6 +77,7 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
+import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
@@ -324,6 +325,23 @@ class NuguAndroidClient private constructor(
                 }
             })
 
+            addAgentFactory(AbstractTTSAgent.NAMESPACE, object : TTSAgentFactory {
+                override fun create(container: SdkContainer): AbstractTTSAgent = with(container) {
+                    DefaultTTSAgent(
+                        getPlayerFactory().createSpeakPlayer(),
+                        getMessageSender(),
+                        getAudioFocusManager(),
+                        getContextManager(),
+                        getPlaySynchronizer(),
+                        getAudioPlayStackManager(),
+                        getInputManagerProcessor(),
+                        DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                    ).apply {
+                        getDirectiveSequencer().addDirectiveHandler(this)
+                    }
+                }
+            })
+
             builder.batteryStatusProvider?.let {
                 addAgentFactory(
                     DefaultBatteryAgent.NAMESPACE,
@@ -479,7 +497,12 @@ class NuguAndroidClient private constructor(
         } catch (th: Throwable) {
             null
         }
-    override val ttsAgent: TTSAgentInterface? = client.ttsAgent
+    override val ttsAgent: TTSAgentInterface?
+        get() = try {
+            client.getAgent(AbstractTTSAgent.NAMESPACE) as TTSAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val displayAgent: DisplayAgentInterface?
         get() = try {
             client.getAgent(DefaultDisplayAgent.NAMESPACE) as DisplayAgentInterface
@@ -632,15 +655,15 @@ class NuguAndroidClient private constructor(
         playServiceId: String,
         listener: TTSAgentInterface.OnPlaybackListener?
     ) {
-        client.requestTTS(text, playServiceId, listener)
+        ttsAgent?.requestTTS(text, playServiceId, listener)
     }
 
     override fun localStopTTS() {
-        client.localStopTTS()
+        ttsAgent?.stopTTS(false)
     }
 
     override fun cancelTTSAndOthers() {
-        client.cancelTTSAndOthers()
+        ttsAgent?.stopTTS(true)
     }
 
     override fun getDisplay(): DisplayAggregatorInterface? = displayAggregator
@@ -650,6 +673,7 @@ class NuguAndroidClient private constructor(
     }
 
     override fun shutdown() {
+        ttsAgent?.stopTTS(true)
         audioPlayerAgent?.shutdown()
         client.shutdown()
     }

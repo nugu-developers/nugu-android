@@ -20,7 +20,6 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
-import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 
 object DefaultAgentFactory {
     val ASR = object : ASRAgentFactory {
@@ -55,23 +54,6 @@ object DefaultAgentFactory {
                 getMessageSender(),
                 getConnectionManager(),
                 getContextManager()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-            }
-        }
-    }
-
-    val TTS = object : TTSAgentFactory {
-        override fun create(container: SdkContainer): AbstractTTSAgent = with(container) {
-            DefaultTTSAgent(
-                getPlayerFactory().createSpeakPlayer(),
-                getMessageSender(),
-                getAudioFocusManager(),
-                getContextManager(),
-                getPlaySynchronizer(),
-                getAudioPlayStackManager(),
-                getInputManagerProcessor(),
-                DefaultFocusChannel.DIALOG_CHANNEL_NAME
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
             }

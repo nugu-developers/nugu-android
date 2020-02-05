@@ -33,7 +33,6 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
-import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
@@ -47,7 +46,6 @@ import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -92,7 +90,6 @@ class NuguClient private constructor(
 
         // Agent Factory
         internal var asrAgentFactory: ASRAgentFactory? = null
-        internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -100,7 +97,6 @@ class NuguClient private constructor(
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
 
         fun asrAgentFactory(factory: ASRAgentFactory) = apply { asrAgentFactory = factory }
-        fun ttsAgentFactory(factory: TTSAgentFactory) = apply { ttsAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
@@ -119,8 +115,6 @@ class NuguClient private constructor(
         PlaybackRouter()
 
     // CA
-    val ttsAgent: AbstractTTSAgent
-    //    private val alertsCapabilityAgent: AlertsCapabilityAgent
     val systemAgent: AbstractSystemAgent
 
     // CA internal Object (ref)
@@ -210,7 +204,6 @@ class NuguClient private constructor(
                     playbackRouter
             }
 
-            ttsAgent = ttsAgentFactory.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
@@ -298,24 +291,7 @@ class NuguClient private constructor(
 
     fun shutdown() {
         systemAgent.shutdown()
-        ttsAgent.stopTTS(true)
         networkManager.disable()
-    }
-
-    fun requestTTS(
-        text: String,
-        playServiceId: String,
-        listener: TTSAgentInterface.OnPlaybackListener?
-    ) {
-        ttsAgent.requestTTS(text, playServiceId, listener)
-    }
-
-    fun localStopTTS() {
-        ttsAgent.stopTTS(false)
-    }
-
-    fun cancelTTSAndOthers() {
-        ttsAgent.stopTTS(true)
     }
 
     fun setStateProvider(
