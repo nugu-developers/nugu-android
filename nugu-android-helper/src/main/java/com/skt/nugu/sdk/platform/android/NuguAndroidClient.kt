@@ -60,7 +60,7 @@ import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
-import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
@@ -76,6 +76,7 @@ import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
@@ -244,6 +245,9 @@ class NuguAndroidClient private constructor(
             return NuguAndroidClient(this)
         }
     }
+
+    private val dialogUXStateAggregator =
+        DialogUXStateAggregator()
 
     private val client: NuguClient = NuguClient.Builder(
         builder.playerFactory,
@@ -527,6 +531,10 @@ class NuguAndroidClient private constructor(
         } else {
             null
         }
+
+        ttsAgent?.addListener(dialogUXStateAggregator)
+        asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
+        client.getDialogSessionManager().addListener(dialogUXStateAggregator)
     }
 
     override fun connect() {
@@ -572,11 +580,11 @@ class NuguAndroidClient private constructor(
     }
 
     override fun addDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
-        client.addDialogUXStateListener(listener)
+        dialogUXStateAggregator.addListener(listener)
     }
 
     override fun removeDialogUXStateListener(listener: DialogUXStateAggregatorInterface.Listener) {
-        client.removeDialogUXStateListener(listener)
+        dialogUXStateAggregator.removeListener(listener)
     }
 
     override fun addASRListener(listener: ASRAgentInterface.OnStateChangeListener) {
