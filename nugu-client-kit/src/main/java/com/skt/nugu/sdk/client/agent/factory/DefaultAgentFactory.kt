@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveH
 import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
-import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
@@ -112,24 +111,6 @@ object DefaultAgentFactory {
                 ControlScrollDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
                     getDirectiveSequencer().addDirectiveHandler(this)
                 }
-            }
-        }
-    }
-
-    val EXTENSION = object : ExtensionAgentFactory {
-        override fun create(container: SdkContainer): AbstractExtensionAgent? = with(container){
-            val client = getExtensionClient()
-            if(client != null) {
-                DefaultExtensionAgent(
-                    getContextManager(),
-                    getMessageSender(),
-                    getInputManagerProcessor()
-                ).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                    setClient(client)
-                }
-            } else {
-                null
             }
         }
     }

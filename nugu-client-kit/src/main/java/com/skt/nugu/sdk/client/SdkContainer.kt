@@ -19,8 +19,6 @@ import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
-import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
@@ -53,9 +51,6 @@ interface SdkContainer {
     fun getAudioEncoder(): Encoder
     fun getEndPointDetector(): AudioEndPointDetector?
     fun getEpdTimeoutMillis(): Long
-
-    // Extension only
-    fun getExtensionClient(): ExtensionAgentInterface.Client?
 
     fun getPlayerFactory(): PlayerFactory
 

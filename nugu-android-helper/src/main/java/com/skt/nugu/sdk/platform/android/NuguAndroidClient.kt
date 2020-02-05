@@ -58,6 +58,7 @@ import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -246,7 +247,6 @@ class NuguAndroidClient private constructor(
         SpeexEncoder()
     ).logger(AndroidLogger())
         .defaultEpdTimeoutMillis(builder.defaultEpdTimeoutMillis)
-        .extensionClient(builder.extensionClient)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {
@@ -363,6 +363,21 @@ class NuguAndroidClient private constructor(
                         }
                 })
             }
+            builder.extensionClient?.let {
+                addAgentFactory(AbstractExtensionAgent.NAMESPACE, object : ExtensionAgentFactory {
+                    override fun create(container: SdkContainer): AbstractExtensionAgent =
+                        with(container) {
+                            DefaultExtensionAgent(
+                                getContextManager(),
+                                getMessageSender(),
+                                getInputManagerProcessor()
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                                setClient(it)
+                            }
+                        }
+                })
+            }
 
             asrAgentFactory(builder.asrAgentFactory)
         }
@@ -371,7 +386,12 @@ class NuguAndroidClient private constructor(
     override val audioPlayerAgent: AudioPlayerAgentInterface? = client.audioPlayerAgent
     override val ttsAgent: TTSAgentInterface? = client.ttsAgent
     override val displayAgent: DisplayAgentInterface? = client.displayAgent
-    override val extensionAgent: ExtensionAgentInterface? = client.extensionAgent
+    override val extensionAgent: ExtensionAgentInterface?
+        get() = try {
+            client.getAgent(AbstractExtensionAgent.NAMESPACE) as ExtensionAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val asrAgent: ASRAgentInterface? = client.asrAgent
     override val textAgent: TextAgentInterface? = client.textAgent
     override val locationAgent: LocationAgentInterface? = client.locationAgent
