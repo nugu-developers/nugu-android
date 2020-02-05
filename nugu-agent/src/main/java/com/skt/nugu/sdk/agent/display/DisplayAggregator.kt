@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.display
+package com.skt.nugu.sdk.agent.display
 
 import com.skt.nugu.sdk.agent.common.Direction
-import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
-import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
-import com.skt.nugu.sdk.agent.display.DisplayInterface
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

@@ -21,7 +21,7 @@ import android.support.annotation.IdRes
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
-import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.deepMerge
