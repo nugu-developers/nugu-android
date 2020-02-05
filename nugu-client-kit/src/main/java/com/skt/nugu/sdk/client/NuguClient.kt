@@ -154,6 +154,8 @@ class NuguClient private constructor(
 
     private val sdkContainer: SdkContainer
 
+    private val agentMap = HashMap<String, CapabilityAgent>()
+
     init {
         with(builder) {
             Logger.logger = logger
@@ -241,8 +243,6 @@ class NuguClient private constructor(
             )
         }
     }
-
-    private val agentMap = HashMap<String, CapabilityAgent>()
 
     fun connect() {
         networkManager.enable()
