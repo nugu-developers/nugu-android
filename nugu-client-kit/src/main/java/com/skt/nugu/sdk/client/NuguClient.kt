@@ -26,7 +26,6 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.network.NetworkManager
 import com.skt.nugu.sdk.core.network.MessageRouter
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
-import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -102,7 +101,6 @@ class NuguClient private constructor(
             DefaultAgentFactory.AUDIO_PLAYER
         internal var asrAgentFactory: ASRAgentFactory? = null
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
-        internal var textAgentFactory: TextAgentFactory = DefaultAgentFactory.TEXT
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
@@ -115,7 +113,6 @@ class NuguClient private constructor(
 
         fun asrAgentFactory(factory: ASRAgentFactory) = apply { asrAgentFactory = factory }
         fun ttsAgentFactory(factory: TTSAgentFactory) = apply { ttsAgentFactory = factory }
-        fun textAgentFactory(factory: TextAgentFactory) = apply { textAgentFactory = factory }
 
         fun displayAgentFactory(factory: DisplayAgentFactory) =
             apply { displayAgentFactory = factory }
@@ -154,7 +151,6 @@ class NuguClient private constructor(
     private val dialogUXStateAggregator =
         DialogUXStateAggregator()
     val asrAgent: AbstractASRAgent?
-    val textAgent: TextAgentInterface
     val networkManager: NetworkManagerInterface
 
     private val displayAggregator: DisplayAggregator?
@@ -238,7 +234,6 @@ class NuguClient private constructor(
 
             ttsAgent = ttsAgentFactory.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
-            textAgent = textAgentFactory.create(sdkContainer)
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
             displayAgent = displayAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
@@ -356,10 +351,6 @@ class NuguClient private constructor(
 
     fun removeASRResultListener(listener: ASRAgentInterface.OnResultListener) {
         asrAgent?.removeOnResultListener(listener)
-    }
-
-    fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
-        textAgent.requestTextInput(text, listener)
     }
 
     fun shutdown() {

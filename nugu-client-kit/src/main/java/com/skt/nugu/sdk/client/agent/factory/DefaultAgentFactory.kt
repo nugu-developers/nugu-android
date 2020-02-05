@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
 import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
 import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
-import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 
 object DefaultAgentFactory {
@@ -126,19 +125,6 @@ object DefaultAgentFactory {
                 getContextManager()
             ).apply {
                 getDirectiveSequencer().addDirectiveHandler(this)
-            }
-        }
-    }
-
-    val TEXT = object : TextAgentFactory {
-        override fun create(container: SdkContainer): AbstractTextAgent = with(container) {
-            DefaultTextAgent(
-                getMessageSender(),
-                getContextManager(),
-                getInputManagerProcessor()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-                getDialogSessionManager().addListener(this)
             }
         }
     }

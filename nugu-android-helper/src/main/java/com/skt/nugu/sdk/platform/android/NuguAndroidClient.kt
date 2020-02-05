@@ -69,6 +69,7 @@ import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.*
+import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -386,6 +387,18 @@ class NuguAndroidClient private constructor(
                     }
                 }
             })
+            addAgentFactory(AbstractTextAgent.NAMESPACE, object: TextAgentFactory {
+                override fun create(container: SdkContainer): AbstractTextAgent = with(container) {
+                    DefaultTextAgent(
+                        getMessageSender(),
+                        getContextManager(),
+                        getInputManagerProcessor()
+                    ).apply {
+                        getDirectiveSequencer().addDirectiveHandler(this)
+                        getDialogSessionManager().addListener(this)
+                    }
+                }
+            })
 
             asrAgentFactory(builder.asrAgentFactory)
         }
@@ -401,7 +414,12 @@ class NuguAndroidClient private constructor(
             null
         }
     override val asrAgent: ASRAgentInterface? = client.asrAgent
-    override val textAgent: TextAgentInterface? = client.textAgent
+    override val textAgent: TextAgentInterface?
+        get() = try {
+            client.getAgent(AbstractTextAgent.NAMESPACE) as TextAgentInterface
+        } catch (th: Throwable) {
+            null
+        }
     override val locationAgent: LocationAgentInterface?
         get() = try {
             client.getAgent(AbstractLocationAgent.NAMESPACE) as LocationAgentInterface
@@ -510,7 +528,7 @@ class NuguAndroidClient private constructor(
     }
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
-        client.requestTextInput(text, listener)
+        textAgent?.requestTextInput(text, listener)
     }
 
     override fun requestTTS(
