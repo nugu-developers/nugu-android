@@ -33,7 +33,6 @@ import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
@@ -45,7 +44,6 @@ import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.context.PlayStackContextManager
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
-import com.skt.nugu.sdk.client.display.DisplayAggregator
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
@@ -153,8 +151,6 @@ class NuguClient private constructor(
     val asrAgent: AbstractASRAgent?
     val networkManager: NetworkManagerInterface
 
-    private val displayAggregator: DisplayAggregator?
-
     var useServerSideEndPointDetector: Boolean = false
 
     private val contextStateProviderRegistry: ContextStateProviderRegistry
@@ -215,9 +211,6 @@ class NuguClient private constructor(
                 override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface =
                     directiveGroupProcessor
 
-                override fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface =
-                    dialogUXStateAggregator
-
                 override fun getAudioProvider(): AudioProvider = defaultAudioProvider
 
                 override fun getAudioEncoder(): Encoder = audioEncoder
@@ -247,15 +240,6 @@ class NuguClient private constructor(
             ttsAgent.addListener(dialogUXStateAggregator)
             asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
             dialogSessionManager.addListener(dialogUXStateAggregator)
-
-            displayAggregator = if (displayAgent != null) {
-                DisplayAggregator(
-                    displayAgent,
-                    audioPlayerAgent
-                )
-            } else {
-                null
-            }
 
             PlayStackContextManager(
                 contextManager,
@@ -374,14 +358,6 @@ class NuguClient private constructor(
 
     fun cancelTTSAndOthers() {
         ttsAgent.stopTTS(true)
-    }
-
-    fun setDisplayRenderer(renderer: DisplayAggregatorInterface.Renderer?) {
-        displayAggregator?.setRenderer(renderer)
-    }
-
-    fun getDisplay(): DisplayAggregatorInterface? {
-        return displayAggregator
     }
 
     fun setStateProvider(

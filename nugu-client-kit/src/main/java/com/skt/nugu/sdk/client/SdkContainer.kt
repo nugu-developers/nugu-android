@@ -23,7 +23,6 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
-import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -44,7 +43,6 @@ interface SdkContainer {
     fun getPlaySynchronizer(): PlaySynchronizerInterface
     fun getDirectiveSequencer(): DirectiveSequencerInterface
     fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface
-    fun getDialogUXStateAggregator(): DialogUXStateAggregatorInterface
 
     // ASR only
     fun getAudioProvider(): AudioProvider

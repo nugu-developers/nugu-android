@@ -27,7 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.client.ClientHelperInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.microphone.Microphone
@@ -44,6 +44,7 @@ import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
@@ -72,6 +73,7 @@ import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
+import com.skt.nugu.sdk.agent.display.DisplayAggregator
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
@@ -404,7 +406,7 @@ class NuguAndroidClient private constructor(
         }
         .build()
 
-    override val audioPlayerAgent: AudioPlayerAgentInterface? = client.audioPlayerAgent
+    override val audioPlayerAgent: AbstractAudioPlayerAgent? = client.audioPlayerAgent
     override val ttsAgent: TTSAgentInterface? = client.ttsAgent
     override val displayAgent: DisplayAgentInterface? = client.displayAgent
     override val extensionAgent: ExtensionAgentInterface?
@@ -435,10 +437,21 @@ class NuguAndroidClient private constructor(
     override val systemAgent: SystemAgentInterface = client.systemAgent
     override val networkManager: NetworkManagerInterface = client.networkManager
 
+    private val displayAggregator: DisplayAggregator?
+
     private val audioFocusInteractor: AudioFocusInteractor?
 
     init {
         audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.audioFocusManager)
+
+        displayAggregator = if (displayAgent != null && audioPlayerAgent != null) {
+            DisplayAggregator(
+                displayAgent,
+                audioPlayerAgent
+            )
+        } else {
+            null
+        }
     }
 
     override fun connect() {
@@ -547,10 +560,10 @@ class NuguAndroidClient private constructor(
         client.cancelTTSAndOthers()
     }
 
-    override fun getDisplay(): DisplayAggregatorInterface? = client.getDisplay()
+    override fun getDisplay(): DisplayAggregatorInterface? = displayAggregator
 
     override fun setDisplayRenderer(renderer: DisplayAggregatorInterface.Renderer?) {
-        client.setDisplayRenderer(renderer)
+        displayAggregator?.setRenderer(renderer)
     }
 
     override fun shutdown() {
