@@ -84,7 +84,7 @@ import java.util.concurrent.Future
 
 class NuguClient private constructor(
     builder: Builder
-): NuguClientInterface {
+) {
     companion object {
         private const val TAG = "NuguClient"
     }
@@ -167,12 +167,12 @@ class NuguClient private constructor(
         PlaybackRouter()
 
     // CA
-    override val audioPlayerAgent: AbstractAudioPlayerAgent
-    override val ttsAgent: AbstractTTSAgent
+    val audioPlayerAgent: AbstractAudioPlayerAgent
+    val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
-    override val systemAgent: AbstractSystemAgent
-    override val displayAgent: DisplayAgentInterface?
-    override var locationAgent: LocationAgentInterface? = null
+    val systemAgent: AbstractSystemAgent
+    val displayAgent: DisplayAgentInterface?
+    var locationAgent: LocationAgentInterface? = null
 
     // CA internal Object (ref)
 
@@ -184,11 +184,11 @@ class NuguClient private constructor(
         MessageRouter(builder.transportFactory, builder.authDelegate)
     private val dialogUXStateAggregator =
         DialogUXStateAggregator()
-    override val asrAgent: AbstractASRAgent?
-    override val textAgent: TextAgentInterface
-    override val extensionAgent: AbstractExtensionAgent?
-    override val delegationAgent: AbstractDelegationAgent?
-    override val networkManager: NetworkManagerInterface
+    val asrAgent: AbstractASRAgent?
+    val textAgent: TextAgentInterface
+    val extensionAgent: AbstractExtensionAgent?
+    val delegationAgent: AbstractDelegationAgent?
+    val networkManager: NetworkManagerInterface
 
     private val displayAggregator: DisplayAggregator?
 
