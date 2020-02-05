@@ -24,9 +24,6 @@ import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
-import com.skt.nugu.sdk.agent.display.AbstractDisplayAgent
-import com.skt.nugu.sdk.agent.display.ControlFocusDirectiveHandler
-import com.skt.nugu.sdk.agent.display.ControlScrollDirectiveHandler
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 
@@ -88,27 +85,6 @@ object DefaultAgentFactory {
 
 
                 getDirectiveSequencer().addDirectiveHandler(this)
-            }
-        }
-    }
-
-    val TEMPLATE = object : DisplayAgentFactory {
-        override fun create(container: SdkContainer): AbstractDisplayAgent = with(container) {
-            DefaultDisplayAgent(
-                getContextManager(),
-                getMessageSender(),
-                getPlaySynchronizer(),
-                getDisplayPlayStackManager(),
-                getInputManagerProcessor()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-
-                ControlFocusDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
-                ControlScrollDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
-                    getDirectiveSequencer().addDirectiveHandler(this)
-                }
             }
         }
     }

@@ -52,7 +52,6 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -99,7 +98,6 @@ class NuguClient private constructor(
             DefaultAgentFactory.AUDIO_PLAYER
         internal var asrAgentFactory: ASRAgentFactory? = null
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
-        internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -111,9 +109,6 @@ class NuguClient private constructor(
 
         fun asrAgentFactory(factory: ASRAgentFactory) = apply { asrAgentFactory = factory }
         fun ttsAgentFactory(factory: TTSAgentFactory) = apply { ttsAgentFactory = factory }
-
-        fun displayAgentFactory(factory: DisplayAgentFactory) =
-            apply { displayAgentFactory = factory }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
@@ -136,7 +131,6 @@ class NuguClient private constructor(
     val ttsAgent: AbstractTTSAgent
     //    private val alertsCapabilityAgent: AlertsCapabilityAgent
     val systemAgent: AbstractSystemAgent
-    val displayAgent: DisplayAgentInterface?
 
     // CA internal Object (ref)
 
@@ -228,7 +222,6 @@ class NuguClient private constructor(
             ttsAgent = ttsAgentFactory.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
-            displayAgent = displayAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
 
             agentFactoryMap.forEach {
