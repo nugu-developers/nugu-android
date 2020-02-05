@@ -36,7 +36,6 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.client.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
-import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
@@ -57,7 +56,6 @@ import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.client.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
-import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -100,16 +98,12 @@ class NuguClient private constructor(
         // sdk version for userAgent
         internal var sdkVersion: String = "1.0"
 
-        // Components for agent
-        internal var extensionClient: ExtensionAgentInterface.Client? = null
-
         // Agent Factory
         internal var audioPlayerAgentFactory: AudioPlayerAgentFactory =
             DefaultAgentFactory.AUDIO_PLAYER
         internal var asrAgentFactory: ASRAgentFactory? = null
         internal var ttsAgentFactory: TTSAgentFactory = DefaultAgentFactory.TTS
         internal var textAgentFactory: TextAgentFactory = DefaultAgentFactory.TEXT
-        internal var extensionAgentFactory: ExtensionAgentFactory = DefaultAgentFactory.EXTENSION
         internal var displayAgentFactory: DisplayAgentFactory? = DefaultAgentFactory.TEMPLATE
         internal var locationAgentFactory: LocationAgentFactory? = DefaultAgentFactory.LOCATION
 
@@ -118,17 +112,12 @@ class NuguClient private constructor(
         fun defaultEpdTimeoutMillis(epdTimeoutMillis: Long) =
             apply { defaultEpdTimeoutMillis = epdTimeoutMillis }
 
-        fun extensionClient(client: ExtensionAgentInterface.Client?) =
-            apply { extensionClient = client }
-
         fun audioPlayerAgentFactory(factory: AudioPlayerAgentFactory) =
             apply { audioPlayerAgentFactory = factory }
 
         fun asrAgentFactory(factory: ASRAgentFactory) = apply { asrAgentFactory = factory }
         fun ttsAgentFactory(factory: TTSAgentFactory) = apply { ttsAgentFactory = factory }
         fun textAgentFactory(factory: TextAgentFactory) = apply { textAgentFactory = factory }
-        fun extensionAgentFactory(factory: ExtensionAgentFactory) =
-            apply { extensionAgentFactory = factory }
 
         fun displayAgentFactory(factory: DisplayAgentFactory) =
             apply { displayAgentFactory = factory }
@@ -172,7 +161,6 @@ class NuguClient private constructor(
         DialogUXStateAggregator()
     val asrAgent: AbstractASRAgent?
     val textAgent: TextAgentInterface
-    val extensionAgent: AbstractExtensionAgent?
     val networkManager: NetworkManagerInterface
 
     private val displayAggregator: DisplayAggregator?
@@ -248,8 +236,6 @@ class NuguClient private constructor(
 
                 override fun getEpdTimeoutMillis(): Long = defaultEpdTimeoutMillis
 
-                override fun getExtensionClient(): ExtensionAgentInterface.Client? = extensionClient
-
                 override fun getPlayerFactory(): PlayerFactory = playerFactory
 
                 override fun getPlaybackRouter(): com.skt.nugu.sdk.agent.playback.PlaybackRouter =
@@ -260,7 +246,6 @@ class NuguClient private constructor(
             locationAgent = locationAgentFactory?.create(sdkContainer)
             asrAgent = asrAgentFactory?.create(sdkContainer)
             textAgent = textAgentFactory.create(sdkContainer)
-            extensionAgent = extensionAgentFactory.create(sdkContainer)
             audioPlayerAgent = audioPlayerAgentFactory.create(sdkContainer)
             displayAgent = displayAgentFactory?.create(sdkContainer)
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
