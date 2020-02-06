@@ -20,15 +20,6 @@ package com.skt.nugu.sdk.agent.bluetooth
  */
 interface BluetoothAgentInterface {
     /**
-     * the hardware address of the local Bluetooth.
-     */
-    var address: String
-    /**
-     * the friendly Bluetooth name of the local Bluetooth.
-     */
-    var name: String?
-
-    /**
      * The enum State describes the state of the bluetooth (on,off).
      */
     enum class State(val value: String) {
@@ -40,13 +31,19 @@ interface BluetoothAgentInterface {
      * An enum representing the current state of the stream.
      */
     enum class StreamingState(val value: String) {
+        // The initial streaming state before the content is streamed.
         INACTIVE("INACTIVE"),
+        // The streaming state when audio playback is paused
         PAUSED("PAUSED"),
+        // The streaming state of the connected Bluetooth device and the active device that plays audio.
         ACTIVE("ACTIVE"),
+        // The streaming state when audio playback is not available, For example, unsupported avrcp.
         UNUSABLE("UNUSABLE")
     }
 
-    /** An enum representing AVRCP commands. **/
+    /**
+     * An enum representing AVRCP commands.
+     */
     enum class AVRCPCommand {
         // A Play command.
         PLAY,
@@ -66,38 +63,35 @@ interface BluetoothAgentInterface {
     sealed class BluetoothEvent {
         /**
          * Event indicating that a local device has changed to discoverable mode.
+         * @param enabled true is enabled, otherwise false
          */
-        class DiscoverableEvent(val enabled: Boolean, val durationInSeconds: Long = 0) : BluetoothEvent()
+        class DiscoverableEvent(val enabled: Boolean) : BluetoothEvent()
         /**
-         * Event indicating that a remote device has changed to connections(Connected, ConnectFailed,Disconnected) .
+         * Event indicating that a remote device has changed to connections(Connected, ConnectFailed, Disconnected) .
          */
-        class ConnectedEvent(val device: BluetoothDevice) : BluetoothEvent()
-        class ConnectFailedEvent(val device: BluetoothDevice) : BluetoothEvent()
-        class DisconnectedEvent(val device: BluetoothDevice) : BluetoothEvent()
+        class ConnectedEvent : BluetoothEvent()
+        class ConnectFailedEvent : BluetoothEvent()
+        class DisconnectedEvent : BluetoothEvent()
         /**
          * Event indicating that an AVRCP command has changed.
          */
-        class AVRCPEvent(val command: BluetoothAgentInterface.AVRCPCommand) : BluetoothEvent()
+        class AVRCPEvent(val command: AVRCPCommand) : BluetoothEvent()
     }
     /**
-     * Interface of a listener to be called when there has been an event of bluetooth
+     * Interface of a listener to be called when there has been an directive of bluetooth from the server.
      * @param event a [BluetoothEvent]
      */
     interface Listener {
-        fun onBluetoothEvent(event: BluetoothEvent)
+        fun onDiscoverableStart(durationInSeconds: Long = 0)
+        fun onDiscoverableFinish()
+        fun onAVRCPCommand(command: AVRCPCommand)
     }
 
     /**
-     * Add a listener
+     * Set a listener
      * @param listener the listener that added
      */
-    fun addListener(listener: Listener)
-
-    /**
-     * Remove a listener
-     * @param listener the listener that removed
-     */
-    fun removeListener(listener: Listener)
+    fun setListener(listener: Listener)
 
     /**
      * Send a local Bluetooth event to the server (DeviceGateway).

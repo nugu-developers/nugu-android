@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.bluetooth.AbstractBluetoothAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
@@ -168,7 +169,6 @@ class NuguClient private constructor(
 
                 override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface =
                     directiveGroupProcessor
-
             }
 
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)

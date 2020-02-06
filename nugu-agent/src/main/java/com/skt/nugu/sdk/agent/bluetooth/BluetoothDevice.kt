@@ -16,22 +16,9 @@
 package com.skt.nugu.sdk.agent.bluetooth
 
 /**
- * Represents a Bluetooth Device.
+ * Represents a remote bluetooth Device.
  */
 data class BluetoothDevice(
     val name: String,
-    val address: String? = null,
-    val supportedAVRCP: Boolean = true
-) {
-    private var state: BluetoothAgentInterface.StreamingState = BluetoothAgentInterface.StreamingState.UNUSABLE
-
-    fun state(): String {
-        return state.value
-    }
-
-    fun state(state: BluetoothAgentInterface.StreamingState) {
-        if (supportedAVRCP) {
-            this.state = state
-        }
-    }
-}
+    val address: String,
+    val state: BluetoothAgentInterface.StreamingState)

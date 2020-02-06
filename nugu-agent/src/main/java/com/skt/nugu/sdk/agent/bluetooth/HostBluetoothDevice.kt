@@ -15,18 +15,10 @@
  */
 package com.skt.nugu.sdk.agent.bluetooth
 
-import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-
-abstract class AbstractBluetoothAgent (
-    protected val messageSender: MessageSender,
-    protected val contextManager: ContextManagerInterface,
-    protected val bluetoothProvider : BluetoothProvider?
-) : AbstractCapabilityAgent(),
-    BluetoothAgentInterface {
-    companion object {
-        const val NAMESPACE = "Bluetooth"
-        const val VERSION = "1.0"
-    }
-}
+/**
+ * Represents a local bluetooth Device.
+ */
+class HostBluetoothDevice(
+    val name: String,
+    val state: BluetoothAgentInterface.State
+)

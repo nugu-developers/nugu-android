@@ -22,7 +22,6 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -31,19 +30,23 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.Listener
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.AVRCPCommand
-import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.State
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
+
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
+import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
+import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 
 
 class DefaultBluetoothAgent(
     messageSender: MessageSender,
-    contextManager: ContextManagerInterface
+    contextManager: ContextManagerInterface,
+    bluetoothProvider : BluetoothProvider?
 ) : AbstractBluetoothAgent(
     messageSender,
-    contextManager
+    contextManager,
+    bluetoothProvider
 ) {
     /**
      * This class handles providing configuration for the bluetooth Capability agent
@@ -84,13 +87,11 @@ class DefaultBluetoothAgent(
         const val EVENT_NAME_MEDIACONTROL_NEXT_SUCCEEDED = "MediaControlNextSucceeded"
         const val EVENT_NAME_MEDIACONTROL_NEXT_FAILED = "MediaControlNextFailed"
 
-        const val EVENT_NAME_MEDIACONTROL_PREV_SUCCEEDED = "MediaControlPreviousSucceeded"
-        const val EVENT_NAME_MEDIACONTROL_PREV_FAILED = "MediaControlPreviousFailed"
+        const val EVENT_NAME_MEDIACONTROL_PREVIOUS_SUCCEEDED = "MediaControlPreviousSucceeded"
+        const val EVENT_NAME_MEDIACONTROL_PREVIOUS_FAILED = "MediaControlPreviousFailed"
 
         const val KEY_HAS_PAIRED_DEVICES = "hasPairedDevices"
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
-
-        const val DEFAULT_MAC_ADDRESS = "02:00:00:00:00:00"
 
         val START_DISCOVERABLE_MODE = NamespaceAndName(
             NAMESPACE,
@@ -112,19 +113,21 @@ class DefaultBluetoothAgent(
             NAMESPACE,
             NAME_PAUSE
         )
+        val NEXT = NamespaceAndName(
+            NAMESPACE,
+            NAME_NEXT
+        )
+        val PREVIOUS = NamespaceAndName(
+            NAMESPACE,
+            NAME_PREVIOUS
+        )
     }
 
     private val executor = Executors.newSingleThreadExecutor()
     override val namespaceAndName: NamespaceAndName =
         NamespaceAndName("supportedInterfaces", NAMESPACE)
 
-    override var address = DEFAULT_MAC_ADDRESS
-    override var name: String? = null
-    internal var state = State.OFF
-
-    private var bluetoothDevice: BluetoothDevice? = null
-
-    private var listeners = HashSet<Listener>()
+    private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()
 
     init {
@@ -145,7 +148,10 @@ class DefaultBluetoothAgent(
 
     private fun getPairedDevices(): HashMap<String, Boolean> {
         val pairedDevices = HashMap<String, Boolean>()
-        pairedDevices[KEY_HAS_PAIRED_DEVICES] = this@DefaultBluetoothAgent.bluetoothDevice != null
+
+        bluetoothProvider?.let {
+            pairedDevices[KEY_HAS_PAIRED_DEVICES] = it.activeDevice() != null
+        }
         return pairedDevices
     }
 
@@ -158,15 +164,9 @@ class DefaultBluetoothAgent(
         configuration[PLAY] = nonBlockingPolicy
         configuration[STOP] = nonBlockingPolicy
         configuration[PAUSE] = nonBlockingPolicy
+        configuration[NEXT] = nonBlockingPolicy
+        configuration[PREVIOUS] = nonBlockingPolicy
         return configuration
-    }
-
-    override fun onContextAvailable(jsonContext: String) {
-        // no-op
-    }
-
-    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-        // no-op
     }
 
     override fun provideState(
@@ -175,43 +175,41 @@ class DefaultBluetoothAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            if (listeners.size == 0) {
-                return@submit
+            bluetoothProvider?.let {
+                val context = JsonObject().apply {
+                    addProperty("version", VERSION)
+
+                    it.device()?.let { hostController ->
+                        add("device", JsonObject().apply {
+                            addProperty("name", hostController.name)
+                            addProperty("status", hostController.state.value)
+                        })
+                    }
+
+                    it.activeDevice()?.let { bluetoothDevice ->
+                        add("activeDevice", JsonObject().apply {
+                            addProperty("id", bluetoothDevice.address)
+                            addProperty("name", bluetoothDevice.name)
+                            addProperty("streaming", bluetoothDevice.state.value)
+                        })
+                    }
+
+                }.toString()
+
+                contextSetter.setState(
+                    namespaceAndName,
+                    context,
+                    StateRefreshPolicy.ALWAYS,
+                    stateRequestToken
+                )
             }
 
-            val context = JsonObject().apply {
-                addProperty("version", VERSION)
-
-                name?.let {
-                    add("device", JsonObject().apply {
-                        addProperty("name", it)
-                        addProperty("status", state.value)
-                    })
-                }
-
-                bluetoothDevice?.let {
-                    add("activeDevice", JsonObject().apply {
-                        addProperty("id", it.address)
-                        addProperty("name", it.name)
-                        addProperty("streaming", it.state())
-                    })
-                }
-            }.toString()
-
-            contextSetter.setState(
-                namespaceAndName,
-                context,
-                StateRefreshPolicy.ALWAYS,
-                stateRequestToken
-            )
         }
     }
-
 
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
     }
-
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
@@ -231,32 +229,35 @@ class DefaultBluetoothAgent(
         removeDirective(info.directive.getMessageId())
     }
 
-    override fun addListener(listener: Listener) {
-        Logger.d(TAG, "[addListener] observer: $listener")
-        this.listeners.add(listener)
-    }
-
-    override fun removeListener(listener: Listener) {
-        Logger.d(TAG, "[removeListener] observer: $listener")
-        this.listeners.remove(listener)
+    override fun setListener(listener: Listener) {
+        Logger.d(TAG, "[setListener] $listener")
+        this.listener = listener
     }
 
     private fun sendEvent(name: String, playServiceId: String, props: HashMap<String, Boolean>? = null): Boolean {
-        val request = EventMessageRequest.Builder(
-            contextManager.getContextWithoutUpdate(namespaceAndName),
-            NAMESPACE,
-            name,
-            VERSION
-        ).payload(
-            JsonObject().apply {
-                addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                props?.forEach {
-                    addProperty(it.key, it.value)
-                }
-            }.toString()
-        ).build()
+        val waitResult = CountDownLatch(1)
+        var result = false
+        contextManager.getContext(object : ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                    .payload(JsonObject().apply {
+                        addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                        props?.forEach {
+                            addProperty(it.key, it.value)
+                        }
+                    }.toString()).build()
 
-        return messageSender.sendMessage(request)
+                result = messageSender.sendMessage(request)
+                waitResult.countDown()
+            }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                waitResult.countDown()
+            }
+        }, namespaceAndName)
+
+        waitResult.await()
+        return result
     }
 
     /**
@@ -422,8 +423,8 @@ class DefaultBluetoothAgent(
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
                 val events = arrayListOf(
-                    EVENT_NAME_MEDIACONTROL_PREV_SUCCEEDED,
-                    EVENT_NAME_MEDIACONTROL_PREV_FAILED)
+                    EVENT_NAME_MEDIACONTROL_PREVIOUS_SUCCEEDED,
+                    EVENT_NAME_MEDIACONTROL_PREVIOUS_FAILED)
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
                         return sendEvent(name, payload.playServiceId)
@@ -435,107 +436,76 @@ class DefaultBluetoothAgent(
     }
 
     private fun executeStop() {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.AVRCPEvent(AVRCPCommand.STOP))
-        }
+        listener?.onAVRCPCommand(AVRCPCommand.STOP)
     }
 
     private fun executeNext() {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.AVRCPEvent(AVRCPCommand.NEXT))
-        }
+        listener?.onAVRCPCommand(AVRCPCommand.NEXT)
     }
 
     private fun executePrevious() {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.AVRCPEvent(AVRCPCommand.PREVIOUS))
-        }
+        listener?.onAVRCPCommand(AVRCPCommand.PREVIOUS)
     }
 
     private fun executePlay() {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.AVRCPEvent(AVRCPCommand.PLAY))
-        }
+        listener?.onAVRCPCommand(AVRCPCommand.PLAY)
     }
 
     private fun executePause() {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.AVRCPEvent(AVRCPCommand.PAUSE))
-        }
+        listener?.onAVRCPCommand(AVRCPCommand.PAUSE)
     }
 
     private fun executeStartDiscoverableMode(durationInSeconds: Long) {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.DiscoverableEvent(enabled = true, durationInSeconds = durationInSeconds))
-        }
+        listener?.onDiscoverableStart(durationInSeconds = durationInSeconds)
     }
 
     private fun executeFinishDiscoverableMode() {
-        listeners.forEach {
-            it.onBluetoothEvent(BluetoothEvent.DiscoverableEvent(false))
-        }
+        listener?.onDiscoverableFinish()
     }
 
     override fun sendBluetoothEvent(event: BluetoothEvent): Boolean {
         when (event) {
             is BluetoothEvent.DiscoverableEvent -> {
-                state = if (event.enabled) State.ON else State.OFF
-
-                Logger.d(TAG, "discoverable : $state")
-                when (state) {
-                    State.ON -> {
-                        return eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED)
+                Logger.d(TAG, "discoverable : ${event.enabled}")
+                return when (event.enabled) {
+                    true -> {
+                        eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED)
                     }
-                    State.OFF -> {
-                        return try {
-                            eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED)
-                        } finally {
-                            bluetoothDevice = null
-                        }
+                    false -> {
+                        eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED)
                     }
                 }
             }
             is BluetoothEvent.ConnectedEvent -> {
-                Logger.d(TAG, "connected device : ${event.device}")
-                bluetoothDevice = event.device
+                Logger.d(TAG, "connected device")
                 return eventBus.post(EVENT_NAME_CONNECT_SUCCEEDED)
 
             }
             is BluetoothEvent.ConnectFailedEvent -> {
-                Logger.d(TAG, "ConnectFailed device : ${event.device}")
+                Logger.d(TAG, "ConnectFailed device")
                 return eventBus.post(EVENT_NAME_CONNECT_FAILED)
             }
             is BluetoothEvent.DisconnectedEvent -> {
-                Logger.d(TAG, "disconnected device : ${event.device}")
-                bluetoothDevice?.state(BluetoothAgentInterface.StreamingState.INACTIVE)
-                return try {
-                    eventBus.post(EVENT_NAME_DISCONNECT_SUCCEEDED)
-                } finally {
-                    bluetoothDevice = null
-                }
+                Logger.d(TAG, "disconnected device")
+                return eventBus.post(EVENT_NAME_DISCONNECT_SUCCEEDED)
             }
             is BluetoothEvent.AVRCPEvent -> {
-                Logger.d(TAG, "bluetoothDevice is null : ${event.command}")
+                Logger.d(TAG, "bluetoothDevice command : ${event.command}")
                 return when (event.command) {
                     AVRCPCommand.PLAY -> {
-                        bluetoothDevice?.state(BluetoothAgentInterface.StreamingState.ACTIVE)
                         eventBus.post(EVENT_NAME_MEDIACONTROL_PLAY_SUCCEEDED)
                     }
                     AVRCPCommand.PAUSE -> {
-                        bluetoothDevice?.state(BluetoothAgentInterface.StreamingState.PAUSED)
                         eventBus.post(EVENT_NAME_MEDIACONTROL_PAUSE_SUCCEEDED)
                     }
                     AVRCPCommand.STOP -> {
-                        bluetoothDevice?.state(BluetoothAgentInterface.StreamingState.INACTIVE)
                         eventBus.post(EVENT_NAME_MEDIACONTROL_STOP_SUCCEEDED)
                     }
                     AVRCPCommand.NEXT -> {
-                        bluetoothDevice?.state(BluetoothAgentInterface.StreamingState.ACTIVE)
                         eventBus.post(EVENT_NAME_MEDIACONTROL_NEXT_SUCCEEDED)
                     }
                     AVRCPCommand.PREVIOUS -> {
-                        bluetoothDevice?.state(BluetoothAgentInterface.StreamingState.ACTIVE)
-                        eventBus.post(EVENT_NAME_MEDIACONTROL_PREV_SUCCEEDED)
+                        eventBus.post(EVENT_NAME_MEDIACONTROL_PREVIOUS_SUCCEEDED)
                     }
                 }
             }

@@ -51,6 +51,7 @@ import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.bluetooth.AbstractBluetoothAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.client.NuguClientInterface
@@ -163,6 +164,9 @@ class NuguAndroidClient private constructor(
         internal var screen: Screen? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
+
+        internal var bluetoothProvider: BluetoothProvider? = null
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -231,8 +235,14 @@ class NuguAndroidClient private constructor(
         /**
          * @param factory the audio focus interactor factory
          */
+
         fun audioFocusInteractorFactory(factory: AudioFocusInteractorFactory?) =
             apply { audioFocusInteractorFactory = factory }
+
+        /**
+         * @param bluetoothProvider the bluetooth to be controlled by NUGU
+         */
+        fun bluetoothProvider(bluetoothProvider: BluetoothProvider?) = apply { this.bluetoothProvider = bluetoothProvider }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -487,16 +497,21 @@ class NuguAndroidClient private constructor(
                     }
                 }
             })
-            addAgentFactory(AbstractBluetoothAgent.NAMESPACE, object: BluetoothAgentFactory {
-                override fun create(container: SdkContainer): AbstractBluetoothAgent = with(container) {
-                    DefaultBluetoothAgent(
-                        getMessageSender(),
-                        getContextManager()
-                    ).apply {
-                        getDirectiveSequencer().addDirectiveHandler(this)
-                    }
-                }
-            })
+
+            builder.bluetoothProvider?.let {
+                addAgentFactory(AbstractBluetoothAgent.NAMESPACE, object : BluetoothAgentFactory {
+                    override fun create(container: SdkContainer): AbstractBluetoothAgent =
+                        with(container) {
+                            DefaultBluetoothAgent(
+                                getMessageSender(),
+                                getContextManager(),
+                                it
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
+                        }
+                })
+            }
         }
         .build()
 

@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * A class that provides event publication and subscription for Bluetooth.
  **/
-class BluetoothEventBus {
+internal class BluetoothEventBus {
     private val callbacks = ConcurrentHashMap<Int, ConcurrentHashMap<String, Listener>>()
 
     interface Listener {
