@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.client.ClientHelperInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.agent.light.Light
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.movement.MovementController
@@ -63,7 +62,6 @@ import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
-import com.skt.nugu.sdk.agent.light.AbstractLightAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -160,7 +158,6 @@ class NuguAndroidClient private constructor(
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
         internal var movementController: MovementController? = null
-        internal var light: Light? = null
         internal var screen: Screen? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
@@ -219,11 +216,6 @@ class NuguAndroidClient private constructor(
          */
         fun movementController(controller: MovementController?) =
             apply { movementController = controller }
-
-        /**
-         * @param light the light to be controlled by NUGU
-         */
-        fun light(light: Light?) = apply { this.light = light }
 
         /**
          * @param screen the screen to be controlled by NUGU
@@ -387,20 +379,6 @@ class NuguAndroidClient private constructor(
                                 }
                             }
                     })
-            }
-            builder.light?.let {
-                addAgentFactory(AbstractLightAgent.NAMESPACE, object : LightAgentFactory {
-                    override fun create(container: SdkContainer): AbstractLightAgent =
-                        with(container) {
-                            DefaultLightAgent(
-                                getMessageSender(),
-                                getContextManager(),
-                                it
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
-                            }
-                        }
-                })
             }
             builder.movementController?.let {
                 addAgentFactory(AbstractMovementAgent.NAMESPACE, object : MovementAgentFactory {
