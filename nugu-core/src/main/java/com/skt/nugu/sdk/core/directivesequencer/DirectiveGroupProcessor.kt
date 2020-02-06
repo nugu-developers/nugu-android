@@ -28,8 +28,6 @@ class DirectiveGroupProcessor(
     private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
-        inputProcessorManager.onReceiveDirectives(directives)
-
         var processedDirectives = directives
         directiveGroupPreprocessors.forEach {
             processedDirectives = it.preprocess(processedDirectives)
@@ -38,6 +36,8 @@ class DirectiveGroupProcessor(
         processedDirectives.forEach {
             directiveSequencer.onDirective(it)
         }
+
+        inputProcessorManager.onReceiveDirectives(processedDirectives)
     }
 
     override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {

@@ -49,7 +49,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashSet
+import kotlin.concurrent.withLock
 
 class DefaultAudioPlayerAgent(
     mediaPlayer: MediaPlayerInterface,
@@ -131,6 +133,7 @@ class DefaultAudioPlayerAgent(
 
     private var currentItem: AudioInfo? = null
     private var nextItem: AudioInfo? = null
+
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
@@ -160,6 +163,9 @@ class DefaultAudioPlayerAgent(
         }
     }
 
+    private val willBeHandleDirectiveLock = ReentrantLock()
+    private var willBeHandlePauseDirectiveInfo: DirectiveInfo? = null
+    private var willBeHandleStopDirectiveInfo: DirectiveInfo? = null
 
     private inner class AudioInfo(
         val payload: PlayPayload,
@@ -236,7 +242,23 @@ class DefaultAudioPlayerAgent(
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
         when (info.directive.getNamespaceAndName()) {
+            PAUSE -> preHandlePauseDirective(info)
+            STOP -> preHandleStopDirective(info)
             PLAY -> preHandlePlayDirective(info)
+        }
+    }
+
+    private fun preHandlePauseDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[preHandlePauseDirective] info: $info")
+        willBeHandleDirectiveLock.withLock {
+            willBeHandlePauseDirectiveInfo = info
+        }
+    }
+
+    private fun preHandleStopDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[preHandleStopDirective] info: $info")
+        willBeHandleDirectiveLock.withLock {
+            willBeHandleStopDirectiveInfo = info
         }
     }
 
@@ -288,6 +310,11 @@ class DefaultAudioPlayerAgent(
         Logger.d(TAG, "[handleStopDirective] info : $info")
         setHandlingCompleted(info)
         executor.submit {
+            willBeHandleDirectiveLock.withLock {
+                if(info == willBeHandlePauseDirectiveInfo) {
+                    willBeHandleStopDirectiveInfo = null
+                }
+            }
             executeCancelNextItem()
             executeStop()
         }
@@ -309,6 +336,12 @@ class DefaultAudioPlayerAgent(
         Logger.d(TAG, "[handlePauseDirective] info : $info")
         setHandlingCompleted(info)
         executor.submit {
+            willBeHandleDirectiveLock.withLock {
+                if(info == willBeHandlePauseDirectiveInfo) {
+                    willBeHandlePauseDirectiveInfo = null
+                }
+            }
+
             executePause(PauseReason.BY_PAUSE_DIRECTIVE)
         }
     }
@@ -917,6 +950,16 @@ class DefaultAudioPlayerAgent(
                 return
             }
             AudioPlayerAgentInterface.State.PAUSED -> {
+                willBeHandleDirectiveLock.withLock {
+                    if (willBeHandlePauseDirectiveInfo != null || willBeHandleStopDirectiveInfo != null) {
+                        Logger.d(
+                            TAG,
+                            "[executeOnForegroundFocus] skip. will be pause or stop directive handled."
+                        )
+                        return
+                    }
+                }
+
                 if (pauseReason == PauseReason.BY_PAUSE_DIRECTIVE) {
                     Logger.d(
                         TAG,
