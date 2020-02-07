@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
@@ -40,4 +41,5 @@ interface NuguClientInterface {
     val delegationAgent: DelegationAgentInterface?
     val systemAgent: SystemAgentInterface
     val networkManager: NetworkManagerInterface
+    val bluetoothAgent: BluetoothAgentInterface?
 }
