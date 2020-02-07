@@ -33,11 +33,11 @@ class DirectiveGroupProcessor(
             processedDirectives = it.preprocess(processedDirectives)
         }
 
+        inputProcessorManager.onReceiveDirectives(processedDirectives)
+        
         processedDirectives.forEach {
             directiveSequencer.onDirective(it)
         }
-
-        inputProcessorManager.onReceiveDirectives(processedDirectives)
     }
 
     override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
