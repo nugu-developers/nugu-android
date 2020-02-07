@@ -309,14 +309,15 @@ class DefaultDisplayAgent(
 
     protected fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
-        if (info.directive.getMessageId() == currentInfo?.getTemplateId()) {
+        val current = currentInfo
+        if (info.directive.getMessageId() == current?.getTemplateId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
             val templateId = info.directive.getMessageId()
             if (immediate) {
                 stopClearTimer(templateId)
                 renderer?.clear(info.directive.getMessageId(), true)
             } else {
-                restartClearTimer(templateId)
+                restartClearTimer(templateId, current.getDuration())
             }
         } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
             executeCancelPendingInfo()
@@ -607,7 +608,7 @@ class DefaultDisplayAgent(
 
     private fun startClearTimer(
         templateId: String,
-        timeout: Long = 7000L
+        timeout: Long
     ) {
         Logger.d(TAG, "[startClearTimer] templateId: $templateId, timeout: $timeout")
         clearTimeoutFutureMap[templateId] =
@@ -616,9 +617,9 @@ class DefaultDisplayAgent(
             }, timeout, TimeUnit.MILLISECONDS)
     }
 
-    protected fun restartClearTimer(
+    private fun restartClearTimer(
         templateId: String,
-        timeout: Long = 7000L
+        timeout: Long
     ) {
         if (stoppedTimerTemplateIdMap[templateId] == true) {
             Logger.d(
