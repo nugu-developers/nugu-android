@@ -190,7 +190,7 @@ class DefaultBluetoothAgent(
                         add("activeDevice", JsonObject().apply {
                             addProperty("id", bluetoothDevice.address)
                             addProperty("name", bluetoothDevice.name)
-                            addProperty("streaming", bluetoothDevice.state.value)
+                            addProperty("streaming", bluetoothDevice.streaming.value)
                         })
                     }
 

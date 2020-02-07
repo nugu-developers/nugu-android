@@ -21,4 +21,4 @@ package com.skt.nugu.sdk.agent.bluetooth
 data class BluetoothDevice(
     val name: String,
     val address: String,
-    val state: BluetoothAgentInterface.StreamingState)
+    val streaming: BluetoothAgentInterface.StreamingState)
