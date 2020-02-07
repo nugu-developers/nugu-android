@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.bluetooth
 /**
  * Represents a local bluetooth Device.
  */
-class BluetoothHost(
+data class BluetoothHost(
     val name: String,
     val state: BluetoothAgentInterface.State
 )
