@@ -23,7 +23,6 @@ import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
-import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPageController
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
@@ -73,7 +72,7 @@ class DefaultAudioPlayerAgent(
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener
     , AudioPlayerLyricsDirectiveHandler.VisibilityController
-    , AudioPlayerLyricsDirectiveHandler.PagingController{
+    , AudioPlayerLyricsDirectiveHandler.PagingController {
 
     internal data class PlayPayload(
         @SerializedName("playServiceId")
@@ -180,6 +179,8 @@ class DefaultAudioPlayerAgent(
                             focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
                         }
                     }
+
+                    directive.destroy()
                 }
             }
 
@@ -225,7 +226,7 @@ class DefaultAudioPlayerAgent(
     private fun notifyOnReleaseAudioInfo(info: AudioInfo, delay: Long? = null) {
         Logger.d(TAG, "[notifyOnReleaseAudioInfo] $info")
         with(info) {
-            if(delay == null) {
+            if (delay == null) {
                 playSynchronizer.releaseSyncImmediately(this, onReleaseCallback)
                 playContext?.let {
                     playStackManager.remove(it)
@@ -311,7 +312,7 @@ class DefaultAudioPlayerAgent(
         setHandlingCompleted(info)
         executor.submit {
             willBeHandleDirectiveLock.withLock {
-                if(info == willBeHandlePauseDirectiveInfo) {
+                if (info == willBeHandlePauseDirectiveInfo) {
                     willBeHandleStopDirectiveInfo = null
                 }
             }
@@ -337,7 +338,7 @@ class DefaultAudioPlayerAgent(
         setHandlingCompleted(info)
         executor.submit {
             willBeHandleDirectiveLock.withLock {
-                if(info == willBeHandlePauseDirectiveInfo) {
+                if (info == willBeHandlePauseDirectiveInfo) {
                     willBeHandlePauseDirectiveInfo = null
                 }
             }
@@ -378,7 +379,7 @@ class DefaultAudioPlayerAgent(
         val hasSameToken = hasSameToken(currentItem, nextItem)
 
         if (currentItem != null && currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-            pauseReason = if(hasSameToken) {
+            pauseReason = if (hasSameToken) {
                 PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME
             } else {
                 PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY
@@ -398,8 +399,8 @@ class DefaultAudioPlayerAgent(
                     "Could not acquire $channelName for $NAMESPACE"
                 )
             }
-        } else if(currentActivity == AudioPlayerAgentInterface.State.PLAYING){
-            if(hasSameToken) {
+        } else if (currentActivity == AudioPlayerAgentInterface.State.PLAYING) {
+            if (hasSameToken) {
                 executePlayNextItem()
             } else {
                 executeStop(true)
@@ -575,9 +576,9 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun setFavorite(favorite: Boolean) {
-        contextManager.getContext(object: ContextRequester{
+        contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                executor.submit{
+                executor.submit {
                     currentItem?.apply {
                         val messageRequest = EventMessageRequest.Builder(
                             jsonContext,
@@ -602,9 +603,9 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun setRepeatMode(mode: AudioPlayerAgentInterface.RepeatMode) {
-        contextManager.getContext(object: ContextRequester{
+        contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                executor.submit{
+                executor.submit {
                     currentItem?.apply {
                         val messageRequest = EventMessageRequest.Builder(
                             jsonContext,
@@ -629,9 +630,9 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun setShuffle(shuffle: Boolean) {
-        contextManager.getContext(object: ContextRequester{
+        contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                executor.submit{
+                executor.submit {
                     currentItem?.apply {
                         val messageRequest = EventMessageRequest.Builder(
                             jsonContext,
@@ -968,7 +969,7 @@ class DefaultAudioPlayerAgent(
                     return
                 }
 
-                if(pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY) {
+                if (pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY) {
                     Logger.d(
                         TAG,
                         "[executeOnForegroundFocus] will be start next item after stop current item completely."
@@ -1018,7 +1019,7 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnNoneFocus() {
-        if(currentActivity.isActive()) {
+        if (currentActivity.isActive()) {
             executeCancelNextItem()
             executeStop()
         }
@@ -1042,9 +1043,15 @@ class DefaultAudioPlayerAgent(
             }
             currentItem = it
             nextItem = null
-            if (!executeShouldResumeNextItem(token, it.payload.audioItem.stream.token)) {
-                token = it.payload.audioItem.stream.token
-                sourceId = mediaPlayer.setSource(URI.create(it.payload.audioItem.stream.url))
+            val audioItem = it.payload.audioItem
+            if (!executeShouldResumeNextItem(token, audioItem.stream.token)) {
+                token = audioItem.stream.token
+                sourceId = when (audioItem.sourceType) {
+                    AudioItem.SourceType.URL -> mediaPlayer.setSource(URI.create(audioItem.stream.url))
+                    AudioItem.SourceType.ATTACHMENT -> it.directive.getAttachmentReader()?.let { reader ->
+                        mediaPlayer.setSource(reader)
+                    } ?: SourceId.ERROR()
+                }
                 if (sourceId.isError()) {
                     Logger.w(TAG, "[executePlayNextItem] failed to setSource")
                     executeOnPlaybackError(
@@ -1055,10 +1062,10 @@ class DefaultAudioPlayerAgent(
                     return
                 }
 
-                if (mediaPlayer.getOffset(sourceId) != it.payload.audioItem.stream.offsetInMilliseconds) {
+                if (mediaPlayer.getOffset(sourceId) != audioItem.stream.offsetInMilliseconds) {
                     mediaPlayer.seekTo(
                         sourceId,
-                        it.payload.audioItem.stream.offsetInMilliseconds
+                        audioItem.stream.offsetInMilliseconds
                     )
                 }
 
@@ -1088,17 +1095,17 @@ class DefaultAudioPlayerAgent(
                 }
 
                 progressTimer.init(
-                    it.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
+                    audioItem.stream.progressReport?.progressReportDelayInMilliseconds
                         ?: ProgressTimer.NO_DELAY,
-                    it.payload.audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
+                    audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
                         ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
                 )
             } else {
                 // Resume or Seek cases
-                if (mediaPlayer.getOffset(sourceId) != it.payload.audioItem.stream.offsetInMilliseconds) {
+                if (mediaPlayer.getOffset(sourceId) != audioItem.stream.offsetInMilliseconds) {
                     mediaPlayer.seekTo(
                         sourceId,
-                        it.payload.audioItem.stream.offsetInMilliseconds
+                        audioItem.stream.offsetInMilliseconds
                     )
                 }
 
