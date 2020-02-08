@@ -123,7 +123,8 @@ class DefaultAudioPlayerAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
     private var pausedStopFuture: ScheduledFuture<*>? = null
-    private val pausedStopExecutor = ScheduledThreadPoolExecutor(1)
+    private var delayedReleaseAudioInfoFuture: ScheduledFuture<*>? = null
+    private val scheduleExecutor = ScheduledThreadPoolExecutor(1)
     private val stopDelayForPausedSourceAtMinutes: Long = 10L
 
     private var currentActivity: AudioPlayerAgentInterface.State =
@@ -132,6 +133,7 @@ class DefaultAudioPlayerAgent(
 
     private var currentItem: AudioInfo? = null
     private var nextItem: AudioInfo? = null
+    private var delayedReleaseAudioInfo: AudioInfo? = null
 
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
@@ -218,24 +220,21 @@ class DefaultAudioPlayerAgent(
             }
             else -> {
                 Logger.d(TAG, "[executeCancelAudioInfo] cancel outdated item")
-                notifyOnReleaseAudioInfo(audioInfo)
+                notifyOnReleaseAudioInfo(audioInfo, true)
             }
         }
     }
 
-    private fun notifyOnReleaseAudioInfo(info: AudioInfo, delay: Long? = null) {
+    private fun notifyOnReleaseAudioInfo(info: AudioInfo, immediately: Boolean) {
         Logger.d(TAG, "[notifyOnReleaseAudioInfo] $info")
         with(info) {
-            if (delay == null) {
+            if (immediately) {
                 playSynchronizer.releaseSyncImmediately(this, onReleaseCallback)
-                playContext?.let {
-                    playStackManager.remove(it)
-                }
             } else {
                 playSynchronizer.releaseSync(this, this.onReleaseCallback)
-                playContext?.let {
-                    playStackManager.removeDelayed(it, delay)
-                }
+            }
+            playContext?.let {
+                playStackManager.remove(it)
             }
         }
     }
@@ -330,7 +329,7 @@ class DefaultAudioPlayerAgent(
             return
         }
         Logger.d(TAG, "[executeCancelNextItem] cancel next item : $item")
-        notifyOnReleaseAudioInfo(item)
+        notifyOnReleaseAudioInfo(item, true)
     }
 
     private fun handlePauseDirective(info: DirectiveInfo) {
@@ -362,7 +361,7 @@ class DefaultAudioPlayerAgent(
         val item = nextItem ?: return
 
         if (info.directive.getMessageId() == item.directive.getMessageId()) {
-            notifyOnReleaseAudioInfo(item)
+            notifyOnReleaseAudioInfo(item, true)
         }
     }
 
@@ -456,6 +455,10 @@ class DefaultAudioPlayerAgent(
                 if (playCalled) {
                     if (mediaPlayer.stop(sourceId)) {
                         stopCalled = true
+                    }
+                } else if(currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
+                    delayedReleaseAudioInfo?.let {
+                        notifyOnReleaseAudioInfo(it, true)
                     }
                 }
                 return
@@ -800,7 +803,7 @@ class DefaultAudioPlayerAgent(
 
     private fun scheduleStopForPausedSource(id: SourceId) {
         pausedStopFuture?.cancel(true)
-        pausedStopFuture = pausedStopExecutor.schedule(Callable {
+        pausedStopFuture = scheduleExecutor.schedule(Callable {
             executor.submit {
                 if (id.id != sourceId.id) {
                     return@submit
@@ -906,11 +909,29 @@ class DefaultAudioPlayerAgent(
         val syncObject = currentItem ?: return
 
         if (byStop) {
-            notifyOnReleaseAudioInfo(syncObject)
+            notifyOnReleaseAudioInfo(syncObject, false)
         } else {
-            notifyOnReleaseAudioInfo(syncObject, 7000L)
+            delayNotifyOnReleaseAudioInfo(syncObject, 7000L)
         }
     }
+
+    private fun delayNotifyOnReleaseAudioInfo(
+        delayedObject: AudioInfo,
+        delay: Long
+    ) {
+        Logger.d(TAG, "[delayNotifyOnReleaseAudioInfo] $delayedObject, $delay")
+        delayedReleaseAudioInfo?.let {
+            notifyOnReleaseAudioInfo(it, true)
+        }
+        delayedReleaseAudioInfo = delayedObject
+        delayedReleaseAudioInfoFuture?.cancel(true)
+        delayedReleaseAudioInfoFuture = scheduleExecutor.schedule(Callable {
+            executor.submit {
+                notifyOnReleaseAudioInfo(delayedObject, false)
+            }
+        }, delay, TimeUnit.MILLISECONDS)
+    }
+
 
     private fun executeOnFocusChanged(newFocus: FocusState) {
         Logger.d(
@@ -1039,7 +1060,7 @@ class DefaultAudioPlayerAgent(
 
         currentPlayItem.let {
             currentItem?.let { info ->
-                notifyOnReleaseAudioInfo(info)
+                notifyOnReleaseAudioInfo(info, true)
             }
             currentItem = it
             nextItem = null
