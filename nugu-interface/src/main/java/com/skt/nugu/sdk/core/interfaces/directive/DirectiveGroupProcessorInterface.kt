@@ -15,7 +15,16 @@
  */
 package com.skt.nugu.sdk.core.interfaces.directive
 
+import com.skt.nugu.sdk.core.interfaces.message.Directive
+
 interface DirectiveGroupProcessorInterface {
+    interface Listener {
+        fun onReceiveDirectives(directives: List<Directive>)
+    }
+
+    fun addListener(listener: Listener)
+    fun removeListener(listener: Listener)
+
     fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
     fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
 }

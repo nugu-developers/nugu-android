@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.inputprocessor
 
-import com.skt.nugu.sdk.core.directivesequencer.DirectiveGroupHandler
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
 
-class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupHandler {
+class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProcessorInterface.Listener {
     companion object {
         private const val TAG = "InputProcessorManager"
     }

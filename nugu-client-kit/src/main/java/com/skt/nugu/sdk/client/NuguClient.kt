@@ -121,9 +121,9 @@ class NuguClient private constructor(
             Logger.logger = logger
             SdkVersion.currentVersion = sdkVersion
             val directiveGroupProcessor = DirectiveGroupProcessor(
-                inputProcessorManager,
                 directiveSequencer
             ).apply {
+                addListener(inputProcessorManager)
                 addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
             }
             val messageInterpreter =
@@ -227,5 +227,5 @@ class NuguClient private constructor(
     }
 
     fun getAgent(namespace: String): CapabilityAgent? = agentMap[namespace]
-    fun getDialogSessionManager(): DialogSessionManagerInterface = sdkContainer.getDialogSessionManager()
+    fun getSdkContainer(): SdkContainer = sdkContainer
 }

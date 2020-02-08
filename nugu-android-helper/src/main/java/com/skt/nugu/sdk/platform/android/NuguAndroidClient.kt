@@ -584,14 +584,16 @@ class NuguAndroidClient private constructor(
             DisplayAggregator(
                 tempDisplayAgent,
                 tempAudioPlayerAgent
-            )
+            ).apply {
+                client.getSdkContainer().getDirectiveGroupProcessor().addListener(this)
+            }
         } else {
             null
         }
 
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
-        client.getDialogSessionManager().addListener(dialogUXStateAggregator)
+        client.getSdkContainer().getDialogSessionManager().addListener(dialogUXStateAggregator)
     }
 
     override fun connect() {
