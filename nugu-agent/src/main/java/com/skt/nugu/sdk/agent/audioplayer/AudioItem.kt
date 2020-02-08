@@ -19,11 +19,17 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 
 data class AudioItem(
+    @SerializedName("sourceType")
+    val sourceType: SourceType = SourceType.URL,
     @SerializedName("stream")
     val stream: Stream,
     @SerializedName("metadata")
     val metaData: Metadata?
 ) {
+    enum class SourceType {
+        URL, ATTACHMENT
+    }
+
     /**
      *
      */
