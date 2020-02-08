@@ -15,23 +15,26 @@
  */
 package com.skt.nugu.sdk.agent.display
 
+import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DisplayAggregator(
     private val templateAgent: DisplayAgentInterface,
     private val audioPlayerAgent: AudioPlayerDisplayInterface
-) : DisplayAggregatorInterface {
+) : DisplayAggregatorInterface, DirectiveGroupProcessorInterface.Listener {
     private abstract inner class BaseRenderer {
         protected abstract fun getAgent(): DisplayInterface<*>
-        protected abstract fun getType(): DisplayAggregatorInterface.Type
 
         fun render(
             templateId: String,
             templateType: String,
             templateContent: String,
-            dialogRequestId: String
+            dialogRequestId: String,
+            type: DisplayAggregatorInterface.Type
         ): Boolean {
             lock.withLock {
                 requestAgentMap[templateId] = getAgent()
@@ -41,7 +44,7 @@ class DisplayAggregator(
                 templateType,
                 templateContent,
                 dialogRequestId,
-                getType()
+                type
             ) ?: false
 
             if (!willRender) {
@@ -61,13 +64,12 @@ class DisplayAggregator(
     private var observer: DisplayAggregatorInterface.Renderer? = null
     private val lock = ReentrantLock()
     private val requestAgentMap = HashMap<String, DisplayInterface<*>>()
+    private val displayTypeMap = LinkedHashMap<String, DisplayAggregatorInterface.Type>()
 
     init {
         templateAgent.setRenderer(object : DisplayAgentInterface.Renderer {
             private val renderer = object : BaseRenderer() {
                 override fun getAgent() = templateAgent
-                override fun getType(): DisplayAggregatorInterface.Type =
-                    DisplayAggregatorInterface.Type.INFOMATION
             }
 
             override fun render(
@@ -75,7 +77,7 @@ class DisplayAggregator(
                 templateType: String,
                 templateContent: String,
                 dialogRequestId: String
-            ): Boolean = renderer.render(templateId, templateType, templateContent, dialogRequestId)
+            ): Boolean = renderer.render(templateId, templateType, templateContent, dialogRequestId, getAndRemoveTypeForTemplateAgent(dialogRequestId))
 
             override fun clear(templateId: String, force: Boolean) =
                 renderer.clear(templateId, force)
@@ -89,8 +91,6 @@ class DisplayAggregator(
         audioPlayerAgent.setRenderer(object : AudioPlayerDisplayInterface.Renderer {
             private val renderer = object : BaseRenderer() {
                 override fun getAgent() = audioPlayerAgent
-                override fun getType(): DisplayAggregatorInterface.Type =
-                    DisplayAggregatorInterface.Type.AUDIO_PLAYER
             }
 
             override fun render(
@@ -99,7 +99,7 @@ class DisplayAggregator(
                 templateContent: String,
                 dialogRequestId: String
             ): Boolean =
-                renderer.render(templateId, templateType, templateContent, dialogRequestId)
+                renderer.render(templateId, templateType, templateContent, dialogRequestId, DisplayAggregatorInterface.Type.AUDIO_PLAYER)
 
             override fun clear(templateId: String, force: Boolean) =
                 renderer.clear(templateId, force)
@@ -108,6 +108,10 @@ class DisplayAggregator(
                 observer?.update(templateId, templateContent)
             }
         })
+    }
+
+    private fun getAndRemoveTypeForTemplateAgent(dialogRequestId: String): DisplayAggregatorInterface.Type {
+        return displayTypeMap.remove(dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
     }
 
     override fun setElementSelected(
@@ -139,5 +143,20 @@ class DisplayAggregator(
         lock.withLock {
             requestAgentMap[templateId]
         }?.stopRenderingTimer(templateId)
+    }
+
+    override fun onReceiveDirectives(directives: List<Directive>) {
+        val audioPlayerDirective = directives.filter {
+            (it.getNamespaceAndName() == AbstractAudioPlayerAgent.PLAY)
+        }
+
+        val dialogRequestId = audioPlayerDirective.firstOrNull()?.getDialogRequestId() ?: return
+
+        displayTypeMap[dialogRequestId] = DisplayAggregatorInterface.Type.AUDIO_PLAYER
+
+        if(displayTypeMap.count() > 10) {
+            val removeKey = displayTypeMap.keys.firstOrNull() ?: return
+            displayTypeMap.remove(removeKey)
+        }
     }
 }

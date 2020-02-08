@@ -21,11 +21,11 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 class DirectiveGroupProcessor(
-    private val inputProcessorManager: DirectiveGroupHandler,
     private val directiveSequencer: DirectiveSequencerInterface
 ) : DirectiveGroupHandler,
     DirectiveGroupProcessorInterface {
     private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
+    private val listeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
         var processedDirectives = directives
@@ -33,11 +33,21 @@ class DirectiveGroupProcessor(
             processedDirectives = it.preprocess(processedDirectives)
         }
 
-        inputProcessorManager.onReceiveDirectives(processedDirectives)
+        listeners.forEach {
+            it.onReceiveDirectives(processedDirectives)
+        }
         
         processedDirectives.forEach {
             directiveSequencer.onDirective(it)
         }
+    }
+
+    override fun addListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        listeners.add(listener)
+    }
+
+    override fun removeListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        listeners.remove(listener)
     }
 
     override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
