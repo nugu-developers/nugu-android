@@ -458,6 +458,9 @@ class DefaultAudioPlayerAgent(
                     }
                 } else if(currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
                     delayedReleaseAudioInfo?.let {
+                        delayedReleaseAudioInfo = null
+                        delayedReleaseAudioInfoFuture?.cancel(true)
+                        delayedReleaseAudioInfoFuture = null
                         notifyOnReleaseAudioInfo(it, true)
                     }
                 }
@@ -927,6 +930,9 @@ class DefaultAudioPlayerAgent(
         delayedReleaseAudioInfoFuture?.cancel(true)
         delayedReleaseAudioInfoFuture = scheduleExecutor.schedule(Callable {
             executor.submit {
+                delayedReleaseAudioInfo = null
+                delayedReleaseAudioInfoFuture?.cancel(true)
+                delayedReleaseAudioInfoFuture = null
                 notifyOnReleaseAudioInfo(delayedObject, false)
             }
         }, delay, TimeUnit.MILLISECONDS)
