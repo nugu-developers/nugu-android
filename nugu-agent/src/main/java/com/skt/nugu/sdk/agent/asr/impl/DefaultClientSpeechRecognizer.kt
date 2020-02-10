@@ -180,7 +180,13 @@ class DefaultClientSpeechRecognizer(
                 resultListener?.onNoneResult()
             }
             AsrNotifyResultPayload.State.ERROR -> {
-                resultListener?.onError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+                if(epdState.isActive()) {
+                    request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                    endPointDetector.stopDetector()
+                } else {
+                    request.senderThread?.requestStop()
+                    handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+                }
             }
             AsrNotifyResultPayload.State.FA -> {
                 // TODO : Impl

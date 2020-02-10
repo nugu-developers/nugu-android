@@ -226,7 +226,8 @@ class DefaultServerSpeechRecognizer(
                 resultListener?.onNoneResult()
             }
             AsrNotifyResultPayload.State.ERROR -> {
-                resultListener?.onError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+                request.senderThread.requestStop()
+                handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
             }
             AsrNotifyResultPayload.State.FA -> {
                 // TODO : Impl
