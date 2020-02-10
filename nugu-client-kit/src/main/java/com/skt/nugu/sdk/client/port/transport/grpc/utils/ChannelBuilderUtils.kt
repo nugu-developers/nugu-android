@@ -19,7 +19,9 @@ import com.skt.nugu.sdk.client.port.transport.grpc.Options
 import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.squareup.okhttp.ConnectionSpec
 import io.grpc.*
+import io.grpc.okhttp.OkHttpChannelBuilder
 import java.util.concurrent.TimeUnit
 
 /**
@@ -34,10 +36,10 @@ class ChannelBuilderUtils {
             options: Options,
             authorization: String?
         ): ManagedChannelBuilder<*> {
-            val channelBuilder = ManagedChannelBuilder
+            val channelBuilder =  OkHttpChannelBuilder
                 .forAddress(options.address, options.port)
                 .userAgent(userAgent())
-
+            channelBuilder.connectionSpec(ConnectionSpec.MODERN_TLS)
             if (!options.hostname.isBlank()) {
                 channelBuilder.overrideAuthority(options.hostname)
             }
