@@ -9,7 +9,7 @@ Version 0.8.3 *(2020-02-11)*
 * New: Prototype screen interface v1.0 (#242)
 * New: Update display agent version to 1.2 (#232)
     * support CONTROL_FOCUS, CONTROL_SCROLL, SCORE_1, SCORE_2, SEARCH_LIST_1, SEARCH_LIST_2 directives.
-  * Added Controller interface.
+    * Added Controller interface.
 * New: Support playing attahcment source at AudioPlayerAgent (#236)
 * New: Implement bluetooth agent(#58)
 * Fix: Apply duration of display when restart timer(#263)
