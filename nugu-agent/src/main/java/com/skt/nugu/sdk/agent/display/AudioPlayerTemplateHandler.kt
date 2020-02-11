@@ -64,6 +64,7 @@ class AudioPlayerTemplateHandler(
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
+    private val templateControllerMap = HashMap<String, AudioPlayerDisplayInterface.Controller>()
 
     private data class TemplatePayload(
         @SerializedName("playServiceId")
@@ -221,7 +222,10 @@ class AudioPlayerTemplateHandler(
         }
     }
 
-    override fun displayCardRendered(templateId: String) {
+    override fun displayCardRendered(
+        templateId: String,
+        controller: AudioPlayerDisplayInterface.Controller?
+    ) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
@@ -239,6 +243,9 @@ class AudioPlayerTemplateHandler(
                         override fun onDenied() {
                         }
                     })
+                controller?.let { templateController ->
+                    templateControllerMap[templateId] = templateController
+                }
                 it.playContext?.let {playContext->
                     playStackManager.add(playContext)
                 }
@@ -254,6 +261,7 @@ class AudioPlayerTemplateHandler(
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
                 stoppedTimerTemplateIdMap.remove(templateId)
+                templateControllerMap.remove(templateId)
                 releaseSyncImmediately(it)
 
                 if (clearInfoIfCurrent(it)) {

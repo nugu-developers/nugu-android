@@ -1363,8 +1363,11 @@ class DefaultAudioPlayerAgent(
     ): String = displayDelegate?.setElementSelected(templateId, token, callback)
         ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
 
-    override fun displayCardRendered(templateId: String) {
-        displayDelegate?.displayCardRendered(templateId)
+    override fun displayCardRendered(
+        templateId: String,
+        controller: AudioPlayerDisplayInterface.Controller?
+    ) {
+        displayDelegate?.displayCardRendered(templateId, controller)
     }
 
     override fun displayCardCleared(templateId: String) {

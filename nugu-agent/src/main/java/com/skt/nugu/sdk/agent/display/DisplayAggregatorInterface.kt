@@ -15,8 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-import com.skt.nugu.sdk.agent.common.Direction
-
 /**
  * There are some displays to be render.
  *
@@ -25,7 +23,7 @@ import com.skt.nugu.sdk.agent.common.Direction
  * @see [com.skt.nugu.sdk.agent.display.DisplayAgentInterface]
  */
 interface DisplayAggregatorInterface:
-    DisplayInterface<DisplayAggregatorInterface.Renderer> {
+    DisplayInterface<DisplayAggregatorInterface.Renderer, DisplayAggregatorInterface.Controller> {
     /**
      * Enum class for display types
      */
@@ -74,35 +72,7 @@ interface DisplayAggregatorInterface:
          * @param templateContent the content of template in structured JSON which should be updated. The content consist of partial or full elements for templateContent of [render]
          */
         fun update(templateId: String, templateContent: String)
-
-        /**
-         * Used to notify the renderer when display should change focus of item.
-         *
-         * @param templateId the unique identifier for the template card
-         * @param direction the direction to which change focus
-         * @return true: success, false: otherwise
-         */
-        fun controlFocus(templateId: String, direction: Direction): Boolean
-
-        /**
-         * Used to notify the renderer when display should scroll
-         *
-         * @param templateId the unique identifier for the template card
-         * @param direction the direction to which scroll
-         * @return true: success, false: otherwise
-         */
-        fun controlScroll(templateId: String, direction: Direction): Boolean
-
-        /**
-         * Returns a token which has focus currently.
-         * @return the token if exist, otherwise  null.
-         */
-        fun getFocusedItemToken(templateId: String): String?
-
-        /**
-         * Return visible token list.
-         * @return the visible token list in order
-         */
-        fun getVisibleTokenList(templateId: String): List<String>?
     }
+
+    interface Controller: AudioPlayerDisplayInterface.Controller, DisplayAgentInterface.Controller
 }

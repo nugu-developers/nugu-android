@@ -272,6 +272,7 @@ class DefaultDisplayAgent(
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
+    private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
     private var renderer: DisplayAgentInterface.Renderer? = null
 
@@ -476,7 +477,10 @@ class DefaultDisplayAgent(
         return configuration
     }
 
-    override fun displayCardRendered(templateId: String) {
+    override fun displayCardRendered(
+        templateId: String,
+        controller: DisplayAgentInterface.Controller?
+    ) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
@@ -494,6 +498,9 @@ class DefaultDisplayAgent(
                         override fun onDenied() {
                         }
                     })
+                controller?.let { templateController ->
+                    templateControllerMap[templateId] = templateController
+                }
                 it.playContext?.let { playContext ->
                     playStackManager.add(playContext)
                 }
@@ -509,6 +516,7 @@ class DefaultDisplayAgent(
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
                 stoppedTimerTemplateIdMap.remove(templateId)
+                templateControllerMap.remove(templateId)
                 releaseSyncImmediately(it)
 
                 onDisplayCardCleared(it)
@@ -737,14 +745,13 @@ class DefaultDisplayAgent(
         info?.payload?.let {
             addProperty("playServiceId", it.playServiceId)
             addProperty("token", it.token)
-            renderer?.let {
-                val templateId = info.getTemplateId()
-                it.getFocusedItemToken(templateId)?.let {focusedItemToken->
+            templateControllerMap[info.getTemplateId()]?.let { controller ->
+                controller.getFocusedItemToken()?.let { focusedItemToken ->
                     addProperty("focusedItemToken", focusedItemToken)
                 }
-                it.getVisibleTokenList(templateId)?.let { visibleTokenList->
+                controller.getVisibleTokenList()?.let { visibleTokenList ->
                     add("visibleTokenList", JsonArray().apply {
-                        visibleTokenList.forEach {token->
+                        visibleTokenList.forEach { token ->
                             add(token)
                         }
                     })
@@ -771,7 +778,7 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            renderer?.controlFocus(currentRenderedInfo.getTemplateId(), direction) ?: false
+            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction) ?: false
         })
 
         return result.get()
@@ -789,7 +796,7 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            renderer?.controlScroll(currentRenderedInfo.getTemplateId(), direction) ?: false
+            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction) ?: false
         })
 
         return result.get()

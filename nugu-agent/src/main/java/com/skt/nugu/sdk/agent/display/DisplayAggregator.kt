@@ -27,7 +27,7 @@ class DisplayAggregator(
     private val audioPlayerAgent: AudioPlayerDisplayInterface
 ) : DisplayAggregatorInterface, DirectiveGroupProcessorInterface.Listener {
     private abstract inner class BaseRenderer {
-        protected abstract fun getAgent(): DisplayInterface<*>
+        protected abstract fun getAgent(): DisplayInterface<*, *>
 
         fun render(
             templateId: String,
@@ -63,7 +63,7 @@ class DisplayAggregator(
 
     private var observer: DisplayAggregatorInterface.Renderer? = null
     private val lock = ReentrantLock()
-    private val requestAgentMap = HashMap<String, DisplayInterface<*>>()
+    private val requestAgentMap = HashMap<String, DisplayInterface<*, *>>()
     private val displayTypeMap = LinkedHashMap<String, DisplayAggregatorInterface.Type>()
 
     init {
@@ -77,15 +77,16 @@ class DisplayAggregator(
                 templateType: String,
                 templateContent: String,
                 dialogRequestId: String
-            ): Boolean = renderer.render(templateId, templateType, templateContent, dialogRequestId, getAndRemoveTypeForTemplateAgent(dialogRequestId))
+            ): Boolean = renderer.render(
+                templateId,
+                templateType,
+                templateContent,
+                dialogRequestId,
+                getAndRemoveTypeForTemplateAgent(dialogRequestId)
+            )
 
             override fun clear(templateId: String, force: Boolean) =
                 renderer.clear(templateId, force)
-
-            override fun controlFocus(templateId: String, direction: Direction): Boolean = observer?.controlFocus(templateId, direction) ?: false
-            override fun controlScroll(templateId: String, direction: Direction): Boolean = observer?.controlScroll(templateId, direction) ?: false
-            override fun getFocusedItemToken(templateId: String): String? = observer?.getFocusedItemToken(templateId)
-            override fun getVisibleTokenList(templateId: String): List<String>? = observer?.getVisibleTokenList(templateId)
         })
 
         audioPlayerAgent.setRenderer(object : AudioPlayerDisplayInterface.Renderer {
@@ -99,7 +100,13 @@ class DisplayAggregator(
                 templateContent: String,
                 dialogRequestId: String
             ): Boolean =
-                renderer.render(templateId, templateType, templateContent, dialogRequestId, DisplayAggregatorInterface.Type.AUDIO_PLAYER)
+                renderer.render(
+                    templateId,
+                    templateType,
+                    templateContent,
+                    dialogRequestId,
+                    DisplayAggregatorInterface.Type.AUDIO_PLAYER
+                )
 
             override fun clear(templateId: String, force: Boolean) =
                 renderer.clear(templateId, force)
@@ -123,10 +130,16 @@ class DisplayAggregator(
     }?.setElementSelected(templateId, token, callback)
         ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
-    override fun displayCardRendered(templateId: String) {
-        lock.withLock {
+    override fun displayCardRendered(templateId: String, controller: DisplayAggregatorInterface.Controller?) {
+        val agent = lock.withLock {
             requestAgentMap[templateId]
-        }?.displayCardRendered(templateId)
+        } ?: return
+
+        if(agent == templateAgent) {
+            (agent as DisplayAgentInterface).displayCardRendered(templateId, controller as DisplayAgentInterface.Controller?)
+        } else {
+            (agent as AudioPlayerDisplayInterface).displayCardRendered(templateId, controller as AudioPlayerDisplayInterface.Controller?)
+        }
     }
 
     override fun displayCardCleared(templateId: String) {
@@ -154,7 +167,7 @@ class DisplayAggregator(
 
         displayTypeMap[dialogRequestId] = DisplayAggregatorInterface.Type.AUDIO_PLAYER
 
-        if(displayTypeMap.count() > 10) {
+        if (displayTypeMap.count() > 10) {
             val removeKey = displayTypeMap.keys.firstOrNull() ?: return
             displayTypeMap.remove(removeKey)
         }
