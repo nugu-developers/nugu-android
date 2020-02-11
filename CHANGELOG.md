@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+Version 0.8.3 *(2020-02-11)*
+----------------------------
+* New: Implement battery agent (#249)
+    * Apply battery charing status (#238)
+* New: Add NONE,LONGEST duration type for display(#232)
+* New: Prototype screen interface v1.0 (#242)
+* New: Update display agent version to 1.2 (#232)
+    * support CONTROL_FOCUS, CONTROL_SCROLL, SCORE_1, SCORE_2, SEARCH_LIST_1, SEARCH_LIST_2 directives.
+  * Added Controller interface.
+* New: Support playing attahcment source at AudioPlayerAgent (#236)
+* New: Implement bluetooth agent(#58)
+* Fix: Apply duration of display when restart timer(#263)
+* Fix: pause not work at AudioPlayer (#258)
+* Fix: Deliver display type correctly (#267)
+* Fix: Handle AudioPlayer.Stop directive on finish (#270)
+* Fix: Handle notify result error (#272)
+* Fix: Fix TimeUUID v2 spec does not apply (#255) 
+* Improve: Update SilverTray v4.1.9 (#246)
+* Improve: Move some classes
+ 
 Version 0.8.2 *(2020-01-30)*
 ----------------------------
  * New: Support AudioPlayer v1.1
