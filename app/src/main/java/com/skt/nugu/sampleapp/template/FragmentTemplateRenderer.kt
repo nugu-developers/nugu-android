@@ -72,7 +72,7 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
                             fragment.updateView(templateType, templateId, templateContent)
                             ClientManager.getClient().getDisplay()
                                 ?.displayCardCleared(prevTemplateId)
-                            ClientManager.getClient().getDisplay()?.displayCardRendered(templateId)
+                            ClientManager.getClient().getDisplay()?.displayCardRendered(templateId, fragment.controller)
                         }
                     } else {
                         Log.d(TAG, "[render] not match fragment, remove and add newFragment")
@@ -117,47 +117,6 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
                 }
             }
         }
-    }
-
-    override fun controlFocus(templateId: String, direction: Direction): Boolean = operate(templateId, false) {
-        it.controlFocus(direction)
-    } ?: false
-
-    override fun controlScroll(templateId: String, direction: Direction): Boolean = operate(templateId, false) {
-        it.controlScroll(direction)
-    } ?: false
-
-    override fun getFocusedItemToken(templateId: String): String? = operate(templateId, null) {
-        it.getFocusedItemToken()
-    }
-
-    override fun getVisibleTokenList(templateId: String): List<String>? = operate(templateId, null) {
-        it.getVisibleTokenList()
-    }
-
-    private fun <T> operate(templateId: String, defaultReturn: T?, op: (fragment: TemplateFragment)->T?): T? {
-        val countDownLatch = CountDownLatch(1)
-        var result: T? = defaultReturn
-
-        handler.post {
-            val fragmentManager = fragmentManagerRef.get()
-            if (fragmentManager == null) {
-                countDownLatch.countDown()
-                return@post
-            }
-            val fragment = findFragmentByTemplateId(fragmentManager, templateId)
-            if (fragment is TemplateFragment) {
-                result = op(fragment)
-                countDownLatch.countDown()
-            } else {
-                countDownLatch.countDown()
-                return@post
-            }
-        }
-
-        countDownLatch.await(5000L, TimeUnit.MILLISECONDS)
-
-        return result
     }
 
     override fun clear(templateId: String, force: Boolean) {

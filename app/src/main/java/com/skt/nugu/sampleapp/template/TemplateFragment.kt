@@ -29,7 +29,7 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
 import com.skt.nugu.sdk.agent.common.Direction
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 
 internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener {
     companion object {
@@ -53,11 +53,36 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
 
     private lateinit var containerLayout: FrameLayout
     private lateinit var templateView: View
+    var controller = object : DisplayAggregatorInterface.Controller {
+        override fun controlFocus(direction: Direction): Boolean {
+            // TODO : XXX
+            Log.d(TAG, "[controlFocus] $direction (not implemented yet)")
+            return false
+        }
+
+        override fun controlScroll(direction: Direction): Boolean {
+            // TODO : XXX
+            Log.d(TAG, "[controlScroll] $direction (not implemented yet)")
+            return false
+        }
+
+        override fun getFocusedItemToken(): String? {
+            // TODO : XXX
+            Log.d(TAG, "[getFocusedItemToken] (not implemented yet)")
+            return null
+        }
+
+        override fun getVisibleTokenList(): List<String>? {
+            // TODO : XXX
+            Log.d(TAG, "[getVisibleTokenList] (not implemented yet)")
+            return null
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "[onCreate] ${getTemplateId()}")
-        ClientManager.getClient().getDisplay()?.displayCardRendered(getTemplateId())
+        ClientManager.getClient().getDisplay()?.displayCardRendered(getTemplateId(), controller)
         ClientManager.getClient().addAudioPlayerListener(this)
     }
 
@@ -142,29 +167,5 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
                 }
             }
         }
-    }
-
-    fun controlFocus(direction: Direction): Boolean {
-        // TODO : XXX
-        Log.d(TAG, "[controlFocus] $direction (not implemented yet)")
-        return false
-    }
-
-    fun controlScroll(direction: Direction): Boolean {
-        // TODO : XXX
-        Log.d(TAG, "[controlScroll] $direction (not implemented yet)")
-        return false
-    }
-
-    fun getFocusedItemToken(): String? {
-        // TODO : XXX
-        Log.d(TAG, "[getFocusedItemToken] (not implemented yet)")
-        return null
-    }
-
-    fun getVisibleTokenList(): List<String>? {
-        // TODO : XXX
-        Log.d(TAG, "[getVisibleTokenList] (not implemented yet)")
-        return null
     }
 }

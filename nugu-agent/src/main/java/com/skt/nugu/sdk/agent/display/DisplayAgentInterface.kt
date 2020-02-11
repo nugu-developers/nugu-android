@@ -21,7 +21,7 @@ import com.skt.nugu.sdk.agent.common.Direction
  * The public interface for DisplayAgent
  */
 interface DisplayAgentInterface:
-    DisplayInterface<DisplayAgentInterface.Renderer> {
+    DisplayInterface<DisplayAgentInterface.Renderer, DisplayAgentInterface.Controller> {
     /**
      * The renderer of display agent.
      * When receive an directive for display, the agent will request the renderer to render it.
@@ -52,34 +52,35 @@ interface DisplayAgentInterface:
          */
         fun clear(templateId: String, force: Boolean)
 
+    }
+
+    interface Controller {
         /**
          * Used to notify the renderer when display should change focus of item.
          *
-         * @param templateId the unique identifier for the template card
          * @param direction the direction to which change focus
          * @return true: success, false: otherwise
          */
-        fun controlFocus(templateId: String, direction: Direction): Boolean
+        fun controlFocus(direction: Direction): Boolean
 
         /**
          * Used to notify the renderer when display should scroll
          *
-         * @param templateId the unique identifier for the template card
          * @param direction the direction to which scroll
          * @return true: success, false: otherwise
          */
-        fun controlScroll(templateId: String, direction: Direction): Boolean
+        fun controlScroll(direction: Direction): Boolean
 
         /**
          * Returns a token which has focus currently.
          * @return the token if exist, otherwise  null.
          */
-        fun getFocusedItemToken(templateId: String): String?
+        fun getFocusedItemToken(): String?
 
         /**
          * Return visible token list.
          * @return the visible token list in order
          */
-        fun getVisibleTokenList(templateId: String): List<String>?
+        fun getVisibleTokenList(): List<String>?
     }
 }

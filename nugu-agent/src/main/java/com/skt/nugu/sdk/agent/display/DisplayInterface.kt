@@ -5,7 +5,7 @@ import com.skt.nugu.sdk.core.interfaces.common.EventCallback
 /**
  * The basic interface for display
  */
-interface DisplayInterface<Renderer> {
+interface DisplayInterface<Renderer, Controller> {
     /**
      * enum class for ErrorType
      */
@@ -39,8 +39,9 @@ interface DisplayInterface<Renderer> {
      * This should be called when the display rendered by the renderer.
      *
      * @param templateId the templateId that has been rendered
+     * @param controller the controller for template identified by [templateId]
      */
-    fun displayCardRendered(templateId: String)
+    fun displayCardRendered(templateId: String, controller: Controller?)
 
     /**
      * Notifies the display that has been cleared.

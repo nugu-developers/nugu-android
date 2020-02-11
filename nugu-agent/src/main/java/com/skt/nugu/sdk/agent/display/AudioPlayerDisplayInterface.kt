@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-interface AudioPlayerDisplayInterface : DisplayInterface<AudioPlayerDisplayInterface.Renderer> {
+interface AudioPlayerDisplayInterface : DisplayInterface<AudioPlayerDisplayInterface.Renderer, AudioPlayerDisplayInterface.Controller> {
     interface Renderer {
         /**
          * Used to notify the renderer when received a display directive.
@@ -50,4 +50,6 @@ interface AudioPlayerDisplayInterface : DisplayInterface<AudioPlayerDisplayInter
          */
         fun update(templateId: String, templateContent: String)
     }
+
+    interface Controller
 }
