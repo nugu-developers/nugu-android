@@ -96,8 +96,11 @@ class DefaultClientSpeechRecognizer(
             "[startProcessor] wakeupBoundary:$wakeupBoundary, currentInputPosition: ${audioInputStream.getPosition()}"
         )
 
-        val sendPositionAndWakeupBoundary =
-            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
+//        val sendPositionAndWakeupBoundary =
+//            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
+
+        // Do not deliver wakeup info when client epd mode.
+        val sendPositionAndWakeupBoundary = Pair(null, null)
 
         val eventMessage = EventMessageRequest.Builder(
             context,
@@ -112,8 +115,8 @@ class DefaultClientSpeechRecognizer(
                 property = payload?.property,
                 domainTypes = payload?.domainTypes,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
-                encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
-                wakeupBoundary = sendPositionAndWakeupBoundary.second
+                encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
+//                wakeupBoundary = sendPositionAndWakeupBoundary.second
             ).toJsonString()
         ).build()
 
