@@ -115,10 +115,12 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 private val assetsFolder =
                     context.getDir("skt_nugu_assets", Context.MODE_PRIVATE).absolutePath
                 private val aria = SpeechRecognizerAggregator.KeywordResources(
+                    "아리아",
                     assetsFolder + File.separator + "skt_trigger_am_aria.raw",
                     assetsFolder + File.separator + "skt_trigger_search_aria.raw"
                 )
                 private val tinkerbell = SpeechRecognizerAggregator.KeywordResources(
+                    "팅커벨",
                     assetsFolder + File.separator + "skt_trigger_am_tinkerbell.raw",
                     assetsFolder + File.separator + "skt_trigger_search_tinkerbell.raw"
                 )
