@@ -221,10 +221,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                     requestCode,
                     object : OnRequestPermissionResultHandler.OnPermissionListener {
                         override fun onGranted() {
-                            speechRecognizerAggregator.startListening(
-                                null,
-                                null
-                            )
+                            speechRecognizerAggregator.startListening(null)
                         }
 
                         override fun onDenied() {
@@ -236,10 +233,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                         }
                     })
             } else {
-                speechRecognizerAggregator.startListening(
-                    null,
-                    null
-                )
+                speechRecognizerAggregator.startListening(null)
             }
         }
 

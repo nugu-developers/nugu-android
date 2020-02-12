@@ -16,14 +16,9 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.asr.AsrNotifyResultPayload
-import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
-import com.skt.nugu.sdk.agent.asr.SpeechRecognizer
-import com.skt.nugu.sdk.agent.asr.WakeupBoundary
+import com.skt.nugu.sdk.agent.asr.*
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -115,7 +110,7 @@ class DefaultASRAgent(
 
     private var audioInputStream: SharedDataStream? = null
     private var audioFormat: AudioFormat? = null
-    private var wakeupBoundary: WakeupBoundary? = null
+    private var wakeupInfo: WakeupInfo? = null
     private var expectSpeechPayload: ExpectSpeechPayload? = null
 
     private var contextForRecognitionOnForegroundFocus: String? = null
@@ -494,7 +489,7 @@ class DefaultASRAgent(
             inputStream,
             inputFormat,
             context,
-            wakeupBoundary,
+            wakeupInfo,
             expectSpeechPayload,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult() {
@@ -611,29 +606,15 @@ class DefaultASRAgent(
     override fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?,
-        wakewordDetectPosition: Long?
+        wakeupInfo: WakeupInfo?
     ): Future<Boolean> {
         Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
         return executor.submit(Callable<Boolean> {
             if (audioInputStream != null && audioFormat != null) {
-                val wakeupBoundary =
-                    if (wakewordDetectPosition != null && wakewordEndPosition != null && wakewordStartPosition != null) {
-                        val bytesPerSample = audioFormat.getBytesPerSample()
-                        WakeupBoundary(
-                            wakewordDetectPosition / bytesPerSample,
-                            wakewordStartPosition / bytesPerSample,
-                            wakewordEndPosition / bytesPerSample
-                        )
-                    } else {
-                        null
-                    }
-
                 executeStartRecognition(
                     audioInputStream,
                     audioFormat,
-                    wakeupBoundary,
+                    wakeupInfo,
                     expectSpeechPayload
                 )
             } else {
@@ -710,7 +691,7 @@ class DefaultASRAgent(
     private fun executeStartRecognition(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
-        wakeupBoundary: WakeupBoundary?,
+        wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?
     ): Boolean {
         Logger.d(TAG, "[executeStartRecognition] state: $state")
@@ -722,7 +703,7 @@ class DefaultASRAgent(
             return false
         }
 
-        this.wakeupBoundary = wakeupBoundary
+        this.wakeupInfo = wakeupInfo
         this.audioInputStream = audioInputStream
         this.audioFormat = audioFormat
         this.expectSpeechPayload = payload

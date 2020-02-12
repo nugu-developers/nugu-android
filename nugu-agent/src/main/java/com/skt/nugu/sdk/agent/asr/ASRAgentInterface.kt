@@ -146,17 +146,14 @@ interface ASRAgentInterface {
      * start recognition
      * @param audioInputStream the audio input stream which is used for recognition, if null
      * @param audioFormat the audio format for [audioInputStream].
-     * @param wakewordStartPosition the start position of wakeword at [audioInputStream], null if not exist.
-     * @param wakewordEndPosition the end position of wakeword at [audioInputStream], null if not exist.
-     * @param wakewordDetectPosition the detect position of wakeword at [audioInputStream], null if not exist.
+     * @param wakeupInfo the wakeup info(boundary & word) causing this recognition. The boundary should be relative position for [audioInputStream],
+     * If the recognition was not invoked by wakeup, set to null.
      * @return true: if start, false: failed to start(already recognizing or others).
      */
     fun startRecognition(
         audioInputStream: SharedDataStream? = null,
         audioFormat: AudioFormat? = null,
-        wakewordStartPosition: Long? = null,
-        wakewordEndPosition: Long? = null,
-        wakewordDetectPosition: Long? = null
+        wakeupInfo: WakeupInfo? = null
     ): Future<Boolean>
 
     /**

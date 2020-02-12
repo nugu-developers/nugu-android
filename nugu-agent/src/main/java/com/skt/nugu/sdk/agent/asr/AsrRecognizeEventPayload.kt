@@ -27,7 +27,7 @@ data class AsrRecognizeEventPayload(
     private val language: String? = null,
     private val endpointing: String,
     private val encoding: String? = null,
-    private val wakeupBoundary: WakeupBoundary? = null
+    private val wakeup: PayloadWakeup? = null
 ) {
     companion object {
         const val CODEC_SPEEX = "SPEEX"
@@ -71,11 +71,14 @@ data class AsrRecognizeEventPayload(
             addProperty("encoding", encoding)
         }
 
-        wakeupBoundary?.let {
-            add("wakeupBoundary", JsonObject().apply {
-                addProperty("detection", it.detectSamplePosition)
-                addProperty("start", it.startSamplePosition)
-                addProperty("end", it.endSamplePosition)
+        wakeup?.let {
+            add("wakeup", JsonObject().apply {
+               addProperty("word", it.word)
+                add("boundary", JsonObject().apply {
+                    addProperty("start", it.boundary.startSamplePosition)
+                    addProperty("end", it.boundary.endSamplePosition)
+                    addProperty("detection", it.boundary.detectSamplePosition)
+                })
             })
         }
     }.toString()

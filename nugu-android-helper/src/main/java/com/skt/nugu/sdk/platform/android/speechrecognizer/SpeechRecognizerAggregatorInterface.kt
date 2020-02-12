@@ -15,13 +15,15 @@
  */
 package com.skt.nugu.sdk.platform.android.speechrecognizer
 
+import com.skt.nugu.sdk.agent.asr.WakeupInfo
+
 /**
  * Utility interface for speech recognition
  *
  * Integrate functionality of keyword detector and speech processor and input management.
  *
  * the speech processor has in charge of three roles:
- * * EPD : refer to [com.skt.nugu.sdk.core.interfaces.audio.AudioEndPointDetector]
+ * * EPD : refer to [com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector]
  * * STT : convert speech to text
  * * IP(Input Processing) : send request to NUGU
  */
@@ -84,11 +86,9 @@ interface SpeechRecognizerAggregatorInterface {
 
     /**
      * Start keyword detector.
-     * @param keywordStartPosition start position of keyword at input
-     * @param keywordEndPosition end position of keyword at input
-     * @param keywordDetectPosition detect position of keyword at input
+     * @param wakeupInfo the wakeup info of wakeup word for input
      */
-    fun startListening(keywordStartPosition: Long? = null, keywordEndPosition: Long? = null, keywordDetectPosition: Long? = null)
+    fun startListening(wakeupInfo: WakeupInfo?)
 
     /**
      * Stop Recognizing

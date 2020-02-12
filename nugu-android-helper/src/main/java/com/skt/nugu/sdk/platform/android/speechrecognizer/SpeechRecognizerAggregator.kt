@@ -21,6 +21,7 @@ import android.util.Log
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
 import com.skt.nugu.keensense.tyche.TycheKeywordDetector
+import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
@@ -63,9 +64,7 @@ class SpeechRecognizerAggregator(
     private var isTriggerStoppingByStartListening = false
 
     private var audioFormat: AudioFormat? = null
-    private var keywordStartPosition: Long? = null
-    private var keywordEndPosition: Long? = null
-    private var keywordDetectPosition: Long? = null
+    private var wakeupInfo: WakeupInfo? = null
 
     init {
         keywordDetector.addDetectorStateObserver(object : KeywordDetectorStateObserver {
@@ -135,6 +134,7 @@ class SpeechRecognizerAggregator(
             }
 
             KeywordDetectorInput(inputStream).let {
+                val keyword = keywordResource.keyword
                 val audioFormat = audioProvider.getFormat()
                 val result = keywordDetector.startDetect(
                     it,
@@ -152,11 +152,19 @@ class SpeechRecognizerAggregator(
                             )
                             keywordDetectorResultRunnable = Runnable {
                                 setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
+                                val wakeupInfo = try {
+                                    WakeupInfo(keyword, WakeupInfo.Boundary(
+                                        keywordDetector.getKeywordStartOffset()!!,
+                                        keywordDetector.getKeywordEndOffset()!!,
+                                        keywordDetector.getKeywordDetectOffset()!!
+                                    ))
+                                } catch (th: Throwable) {
+                                    null
+                                }
+
                                 executeStartListeningInternal(
                                     audioProvider.getFormat(),
-                                    keywordDetector.getKeywordStartOffset(),
-                                    keywordDetector.getKeywordEndOffset(),
-                                    keywordDetector.getKeywordDetectOffset()
+                                    wakeupInfo
                                 )
 
                                 // To prevent releasing audio input resources, release after startListening.
@@ -170,9 +178,7 @@ class SpeechRecognizerAggregator(
                                 if (isTriggerStoppingByStartListening) {
                                     executeStartListeningInternal(
                                         audioFormat,
-                                        keywordStartPosition,
-                                        keywordEndPosition,
-                                        keywordDetectPosition
+                                        wakeupInfo
                                     )
                                     isTriggerStoppingByStartListening = false
 
@@ -211,11 +217,7 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun startListening(
-        keywordStartPosition: Long?,
-        keywordEndPosition: Long?,
-        keywordDetectPosition: Long?
-    ) {
+    override fun startListening(wakeupInfo: WakeupInfo?) {
         Log.d(
             TAG,
             "[startListening]"
@@ -223,7 +225,7 @@ class SpeechRecognizerAggregator(
         executor.submit {
             Log.d(
                 TAG,
-                "[startListening] on executor - keywordStartPosition: $keywordStartPosition, keywordEndPosition: $keywordEndPosition, keywordDetectPosition: $keywordDetectPosition, state: $state, keywordDetectorState: ${keywordDetector.getDetectorState()}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
+                "[startListening] on executor - wakeupInfo: $wakeupInfo, state: $state, keywordDetectorState: ${keywordDetector.getDetectorState()}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
             )
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.WAITING -> {
@@ -234,8 +236,7 @@ class SpeechRecognizerAggregator(
 
                     Log.d(TAG, "[startListening] will be started after trigger stopped.")
                     this.audioFormat = audioProvider.getFormat()
-                    this.keywordStartPosition = keywordStartPosition
-                    this.keywordEndPosition = keywordEndPosition
+                    this.wakeupInfo = wakeupInfo
                     isTriggerStoppingByStartListening = true
                     executeStopTrigger()
                 }
@@ -246,9 +247,7 @@ class SpeechRecognizerAggregator(
                 else -> {
                     executeStartListeningInternal(
                         audioProvider.getFormat(),
-                        keywordStartPosition,
-                        keywordEndPosition,
-                        keywordDetectPosition
+                        wakeupInfo
                     )
                 }
             }
@@ -257,9 +256,7 @@ class SpeechRecognizerAggregator(
 
     private fun executeStartListeningInternal(
         audioFormat: AudioFormat,
-        keywordStartPosition: Long?,
-        keywordEndPosition: Long?,
-        keywordDetectPosition: Long?
+        wakeupInfo: WakeupInfo?
     ) {
 //        if (speechProcessor.useSelfSource()) {
 //            audioProvider.reset()
@@ -270,9 +267,7 @@ class SpeechRecognizerAggregator(
             val result = speechProcessor.start(
                 inputStream,
                 audioFormat,
-                keywordStartPosition,
-                keywordEndPosition,
-                keywordDetectPosition
+                wakeupInfo
             )
             if (result.get() == false) {
                 setState(SpeechRecognizerAggregatorInterface.State.ERROR)
