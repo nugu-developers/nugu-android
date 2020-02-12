@@ -29,7 +29,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 class SpeechRecognizerAggregator(
-    private var keywordResources: KeywordResources,
+    private var keywordResource: KeywordResources,
     private val speechProcessor: SpeechProcessorDelegate,
     private val audioProvider: AudioProvider,
     private val handler: Handler = Handler(Looper.getMainLooper())
@@ -46,15 +46,10 @@ class SpeechRecognizerAggregator(
     )
 
     fun changeKeywordResource(keywordResource: KeywordResources) {
-        keywordDetector.keywordResources = TycheKeywordDetector.KeywordResources(keywordResource.netFilePath, keywordResource.searchFilePath)
+        this.keywordResource = keywordResource
     }
 
-    private val keywordDetector: TycheKeywordDetector = TycheKeywordDetector(
-        TycheKeywordDetector.KeywordResources(
-            keywordResources.netFilePath,
-            keywordResources.searchFilePath
-        )
-    )
+    private val keywordDetector: TycheKeywordDetector = TycheKeywordDetector()
 
     private val executor = Executors.newSingleThreadExecutor()
     private val listeners = HashSet<SpeechRecognizerAggregatorInterface.OnStateChangeListener>()
@@ -147,6 +142,7 @@ class SpeechRecognizerAggregator(
                         audioFormat.bitsPerSample,
                         audioFormat.numChannels
                     ),
+                    TycheKeywordDetector.KeywordResources(keywordResource.netFilePath, keywordResource.searchFilePath),
                     object : KeywordDetectorObserver {
                         override fun onDetected() {
                             Log.d(
