@@ -161,7 +161,7 @@ interface ASRAgentInterface {
     /**
      * Stop current recognition
      */
-    fun stopRecognition()
+    fun stopRecognition(cancel: Boolean = true)
 
     /** Add a listener to be called when a state changed.
      * @param listener the state listener that added

@@ -51,8 +51,8 @@ class SpeechProcessorDelegate(
     /**
      * Request stop epd to [ASRAgentInterface]
      */
-    fun stop() {
-        asrAgent.stopRecognition()
+    fun stop(cancel: Boolean = true) {
+        asrAgent.stopRecognition(cancel)
     }
 
     /** Add a listener to be called when a state changed.

@@ -104,7 +104,7 @@ class BottomSheetController(
         }
 
         btnClose.setOnClickListener {
-            ClientManager.speechRecognizerAggregator.stopListening()
+            ClientManager.speechRecognizerAggregator.stopListening(false)
         }
     }
 

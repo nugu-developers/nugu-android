@@ -52,6 +52,7 @@ class DefaultClientSpeechRecognizer(
         val resultListener: ASRAgentInterface.OnResultListener?
     ) {
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
+        var stopByCancel: Boolean? = null
     }
 
 
@@ -146,8 +147,9 @@ class DefaultClientSpeechRecognizer(
         }
     }
 
-    override fun stop() {
+    override fun stop(cancel: Boolean) {
         if (epdState.isActive()) {
+            currentRequest?.stopByCancel = cancel
             endPointDetector.stopDetector()
         }
 
@@ -244,11 +246,15 @@ class DefaultClientSpeechRecognizer(
             }
             AudioEndPointDetector.State.STOP -> {
                 epdState = AudioEndPointDetector.State.STOP
-                request.senderThread?.requestStop()
                 val errorType = request.errorTypeForCausingEpdStop
                 if(errorType != null) {
+                    request.senderThread?.requestStop()
                     handleError(errorType)
+                } else if(request.stopByCancel == false){
+                    request.senderThread?.requestFinish()
+                    SpeechRecognizer.State.SPEECH_END
                 } else {
+                    request.senderThread?.requestStop()
                     handleCancel()
                 }
                 return

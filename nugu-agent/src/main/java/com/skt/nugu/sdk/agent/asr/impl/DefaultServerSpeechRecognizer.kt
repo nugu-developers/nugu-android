@@ -178,8 +178,12 @@ class DefaultServerSpeechRecognizer(
         )
     }
 
-    override fun stop() {
-        currentRequest?.senderThread?.requestStop()
+    override fun stop(cancel: Boolean) {
+        if(cancel) {
+            currentRequest?.senderThread?.requestStop()
+        } else {
+            currentRequest?.senderThread?.requestFinish()
+        }
     }
 
     override fun addListener(listener: SpeechRecognizer.OnStateChangeListener) {

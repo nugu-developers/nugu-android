@@ -98,9 +98,12 @@ interface SpeechRecognizerAggregatorInterface {
     fun stop()
 
     /**
-     * Stop end point detector
+     * Stop end point detector.
+     * If [cancel] is true, stop epd and cancel asr processing.
+     * Otherwise, stop epd but finish asr processing.
+     * @param cancel the flag to cancel or finish processing
      */
-    fun stopListening()
+    fun stopListening(cancel: Boolean = true)
 
     /**
      * Stop keyword detector

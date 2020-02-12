@@ -305,14 +305,14 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun stopListening() {
+    override fun stopListening(cancel: Boolean) {
         Log.d(TAG, "[stopListening]")
         executor.submit {
             Log.d(TAG, "[stopListening] on executor")
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.WAKEUP,
                 SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
-                SpeechRecognizerAggregatorInterface.State.SPEECH_START -> speechProcessor.stop()
+                SpeechRecognizerAggregatorInterface.State.SPEECH_START -> speechProcessor.stop(cancel)
                 else -> {
                 }
             }
