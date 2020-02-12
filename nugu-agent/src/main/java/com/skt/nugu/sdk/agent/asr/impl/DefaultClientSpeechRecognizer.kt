@@ -35,8 +35,7 @@ class DefaultClientSpeechRecognizer(
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val audioEncoder: Encoder,
     private val messageSender: MessageSender,
-    private val endPointDetector: AudioEndPointDetector,
-    private val defaultTimeoutMillis: Long
+    private val endPointDetector: AudioEndPointDetector
 ) : SpeechRecognizer, InputProcessor
 , AudioEndPointDetector.OnStateChangedListener {
     companion object {
@@ -83,6 +82,7 @@ class DefaultClientSpeechRecognizer(
         context: String,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
         Logger.d(
@@ -124,10 +124,19 @@ class DefaultClientSpeechRecognizer(
                 eventMessage,
                 resultListener
             )
+
+        val listeningTimeoutSec:Int = if(payload != null) {
+            (payload.timeoutInMilliseconds / 1000L).toInt()
+        } else {
+            epdParam.timeoutInSeconds
+        }
+
         if (!endPointDetector.startDetector(
                 audioInputStream.createReader(),
                 audioFormat,
-                ((payload?.timeoutInMilliseconds ?: defaultTimeoutMillis) / 1000L).toInt()
+                listeningTimeoutSec,
+                epdParam.maxDurationInSeconds,
+                epdParam.pauseLengthInMilliseconds
             )
         ) {
             Logger.e(TAG, "[startProcessor] failed to start epd.")

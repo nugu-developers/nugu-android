@@ -21,6 +21,7 @@ import android.util.Log
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
 import com.skt.nugu.keensense.tyche.TycheKeywordDetector
+import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -65,6 +66,7 @@ class SpeechRecognizerAggregator(
 
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
+    private var epdParam: EndPointDetectorParam? = null
 
     init {
         keywordDetector.addDetectorStateObserver(object : KeywordDetectorStateObserver {
@@ -120,7 +122,7 @@ class SpeechRecognizerAggregator(
         })
     }
 
-    override fun startListeningWithTrigger() {
+    override fun startListeningWithTrigger(epdParam: EndPointDetectorParam?) {
         executor.submit {
             if (keywordDetector.getDetectorState() == KeywordDetectorStateObserver.State.ACTIVE) {
                 Log.w(TAG, "[startListeningWithTrigger] failed - already executing")
@@ -164,7 +166,8 @@ class SpeechRecognizerAggregator(
 
                                 executeStartListeningInternal(
                                     audioProvider.getFormat(),
-                                    wakeupInfo
+                                    wakeupInfo,
+                                    epdParam
                                 )
 
                                 // To prevent releasing audio input resources, release after startListening.
@@ -178,7 +181,8 @@ class SpeechRecognizerAggregator(
                                 if (isTriggerStoppingByStartListening) {
                                     executeStartListeningInternal(
                                         audioFormat,
-                                        wakeupInfo
+                                        this@SpeechRecognizerAggregator.wakeupInfo,
+                                        this@SpeechRecognizerAggregator.epdParam
                                     )
                                     isTriggerStoppingByStartListening = false
 
@@ -217,7 +221,7 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun startListening(wakeupInfo: WakeupInfo?) {
+    override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?) {
         Log.d(
             TAG,
             "[startListening]"
@@ -237,6 +241,7 @@ class SpeechRecognizerAggregator(
                     Log.d(TAG, "[startListening] will be started after trigger stopped.")
                     this.audioFormat = audioProvider.getFormat()
                     this.wakeupInfo = wakeupInfo
+                    this.epdParam = epdParam
                     isTriggerStoppingByStartListening = true
                     executeStopTrigger()
                 }
@@ -247,7 +252,8 @@ class SpeechRecognizerAggregator(
                 else -> {
                     executeStartListeningInternal(
                         audioProvider.getFormat(),
-                        wakeupInfo
+                        wakeupInfo,
+                        epdParam
                     )
                 }
             }
@@ -256,7 +262,8 @@ class SpeechRecognizerAggregator(
 
     private fun executeStartListeningInternal(
         audioFormat: AudioFormat,
-        wakeupInfo: WakeupInfo?
+        wakeupInfo: WakeupInfo?,
+        epdParam : EndPointDetectorParam?
     ) {
 //        if (speechProcessor.useSelfSource()) {
 //            audioProvider.reset()
@@ -267,7 +274,8 @@ class SpeechRecognizerAggregator(
             val result = speechProcessor.start(
                 inputStream,
                 audioFormat,
-                wakeupInfo
+                wakeupInfo,
+                epdParam
             )
             if (result.get() == false) {
                 setState(SpeechRecognizerAggregatorInterface.State.ERROR)

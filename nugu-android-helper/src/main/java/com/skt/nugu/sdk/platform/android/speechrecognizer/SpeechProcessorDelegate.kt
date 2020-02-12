@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.speechrecognizer
 
 import android.util.Log
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -42,9 +43,9 @@ class SpeechProcessorDelegate(
     /**
      * Request starting epd to [ASRAgentInterface]
      */
-    fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakeupInfo: WakeupInfo?): Future<Boolean> {
+    fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?): Future<Boolean> {
         Log.d(TAG, "[startDetector]")
-        return asrAgent.startRecognition(audioInputStream, audioFormat, wakeupInfo)
+        return asrAgent.startRecognition(audioInputStream, audioFormat, wakeupInfo, epdParam)
     }
 
     /**

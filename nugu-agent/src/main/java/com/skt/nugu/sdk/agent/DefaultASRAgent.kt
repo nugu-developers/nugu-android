@@ -84,15 +84,15 @@ class DefaultASRAgent(
         const val EVENT_STOP_RECOGNIZE = "StopRecognize"
 
         val EXPECT_SPEECH = NamespaceAndName(
-            AbstractASRAgent.NAMESPACE,
+            NAMESPACE,
             NAME_EXPECT_SPEECH
         )
         val RECOGNIZE = NamespaceAndName(
-            AbstractASRAgent.NAMESPACE,
+            NAMESPACE,
             NAME_RECOGNIZE
         )
         val NOTIFY_RESULT = NamespaceAndName(
-            AbstractASRAgent.NAMESPACE,
+            NAMESPACE,
             NAME_NOTIFY_RESULT
         )
 
@@ -112,6 +112,7 @@ class DefaultASRAgent(
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
     private var expectSpeechPayload: ExpectSpeechPayload? = null
+    private var endPointDetectorParam: EndPointDetectorParam? = null
 
     private var contextForRecognitionOnForegroundFocus: String? = null
 
@@ -172,8 +173,7 @@ class DefaultASRAgent(
             DefaultServerSpeechRecognizer(
                 inputProcessorManager,
                 audioEncoder,
-                messageSender,
-                defaultEpdTimeoutMillis
+                messageSender
             )
 
         clientEpdSpeechRecognizer = if (endPointDetector != null) {
@@ -181,8 +181,7 @@ class DefaultASRAgent(
                 inputProcessorManager,
                 audioEncoder,
                 messageSender,
-                endPointDetector,
-                defaultEpdTimeoutMillis
+                endPointDetector
             )
         } else {
             null
@@ -308,7 +307,7 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload)
+        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, null)
         setHandlingCompleted(info)
     }
 
@@ -491,6 +490,7 @@ class DefaultASRAgent(
             context,
             wakeupInfo,
             expectSpeechPayload,
+            endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult() {
                     speechToTextConverterEventObserver.onNoneResult()
@@ -606,7 +606,8 @@ class DefaultASRAgent(
     override fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        wakeupInfo: WakeupInfo?
+        wakeupInfo: WakeupInfo?,
+        param: EndPointDetectorParam?
     ): Future<Boolean> {
         Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
         return executor.submit(Callable<Boolean> {
@@ -615,7 +616,8 @@ class DefaultASRAgent(
                     audioInputStream,
                     audioFormat,
                     wakeupInfo,
-                    expectSpeechPayload
+                    expectSpeechPayload,
+                    param
                 )
             } else {
                 currentAudioProvider = audioProvider
@@ -635,7 +637,8 @@ class DefaultASRAgent(
                     newAudioInputStream,
                     newAudioFormat,
                     null,
-                    expectSpeechPayload
+                    expectSpeechPayload,
+                    param
                 )
             }
         })
@@ -692,7 +695,8 @@ class DefaultASRAgent(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?
+        payload: ExpectSpeechPayload?,
+        param: EndPointDetectorParam?
     ): Boolean {
         Logger.d(TAG, "[executeStartRecognition] state: $state")
         if (!canRecognizing()) {
@@ -707,6 +711,7 @@ class DefaultASRAgent(
         this.audioInputStream = audioInputStream
         this.audioFormat = audioFormat
         this.expectSpeechPayload = payload
+        this.endPointDetectorParam = param
 
 
         val waitResult = CountDownLatch(1)
