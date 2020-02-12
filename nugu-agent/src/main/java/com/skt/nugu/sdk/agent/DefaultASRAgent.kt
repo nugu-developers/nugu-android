@@ -464,7 +464,7 @@ class DefaultASRAgent(
                 }
             }
             FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
-            FocusState.NONE -> executeStopRecognition()
+            FocusState.NONE -> executeStopRecognition(true)
         }
     }
 
@@ -644,10 +644,10 @@ class DefaultASRAgent(
         })
     }
 
-    override fun stopRecognition() {
+    override fun stopRecognition(cancel: Boolean) {
         Logger.d(TAG, "[stopRecognition]")
         executor.submit {
-            executeStopRecognition()
+            executeStopRecognition(cancel)
         }
     }
 
@@ -733,8 +733,8 @@ class DefaultASRAgent(
         return result
     }
 
-    private fun executeStopRecognition() {
-        currentSpeechRecognizer.stop()
+    private fun executeStopRecognition(cancel: Boolean) {
+        currentSpeechRecognizer.stop(cancel)
     }
 
     private fun canRecognizing(): Boolean {

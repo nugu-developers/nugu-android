@@ -39,7 +39,7 @@ interface SpeechRecognizer {
     var enablePartialResult: Boolean
 
     fun start(audioInputStream: SharedDataStream, audioFormat: AudioFormat, context: String, wakeupInfo: WakeupInfo?, payload: ExpectSpeechPayload?, epdParam: EndPointDetectorParam, resultListener: ASRAgentInterface.OnResultListener?)
-    fun stop()
+    fun stop(cancel: Boolean)
 
     fun addListener(listener: OnStateChangeListener)
     fun removeListener(listener: OnStateChangeListener)
