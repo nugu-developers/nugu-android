@@ -43,6 +43,7 @@ import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
+import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -657,21 +658,17 @@ class NuguAndroidClient private constructor(
     override fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?,
-        wakewordDetectPosition: Long?
+        wakeupInfo: WakeupInfo?
     ): Future<Boolean> {
         Logger.d(
             TAG,
-            "[startRecognition] wakewordStartPosition: $wakewordStartPosition , wakewordEndPosition:$wakewordEndPosition, wakewordDetectPosition:$wakewordDetectPosition"
+            "[startRecognition] wakeupInfo: $wakeupInfo"
         )
 
         return asrAgent?.startRecognition(
             audioInputStream,
             audioFormat,
-            wakewordStartPosition,
-            wakewordEndPosition,
-            wakewordDetectPosition
+            wakeupInfo
         ) ?: ImmediateBooleanFuture(false)
     }
 

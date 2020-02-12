@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -130,17 +131,13 @@ interface ClientHelperInterface {
      *
      * @param audioInputStream the audio input stream to read for recognizing
      * @param audioFormat the format of [audioInputStream]
-     * @param wakewordStartPosition the start position of wakeword at [audioInputStream] if exist.
-     * @param wakewordEndPosition the end position of wakeword at [audioInputStream] if exist.
-     * @param wakewordDetectPosition the detect position of wakeword at [audioInputStream], null if not exist.
+     * @param wakeupInfo the wakeupInfo of wakeword for [audioInputStream] if exist.
      * @return the boolean future, true: if recognize started, false: otherwise
      */
     fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        wakewordStartPosition: Long?,
-        wakewordEndPosition: Long?,
-        wakewordDetectPosition: Long?
+        wakeupInfo: WakeupInfo?
     ): Future<Boolean>
 
     /**

@@ -15,21 +15,15 @@
  */
 package com.skt.nugu.sdk.agent.asr.impl
 
-import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
-import com.skt.nugu.sdk.agent.asr.SpeechRecognizer
-import com.skt.nugu.sdk.agent.asr.WakeupBoundary
 import com.skt.nugu.sdk.agent.DefaultASRAgent
+import com.skt.nugu.sdk.agent.asr.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.agent.asr.AsrNotifyResultPayload
-import com.skt.nugu.sdk.agent.asr.AsrRecognizeEventPayload
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.ScheduledFuture
@@ -73,17 +67,34 @@ class DefaultServerSpeechRecognizer(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
         context: String,
-        wakeupBoundary: WakeupBoundary?,
+        wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
         Logger.d(
             TAG,
-            "[startProcessor] wakeupBoundary:$wakeupBoundary, currentInputPosition: ${audioInputStream.getPosition()}"
+            "[startProcessor] wakeupInfo:$wakeupInfo, currentInputPosition: ${audioInputStream.getPosition()}"
         )
 
-        val sendPositionAndWakeupBoundary =
-            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
+        val payloadWakeupInfo: PayloadWakeup?
+        val sendPosition: Long?
+        if(wakeupInfo != null) {
+            with(wakeupInfo) {
+                val bytesPerSample = audioFormat.getBytesPerSample()
+                val offsetPosition = 500 * audioFormat.getBytesPerMillis()
+                sendPosition = max(boundary.startPosition - offsetPosition, 0)
+                payloadWakeupInfo = PayloadWakeup(
+                    word, PayloadWakeup.Boundary(
+                        (boundary.startPosition - sendPosition) / bytesPerSample,
+                        (boundary.endPosition - sendPosition) / bytesPerSample,
+                        (boundary.detectPosition - sendPosition) / bytesPerSample
+                    )
+                )
+            }
+        } else {
+            sendPosition = null
+            payloadWakeupInfo = null
+        }
 
         val eventMessage = EventMessageRequest.Builder(
             context,
@@ -99,7 +110,7 @@ class DefaultServerSpeechRecognizer(
                 domainTypes = payload?.domainTypes,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
-                wakeupBoundary = sendPositionAndWakeupBoundary.second
+                wakeup = payloadWakeupInfo
             ).toJsonString()
         ).build()
 
@@ -108,7 +119,7 @@ class DefaultServerSpeechRecognizer(
             val thread = createSenderThread(
                 audioInputStream,
                 audioFormat,
-                sendPositionAndWakeupBoundary,
+                sendPosition,
                 eventMessage
             )
             currentRequest =
@@ -127,47 +138,19 @@ class DefaultServerSpeechRecognizer(
         }
     }
 
-    private fun computeSendPositionAndWakeupBoundary(
-        audioFormat: AudioFormat,
-        wakeupBoundary: WakeupBoundary?
-    ): Pair<Long?, WakeupBoundary?> {
-        val sendPosition: Long?
-        val sendWakeupBoundary: WakeupBoundary?
-        if (wakeupBoundary != null) {
-            // 화자인식 ON && wakeup에 의한 시작 : wakeword 음성도 전송한다.
-            // send stream before 500ms to ready at server ASR
-            val offsetPosition = 500 * audioFormat.getBytesPerMillis()
-            val wakewordStartPosition =
-                wakeupBoundary.startSamplePosition * audioFormat.getBytesPerSample()
-            sendPosition = max(wakewordStartPosition - offsetPosition, 0)
-            val sendSamplePosition = sendPosition / audioFormat.getBytesPerSample()
-            sendWakeupBoundary = WakeupBoundary(
-                wakeupBoundary.detectSamplePosition - sendSamplePosition,
-                wakeupBoundary.startSamplePosition - sendSamplePosition,
-                wakeupBoundary.endSamplePosition - sendSamplePosition
-            )
-        } else {
-            // 화자인식 OFF :
-            sendPosition = null
-            sendWakeupBoundary = null
-        }
-
-        return Pair(sendPosition, sendWakeupBoundary)
-    }
-
     private fun createSenderThread(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
-        sendPositionAndWakeupBoundary: Pair<Long?, WakeupBoundary?>,
+        sendPosition: Long?,
         eventMessage: EventMessageRequest
     ): SpeechRecognizeAttachmentSenderThread {
         Logger.d(
             TAG,
-            "[createSenderThread] sendPositionAndWakeupBoundary :${sendPositionAndWakeupBoundary} / bytesPerMillis : ${audioFormat.getBytesPerMillis()}"
+            "[createSenderThread] sendPosition :$sendPosition / bytesPerMillis : ${audioFormat.getBytesPerMillis()}"
         )
 
         return SpeechRecognizeAttachmentSenderThread(
-            audioInputStream.createReader(sendPositionAndWakeupBoundary.first),
+            audioInputStream.createReader(sendPosition),
             audioFormat,
             messageSender,
             object :

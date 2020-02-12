@@ -16,15 +16,9 @@
 package com.skt.nugu.sdk.agent.asr.impl
 
 import com.skt.nugu.sdk.agent.DefaultASRAgent
-import com.skt.nugu.sdk.agent.asr.AsrNotifyResultPayload
-import com.skt.nugu.sdk.agent.asr.AsrRecognizeEventPayload
-import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
-import com.skt.nugu.sdk.agent.asr.SpeechRecognizer
-import com.skt.nugu.sdk.agent.asr.WakeupBoundary
+import com.skt.nugu.sdk.agent.asr.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -52,7 +46,7 @@ class DefaultClientSpeechRecognizer(
     private data class RecognizeRequest(
         val audioInputStream: SharedDataStream,
         val audioFormat: AudioFormat,
-        val wakeupBoundary: WakeupBoundary?,
+        val wakeupInfo: WakeupInfo?,
         val sendPositionAndWakeupBoundary: Pair<Long?, WakeupBoundary?>,
         var senderThread: SpeechRecognizeAttachmentSenderThread?,
         val eventMessage: EventMessageRequest,
@@ -87,13 +81,13 @@ class DefaultClientSpeechRecognizer(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
         context: String,
-        wakeupBoundary: WakeupBoundary?,
+        wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
         Logger.d(
             TAG,
-            "[startProcessor] wakeupBoundary:$wakeupBoundary, currentInputPosition: ${audioInputStream.getPosition()}"
+            "[startProcessor] wakeupInfo:$wakeupInfo, currentInputPosition: ${audioInputStream.getPosition()}"
         )
 
 //        val sendPositionAndWakeupBoundary =
@@ -124,7 +118,7 @@ class DefaultClientSpeechRecognizer(
             RecognizeRequest(
                 audioInputStream,
                 audioFormat,
-                wakeupBoundary,
+                wakeupInfo,
                 sendPositionAndWakeupBoundary,
                 null,
                 eventMessage,
@@ -274,7 +268,7 @@ class DefaultClientSpeechRecognizer(
 
         Logger.d(
             TAG,
-            "[startSpeechToTextConverter] send position : $sendPosition / send wakeupBoundary ${sendPositionAndWakeupBoundary.second} / wakeupBoundary : ${request.wakeupBoundary} / bytesPerMillis : ${request.audioFormat.getBytesPerMillis()}"
+            "[startSpeechToTextConverter] send position : $sendPosition / send wakeupBoundary ${sendPositionAndWakeupBoundary.second} / wakeupInfo : ${request.wakeupInfo} / bytesPerMillis : ${request.audioFormat.getBytesPerMillis()}"
         )
 
         with(request) {
