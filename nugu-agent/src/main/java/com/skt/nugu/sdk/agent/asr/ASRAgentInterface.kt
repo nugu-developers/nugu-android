@@ -148,12 +148,14 @@ interface ASRAgentInterface {
      * @param audioFormat the audio format for [audioInputStream].
      * @param wakeupInfo the wakeup info(boundary & word) causing this recognition. The boundary should be relative position for [audioInputStream],
      * If the recognition was not invoked by wakeup, set to null.
+     * @param param the params for EPD
      * @return true: if start, false: failed to start(already recognizing or others).
      */
     fun startRecognition(
         audioInputStream: SharedDataStream? = null,
         audioFormat: AudioFormat? = null,
-        wakeupInfo: WakeupInfo? = null
+        wakeupInfo: WakeupInfo? = null,
+        param: EndPointDetectorParam? = null
     ): Future<Boolean>
 
     /**

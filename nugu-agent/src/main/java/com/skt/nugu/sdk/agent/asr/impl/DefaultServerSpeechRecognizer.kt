@@ -34,8 +34,7 @@ import kotlin.math.max
 class DefaultServerSpeechRecognizer(
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val audioEncoder: Encoder,
-    private val messageSender: MessageSender,
-    private val defaultTimeoutMillis: Long
+    private val messageSender: MessageSender
 ) : SpeechRecognizer, InputProcessor {
     companion object {
         private const val TAG = "DefaultServerSpeechRecognizer"
@@ -69,6 +68,7 @@ class DefaultServerSpeechRecognizer(
         context: String,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
         Logger.d(
@@ -114,8 +114,13 @@ class DefaultServerSpeechRecognizer(
             ).toJsonString()
         ).build()
 
-
         if (messageSender.sendMessage(eventMessage)) {
+            val listeningTimeoutSec: Long = if(payload != null) {
+                (payload.timeoutInMilliseconds / 1000L)
+            } else {
+                epdParam.timeoutInSeconds.toLong()
+            }
+
             val thread = createSenderThread(
                 audioInputStream,
                 audioFormat,
@@ -132,7 +137,7 @@ class DefaultServerSpeechRecognizer(
             timeoutFuture?.cancel(true)
             timeoutFuture = timeoutScheduler.schedule({
                 handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
-            }, defaultTimeoutMillis, TimeUnit.SECONDS)
+            }, listeningTimeoutSec, TimeUnit.SECONDS)
         } else {
             Logger.w(TAG, "[startProcessor] failed to send recognize event")
         }

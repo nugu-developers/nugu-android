@@ -52,7 +52,7 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProc
             }
         }
 
-        if(timeoutFutureRemoved && !removedDialogRequestId.isNullOrBlank()) {
+        if(timeoutFutureRemoved && !removedDialogRequestId.isBlank()) {
             requests.remove(removedDialogRequestId)
         }
     }

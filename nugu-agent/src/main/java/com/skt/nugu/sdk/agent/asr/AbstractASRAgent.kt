@@ -34,7 +34,7 @@ abstract class AbstractASRAgent(
     protected val audioProvider: AudioProvider,
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
-    defaultEpdTimeoutMillis: Long,
+    protected val defaultEpdTimeoutMillis: Long,
     protected val channelName: String
 ) : AbstractCapabilityAgent(),
     ASRAgentInterface,

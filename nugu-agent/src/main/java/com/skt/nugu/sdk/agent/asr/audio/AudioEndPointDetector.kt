@@ -80,12 +80,16 @@ interface AudioEndPointDetector {
      * @param reader reader for audio source
      * @param audioFormat audio format for [reader]'s stream
      * @param timeoutInSeconds the silence timeout in seconds
+     * @param maxDurationInSeconds the allowed maximum speech duration from SPEECH_START to SPEECH_END in seconds (default = 10sec)
+     * @param pauseLengthInMilliseconds the inter-breath time which determine speech end in milliseconds(default = 700ms)
      * @return true: success to start, false: otherwise.
      */
     fun startDetector(
         reader: SharedDataStream.Reader,
         audioFormat: AudioFormat,
-        timeoutInSeconds: Int
+        timeoutInSeconds: Int,
+        maxDurationInSeconds: Int = 10,
+        pauseLengthInMilliseconds: Int = 700
     ): Boolean
 
     /**
