@@ -41,6 +41,7 @@ class SpeechRecognizerAggregator(
     }
 
     data class KeywordResources(
+        val keyword: String,
         val netFilePath: String,
         val searchFilePath: String
     )
