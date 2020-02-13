@@ -250,14 +250,15 @@ class DefaultClientSpeechRecognizer(
                 if(errorType != null) {
                     request.senderThread?.requestStop()
                     handleError(errorType)
+                    return
                 } else if(request.stopByCancel == false){
                     request.senderThread?.requestFinish()
                     SpeechRecognizer.State.SPEECH_END
                 } else {
                     request.senderThread?.requestStop()
                     handleCancel()
+                    return
                 }
-                return
             }
 
             AudioEndPointDetector.State.ERROR -> {
