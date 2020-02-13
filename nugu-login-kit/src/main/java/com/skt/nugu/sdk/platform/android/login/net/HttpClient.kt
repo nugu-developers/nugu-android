@@ -28,11 +28,6 @@ import java.security.cert.X509Certificate
  */
 class HttpClient(private val baseUrl: String) {
     /**
-     * HTTP Status-Code 499(not official) : custom client error.
-     */
-    private val HTTP_CLIENT_ERROR = 499
-
-    /**
      * Returns a [HttpsURLConnection] instance
      */
     private fun getConnection(uri: String) : HttpsURLConnection{
@@ -94,9 +89,10 @@ class HttpClient(private val baseUrl: String) {
     }
 
     private fun readStream(inputStream: BufferedInputStream): String {
-        val bufferedReader = BufferedReader(InputStreamReader(inputStream))
         val stringBuilder = StringBuilder()
-        bufferedReader.forEachLine { stringBuilder.append(it) }
+        BufferedReader(InputStreamReader(inputStream)).forEachLine {
+            stringBuilder.append(it)
+        }
         return stringBuilder.toString()
     }
 }

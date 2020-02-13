@@ -15,11 +15,13 @@
  */
 package com.skt.nugu.sdk.platform.android.login.auth
 
+import com.skt.nugu.sdk.platform.android.login.exception.BaseException
 import java.util.*
 import java.net.HttpURLConnection
 import com.skt.nugu.sdk.platform.android.login.net.HttpClient
 import org.json.JSONObject
 import com.skt.nugu.sdk.platform.android.login.net.FormEncodingBuilder
+import org.json.JSONException
 import java.io.IOException
 import kotlin.math.min
 
@@ -82,19 +84,18 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
 
-
         when (GrantType.valueOf(grantType.toUpperCase())) {
             GrantType.CLIENT_CREDENTIALS -> {
                 form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
             }
             GrantType.AUTHORIZATION_CODE -> {
-                if (!refreshToken.isNullOrBlank()) {
+                refreshToken?.let {
                     form.add("grant_type", "refresh_token")
-                        .add("refresh_token", refreshToken)
-                } else {
+                        .add("refresh_token", it)
+                } ?: run {
                     form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
-                        .add("code", authCode ?: "")
-                        .add("redirect_uri", options.redirectUri ?: "")
+                        .add("code", authCode.toString())
+                        .add("redirect_uri", options.redirectUri.toString())
                 }
             }
         }
@@ -108,16 +109,24 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 }
                 HttpURLConnection.HTTP_UNAUTHORIZED,
                 HttpURLConnection.HTTP_BAD_REQUEST -> {
-                    val json =
-                        if (response.body.isEmpty()) JSONObject() else JSONObject(response.body)
-                    val error = if (json.has("error")) json.get("error").toString() else "unknown error"
-                    val resultMessage = if (json.has("error_description")) json.get("error_description").toString() else "unknown description"
-                    throw UnAuthenticatedException("${error} : ${resultMessage}")
+                    credential.clear()
+
+                    val body = JSONObject(response.body)
+                    throw BaseException.UnAuthenticatedException(
+                        error = body.get("error").toString(),
+                        message = body.get("error_description").toString()
+                    )
                 }
                 else -> {
                     if (shouldRetry(retriesAttempted = ++retriesAttempted, statusCode = response.code)) {
                         return AuthFlowState.REQUEST_ISSUE_TOKEN
                     }
+                    credential.clear()
+
+                    throw BaseException.HttpErrorException(
+                        response.code,
+                        response.body
+                    )
                 }
             }
         } catch (e: Throwable) {
@@ -126,8 +135,6 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             }
             throw e
         }
-        credential.clear()
-        return AuthFlowState.STOPPING
     }
 
     /**

@@ -83,13 +83,13 @@ class NuguOAuth private constructor(
         }
     }
 
-    private var lastErrorReason: String = ""
+    private var authError: NuguOAuthError? = null
 
     private val executor = Executors.newSingleThreadExecutor()
     // current state
     private var state = AuthStateListener.State.UNINITIALIZED
-    private var authCode: String? = ""
-    private var refreshToken: String? = ""
+    private var authCode: String? = null
+    private var refreshToken: String? = null
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
         NuguOAuthClient(authServerBaseUrl)
@@ -159,29 +159,14 @@ class NuguOAuth private constructor(
                 )
             }.onSuccess {
                 setAuthState(AuthStateListener.State.REFRESHED)
-                notifyOnLoginListener(true)
+                setResult(true)
             }.onFailure {
                 // If UnAuthenticatedException in AuthorizationFlow,
                 // remove existing token from cache.
-                lastErrorReason = it.message.toString()
+                authError = NuguOAuthError(it)
                 setAuthState(AuthStateListener.State.UNRECOVERABLE_ERROR)
-
-                if (it is UnAuthenticatedException) {
-                    clearAuthorization()
-                }
             }
         }
-    }
-
-    private fun notifyOnLoginListener(result: Boolean, reason: String = "") {
-        onceOnLoginListener?.let {
-            if (result) {
-                it.onSuccess(client.getCredentials())
-            } else {
-                it.onError(reason)
-            }
-        }
-        onceOnLoginListener = null
     }
 
     /**
@@ -237,7 +222,7 @@ class NuguOAuth private constructor(
 
         // notify state change
         listeners.forEach {
-            val consumedEvent = it.onAuthStateChanged(this.state)
+            val consumedEvent = it.onAuthStateChanged(newState)
             if (!consumedEvent) {
                 removeAuthStateListener(it)
             }
@@ -310,8 +295,8 @@ class NuguOAuth private constructor(
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceOnLoginListener = listener
-        this.refreshToken = ""
-        this.authCode = ""
+        this.refreshToken = null
+        this.authCode = null
 
         checkClientId()
         checkClientSecret()
@@ -328,7 +313,16 @@ class NuguOAuth private constructor(
      * @param true is success, otherwise false
      * */
     fun setResult(result: Boolean) {
-        notifyOnLoginListener(result, lastErrorReason)
+        onceOnLoginListener?.let {
+            if (result) {
+                it.onSuccess(client.getCredentials())
+            } else {
+                authError?.apply {
+                    it.onError(this)
+                }
+            }
+        }
+        onceOnLoginListener = null
     }
 
     /**
@@ -341,18 +335,10 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
 
-        this.login(object :
-            AuthStateListener {
-            override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-                if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
-                    setResult(true)
-                    return false
-                } else if (newState == AuthStateListener.State.UNRECOVERABLE_ERROR /* Authentication error */) {
-                    setResult(false)
-                    return false
-                }
-                return true
-            }
+        this.login(object : AuthStateListener {
+            override fun onAuthStateChanged(
+                newState: AuthStateListener.State
+            ) = handleAuthState(newState)
         })
     }
 
@@ -366,23 +352,15 @@ class NuguOAuth private constructor(
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceOnLoginListener = listener
         this.authCode = authCode
-        this.refreshToken = ""
+        this.refreshToken = null
 
         checkClientId()
         checkClientSecret()
 
-        this.login(object :
-            AuthStateListener {
-            override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-                if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
-                    setResult(true)
-                    return false
-                } else if (newState == AuthStateListener.State.UNRECOVERABLE_ERROR /* Authentication error */) {
-                    setResult(false)
-                    return false
-                }
-                return true
-            }
+        this.login(object : AuthStateListener {
+            override fun onAuthStateChanged(
+                newState: AuthStateListener.State
+            ) = handleAuthState(newState)
         })
     }
 
@@ -393,23 +371,34 @@ class NuguOAuth private constructor(
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceOnLoginListener = listener
         this.refreshToken = refreshToken
+        this.authCode = null
 
         checkClientId()
         checkClientSecret()
 
-        this.login(object :
-            AuthStateListener {
-            override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-                if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
-                    setResult(true)
-                    return false
-                } else if (newState == AuthStateListener.State.UNRECOVERABLE_ERROR /* Authentication error */) {
-                    setResult(false)
-                    return false
-                }
-                return true
-            }
+        this.login(object : AuthStateListener {
+            override fun onAuthStateChanged(
+                newState: AuthStateListener.State
+            ) = handleAuthState(newState)
         })
+    }
+
+    private fun handleAuthState(newState: AuthStateListener.State) : Boolean {
+        when(newState) {
+            AuthStateListener.State.EXPIRED,
+            AuthStateListener.State.UNINITIALIZED -> { /* noop */}
+            AuthStateListener.State.REFRESHED -> {
+                /* Authentication successful */
+                setResult(true)
+                return false
+            }
+            AuthStateListener.State.UNRECOVERABLE_ERROR -> {
+                /* Authentication error */
+                setResult(false)
+                return false
+            }
+        }
+        return true
     }
 
     private fun checkRedirectUri() {
