@@ -146,15 +146,6 @@ class DefaultBluetoothAgent(
         @SerializedName("playServiceId") val playServiceId: String
     )
 
-    private fun getPairedDevices(): HashMap<String, Boolean> {
-        val pairedDevices = HashMap<String, Boolean>()
-
-        bluetoothProvider?.let {
-            pairedDevices[KEY_HAS_PAIRED_DEVICES] = it.activeDevice() != null
-        }
-        return pairedDevices
-    }
-
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val nonBlockingPolicy = BlockingPolicy()
 
@@ -234,7 +225,7 @@ class DefaultBluetoothAgent(
         this.listener = listener
     }
 
-    private fun sendEvent(name: String, playServiceId: String, props: HashMap<String, Boolean>? = null): Boolean {
+    private fun sendEvent(name: String, playServiceId: String, hasPairedDevices: Boolean? = null): Boolean {
         val waitResult = CountDownLatch(1)
         var result = false
         contextManager.getContext(object : ContextRequester {
@@ -242,8 +233,8 @@ class DefaultBluetoothAgent(
                 val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
                     .payload(JsonObject().apply {
                         addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                        props?.forEach {
-                            addProperty(it.key, it.value)
+                        hasPairedDevices?.let {
+                            addProperty(KEY_HAS_PAIRED_DEVICES, it)
                         }
                     }.toString()).build()
 
@@ -297,8 +288,8 @@ class DefaultBluetoothAgent(
             eventBus.subscribe(arrayListOf(
                 EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED,
                 EVENT_NAME_START_DISCOVERABLE_MODE_FAILED), object : BluetoothEventBus.Listener {
-                override fun call(name: String): Boolean {
-                    return sendEvent(name, payload.playServiceId, getPairedDevices())
+                override fun call(name: String, value: Any): Boolean {
+                    return sendEvent(name, payload.playServiceId, value as Boolean)
                 }
             }).subscribe(arrayListOf(
                 EVENT_NAME_CONNECT_SUCCEEDED,
@@ -465,21 +456,25 @@ class DefaultBluetoothAgent(
 
     override fun sendBluetoothEvent(event: BluetoothEvent): Boolean {
         when (event) {
-            is BluetoothEvent.DiscoverableEvent -> {
-                Logger.d(TAG, "discoverable : ${event.enabled}")
-                return when (event.enabled) {
-                    true -> {
-                        eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED)
-                    }
-                    false -> {
-                        eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED)
-                    }
-                }
+            is BluetoothEvent.StartDiscoverableEvent-> {
+                Logger.d(TAG, "discoverable start")
+                return eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED, event.hasPairedDevices)
+            }
+            is BluetoothEvent.StartDiscoverableFailedEvent -> {
+                Logger.d(TAG, "discoverable start failed")
+                return eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_FAILED, event.hasPairedDevices)
+            }
+            is BluetoothEvent.FinishDiscoverableEvent -> {
+                Logger.d(TAG, "discoverable finish")
+                return eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED)
+            }
+            is BluetoothEvent.FinishDiscoverableFailedEvent -> {
+                Logger.d(TAG, "discoverable finish failed")
+                return eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_FAILED)
             }
             is BluetoothEvent.ConnectedEvent -> {
                 Logger.d(TAG, "connected device")
                 return eventBus.post(EVENT_NAME_CONNECT_SUCCEEDED)
-
             }
             is BluetoothEvent.ConnectFailedEvent -> {
                 Logger.d(TAG, "ConnectFailed device")

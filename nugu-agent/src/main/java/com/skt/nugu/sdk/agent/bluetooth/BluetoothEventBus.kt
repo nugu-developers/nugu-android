@@ -24,8 +24,10 @@ internal class BluetoothEventBus {
     private val callbacks = ConcurrentHashMap<Int, ConcurrentHashMap<String, Listener>>()
 
     interface Listener {
-        fun call(name: String) : Boolean
+        fun call(name: String) : Boolean { return false }
+        fun call(name: String, value: Any) : Boolean { return false }
     }
+
     /**
      * Listens on the event.
      * @param names an event names.
@@ -71,6 +73,20 @@ internal class BluetoothEventBus {
             for (callback in it.value) {
                 if (callback.key == name) {
                     callback.value.call(name).let {result->
+                        unsubscribe(it.key)
+                        return result
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    fun post(name: String, value: Any): Boolean {
+        this.callbacks.forEach {
+            for (callback in it.value) {
+                if (callback.key == name) {
+                    callback.value.call(name, value).let { result ->
                         unsubscribe(it.key)
                         return result
                     }

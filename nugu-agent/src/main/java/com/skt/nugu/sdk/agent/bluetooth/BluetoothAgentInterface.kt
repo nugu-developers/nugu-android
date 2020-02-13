@@ -62,18 +62,20 @@ interface BluetoothAgentInterface {
      */
     sealed class BluetoothEvent {
         /**
-         * Event indicating that a local device has changed to discoverable mode.
-         * @param enabled true is enabled, otherwise false
+         * Event indicating that a local device has changed to discoverable mode(startDiscoverable, finishDiscoverable).
          */
-        class DiscoverableEvent(val enabled: Boolean) : BluetoothEvent()
+        class StartDiscoverableEvent(val hasPairedDevices: Boolean) : BluetoothEvent()
+        class StartDiscoverableFailedEvent(val hasPairedDevices: Boolean) : BluetoothEvent()
+        class FinishDiscoverableEvent : BluetoothEvent()
+        class FinishDiscoverableFailedEvent : BluetoothEvent()
         /**
-         * Event indicating that a remote device has changed to connections(Connected, ConnectFailed, Disconnected) .
+         * Event indicating that a remote device has changed to connections(Connected, ConnectFailed, Disconnected).
          */
         class ConnectedEvent : BluetoothEvent()
         class ConnectFailedEvent : BluetoothEvent()
         class DisconnectedEvent : BluetoothEvent()
         /**
-         * Event indicating that an AVRCP command has changed.
+         * Event indicating that an [AVRCPCommand] has changed.
          */
         class AVRCPEvent(val command: AVRCPCommand) : BluetoothEvent()
     }
