@@ -173,6 +173,12 @@ class DefaultDelegationAgent(
     ): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
+        val jsonData = try {
+            JsonParser.parseString(data).asJsonObject
+        } catch (th: Throwable) {
+            throw IllegalArgumentException("data is not jsonObject", th)
+        }
+
         listener?.let {
             requestListenerMap[dialogRequestId] = it
         }
@@ -186,7 +192,10 @@ class DefaultDelegationAgent(
                             NAMESPACE,
                             NAME_REQUEST,
                             VERSION
-                        ).dialogRequestId(dialogRequestId).build()
+                        ).payload(JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                            add("data", jsonData)
+                        }.toString()).dialogRequestId(dialogRequestId).build()
                     )
                     onSendEventFinished(dialogRequestId)
                 }
