@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+
+Version 0.8.4 *(2020-02-13)*
+----------------------------
+* New: Allow to detail control for ASR options (#282)
+* New: Add flag at stopListening() to indicate cancel or finish ASR process (#284)
+* Fix: Add missing payload at Delegate's Request event (#286)
+* Improve: Add wakeup word for KeywordResource (#279)
+
 Version 0.8.3 *(2020-02-11)*
 ----------------------------
 * New: Implement battery agent (#249)
