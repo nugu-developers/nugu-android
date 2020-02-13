@@ -54,6 +54,7 @@ interface DelegationAgentInterface {
      * @param playServiceId the identifier for play which sends request
      * @param data the data structured JSON
      * @param listener the listener to be notified request finished (success or error)
+     * @throws IllegalArgumentException if there are invalid param given
      * @return the dialogRequestId for request
      */
     fun request(playServiceId: String, data: String, listener: OnRequestListener?): String
