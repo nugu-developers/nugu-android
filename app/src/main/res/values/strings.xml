@@ -12,6 +12,8 @@
     <string name="button_fab_description">start listening</string>
 
     <string name="authentication_failed">Authentication failed.</string>
+    <string name="service_finished">{sampleapp}의 누구 서비스가 종료되었습니다.</string>
+
     <string name="connection_failed">Connection to server failed.</string>
     <string name="reconnecting">Reconnecting</string>
 

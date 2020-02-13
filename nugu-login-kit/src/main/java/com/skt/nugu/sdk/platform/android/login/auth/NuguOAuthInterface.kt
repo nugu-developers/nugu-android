@@ -65,8 +65,13 @@ interface NuguOAuthInterface {
 
     /**
      * Refresh Token from Type1.
+     * @param refreshToken refresh Token
      * @param listener Listener to receive result.
-     * 실행결과를 수신합니다.
+     *
+     *
+     * providers will return a "Refresh Token" when you sign-in initially.
+     * When our session expires, we can exchange the refresh token to get new auth tokens.
+     * > Auth tokens are not the same as a Refresh token
      */
     fun loginSilently(refreshToken : String, listener: OnLoginListener)
 
@@ -88,9 +93,9 @@ interface NuguOAuthInterface {
 
         /**
          * Listener called when a login fails
-         * @param reason of failure
+         * @param error the NuguOAuthError
          */
-        fun onError(reason: String)
+        fun onError(error: NuguOAuthError)
     }
 
     /**

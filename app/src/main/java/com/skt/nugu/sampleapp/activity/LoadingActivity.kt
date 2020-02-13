@@ -20,14 +20,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import com.skt.nugu.sdk.platform.android.login.auth.Credentials
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import com.skt.nugu.sdk.platform.android.ux.widget.Snackbar
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
+import com.skt.nugu.sdk.platform.android.login.auth.*
 import java.math.BigInteger
 import java.security.SecureRandom
 
@@ -90,12 +87,21 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                             startIntroActivity()
                         }
 
-                        override fun onError(reason: String) {
-                            Log.e(TAG, "error($reason)\nPlease check the clientSecret, clientId, redirectUri")
-                            // please try again in a few minutes
+                        override fun onError(error: NuguOAuthError) {
+                            // The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
+                            Log.e(TAG, "An unexpected error has occurred. " +
+                                    "Please check the logs for details\n" +
+                                    "$error")
+                            if(error.error == NuguOAuthError.INVALID_CLIENT && error.message == NuguOAuthError.FINISHED) {
+                                Snackbar.with(findViewById(R.id.baseLayout))
+                                    .message(R.string.service_finished)
+                                    .show()
+                                return
+                            }
                             Snackbar.with(findViewById(R.id.baseLayout))
                                 .message(R.string.authorization_failure_message)
                                 .show()
+
                         }
                     })
                 else -> authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
@@ -106,13 +112,23 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                         startMainActivity()
                     }
 
-                    override fun onError(reason: String) {
-                        // please try again in a few minutes
+                    override fun onError(error: NuguOAuthError) {
+                        Log.e(TAG, "An unexpected error has occurred." +
+                                "Please check the logs for details\n" +
+                                "$error")
+                        // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
+                        PreferenceHelper.credentials(this@LoadingActivity, "")
+
+                        if(error.error == NuguOAuthError.INVALID_CLIENT && error.message == NuguOAuthError.FINISHED) {
+                            Snackbar.with(findViewById(R.id.baseLayout))
+                                .message(R.string.service_finished)
+                                .show()
+                            return
+                        }
+
                         Snackbar.with(findViewById(R.id.baseLayout))
                             .message(R.string.authorization_failure_message)
                             .show()
-                        // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
-                        PreferenceHelper.credentials(this@LoadingActivity, "")
                     }
                 })
             }
@@ -127,7 +143,7 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
                     startMainActivity()
                 }
 
-                override fun onError(reason: String) {
+                override fun onError(error: NuguOAuthError) {
                     // please try again in a few minutes
                     Snackbar.with(findViewById(R.id.baseLayout))
                         .message(R.string.authorization_failure_message)
