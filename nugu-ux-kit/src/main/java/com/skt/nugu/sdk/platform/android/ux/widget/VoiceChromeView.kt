@@ -60,7 +60,9 @@ class VoiceChromeView : FrameLayout {
             it.enableMergePathsForKitKatAndAbove(true)
             it.addAnimatorListener(animationListener)
             addView(it, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-            setAnimation(R.raw.lp, LottieDrawable.INFINITE)
+            // Preload in cache
+            it.setAnimation(R.raw.lp)
+            it.setAnimation(R.raw.la)
         }
     }
 
@@ -89,18 +91,11 @@ class VoiceChromeView : FrameLayout {
      * @param count is Repeat count
      */
     private fun addAnimation(resId: Int, count: Int = LottieDrawable.INFINITE) {
+        queue.add(AnimationInfo(resId, count))
+
         this.post {
-            queue.add(AnimationInfo(resId, count))
             nextAnimation()
         }
-    }
-
-    /**
-     * Clear animation
-     * resid, 0 means draw transparent screen
-     */
-    private fun resetAnimation() {
-        this.addAnimation(0,LottieDrawable.INFINITE)
     }
 
     /**
@@ -110,10 +105,11 @@ class VoiceChromeView : FrameLayout {
      * @param count is Repeat count
      */
     private fun setAnimation(resId: Int, count: Int = LottieDrawable.INFINITE) {
+        queue.clear()
+        queue.add(AnimationInfo(resId, count))
+
         this.post {
             lottieView.cancelAnimation()
-            queue.clear()
-            queue.add(AnimationInfo(resId, count))
             nextAnimation()
         }
     }
@@ -129,6 +125,7 @@ class VoiceChromeView : FrameLayout {
             if(resId == 0) {
                 // for clear
                 lottieView.setImageDrawable(null)
+                nextAnimation()
             }
             else {
                 lottieView.setAnimation(resId)
@@ -159,10 +156,23 @@ class VoiceChromeView : FrameLayout {
     }
 
     /**
-     * Stop animation
+     * Cancel animation (immediately)
+     */
+    fun cancelAnimation() {
+        queue.clear()
+
+        this.post {
+            lottieView.cancelAnimation()
+            lottieView.setImageDrawable(null)
+        }
+    }
+
+    /**
+     * Stop animation (It stop after animation ends)
+     * Note : resid, 0 means draw transparent screen
      */
     fun stopAnimation() {
-        resetAnimation()
+        this.addAnimation(0, LottieDrawable.INFINITE)
     }
 
     /**
