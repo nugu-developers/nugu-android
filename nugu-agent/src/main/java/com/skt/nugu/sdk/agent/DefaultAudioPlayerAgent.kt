@@ -1068,16 +1068,17 @@ class DefaultAudioPlayerAgent(
             currentItem?.let { info ->
                 notifyOnReleaseAudioInfo(info, true)
             }
+
             currentItem = it
             nextItem = null
             val audioItem = it.payload.audioItem
             if (!executeShouldResumeNextItem(token, audioItem.stream.token)) {
                 token = audioItem.stream.token
                 sourceId = when (audioItem.sourceType) {
-                    AudioItem.SourceType.URL -> mediaPlayer.setSource(URI.create(audioItem.stream.url))
                     AudioItem.SourceType.ATTACHMENT -> it.directive.getAttachmentReader()?.let { reader ->
                         mediaPlayer.setSource(reader)
                     } ?: SourceId.ERROR()
+                    else -> mediaPlayer.setSource(URI.create(audioItem.stream.url))
                 }
                 if (sourceId.isError()) {
                     Logger.w(TAG, "[executePlayNextItem] failed to setSource")
