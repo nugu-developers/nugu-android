@@ -100,39 +100,6 @@ class DefaultSpeakerAgent(
         contextManager.setStateProvider(namespaceAndName, this)
     }
 
-    override fun setVolume(
-        type: Speaker.Type,
-        volume: Int,
-        forceNoNotifications: Boolean
-    ): Future<Boolean> {
-        Logger.d(TAG, "[setVolume] $type $volume $forceNoNotifications")
-        return executor.submit(Callable<Boolean> {
-            executeSetVolume(
-                type,
-                volume,
-                Speaker.Rate.FAST,
-                SpeakerManagerObserver.Source.LOCAL_API,
-                forceNoNotifications
-            )
-        })
-    }
-
-    override fun setMute(
-        type: Speaker.Type,
-        mute: Boolean,
-        forceNoNotifications: Boolean
-    ): Future<Boolean> {
-        Logger.d(TAG, "[setMute] $type $mute $forceNoNotifications")
-        return executor.submit(Callable<Boolean> {
-            executeSetMute(
-                type,
-                mute,
-                SpeakerManagerObserver.Source.LOCAL_API,
-                forceNoNotifications
-            )
-        })
-    }
-
     private fun executeSetVolume(
         type: Speaker.Type,
         volume: Int,

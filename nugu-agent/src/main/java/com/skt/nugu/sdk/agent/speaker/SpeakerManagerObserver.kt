@@ -17,8 +17,7 @@ package com.skt.nugu.sdk.agent.speaker
 
 interface SpeakerManagerObserver {
     enum class Source {
-        DIRECTIVE,
-        LOCAL_API
+        DIRECTIVE
     }
 
     fun onSpeakerSettingsChanged(source: Source, speakers: Collection<Speaker>)
