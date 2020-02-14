@@ -313,7 +313,7 @@ class DefaultAudioPlayerAgent(
         setHandlingCompleted(info)
         executor.submit {
             willBeHandleDirectiveLock.withLock {
-                if (info == willBeHandlePauseDirectiveInfo) {
+                if (info == willBeHandleStopDirectiveInfo) {
                     willBeHandleStopDirectiveInfo = null
                 }
             }
