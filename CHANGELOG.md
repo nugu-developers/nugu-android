@@ -2,6 +2,15 @@ Change Log
 ==========
 
 
+Version 0.8.5 *(2020-02-14)*
+----------------------------
+* Fix: audio player not working (#288)
+* Fix: Can't play after animation stop (#209)
+* Fix: Incorrect delivery of hasPairedDevices (#58)
+* Improve: Apply blocking policy for speaker directive (#293)
+* Improve: Add poc status in oAuthClient (#248)
+* Improve: Remove local api for SpeakerAgent's control (#295)
+
 Version 0.8.4 *(2020-02-13)*
 ----------------------------
 * New: Allow to detail control for ASR options (#282)
