@@ -66,7 +66,6 @@ class NuguClient private constructor(
     }
 
     data class Builder(
-        internal val playerFactory: PlayerFactory,
         internal val authDelegate: AuthDelegate
     ) {
         internal var transportFactory: TransportFactory = GrpcTransportFactory()

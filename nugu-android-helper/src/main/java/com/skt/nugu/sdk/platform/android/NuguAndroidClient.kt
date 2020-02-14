@@ -259,7 +259,6 @@ class NuguAndroidClient private constructor(
     private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
 
     private val client: NuguClient = NuguClient.Builder(
-        builder.playerFactory,
         builder.authDelegate
     ).logger(AndroidLogger())
         .transportFactory(builder.transportFactory)
