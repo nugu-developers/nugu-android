@@ -1223,9 +1223,15 @@ class DefaultAudioPlayerAgent(
             StateRefreshPolicy.NEVER
         }
 
+        val playerActivity = if(currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {
+            AudioPlayerAgentInterface.State.PLAYING
+        } else {
+            currentActivity
+        }
+
         contextSetter.setState(namespaceAndName, JsonObject().apply {
             addProperty("version", VERSION)
-            addProperty("playerActivity", currentActivity.name)
+            addProperty("playerActivity", playerActivity.name)
             if (token.isNotBlank() && currentActivity != AudioPlayerAgentInterface.State.IDLE) {
                 addProperty("token", token)
             }
