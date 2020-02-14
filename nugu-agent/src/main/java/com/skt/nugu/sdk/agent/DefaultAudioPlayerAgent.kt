@@ -901,7 +901,7 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun handlePlaybackCompleted(byStop: Boolean) {
-        Logger.d(TAG, "[handlePlaybackCompleted]")
+        Logger.d(TAG, "[handlePlaybackCompleted] byStop: $byStop")
         progressTimer.stop()
 
         val dialogRequestId = currentItem?.directive?.getDialogRequestId()
@@ -912,7 +912,7 @@ class DefaultAudioPlayerAgent(
         val syncObject = currentItem ?: return
 
         if (byStop) {
-            notifyOnReleaseAudioInfo(syncObject, false)
+            notifyOnReleaseAudioInfo(syncObject, true)
         } else {
             delayNotifyOnReleaseAudioInfo(syncObject, 7000L)
         }
