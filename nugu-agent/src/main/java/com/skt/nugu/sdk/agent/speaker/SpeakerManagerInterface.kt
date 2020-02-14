@@ -15,12 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.speaker
 
-import java.util.concurrent.Future
-
 interface SpeakerManagerInterface {
-    fun setVolume(type: Speaker.Type, volume: Int, forceNoNotifications: Boolean = false): Future<Boolean>
-    fun setMute(type: Speaker.Type, mute: Boolean, forceNoNotifications: Boolean = false): Future<Boolean>
-
     fun addSpeakerManagerObserver(observer: SpeakerManagerObserver)
     fun removeSpeakerManagerObserver(observer: SpeakerManagerObserver)
 
