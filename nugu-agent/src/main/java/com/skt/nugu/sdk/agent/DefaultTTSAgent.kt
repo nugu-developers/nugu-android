@@ -38,6 +38,8 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.TimeoutCondition
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -116,6 +118,7 @@ class DefaultTTSAgent(
         var isPlaybackInitiated = false
         var isDelayedCancel = false
         var cancelByStop = false
+        var stopDirective: Directive? = null
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -285,10 +288,12 @@ class DefaultTTSAgent(
     private fun executeHandleStopDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[executeHandleStopDirective] info: $info")
 
+        currentInfo?.let {
+            it.stopDirective = info.directive
+        }
+
         if (currentInfo != null) {
-            //            if(info.directive.getMessageId() == it.directive.getMessageId()) {
             executeCancelCurrentSpeakInfo()
-//            }
         } else {
             Logger.d(TAG, "[executeHandleStopDirective] ignore : currentInfo is null")
         }
@@ -709,14 +714,21 @@ class DefaultTTSAgent(
 
     private fun executePlaybackStarted() {
         Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
-        if (currentInfo == null) {
-            return
-        }
+
+        val info = currentInfo ?: return
+
         setCurrentState(TTSAgentInterface.State.PLAYING)
-        sendEventWithToken(
-            NAMESPACE,
-            EVENT_SPEECH_STARTED
-        )
+
+        val playServiceId = info.getPlayServiceId()
+        if (!playServiceId.isNullOrBlank()) {
+            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            sendEventWithToken(
+                NAMESPACE,
+                EVENT_SPEECH_STARTED,
+                playServiceId,
+                referrerDialogRequestId
+            )
+        }
     }
 
     private fun executePlaybackStopped() {
@@ -728,10 +740,23 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.STOPPED)
-        sendEventWithToken(
-            NAMESPACE,
-            EVENT_SPEECH_STOPPED
-        )
+
+        val playServiceId = info.getPlayServiceId()
+        if (!playServiceId.isNullOrBlank()) {
+            val stopDirective = info.stopDirective
+            val referrerDialogRequestId = if(stopDirective != null) {
+                stopDirective.header.getValidReferrerDialogRequestId()
+            } else {
+                info.directive.header.getValidReferrerDialogRequestId()
+            }
+
+            sendEventWithToken(
+                NAMESPACE,
+                EVENT_SPEECH_STOPPED,
+                playServiceId,
+                referrerDialogRequestId
+            )
+        }
 
         with(info) {
             if (cancelByStop) {
@@ -755,10 +780,17 @@ class DefaultTTSAgent(
 
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.FINISHED)
-        sendEventWithToken(
-            NAMESPACE,
-            EVENT_SPEECH_FINISHED
-        )
+
+        val playServiceId = info.getPlayServiceId()
+        if (!playServiceId.isNullOrBlank()) {
+            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            sendEventWithToken(
+                NAMESPACE,
+                EVENT_SPEECH_FINISHED,
+                playServiceId,
+                referrerDialogRequestId
+            )
+        }
 
         setHandlingCompleted()
         releaseSync(info)
@@ -782,32 +814,32 @@ class DefaultTTSAgent(
         releaseSync(info)
     }
 
-    private fun sendEventWithToken(namespace: String, name: String) {
-        val info = currentInfo
-        info?.getPlayServiceId()?.let {
-            if (it.isNotBlank()) {
-                contextManager.getContext(object :
-                    ContextRequester {
-                    override fun onContextAvailable(jsonContext: String) {
-                        val messageRequest =
-                            EventMessageRequest.Builder(jsonContext, namespace, name, VERSION)
-                                .payload(
-                                    JsonObject().apply {
-                                        addProperty(KEY_PLAY_SERVICE_ID, it)
-                                    }.toString()
-                                )
-                                .referrerDialogRequestId(info.getDialogRequestId())
-                                .build()
-                        messageSender.sendMessage(messageRequest)
+    private fun sendEventWithToken(
+        namespace: String,
+        name: String,
+        playServiceId: String,
+        referrerDialogRequestId: String
+    ) {
+        contextManager.getContext(object :
+            ContextRequester {
+            override fun onContextAvailable(jsonContext: String) {
+                val messageRequest =
+                    EventMessageRequest.Builder(jsonContext, namespace, name, VERSION)
+                        .payload(
+                            JsonObject().apply {
+                                addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                            }.toString()
+                        )
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
+                messageSender.sendMessage(messageRequest)
 
-                        Logger.d(TAG, "[sendEventWithToken] $messageRequest")
-                    }
-
-                    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    }
-                }, namespaceAndName)
+                Logger.d(TAG, "[sendEventWithToken] $messageRequest")
             }
-        }
+
+            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+            }
+        }, namespaceAndName)
     }
 
     private fun setHandlingCompleted(info: SpeakDirectiveInfo? = currentInfo) {
