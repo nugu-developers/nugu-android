@@ -761,7 +761,9 @@ class DefaultAudioPlayerAgent(
     private fun executeOnPlaybackResumed(id: SourceId) {
         Logger.d(TAG, "[executeOnPlaybackResumed] id: $id, focus: $focus")
         progressTimer.resume()
-        sendPlaybackResumedEvent()
+        pauseReason?.let {
+            sendPlaybackResumedEvent()
+        }
         executeOnPlaybackPlayingInternal(id)
     }
 
@@ -812,7 +814,10 @@ class DefaultAudioPlayerAgent(
 
         pauseCalled = false
         progressTimer.pause()
-        sendPlaybackPausedEvent()
+
+        pauseReason?.let {
+            sendPlaybackPausedEvent()
+        }
         changeActivity(AudioPlayerAgentInterface.State.PAUSED)
     }
 
