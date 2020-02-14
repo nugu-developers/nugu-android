@@ -436,12 +436,26 @@ class DefaultAudioPlayerAgent(
         return currentItem.payload.audioItem.stream.token == nextItem.payload.audioItem.stream.token
     }
 
-    private fun executeResume() {
-        Logger.d(TAG, "[executeResume] currentActivity: $currentActivity")
-        if (currentActivity == AudioPlayerAgentInterface.State.PAUSED && focus == FocusState.FOREGROUND) {
-            if (!mediaPlayer.resume(sourceId)) {
-            } else {
+    private fun executeResumeByButton() {
+        if(currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
+            when(focus) {
+                FocusState.FOREGROUND -> {
+                    if(!mediaPlayer.resume(sourceId)) {
+                        Logger.w(TAG, "[executeResume] failed to resume: $sourceId")
+                    }
+                }
+                FocusState.BACKGROUND -> {
+                    // TODO : Should determine policy in this case.
+                    // Should be resume on foregrounded? If so, clear pause reason to resume on foreground.
+                    // pauseReason = null
+                }
+                FocusState.NONE -> {
+                    // no-op
+                    Logger.e(TAG, "[executeResume] nothing to do (must not be happen)")
+                }
             }
+        } else {
+            Logger.d(TAG, "[executeResume] skip, not paused state.")
         }
     }
 
@@ -472,9 +486,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.PAUSED -> {
                 getOffsetInMilliseconds()
                 playNextItemAfterStopped = startNextSong
-                if (!mediaPlayer.stop(sourceId)) {
-
-                } else {
+                if (mediaPlayer.stop(sourceId)) {
                     stopCalled = true
                 }
             }
@@ -1369,7 +1381,7 @@ class DefaultAudioPlayerAgent(
             Logger.w(TAG, "[onButtonPressed] button: $button, state : $currentActivity")
             when (button) {
                 PlaybackButton.PLAY -> {
-                    executeResume()
+                    executeResumeByButton()
 //                    sendPlayCommandIssued()
                 }
                 PlaybackButton.PAUSE -> {
