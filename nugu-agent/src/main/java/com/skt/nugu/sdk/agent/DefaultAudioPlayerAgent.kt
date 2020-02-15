@@ -1331,26 +1331,33 @@ class DefaultAudioPlayerAgent(
 
     private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
         currentItem?.apply {
-            val token = payload.audioItem.stream.token
-            val messageRequest = EventMessageRequest.Builder(
-                contextManager.getContextWithoutUpdate(namespaceAndName),
-                NAMESPACE,
-                eventName,
-                VERSION
-            ).payload(
-                JsonObject().apply {
-                    addProperty("playServiceId", playServiceId)
-                    addProperty("token", token)
-                    addProperty("offsetInMilliseconds", offset)
-                }.toString()
-            ).build()
+            contextManager.getContext(object : ContextRequester {
+                override fun onContextAvailable(jsonContext: String) {
+                    val token = payload.audioItem.stream.token
+                    val messageRequest = EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        eventName,
+                        VERSION
+                    ).payload(
+                        JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                            addProperty("token", token)
+                            addProperty("offsetInMilliseconds", offset)
+                        }.toString()
+                    ).build()
 
-            if (condition.invoke()) {
-                messageSender.sendMessage(messageRequest)
-                Logger.d(TAG, "[sendEvent] $messageRequest")
-            } else {
-                Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
-            }
+                    if (condition.invoke()) {
+                        messageSender.sendMessage(messageRequest)
+                        Logger.d(TAG, "[sendEvent] $messageRequest")
+                    } else {
+                        Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
+                    }
+                }
+
+                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+                }
+            }, namespaceAndName)
         }
     }
 
