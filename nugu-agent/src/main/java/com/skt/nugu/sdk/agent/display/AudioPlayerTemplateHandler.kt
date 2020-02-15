@@ -50,7 +50,6 @@ class AudioPlayerTemplateHandler(
                 NAMESPACE,
                 NAME_AUDIOPLAYER_TEMPLATE2
             )
-
     }
 
     private var pendingInfo: TemplateDirectiveInfo? = null
@@ -60,8 +59,6 @@ class AudioPlayerTemplateHandler(
 
     private var executor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
-    private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, AudioPlayerDisplayInterface.Controller>()
@@ -93,21 +90,17 @@ class AudioPlayerTemplateHandler(
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
-        override fun requestReleaseSync(immediate: Boolean) {
+        override fun requestReleaseSync(force: Boolean) {
             executor.submit {
-                executeCancelUnknownInfo(this, immediate)
+                if(stoppedTimerTemplateIdMap[getTemplateId()] == true && !force){
+                    Logger.d(TAG, "[requestReleaseSync] timer stopped & not force release request, so ignore")
+                    return@submit
+                }
+                executeCancelUnknownInfo(this, force)
             }
         }
 
         fun getTemplateId(): String = directive.getMessageId()
-
-        fun getDuration(): Long {
-            return when (payload.duration) {
-                "MID" -> 15000L
-                "LONG" -> 30000L
-                else -> 7000L
-            }
-        }
 
         var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
             PlayStackManagerInterface.PlayContext(it, 300)
@@ -135,17 +128,11 @@ class AudioPlayerTemplateHandler(
         }
     }
 
-    private fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
-        Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
+    private fun executeCancelUnknownInfo(info: DirectiveInfo, force: Boolean) {
+        Logger.d(TAG, "[executeCancelUnknownInfo] force: $force")
         if (info.directive.getMessageId() == currentInfo?.getTemplateId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
-            val templateId = info.directive.getMessageId()
-            if (immediate) {
-                stopClearTimer(templateId)
-                renderer?.clear(info.directive.getMessageId(), true)
-            } else {
-                restartClearTimer(templateId)
-            }
+            renderer?.clear(info.directive.getMessageId(), force)
         } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
             executeCancelPendingInfo()
         } else {
@@ -173,7 +160,7 @@ class AudioPlayerTemplateHandler(
         setHandlingFailed(info, "Canceled by the other display info")
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
         stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
-        releaseSyncImmediately(info)
+        releaseSyncForce(info)
     }
 
     override fun handleDirective(info: DirectiveInfo) {
@@ -190,7 +177,7 @@ class AudioPlayerTemplateHandler(
         }
     }
 
-    private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
+    private fun releaseSyncForce(info: TemplateDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
         info.playContext?.let {
             playStackManager.remove(it)
@@ -233,11 +220,7 @@ class AudioPlayerTemplateHandler(
                     it,
                     object : PlaySynchronizerInterface.OnRequestSyncListener {
                         override fun onGranted() {
-                            if (!playSynchronizer.existOtherSyncObject(it)) {
-                                restartClearTimer(templateId, it.getDuration())
-                            } else {
-                                stopClearTimer(templateId)
-                            }
+
                         }
 
                         override fun onDenied() {
@@ -257,12 +240,11 @@ class AudioPlayerTemplateHandler(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
-                stopClearTimer(templateId)
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
                 stoppedTimerTemplateIdMap.remove(templateId)
                 templateControllerMap.remove(templateId)
-                releaseSyncImmediately(it)
+                releaseSyncForce(it)
 
                 if (clearInfoIfCurrent(it)) {
                     val nextInfo = pendingInfo
@@ -304,49 +286,6 @@ class AudioPlayerTemplateHandler(
         }
         Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId")
         stoppedTimerTemplateIdMap[templateId] = true
-        stopClearTimer(templateId)
-    }
-
-    private fun startClearTimer(
-        templateId: String,
-        timeout: Long = 7000L
-    ) {
-        Logger.d(TAG, "[startClearTimer] templateId: $templateId, timeout: $timeout")
-        clearTimeoutFutureMap[templateId] =
-            clearTimeoutScheduler.schedule({
-                renderer?.clear(templateId, false)
-            }, timeout, TimeUnit.MILLISECONDS)
-    }
-
-    private fun restartClearTimer(
-        templateId: String,
-        timeout: Long = 7000L
-    ) {
-        if (stoppedTimerTemplateIdMap[templateId] == true) {
-            Logger.d(
-                TAG,
-                "[restartClearTimer] not restart because of stopped by stopRenderingTimer() - templateId: $templateId, timeout: $timeout"
-            )
-            return
-        }
-
-        Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
-        stopClearTimer(templateId)
-        startClearTimer(templateId, timeout)
-    }
-
-    private fun stopClearTimer(templateId: String) {
-        val future = clearTimeoutFutureMap[templateId]
-        var canceled = false
-        if (future != null) {
-            canceled = future.cancel(true)
-            clearTimeoutFutureMap[templateId] = null
-        }
-
-        Logger.d(
-            TAG,
-            "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled"
-        )
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
