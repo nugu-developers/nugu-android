@@ -173,6 +173,8 @@ class DefaultAudioPlayerAgent(
         val directive: Directive,
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
+        var stopRenderingTimerCalled: Boolean = false
+
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
@@ -456,7 +458,7 @@ class DefaultAudioPlayerAgent(
                     if (mediaPlayer.stop(sourceId)) {
                         stopCalled = true
                     }
-                } else if(currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
+                } else if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
                     delayedReleaseAudioInfo?.let {
                         delayedReleaseAudioInfo = null
                         delayedReleaseAudioInfoFuture?.cancel(true)
@@ -796,7 +798,9 @@ class DefaultAudioPlayerAgent(
             return
         }
 
-        scheduleStopForPausedSource(id)
+        if (currentItem?.stopRenderingTimerCalled == false) {
+            executeScheduleStopForPausedSource(id)
+        }
 
         pauseCalled = false
         progressTimer.pause()
@@ -804,7 +808,7 @@ class DefaultAudioPlayerAgent(
         changeActivity(AudioPlayerAgentInterface.State.PAUSED)
     }
 
-    private fun scheduleStopForPausedSource(id: SourceId) {
+    private fun executeScheduleStopForPausedSource(id: SourceId) {
         pausedStopFuture?.cancel(true)
         pausedStopFuture = scheduleExecutor.schedule(Callable {
             executor.submit {
@@ -817,7 +821,7 @@ class DefaultAudioPlayerAgent(
                 }
                 executeStop(false)
             }
-        }, stopDelayForPausedSourceAtMinutes, TimeUnit.MINUTES)
+        }, stopDelayForPausedSourceAtMinutes, TimeUnit.SECONDS)
     }
 
     private fun executeOnPlaybackError(id: SourceId, type: ErrorType, error: String) {
@@ -931,7 +935,6 @@ class DefaultAudioPlayerAgent(
         delayedReleaseAudioInfoFuture = scheduleExecutor.schedule(Callable {
             executor.submit {
                 delayedReleaseAudioInfo = null
-                delayedReleaseAudioInfoFuture?.cancel(true)
                 delayedReleaseAudioInfoFuture = null
                 notifyOnReleaseAudioInfo(delayedObject, false)
             }
@@ -1415,6 +1418,13 @@ class DefaultAudioPlayerAgent(
 
     override fun stopRenderingTimer(templateId: String) {
         displayDelegate?.stopRenderingTimer(templateId)
+
+        executor.submit {
+            currentItem?.stopRenderingTimerCalled = true
+            // cancel paused stop future.
+            pausedStopFuture?.cancel(true)
+            pausedStopFuture = null
+        }
     }
 
     fun setDisplay(display: AudioPlayerDisplayInterface?) {
