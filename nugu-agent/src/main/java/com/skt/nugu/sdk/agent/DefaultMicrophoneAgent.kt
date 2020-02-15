@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -38,7 +39,7 @@ class DefaultMicrophoneAgent(
 ) : AbstractMicrophoneAgent(messageSender, contextManager, defaultMicrophone) {
     internal data class SetMicPayload(
         @SerializedName("playServiceId")
-        val playServiceId: String?,
+        val playServiceId: String,
         @SerializedName("status")
         val status: String
     )
@@ -100,23 +101,32 @@ class DefaultMicrophoneAgent(
 
         setHandlingCompleted(info)
         executor.submit {
+            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+
             if (executeHandleSetMic(status)) {
-                sendSetMicSucceededEvent()
+                sendEvent(
+                    NAME_SET_MIC_SUCCEEDED,
+                    payload.playServiceId,
+                    payload.status,
+                    referrerDialogRequestId
+                )
             } else {
-                sendSetMicFailedEvent()
+                sendEvent(
+                    NAME_SET_MIC_FAILED,
+                    payload.playServiceId,
+                    payload.status,
+                    referrerDialogRequestId
+                )
             }
         }
     }
 
-    private fun sendSetMicSucceededEvent() {
-        sendEvent(NAME_SET_MIC_SUCCEEDED)
-    }
-
-    private fun sendSetMicFailedEvent() {
-        sendEvent(NAME_SET_MIC_FAILED)
-    }
-
-    private fun sendEvent(eventName: String) {
+    private fun sendEvent(
+        eventName: String,
+        playServiceId: String,
+        micStatus: String,
+        referrerDialogRequestId: String
+    ) {
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
@@ -125,7 +135,12 @@ class DefaultMicrophoneAgent(
                         NAMESPACE,
                         eventName,
                         VERSION
-                    ).build()
+                    ).payload(JsonObject().apply {
+                        addProperty("playServiceId", playServiceId)
+                        addProperty("micStatus", micStatus)
+                    }.toString())
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
                 )
             }
 
