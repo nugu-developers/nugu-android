@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -83,6 +84,7 @@ class DefaultScreenAgent(
 
     override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
+            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
             when (info.directive.getNamespaceAndName()) {
                 TURN_ON -> {
                     val payload =
@@ -94,9 +96,9 @@ class DefaultScreenAgent(
                     }
 
                     if (screen.turnOn(payload.brightness)) {
-                        sendEvent("$NAME_TURN_ON$NAME_SUCCEEDED", payload.playServiceId)
+                        sendEvent("$NAME_TURN_ON$NAME_SUCCEEDED", payload.playServiceId, referrerDialogRequestId)
                     } else {
-                        sendEvent("$NAME_TURN_ON$NAME_FAILED", payload.playServiceId)
+                        sendEvent("$NAME_TURN_ON$NAME_FAILED", payload.playServiceId, referrerDialogRequestId)
                     }
                 }
                 TURN_OFF -> {
@@ -108,9 +110,9 @@ class DefaultScreenAgent(
                         return@submit
                     }
                     if (screen.turnOff()) {
-                        sendEvent("$NAME_TURN_OFF$NAME_SUCCEEDED", payload.playServiceId)
+                        sendEvent("$NAME_TURN_OFF$NAME_SUCCEEDED", payload.playServiceId, referrerDialogRequestId)
                     } else {
-                        sendEvent("$NAME_TURN_OFF$NAME_FAILED", payload.playServiceId)
+                        sendEvent("$NAME_TURN_OFF$NAME_FAILED", payload.playServiceId, referrerDialogRequestId)
                     }
                 }
                 SET_BRIGHTNESS -> {
@@ -124,9 +126,9 @@ class DefaultScreenAgent(
                         return@submit
                     }
                     if (screen.setBrightness(payload.brightness)) {
-                        sendEvent("$NAME_SET_BRIGHTNESS$NAME_SUCCEEDED", payload.playServiceId)
+                        sendEvent("$NAME_SET_BRIGHTNESS$NAME_SUCCEEDED", payload.playServiceId, referrerDialogRequestId)
                     } else {
-                        sendEvent("$NAME_SET_BRIGHTNESS$NAME_FAILED", payload.playServiceId)
+                        sendEvent("$NAME_SET_BRIGHTNESS$NAME_FAILED", payload.playServiceId, referrerDialogRequestId)
                     }
                 }
             }
@@ -135,13 +137,15 @@ class DefaultScreenAgent(
         }
     }
 
-    private fun sendEvent(name: String, playServiceId: String) {
+    private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
                     .payload(JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
-                    }.toString()).build()
+                    }.toString())
+                    .referrerDialogRequestId(referrerDialogRequestId)
+                    .build()
 
                 messageSender.sendMessage(request)
             }
