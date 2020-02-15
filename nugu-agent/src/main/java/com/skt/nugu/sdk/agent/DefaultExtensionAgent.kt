@@ -24,6 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -135,10 +136,11 @@ class DefaultExtensionAgent(
         executor.submit {
             val currentClient = client
             if (currentClient != null) {
+                val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
                 if (currentClient.action(data.toString(), playServiceId)) {
-                    sendActionSucceededEvent(playServiceId)
+                    sendActionEvent(NAME_ACTION_SUCCEEDED, playServiceId, referrerDialogRequestId)
                 } else {
-                    sendActionFailedEvent(playServiceId)
+                    sendActionEvent(NAME_ACTION_FAILED, playServiceId, referrerDialogRequestId)
                 }
             } else {
                 Logger.w(
@@ -178,22 +180,16 @@ class DefaultExtensionAgent(
         removeDirective(info.directive.getMessageId())
     }
 
-    private fun sendActionSucceededEvent(playServiceId: String) {
-        sendEvent(NAME_ACTION_SUCCEEDED, playServiceId)
-    }
-
-    private fun sendActionFailedEvent(playServiceId: String) {
-        sendEvent(NAME_ACTION_FAILED, playServiceId)
-    }
-
-    private fun sendEvent(name: String, playServiceId: String) {
+    private fun sendActionEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
         Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
                     .payload(JsonObject().apply {
                         addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
-                    }.toString()).build()
+                    }.toString())
+                    .referrerDialogRequestId(referrerDialogRequestId)
+                    .build()
 
                 messageSender.sendMessage(request)
             }
