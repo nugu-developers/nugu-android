@@ -31,9 +31,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import java.util.concurrent.Callable
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
 
 class DefaultSpeakerAgent(
     contextManager: ContextManagerInterface,
@@ -111,7 +109,7 @@ class DefaultSpeakerAgent(
         val speakers = speakerMap.filter { it.key == type }.values
 
         for (speaker in speakers) {
-            if (!speaker.setVolume(volume)) {
+            if (!speaker.setVolume(volume, rate)) {
                 return false
             }
         }
