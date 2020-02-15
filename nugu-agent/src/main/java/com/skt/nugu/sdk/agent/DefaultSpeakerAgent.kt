@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
@@ -43,12 +44,10 @@ class DefaultSpeakerAgent(
         private const val TAG = "SpeakerManager"
 
         private const val NAME_SET_VOLUME = "SetVolume"
-        private const val NAME_SET_VOLUME_SUCCEEDED = "SetVolumeSucceeded"
-        private const val NAME_SET_VOLUME_FAILED = "SetVolumeFailed"
-
         private const val NAME_SET_MUTE = "SetMute"
-        private const val NAME_SET_MUTE_SUCCEEDED = "SetMuteSucceeded"
-        private const val NAME_SET_MUTE_FAILED = "SetMuteFailed"
+
+        private const val NAME_SUCCEEDED = "SUCCEEDED"
+        private const val NAME_FAILED = "Failed"
 
         private val SET_VOLUME = NamespaceAndName(
             NAMESPACE,
@@ -209,10 +208,11 @@ class DefaultSpeakerAgent(
                 }
             }
 
+            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
             if (success) {
-                sendSetVolumeSucceededEvent(payload.playServiceId)
+                sendSpeakerEvent("{$NAME_SET_VOLUME$NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
             } else {
-                sendSetVolumeFailedEvent(payload.playServiceId)
+                sendSpeakerEvent("{$NAME_SET_VOLUME$NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
             }
 
             executeSetHandlingCompleted(info)
@@ -244,10 +244,11 @@ class DefaultSpeakerAgent(
                 }
             }
 
+            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
             if (success) {
-                sendSetMuteSucceededEvent(payload.playServiceId)
+                sendSpeakerEvent("{$NAME_SET_MUTE$NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
             } else {
-                sendSetMuteFailedEvent(payload.playServiceId)
+                sendSpeakerEvent("{$NAME_SET_MUTE$NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
             }
         }
     }
@@ -310,30 +311,16 @@ class DefaultSpeakerAgent(
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 
-    private fun sendSetVolumeSucceededEvent(playServiceId: String) {
-        sendSpeakerEvent(NAME_SET_VOLUME_SUCCEEDED, playServiceId)
-    }
-
-    private fun sendSetVolumeFailedEvent(playServiceId: String) {
-        sendSpeakerEvent(NAME_SET_VOLUME_FAILED, playServiceId)
-    }
-
-    private fun sendSetMuteSucceededEvent(playServiceId: String) {
-        sendSpeakerEvent(NAME_SET_MUTE_SUCCEEDED, playServiceId)
-    }
-
-    private fun sendSetMuteFailedEvent(playServiceId: String) {
-        sendSpeakerEvent(NAME_SET_MUTE_FAILED, playServiceId)
-    }
-
-    private fun sendSpeakerEvent(eventName: String, playServiceId: String) {
+    private fun sendSpeakerEvent(eventName: String, playServiceId: String, referrerDialogRequestId: String) {
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 val request =
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, eventName, VERSION)
                         .payload(JsonObject().apply {
                             addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                        }.toString()).build()
+                        }.toString())
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
                 messageSender.sendMessage(request)
             }
 
