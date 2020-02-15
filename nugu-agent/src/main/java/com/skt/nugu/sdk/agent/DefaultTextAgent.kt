@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -52,15 +53,12 @@ class DefaultTextAgent(
     companion object {
         private const val TAG = "TextAgent"
 
-        const val NAME_TEXT_SOURCE = "TextSource"
+        private const val NAME_TEXT_SOURCE = "TextSource"
 
         val TEXT_SOURCE = NamespaceAndName(
             NAMESPACE,
             NAME_TEXT_SOURCE
         )
-
-        const val KEY_TEXT = "text"
-        const val KEY_TOKEN = "token"
 
         const val NAME_TEXT_INPUT = "TextInput"
     }
@@ -88,8 +86,6 @@ class DefaultTextAgent(
 
     private fun executeHandleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[executeHandleDirective] info: $info")
-        val directive = info.directive
-
         val payload =
             MessageFactory.create(info.directive.payload, TextSourcePayload::class.java)
         if (payload == null) {
@@ -146,10 +142,10 @@ class DefaultTextAgent(
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
         Logger.d(TAG, "[requestTextInput] text: $text")
-        executeSendTextInputEventInternal(text, null, listener)
+        executeSendTextInputEventInternal(text, null, null, listener)
     }
 
-    private fun createMessage(text: String, context: String, token: String? = null) =
+    private fun createMessage(text: String, context: String, token: String?, referrerDialogRequestId: String?) =
         EventMessageRequest.Builder(
             context,
             NAMESPACE,
@@ -181,7 +177,7 @@ class DefaultTextAgent(
                     }
                 }
             }.toString()
-        ).build()
+        ).referrerDialogRequestId(referrerDialogRequestId ?: "").build()
 
     private fun executeSendTextInputEvent(
         text: String,
@@ -191,19 +187,20 @@ class DefaultTextAgent(
     ) {
         Logger.d(TAG, "[executeSendTextInputEvent] text: $text, token: $token")
         executeSetHandlingCompleted(info)
-        executeSendTextInputEventInternal(text, token, listener)
+        executeSendTextInputEventInternal(text, token, info.directive.header.getValidReferrerDialogRequestId(), listener)
     }
 
     private fun executeSendTextInputEventInternal(
         text: String,
         token: String?,
+        referrerDialogRequestId: String?,
         listener: TextAgentInterface.RequestListener?
     ) {
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
-                    createMessage(text, jsonContext, token).let {
+                    createMessage(text, jsonContext, token, referrerDialogRequestId).let {
                         messageSender.sendMessage(it)
                         if (listener != null) {
                             requestListeners[it.dialogRequestId] = listener
