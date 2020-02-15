@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -33,7 +34,7 @@ class ControlScrollDirectiveHandler(
     private val contextGetter: ContextGetterInterface,
     private val messageSender: MessageSender,
     private val namespaceAndName: NamespaceAndName
-): AbstractDirectiveHandler() {
+) : AbstractDirectiveHandler() {
     companion object {
         private const val TAG = "ControlScrollDirectiveHandler"
         private const val NAME_CONTROL_SCROLL = "ControlScroll"
@@ -63,17 +64,27 @@ class ControlScrollDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, ControlScrollPayload::class.java)
+        val payload =
+            MessageFactory.create(info.directive.payload, ControlScrollPayload::class.java)
         if (payload == null) {
             Logger.w(TAG, "[handleDirective] controlScroll - invalid payload")
-            setHandlingFailed(info,"[handleDirective] controlScroll - invalid payload")
+            setHandlingFailed(info, "[handleDirective] controlScroll - invalid payload")
             return
         }
 
-        if(controller.controlScroll(payload.playServiceId, payload.direction)) {
-            sendControlScrollEvent(info.directive.payload, "${NAME_CONTROL_SCROLL}${NAME_SUCCEEDED}")
+        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+        if (controller.controlScroll(payload.playServiceId, payload.direction)) {
+            sendControlScrollEvent(
+                info.directive.payload,
+                "${NAME_CONTROL_SCROLL}${NAME_SUCCEEDED}",
+                referrerDialogRequestId
+            )
         } else {
-            sendControlScrollEvent(info.directive.payload, "${NAME_CONTROL_SCROLL}${NAME_FAILED}")
+            sendControlScrollEvent(
+                info.directive.payload,
+                "${NAME_CONTROL_SCROLL}${NAME_FAILED}",
+                referrerDialogRequestId
+            )
         }
         setHandlingCompleted(info)
     }
@@ -92,7 +103,11 @@ class ControlScrollDirectiveHandler(
         removeDirective(info.directive.getMessageId())
     }
 
-    private fun sendControlScrollEvent(payload: String, name: String) {
+    private fun sendControlScrollEvent(
+        payload: String,
+        name: String,
+        referrerDialogRequestId: String
+    ) {
         contextGetter.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
@@ -101,7 +116,9 @@ class ControlScrollDirectiveHandler(
                         namespaceAndName.namespace,
                         name,
                         DefaultDisplayAgent.VERSION
-                    ).payload(payload).build()
+                    ).payload(payload)
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
                 )
             }
 

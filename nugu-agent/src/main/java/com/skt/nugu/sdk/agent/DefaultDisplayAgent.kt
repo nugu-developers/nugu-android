@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -705,7 +706,9 @@ class DefaultDisplayAgent(
                         VERSION
                     ).payload(JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
-                    }.toString()).referrerDialogRequestId(info.directive.getDialogRequestId()).build()
+                    }.toString())
+                        .referrerDialogRequestId(info.directive.header.getValidReferrerDialogRequestId())
+                        .build()
                 )
             }
 
@@ -778,7 +781,8 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction) ?: false
+            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction)
+                ?: false
         })
 
         return result.get()
@@ -796,7 +800,8 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction) ?: false
+            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction)
+                ?: false
         })
 
         return result.get()

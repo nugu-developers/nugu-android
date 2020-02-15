@@ -15,11 +15,12 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-   import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -70,10 +71,19 @@ class ControlFocusDirectiveHandler(
             return
         }
 
-        if(controller.controlFocus(payload.playServiceId, payload.direction)) {
-            sendControlFocusEvent(info.directive.payload, "$NAME_CONTROL_FOCUS$NAME_SUCCEEDED")
+        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+        if (controller.controlFocus(payload.playServiceId, payload.direction)) {
+            sendControlFocusEvent(
+                info.directive.payload,
+                "$NAME_CONTROL_FOCUS$NAME_SUCCEEDED",
+                referrerDialogRequestId
+            )
         } else {
-            sendControlFocusEvent(info.directive.payload, "$NAME_CONTROL_FOCUS$NAME_FAILED")
+            sendControlFocusEvent(
+                info.directive.payload,
+                "$NAME_CONTROL_FOCUS$NAME_FAILED",
+                referrerDialogRequestId
+            )
         }
         setHandlingCompleted(info)
     }
@@ -92,7 +102,11 @@ class ControlFocusDirectiveHandler(
         removeDirective(info.directive.getMessageId())
     }
 
-    private fun sendControlFocusEvent(payload: String, name: String) {
+    private fun sendControlFocusEvent(
+        payload: String,
+        name: String,
+        referrerDialogRequestId: String
+    ) {
         contextGetter.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
@@ -101,7 +115,9 @@ class ControlFocusDirectiveHandler(
                         namespaceAndName.namespace,
                         name,
                         DefaultDisplayAgent.VERSION
-                    ).payload(payload).build()
+                    ).payload(payload)
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
                 )
             }
 
