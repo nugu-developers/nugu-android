@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Executors
@@ -220,8 +221,10 @@ class DefaultTextAgent(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
-        Logger.d(TAG, "[onReceiveResponse] $header")
+    override fun onReceiveDirectives(
+        dialogRequestId: String,
+        directives: List<Directive>
+    ): Boolean {
         executor.submit {
             requestListeners.remove(dialogRequestId)?.onReceiveResponse()
         }

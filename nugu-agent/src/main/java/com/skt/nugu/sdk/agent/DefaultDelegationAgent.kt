@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.HashMap
@@ -214,7 +215,10 @@ class DefaultDelegationAgent(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
+    override fun onReceiveDirectives(
+        dialogRequestId: String,
+        directives: List<Directive>
+    ): Boolean {
         requestListenerMap.remove(dialogRequestId)?.onSuccess()
         return true
     }
