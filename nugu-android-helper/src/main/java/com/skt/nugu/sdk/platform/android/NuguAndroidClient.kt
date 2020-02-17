@@ -29,7 +29,6 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.microphone.Microphone
-import com.skt.nugu.sdk.agent.movement.MovementController
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
@@ -71,7 +70,6 @@ import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.agent.movement.AbstractMovementAgent
 import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.*
@@ -161,7 +159,6 @@ class NuguAndroidClient private constructor(
         internal var defaultMicrophone: Microphone? = null
         internal var delegationClient: DelegationClient? = null
         internal var extensionClient: ExtensionAgentInterface.Client? = null
-        internal var movementController: MovementController? = null
         internal var screen: Screen? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
             AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
@@ -216,12 +213,6 @@ class NuguAndroidClient private constructor(
          */
         fun extensionClient(client: ExtensionAgentInterface.Client?) =
             apply { extensionClient = client }
-
-        /**
-         * @param controller the controller which control move directive
-         */
-        fun movementController(controller: MovementController?) =
-            apply { movementController = controller }
 
         /**
          * @param screen the screen to be controlled by NUGU
@@ -390,20 +381,6 @@ class NuguAndroidClient private constructor(
                                 }
                             }
                     })
-            }
-            builder.movementController?.let {
-                addAgentFactory(AbstractMovementAgent.NAMESPACE, object : MovementAgentFactory {
-                    override fun create(container: SdkContainer): AbstractMovementAgent =
-                        with(container) {
-                            DefaultMovementAgent(
-                                getContextManager(),
-                                getMessageSender(),
-                                it
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
-                            }
-                        }
-                })
             }
             builder.screen?.let {
                 addAgentFactory(DefaultScreenAgent.NAMESPACE, object : ScreenAgentFactory {
