@@ -5,5 +5,5 @@ ext {
 
 
     nuguVersionCode=806
-    nuguVersionName="0.8.6-SNAPSHOT"
+    nuguVersionName="0.8.6"
 }

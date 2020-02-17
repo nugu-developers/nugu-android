@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.8.6 *(2020-02-17)*
+----------------------------
+* New: Apply referrerDialogRequestId at (#19)
+    * TTS, Text, Speaker, Screen, Mic, Extension, Display Interface.	
+* Fix: Apply rate param at setVolume (#303)
+* Fix: Close display immediately (side-effect for #270) (#306)
+* Improve: Movement Interface Removal (#306)
 
 Version 0.8.5 *(2020-02-14)*
 ----------------------------
