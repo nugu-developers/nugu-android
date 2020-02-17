@@ -22,9 +22,9 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
@@ -378,14 +378,20 @@ class DefaultClientSpeechRecognizer(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
-        if (header.namespace != AbstractASRAgent.NAMESPACE) {
-            Logger.d(TAG, "[onReceiveResponse] $header")
-            handleFinish()
-            return true
-        }
+    override fun onReceiveDirectives(
+        dialogRequestId: String,
+        directives: List<Directive>
+    ): Boolean {
+        val receiveResponse = directives.filter { it.header.namespace != AbstractASRAgent.NAMESPACE }.any()
 
-        return false
+        return if(receiveResponse) {
+            Logger.d(TAG, "[onReceiveDirectives] receive response")
+            handleFinish()
+            true
+        } else {
+            Logger.d(TAG, "[onReceiveDirectives] receive asr response")
+            false
+        }
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {

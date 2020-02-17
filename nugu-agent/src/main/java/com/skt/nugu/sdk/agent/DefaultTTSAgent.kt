@@ -886,10 +886,10 @@ class DefaultTTSAgent(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
-        // nothing to do
-        return true
-    }
+    override fun onReceiveDirectives(
+        dialogRequestId: String,
+        directives: List<Directive>
+    ): Boolean = true
 
     override fun onResponseTimeout(dialogRequestId: String) {
         requestListenerMap.remove(dialogRequestId)?.onError()

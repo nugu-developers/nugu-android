@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -244,7 +245,10 @@ class DefaultExtensionAgent(
         inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
-    override fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
+    override fun onReceiveDirectives(
+        dialogRequestId: String,
+        directives: List<Directive>
+    ): Boolean {
         issueCommandCallbackMap.remove(dialogRequestId)?.onSuccess(dialogRequestId)
         return true
     }

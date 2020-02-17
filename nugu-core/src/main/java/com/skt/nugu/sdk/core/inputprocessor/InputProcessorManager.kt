@@ -34,26 +34,19 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProc
     private val timeoutScheduler = Executors.newSingleThreadScheduledExecutor()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
-        var removedDialogRequestId = ""
-        var timeoutFutureRemoved = false
-        for (directive in directives) {
-            try {
-                val header = directive.header
-                if(onReceiveDirective(header.dialogRequestId, header) && !timeoutFutureRemoved) {
-                    timeoutFutureRemoved = true
-                    header.dialogRequestId.let {
-                        removedDialogRequestId = it
-                        timeoutFutureMap[it]?.cancel(true)
-                        timeoutFutureMap.remove(it)
-                    }
-                }
-            } catch (th: Throwable) {
-                // ignore
+        val dialogRequestId = directives.firstOrNull()?.header?.dialogRequestId ?: return
+
+        val receiveResponse = requests[dialogRequestId]?.onReceiveDirectives(dialogRequestId, directives) ?: false
+
+        if(receiveResponse) {
+            dialogRequestId.let {
+                timeoutFutureMap[it]?.cancel(true)
+                timeoutFutureMap.remove(it)
             }
         }
 
-        if(timeoutFutureRemoved && !removedDialogRequestId.isBlank()) {
-            requests.remove(removedDialogRequestId)
+        if(receiveResponse && !dialogRequestId.isBlank()) {
+            requests.remove(dialogRequestId)
         }
     }
 
@@ -73,16 +66,6 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProc
         inputProcessor.onResponseTimeout(dialogRequestId)
         responseTimeoutListeners.forEach {
             it.onResponseTimeout(dialogRequestId)
-        }
-    }
-
-    private fun onReceiveDirective(dialogRequestId: String, header: Header): Boolean {
-        val inputProcessor = requests[dialogRequestId]
-        return if (inputProcessor != null) {
-            inputProcessor.onReceiveDirective(dialogRequestId, header)
-        } else {
-            Logger.w(TAG, "[receiveResponse] no input processor for $dialogRequestId")
-            false
         }
     }
 
