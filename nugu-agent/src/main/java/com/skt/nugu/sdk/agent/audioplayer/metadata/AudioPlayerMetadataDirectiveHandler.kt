@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer.metadata
 
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
@@ -49,7 +50,7 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("metadata")
-        val metadata: String
+        val metadata: JsonObject
     )
 
     private val supportConfigurations = HashMap<NamespaceAndName, BlockingPolicy>()
@@ -65,15 +66,20 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        info.result.setCompleted()
-
         with(info.directive) {
             val updateMetadataPayload = MessageFactory.create(payload, UpdateMetadataPayload::class.java)
-                ?: return
+            if(updateMetadataPayload == null) {
+                info.result.setFailed("[handleDirective] invalid payload: $updateMetadataPayload")
+                removeDirective(info.directive.getMessageId())
+                return
+            }
+
+            info.result.setCompleted()
+            removeDirective(info.directive.getMessageId())
 
             if (getNamespaceAndName() == UPDATE_METADATA) {
                 listeners.forEach {listener ->
-                    listener.onMetadataUpdate(updateMetadataPayload.playServiceId, updateMetadataPayload.metadata)
+                    listener.onMetadataUpdate(updateMetadataPayload.playServiceId, updateMetadataPayload.metadata.toString())
                 }
             }
         }
