@@ -838,7 +838,7 @@ class DefaultAudioPlayerAgent(
                 }
                 executeStop(false)
             }
-        }, stopDelayForPausedSourceAtMinutes, TimeUnit.SECONDS)
+        }, stopDelayForPausedSourceAtMinutes, TimeUnit.MINUTES)
     }
 
     private fun executeOnPlaybackError(id: SourceId, type: ErrorType, error: String) {
