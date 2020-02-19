@@ -245,13 +245,15 @@ class DefaultClientSpeechRecognizer(
                 }
             }
             AudioEndPointDetector.State.STOP -> {
-                epdState = AudioEndPointDetector.State.STOP
                 val errorType = request.errorTypeForCausingEpdStop
+                val prevEpdState = epdState
+                epdState = AudioEndPointDetector.State.STOP
+
                 if(errorType != null) {
                     request.senderThread?.requestStop()
                     handleError(errorType)
                     return
-                } else if(request.stopByCancel == false){
+                } else if(request.stopByCancel == false && prevEpdState == AudioEndPointDetector.State.SPEECH_START){
                     request.senderThread?.requestFinish()
                     SpeechRecognizer.State.SPEECH_END
                 } else {
