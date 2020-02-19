@@ -82,8 +82,10 @@ internal class EventStreamService(
             }
 
             override fun onCompleted() {
-                Logger.d(TAG, "[EventStreamService] onCompleted")
-                shutdown()
+                if(!isShutdown.get()) {
+                    Logger.d(TAG, "[onCompleted] Stream is completed")
+                    observer.onError(Status.UNKNOWN)
+                }
             }
 
             private fun toJson(src: Any): String {
