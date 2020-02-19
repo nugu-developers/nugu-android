@@ -248,6 +248,7 @@ class DefaultSpeakerAgent(
             } else {
                 sendSpeakerEvent("{$NAME_SET_MUTE$NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
             }
+            executeSetHandlingCompleted(info)
         }
     }
 
