@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.8.7 *(2020-02-19)*
+----------------------------
+* Fix: Blocked some directives after setMute received (#310)
+* Fix: An error when the stream was closed
+* Fix: Not working UpdateMetadata directive (#313)
+* Fix: Voice chrome not dismissed in some cases(#317)
+
 Version 0.8.6 *(2020-02-17)*
 ----------------------------
 * New: Apply referrerDialogRequestId at (#19)
