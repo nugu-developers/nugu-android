@@ -59,6 +59,10 @@ class DisplayAggregator(
         fun clear(templateId: String, force: Boolean) {
             observer?.clear(templateId, force)
         }
+
+        fun update(templateId: String, templateContent: String) {
+            observer?.update(templateId, templateContent)
+        }
     }
 
     private var observer: DisplayAggregatorInterface.Renderer? = null
@@ -87,6 +91,10 @@ class DisplayAggregator(
 
             override fun clear(templateId: String, force: Boolean) =
                 renderer.clear(templateId, force)
+
+            override fun update(templateId: String, templateContent: String) {
+                renderer.update(templateId, templateContent)
+            }
         })
 
         audioPlayerAgent.setRenderer(object : AudioPlayerDisplayInterface.Renderer {
@@ -112,7 +120,7 @@ class DisplayAggregator(
                 renderer.clear(templateId, force)
 
             override fun update(templateId: String, templateContent: String) {
-                observer?.update(templateId, templateContent)
+                renderer.update(templateId, templateContent)
             }
         })
     }

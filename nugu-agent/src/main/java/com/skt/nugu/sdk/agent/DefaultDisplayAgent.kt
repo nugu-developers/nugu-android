@@ -87,6 +87,7 @@ class DefaultDisplayAgent(
         private const val NAME_SCORE_2 = "Score2"
         private const val NAME_SEARCH_LIST_1 = "SearchList1"
         private const val NAME_SEARCH_LIST_2 = "SearchList2"
+        private const val NAME_UPDATE = "Update"
 
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
@@ -204,6 +205,11 @@ class DefaultDisplayAgent(
         private val SEARCH_LIST_2 = NamespaceAndName(
             NAMESPACE,
             NAME_SEARCH_LIST_2
+        )
+
+        private val UPDATE = NamespaceAndName(
+            NAMESPACE,
+            NAME_UPDATE
         )
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
@@ -358,6 +364,9 @@ class DefaultDisplayAgent(
                 CLOSE -> {
                     executeHandleCloseDirective(info)
                 }
+                UPDATE -> {
+                    executeHandleUpdateDirective(info)
+                }
                 else -> {
                     executeHandleTemplateDirective(info)
                 }
@@ -394,6 +403,30 @@ class DefaultDisplayAgent(
             sendCloseEventWhenClosed(currentRenderedInfo, info)
         } else {
             sendCloseFailed(info, closePayload.playServiceId)
+        }
+    }
+
+    private fun executeHandleUpdateDirective(info: DirectiveInfo) {
+        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
+        if(payload == null) {
+            setHandlingFailed(info, "[executeHandleUpdateDirective] invalid payload: $payload")
+            return
+        }
+
+        val currentDisplayInfo = currentInfo
+        if(currentDisplayInfo == null) {
+            setHandlingFailed(info, "[executeHandleUpdateDirective] failed: no current display")
+            return
+        }
+
+        val currentToken = currentDisplayInfo.payload.token
+        val updateToken = payload.token
+
+        if(currentToken == updateToken && !updateToken.isNullOrBlank()) {
+            renderer?.update(currentDisplayInfo.getTemplateId(), info.directive.payload)
+            setHandlingCompleted(info)
+        } else {
+            setHandlingFailed(info, "[executeHandleUpdateDirective] no matched token (current:$currentToken / update:$updateToken)")
         }
     }
 
@@ -475,6 +508,7 @@ class DefaultDisplayAgent(
         configuration[SEARCH_LIST_1] = nonBlockingPolicy
         configuration[SEARCH_LIST_2] = nonBlockingPolicy
 
+        configuration[UPDATE] = nonBlockingPolicy
 
         return configuration
     }
@@ -769,6 +803,7 @@ class DefaultDisplayAgent(
 
     private fun isTemplateDirective(namespaceAndName: NamespaceAndName): Boolean =
         when (namespaceAndName) {
+            UPDATE,
             CLOSE -> false
             else -> true
         }
