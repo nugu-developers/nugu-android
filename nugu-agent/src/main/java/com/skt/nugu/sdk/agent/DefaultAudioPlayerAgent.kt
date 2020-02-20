@@ -513,6 +513,9 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> return
             AudioPlayerAgentInterface.State.PAUSED -> {
+                if(pauseReason == null) {
+                    sendPlaybackPausedEvent()
+                }
                 pauseReason = reason
             }
             AudioPlayerAgentInterface.State.PLAYING -> {
