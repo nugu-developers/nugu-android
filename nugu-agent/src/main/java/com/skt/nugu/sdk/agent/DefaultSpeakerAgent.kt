@@ -44,7 +44,7 @@ class DefaultSpeakerAgent(
         private const val NAME_SET_VOLUME = "SetVolume"
         private const val NAME_SET_MUTE = "SetMute"
 
-        private const val NAME_SUCCEEDED = "SUCCEEDED"
+        private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
 
         private val SET_VOLUME = NamespaceAndName(
@@ -208,9 +208,9 @@ class DefaultSpeakerAgent(
 
             val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
             if (success) {
-                sendSpeakerEvent("{$NAME_SET_VOLUME$NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
+                sendSpeakerEvent("${NAME_SET_VOLUME}${NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
             } else {
-                sendSpeakerEvent("{$NAME_SET_VOLUME$NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
+                sendSpeakerEvent("${NAME_SET_VOLUME}${NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
             }
 
             executeSetHandlingCompleted(info)
@@ -244,9 +244,9 @@ class DefaultSpeakerAgent(
 
             val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
             if (success) {
-                sendSpeakerEvent("{$NAME_SET_MUTE$NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
+                sendSpeakerEvent("${NAME_SET_MUTE}${NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
             } else {
-                sendSpeakerEvent("{$NAME_SET_MUTE$NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
+                sendSpeakerEvent("${NAME_SET_MUTE}${NAME_FAILED}", payload.playServiceId, referrerDialogRequestId)
             }
             executeSetHandlingCompleted(info)
         }
