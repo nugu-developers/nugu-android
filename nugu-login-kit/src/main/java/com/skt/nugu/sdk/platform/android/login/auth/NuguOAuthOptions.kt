@@ -38,6 +38,10 @@ data class NuguOAuthOptions(
         const val AUTHORIZATION_CODE = "authorization_code"
         /** type2 **/
         const val CLIENT_CREDENTIALS = "client_credentials"
+        /** device_authorization **/
+        const val DEVICE_CODE = "device_code"
+        /** refresh_token **/
+        const val REFRESH_TOKEN = "refresh_token"
     }
 
     /**

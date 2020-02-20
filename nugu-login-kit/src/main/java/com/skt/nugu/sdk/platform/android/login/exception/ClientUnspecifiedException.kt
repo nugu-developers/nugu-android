@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.platform.android.login.auth
+package com.skt.nugu.sdk.platform.android.login.exception
 
 /**
  * Thrown to indicate that a method has been passed an Unspecified.

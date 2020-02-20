@@ -163,9 +163,9 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
         if (deviceUniqueId.isBlank()) {
             // Generate random
             deviceUniqueId += BigInteger(130, SecureRandom()).toString(32) // Fix your device policy
+            // save deviceUniqueId
+            PreferenceHelper.deviceUniqueId(this, deviceUniqueId)
         }
-        // save deviceUniqueId
-        PreferenceHelper.deviceUniqueId(this, deviceUniqueId)
         return deviceUniqueId
     }
 

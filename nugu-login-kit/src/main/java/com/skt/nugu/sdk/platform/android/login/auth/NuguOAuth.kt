@@ -21,6 +21,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -88,7 +89,7 @@ class NuguOAuth private constructor(
     private val executor = Executors.newSingleThreadExecutor()
     // current state
     private var state = AuthStateListener.State.UNINITIALIZED
-    private var authCode: String? = null
+    private var code: String? = null
     private var refreshToken: String? = null
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
@@ -154,7 +155,7 @@ class NuguOAuth private constructor(
         executor.submit {
             runCatching {
                 client.handleAuthorizationFlow(
-                    authCode = authCode,
+                    code = code,
                     refreshToken = refreshToken
                 )
             }.onSuccess {
@@ -270,16 +271,15 @@ class NuguOAuth private constructor(
      * @param intent
      */
     override fun hasAuthCodeFromIntent(intent: Any): Boolean {
-        var authCode: String? = null
-        when (intent) {
-            is Intent -> intent.dataString?.apply {
-                Uri.parse(URLDecoder.decode(this, "UTF-8")).let {
-                    authCode = it.getQueryParameter("code")
+        this.code = when (intent) {
+            is Intent -> intent.dataString?.let {
+                Uri.parse(URLDecoder.decode(it, "UTF-8")).let {
+                    it.getQueryParameter("code")
                 }
             }
+            else -> null
         }
-        this.authCode = authCode
-        return !authCode.isNullOrBlank()
+        return !this.code.isNullOrBlank()
     }
 
     /**
@@ -295,8 +295,6 @@ class NuguOAuth private constructor(
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceOnLoginListener = listener
-        this.refreshToken = null
-        this.authCode = null
 
         checkClientId()
         checkClientSecret()
@@ -346,13 +344,12 @@ class NuguOAuth private constructor(
      * Only Type1
      */
     override fun loginWithAuthenticationCode(
-        authCode: String,
+        code: String,
         listener: NuguOAuthInterface.OnLoginListener
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceOnLoginListener = listener
-        this.authCode = authCode
-        this.refreshToken = null
+        this.code = code
 
         checkClientId()
         checkClientSecret()
@@ -368,10 +365,9 @@ class NuguOAuth private constructor(
      * Only Type1
      */
     override fun loginSilently(refreshToken: String, listener: NuguOAuthInterface.OnLoginListener) {
-        this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
+        this.options.grantType = NuguOAuthOptions.REFRESH_TOKEN
         this.onceOnLoginListener = listener
         this.refreshToken = refreshToken
-        this.authCode = null
 
         checkClientId()
         checkClientSecret()
@@ -399,6 +395,41 @@ class NuguOAuth private constructor(
             }
         }
         return true
+    }
+
+    override fun loginWithDeviceCode(
+        code: String,
+        listener: NuguOAuthInterface.OnLoginListener
+    ) {
+        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
+        this.onceOnLoginListener = listener
+        this.code = code
+
+        checkClientId()
+        checkClientSecret()
+
+        this.login(object : AuthStateListener {
+            override fun onAuthStateChanged(
+                newState: AuthStateListener.State
+            ) = handleAuthState(newState)
+        })
+    }
+
+    override fun startDeviceAuthorization(data: String, listener: NuguOAuthInterface.OnDeviceAuthorizationListener) {
+        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
+
+        checkClientId()
+        checkClientSecret()
+
+        executor.submit {
+            runCatching {
+                client.handleStartDeviceAuthorization(data)
+            }.onSuccess {
+                listener.onSuccess(it)
+            }.onFailure {
+                listener.onError(NuguOAuthError(it))
+            }
+        }
     }
 
     private fun checkRedirectUri() {
