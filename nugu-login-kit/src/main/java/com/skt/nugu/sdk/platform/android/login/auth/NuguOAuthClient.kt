@@ -21,9 +21,9 @@ import java.net.HttpURLConnection
 import com.skt.nugu.sdk.platform.android.login.net.HttpClient
 import org.json.JSONObject
 import com.skt.nugu.sdk.platform.android.login.net.FormEncodingBuilder
-import org.json.JSONException
 import java.io.IOException
 import kotlin.math.min
+
 
 /**
  * NuguOAuthClient is a client for work with Authorization.
@@ -51,6 +51,8 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     enum class GrantType(val value: String) {
         CLIENT_CREDENTIALS("client_credentials"),
         AUTHORIZATION_CODE("authorization_code"),
+        DEVICE_CODE("device_code"),
+        REFRESH_TOKEN("refresh_token")
     }
 
     companion object {
@@ -76,7 +78,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
      *     fail during an exchange, it is possible that the remote server
      *     accepted the request before the failure.
      */
-    private fun handleRequestToken(authCode: String?, refreshToken: String?): AuthFlowState {
+    private fun handleRequestToken(code: String?, refreshToken: String?): AuthFlowState {
         val grantType = options.grantType
 
         val form = FormEncodingBuilder()
@@ -89,14 +91,15 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
             }
             GrantType.AUTHORIZATION_CODE -> {
-                refreshToken?.let {
-                    form.add("grant_type", "refresh_token")
-                        .add("refresh_token", it)
-                } ?: run {
-                    form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
-                        .add("code", authCode.toString())
-                        .add("redirect_uri", options.redirectUri.toString())
-                }
+                form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
+                    .add("code", code.toString())
+                    .add("redirect_uri", options.redirectUri.toString())
+            }
+            GrantType.REFRESH_TOKEN-> {
+                form.add("refresh_token", refreshToken.toString())
+            }
+            GrantType.DEVICE_CODE -> {
+                form.add("device_code", code.toString())
             }
         }
 
@@ -172,13 +175,43 @@ internal class NuguOAuthClient(private val baseUrl: String) {
      * Authorization flow
      * @param refreshAccessToken true is skip the LinkDevice
      * */
-    fun handleAuthorizationFlow(authCode: String?, refreshToken: String?) {
+    fun handleAuthorizationFlow(code: String?, refreshToken: String?) {
         var flowState = AuthFlowState.STARTING
         while (flowState != AuthFlowState.STOPPING) {
             flowState = when (flowState) {
                 AuthFlowState.STARTING -> handleStarting()
-                AuthFlowState.REQUEST_ISSUE_TOKEN -> handleRequestToken(authCode, refreshToken)
+                AuthFlowState.REQUEST_ISSUE_TOKEN -> handleRequestToken(code, refreshToken)
                 AuthFlowState.STOPPING -> handleStopping()
+            }
+        }
+    }
+
+    fun handleStartDeviceAuthorization(data: String) : DeviceAuthorizationResult {
+        val form = FormEncodingBuilder()
+            .add("client_id", options.clientId)
+            .add("client_secret", options.clientSecret)
+            .add("data", data)
+
+        val response = client.newCall("$baseUrl/v1/auth/oauth/device_authorization", form)
+        when (response.code) {
+            HttpURLConnection.HTTP_OK -> {
+                DeviceAuthorizationResult.parse(response.body)?.let {
+                    return it
+                }
+            }
+            HttpURLConnection.HTTP_UNAUTHORIZED,
+            HttpURLConnection.HTTP_BAD_REQUEST -> {
+                val body = JSONObject(response.body)
+                throw BaseException.UnAuthenticatedException(
+                    error = body.get("error").toString(),
+                    message = body.get("error_description").toString()
+                )
+            }
+            else -> {
+                throw BaseException.HttpErrorException(
+                    response.code,
+                    response.body
+                )
             }
         }
     }

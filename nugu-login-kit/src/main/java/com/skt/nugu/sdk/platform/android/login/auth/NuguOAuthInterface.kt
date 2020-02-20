@@ -67,8 +67,6 @@ interface NuguOAuthInterface {
      * Refresh Token from Type1.
      * @param refreshToken refresh Token
      * @param listener Listener to receive result.
-     *
-     *
      * providers will return a "Refresh Token" when you sign-in initially.
      * When our session expires, we can exchange the refresh token to get new auth tokens.
      * > Auth tokens are not the same as a Refresh token
@@ -77,13 +75,13 @@ interface NuguOAuthInterface {
 
     /**
      * Start a login without browser. Only Type1
-     * @param authCode authCode
+     * @param code authCode
      * @param listener Listener to receive result.
      */
-    fun loginWithAuthenticationCode(authCode: String, listener: OnLoginListener)
+    fun loginWithAuthenticationCode(code: String, listener: OnLoginListener)
+
     /**
-     * Called when state changed
-     * @param state changed state
+     * On login actions listener
      */
     interface OnLoginListener {
         /**
@@ -99,10 +97,41 @@ interface NuguOAuthInterface {
     }
 
     /**
+     * On deviceAuthorization actions listener
+     */
+    interface OnDeviceAuthorizationListener {
+        /**
+         * Listener called when a deviceAuthorization completes successfully.
+         */
+        fun onSuccess(result: DeviceAuthorizationResult)
+
+        /**
+         * Listener called when a deviceAuthorization fails
+         * @param error the NuguOAuthError
+         */
+        fun onError(error: NuguOAuthError)
+    }
+
+    /**
+     * Login with device_code to issue tokens
+     * @param code The short-lived code that is used by the device when polling for a session token.
+     * @param listener Listener to receive result.
+     */
+    fun loginWithDeviceCode(code: String, listener: OnLoginListener)
+
+    /**
+     * Start device authorization by requesting a pair of verification codes from the authorization service.
+     * @param data custom values
+     * @param listener Listener to receive result.
+     */
+    fun startDeviceAuthorization(data: String, listener: OnDeviceAuthorizationListener)
+
+    /**
      * addAuthStateListener adds an [AuthStateListener] on the given was changed
      * @param listener the listener that added
      */
     fun addAuthStateListener(listener: AuthStateListener)
+
     /**
      * Removes an [AuthStateListener]
      * @param listener the listener that removed

@@ -72,19 +72,20 @@ data class Credentials(
          * Parse to a Credentials
          * @param string is json format
          * @return a Credentials
+         * @throws JSONException if the parse fails or doesn't yield a JSONObject
          */
+        @Throws(JSONException::class)
         fun parse(string: String): Credentials {
-            try {
-                JSONObject(string).apply {
-                    return Credentials(
-                        accessToken = if (!has("access_token")) "" else get("access_token").toString(),
-                        refreshToken = if (!has("refresh_token")) "" else get("refresh_token").toString(),
-                        expiresInSecond = Date().time + if (!has("expires_in")) 0 else get("expires_in").toString().toLong() * 1000L,
-                        tokenType = if (!has("token_type")) "" else get("token_type").toString()
-                    )
-                }
-            } catch(e: JSONException) {
+            if (string.isBlank()) {
                 return DEFAULT()
+            }
+            JSONObject(string).apply {
+                return Credentials(
+                    accessToken = getString("access_token"),
+                    expiresInSecond = Date().time + getLong("expires_in") * 1000L,
+                    tokenType = getString("token_type"),
+                    refreshToken = if (!has("refresh_token")) "" else get("refresh_token").toString()
+                )
             }
         }
     }
