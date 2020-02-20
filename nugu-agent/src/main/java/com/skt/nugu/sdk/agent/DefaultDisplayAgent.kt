@@ -87,6 +87,12 @@ class DefaultDisplayAgent(
         private const val NAME_SCORE_2 = "Score2"
         private const val NAME_SEARCH_LIST_1 = "SearchList1"
         private const val NAME_SEARCH_LIST_2 = "SearchList2"
+
+        private const val NAME_COMMERCE_LIST = "CommerceList"
+        private const val NAME_COMMERCE_OPTION = "CommerceOption"
+        private const val NAME_COMMERCE_PRICE = "CommercePrice"
+        private const val NAME_COMMERCE_INFO = "CommerceInfo"
+
         private const val NAME_UPDATE = "Update"
 
         private const val NAME_SUCCEEDED = "Succeeded"
@@ -205,6 +211,26 @@ class DefaultDisplayAgent(
         private val SEARCH_LIST_2 = NamespaceAndName(
             NAMESPACE,
             NAME_SEARCH_LIST_2
+        )
+
+        private val COMMERCE_LIST = NamespaceAndName(
+            NAMESPACE,
+            NAME_COMMERCE_LIST
+        )
+
+        private val COMMERCE_OPTION = NamespaceAndName(
+            NAMESPACE,
+            NAME_COMMERCE_OPTION
+        )
+
+        private val COMMERCE_PRICE = NamespaceAndName(
+            NAMESPACE,
+            NAME_COMMERCE_PRICE
+        )
+
+        private val COMMERCE_INFO= NamespaceAndName(
+            NAMESPACE,
+            NAME_COMMERCE_INFO
         )
 
         private val UPDATE = NamespaceAndName(
@@ -507,6 +533,11 @@ class DefaultDisplayAgent(
         configuration[SCORE_2] = nonBlockingPolicy
         configuration[SEARCH_LIST_1] = nonBlockingPolicy
         configuration[SEARCH_LIST_2] = nonBlockingPolicy
+
+        configuration[COMMERCE_LIST] = nonBlockingPolicy
+        configuration[COMMERCE_OPTION] = nonBlockingPolicy
+        configuration[COMMERCE_PRICE] = nonBlockingPolicy
+        configuration[COMMERCE_INFO] = nonBlockingPolicy
 
         configuration[UPDATE] = nonBlockingPolicy
 
