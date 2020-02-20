@@ -37,17 +37,14 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.net.URI
 import java.util.*
-import java.util.concurrent.Callable
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.ScheduledThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
@@ -71,6 +68,7 @@ class DefaultAudioPlayerAgent(
     playStackManager,
     channelName
 ), MediaPlayerControlInterface.PlaybackEventListener
+    , DirectiveGroupProcessorInterface.Listener
     , AudioPlayerLyricsDirectiveHandler.VisibilityController
     , AudioPlayerLyricsDirectiveHandler.PagingController {
 
@@ -134,6 +132,8 @@ class DefaultAudioPlayerAgent(
     private var currentItem: AudioInfo? = null
     private var nextItem: AudioInfo? = null
     private var delayedReleaseAudioInfo: AudioInfo? = null
+
+    private val willBePreHandlingDirective = ConcurrentHashMap<String, Directive>()
 
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
@@ -241,8 +241,20 @@ class DefaultAudioPlayerAgent(
         }
     }
 
+    override fun onReceiveDirectives(directives: List<Directive>) {
+        Logger.d(TAG, "[onReceiveDirectives]")
+        val playbackDirective = directives.firstOrNull {
+            it.getNamespaceAndName() == PLAY ||
+                    it.getNamespaceAndName() == PAUSE ||
+                    it.getNamespaceAndName() == STOP
+        } ?: return
+
+        willBePreHandlingDirective[playbackDirective.getMessageId()] = playbackDirective
+    }
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
+        willBePreHandlingDirective.remove(info.directive.getMessageId())
         when (info.directive.getNamespaceAndName()) {
             PAUSE -> preHandlePauseDirective(info)
             STOP -> preHandleStopDirective(info)
@@ -355,6 +367,7 @@ class DefaultAudioPlayerAgent(
 
     override fun cancelDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[cancelDirective] info: $info")
+        willBePreHandlingDirective.remove(info.directive.getMessageId())
         cancelSync(info)
         removeDirective(info)
     }
@@ -1031,6 +1044,14 @@ class DefaultAudioPlayerAgent(
                         "[executeOnForegroundFocus] will be resume by next item"
                     )
                     executePlayNextItem()
+                    return
+                }
+
+                if(willBePreHandlingDirective.isNotEmpty()) {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] exist willBePreHandlingDirective (count: ${willBePreHandlingDirective.size})"
+                    )
                     return
                 }
 

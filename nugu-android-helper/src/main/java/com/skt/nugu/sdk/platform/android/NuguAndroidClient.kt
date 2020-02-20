@@ -336,6 +336,7 @@ class NuguAndroidClient private constructor(
                         }
 
 
+                        getDirectiveGroupProcessor().addListener(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
                     }
                 }
