@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 0.8.8 *(2020-02-20)*
+----------------------------
+* New: Support display v1.2 (#232)
+    * Support Update directive (#326)
+	* Support CommerceXXX directives (#326)
+* Fix: Audioplayer stopped after 10s pausing (#320)
+* Fix: Wrong event name for setVolume/setMute (#322)
+* Fix: Wrong resume issue on focus change (#266)
+* Fix: Send pause event correctly (#297)
+
 Version 0.8.7 *(2020-02-19)*
 ----------------------------
 * Fix: Blocked some directives after setMute received (#310)
