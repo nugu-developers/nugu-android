@@ -52,6 +52,13 @@ interface DisplayAgentInterface:
          */
         fun clear(templateId: String, force: Boolean)
 
+        /**
+         * Used to notify the renderer when display should be updated. .
+         *
+         * @param templateId the unique identifier for the template card
+         * @param templateContent the content of template in structured JSON which should be updated. The content consist of partial or full elements for templateContent of [render]
+         */
+        fun update(templateId: String, templateContent: String)
     }
 
     interface Controller {
