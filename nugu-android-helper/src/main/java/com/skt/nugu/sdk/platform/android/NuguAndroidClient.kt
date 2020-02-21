@@ -275,6 +275,7 @@ class NuguAndroidClient private constructor(
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
                             getDialogSessionManager().addListener(this)
+                            dialogUXStateAggregator.addListener(this)
                         }
                     }
                 }

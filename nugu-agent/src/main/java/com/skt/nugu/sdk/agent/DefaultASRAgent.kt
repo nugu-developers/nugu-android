@@ -34,6 +34,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
@@ -67,7 +68,7 @@ class DefaultASRAgent(
     endPointDetector,
     defaultEpdTimeoutMillis,
     channelName
-), SpeechRecognizer.OnStateChangeListener, ChannelObserver {
+), SpeechRecognizer.OnStateChangeListener, ChannelObserver, DialogUXStateAggregatorInterface.Listener {
     companion object {
         private const val TAG = "DefaultASRAgent"
 
@@ -467,7 +468,7 @@ class DefaultASRAgent(
             FocusState.NONE -> executeStopRecognition(true)
         }
     }
-
+    
     private fun executeInternalStartRecognition(context: String) {
         Logger.d(TAG, "[executeInternalStartRecognition]")
 
@@ -603,6 +604,22 @@ class DefaultASRAgent(
         }
     }
 
+    override fun onDialogUXStateChanged(
+        newState: DialogUXStateAggregatorInterface.DialogUXState,
+        dialogMode: Boolean
+    ) {
+        executor.submit {
+            if(newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+                return@submit
+            }
+
+            if(focusState != FocusState.NONE) {
+                focusManager.releaseChannel(channelName, this)
+                focusState = FocusState.NONE
+            }
+        }
+    }
+
     override fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
@@ -664,10 +681,6 @@ class DefaultASRAgent(
     private fun setState(state: ASRAgentInterface.State) {
         if (this.state == state) {
             return
-        }
-
-        if(state == ASRAgentInterface.State.IDLE && focusState != FocusState.NONE) {
-            focusManager.releaseChannel(channelName, this)
         }
 
         Logger.d(TAG, "[setState] $state")
