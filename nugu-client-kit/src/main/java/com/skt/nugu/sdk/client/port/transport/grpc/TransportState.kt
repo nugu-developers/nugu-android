@@ -34,7 +34,7 @@ internal class TransportState {
     }
 
     /**
-     * Enum to Connection Detailed State of Transport
+     * Enum to Connection Detailed State of Transportable
      */
     enum class DetailedState {
         /** Ready to start data connection setup.  */

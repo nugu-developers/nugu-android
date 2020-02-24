@@ -18,19 +18,19 @@ package com.skt.nugu.sdk.core.interfaces.transport
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 
 /**
- * An interface class which allows a derived class to observe a Transport implementation.
+ * An interface class which allows a derived class to observe a Transportable implementation.
  */
 interface TransportListener {
     /**
      * Called when a connecting to DeviceGateway is established.
      */
-    fun onConnecting(transport: Transport, reason: ConnectionStatusListener.ChangedReason)
+    fun onConnecting(transport: Transportable, reason: ConnectionStatusListener.ChangedReason)
     /**
      * Called when a connection to DeviceGateway is established.
      */
-    fun onConnected(transport: Transport)
+    fun onConnected(transport: Transportable)
     /**
      * Called when a disconnected
      */
-    fun onDisconnected(transport: Transport, reason: ConnectionStatusListener.ChangedReason)
+    fun onDisconnected(transport: Transportable, reason: ConnectionStatusListener.ChangedReason)
 }

@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -32,6 +33,7 @@ class NetworkManager private constructor(
     MessageRouterObserverInterface {
 
     companion object {
+        val TAG = "NetworkManager"
         /**
          * Create a [NetworkManager]
          * @return a [NetworkManager] instance

@@ -18,28 +18,46 @@ package com.skt.nugu.sdk.client.port.transport.grpc
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
+import com.skt.nugu.sdk.core.interfaces.transport.Transportable
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 
 /**
- * TransportFactory to create [GrpcTransport].
- * @param option the options for GrpcTransport
+ * GrpcTransportFactory to create [Transport].
+ * @param option the options for Transport
  */
-
-class GrpcTransportFactory(private val address: String =  DEFAULT_ADDRESS) : TransportFactory {
-    companion object {
-        const val DEFAULT_ADDRESS = "reg-http.sktnugu.com"
-    }
+const val DEFAULT_ADDRESS = "reg-http.sktnugu.com"
+class GrpcTransportFactory(private val address: String = DEFAULT_ADDRESS) : TransportFactory {
     /**
-     * Create a Transport.
+     * Create a Transportable.
      */
     override fun createTransport(
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
         transportObserver: TransportListener
-    ): Transport {
-        return GrpcTransport.create(
+    ): Transportable {
+        return Transport.create(
             address,
+            Protocol.GRPC,
+            authDelegate,
+            messageConsumer,
+            transportObserver
+        )
+    }
+}
+
+/**
+ * HTTP2TransportFactory to create [Transport].
+ * @param option the options for Transport
+ */
+class HTTP2TransportFactory(private val address: String = DEFAULT_ADDRESS) : TransportFactory {
+    override fun createTransport(
+        authDelegate: AuthDelegate,
+        messageConsumer: MessageConsumer,
+        transportObserver: TransportListener
+    ): Transportable {
+        return Transport.create(
+            address,
+            Protocol.HTTP2,
             authDelegate,
             messageConsumer,
             transportObserver

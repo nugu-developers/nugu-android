@@ -13,61 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
+package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.h2
 
+import com.google.gson.GsonBuilder
 import com.google.protobuf.ByteString
 import com.skt.nugu.sdk.client.port.transport.grpc.Options
+import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGateway
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
+import com.skt.nugu.sdk.client.port.transport.grpc.utils.SecurityInterceptor
+import com.skt.nugu.sdk.client.port.transport.grpc.utils.UserAgentInterceptor
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.squareup.okhttp.OkHttpClient
+import com.squareup.okhttp.Protocol
 import devicegateway.grpc.*
-import io.grpc.ManagedChannel
+import io.grpc.ExperimentalApi
 import io.grpc.Status
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- *  Implementation of DeviceGateway
+ *  Implementation of DeviceGateway with http2
  **/
-internal class DeviceGatewayClient(policyResponse: PolicyResponse,
-                          private var messageConsumer: MessageConsumer?,
-                          private var transportObserver: Observer?,
-                          private val authorization: String?,
-                          var isHandOff: Boolean)
-    : Transport
-    , PingService.Observer
-    , EventStreamService.Observer {
+@ExperimentalApi("The stability has not been verified")
+internal class HTTP2DeviceGatewayClient(private val policyResponse: PolicyResponse,
+                                        private var messageConsumer: MessageConsumer?,
+                                        private var transportObserver: DeviceGateway.Observer?,
+                                        private val authDelegate: AuthDelegate)
+    : DeviceGateway
+    , DownStreamService.Observer
+    , UpStreamService.Observer
+    , PingService.Observer{
     companion object {
-        private const val TAG = "DeviceGatewayClient"
+        private const val TAG = "HTTP2DeviceGatewayClient"
+
+        fun create(
+            policyResponse: PolicyResponse,
+            messageConsumer: MessageConsumer?,
+            transportObserver: DeviceGateway.Observer?,
+            authDelegate: AuthDelegate
+        ) = HTTP2DeviceGatewayClient(
+            policyResponse,
+            messageConsumer, transportObserver, authDelegate
+        )
     }
 
     private val policies = ConcurrentLinkedQueue(policyResponse.serverPolicyList)
     private var backoff : BackOff = BackOff.DEFAULT()
 
-    private var currentChannel: ManagedChannel? = null
-
+    private var downStreamService: DownStreamService? = null
+    private var upStreamService: UpStreamService? = null
     private var pingService: PingService? = null
-    private var eventStreamService: EventStreamService? = null
-    private var crashReportService: CrashReportService? = null
     private var currentPolicy : PolicyResponse.ServerPolicy? = nextPolicy()
     private var healthCheckPolicy = policyResponse.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
-
-    interface Observer {
-        fun onConnected()
-        fun onReconnecting(reason: ChangedReason = ChangedReason.NONE)
-        fun onError(reason: ChangedReason)
-    }
 
     /**
      * Set a policy.
@@ -82,6 +92,8 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
         return currentPolicy
     }
 
+
+    lateinit var client: OkHttpClient
     /**
      * Connect to DeviceGateway.
      * @return true is success, otherwise false
@@ -109,18 +121,25 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                 charge = this.charge.toString(),
                 protocol = this.protocol.toString()
             )
-
-            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(option, authorization).build()
-            currentChannel.also {
-                pingService = PingService(VoiceServiceGrpc.newBlockingStub(it),
-                    healthCheckPolicy,
-                    observer = this@DeviceGatewayClient
+            val client = OkHttpClient().apply {
+                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+                setReadTimeout(0, TimeUnit.MINUTES)
+                setWriteTimeout(0, TimeUnit.MINUTES)
+                setConnectTimeout(0, TimeUnit.MINUTES)
+                interceptors().add(
+                    SecurityInterceptor(
+                        authDelegate
+                    )
                 )
-                eventStreamService = EventStreamService(VoiceServiceGrpc.newStub(it),
-                    observer = this@DeviceGatewayClient
+                networkInterceptors().add(
+                    UserAgentInterceptor(
+                        "OpenSDK/" + SdkVersion.currentVersion
+                    )
                 )
-                crashReportService = CrashReportService(VoiceServiceGrpc.newBlockingStub(it))
             }
+            downStreamService = DownStreamService.create(option, client, this@HTTP2DeviceGatewayClient)
+            upStreamService = UpStreamService.create(option, client, this@HTTP2DeviceGatewayClient)
+            pingService = PingService.create(option, client, healthCheckPolicy, this@HTTP2DeviceGatewayClient)
         }
         return true
     }
@@ -129,14 +148,12 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
      * disconnect from DeviceGateway
      */
     override fun disconnect() {
+        downStreamService?.shutdown()
+        downStreamService = null
+        upStreamService?.shutdown()
+        upStreamService = null
         pingService?.shutdown()
         pingService = null
-        eventStreamService?.shutdown()
-        eventStreamService = null
-        crashReportService?.shutdown()
-        crashReportService = null
-        ChannelBuilderUtils.shutdown(currentChannel)
-        currentChannel = null
         isConnected.set(false)
     }
 
@@ -155,13 +172,12 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
      * @return true is success, otherwise false
      */
     override fun send(request: MessageRequest) : Boolean {
-        val event = eventStreamService
-        val crash = crashReportService
+        val event = upStreamService
 
         val result = when(request) {
-            is AttachmentMessageRequest -> event?.sendAttachmentMessage(toProtobufMessage(request))
-            is EventMessageRequest -> event?.sendEventMessage(toProtobufMessage(request))
-            is CrashReportMessageRequest -> crash?.sendCrashReport(request)
+            is AttachmentMessageRequest -> event?.sendAttachmentMessage(request)
+            is EventMessageRequest -> event?.sendEventMessage(request)
+            is CrashReportMessageRequest -> event?.sendCrashReport(request)
             else -> false
         } ?: false
 
@@ -294,10 +310,8 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                         .setReferrerDialogRequestId(referrerDialogRequestId)
                         .build()
                 )
-                .setParentMessageId(parentMessageId)
                 .setSeq(seq)
                 .setIsEnd(isEnd)
-                .setMediaType(mediaType)
                 .setContent(
                     if (byteArray != null) {
                         ByteString.copyFrom(byteArray)
@@ -312,8 +326,8 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
         }
     }
 
-    private fun toProtobufMessage(request: EventMessageRequest): EventMessage {
-        with(request) {
+    private fun toProtobufMessage(request: EventMessageRequest): String {
+       /* with(request) {
             val event = Event.newBuilder()
                 .setHeader(
                     Header.newBuilder()
@@ -332,7 +346,8 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                 .setContext(context)
                 .setEvent(event)
                 .build()
-        }
+        }*/
+        return GsonBuilder().create().toJson(request)
     }
 
     private fun toStringMessage(request: MessageRequest) : String {
@@ -340,7 +355,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
             is AttachmentMessageRequest -> {
                 val temp = request.copy()
                 temp.byteArray = null
-                temp.toString()
+                temp.toString() + "byteArray size = " + request.byteArray?.size
             }
             else -> request.toString()
         }

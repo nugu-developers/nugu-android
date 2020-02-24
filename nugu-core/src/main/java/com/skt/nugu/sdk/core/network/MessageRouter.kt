@@ -21,7 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
+import com.skt.nugu.sdk.core.interfaces.transport.Transportable
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
@@ -40,9 +40,9 @@ class MessageRouter(
     }
 
     /** The current active transport */
-    private var activeTransport: Transport? = null
+    private var activeTransport: Transportable? = null
     /** The handoff transport */
-    private var handoffTransport: Transport? = null
+    private var handoffTransport: Transportable? = null
 
     /** The observer object.*/
     private var observer: MessageRouterObserverInterface? = null
@@ -176,7 +176,7 @@ class MessageRouter(
      * @see [setConnectionStatus]
      * @param transport is interface.....  not used yet..
      */
-    override fun onConnected(transport: Transport) {
+    override fun onConnected(transport: Transportable) {
         Logger.d(TAG, "[onConnected] $transport")
 
         // Switch from handoffTransport to activeTransport.
@@ -200,7 +200,7 @@ class MessageRouter(
      * @param transport is Interface
      */
     override fun onDisconnected(
-        transport: Transport,
+        transport: Transportable,
         reason: ConnectionStatusListener.ChangedReason
     ) {
         lock.withLock {
@@ -224,7 +224,7 @@ class MessageRouter(
      * @param transport is Interface
      */
     override fun onConnecting(
-        transport: Transport,
+        transport: Transportable,
         reason: ConnectionStatusListener.ChangedReason
     ) {
         setConnectionStatus(

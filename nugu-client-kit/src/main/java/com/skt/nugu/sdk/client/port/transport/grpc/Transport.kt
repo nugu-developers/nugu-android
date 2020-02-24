@@ -15,42 +15,46 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc
 
-import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
+import com.skt.nugu.sdk.core.interfaces.transport.Transportable
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
+import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayFactory
+import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGateway
 import devicegateway.grpc.PolicyResponse
 import java.util.concurrent.Executors
 
 /**
- * Class to create and manage an gRPC transport
+ * Class to create and manage a transport
  */
-internal class GrpcTransport private constructor(
+open class Transport (
     address: String,
+    private val protocol : Protocol,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
-) : Transport {
+) : Transportable {
     /**
      * Transport Constructor.
      */
     companion object {
-        private const val TAG = "GrpcTransport"
+        private const val TAG = "Transport"
 
         fun create(
             address: String,
+            enabledProtocol: Protocol,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
-        ): Transport {
-            return GrpcTransport(
+        ): Transportable {
+            return Transport(
                 address,
+                enabledProtocol,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -59,15 +63,21 @@ internal class GrpcTransport private constructor(
     }
 
     private var state: TransportState = TransportState()
-    private var deviceGatewayClient: DeviceGatewayClient? = null
-    private var registryClient: RegistryClient = RegistryClient(address = address)
+    private var deviceGatewayClient: DeviceGateway? = null
+    private var isHandOff = false
+    private var registryClient: RegistryClient = RegistryClient(address = address, protocol = protocol)
     private val executor = Executors.newSingleThreadExecutor()
 
-    /** @return the bearer token **/
-    private fun getAuthorization() = authDelegate.getAuthorization()?:""
     /** @return the detail state **/
     private fun getDetailedState() = state.getDetailedState()
 
+    init {
+        if(address == DEFAULT_ADDRESS) {
+            Logger.d(TAG, "Transport server : PRD")
+        } else {
+            Logger.d(TAG, "Transport server : address($address), protocol($protocol)")
+        }
+    }
     /**
      * connect from deviceGatewayClient and registryClient.
      */
@@ -94,7 +104,7 @@ internal class GrpcTransport private constructor(
         }
         setState(DetailedState.CONNECTING_REGISTRY)
 
-        registryClient.getPolicy(getAuthorization(), object : RegistryClient.Observer {
+        registryClient.getPolicy(authDelegate, object : RegistryClient.Observer {
             override fun onCompleted(policy: PolicyResponse?) {
                 // succeeded, then it should be connection to DeviceGateway
                 policy?.let {
@@ -117,13 +127,12 @@ internal class GrpcTransport private constructor(
         return true
     }
 
-    private val deviceGatewayObserver = object : DeviceGatewayClient.Observer {
+    private val deviceGatewayObserver = object : DeviceGateway.Observer {
         override fun onConnected() {
             setState(DetailedState.CONNECTED)
 
-            val isHandOff = deviceGatewayClient?.isHandOff ?: false
             if(isHandOff) {
-                deviceGatewayClient?.isHandOff = false
+                isHandOff = false
                 Logger.d(TAG,"[onConnected] Handoff changed : $isHandOff")
             }
         }
@@ -134,7 +143,6 @@ internal class GrpcTransport private constructor(
                 ChangedReason.INVALID_AUTH -> setState(DetailedState.FAILED,reason)
                 else -> {
                     // if the handoffConnection fails, the registry must be retry.
-                    val isHandOff = deviceGatewayClient?.isHandOff ?: false
                     if(!isHandOff) {
                         setState(DetailedState.FAILED, reason)
                     } else {
@@ -160,22 +168,20 @@ internal class GrpcTransport private constructor(
             setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
 
-        val isHandOff = getDetailedState() == DetailedState.HANDOFF
+        isHandOff = getDetailedState() == DetailedState.HANDOFF
 
         setState(DetailedState.CONNECTING_DEVICEGATEWAY)
 
-        if( deviceGatewayClient != null ) {
+        deviceGatewayClient?.let {
             Logger.w(TAG,"[tryConnectToDeviceGateway] deviceGatewayClient is not null")
+            deviceGatewayClient?.shutdown()
         }
-        deviceGatewayClient?.shutdown()
-
-        DeviceGatewayClient(
+        DeviceGatewayFactory(protocol).create(
             policy,
             messageConsumer,
             deviceGatewayObserver,
-            getAuthorization(),
-            isHandOff
-        ).let {
+            authDelegate
+        ).also {
             deviceGatewayClient = it
             return it.connect()
         }
@@ -187,8 +193,8 @@ internal class GrpcTransport private constructor(
      * @return the authorization
      */
     private fun checkAuthorizationIfEmpty(block: () -> Unit) : String? {
-        val authorization = getAuthorization()
-        if (authorization.isBlank()) {
+        val authorization =  authDelegate.getAuthorization()
+        if (authorization.isNullOrBlank()) {
             block.invoke()
             return null
         }

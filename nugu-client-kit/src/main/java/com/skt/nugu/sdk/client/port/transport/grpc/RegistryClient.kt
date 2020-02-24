@@ -16,29 +16,30 @@
 package com.skt.nugu.sdk.client.port.transport.grpc
 
 import com.google.gson.*
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
+import com.skt.nugu.sdk.core.interfaces.transport.Transportable
 import com.skt.nugu.sdk.core.utils.Logger
 import com.squareup.okhttp.*
 import devicegateway.grpc.PolicyResponse
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
 import devicegateway.grpc.Charge
-import devicegateway.grpc.Protocol
+import devicegateway.grpc.Protocol as GrpcProtocol
 import java.io.IOException
 import java.net.UnknownHostException
-import java.util.*
-import java.util.concurrent.Executors
 
 /**
  *  Implementation of registry
  **/
-internal class RegistryClient(private var address: String) : Transport {
+internal class RegistryClient(
+    private val address: String,
+    private val protocol: Protocol
+    ) : Transportable {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: PolicyResponse? = null
-        const val GRPC_PROTOCOL = "H2_GRPC"
         const val HTTPS_SCHEME = "https"
     }
 
@@ -49,7 +50,7 @@ internal class RegistryClient(private var address: String) : Transport {
         fun onError(reason: ChangedReason)
     }
 
-    fun getPolicy(token: String?, observer: Observer) {
+    fun getPolicy(authDelegate: AuthDelegate, observer: Observer) {
         if (isShutdown.get()) {
             Logger.w(TAG, "[getPolicy] already shutdown")
             return
@@ -63,12 +64,12 @@ internal class RegistryClient(private var address: String) : Transport {
             .host(address)
             .addPathSegment("v1")
             .addPathSegment("policies")
-            .addQueryParameter("protocol", GRPC_PROTOCOL)
+            .addQueryParameter("protocol", protocol.value)
             .build()
 
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
-            .header("Authorization", token ?: "")
+            .header("Authorization", authDelegate.getAuthorization())
             .build()
         try {
             val response = client.newCall(request).enqueue(object : Callback {
@@ -105,7 +106,7 @@ internal class RegistryClient(private var address: String) : Transport {
                                 policyBuilder.addServerPolicy(
                                     PolicyResponse.ServerPolicy.newBuilder()
                                         .setProtocolValue(
-                                            Protocol.valueOf(it.asJsonObject.get("protocol").asString.toUpperCase()).ordinal
+                                            GrpcProtocol.valueOf(it.asJsonObject.get("protocol").asString.toUpperCase()).ordinal
                                         )
                                         .setChargeValue(
                                             Charge.valueOf(it.asJsonObject.get("charge").asString.toUpperCase()).ordinal

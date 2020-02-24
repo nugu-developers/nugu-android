@@ -33,5 +33,5 @@ interface TransportFactory {
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
         transportObserver: TransportListener
-    ): Transport
+    ): Transportable
 }

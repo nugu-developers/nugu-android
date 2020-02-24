@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc
+package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.*
 
 /**
  *  Implementation of ClientInterceptor
  **/
-internal class HeaderClientInterceptor(val authorization: String) : ClientInterceptor {
+internal class HeaderClientInterceptor(val authDelegate: AuthDelegate) : ClientInterceptor {
     companion object {
         private const val TAG = "HeaderClientInterceptor"
         internal val AUTH_TOKEN_KEY: Metadata.Key<String> =
@@ -36,7 +37,7 @@ internal class HeaderClientInterceptor(val authorization: String) : ClientInterc
             ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
 
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
-                headers.put(AUTH_TOKEN_KEY, authorization)
+                headers.put(AUTH_TOKEN_KEY, authDelegate.getAuthorization())
 
                 super.start(object :
                     ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {
@@ -46,7 +47,7 @@ internal class HeaderClientInterceptor(val authorization: String) : ClientInterc
                          * you can use [io.grpc.stub.MetadataUtils.attachHeaders]
                          * directly to send header
                          */
-                        Logger.d(TAG, "header received from server:" + headers!!)
+                        Logger.d(TAG, "header received from server:$headers")
                         super.onHeaders(headers)
                     }
                 }, headers)

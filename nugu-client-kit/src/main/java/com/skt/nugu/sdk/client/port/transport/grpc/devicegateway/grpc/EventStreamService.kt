@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
+package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.grpc
 
 import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes

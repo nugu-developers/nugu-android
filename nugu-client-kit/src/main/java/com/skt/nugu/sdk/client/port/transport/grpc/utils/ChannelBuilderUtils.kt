@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
 import com.skt.nugu.sdk.client.port.transport.grpc.Options
-import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import io.grpc.*
@@ -32,10 +32,11 @@ class ChannelBuilderUtils {
         /** configures the gRPC channel. */
         fun createChannelBuilderWith(
             options: Options,
-            authorization: String?
+            authDelegate: AuthDelegate
         ): ManagedChannelBuilder<*> {
             val channelBuilder = ManagedChannelBuilder
                 .forAddress(options.address, options.port)
+                .keepAliveTime(20L, TimeUnit.SECONDS)
                 .userAgent(userAgent())
 
             if (!options.hostname.isBlank()) {
@@ -43,7 +44,7 @@ class ChannelBuilderUtils {
             }
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
-                    authorization ?: ""
+                    authDelegate
                 )
             )
         }

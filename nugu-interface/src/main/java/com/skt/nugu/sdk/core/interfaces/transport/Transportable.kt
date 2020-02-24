@@ -21,7 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * This class defines the interface for transport
  * that must be implemented to represent the creation and management of an interface.
  */
-interface Transport {
+interface Transportable {
     /**
      * Initiate a connection to DeviceGateway.
      */
