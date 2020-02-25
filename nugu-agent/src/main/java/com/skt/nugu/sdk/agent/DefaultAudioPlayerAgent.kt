@@ -1244,16 +1244,16 @@ class DefaultAudioPlayerAgent(
         stateRequestToken: Int,
         sendToken: Boolean
     ) {
-        val policy = if (currentActivity == AudioPlayerAgentInterface.State.PLAYING) {
-            StateRefreshPolicy.ALWAYS
-        } else {
-            StateRefreshPolicy.NEVER
-        }
-
         val playerActivity = if(currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {
             AudioPlayerAgentInterface.State.PLAYING
         } else {
             currentActivity
+        }
+
+        val policy = if (playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
+            StateRefreshPolicy.ALWAYS
+        } else {
+            StateRefreshPolicy.NEVER
         }
 
         contextSetter.setState(namespaceAndName, JsonObject().apply {
