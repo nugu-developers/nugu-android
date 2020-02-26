@@ -466,6 +466,7 @@ class DefaultDisplayAgent(
 
         if(currentToken == updateToken && !updateToken.isNullOrBlank()) {
             renderer?.update(currentDisplayInfo.getTemplateId(), info.directive.payload)
+            timer?.reset(currentDisplayInfo.getTemplateId())
             setHandlingCompleted(info)
         } else {
             setHandlingFailed(info, "[executeHandleUpdateDirective] no matched token (current:$currentToken / update:$updateToken)")
@@ -807,7 +808,7 @@ class DefaultDisplayAgent(
         }
 
     override fun controlFocus(playServiceId: String, direction: Direction): Boolean {
-        val result: Future<Boolean> = executor.submit(Callable<Boolean> {
+        val future: Future<Boolean> = executor.submit(Callable<Boolean> {
             val currentRenderedInfo = currentInfo ?: return@Callable false
             val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
             if (currentPlayServiceId.isNullOrBlank()) {
@@ -818,15 +819,21 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction)
+            val result = templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction)
                 ?: false
+
+            if(result) {
+                timer?.reset(currentRenderedInfo.getTemplateId())
+            }
+
+            return@Callable result
         })
 
-        return result.get()
+        return future.get()
     }
 
     override fun controlScroll(playServiceId: String, direction: Direction): Boolean {
-        val result: Future<Boolean> = executor.submit(Callable<Boolean> {
+        val future: Future<Boolean> = executor.submit(Callable<Boolean> {
             val currentRenderedInfo = currentInfo ?: return@Callable false
             val currentPlayServiceId = currentRenderedInfo.payload.playServiceId
             if (currentPlayServiceId.isNullOrBlank()) {
@@ -837,10 +844,16 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction)
+            val result = templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction)
                 ?: false
+
+            if(result) {
+                timer?.reset(currentRenderedInfo.getTemplateId())
+            }
+
+            return@Callable result
         })
 
-        return result.get()
+        return future.get()
     }
 }
