@@ -29,12 +29,14 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 
 class SpeechRecognizerAggregator(
     private var keywordResource: KeywordResources,
     private val speechProcessor: SpeechProcessorDelegate,
     private val audioProvider: AudioProvider,
-    private val handler: Handler = Handler(Looper.getMainLooper())
+    private val handler: Handler = Handler(Looper.getMainLooper()),
+    threadFactory: ThreadFactory = Executors.defaultThreadFactory()
 ) : SpeechRecognizerAggregatorInterface {
     companion object {
         // const val TAG = "SpeechRecognizerAggregator"
@@ -54,7 +56,7 @@ class SpeechRecognizerAggregator(
 
     private val keywordDetector: TycheKeywordDetector = TycheKeywordDetector()
 
-    private val executor = Executors.newSingleThreadExecutor()
+    private val executor = Executors.newSingleThreadExecutor(threadFactory)
     private val listeners = HashSet<SpeechRecognizerAggregatorInterface.OnStateChangeListener>()
 
     private var state = SpeechRecognizerAggregatorInterface.State.STOP
