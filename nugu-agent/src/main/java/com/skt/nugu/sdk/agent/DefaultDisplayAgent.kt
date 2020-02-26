@@ -93,6 +93,10 @@ class DefaultDisplayAgent(
         private const val NAME_COMMERCE_PRICE = "CommercePrice"
         private const val NAME_COMMERCE_INFO = "CommerceInfo"
 
+        private const val NAME_CALL_1 = "Call1"
+        private const val NAME_CALL_2 = "Call2"
+        private const val NAME_CALL_3 = "Call2"
+
         private const val NAME_UPDATE = "Update"
 
         private const val NAME_SUCCEEDED = "Succeeded"
@@ -231,6 +235,21 @@ class DefaultDisplayAgent(
         private val COMMERCE_INFO= NamespaceAndName(
             NAMESPACE,
             NAME_COMMERCE_INFO
+        )
+
+        private val CALL_1 = NamespaceAndName(
+            NAMESPACE,
+            NAME_CALL_1
+        )
+
+        private val CALL_2 = NamespaceAndName(
+            NAMESPACE,
+            NAME_CALL_2
+        )
+
+        private val CALL_3 = NamespaceAndName(
+            NAMESPACE,
+            NAME_CALL_3
         )
 
         private val UPDATE = NamespaceAndName(
@@ -538,6 +557,10 @@ class DefaultDisplayAgent(
         configuration[COMMERCE_OPTION] = nonBlockingPolicy
         configuration[COMMERCE_PRICE] = nonBlockingPolicy
         configuration[COMMERCE_INFO] = nonBlockingPolicy
+
+        configuration[CALL_1] = nonBlockingPolicy
+        configuration[CALL_2] = nonBlockingPolicy
+        configuration[CALL_3] = nonBlockingPolicy
 
         configuration[UPDATE] = nonBlockingPolicy
 
