@@ -127,6 +127,7 @@ class SpeechRecognizeAttachmentSenderThread(
                 currentAttachmentSequenceNumber,
                 encoded == null,
                 request.messageId,
+                "audio/speex", // TODO: Get info from Encoder
                 encoded
             )
 
