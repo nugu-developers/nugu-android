@@ -19,8 +19,14 @@ class DisplayTimer(private val tag: String) {
         val clear:() -> Unit
     )
 
-    fun start(id: String, timeout: Long, clear:() -> Unit) {
+    fun start(id: String, timeout: Long, clear:() -> Unit): Boolean {
         lock.withLock {
+            val exist = clearRequestParamMap[id] != null
+            if(exist) {
+                Logger.d(tag, "[start] already started (skip) - templateId: $id, timeout: $timeout")
+                return false
+            }
+
             Logger.d(tag, "[start] templateId: $id, timeout: $timeout")
             clearRequestParamMap[id] = StartParam(id, timeout, clear)
             clearTimeoutFutureMap[id] =
@@ -31,6 +37,8 @@ class DisplayTimer(private val tag: String) {
                     }
                     clear.invoke()
                 }, timeout, TimeUnit.MILLISECONDS)
+
+            return true
         }
     }
 
