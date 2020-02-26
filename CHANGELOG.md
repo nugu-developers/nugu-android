@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 0.8.9 *(2020-02-26)*
+----------------------------
+* New: Implement the OAuth2 Device Authorization Grant
+* Fix: Wrong resume issue on focus change (improved) (#266)
+* Fix: Audio player context not updated (#333)
+    * Side issue for #297
+* Improve: Add missing field(parentMessageId, mediaType) at AttachmentMessage (#335)
+* Improve: Provide thread factory used at executor in SpeechRecognizerAggregator (#339)
+
 Version 0.8.8 *(2020-02-20)*
 ----------------------------
 * New: Support display v1.2 (#232)
