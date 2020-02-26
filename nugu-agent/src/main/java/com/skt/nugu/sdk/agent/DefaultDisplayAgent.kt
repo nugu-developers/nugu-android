@@ -321,12 +321,11 @@ class DefaultDisplayAgent(
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
-    private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
     private var renderer: DisplayAgentInterface.Renderer? = null
+    private val timer: DisplayTimer? = DisplayTimer(TAG)
 
     override val namespaceAndName: NamespaceAndName = NamespaceAndName(
         "supportedInterfaces",
@@ -367,7 +366,7 @@ class DefaultDisplayAgent(
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
             val templateId = info.directive.getMessageId()
             if (immediate) {
-                stopClearTimer(templateId)
+                timer?.stop(templateId)
                 renderer?.clear(info.directive.getMessageId(), true)
             } else {
                 restartClearTimer(templateId, current.getDuration())
@@ -578,7 +577,7 @@ class DefaultDisplayAgent(
                             if (!playSynchronizer.existOtherSyncObject(it)) {
                                 restartClearTimer(templateId, it.getDuration())
                             } else {
-                                stopClearTimer(templateId)
+                                timer?.stop(templateId)
                             }
                         }
 
@@ -599,7 +598,7 @@ class DefaultDisplayAgent(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
-                stopClearTimer(templateId)
+                timer?.stop(templateId)
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
                 templateControllerMap.remove(templateId)
@@ -689,38 +688,15 @@ class DefaultDisplayAgent(
         return dialogRequestId
     }
 
-    private fun startClearTimer(
-        templateId: String,
-        timeout: Long
-    ) {
-        Logger.d(TAG, "[startClearTimer] templateId: $templateId, timeout: $timeout")
-        clearTimeoutFutureMap[templateId] =
-            clearTimeoutScheduler.schedule({
-                renderer?.clear(templateId, false)
-            }, timeout, TimeUnit.MILLISECONDS)
-    }
-
     private fun restartClearTimer(
         templateId: String,
         timeout: Long
     ) {
         Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
-        stopClearTimer(templateId)
-        startClearTimer(templateId, timeout)
-    }
-
-    protected fun stopClearTimer(templateId: String) {
-        val future = clearTimeoutFutureMap[templateId]
-        var canceled = false
-        if (future != null) {
-            canceled = future.cancel(true)
-            clearTimeoutFutureMap[templateId] = null
+        timer?.stop(templateId)
+        timer?.start(templateId, timeout) {
+            renderer?.clear(templateId, false)
         }
-
-        Logger.d(
-            TAG,
-            "[stopClearTimer] templateId: $templateId , future: $future, canceled: $canceled"
-        )
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
