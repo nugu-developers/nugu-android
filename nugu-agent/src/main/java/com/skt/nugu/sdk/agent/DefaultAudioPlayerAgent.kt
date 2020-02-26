@@ -174,8 +174,6 @@ class DefaultAudioPlayerAgent(
         val directive: Directive,
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
-        var stopRenderingTimerCalled: Boolean = false
-
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
@@ -829,10 +827,6 @@ class DefaultAudioPlayerAgent(
             return
         }
 
-        if (currentItem?.stopRenderingTimerCalled == false) {
-            executeScheduleStopForPausedSource(id)
-        }
-
         pauseCalled = false
         progressTimer.pause()
 
@@ -1462,17 +1456,6 @@ class DefaultAudioPlayerAgent(
 
     override fun setRenderer(renderer: AudioPlayerDisplayInterface.Renderer?) {
         displayDelegate?.setRenderer(renderer)
-    }
-
-    override fun stopRenderingTimer(templateId: String) {
-        displayDelegate?.stopRenderingTimer(templateId)
-
-        executor.submit {
-            currentItem?.stopRenderingTimerCalled = true
-            // cancel paused stop future.
-            pausedStopFuture?.cancel(true)
-            pausedStopFuture = null
-        }
     }
 
     fun setDisplay(display: AudioPlayerDisplayInterface?) {

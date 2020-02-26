@@ -60,7 +60,6 @@ class AudioPlayerTemplateHandler(
 
     private var executor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, AudioPlayerDisplayInterface.Controller>()
 
@@ -93,10 +92,6 @@ class AudioPlayerTemplateHandler(
 
         override fun requestReleaseSync(force: Boolean) {
             executor.submit {
-                if(stoppedTimerTemplateIdMap[getTemplateId()] == true && !force){
-                    Logger.d(TAG, "[requestReleaseSync] timer stopped & not force release request, so ignore")
-                    return@submit
-                }
                 executeCancelUnknownInfo(this, force)
             }
         }
@@ -160,7 +155,6 @@ class AudioPlayerTemplateHandler(
 
         setHandlingFailed(info, "Canceled by the other display info")
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
-        stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
         releaseSyncForce(info)
     }
 
@@ -197,7 +191,6 @@ class AudioPlayerTemplateHandler(
             // the renderer denied to render
             setHandlingCompleted(info)
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
-            stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
             clearInfoIfCurrent(info)
         }
@@ -243,7 +236,6 @@ class AudioPlayerTemplateHandler(
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
-                stoppedTimerTemplateIdMap.remove(templateId)
                 templateControllerMap.remove(templateId)
                 releaseSyncForce(it)
 
@@ -278,15 +270,6 @@ class AudioPlayerTemplateHandler(
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
         throw UnsupportedOperationException("setElementSelected not supported")
-    }
-
-    override fun stopRenderingTimer(templateId: String) {
-        if (stoppedTimerTemplateIdMap[templateId] == true) {
-            Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId - already called")
-            return
-        }
-        Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId")
-        stoppedTimerTemplateIdMap[templateId] = true
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
