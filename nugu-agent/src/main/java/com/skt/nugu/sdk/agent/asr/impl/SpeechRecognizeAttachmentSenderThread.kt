@@ -126,6 +126,7 @@ class SpeechRecognizeAttachmentSenderThread(
                 request.dialogRequestId,
                 currentAttachmentSequenceNumber,
                 encoded == null,
+                request.messageId,
                 encoded
             )
 

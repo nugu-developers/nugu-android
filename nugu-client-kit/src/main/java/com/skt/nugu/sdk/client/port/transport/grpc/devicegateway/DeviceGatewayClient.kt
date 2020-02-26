@@ -294,6 +294,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                         .setReferrerDialogRequestId(referrerDialogRequestId)
                         .build()
                 )
+                .setParentMessageId(parentMessageId)
                 .setSeq(seq)
                 .setIsEnd(isEnd)
                 .setContent(

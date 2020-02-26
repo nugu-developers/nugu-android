@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * @param version the version
  * @param seq the sequence
  * @param isEnd end of message
+ * @param parentMessageId the parent message id
  * @param byteArray the byteArray is data
  */
 data class AttachmentMessageRequest(
@@ -39,5 +40,6 @@ data class AttachmentMessageRequest(
     val referrerDialogRequestId: String,
     val seq: Int,
     val isEnd: Boolean,
+    val parentMessageId: String,
     var byteArray: ByteArray?
 ) : MessageRequest
