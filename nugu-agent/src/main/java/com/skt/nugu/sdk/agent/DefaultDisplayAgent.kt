@@ -369,7 +369,7 @@ class DefaultDisplayAgent(
                 timer?.stop(templateId)
                 renderer?.clear(info.directive.getMessageId(), true)
             } else {
-                restartClearTimer(templateId, current.getDuration())
+                timer?.reset(templateId)
             }
         } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
             executeCancelPendingInfo()
@@ -575,7 +575,9 @@ class DefaultDisplayAgent(
                     object : PlaySynchronizerInterface.OnRequestSyncListener {
                         override fun onGranted() {
                             if (!playSynchronizer.existOtherSyncObject(it)) {
-                                restartClearTimer(templateId, it.getDuration())
+                                timer?.start(templateId, it.getDuration()) {
+                                    renderer?.clear(templateId, false)
+                                }
                             } else {
                                 timer?.stop(templateId)
                             }
@@ -686,17 +688,6 @@ class DefaultDisplayAgent(
         }, namespaceAndName)
 
         return dialogRequestId
-    }
-
-    private fun restartClearTimer(
-        templateId: String,
-        timeout: Long
-    ) {
-        Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
-        timer?.stop(templateId)
-        timer?.start(templateId, timeout) {
-            renderer?.clear(templateId, false)
-        }
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
