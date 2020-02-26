@@ -297,6 +297,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
                 .setParentMessageId(parentMessageId)
                 .setSeq(seq)
                 .setIsEnd(isEnd)
+                .setMediaType(mediaType)
                 .setContent(
                     if (byteArray != null) {
                         ByteString.copyFrom(byteArray)

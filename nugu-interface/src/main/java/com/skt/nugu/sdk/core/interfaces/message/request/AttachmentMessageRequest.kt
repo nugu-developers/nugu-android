@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * @param seq the sequence
  * @param isEnd end of message
  * @param parentMessageId the parent message id
+ * @param mediaType the media type
  * @param byteArray the byteArray is data
  */
 data class AttachmentMessageRequest(
@@ -41,5 +42,6 @@ data class AttachmentMessageRequest(
     val seq: Int,
     val isEnd: Boolean,
     val parentMessageId: String,
+    val mediaType: String,
     var byteArray: ByteArray?
 ) : MessageRequest
