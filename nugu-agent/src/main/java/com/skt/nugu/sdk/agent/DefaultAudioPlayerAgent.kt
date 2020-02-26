@@ -827,6 +827,8 @@ class DefaultAudioPlayerAgent(
             return
         }
 
+        executeScheduleStopForPausedSource(id)
+
         pauseCalled = false
         progressTimer.pause()
 
