@@ -167,6 +167,8 @@ class NuguAndroidClient private constructor(
 
         internal var dialogUXStateTransitionDelay: Long = 200L
 
+        internal var enableDisplayLifeCycleManagement = true
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -242,6 +244,12 @@ class NuguAndroidClient private constructor(
          * @param delay (milliseconds) the transition delay for idle state of DialogUXState
          */
         fun dialogUXStateTransitionDelay(delay: Long) = apply { this.dialogUXStateTransitionDelay = delay }
+
+        /**
+         * @param enable the flag to enable or disable managing lifecycle for display.
+         * If want to manage the display's lifecycle yourself, disable (set to false).
+         */
+        fun enableDisplayLifeCycleManagement(enable: Boolean) = apply {this.enableDisplayLifeCycleManagement = enable}
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
