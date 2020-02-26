@@ -160,12 +160,6 @@ class DisplayAggregator(
         this.observer = renderer
     }
 
-    override fun stopRenderingTimer(templateId: String) {
-        lock.withLock {
-            requestAgentMap[templateId]
-        }?.stopRenderingTimer(templateId)
-    }
-
     override fun onReceiveDirectives(directives: List<Directive>) {
         val audioPlayerDirective = directives.filter {
             (it.getNamespaceAndName() == AbstractAudioPlayerAgent.PLAY)

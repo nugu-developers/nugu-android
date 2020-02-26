@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
@@ -324,7 +323,6 @@ class DefaultDisplayAgent(
 
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
-    private val stoppedTimerTemplateIdMap = ConcurrentHashMap<String, Boolean>()
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
@@ -400,7 +398,6 @@ class DefaultDisplayAgent(
 
         setHandlingFailed(info, "Canceled by the other display info")
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
-        stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
         releaseSyncImmediately(info)
     }
 
@@ -507,7 +504,6 @@ class DefaultDisplayAgent(
             // the renderer denied to render
             setHandlingCompleted(info)
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
-            stoppedTimerTemplateIdMap.remove(info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
             clearInfoIfCurrent(info)
         }
@@ -606,7 +602,6 @@ class DefaultDisplayAgent(
                 stopClearTimer(templateId)
                 setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
-                stoppedTimerTemplateIdMap.remove(templateId)
                 templateControllerMap.remove(templateId)
                 releaseSyncImmediately(it)
 
@@ -694,17 +689,6 @@ class DefaultDisplayAgent(
         return dialogRequestId
     }
 
-
-    override fun stopRenderingTimer(templateId: String) {
-        if (stoppedTimerTemplateIdMap[templateId] == true) {
-            Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId - already called")
-            return
-        }
-        Logger.d(TAG, "[stopRenderingTimer] templateId: $templateId")
-        stoppedTimerTemplateIdMap[templateId] = true
-        stopClearTimer(templateId)
-    }
-
     private fun startClearTimer(
         templateId: String,
         timeout: Long
@@ -720,14 +704,6 @@ class DefaultDisplayAgent(
         templateId: String,
         timeout: Long
     ) {
-        if (stoppedTimerTemplateIdMap[templateId] == true) {
-            Logger.d(
-                TAG,
-                "[restartClearTimer] not restart because of stopped by stopRenderingTimer() - templateId: $templateId, timeout: $timeout"
-            )
-            return
-        }
-
         Logger.d(TAG, "[restartClearTimer] templateId: $templateId, timeout: $timeout")
         stopClearTimer(templateId)
         startClearTimer(templateId, timeout)
