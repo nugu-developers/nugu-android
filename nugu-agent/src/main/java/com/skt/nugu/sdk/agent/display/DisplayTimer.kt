@@ -4,30 +4,62 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class DisplayTimer(private val tag: String) {
+    private val lock = ReentrantLock()
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
-    private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>?> = HashMap()
+    private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>> = HashMap()
+    private val clearRequestParamMap: MutableMap<String, StartParam> = HashMap()
+
+    private data class StartParam(
+        val id: String,
+        val timeout: Long,
+        val clear:() -> Unit
+    )
 
     fun start(id: String, timeout: Long, clear:() -> Unit) {
-        Logger.d(tag, "[start] templateId: $id, timeout: $timeout")
-        clearTimeoutFutureMap[id] =
-            clearTimeoutScheduler.schedule({
-                clear.invoke()
-            }, timeout, TimeUnit.MILLISECONDS)
+        lock.withLock {
+            Logger.d(tag, "[start] templateId: $id, timeout: $timeout")
+            clearRequestParamMap[id] = StartParam(id, timeout, clear)
+            clearTimeoutFutureMap[id] =
+                clearTimeoutScheduler.schedule({
+                    lock.withLock {
+                        clearRequestParamMap.remove(id)
+                        clearTimeoutFutureMap.remove(id)
+                    }
+                    clear.invoke()
+                }, timeout, TimeUnit.MILLISECONDS)
+        }
     }
 
-    fun stop(id: String) {
-        val future = clearTimeoutFutureMap[id]
-        var canceled = false
-        if (future != null) {
-            canceled = future.cancel(true)
-            clearTimeoutFutureMap[id] = null
-        }
+    fun stop(id: String): Boolean {
+        lock.withLock {
+            clearRequestParamMap.remove(id)
+            val future = clearTimeoutFutureMap.remove(id)
+            var canceled = false
+            if (future != null) {
+                canceled = future.cancel(true)
+            }
 
-        Logger.d(
-            tag,
-            "[stop] templateId: $id , future: $future, canceled: $canceled"
-        )
+            Logger.d(
+                tag,
+                "[stop] templateId: $id , future: $future, canceled: $canceled"
+            )
+            return canceled
+        }
+    }
+
+    fun reset(id: String) {
+        lock.withLock {
+            val param = clearRequestParamMap[id] ?: return
+            if (param != null && stop(id)) {
+                Logger.d(tag, "[reset] start: $id")
+                start(param.id, param.timeout, param.clear)
+            } else {
+                Logger.d(tag, "[reset] skipped: $id")
+            }
+        }
     }
 }
