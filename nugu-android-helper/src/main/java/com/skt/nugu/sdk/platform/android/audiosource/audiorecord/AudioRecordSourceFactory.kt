@@ -32,7 +32,9 @@ class AudioRecordSourceFactory(
     val bufferSize: Int = sampleRate * 2 * 10
 ) : AudioSourceFactory {
     companion object {
-        private const val TAG = "AudioRecordSourceFactory"
+        // To remove error, shorten TAG
+        private const val TAG = "ARecordSourceFactory"
+        //private const val TAG = "AudioRecordSourceFactory"
     }
     override fun create(): AudioSource =
         AudioRecordSource(
