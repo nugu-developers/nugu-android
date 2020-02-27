@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -66,7 +67,7 @@ class DefaultTTSAgent(
     playStackManager,
     inputProcessorManager,
     channelName
-), MediaPlayerControlInterface.PlaybackEventListener {
+), MediaPlayerControlInterface.PlaybackEventListener, DialogUXStateAggregatorInterface.Listener{
 
     internal data class SpeakPayload(
         @SerializedName("playServiceId")
@@ -136,8 +137,6 @@ class DefaultTTSAgent(
                         if (nextInfo != null) {
                             preparedSpeakInfo = null
                             executePlaySpeakInfo(nextInfo)
-                        } else {
-                            releaseForegroundFocus()
                         }
                     } else {
                         Logger.d(TAG, "[onReleased] (focus: $currentFocus)")
@@ -893,5 +892,21 @@ class DefaultTTSAgent(
 
     override fun onResponseTimeout(dialogRequestId: String) {
         requestListenerMap.remove(dialogRequestId)?.onError()
+    }
+
+    override fun onDialogUXStateChanged(
+        newState: DialogUXStateAggregatorInterface.DialogUXState,
+        dialogMode: Boolean
+    ) {
+        executor.submit {
+            if(newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+                return@submit
+            }
+
+            if(currentFocus != FocusState.NONE) {
+                focusManager.releaseChannel(channelName, this)
+                currentFocus = FocusState.NONE
+            }
+        }
     }
 }
