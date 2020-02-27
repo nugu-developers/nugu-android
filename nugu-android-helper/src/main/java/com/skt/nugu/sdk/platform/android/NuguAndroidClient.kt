@@ -165,6 +165,8 @@ class NuguAndroidClient private constructor(
 
         internal var bluetoothProvider: BluetoothProvider? = null
 
+        internal var dialogUXStateTransitionDelay: Long = 200L
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -236,6 +238,11 @@ class NuguAndroidClient private constructor(
          */
         fun bluetoothProvider(bluetoothProvider: BluetoothProvider?) = apply { this.bluetoothProvider = bluetoothProvider }
 
+        /**
+         * @param delay (milliseconds) the transition delay for idle state of DialogUXState
+         */
+        fun dialogUXStateTransitionDelay(delay: Long) = apply { this.dialogUXStateTransitionDelay = delay }
+
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
 
@@ -245,7 +252,7 @@ class NuguAndroidClient private constructor(
     }
 
     private val dialogUXStateAggregator =
-        DialogUXStateAggregator()
+        DialogUXStateAggregator(builder.dialogUXStateTransitionDelay)
 
     private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
 
