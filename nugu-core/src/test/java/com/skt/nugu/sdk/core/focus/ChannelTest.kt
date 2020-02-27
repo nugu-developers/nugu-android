@@ -52,21 +52,4 @@ class ChannelTest : FocusChangeManager() {
         testChannel.setObserver(null)
         Assert.assertFalse(testChannel.hasObserver())
     }
-
-    @Test
-    fun getTimeAtIdle() {
-        val startTime = testChannel.state.timeAtIdle
-        Assert.assertTrue(testChannel.setFocus(FocusState.FOREGROUND))
-        val afterForegroundTime = testChannel.state.timeAtIdle
-        Assert.assertEquals(startTime, afterForegroundTime)
-
-        Assert.assertTrue(testChannel.setFocus(FocusState.BACKGROUND))
-        val afterBackgroundTime = testChannel.state.timeAtIdle
-        Assert.assertEquals(startTime, afterBackgroundTime)
-
-        Thread.sleep(1) // sleep
-        Assert.assertTrue(testChannel.setFocus(FocusState.NONE))
-        val afterNoneBackgroundTime = testChannel.state.timeAtIdle
-        Assert.assertTrue(afterNoneBackgroundTime - afterBackgroundTime > 0)
-    }
 }
