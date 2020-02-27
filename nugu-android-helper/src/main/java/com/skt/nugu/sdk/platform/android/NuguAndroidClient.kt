@@ -356,6 +356,7 @@ class NuguAndroidClient private constructor(
                         DefaultFocusChannel.DIALOG_CHANNEL_NAME
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
+                        dialogUXStateAggregator.addListener(this)
                     }
                 }
             })
