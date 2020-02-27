@@ -44,6 +44,7 @@ import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
@@ -125,8 +126,9 @@ class NuguClient private constructor(
                 addListener(inputProcessorManager)
                 addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
             }
+            val attachmentManager = AttachmentManager()
             val messageInterpreter =
-                MessageInterpreter(directiveGroupProcessor, AttachmentManager())
+                MessageInterpreter(directiveGroupProcessor, attachmentManager)
 
             networkManager = NetworkManager.create(messageRouter).apply {
                 addMessageObserver(messageInterpreter)
@@ -150,6 +152,8 @@ class NuguClient private constructor(
 
                 override fun getDisplayPlayStackManager(): PlayStackManagerInterface =
                     displayPlayStackManager
+
+                override fun getAttachmentManager(): AttachmentManagerInterface = attachmentManager
 
                 override fun getMessageSender(): MessageSender = networkManager
                 override fun getConnectionManager(): ConnectionManagerInterface = networkManager
