@@ -53,8 +53,10 @@ class DialogUXStateAggregator :
 
     private val tryEnterIdleStateRunnable: Runnable = Runnable {
         executor.submit {
-            if (currentState != DialogUXStateAggregatorInterface.DialogUXState.IDLE &&
-                !asrState.isRecognizing() && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && !isTtsPreparing
+            if (currentState != DialogUXStateAggregatorInterface.DialogUXState.IDLE
+                && !dialogModeEnabled
+                && !asrState.isRecognizing()
+                && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && !isTtsPreparing
             ) {
                 Logger.d(TAG, "[tryEnterIdleStateRunnable]")
                 setState(DialogUXStateAggregatorInterface.DialogUXState.IDLE)
@@ -132,6 +134,7 @@ class DialogUXStateAggregator :
     override fun onSessionClosed(sessionId: String) {
         executor.submit {
             dialogModeEnabled = false
+            tryEnterIdleState()
         }
     }
 
