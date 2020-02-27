@@ -22,11 +22,11 @@ interface SpeakerFactory {
     /**
      * Create a speaker for playing nugu such as tts and media.
      */
-    fun createNuguSpeaker(): Speaker
+    fun createNuguSpeaker(): Speaker?
     /**
      * Create a speaker for playing alerts
      */
-    fun createAlarmSpeaker(): Speaker
+    fun createAlarmSpeaker(): Speaker?
     /**
      * Create a speaker for call
      */

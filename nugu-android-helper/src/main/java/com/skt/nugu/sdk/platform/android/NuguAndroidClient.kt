@@ -138,12 +138,12 @@ class NuguAndroidClient private constructor(
                 AndroidMediaPlayer(context, MediaPlayer())
         }
         internal var speakerFactory: SpeakerFactory = object : SpeakerFactory {
-            override fun createNuguSpeaker(): Speaker =
+            override fun createNuguSpeaker(): Speaker? =
                 object : AndroidAudioSpeaker(context, AudioManager.STREAM_MUSIC) {
                     override fun getSpeakerType() = Speaker.Type.NUGU
                 }
 
-            override fun createAlarmSpeaker(): Speaker =
+            override fun createAlarmSpeaker(): Speaker? =
                 object : AndroidAudioSpeaker(context, AudioManager.STREAM_ALARM) {
                     override fun getSpeakerType() = Speaker.Type.ALARM
                 }
@@ -297,8 +297,12 @@ class NuguAndroidClient private constructor(
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
                             builder.speakerFactory.let {
-                                addSpeaker(it.createNuguSpeaker())
-                                addSpeaker(it.createAlarmSpeaker())
+                                it.createNuguSpeaker()?.let { speaker ->
+                                    addSpeaker(speaker)
+                                }
+                                it.createAlarmSpeaker()?.let { speaker ->
+                                    addSpeaker(speaker)
+                                }
                                 it.createCallSpeaker()?.let { speaker ->
                                     addSpeaker(speaker)
                                 }
