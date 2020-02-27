@@ -308,8 +308,14 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, null)
-        setHandlingCompleted(info)
+        val result = executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, null)
+
+        if(result) {
+            setHandlingCompleted(info)
+        } else {
+            setState(ASRAgentInterface.State.IDLE)
+            setHandlingExpectSpeechFailed(info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
+        }
     }
 
     private fun parseExpectSpeechPayload(directive: Directive): ExpectSpeechPayload? {
