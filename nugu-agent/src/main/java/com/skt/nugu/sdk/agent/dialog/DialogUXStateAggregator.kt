@@ -26,7 +26,9 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-class DialogUXStateAggregator :
+class DialogUXStateAggregator(
+    private val transitionDelayForIdleState: Long
+) :
     DialogUXStateAggregatorInterface
     , ASRAgentInterface.OnStateChangeListener
     , TTSAgentInterface.Listener
@@ -34,7 +36,6 @@ class DialogUXStateAggregator :
     , DialogSessionManagerInterface.OnSessionStateChangeListener{
     companion object {
         private const val TAG = "DialogUXStateAggregator"
-        private const val LONG_TIME = 200L
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -174,7 +175,7 @@ class DialogUXStateAggregator :
         tryEnterIdleStateRunnableFuture?.cancel(true)
         tryEnterIdleStateRunnableFuture = multiturnSpeakingToListeningScheduler.schedule(
             tryEnterIdleStateRunnable,
-            LONG_TIME,
+            transitionDelayForIdleState,
             TimeUnit.MILLISECONDS
         )
     }
