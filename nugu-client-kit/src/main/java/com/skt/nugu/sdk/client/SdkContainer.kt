@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client
 
+import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
@@ -31,6 +32,7 @@ interface SdkContainer {
     fun getAudioFocusManager(): FocusManagerInterface
     fun getAudioPlayStackManager(): PlayStackManagerInterface
     fun getDisplayPlayStackManager(): PlayStackManagerInterface
+    fun getAttachmentManager(): AttachmentManagerInterface
     fun getMessageSender(): MessageSender
     fun getConnectionManager(): ConnectionManagerInterface
     fun getContextManager(): ContextManagerInterface
