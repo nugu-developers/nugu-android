@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.8.10 *(2020-02-27)*
+----------------------------
+* New: Modify access to the attahcment manager (#344)
+* New: Support CallX directives for Display v1.2 (#341)
+* Fix: Prevent focus loss between DM and TTS (#346)
+
+
 Version 0.8.9 *(2020-02-26)*
 ----------------------------
 * New: Implement the OAuth2 Device Authorization Grant
