@@ -1543,7 +1543,7 @@ class DefaultAudioPlayerAgent(
                     }
                     executeStop(false)
                 }
-            }, stopDelayForPausedSourceAtMinutes, TimeUnit.SECONDS))
+            }, stopDelayForPausedSourceAtMinutes, TimeUnit.MINUTES))
         }
 
         private fun delayNotifyOnReleaseAudioInfo(
