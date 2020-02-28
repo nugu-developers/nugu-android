@@ -41,7 +41,8 @@ class DefaultDisplayAgent(
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
-    private val playStackPriority: Int
+    private val playStackPriority: Int,
+    enableDisplayLifeCycleManagement: Boolean
 ) : AbstractDisplayAgent(
     contextManager,
     messageSender,
@@ -232,7 +233,7 @@ class DefaultDisplayAgent(
             NAME_COMMERCE_PRICE
         )
 
-        private val COMMERCE_INFO= NamespaceAndName(
+        private val COMMERCE_INFO = NamespaceAndName(
             NAMESPACE,
             NAME_COMMERCE_INFO
         )
@@ -325,7 +326,8 @@ class DefaultDisplayAgent(
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
     private var renderer: DisplayAgentInterface.Renderer? = null
-    private val timer: DisplayTimer? = DisplayTimer(TAG)
+    private val timer: DisplayTimer? =
+        if (enableDisplayLifeCycleManagement) DisplayTimer(TAG) else null
 
     override val namespaceAndName: NamespaceAndName = NamespaceAndName(
         "supportedInterfaces",
@@ -359,7 +361,7 @@ class DefaultDisplayAgent(
         }
     }
 
-    protected fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
+    private fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
         val current = currentInfo
         if (info.directive.getMessageId() == current?.getTemplateId()) {
@@ -369,7 +371,10 @@ class DefaultDisplayAgent(
                 timer?.stop(templateId)
                 renderer?.clear(info.directive.getMessageId(), true)
             } else {
-                timer?.reset(templateId)
+                timer?.stop(templateId)
+                timer?.start(templateId, current.getDuration()) {
+                    renderer?.clear(info.directive.getMessageId(), true)
+                }
             }
         } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
             executeCancelPendingInfo()
@@ -450,13 +455,13 @@ class DefaultDisplayAgent(
 
     private fun executeHandleUpdateDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-        if(payload == null) {
+        if (payload == null) {
             setHandlingFailed(info, "[executeHandleUpdateDirective] invalid payload: $payload")
             return
         }
 
         val currentDisplayInfo = currentInfo
-        if(currentDisplayInfo == null) {
+        if (currentDisplayInfo == null) {
             setHandlingFailed(info, "[executeHandleUpdateDirective] failed: no current display")
             return
         }
@@ -464,12 +469,15 @@ class DefaultDisplayAgent(
         val currentToken = currentDisplayInfo.payload.token
         val updateToken = payload.token
 
-        if(currentToken == updateToken && !updateToken.isNullOrBlank()) {
+        if (currentToken == updateToken && !updateToken.isNullOrBlank()) {
             renderer?.update(currentDisplayInfo.getTemplateId(), info.directive.payload)
             timer?.reset(currentDisplayInfo.getTemplateId())
             setHandlingCompleted(info)
         } else {
-            setHandlingFailed(info, "[executeHandleUpdateDirective] no matched token (current:$currentToken / update:$updateToken)")
+            setHandlingFailed(
+                info,
+                "[executeHandleUpdateDirective] no matched token (current:$currentToken / update:$updateToken)"
+            )
         }
     }
 
@@ -577,7 +585,7 @@ class DefaultDisplayAgent(
                         override fun onGranted() {
                             if (!playSynchronizer.existOtherSyncObject(it)) {
                                 timer?.start(templateId, it.getDuration()) {
-                                    renderer?.clear(templateId, false)
+                                    renderer?.clear(templateId, true)
                                 }
                             } else {
                                 timer?.stop(templateId)
@@ -819,10 +827,11 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            val result = templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction)
-                ?: false
+            val result =
+                templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlFocus(direction)
+                    ?: false
 
-            if(result) {
+            if (result) {
                 timer?.reset(currentRenderedInfo.getTemplateId())
             }
 
@@ -844,10 +853,11 @@ class DefaultDisplayAgent(
                 return@Callable false
             }
 
-            val result = templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction)
-                ?: false
+            val result =
+                templateControllerMap[currentRenderedInfo.getTemplateId()]?.controlScroll(direction)
+                    ?: false
 
-            if(result) {
+            if (result) {
                 timer?.reset(currentRenderedInfo.getTemplateId())
             }
 

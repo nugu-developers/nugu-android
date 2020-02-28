@@ -487,7 +487,8 @@ class NuguAndroidClient private constructor(
                         getPlaySynchronizer(),
                         getDisplayPlayStackManager(),
                         getInputManagerProcessor(),
-                        DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY
+                        DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY,
+                        builder.enableDisplayLifeCycleManagement
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
 

@@ -23,11 +23,11 @@ class DisplayTimer(private val tag: String) {
         lock.withLock {
             val exist = clearRequestParamMap[id] != null
             if(exist) {
-                Logger.d(tag, "[start] already started (skip) - templateId: $id, timeout: $timeout")
+                Logger.d(tag, "[DisplayTimer.start] already started (skip) - templateId: $id, timeout: $timeout")
                 return false
             }
 
-            Logger.d(tag, "[start] templateId: $id, timeout: $timeout")
+            Logger.d(tag, "[DisplayTimer.start] templateId: $id, timeout: $timeout")
             clearRequestParamMap[id] = StartParam(id, timeout, clear)
             clearTimeoutFutureMap[id] =
                 clearTimeoutScheduler.schedule({
@@ -53,7 +53,7 @@ class DisplayTimer(private val tag: String) {
 
             Logger.d(
                 tag,
-                "[stop] templateId: $id , future: $future, canceled: $canceled"
+                "[DisplayTimer.stop] templateId: $id , future: $future, canceled: $canceled"
             )
             return canceled
         }
@@ -63,10 +63,10 @@ class DisplayTimer(private val tag: String) {
         lock.withLock {
             val param = clearRequestParamMap[id] ?: return
             if (param != null && stop(id)) {
-                Logger.d(tag, "[reset] start: $id")
+                Logger.d(tag, "[DisplayTimer.reset] start: $id")
                 start(param.id, param.timeout, param.clear)
             } else {
-                Logger.d(tag, "[reset] skipped: $id")
+                Logger.d(tag, "[DisplayTimer.reset] skipped: $id")
             }
         }
     }
