@@ -116,8 +116,8 @@ class DefaultAudioPlayerAgent(
         INTERNAL_LOGIC,
     }
 
-    private val lifeCycleController: LifeCycleController? =
-        if (enableDisplayLifeCycleManagement) LifeCycleController() else null
+    private val lifeCycleScheduler: LifeCycleScheduler? =
+        if (enableDisplayLifeCycleManagement) LifeCycleScheduler() else null
 
     private val activityListeners =
         HashSet<AudioPlayerAgentInterface.Listener>()
@@ -204,6 +204,7 @@ class DefaultAudioPlayerAgent(
     }
 
     init {
+        Logger.d(TAG, "[init] channelName: $channelName, enableDisplayLifeCycleManagement: $enableDisplayLifeCycleManagement")
         mediaPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
     }
@@ -484,7 +485,7 @@ class DefaultAudioPlayerAgent(
                         stopCalled = true
                     }
                 } else if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
-                    lifeCycleController?.onStoppedAfterFinished()
+                    lifeCycleScheduler?.onStoppedAfterFinished()
                 }
                 return
             }
@@ -797,7 +798,7 @@ class DefaultAudioPlayerAgent(
 
         pauseReason = null
         playbackRouter.setHandler(this)
-        lifeCycleController?.onPlaying()
+        lifeCycleScheduler?.onPlaying()
         changeActivity(AudioPlayerAgentInterface.State.PLAYING)
     }
 
@@ -823,7 +824,7 @@ class DefaultAudioPlayerAgent(
         }
 
         if(pauseReason != null) {
-            lifeCycleController?.onPaused(id)
+            lifeCycleScheduler?.onPaused(id)
         }
 
         pauseCalled = false
@@ -929,7 +930,7 @@ class DefaultAudioPlayerAgent(
         if (byStop) {
             notifyOnReleaseAudioInfo(syncObject, true)
         } else {
-            lifeCycleController?.onFinished(syncObject)
+            lifeCycleScheduler?.onFinished(syncObject)
         }
     }
 
@@ -1406,6 +1407,10 @@ class DefaultAudioPlayerAgent(
     ): String = displayDelegate?.setElementSelected(templateId, token, callback)
         ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
 
+    override fun notifyUserInteractionOnDisplay(templateId: String) {
+        lifeCycleScheduler?.refreshSchedule()
+    }
+
     override fun displayCardRendered(
         templateId: String,
         controller: AudioPlayerDisplayInterface.Controller?
@@ -1463,43 +1468,71 @@ class DefaultAudioPlayerAgent(
      * - After 10min of pausing, player released.
      * - After 7sec of finish, player released.
      */
-    inner class LifeCycleController {
-        private var pausedStopFuture: ScheduledFuture<*>? = null
-        private var delayedReleaseAudioInfoFuture: ScheduledFuture<*>? = null
+    inner class LifeCycleScheduler {
+        private val CLASS_TAG = "LifeCycleController"
+        private var pausedStopFuture: Pair<SourceId, ScheduledFuture<*>>? = null
+        private var delayedReleaseAudioInfoFuture: Pair<AudioInfo, ScheduledFuture<*>>? = null
         private val scheduleExecutor = ScheduledThreadPoolExecutor(1)
-        private val stopDelayForPausedSourceAtMinutes: Long = 10L
 
-        private var delayedReleaseAudioInfo: AudioInfo? = null
+        private val stopDelayForPausedSourceAtMinutes: Long = 10L
+        private val finishDelayAtMilliseconds: Long = 7000L
 
         fun onPlaying() {
-            Logger.d(TAG, "[LifeCycleController.onPlaying]")
-            pausedStopFuture?.cancel(true)
+            Logger.d(TAG, "[$CLASS_TAG.onPlaying]")
+            pausedStopFuture?.second?.cancel(true)
             pausedStopFuture = null
         }
 
         fun onPaused(id: SourceId) {
-            Logger.d(TAG, "[LifeCycleController.onPaused] id: $id")
+            Logger.d(TAG, "[$CLASS_TAG.onPaused] id: $id")
             executeScheduleStopForPausedSource(id)
         }
 
         fun onFinished(audioInfo: AudioInfo) {
-            Logger.d(TAG, "[LifeCycleController.onFinished]")
-            delayNotifyOnReleaseAudioInfo(audioInfo, 7000L)
+            Logger.d(TAG, "[$CLASS_TAG.onFinished]")
+            delayNotifyOnReleaseAudioInfo(audioInfo, finishDelayAtMilliseconds)
         }
 
         fun onStoppedAfterFinished() {
-            Logger.d(TAG, "[LifeCycleController.onStoppedAfterFinished]")
-            delayedReleaseAudioInfo?.let {
-                delayedReleaseAudioInfo = null
-                delayedReleaseAudioInfoFuture?.cancel(true)
+            Logger.d(TAG, "[$CLASS_TAG.onStoppedAfterFinished]")
+            delayedReleaseAudioInfoFuture?.let {
                 delayedReleaseAudioInfoFuture = null
-                notifyOnReleaseAudioInfo(it, true)
+                it.second.cancel(true)
+                notifyOnReleaseAudioInfo(it.first, true)
+            }
+        }
+
+        fun refreshSchedule() {
+            Logger.d(TAG, "[$CLASS_TAG.refreshSchedule]")
+            executor.submit {
+                refreshPausedStopFutureIfRunning()
+                refreshFinishDelayFutureIfRunning()
+            }
+        }
+
+        private fun refreshPausedStopFutureIfRunning() {
+            Logger.d(TAG, "[$CLASS_TAG.refreshPausedStopFutureIfRunning] $pausedStopFuture")
+            val copyPausedStopFuture = pausedStopFuture
+            pausedStopFuture = null
+            if (copyPausedStopFuture != null) {
+                executeScheduleStopForPausedSource(copyPausedStopFuture.first)
+            }
+        }
+
+        private fun refreshFinishDelayFutureIfRunning() {
+            Logger.d(TAG, "[$CLASS_TAG.refreshFinishDelayFutureIfRunning] $delayedReleaseAudioInfoFuture")
+            val copyDelayedReleaseAudioInfoFuture = delayedReleaseAudioInfoFuture
+            delayedReleaseAudioInfoFuture = null
+            if(copyDelayedReleaseAudioInfoFuture != null) {
+                copyDelayedReleaseAudioInfoFuture.second.cancel(true)
+                delayNotifyOnReleaseAudioInfo(copyDelayedReleaseAudioInfoFuture.first, finishDelayAtMilliseconds)
             }
         }
 
         private fun executeScheduleStopForPausedSource(id: SourceId) {
-            pausedStopFuture?.cancel(true)
-            pausedStopFuture = scheduleExecutor.schedule(Callable {
+            Logger.d(TAG, "[$CLASS_TAG.executeScheduleStopForPausedSource] id: $id")
+            pausedStopFuture?.second?.cancel(true)
+            pausedStopFuture = Pair(id, scheduleExecutor.schedule(Callable {
                 executor.submit {
                     if (id.id != sourceId.id) {
                         return@submit
@@ -1510,26 +1543,25 @@ class DefaultAudioPlayerAgent(
                     }
                     executeStop(false)
                 }
-            }, stopDelayForPausedSourceAtMinutes, TimeUnit.MINUTES)
+            }, stopDelayForPausedSourceAtMinutes, TimeUnit.SECONDS))
         }
 
         private fun delayNotifyOnReleaseAudioInfo(
             delayedObject: AudioInfo,
             delay: Long
         ) {
-            Logger.d(TAG, "[delayNotifyOnReleaseAudioInfo] $delayedObject, $delay")
-            delayedReleaseAudioInfo?.let {
-                notifyOnReleaseAudioInfo(it, true)
+            Logger.d(TAG, "[$CLASS_TAG.delayNotifyOnReleaseAudioInfo] $delayedObject, $delay")
+            delayedReleaseAudioInfoFuture?.let {
+                delayedReleaseAudioInfoFuture = null
+                it.second.cancel(true)
+                notifyOnReleaseAudioInfo(it.first, true)
             }
-            delayedReleaseAudioInfo = delayedObject
-            delayedReleaseAudioInfoFuture?.cancel(true)
-            delayedReleaseAudioInfoFuture = scheduleExecutor.schedule(Callable {
+            delayedReleaseAudioInfoFuture = Pair(delayedObject, scheduleExecutor.schedule(Callable {
                 executor.submit {
-                    delayedReleaseAudioInfo = null
                     delayedReleaseAudioInfoFuture = null
                     notifyOnReleaseAudioInfo(delayedObject, false)
                 }
-            }, delay, TimeUnit.MILLISECONDS)
+            }, delay, TimeUnit.MILLISECONDS))
         }
     }
 }

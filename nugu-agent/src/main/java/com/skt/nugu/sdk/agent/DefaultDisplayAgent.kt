@@ -699,6 +699,10 @@ class DefaultDisplayAgent(
         return dialogRequestId
     }
 
+    override fun notifyUserInteraction(templateId: String) {
+        timer?.reset(templateId)
+    }
+
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
         info.result.setFailed(description)
         removeDirective(info.directive.getMessageId())

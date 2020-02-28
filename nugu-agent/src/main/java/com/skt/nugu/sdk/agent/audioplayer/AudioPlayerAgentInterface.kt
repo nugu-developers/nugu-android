@@ -132,4 +132,11 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * Set the shuffle if supported
      */
     fun setShuffle(shuffle: Boolean)
+
+    /**
+     * This should be called when occur interaction(input event such as touch, drag, etc...) for display
+     *
+     * @param templateId the unique identifier for the template card
+     */
+    fun notifyUserInteractionOnDisplay(templateId: String)
 }
