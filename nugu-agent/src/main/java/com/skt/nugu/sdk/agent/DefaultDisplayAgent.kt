@@ -41,7 +41,8 @@ class DefaultDisplayAgent(
     messageSender: MessageSender,
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface
+    inputProcessorManager: InputProcessorManagerInterface,
+    private val playStackPriority: Int
 ) : AbstractDisplayAgent(
     contextManager,
     messageSender,
@@ -312,7 +313,7 @@ class DefaultDisplayAgent(
         }
 
         var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, 100)
+            PlayStackManagerInterface.PlayContext(it, playStackPriority)
         }
     }
 
