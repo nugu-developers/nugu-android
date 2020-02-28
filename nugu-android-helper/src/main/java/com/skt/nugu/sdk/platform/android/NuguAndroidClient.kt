@@ -324,7 +324,8 @@ class NuguAndroidClient private constructor(
                         playbackRouter,
                         getPlaySynchronizer(),
                         getAudioPlayStackManager(),
-                        DefaultFocusChannel.CONTENT_CHANNEL_NAME
+                        DefaultFocusChannel.CONTENT_CHANNEL_NAME,
+                        DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY
                     ).apply {
                         val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler()
                             .apply {
@@ -337,7 +338,8 @@ class NuguAndroidClient private constructor(
 
                         AudioPlayerTemplateHandler(
                             getPlaySynchronizer(),
-                            getDisplayPlayStackManager()
+                            getDisplayPlayStackManager(),
+                            DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY
                         ).apply {
                             setDisplay(this)
                             getDirectiveSequencer().addDirectiveHandler(this)
@@ -364,7 +366,8 @@ class NuguAndroidClient private constructor(
                         getPlaySynchronizer(),
                         getAudioPlayStackManager(),
                         getInputManagerProcessor(),
-                        DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                        DefaultFocusChannel.DIALOG_CHANNEL_NAME,
+                        DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
                         dialogUXStateAggregator.addListener(this)
@@ -475,7 +478,8 @@ class NuguAndroidClient private constructor(
                         getMessageSender(),
                         getPlaySynchronizer(),
                         getDisplayPlayStackManager(),
-                        getInputManagerProcessor()
+                        getInputManagerProcessor(),
+                        DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
 

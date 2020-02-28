@@ -57,7 +57,8 @@ class DefaultTTSAgent(
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
     inputProcessorManager: InputProcessorManagerInterface,
-    channelName: String
+    channelName: String,
+    private val playStackPriority: Int
 ) : AbstractTTSAgent(
     speechPlayer,
     messageSender,
@@ -150,7 +151,7 @@ class DefaultTTSAgent(
         }
 
         var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, 100)
+            PlayStackManagerInterface.PlayContext(it, playStackPriority)
         }
 
         fun clear() {

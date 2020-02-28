@@ -30,7 +30,8 @@ import java.util.concurrent.*
 
 class AudioPlayerTemplateHandler(
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackManager: PlayStackManagerInterface
+    private val playStackManager: PlayStackManagerInterface,
+    private val playStackPriority: Int
 ) : AbstractDirectiveHandler(), AudioPlayerDisplayInterface, AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
         private const val TAG = "AudioPlayerTemplateHandler"
@@ -103,7 +104,7 @@ class AudioPlayerTemplateHandler(
         fun getTemplateId(): String = directive.getMessageId()
 
         var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, 300)
+            PlayStackManagerInterface.PlayContext(it, playStackPriority)
         }
     }
 

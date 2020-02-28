@@ -57,7 +57,8 @@ class DefaultAudioPlayerAgent(
     playbackRouter: PlaybackRouter,
     playSynchronizer: PlaySynchronizerInterface,
     playStackManager: PlayStackManagerInterface,
-    channelName: String
+    channelName: String,
+    private val playStackPriority: Int
 ) : AbstractAudioPlayerAgent(
     mediaPlayer,
     messageSender,
@@ -193,7 +194,7 @@ class DefaultAudioPlayerAgent(
         }
 
         var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, 300)
+            PlayStackManagerInterface.PlayContext(it, playStackPriority)
         }
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
