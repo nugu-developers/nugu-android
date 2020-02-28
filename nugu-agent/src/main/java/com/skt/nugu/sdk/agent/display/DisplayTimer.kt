@@ -62,7 +62,7 @@ class DisplayTimer(private val tag: String) {
     fun reset(id: String) {
         lock.withLock {
             val param = clearRequestParamMap[id] ?: return
-            if (param != null && stop(id)) {
+            if (stop(id)) {
                 Logger.d(tag, "[DisplayTimer.reset] start: $id")
                 start(param.id, param.timeout, param.clear)
             } else {
