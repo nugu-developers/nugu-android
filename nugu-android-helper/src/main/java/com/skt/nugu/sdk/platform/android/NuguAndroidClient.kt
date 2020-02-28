@@ -333,7 +333,8 @@ class NuguAndroidClient private constructor(
                         getPlaySynchronizer(),
                         getAudioPlayStackManager(),
                         DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                        DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY
+                        DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY,
+                        builder.enableDisplayLifeCycleManagement
                     ).apply {
                         val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler()
                             .apply {
