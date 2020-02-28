@@ -75,4 +75,11 @@ interface DisplayAggregatorInterface:
     }
 
     interface Controller: AudioPlayerDisplayInterface.Controller, DisplayAgentInterface.Controller
+
+    /**
+     * This should be called when occur interaction(input event such as touch, drag, etc...) for display
+     *
+     * @param templateId the unique identifier for the template card
+     */
+    fun notifyUserInteraction(templateId: String)
 }

@@ -129,6 +129,18 @@ class DisplayAggregator(
         return displayTypeMap.remove(dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
     }
 
+    override fun notifyUserInteraction(templateId: String) {
+        val agent = lock.withLock {
+            requestAgentMap[templateId]
+        } ?: return
+
+        if(agent == templateAgent) {
+            templateAgent.notifyUserInteraction(templateId)
+        } else if(agent == audioPlayerAgent) {
+            templateAgent.notifyUserInteraction(templateId)
+        }
+    }
+
     override fun setElementSelected(
         templateId: String,
         token: String,
@@ -144,9 +156,9 @@ class DisplayAggregator(
         } ?: return
 
         if(agent == templateAgent) {
-            (agent as DisplayAgentInterface).displayCardRendered(templateId, controller as DisplayAgentInterface.Controller?)
-        } else {
-            (agent as AudioPlayerDisplayInterface).displayCardRendered(templateId, controller as AudioPlayerDisplayInterface.Controller?)
+            templateAgent.displayCardRendered(templateId, controller as DisplayAgentInterface.Controller?)
+        } else if(agent == audioPlayerAgent){
+            audioPlayerAgent.displayCardRendered(templateId, controller as AudioPlayerDisplayInterface.Controller?)
         }
     }
 

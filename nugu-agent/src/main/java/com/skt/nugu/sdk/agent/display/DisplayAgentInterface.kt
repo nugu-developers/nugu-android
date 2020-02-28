@@ -23,6 +23,13 @@ import com.skt.nugu.sdk.agent.common.Direction
 interface DisplayAgentInterface:
     DisplayInterface<DisplayAgentInterface.Renderer, DisplayAgentInterface.Controller> {
     /**
+     * This should be called when occur interaction(input event such as touch, drag, etc...) for display
+     *
+     * @param templateId the unique identifier for the template card
+     */
+    fun notifyUserInteraction(templateId: String)
+
+    /**
      * The renderer of display agent.
      * When receive an directive for display, the agent will request the renderer to render it.
      */
