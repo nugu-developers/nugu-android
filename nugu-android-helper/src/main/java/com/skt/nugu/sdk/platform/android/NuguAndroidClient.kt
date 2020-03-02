@@ -47,7 +47,6 @@ import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandl
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
-import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.display.*
@@ -418,8 +417,8 @@ class NuguAndroidClient private constructor(
                 })
             }
             builder.delegationClient?.let {
-                addAgentFactory(AbstractDelegationAgent.NAMESPACE, object : DelegationAgentFactory {
-                    override fun create(container: SdkContainer): AbstractDelegationAgent =
+                addAgentFactory(DefaultDelegationAgent.NAMESPACE, object : AgentFactory<DefaultDelegationAgent> {
+                    override fun create(container: SdkContainer): DefaultDelegationAgent =
                         with(container) {
                             DefaultDelegationAgent(
                                 getContextManager(),
@@ -559,7 +558,7 @@ class NuguAndroidClient private constructor(
         }
     override val delegationAgent: DelegationAgentInterface?
         get() = try {
-            client.getAgent(AbstractDelegationAgent.NAMESPACE) as DelegationAgentInterface
+            client.getAgent(DefaultDelegationAgent.NAMESPACE) as DelegationAgentInterface
         } catch (th: Throwable) {
             null
         }

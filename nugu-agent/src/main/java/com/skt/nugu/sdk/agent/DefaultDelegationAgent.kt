@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -28,10 +27,10 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -40,11 +39,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 class DefaultDelegationAgent(
-    contextGetter: ContextGetterInterface,
-    messageSender: MessageSender,
-    inputProcessorManager: InputProcessorManagerInterface,
-    defaultClient: DelegationClient
-) : AbstractDelegationAgent(contextGetter, messageSender, inputProcessorManager, defaultClient) {
+    private val contextGetter: ContextGetterInterface,
+    private val messageSender: MessageSender,
+    private val inputProcessorManager: InputProcessorManagerInterface,
+    private val defaultClient: DelegationClient
+) : AbstractCapabilityAgent(), DelegationAgentInterface, InputProcessor {
 
     internal data class DelegatePayload(
         @SerializedName("appId")
@@ -57,6 +56,9 @@ class DefaultDelegationAgent(
 
     companion object {
         private const val TAG = "DelegationAgent"
+
+        const val NAMESPACE = "Delegation"
+        const val VERSION = "1.0"
 
         private const val NAME_DELEGATE = "Delegate"
         private const val NAME_REQUEST = "Request"
