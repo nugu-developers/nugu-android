@@ -19,7 +19,6 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
@@ -27,7 +26,6 @@ import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
@@ -40,6 +38,8 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.TimeoutCondition
 import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
+import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -50,25 +50,21 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DefaultTTSAgent(
-    speechPlayer: MediaPlayerInterface,
-    messageSender: MessageSender,
-    focusManager: FocusManagerInterface,
-    contextManager: ContextManagerInterface,
-    playSynchronizer: PlaySynchronizerInterface,
-    playStackManager: PlayStackManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface,
-    channelName: String,
+    private val speechPlayer: MediaPlayerInterface,
+    private val messageSender: MessageSender,
+    private val focusManager: FocusManagerInterface,
+    private val contextManager: ContextManagerInterface,
+    private val playSynchronizer: PlaySynchronizerInterface,
+    private val playStackManager: PlayStackManagerInterface,
+    private val inputProcessorManager: InputProcessorManagerInterface,
+    private val channelName: String,
     private val playStackPriority: Int
-) : AbstractTTSAgent(
-    speechPlayer,
-    messageSender,
-    focusManager,
-    contextManager,
-    playSynchronizer,
-    playStackManager,
-    inputProcessorManager,
-    channelName
-), MediaPlayerControlInterface.PlaybackEventListener, DialogUXStateAggregatorInterface.Listener{
+) : AbstractCapabilityAgent()
+    , ChannelObserver
+    , TTSAgentInterface
+    , InputProcessor
+    , MediaPlayerControlInterface.PlaybackEventListener
+    , DialogUXStateAggregatorInterface.Listener{
 
     internal data class SpeakPayload(
         @SerializedName("playServiceId")
@@ -84,6 +80,9 @@ class DefaultTTSAgent(
     //@ThreadSafe
     companion object {
         private const val TAG = "DefaultTTSAgent"
+
+        const val NAMESPACE = "TTS"
+        const val VERSION = "1.0"
 
         const val NAME_SPEAK = "Speak"
         const val NAME_STOP = "Stop"
