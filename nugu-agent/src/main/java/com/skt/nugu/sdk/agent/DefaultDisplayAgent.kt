@@ -96,7 +96,7 @@ class DefaultDisplayAgent(
 
         private const val NAME_CALL_1 = "Call1"
         private const val NAME_CALL_2 = "Call2"
-        private const val NAME_CALL_3 = "Call2"
+        private const val NAME_CALL_3 = "Call3"
 
         private const val NAME_UPDATE = "Update"
 
