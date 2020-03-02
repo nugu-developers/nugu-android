@@ -101,7 +101,7 @@ class DefaultClientSpeechRecognizer(
             context,
             DefaultASRAgent.RECOGNIZE.namespace,
             DefaultASRAgent.RECOGNIZE.name,
-            AbstractASRAgent.VERSION
+            DefaultASRAgent.VERSION
         ).payload(
             AsrRecognizeEventPayload(
                 codec = AsrRecognizeEventPayload.CODEC_SPEEX,
@@ -349,9 +349,9 @@ class DefaultClientSpeechRecognizer(
             messageSender.sendMessage(
                 EventMessageRequest.Builder(
                     it.context,
-                    AbstractASRAgent.NAMESPACE,
+                    DefaultASRAgent.NAMESPACE,
                     DefaultASRAgent.EVENT_STOP_RECOGNIZE,
-                    AbstractASRAgent.VERSION
+                    DefaultASRAgent.VERSION
                 ).referrerDialogRequestId(it.dialogRequestId).build()
             )
         }
@@ -384,7 +384,7 @@ class DefaultClientSpeechRecognizer(
         dialogRequestId: String,
         directives: List<Directive>
     ): Boolean {
-        val receiveResponse = directives.filter { it.header.namespace != AbstractASRAgent.NAMESPACE }.any()
+        val receiveResponse = directives.filter { it.header.namespace != DefaultASRAgent.NAMESPACE }.any()
 
         return if(receiveResponse) {
             Logger.d(TAG, "[onReceiveDirectives] receive response")
