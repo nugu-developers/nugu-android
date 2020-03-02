@@ -16,8 +16,6 @@
 package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.client.agent.factory.*
-import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
-import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.network.NetworkManager
@@ -25,13 +23,10 @@ import com.skt.nugu.sdk.core.network.MessageRouter
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
-import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
@@ -123,7 +118,7 @@ class NuguClient private constructor(
             val directiveGroupProcessor = DirectiveGroupProcessor(
                 directiveSequencer
             ).apply {
-                addListener(inputProcessorManager)
+                addPostProcessedListener(inputProcessorManager)
                 addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
             }
             val attachmentManager = AttachmentManager()

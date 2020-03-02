@@ -80,6 +80,7 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
 import com.skt.nugu.sdk.core.utils.Logger
@@ -359,7 +360,7 @@ class NuguAndroidClient private constructor(
                         }
 
 
-                        getDirectiveGroupProcessor().addListener(this)
+                        getDirectiveGroupProcessor().addPostProcessedListener(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
                     }
                 }
@@ -591,7 +592,7 @@ class NuguAndroidClient private constructor(
                 tempDisplayAgent,
                 tempAudioPlayerAgent
             ).apply {
-                client.getSdkContainer().getDirectiveGroupProcessor().addListener(this)
+                client.getSdkContainer().getDirectiveGroupProcessor().addPostProcessedListener(this)
             }
         } else {
             null
@@ -735,5 +736,13 @@ class NuguAndroidClient private constructor(
 
     override fun removeSystemAgentListener(listener: SystemAgentInterface.Listener) {
         client.removeSystemAgentListener(listener)
+    }
+
+    override fun addReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        client.getSdkContainer().getDirectiveGroupProcessor().addPreProcessedListener(listener)
+    }
+
+    override fun removeReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        client.getSdkContainer().getDirectiveGroupProcessor().removePreProcessedListener(listener)
     }
 }
