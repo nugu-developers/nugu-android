@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
@@ -33,10 +32,10 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
 class DefaultScreenAgent(
-    contextManager: ContextManagerInterface,
-    messageSender: MessageSender,
-    screen: Screen
-) : AbstractScreenAgent(contextManager, messageSender, screen) {
+    private val contextManager: ContextManagerInterface,
+    private val messageSender: MessageSender,
+    private val screen: Screen
+) : AbstractCapabilityAgent() {
     companion object {
         private const val TAG = "ScreenAgent"
         const val NAMESPACE = "Screen"
