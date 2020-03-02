@@ -28,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArraySet
 class NetworkManager private constructor(
     private val messageRouter: MessageRouterInterface
 ) : ConnectionManagerInterface,
-    MessageSender,
+    MessageSender by messageRouter,
     MessageRouterObserverInterface {
 
     companion object {
@@ -117,11 +117,6 @@ class NetworkManager private constructor(
     override fun removeConnectionStatusListener(listener: ConnectionStatusListener) {
         connectionStatusObservers.remove(listener)
     }
-    /**
-     * Send message
-    * @param messageRequest the messageRequest to be sent
-    */
-    override fun sendMessage(messageRequest: MessageRequest): Boolean = messageRouter.sendMessage(messageRequest)
 
     /**
      * Receives the connection status changes.
