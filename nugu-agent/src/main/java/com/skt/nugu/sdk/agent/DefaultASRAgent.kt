@@ -47,30 +47,27 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DefaultASRAgent(
-    inputProcessorManager: InputProcessorManagerInterface,
-    focusManager: FocusManagerInterface,
-    messageSender: MessageSender,
-    contextManager: ContextManagerInterface,
-    dialogSessionManager: DialogSessionManagerInterface,
-    audioProvider: AudioProvider,
+    private val inputProcessorManager: InputProcessorManagerInterface,
+    private val focusManager: FocusManagerInterface,
+    private val messageSender: MessageSender,
+    private val contextManager: ContextManagerInterface,
+    private val dialogSessionManager: DialogSessionManagerInterface,
+    private val audioProvider: AudioProvider,
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
-    defaultEpdTimeoutMillis: Long,
-    channelName: String
-) : AbstractASRAgent(
-    inputProcessorManager,
-    focusManager,
-    messageSender,
-    contextManager,
-    dialogSessionManager,
-    audioProvider,
-    audioEncoder,
-    endPointDetector,
-    defaultEpdTimeoutMillis,
-    channelName
-), SpeechRecognizer.OnStateChangeListener, ChannelObserver, DialogUXStateAggregatorInterface.Listener {
+    private val defaultEpdTimeoutMillis: Long,
+    private val channelName: String
+) : AbstractCapabilityAgent()
+    , ASRAgentInterface
+    , DialogSessionManagerInterface.OnSessionStateChangeListener
+    , SpeechRecognizer.OnStateChangeListener
+    , ChannelObserver
+    , DialogUXStateAggregatorInterface.Listener {
     companion object {
         private const val TAG = "DefaultASRAgent"
+
+        const val NAMESPACE = "ASR"
+        const val VERSION = "1.0"
 
         const val NAME_EXPECT_SPEECH = "ExpectSpeech"
         const val NAME_RECOGNIZE = "Recognize"

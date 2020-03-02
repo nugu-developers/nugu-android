@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent.asr.impl
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
@@ -120,9 +119,9 @@ class SpeechRecognizeAttachmentSenderThread(
                 UUIDGeneration.timeUUID().toString(),
                 request.dialogRequestId,
                 request.context,
-                AbstractASRAgent.NAMESPACE,
+                DefaultASRAgent.NAMESPACE,
                 DefaultASRAgent.NAME_RECOGNIZE,
-                AbstractASRAgent.VERSION,
+                DefaultASRAgent.VERSION,
                 request.dialogRequestId,
                 currentAttachmentSequenceNumber,
                 encoded == null,

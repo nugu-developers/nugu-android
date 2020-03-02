@@ -41,7 +41,6 @@ import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -268,8 +267,8 @@ class NuguAndroidClient private constructor(
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
             }
-            addAgentFactory(AbstractASRAgent.NAMESPACE, object : ASRAgentFactory {
-                override fun create(container: SdkContainer): AbstractASRAgent {
+            addAgentFactory(DefaultASRAgent.NAMESPACE, object : AgentFactory<DefaultASRAgent> {
+                override fun create(container: SdkContainer): DefaultASRAgent {
                     return with(container) {
                         DefaultASRAgent(
                             getInputManagerProcessor(),
@@ -542,7 +541,7 @@ class NuguAndroidClient private constructor(
         }
     override val asrAgent: ASRAgentInterface?
         get() = try {
-            client.getAgent(AbstractASRAgent.NAMESPACE) as ASRAgentInterface
+            client.getAgent(DefaultASRAgent.NAMESPACE) as ASRAgentInterface
         } catch (th: Throwable) {
             null
         }
