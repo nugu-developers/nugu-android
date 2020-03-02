@@ -33,6 +33,7 @@ import java.util.concurrent.Future
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
 /**
  * This is an utility interface that gathers simplified APIs in one place and provides them to clients.
@@ -233,4 +234,16 @@ interface ClientHelperInterface {
      * @param listener the listener that will removed
      */
     fun removeReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener)
+
+    /**
+     * Add listener to be notified when send message
+     * @param listener the listener that will add
+     */
+    fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener)
+
+    /**
+     * Remove listener to be notified when send messasge
+     * @param listener the listener that will removed
+     */
+    fun removeOnSendMessageListener(listener: MessageSender.OnSendMessageListener)
 }

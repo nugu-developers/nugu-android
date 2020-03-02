@@ -20,8 +20,33 @@ package com.skt.nugu.sdk.core.interfaces.message
  */
 interface MessageSender {
     /**
+     * The listener to be notified when occur event
+     */
+    interface OnSendMessageListener {
+        /**
+         * Called when post send message
+         * @param messageRequest the messageRequest to be sent
+         * @param result the success or failure to send the [messageRequest]
+         */
+        fun onPostSendMessage(messageRequest: MessageRequest, result: Boolean)
+    }
+
+    /**
      * Send message
      * @param messageRequest the messageRequest to be sent
      */
     fun sendMessage(messageRequest: MessageRequest): Boolean
+
+
+    /**
+     * Add listener to notified when occur events
+     * @param listener the listener will be added
+     */
+    fun addOnSendMessageListener(listener: OnSendMessageListener)
+
+    /**
+     * Remove the listener
+     * @param listener the listener will be removed
+     */
+    fun removeOnSendMessageListener(listener: OnSendMessageListener)
 }

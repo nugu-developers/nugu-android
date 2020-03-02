@@ -19,10 +19,12 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -44,6 +46,11 @@ class MessageRouter(
 
     /** The observer object.*/
     private var observer: MessageRouterObserverInterface? = null
+
+    /**
+     * The listener for MessageSender
+     */
+    private val messageSenderListeners = CopyOnWriteArraySet<MessageSender.OnSendMessageListener>()
 
     /** The current connection status. */
     private var status: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
@@ -108,8 +115,22 @@ class MessageRouter(
      * @return true is success, otherwise false
      */
     override fun sendMessage(messageRequest: MessageRequest) : Boolean {
-        return activeTransport?.send(messageRequest) ?: false
+        val result = activeTransport?.send(messageRequest) ?: false
 
+        messageSenderListeners.forEach {
+            it.onPostSendMessage(messageRequest, result)
+        }
+
+        return result
+
+    }
+
+    override fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
+        messageSenderListeners.add(listener)
+    }
+
+    override fun removeOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
+        messageSenderListeners.remove(listener)
     }
 
     /**
