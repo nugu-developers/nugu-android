@@ -293,8 +293,8 @@ class NuguAndroidClient private constructor(
                 }
             })
 
-            addAgentFactory(AbstractSpeakerAgent.NAMESPACE, object : SpeakerAgentFactory {
-                override fun create(container: SdkContainer): AbstractSpeakerAgent =
+            addAgentFactory(DefaultSpeakerAgent.NAMESPACE, object : AgentFactory<DefaultSpeakerAgent> {
+                override fun create(container: SdkContainer): DefaultSpeakerAgent =
                     with(container) {
                         DefaultSpeakerAgent(
                             getContextManager(),
@@ -617,7 +617,7 @@ class NuguAndroidClient private constructor(
 
     override fun getSpeakerManager(): SpeakerManagerInterface? {
         return try {
-            client.getAgent(AbstractSpeakerAgent.NAMESPACE) as SpeakerManagerInterface
+            client.getAgent(DefaultSpeakerAgent.NAMESPACE) as SpeakerManagerInterface
         } catch (th: Throwable) {
             null
         }

@@ -18,11 +18,11 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.speaker.AbstractSpeakerAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.speaker.Speaker
+import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -35,11 +35,14 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Executors
 
 class DefaultSpeakerAgent(
-    contextManager: ContextManagerInterface,
-    messageSender: MessageSender
-) : AbstractSpeakerAgent(contextManager, messageSender) {
+    private val contextManager: ContextManagerInterface,
+    private val messageSender: MessageSender
+) : AbstractCapabilityAgent(), SpeakerManagerInterface {
     companion object {
         private const val TAG = "SpeakerManager"
+
+        const val NAMESPACE = "Speaker"
+        const val VERSION = "1.0"
 
         private const val NAME_SET_VOLUME = "SetVolume"
         private const val NAME_SET_MUTE = "SetMute"
