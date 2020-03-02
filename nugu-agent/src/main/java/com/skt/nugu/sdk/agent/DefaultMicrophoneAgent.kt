@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -33,10 +32,10 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Executors
 
 class DefaultMicrophoneAgent(
-    messageSender: MessageSender,
-    contextManager: ContextManagerInterface,
-    defaultMicrophone: Microphone?
-) : AbstractMicrophoneAgent(messageSender, contextManager, defaultMicrophone) {
+    private val messageSender: MessageSender,
+    private val contextManager: ContextManagerInterface,
+    private val defaultMicrophone: Microphone?
+) : AbstractCapabilityAgent(), Microphone.OnSettingChangeListener {
     internal data class SetMicPayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
@@ -46,6 +45,9 @@ class DefaultMicrophoneAgent(
 
     companion object {
         private const val TAG = "MicrophoneAgent"
+
+        const val NAMESPACE = "Mic"
+        const val VERSION = "1.0"
 
         const val NAME_SET_MIC = "SetMic"
         private const val NAME_SET_MIC_SUCCEEDED = "SetMicSucceeded"
