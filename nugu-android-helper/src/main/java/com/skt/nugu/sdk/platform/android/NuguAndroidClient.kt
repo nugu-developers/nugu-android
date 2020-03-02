@@ -473,8 +473,8 @@ class NuguAndroidClient private constructor(
                 }
             })
 
-            addAgentFactory(DefaultDisplayAgent.NAMESPACE, object: DisplayAgentFactory {
-                override fun create(container: SdkContainer): AbstractDisplayAgent = with(container) {
+            addAgentFactory(DefaultDisplayAgent.NAMESPACE, object: AgentFactory<DefaultDisplayAgent> {
+                override fun create(container: SdkContainer): DefaultDisplayAgent = with(container) {
                     DefaultDisplayAgent(
                         getContextManager(),
                         getMessageSender(),

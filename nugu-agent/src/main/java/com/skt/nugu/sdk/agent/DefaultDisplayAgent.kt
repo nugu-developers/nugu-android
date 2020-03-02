@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -36,20 +37,18 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.*
 
 class DefaultDisplayAgent(
-    contextManager: ContextManagerInterface,
-    messageSender: MessageSender,
-    playSynchronizer: PlaySynchronizerInterface,
-    playStackManager: PlayStackManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface,
+    private val contextManager: ContextManagerInterface,
+    private val messageSender: MessageSender,
+    private val playSynchronizer: PlaySynchronizerInterface,
+    private val playStackManager: PlayStackManagerInterface,
+    private val inputProcessorManager: InputProcessorManagerInterface,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
-) : AbstractDisplayAgent(
-    contextManager,
-    messageSender,
-    playSynchronizer,
-    playStackManager,
-    inputProcessorManager
-), ControlFocusDirectiveHandler.Controller, ControlScrollDirectiveHandler.Controller {
+) : AbstractCapabilityAgent()
+    , DisplayAgentInterface
+    , InputProcessor
+    , ControlFocusDirectiveHandler.Controller
+    , ControlScrollDirectiveHandler.Controller {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
 
