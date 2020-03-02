@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.audioplayer.metadata
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -28,9 +28,9 @@ import java.util.concurrent.CopyOnWriteArraySet
 class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     companion object {
         const val NAMESPACE =
-            AbstractAudioPlayerAgent.NAMESPACE
+            DefaultAudioPlayerAgent.NAMESPACE
         const val VERSION =
-            AbstractAudioPlayerAgent.VERSION
+            DefaultAudioPlayerAgent.VERSION
 
         // v1.1
         private const val NAME_UPDATE_METADATA = "UpdateMetadata"

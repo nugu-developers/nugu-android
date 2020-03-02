@@ -34,7 +34,7 @@ class AudioPlayerDirectivePreProcessor :
     override fun preprocess(directives: List<Directive>): MutableList<Directive> {
         val processedDirectives = ArrayList(directives)
         val audioPlayerPlayDirective =
-            processedDirectives.find { it.getNamespaceAndName() == AbstractAudioPlayerAgent.PLAY }
+            processedDirectives.find { it.getNamespaceAndName() == DefaultAudioPlayerAgent.PLAY }
 
         if (audioPlayerPlayDirective == null) {
             return processedDirectives
