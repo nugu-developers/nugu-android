@@ -60,7 +60,6 @@ import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
@@ -453,8 +452,8 @@ class NuguAndroidClient private constructor(
                         }
                 })
             }
-            addAgentFactory(AbstractLocationAgent.NAMESPACE, object: LocationAgentFactory {
-                override fun create(container: SdkContainer): AbstractLocationAgent = with(container) {
+            addAgentFactory(DefaultLocationAgent.NAMESPACE, object: AgentFactory<DefaultLocationAgent> {
+                override fun create(container: SdkContainer): DefaultLocationAgent = with(container) {
                     DefaultLocationAgent().apply {
                         getContextManager().setStateProvider(namespaceAndName, this)
                     }
@@ -551,7 +550,7 @@ class NuguAndroidClient private constructor(
         }
     override val locationAgent: LocationAgentInterface?
         get() = try {
-            client.getAgent(AbstractLocationAgent.NAMESPACE) as LocationAgentInterface
+            client.getAgent(DefaultLocationAgent.NAMESPACE) as LocationAgentInterface
         } catch (th: Throwable) {
             null
         }

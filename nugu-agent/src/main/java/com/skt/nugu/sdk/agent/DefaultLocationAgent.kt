@@ -16,15 +16,20 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
+import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.location.LocationProvider
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 
-class DefaultLocationAgent : AbstractLocationAgent() {
+class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface, ContextStateProvider {
     companion object {
         private const val TAG = "DefaultLocationAgent"
+
+        const val NAMESPACE = "Location"
+        const val VERSION = "1.0"
     }
 
     private var locationProvider: LocationProvider? = null
