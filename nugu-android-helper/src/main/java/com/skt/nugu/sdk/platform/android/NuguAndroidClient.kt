@@ -43,7 +43,6 @@ import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.AbstractASRAgent
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
@@ -318,8 +317,8 @@ class NuguAndroidClient private constructor(
                     }
             })
 
-            addAgentFactory(AbstractAudioPlayerAgent.NAMESPACE, object: AudioPlayerAgentFactory {
-                override fun create(container: SdkContainer): AbstractAudioPlayerAgent = with(container) {
+            addAgentFactory(DefaultAudioPlayerAgent.NAMESPACE, object: AgentFactory<DefaultAudioPlayerAgent> {
+                override fun create(container: SdkContainer): DefaultAudioPlayerAgent = with(container) {
                     DefaultAudioPlayerAgent(
                         builder.playerFactory.createAudioPlayer(),
                         getMessageSender(),
@@ -517,9 +516,9 @@ class NuguAndroidClient private constructor(
         }
         .build()
 
-    override val audioPlayerAgent: AbstractAudioPlayerAgent?
+    override val audioPlayerAgent: DefaultAudioPlayerAgent?
         get() = try {
-            client.getAgent(AbstractAudioPlayerAgent.NAMESPACE) as AbstractAudioPlayerAgent
+            client.getAgent(DefaultAudioPlayerAgent.NAMESPACE) as DefaultAudioPlayerAgent
         } catch (th: Throwable) {
             null
         }

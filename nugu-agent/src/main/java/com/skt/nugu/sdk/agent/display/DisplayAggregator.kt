@@ -15,8 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.display
 
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
-import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.util.concurrent.locks.ReentrantLock
@@ -174,7 +173,7 @@ class DisplayAggregator(
 
     override fun onReceiveDirectives(directives: List<Directive>) {
         val audioPlayerDirective = directives.filter {
-            (it.getNamespaceAndName() == AbstractAudioPlayerAgent.PLAY)
+            (it.getNamespaceAndName() == DefaultAudioPlayerAgent.PLAY)
         }
 
         val dialogRequestId = audioPlayerDirective.firstOrNull()?.getDialogRequestId() ?: return

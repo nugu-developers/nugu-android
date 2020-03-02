@@ -19,7 +19,6 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioItem
 import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -37,7 +36,9 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
+import com.skt.nugu.sdk.agent.playback.PlaybackHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -50,26 +51,21 @@ import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class DefaultAudioPlayerAgent(
-    mediaPlayer: MediaPlayerInterface,
-    messageSender: MessageSender,
-    focusManager: FocusManagerInterface,
-    contextManager: ContextManagerInterface,
-    playbackRouter: PlaybackRouter,
-    playSynchronizer: PlaySynchronizerInterface,
-    playStackManager: PlayStackManagerInterface,
-    channelName: String,
+    private val mediaPlayer: MediaPlayerInterface,
+    private val messageSender: MessageSender,
+    private val focusManager: FocusManagerInterface,
+    private val contextManager: ContextManagerInterface,
+    private val playbackRouter: PlaybackRouter,
+    private val playSynchronizer: PlaySynchronizerInterface,
+    private val playStackManager: PlayStackManagerInterface,
+    private val channelName: String,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
-) : AbstractAudioPlayerAgent(
-    mediaPlayer,
-    messageSender,
-    focusManager,
-    contextManager,
-    playbackRouter,
-    playSynchronizer,
-    playStackManager,
-    channelName
-), MediaPlayerControlInterface.PlaybackEventListener
+) : AbstractCapabilityAgent()
+    , ChannelObserver
+    , AudioPlayerAgentInterface
+    , PlaybackHandler
+    , MediaPlayerControlInterface.PlaybackEventListener
     , DirectiveGroupProcessorInterface.Listener
     , AudioPlayerLyricsDirectiveHandler.VisibilityController
     , AudioPlayerLyricsDirectiveHandler.PagingController {
@@ -85,6 +81,9 @@ class DefaultAudioPlayerAgent(
 
     companion object {
         private const val TAG = "AudioPlayerAgent"
+
+        const val NAMESPACE = "AudioPlayer"
+        const val VERSION = "1.1"
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
@@ -107,6 +106,23 @@ class DefaultAudioPlayerAgent(
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
+
+        const val NAME_PLAY = "Play"
+        const val NAME_STOP = "Stop"
+        const val NAME_PAUSE = "Pause"
+
+        val PLAY = NamespaceAndName(
+            NAMESPACE,
+            NAME_PLAY
+        )
+        val STOP = NamespaceAndName(
+            NAMESPACE,
+            NAME_STOP
+        )
+        val PAUSE = NamespaceAndName(
+            NAMESPACE,
+            NAME_PAUSE
+        )
     }
 
     enum class PauseReason {
@@ -1389,7 +1405,7 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    override fun shutdown() {
+    fun shutdown() {
         executor.submit {
             executeStop()
         }

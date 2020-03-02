@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.agent.display
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.audioplayer.AbstractAudioPlayerAgent
+import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -35,8 +35,8 @@ class AudioPlayerTemplateHandler(
 ) : AbstractDirectiveHandler(), AudioPlayerDisplayInterface, AudioPlayerMetadataDirectiveHandler.Listener {
     companion object {
         private const val TAG = "AudioPlayerTemplateHandler"
-        const val NAMESPACE = AbstractAudioPlayerAgent.NAMESPACE
-        const val VERSION = AbstractAudioPlayerAgent.VERSION
+        const val NAMESPACE = DefaultAudioPlayerAgent.NAMESPACE
+        const val VERSION = DefaultAudioPlayerAgent.VERSION
 
         private const val NAME_AUDIOPLAYER_TEMPLATE1 = "Template1"
         private const val NAME_AUDIOPLAYER_TEMPLATE2 = "Template2"
