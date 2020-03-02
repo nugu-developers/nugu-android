@@ -63,7 +63,6 @@ import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
-import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.client.SdkContainer
@@ -386,8 +385,8 @@ class NuguAndroidClient private constructor(
             }
             builder.defaultMicrophone?.let {
                 addAgentFactory(
-                    AbstractMicrophoneAgent.NAMESPACE,
-                    object : AgentFactory<AbstractMicrophoneAgent> {
+                    DefaultMicrophoneAgent.NAMESPACE,
+                    object : AgentFactory<DefaultMicrophoneAgent> {
                         override fun create(container: SdkContainer): DefaultMicrophoneAgent =
                             with(container) {
                                 DefaultMicrophoneAgent(
