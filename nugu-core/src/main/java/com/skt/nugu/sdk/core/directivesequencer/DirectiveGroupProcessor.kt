@@ -25,15 +25,21 @@ class DirectiveGroupProcessor(
 ) : DirectiveGroupHandler,
     DirectiveGroupProcessorInterface {
     private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
-    private val listeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
+    private val prePreprocessedListeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
+    private val postPreprocessedListeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
+        prePreprocessedListeners.forEach {
+            it.onReceiveDirectives(directives)
+        }
+
         var processedDirectives = directives
+
         directiveGroupPreprocessors.forEach {
             processedDirectives = it.preprocess(processedDirectives)
         }
 
-        listeners.forEach {
+        postPreprocessedListeners.forEach {
             it.onReceiveDirectives(processedDirectives)
         }
         
@@ -42,12 +48,20 @@ class DirectiveGroupProcessor(
         }
     }
 
-    override fun addListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        listeners.add(listener)
+    override fun addPreProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        prePreprocessedListeners.add(listener)
     }
 
-    override fun removeListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        listeners.remove(listener)
+    override fun removePreProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        prePreprocessedListeners.remove(listener)
+    }
+
+    override fun addPostProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        postPreprocessedListeners.add(listener)
+    }
+
+    override fun removePostProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        postPreprocessedListeners.remove(listener)
     }
 
     override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {

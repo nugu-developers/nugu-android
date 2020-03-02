@@ -22,8 +22,11 @@ interface DirectiveGroupProcessorInterface {
         fun onReceiveDirectives(directives: List<Directive>)
     }
 
-    fun addListener(listener: Listener)
-    fun removeListener(listener: Listener)
+    fun addPreProcessedListener(listener: Listener)
+    fun removePreProcessedListener(listener: Listener)
+
+    fun addPostProcessedListener(listener: Listener)
+    fun removePostProcessedListener(listener: Listener)
 
     fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
     fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)

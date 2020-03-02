@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import java.util.concurrent.Future
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 
 /**
  * This is an utility interface that gathers simplified APIs in one place and provides them to clients.
@@ -220,4 +221,16 @@ interface ClientHelperInterface {
      * @param listener the listener that will removed
      */
     fun removeSystemAgentListener(listener : SystemAgentInterface.Listener)
+
+    /**
+     * Add listener to be notified when receive directives from NUGU platform
+     * @param listener the listener that will add
+     */
+    fun addReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener)
+
+    /**
+     * Remove listener to be notified when receive directives from NUGU platform
+     * @param listener the listener that will removed
+     */
+    fun removeReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener)
 }
