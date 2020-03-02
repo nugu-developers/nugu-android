@@ -64,7 +64,6 @@ import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.extension.AbstractExtensionAgent
 import com.skt.nugu.sdk.agent.location.AbstractLocationAgent
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -445,8 +444,8 @@ class NuguAndroidClient private constructor(
                 })
             }
             builder.extensionClient?.let {
-                addAgentFactory(AbstractExtensionAgent.NAMESPACE, object : ExtensionAgentFactory {
-                    override fun create(container: SdkContainer): AbstractExtensionAgent =
+                addAgentFactory(DefaultExtensionAgent.NAMESPACE, object : AgentFactory<DefaultExtensionAgent> {
+                    override fun create(container: SdkContainer): DefaultExtensionAgent =
                         with(container) {
                             DefaultExtensionAgent(
                                 getContextManager(),
@@ -539,7 +538,7 @@ class NuguAndroidClient private constructor(
         }
     override val extensionAgent: ExtensionAgentInterface?
         get() = try {
-            client.getAgent(AbstractExtensionAgent.NAMESPACE) as ExtensionAgentInterface
+            client.getAgent(DefaultExtensionAgent.NAMESPACE) as ExtensionAgentInterface
         } catch (th: Throwable) {
             null
         }
