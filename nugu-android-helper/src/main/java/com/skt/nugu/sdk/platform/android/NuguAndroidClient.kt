@@ -72,7 +72,6 @@ import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.*
-import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
@@ -467,8 +466,8 @@ class NuguAndroidClient private constructor(
                     }
                 }
             })
-            addAgentFactory(AbstractTextAgent.NAMESPACE, object: TextAgentFactory {
-                override fun create(container: SdkContainer): AbstractTextAgent = with(container) {
+            addAgentFactory(DefaultTextAgent.NAMESPACE, object: AgentFactory<DefaultTextAgent> {
+                override fun create(container: SdkContainer): DefaultTextAgent = with(container) {
                     DefaultTextAgent(
                         getMessageSender(),
                         getContextManager(),
@@ -552,7 +551,7 @@ class NuguAndroidClient private constructor(
         }
     override val textAgent: TextAgentInterface?
         get() = try {
-            client.getAgent(AbstractTextAgent.NAMESPACE) as TextAgentInterface
+            client.getAgent(DefaultTextAgent.NAMESPACE) as TextAgentInterface
         } catch (th: Throwable) {
             null
         }

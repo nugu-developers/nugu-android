@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.text.AbstractTextAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
@@ -26,11 +25,11 @@ import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -38,10 +37,13 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Executors
 
 class DefaultTextAgent(
-    messageSender: MessageSender,
-    contextManager: ContextManagerInterface,
-    inputProcessorManager: InputProcessorManagerInterface
-) : AbstractTextAgent(messageSender, contextManager, inputProcessorManager) {
+    private val messageSender: MessageSender,
+    private val contextManager: ContextManagerInterface,
+    private val inputProcessorManager: InputProcessorManagerInterface
+) : AbstractCapabilityAgent()
+    , InputProcessor
+    , TextAgentInterface
+    , DialogSessionManagerInterface.OnSessionStateChangeListener {
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
@@ -53,6 +55,9 @@ class DefaultTextAgent(
 
     companion object {
         private const val TAG = "TextAgent"
+
+        const val NAMESPACE = "Text"
+        const val VERSION = "1.0"
 
         private const val NAME_TEXT_SOURCE = "TextSource"
 
