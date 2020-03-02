@@ -40,19 +40,19 @@ import kotlin.collections.HashMap
 
 
 class DefaultBluetoothAgent(
-    messageSender: MessageSender,
-    contextManager: ContextManagerInterface,
-    bluetoothProvider : BluetoothProvider?
-) : AbstractBluetoothAgent(
-    messageSender,
-    contextManager,
-    bluetoothProvider
-) {
+    private val messageSender: MessageSender,
+    private val contextManager: ContextManagerInterface,
+    private val bluetoothProvider : BluetoothProvider?
+) : AbstractCapabilityAgent(),
+    BluetoothAgentInterface {
     /**
      * This class handles providing configuration for the bluetooth Capability agent
      */
     companion object {
         private const val TAG = "DefaultBluetoothAgent"
+
+        const val NAMESPACE = "Bluetooth"
+        const val VERSION = "1.0"
 
         /** directives */
         const val NAME_START_DISCOVERABLE_MODE = "StartDiscoverableMode"

@@ -48,7 +48,6 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
-import com.skt.nugu.sdk.agent.bluetooth.AbstractBluetoothAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.delegation.AbstractDelegationAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
@@ -502,8 +501,8 @@ class NuguAndroidClient private constructor(
             })
 
             builder.bluetoothProvider?.let {
-                addAgentFactory(AbstractBluetoothAgent.NAMESPACE, object : BluetoothAgentFactory {
-                    override fun create(container: SdkContainer): AbstractBluetoothAgent =
+                addAgentFactory(DefaultBluetoothAgent.NAMESPACE, object : AgentFactory<DefaultBluetoothAgent> {
+                    override fun create(container: SdkContainer): DefaultBluetoothAgent =
                         with(container) {
                             DefaultBluetoothAgent(
                                 getMessageSender(),
@@ -570,7 +569,7 @@ class NuguAndroidClient private constructor(
     override val networkManager: NetworkManagerInterface = client.networkManager
     override val bluetoothAgent: BluetoothAgentInterface?
         get() = try {
-            client.getAgent(AbstractBluetoothAgent.NAMESPACE) as BluetoothAgentInterface
+            client.getAgent(DefaultBluetoothAgent.NAMESPACE) as BluetoothAgentInterface
         } catch (th: Throwable) {
             null
         }
