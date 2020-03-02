@@ -77,7 +77,6 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
-import com.skt.nugu.sdk.agent.tts.AbstractTTSAgent
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
@@ -364,8 +363,8 @@ class NuguAndroidClient private constructor(
                 }
             })
 
-            addAgentFactory(AbstractTTSAgent.NAMESPACE, object : TTSAgentFactory {
-                override fun create(container: SdkContainer): AbstractTTSAgent = with(container) {
+            addAgentFactory(DefaultTTSAgent.NAMESPACE, object : AgentFactory<DefaultTTSAgent> {
+                override fun create(container: SdkContainer): DefaultTTSAgent = with(container) {
                     DefaultTTSAgent(
                         builder.playerFactory.createSpeakPlayer(),
                         getMessageSender(),
@@ -528,7 +527,7 @@ class NuguAndroidClient private constructor(
         }
     override val ttsAgent: TTSAgentInterface?
         get() = try {
-            client.getAgent(AbstractTTSAgent.NAMESPACE) as TTSAgentInterface
+            client.getAgent(DefaultTTSAgent.NAMESPACE) as TTSAgentInterface
         } catch (th: Throwable) {
             null
         }
