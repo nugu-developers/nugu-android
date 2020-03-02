@@ -70,7 +70,6 @@ import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.AbstractMicrophoneAgent
-import com.skt.nugu.sdk.agent.screen.AbstractScreenAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.speaker.*
 import com.skt.nugu.sdk.agent.text.AbstractTextAgent
@@ -409,8 +408,8 @@ class NuguAndroidClient private constructor(
                     })
             }
             builder.screen?.let {
-                addAgentFactory(DefaultScreenAgent.NAMESPACE, object : ScreenAgentFactory {
-                    override fun create(container: SdkContainer): AbstractScreenAgent =
+                addAgentFactory(DefaultScreenAgent.NAMESPACE, object : AgentFactory<DefaultScreenAgent> {
+                    override fun create(container: SdkContainer): DefaultScreenAgent =
                         with(container) {
                             DefaultScreenAgent(
                                 getContextManager(),
