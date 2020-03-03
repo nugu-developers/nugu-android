@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.agent
 
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioItem
 import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
@@ -70,7 +72,16 @@ class DefaultAudioPlayerAgent(
     , AudioPlayerLyricsDirectiveHandler.VisibilityController
     , AudioPlayerLyricsDirectiveHandler.PagingController {
 
+    enum class SourceType(val value: String) {
+        @SerializedName("URL")
+        URL("URL"),
+        @SerializedName("ATTACHMENT")
+        ATTACHMENT("ATTACHMENT")
+    }
+
     data class PlayPayload(
+        @SerializedName("sourceType")
+        val sourceType: SourceType,
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("audioItem")
@@ -1093,8 +1104,8 @@ class DefaultAudioPlayerAgent(
             val audioItem = it.payload.audioItem
             if (!executeShouldResumeNextItem(token, audioItem.stream.token)) {
                 token = audioItem.stream.token
-                sourceId = when (audioItem.sourceType) {
-                    AudioItem.SourceType.ATTACHMENT -> it.directive.getAttachmentReader()?.let { reader ->
+                sourceId = when (it.payload.sourceType) {
+                    SourceType.ATTACHMENT -> it.directive.getAttachmentReader()?.let { reader ->
                         mediaPlayer.setSource(reader)
                     } ?: SourceId.ERROR()
                     else -> mediaPlayer.setSource(URI.create(audioItem.stream.url))
