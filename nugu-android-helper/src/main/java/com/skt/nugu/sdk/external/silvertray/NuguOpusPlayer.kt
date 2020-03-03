@@ -112,6 +112,12 @@ class NuguOpusPlayer(private val streamType: Int) :
         if(currentSourceId.id != id.id) {
             return false
         }
+
+        if(this.status == Status.ENDED) {
+            return false
+        }
+
+        Log.d(TAG, "[pause] $id")
         player.pause()
         return true
     }
