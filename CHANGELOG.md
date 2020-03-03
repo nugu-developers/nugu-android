@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 0.8.11 *(2020-03-03)*
+----------------------------
+* New: Add listener for received directives (#359)
+* New: Add OnSendMessageListener (#361)
+* New: Add handler for text source directive (#365)
+* Fix: Screen's context not updated (#356)
+* Fix: Support Call3 Directive (Fix type)
+* Improve: Allow any speaker nullable (#349)
+* Improve: Change display timer management policy (#332)
+
 Version 0.8.10 *(2020-02-27)*
 ----------------------------
 * New: Modify access to the attahcment manager (#344)
