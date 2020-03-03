@@ -1065,7 +1065,10 @@ class DefaultAudioPlayerAgent(
             }
             AudioPlayerAgentInterface.State.FINISHED,
             AudioPlayerAgentInterface.State.IDLE,
-            AudioPlayerAgentInterface.State.PAUSED,
+            AudioPlayerAgentInterface.State.PAUSED -> {
+                return
+            }
+
             AudioPlayerAgentInterface.State.PLAYING -> {
                 if (!sourceId.isError()) {
                     mediaPlayer.pause(sourceId)
