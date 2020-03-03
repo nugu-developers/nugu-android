@@ -161,6 +161,8 @@ class NuguAndroidClient private constructor(
 
         internal var enableDisplayLifeCycleManagement = true
 
+        internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -242,6 +244,11 @@ class NuguAndroidClient private constructor(
          * If want to manage the display's lifecycle yourself, disable (set to false).
          */
         fun enableDisplayLifeCycleManagement(enable: Boolean) = apply {this.enableDisplayLifeCycleManagement = enable}
+
+        /**
+         * @param handler the handler for text source directive. If not provided, default behavior at TextAgent.
+         */
+        fun textSourceHandler(handler: TextAgentInterface.TextSourceHandler?) = apply { this.textSourceHandler = handler }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -465,7 +472,8 @@ class NuguAndroidClient private constructor(
                     DefaultTextAgent(
                         getMessageSender(),
                         getContextManager(),
-                        getInputManagerProcessor()
+                        getInputManagerProcessor(),
+                        builder.textSourceHandler
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
                         getDialogSessionManager().addListener(this)

@@ -39,7 +39,8 @@ import java.util.concurrent.Executors
 class DefaultTextAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
-    private val inputProcessorManager: InputProcessorManagerInterface
+    private val inputProcessorManager: InputProcessorManagerInterface,
+    private val textSourceHandler: TextAgentInterface.TextSourceHandler?
 ) : AbstractCapabilityAgent()
     , InputProcessor
     , TextAgentInterface
@@ -103,7 +104,12 @@ class DefaultTextAgent(
             return
         }
 
-        executeSendTextInputEvent(payload.text, payload.token, info, null)
+        executeSetHandlingCompleted(info)
+        if(textSourceHandler?.handleTextSource(info.directive.payload, info.directive.header) == true) {
+            Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
+        } else {
+            executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.getValidReferrerDialogRequestId(), null)
+        }
     }
 
     private fun executeSetHandlingCompleted(info: DirectiveInfo) {
@@ -188,12 +194,9 @@ class DefaultTextAgent(
     private fun executeSendTextInputEvent(
         text: String,
         token: String,
-        info: DirectiveInfo,
-        listener: TextAgentInterface.RequestListener?
+        info: DirectiveInfo
     ) {
         Logger.d(TAG, "[executeSendTextInputEvent] text: $text, token: $token")
-        executeSetHandlingCompleted(info)
-        executeSendTextInputEventInternal(text, token, info.directive.header.getValidReferrerDialogRequestId(), listener)
     }
 
     private fun executeSendTextInputEventInternal(

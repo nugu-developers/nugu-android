@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.text
 
+import com.skt.nugu.sdk.core.interfaces.message.Header
+
 interface TextAgentInterface {
     enum class ErrorType {
         ERROR_NETWORK,
@@ -27,5 +29,17 @@ interface TextAgentInterface {
         fun onError(type: ErrorType)
     }
 
+    /**
+     * The handler for text source directive.
+     */
+    interface TextSourceHandler {
+        /**
+         * @param payload the payload of directive
+         * @param header the header of directive
+         * @return true if handled, otherwise return false
+         */
+        fun handleTextSource(payload: String, header: Header): Boolean
+    }
+    
     fun requestTextInput(text: String, listener: RequestListener?)
 }
