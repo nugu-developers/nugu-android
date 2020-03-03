@@ -78,6 +78,7 @@ interface TTSAgentInterface {
 
     interface OnPlaybackListener {
         fun onStart()
+        fun onStop()
         fun onFinish()
         fun onError()
     }

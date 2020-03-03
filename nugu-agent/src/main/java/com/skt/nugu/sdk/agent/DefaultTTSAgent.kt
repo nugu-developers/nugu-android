@@ -339,10 +339,19 @@ class DefaultTTSAgent(
             Logger.d(TAG, "[setCurrentState] state: $state")
             currentState = state
             currentInfo?.directive?.let {
-                if (state == TTSAgentInterface.State.PLAYING) {
-                    requestListenerMap[it.getDialogRequestId()]?.onStart()
-                } else if (state == TTSAgentInterface.State.FINISHED || state == TTSAgentInterface.State.STOPPED) {
-                    requestListenerMap.remove(it.getDialogRequestId())?.onFinish()
+                when(state) {
+                    TTSAgentInterface.State.IDLE -> {
+                        // no-op
+                    }
+                    TTSAgentInterface.State.PLAYING -> {
+                        requestListenerMap[it.getDialogRequestId()]?.onStart()
+                    }
+                    TTSAgentInterface.State.STOPPED -> {
+                        requestListenerMap.remove(it.getDialogRequestId())?.onStop()
+                    }
+                    TTSAgentInterface.State.FINISHED -> {
+                        requestListenerMap.remove(it.getDialogRequestId())?.onFinish()
+                    }
                 }
 
                 notifyObservers(state, it.getDialogRequestId())
