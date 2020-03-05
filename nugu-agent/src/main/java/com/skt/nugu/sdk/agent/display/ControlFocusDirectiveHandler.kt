@@ -127,11 +127,14 @@ class ControlFocusDirectiveHandler(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy()
+        val blockingPolicy = BlockingPolicy(
+            BlockingPolicy.MEDIUM_AUDIO,
+            true
+        )
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[CONTROL_FOCUS] = nonBlockingPolicy
+        configuration[CONTROL_FOCUS] = blockingPolicy
 
         return configuration
     }
