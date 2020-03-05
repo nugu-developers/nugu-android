@@ -524,49 +524,52 @@ class DefaultDisplayAgent(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy()
+        val blockingPolicy = BlockingPolicy(
+            BlockingPolicy.MEDIUM_AUDIO,
+            true
+        )
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[FULLTEXT1] = nonBlockingPolicy
-        configuration[FULLTEXT2] = nonBlockingPolicy
-        configuration[IMAGETEXT1] = nonBlockingPolicy
-        configuration[IMAGETEXT2] = nonBlockingPolicy
-        configuration[IMAGETEXT3] = nonBlockingPolicy
-        configuration[IMAGETEXT4] = nonBlockingPolicy
-        configuration[TEXTLIST1] = nonBlockingPolicy
-        configuration[TEXTLIST2] = nonBlockingPolicy
-        configuration[TEXTLIST3] = nonBlockingPolicy
-        configuration[TEXTLIST4] = nonBlockingPolicy
-        configuration[IMAGELIST1] = nonBlockingPolicy
-        configuration[IMAGELIST2] = nonBlockingPolicy
-        configuration[IMAGELIST3] = nonBlockingPolicy
-        configuration[CUSTOM_TEMPLATE] = nonBlockingPolicy
+        configuration[FULLTEXT1] = blockingPolicy
+        configuration[FULLTEXT2] = blockingPolicy
+        configuration[IMAGETEXT1] = blockingPolicy
+        configuration[IMAGETEXT2] = blockingPolicy
+        configuration[IMAGETEXT3] = blockingPolicy
+        configuration[IMAGETEXT4] = blockingPolicy
+        configuration[TEXTLIST1] = blockingPolicy
+        configuration[TEXTLIST2] = blockingPolicy
+        configuration[TEXTLIST3] = blockingPolicy
+        configuration[TEXTLIST4] = blockingPolicy
+        configuration[IMAGELIST1] = blockingPolicy
+        configuration[IMAGELIST2] = blockingPolicy
+        configuration[IMAGELIST3] = blockingPolicy
+        configuration[CUSTOM_TEMPLATE] = blockingPolicy
 
-        configuration[WEATHER1] = nonBlockingPolicy
-        configuration[WEATHER2] = nonBlockingPolicy
-        configuration[WEATHER3] = nonBlockingPolicy
-        configuration[WEATHER4] = nonBlockingPolicy
-        configuration[WEATHER5] = nonBlockingPolicy
-        configuration[FULLIMAGE] = nonBlockingPolicy
+        configuration[WEATHER1] = blockingPolicy
+        configuration[WEATHER2] = blockingPolicy
+        configuration[WEATHER3] = blockingPolicy
+        configuration[WEATHER4] = blockingPolicy
+        configuration[WEATHER5] = blockingPolicy
+        configuration[FULLIMAGE] = blockingPolicy
 
-        configuration[CLOSE] = nonBlockingPolicy
+        configuration[CLOSE] = blockingPolicy
 
-        configuration[SCORE_1] = nonBlockingPolicy
-        configuration[SCORE_2] = nonBlockingPolicy
-        configuration[SEARCH_LIST_1] = nonBlockingPolicy
-        configuration[SEARCH_LIST_2] = nonBlockingPolicy
+        configuration[SCORE_1] = blockingPolicy
+        configuration[SCORE_2] = blockingPolicy
+        configuration[SEARCH_LIST_1] = blockingPolicy
+        configuration[SEARCH_LIST_2] = blockingPolicy
 
-        configuration[COMMERCE_LIST] = nonBlockingPolicy
-        configuration[COMMERCE_OPTION] = nonBlockingPolicy
-        configuration[COMMERCE_PRICE] = nonBlockingPolicy
-        configuration[COMMERCE_INFO] = nonBlockingPolicy
+        configuration[COMMERCE_LIST] = blockingPolicy
+        configuration[COMMERCE_OPTION] = blockingPolicy
+        configuration[COMMERCE_PRICE] = blockingPolicy
+        configuration[COMMERCE_INFO] = blockingPolicy
 
-        configuration[CALL_1] = nonBlockingPolicy
-        configuration[CALL_2] = nonBlockingPolicy
-        configuration[CALL_3] = nonBlockingPolicy
+        configuration[CALL_1] = blockingPolicy
+        configuration[CALL_2] = blockingPolicy
+        configuration[CALL_3] = blockingPolicy
 
-        configuration[UPDATE] = nonBlockingPolicy
+        configuration[UPDATE] = blockingPolicy
 
         return configuration
     }

@@ -128,11 +128,14 @@ class ControlScrollDirectiveHandler(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy()
+        val blockingPolicy = BlockingPolicy(
+            BlockingPolicy.MEDIUM_AUDIO,
+            true
+        )
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[CONTROL_SCROLL] = nonBlockingPolicy
+        configuration[CONTROL_SCROLL] = blockingPolicy
 
         return configuration
     }
