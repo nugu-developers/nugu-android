@@ -603,6 +603,7 @@ class DefaultDisplayAgent(
                 it.playContext?.let { playContext ->
                     playStackManager.add(playContext)
                 }
+                setHandlingCompleted(it)
             }
         }
     }
@@ -612,7 +613,6 @@ class DefaultDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 timer?.stop(templateId)
-                setHandlingCompleted(it)
                 templateDirectiveInfoMap.remove(templateId)
                 templateControllerMap.remove(templateId)
                 releaseSyncImmediately(it)
