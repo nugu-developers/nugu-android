@@ -501,7 +501,15 @@ class DefaultAudioPlayerAgent(
                         stopCalled = true
                     }
                 } else if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
-                    lifeCycleScheduler?.onStoppedAfterFinished()
+                    val scheduler = lifeCycleScheduler
+
+                    if(scheduler != null) {
+                        scheduler.onStoppedAfterFinished()
+                    } else {
+                        currentItem?.let {
+                            notifyOnReleaseAudioInfo(it, true)
+                        }
+                    }
                 }
                 return
             }
