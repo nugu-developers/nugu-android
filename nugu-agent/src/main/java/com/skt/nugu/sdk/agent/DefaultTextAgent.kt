@@ -214,17 +214,21 @@ class DefaultTextAgent(
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
                     createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
-                        messageSender.sendMessage(it)
-                        if (listener != null) {
-                            requestListeners[it.dialogRequestId] = listener
+                        if(messageSender.sendMessage(it)) {
+                            if (listener != null) {
+                                requestListeners[it.dialogRequestId] = listener
+                            }
+                            onSendEventFinished(it.dialogRequestId)
+                        } else {
+                            listener?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_NETWORK)
                         }
-                        onSendEventFinished(it.dialogRequestId)
                     }
                 }
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 Logger.d(TAG, "[onContextFailure] error: $error")
+                listener?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_UNKNOWN)
             }
         })
 
