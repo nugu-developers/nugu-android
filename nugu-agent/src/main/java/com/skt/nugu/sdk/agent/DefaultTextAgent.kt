@@ -18,22 +18,23 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
-import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.Executors
 
 class DefaultTextAgent(
@@ -152,18 +153,19 @@ class DefaultTextAgent(
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 
-    override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
+    override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?): String {
         Logger.d(TAG, "[requestTextInput] text: $text")
-        executeSendTextInputEventInternal(text, null, null, listener)
+        return executeSendTextInputEventInternal(text, null, null, listener)
     }
 
-    private fun createMessage(text: String, context: String, token: String?, referrerDialogRequestId: String?) =
+    private fun createMessage(text: String, context: String, token: String?, dialogRequestId: String, referrerDialogRequestId: String?) =
         EventMessageRequest.Builder(
             context,
             NAMESPACE,
             NAME_TEXT_INPUT,
             VERSION
-        ).payload(
+        ).dialogRequestId(dialogRequestId)
+            .payload(
             JsonObject().apply
             {
                 addProperty("text", text)
@@ -204,12 +206,14 @@ class DefaultTextAgent(
         token: String?,
         referrerDialogRequestId: String?,
         listener: TextAgentInterface.RequestListener?
-    ) {
+    ): String {
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
-                    createMessage(text, jsonContext, token, referrerDialogRequestId).let {
+                    createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
                         messageSender.sendMessage(it)
                         if (listener != null) {
                             requestListeners[it.dialogRequestId] = listener
@@ -223,6 +227,8 @@ class DefaultTextAgent(
                 Logger.d(TAG, "[onContextFailure] error: $error")
             }
         })
+
+        return dialogRequestId
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
@@ -234,7 +240,7 @@ class DefaultTextAgent(
         directives: List<Directive>
     ): Boolean {
         executor.submit {
-            requestListeners.remove(dialogRequestId)?.onReceiveResponse()
+            requestListeners.remove(dialogRequestId)?.onReceiveResponse(dialogRequestId)
         }
         return true
     }
@@ -243,7 +249,7 @@ class DefaultTextAgent(
         Logger.d(TAG, "[onResponseTimeout] $dialogRequestId")
         executor.submit {
             requestListeners.remove(dialogRequestId)
-                ?.onError(TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+                ?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
         }
     }
 

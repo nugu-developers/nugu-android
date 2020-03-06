@@ -25,8 +25,8 @@ interface TextAgentInterface {
     }
 
     interface RequestListener {
-        fun onReceiveResponse()
-        fun onError(type: ErrorType)
+        fun onReceiveResponse(dialogRequestId: String)
+        fun onError(dialogRequestId: String, type: ErrorType)
     }
 
     /**
@@ -40,6 +40,11 @@ interface TextAgentInterface {
          */
         fun handleTextSource(payload: String, header: Header): Boolean
     }
-    
-    fun requestTextInput(text: String, listener: RequestListener?)
+
+    /**
+     * @param text the input text which to send request.
+     * @param listener the listener for request
+     * @return the dialogRequestId for request
+     */
+    fun requestTextInput(text: String, listener: RequestListener?): String
 }
