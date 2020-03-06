@@ -33,12 +33,12 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
         private const val FRAME_SIZE = 960
         private const val MAX_FRAME_SIZE = FRAME_SIZE * 3
         private const val HEADER_BUFFER_SIZE = 8
-        // Global thread
-        private val readAttachmentThread = Executors.newSingleThreadExecutor()
     }
 
     private val inputStream = PipedInputStream()
     private val outputStream = PipedOutputStream()
+
+    private val readAttachmentThread = Executors.newSingleThreadExecutor()
     private var readAttachmentFuture: Future<*>? = null
 
     init {
