@@ -81,7 +81,7 @@ class DefaultAudioPlayerAgent(
 
     data class PlayPayload(
         @SerializedName("sourceType")
-        val sourceType: SourceType,
+        val sourceType: SourceType?,
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("audioItem")
