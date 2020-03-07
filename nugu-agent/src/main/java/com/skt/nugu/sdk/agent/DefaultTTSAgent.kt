@@ -15,38 +15,38 @@
  */
 package com.skt.nugu.sdk.agent
 
+//import javax.annotation.concurrent.GuardedBy
+//import javax.annotation.concurrent.ThreadSafe
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
+import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
-import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.focus.FocusState
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.TimeoutCondition
 import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
+import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.locks.ReentrantLock
-//import javax.annotation.concurrent.GuardedBy
-//import javax.annotation.concurrent.ThreadSafe
 import kotlin.concurrent.withLock
 
 class DefaultTTSAgent(
@@ -55,7 +55,6 @@ class DefaultTTSAgent(
     private val focusManager: FocusManagerInterface,
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackManager: PlayStackManagerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val channelName: String,
     private val playStackPriority: Int
@@ -64,7 +63,8 @@ class DefaultTTSAgent(
     , TTSAgentInterface
     , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
-    , DialogUXStateAggregatorInterface.Listener{
+    , DialogUXStateAggregatorInterface.Listener
+    , PlayStackManagerInterface.PlayContextProvider {
 
     internal data class SpeakPayload(
         @SerializedName("playServiceId")
@@ -149,10 +149,6 @@ class DefaultTTSAgent(
             }
         }
 
-        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, playStackPriority)
-        }
-
         fun clear() {
             directive.destroy()
         }
@@ -188,7 +184,7 @@ class DefaultTTSAgent(
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
 
-    private var initialDialogUXStateReceived = false
+    private val playContextManager = PlayContextManager()
 
     override val namespaceAndName: NamespaceAndName =
         NamespaceAndName("supportedInterfaces", NAMESPACE)
@@ -197,6 +193,8 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[init]")
         speechPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
+
+        addListener(playContextManager)
     }
 
     override fun addListener(listener: TTSAgentInterface.Listener) {
@@ -418,7 +416,6 @@ class DefaultTTSAgent(
     private fun executePlaySpeakInfo(speakInfo: SpeakDirectiveInfo) {
         Logger.d(TAG, "[executePlaySpeakInfo] $speakInfo")
         currentInfo = speakInfo
-
         val text = speakInfo.payload.text
         listeners.forEach {
             it.onReceiveTTSText(text, speakInfo.getDialogRequestId())
@@ -476,9 +473,6 @@ class DefaultTTSAgent(
                 override fun onDenied() {
                 }
             })
-        info.playContext?.let {
-            playStackManager.add(it)
-        }
     }
 
     private fun executeStateChange() {
@@ -594,16 +588,10 @@ class DefaultTTSAgent(
 
     private fun releaseSync(info: SpeakDirectiveInfo) {
         playSynchronizer.releaseSync(info, info.onReleaseCallback)
-        info.playContext?.let {
-            playStackManager.removeDelayed(it, 7000L)
-        }
     }
 
     private fun releaseSyncImmediately(info: SpeakDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
-        info.playContext?.let {
-            playStackManager.remove(it)
-        }
     }
 
     override fun provideState(
@@ -917,5 +905,47 @@ class DefaultTTSAgent(
                 currentFocus = FocusState.NONE
             }
         }
+    }
+
+    private inner class PlayContextManager: TTSAgentInterface.Listener {
+        private val CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED = 7000L
+        private var playContextValidTimestamp: Long = Long.MAX_VALUE
+        private var currentPlayContext: PlayStackManagerInterface.PlayContext? = null
+
+        fun getPlayContext(): PlayStackManagerInterface.PlayContext? =
+            if (playContextValidTimestamp > System.currentTimeMillis()) {
+                currentPlayContext
+            } else {
+                null
+            }
+
+        override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
+            if(state == TTSAgentInterface.State.STOPPED) {
+                currentPlayContext = null
+                playContextValidTimestamp = Long.MAX_VALUE
+            } else if(state == TTSAgentInterface.State.FINISHED){
+                updateCurrentPlayContext(false)
+                playContextValidTimestamp = System.currentTimeMillis() + CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED
+            }
+        }
+
+        override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
+            updateCurrentPlayContext(true)
+            playContextValidTimestamp = Long.MAX_VALUE
+        }
+
+        private fun updateCurrentPlayContext(persistent: Boolean) {
+            currentInfo?.let {
+                it.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
+                    currentPlayContext = PlayStackManagerInterface.PlayContext(pushPlayServiceId, playStackPriority, persistent)
+                }
+            }
+        }
+    }
+
+    override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {
+        val playContext = playContextManager.getPlayContext()
+        Logger.d(TAG, "[getPlayContext] $playContext")
+        return playContext
     }
 }

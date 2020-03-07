@@ -18,12 +18,16 @@ package com.skt.nugu.sdk.core.interfaces.context
 interface PlayStackManagerInterface {
     data class PlayContext(
         val playServiceId: String,
-        val priority: Int
+        val priority: Int,
+        val persistent: Boolean = true
     ): Comparable<PlayContext> {
         override fun compareTo(other: PlayContext): Int = other.priority - priority
     }
 
-    fun add(playContext: PlayContext)
-    fun remove(playContext: PlayContext)
-    fun removeDelayed(playContext: PlayContext, delay: Long)
+    interface PlayContextProvider {
+        fun getPlayContext(): PlayContext?
+    }
+
+    fun addPlayContextProvider(provider: PlayContextProvider)
+    fun removePlayContextProvider(provider: PlayContextProvider)
 }

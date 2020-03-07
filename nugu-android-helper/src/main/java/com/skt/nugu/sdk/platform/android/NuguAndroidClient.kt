@@ -330,7 +330,6 @@ class NuguAndroidClient private constructor(
                         getContextManager(),
                         playbackRouter,
                         getPlaySynchronizer(),
-                        getAudioPlayStackManager(),
                         DefaultFocusChannel.CONTENT_CHANNEL_NAME,
                         DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY,
                         builder.enableDisplayLifeCycleManagement
@@ -346,9 +345,9 @@ class NuguAndroidClient private constructor(
 
                         AudioPlayerTemplateHandler(
                             getPlaySynchronizer(),
-                            getDisplayPlayStackManager(),
                             DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY
                         ).apply {
+                            getDisplayPlayStackManager().addPlayContextProvider(this)
                             setDisplay(this)
                             getDirectiveSequencer().addDirectiveHandler(this)
                             getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
@@ -357,7 +356,7 @@ class NuguAndroidClient private constructor(
                             audioPlayerMetadataDirectiveHandler.addListener(this)
                         }
 
-
+                        getAudioPlayStackManager().addPlayContextProvider(this)
                         getDirectiveGroupProcessor().addPostProcessedListener(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
                     }
@@ -372,11 +371,11 @@ class NuguAndroidClient private constructor(
                         getAudioFocusManager(),
                         getContextManager(),
                         getPlaySynchronizer(),
-                        getAudioPlayStackManager(),
                         getInputManagerProcessor(),
                         DefaultFocusChannel.DIALOG_CHANNEL_NAME,
                         DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY
                     ).apply {
+                        getAudioPlayStackManager().addPlayContextProvider(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
                         dialogUXStateAggregator.addListener(this)
                     }
@@ -487,11 +486,11 @@ class NuguAndroidClient private constructor(
                         getContextManager(),
                         getMessageSender(),
                         getPlaySynchronizer(),
-                        getDisplayPlayStackManager(),
                         getInputManagerProcessor(),
                         DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY,
                         builder.enableDisplayLifeCycleManagement
                     ).apply {
+                        getDisplayPlayStackManager().addPlayContextProvider(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
 
                         ControlFocusDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {

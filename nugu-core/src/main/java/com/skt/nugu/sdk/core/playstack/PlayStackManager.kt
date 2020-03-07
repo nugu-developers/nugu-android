@@ -19,95 +19,49 @@ import com.skt.nugu.sdk.core.context.PlayStackProvider
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.collections.HashMap
-import kotlin.concurrent.withLock
+import java.util.concurrent.CopyOnWriteArraySet
 
 class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStackProvider {
     private val TAG = "${tagPrefix}PlayStackManager"
 
-    private val lock = ReentrantLock()
-    private val playStack = TreeSet<PlayStackManagerInterface.PlayContext>()
-    private val delayedRemovePlayContext = HashMap<PlayStackManagerInterface.PlayContext, Long>()
+    private val providers = CopyOnWriteArraySet<PlayStackManagerInterface.PlayContextProvider>()
 
-    override fun add(playContext: PlayStackManagerInterface.PlayContext) {
-        lock.withLock {
-            earlyRemoveDelayedPlayContextLocked()
-            if(playStack.add(playContext)) {
-                Logger.d(TAG, "[add] added: $playContext")
-            } else {
-                Logger.d(TAG, "[add] already exist: $playContext")
-            }
-        }
+    override fun addPlayContextProvider(provider: PlayStackManagerInterface.PlayContextProvider) {
+        providers.add(provider)
     }
 
-    override fun remove(playContext: PlayStackManagerInterface.PlayContext) {
-        lock.withLock {
-            if(playStack.remove(playContext)) {
-                Logger.d(TAG, "[remove] removed: $playContext")
-            } else {
-                Logger.d(TAG, "[remove] no item: $playContext")
-            }
-        }
-    }
-
-    override fun removeDelayed(playContext: PlayStackManagerInterface.PlayContext, delay: Long) {
-        lock.withLock {
-            Logger.d(TAG, "[removeDelayed] $playContext / $delay")
-            if(existLowerPriorityPlayContextThanLocked(playStack, playContext.priority)) {
-                Logger.d(TAG, "[removeDelayed] ignore delay due to exist lower priority play context.")
-                playStack.remove(playContext)
-            } else {
-                delayedRemovePlayContext[playContext] = System.currentTimeMillis() + delay
-            }
-        }
+    override fun removePlayContextProvider(provider: PlayStackManagerInterface.PlayContextProvider) {
+        providers.remove(provider)
     }
 
     override fun getPlayStack(): List<PlayStackProvider.PlayStackContext> {
-        lock.withLock {
-            trimTimeoutPlayStackLocked()
+        val playStack = TreeSet<PlayStackManagerInterface.PlayContext>()
+        var highestPriority: Int = Int.MIN_VALUE
 
-            val playStackContext = ArrayList<PlayStackProvider.PlayStackContext>()
-            playStack.forEach {
-                playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.priority))
-            }
-
-            Logger.d(TAG, "[getPlayStack] $playStackContext")
-
-            return playStackContext
-        }
-    }
-
-    private fun earlyRemoveDelayedPlayContextLocked() {
-        Logger.d(TAG, "[earlyPopDelayedPlayContextLocked]")
-        delayedRemovePlayContext.forEach {
-            playStack.remove(it.key)
-            Logger.d(TAG, "[earlyPopDelayedPlayContextLocked] removed: $it")
-        }
-        delayedRemovePlayContext.clear()
-    }
-
-    private fun trimTimeoutPlayStackLocked() {
-        Logger.d(TAG, "[trimTimeoutPlayStackLocked]")
-        val currentTimestamp = System.currentTimeMillis()
-
-        delayedRemovePlayContext.filter {
-            it.value < currentTimestamp
-        }.forEach {
-            delayedRemovePlayContext.remove(it.key)
-            playStack.remove(it.key)
-        }
-    }
-
-    private fun existLowerPriorityPlayContextThanLocked(dest: Set<PlayStackManagerInterface.PlayContext>, priority: Int): Boolean {
-        Logger.d(TAG, "[existLowerPriorityPlayContextThan] $priority")
-
-        dest.forEach {
-            if(it.priority > priority) {
-                return true
+        providers.forEach {
+            it.getPlayContext()?.let { playContext ->
+                playStack.add(playContext)
+                if(playContext.priority > highestPriority) {
+                    highestPriority = playContext.priority
+                }
             }
         }
+        Logger.d(TAG, "[getPlayStack] provided : $playStack, highestPriority: $highestPriority")
 
-        return false
+        val shouldBeExcluded:List<PlayStackManagerInterface.PlayContext> = playStack.filter {
+            it.priority < highestPriority && !it.persistent
+        }
+        Logger.d(TAG, "[getPlayStack] shouldBeExcluded : $shouldBeExcluded")
+
+        playStack.removeAll(shouldBeExcluded)
+        val playStackContext = ArrayList<PlayStackProvider.PlayStackContext>()
+
+        playStack.forEach {
+            playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.priority))
+        }
+
+        Logger.d(TAG, "[getPlayStack] $playStackContext")
+
+        return playStackContext
     }
 }
