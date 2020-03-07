@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.client
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -134,13 +135,16 @@ interface ClientHelperInterface {
      * @param audioInputStream the audio input stream to read for recognizing
      * @param audioFormat the format of [audioInputStream]
      * @param wakeupInfo the wakeupInfo of wakeword for [audioInputStream] if exist.
-     * @return the boolean future, true: if recognize started, false: otherwise
+     * @param param the params for EPD
+     * @param callback the callback for request
      */
     fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        wakeupInfo: WakeupInfo?
-    ): Future<Boolean>
+        wakeupInfo: WakeupInfo?,
+        param: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?
+    )
 
     /**
      * Stop current recognizing.

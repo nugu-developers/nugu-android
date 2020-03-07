@@ -41,6 +41,7 @@ import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -663,18 +664,22 @@ class NuguAndroidClient private constructor(
     override fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
-        wakeupInfo: WakeupInfo?
-    ): Future<Boolean> {
+        wakeupInfo: WakeupInfo?,
+        param: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?
+    ) {
         Logger.d(
             TAG,
             "[startRecognition] wakeupInfo: $wakeupInfo"
         )
 
-        return asrAgent?.startRecognition(
+        asrAgent?.startRecognition(
             audioInputStream,
             audioFormat,
-            wakeupInfo
-        ) ?: ImmediateBooleanFuture(false)
+            wakeupInfo,
+            param,
+            callback
+        )
     }
 
     override fun stopRecognition() {

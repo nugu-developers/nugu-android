@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent.asr
 
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.common.EventCallback
 import java.util.concurrent.Future
 
 /**
@@ -142,6 +143,15 @@ interface ASRAgentInterface {
         fun onMultiturnStateChanged(enabled: Boolean)
     }
 
+    interface StartRecognitionCallback : EventCallback<StartRecognitionCallback.ErrorType> {
+        enum class ErrorType {
+            ERROR_CANNOT_START_RECOGNIZER,
+            ERROR_ALREADY_RECOGNIZING,
+            ERROR_TAKE_TOO_LONG_START_RECOGNITION,
+            ERROR_UNKNOWN
+        }
+    }
+
     /**
      * start recognition
      * @param audioInputStream the audio input stream which is used for recognition, if null
@@ -149,14 +159,15 @@ interface ASRAgentInterface {
      * @param wakeupInfo the wakeup info(boundary & word) causing this recognition. The boundary should be relative position for [audioInputStream],
      * If the recognition was not invoked by wakeup, set to null.
      * @param param the params for EPD
-     * @return true: if start, false: failed to start(already recognizing or others).
+     * @param callback the callback for request
      */
     fun startRecognition(
         audioInputStream: SharedDataStream? = null,
         audioFormat: AudioFormat? = null,
         wakeupInfo: WakeupInfo? = null,
-        param: EndPointDetectorParam? = null
-    ): Future<Boolean>
+        param: EndPointDetectorParam? = null,
+        callback: StartRecognitionCallback? = null
+    )
 
     /**
      * Stop current recognition

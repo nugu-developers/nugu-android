@@ -69,6 +69,7 @@ class DefaultServerSpeechRecognizer(
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
         epdParam: EndPointDetectorParam,
+        recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
         Logger.d(
