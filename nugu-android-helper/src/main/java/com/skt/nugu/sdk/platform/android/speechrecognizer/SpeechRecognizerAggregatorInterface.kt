@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.speechrecognizer
 
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 
@@ -83,14 +84,14 @@ interface SpeechRecognizerAggregatorInterface {
      * Start keyword detector first.
      * After detection, start end point detector
      */
-    fun startListeningWithTrigger(epdParam: EndPointDetectorParam? = null)
+    fun startListeningWithTrigger(epdParam: EndPointDetectorParam? = null, callback: ASRAgentInterface.StartRecognitionCallback? = null)
 
     /**
      * Start keyword detector.
      * @param wakeupInfo the wakeup info of wakeup word for input
      * @param epdParam the epd params
      */
-    fun startListening(wakeupInfo: WakeupInfo? = null, epdParam: EndPointDetectorParam? = null)
+    fun startListening(wakeupInfo: WakeupInfo? = null, epdParam: EndPointDetectorParam? = null, callback: ASRAgentInterface.StartRecognitionCallback? = null)
 
     /**
      * Stop Recognizing

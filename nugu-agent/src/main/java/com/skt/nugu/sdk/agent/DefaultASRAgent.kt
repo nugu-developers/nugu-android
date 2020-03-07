@@ -41,9 +41,11 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import java.util.HashMap
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class DefaultASRAgent(
@@ -111,6 +113,7 @@ class DefaultASRAgent(
     private var wakeupInfo: WakeupInfo? = null
     private var expectSpeechPayload: ExpectSpeechPayload? = null
     private var endPointDetectorParam: EndPointDetectorParam? = null
+    private var startRecognitionCallback: ASRAgentInterface.StartRecognitionCallback? = null
 
     private var contextForRecognitionOnForegroundFocus: String? = null
 
@@ -305,14 +308,19 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        val result = executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, null)
+        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, null, object: ASRAgentInterface.StartRecognitionCallback {
+            override fun onSuccess(dialogRequestId: String) {
+                setHandlingCompleted(info)
+            }
 
-        if(result) {
-            setHandlingCompleted(info)
-        } else {
-            setState(ASRAgentInterface.State.IDLE)
-            setHandlingExpectSpeechFailed(info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
-        }
+            override fun onError(
+                dialogRequestId: String,
+                errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
+            ) {
+                setState(ASRAgentInterface.State.IDLE)
+                setHandlingExpectSpeechFailed(info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
+            }
+        })
     }
 
     private fun parseExpectSpeechPayload(directive: Directive): ExpectSpeechPayload? {
@@ -415,7 +423,14 @@ class DefaultASRAgent(
         }
     }
 
-    private fun executeStartRecognitionOnContextAvailable(jsonContext: String): Boolean {
+    private fun executeStartRecognitionOnContextAvailable(
+        audioInputStream: SharedDataStream,
+        audioFormat: AudioFormat,
+        wakeupInfo: WakeupInfo?,
+        payload: ExpectSpeechPayload?,
+        param: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?,
+        jsonContext: String) {
         Logger.d(
             TAG,
             "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState"
@@ -425,7 +440,9 @@ class DefaultASRAgent(
                 TAG,
                 "[executeStartRecognitionOnContextAvailable] Not permmited in current state: $state"
             )
-            return false
+
+            callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
+            return
         }
 
         if (focusState != FocusState.FOREGROUND) {
@@ -438,16 +455,22 @@ class DefaultASRAgent(
                     TAG,
                     "[executeStartRecognitionOnContextAvailable] Unable to acquire channel"
                 )
-                return false
+                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_UNKNOWN)
+                return
             }
-            contextForRecognitionOnForegroundFocus = jsonContext
         }
+
+        this.wakeupInfo = wakeupInfo
+        this.audioInputStream = audioInputStream
+        this.audioFormat = audioFormat
+        this.expectSpeechPayload = payload
+        this.endPointDetectorParam = param
+        this.startRecognitionCallback = callback
+        this.contextForRecognitionOnForegroundFocus = jsonContext
 
         if (focusState == FocusState.FOREGROUND) {
             executeInternalStartRecognition(jsonContext)
         }
-
-        return true
     }
 
     private fun executeStartRecognitionOnContextFailure(error: ContextRequester.ContextRequestError) {
@@ -478,12 +501,14 @@ class DefaultASRAgent(
         val inputStream = audioInputStream
         if (inputStream == null) {
             Logger.e(TAG, "[executeInternalStartRecognition] audioInputProcessor is null")
+            startRecognitionCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             return
         }
 
         val inputFormat = audioFormat
         if (inputFormat == null) {
             Logger.e(TAG, "[executeInternalStartRecognition] audioFormat is null")
+            startRecognitionCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             return
         }
 
@@ -495,6 +520,7 @@ class DefaultASRAgent(
             wakeupInfo,
             expectSpeechPayload,
             endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
+            startRecognitionCallback,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult() {
                     speechToTextConverterEventObserver.onNoneResult()
@@ -627,17 +653,19 @@ class DefaultASRAgent(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
         wakeupInfo: WakeupInfo?,
-        param: EndPointDetectorParam?
-    ): Future<Boolean> {
+        param: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?
+    ) {
         Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
-        return executor.submit(Callable<Boolean> {
+        executor.submit {
             if (audioInputStream != null && audioFormat != null) {
                 executeStartRecognition(
                     audioInputStream,
                     audioFormat,
                     wakeupInfo,
                     expectSpeechPayload,
-                    param
+                    param,
+                    callback
                 )
             } else {
                 currentAudioProvider = audioProvider
@@ -650,7 +678,8 @@ class DefaultASRAgent(
                         TAG,
                         "[startRecognition] audioInputStream is null"
                     )
-                    return@Callable false
+                    callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+                    return@submit
                 }
 
                 executeStartRecognition(
@@ -658,10 +687,11 @@ class DefaultASRAgent(
                     newAudioFormat,
                     null,
                     expectSpeechPayload,
-                    param
+                    param,
+                    callback
                 )
             }
-        })
+        }
     }
 
     override fun stopRecognition(cancel: Boolean) {
@@ -712,41 +742,37 @@ class DefaultASRAgent(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
-        param: EndPointDetectorParam?
-    ): Boolean {
+        param: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?
+    ) {
         Logger.d(TAG, "[executeStartRecognition] state: $state")
         if (!canRecognizing()) {
             Logger.w(
                 TAG,
                 "[executeStartRecognition] StartRecognizing allowed in IDLE or BUSY state."
             )
-            return false
+            callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
+            return
         }
 
-        this.wakeupInfo = wakeupInfo
-        this.audioInputStream = audioInputStream
-        this.audioFormat = audioFormat
-        this.expectSpeechPayload = payload
-        this.endPointDetectorParam = param
-
-
-        val waitResult = CountDownLatch(1)
-        var result = true
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable]")
-                result = executeStartRecognitionOnContextAvailable(jsonContext)
-                waitResult.countDown()
+                executeStartRecognitionOnContextAvailable(
+                    audioInputStream,
+                    audioFormat,
+                    wakeupInfo,
+                    payload,
+                    param,
+                    callback,
+                    jsonContext)
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 executeStartRecognitionOnContextFailure(error)
-                result = false
-                waitResult.countDown()
+                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_TAKE_TOO_LONG_START_RECOGNITION)
             }
         })
-        waitResult.await()
-        return result
     }
 
     private fun executeStopRecognition(cancel: Boolean) {

@@ -21,6 +21,7 @@ import android.util.Log
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
 import com.skt.nugu.keensense.tyche.TycheKeywordDetector
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
@@ -28,6 +29,7 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import java.nio.ByteBuffer
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 
@@ -69,6 +71,7 @@ class SpeechRecognizerAggregator(
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
     private var epdParam: EndPointDetectorParam? = null
+    private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
 
     init {
         keywordDetector.addDetectorStateObserver(object : KeywordDetectorStateObserver {
@@ -124,7 +127,10 @@ class SpeechRecognizerAggregator(
         })
     }
 
-    override fun startListeningWithTrigger(epdParam: EndPointDetectorParam?) {
+    override fun startListeningWithTrigger(
+        epdParam: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?
+    ) {
         executor.submit {
             if (keywordDetector.getDetectorState() == KeywordDetectorStateObserver.State.ACTIVE) {
                 Log.w(TAG, "[startListeningWithTrigger] failed - already executing")
@@ -169,7 +175,8 @@ class SpeechRecognizerAggregator(
                                 executeStartListeningInternal(
                                     audioProvider.getFormat(),
                                     wakeupInfo,
-                                    epdParam
+                                    epdParam,
+                                    callback
                                 )
 
                                 // To prevent releasing audio input resources, release after startListening.
@@ -184,7 +191,8 @@ class SpeechRecognizerAggregator(
                                     executeStartListeningInternal(
                                         audioFormat,
                                         this@SpeechRecognizerAggregator.wakeupInfo,
-                                        this@SpeechRecognizerAggregator.epdParam
+                                        this@SpeechRecognizerAggregator.epdParam,
+                                        this@SpeechRecognizerAggregator.startListeningCallback
                                     )
                                     isTriggerStoppingByStartListening = false
 
@@ -223,7 +231,7 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?) {
+    override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?) {
         Log.d(
             TAG,
             "[startListening]"
@@ -244,6 +252,7 @@ class SpeechRecognizerAggregator(
                     this.audioFormat = audioProvider.getFormat()
                     this.wakeupInfo = wakeupInfo
                     this.epdParam = epdParam
+                    this.startListeningCallback = callback
                     isTriggerStoppingByStartListening = true
                     executeStopTrigger()
                 }
@@ -255,7 +264,8 @@ class SpeechRecognizerAggregator(
                     executeStartListeningInternal(
                         audioProvider.getFormat(),
                         wakeupInfo,
-                        epdParam
+                        epdParam,
+                        callback
                     )
                 }
             }
@@ -265,7 +275,8 @@ class SpeechRecognizerAggregator(
     private fun executeStartListeningInternal(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
-        epdParam : EndPointDetectorParam?
+        epdParam : EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?
     ) {
 //        if (speechProcessor.useSelfSource()) {
 //            audioProvider.reset()
@@ -273,15 +284,29 @@ class SpeechRecognizerAggregator(
 
         val inputStream = audioProvider.acquireAudioInputStream(speechProcessor)
         if (inputStream != null) {
-            val result = speechProcessor.start(
+            val countDownLatch = CountDownLatch(1)
+            speechProcessor.start(
                 inputStream,
                 audioFormat,
                 wakeupInfo,
-                epdParam
+                epdParam,
+                object: ASRAgentInterface.StartRecognitionCallback {
+                    override fun onSuccess(dialogRequestId: String) {
+                        countDownLatch.countDown()
+                        callback?.onSuccess(dialogRequestId)
+                    }
+
+                    override fun onError(
+                        dialogRequestId: String,
+                        errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
+                    ) {
+                        setState(SpeechRecognizerAggregatorInterface.State.ERROR)
+                        countDownLatch.countDown()
+                        callback?.onError(dialogRequestId, errorType)
+                    }
+                }
             )
-            if (result.get() == false) {
-                setState(SpeechRecognizerAggregatorInterface.State.ERROR)
-            }
+            countDownLatch.await()
         } else {
             Log.e(
                 TAG,

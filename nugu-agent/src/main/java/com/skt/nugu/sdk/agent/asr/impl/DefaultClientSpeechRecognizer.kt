@@ -49,6 +49,7 @@ class DefaultClientSpeechRecognizer(
         val sendPositionAndWakeupBoundary: Pair<Long?, WakeupBoundary?>,
         var senderThread: SpeechRecognizeAttachmentSenderThread?,
         val eventMessage: EventMessageRequest,
+        val recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         val resultListener: ASRAgentInterface.OnResultListener?
     ) {
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
@@ -84,6 +85,7 @@ class DefaultClientSpeechRecognizer(
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
         epdParam: EndPointDetectorParam,
+        recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
         Logger.d(
@@ -123,6 +125,7 @@ class DefaultClientSpeechRecognizer(
                 sendPositionAndWakeupBoundary,
                 null,
                 eventMessage,
+                recognitionCallback,
                 resultListener
             )
 
@@ -141,9 +144,13 @@ class DefaultClientSpeechRecognizer(
             )
         ) {
             Logger.e(TAG, "[startProcessor] failed to start epd.")
+            currentRequest?.recognitionCallback?.onError(eventMessage.dialogRequestId,
+                ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER
+            )
             currentRequest = null
         } else {
             Logger.d(TAG, "[startProcessor] started")
+            currentRequest?.recognitionCallback?.onSuccess(eventMessage.dialogRequestId)
         }
     }
 
