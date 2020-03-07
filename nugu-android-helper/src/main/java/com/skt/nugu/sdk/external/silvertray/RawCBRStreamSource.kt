@@ -148,6 +148,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
 
     override fun release() {
         readAttachmentFuture?.cancel(true) // interrupt
+        readAttachmentThread.shutdown()
         inputStream.close()
     }
 
