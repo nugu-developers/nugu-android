@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioItem
 import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
@@ -59,7 +58,6 @@ class DefaultAudioPlayerAgent(
     private val contextManager: ContextManagerInterface,
     private val playbackRouter: PlaybackRouter,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackManager: PlayStackManagerInterface,
     private val channelName: String,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
@@ -70,7 +68,8 @@ class DefaultAudioPlayerAgent(
     , MediaPlayerControlInterface.PlaybackEventListener
     , DirectiveGroupProcessorInterface.Listener
     , AudioPlayerLyricsDirectiveHandler.VisibilityController
-    , AudioPlayerLyricsDirectiveHandler.PagingController {
+    , AudioPlayerLyricsDirectiveHandler.PagingController
+    , PlayStackManagerInterface.PlayContextProvider {
 
     enum class SourceType(val value: String) {
         @SerializedName("URL")
@@ -205,6 +204,7 @@ class DefaultAudioPlayerAgent(
                 executor.submit {
                     if (focus != FocusState.NONE) {
                         if (currentItem == this@AudioInfo) {
+                            currentItem = null
                             focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
                         }
                     }
@@ -260,9 +260,6 @@ class DefaultAudioPlayerAgent(
                 playSynchronizer.releaseSyncImmediately(this, onReleaseCallback)
             } else {
                 playSynchronizer.releaseSync(this, this.onReleaseCallback)
-            }
-            playContext?.let {
-                playStackManager.remove(it)
             }
         }
     }
@@ -1159,9 +1156,6 @@ class DefaultAudioPlayerAgent(
                         override fun onDenied() {
                         }
                     })
-                it.playContext?.let { playContext ->
-                    playStackManager.add(playContext)
-                }
 
                 progressTimer.init(
                     audioItem.stream.progressReport?.progressReportDelayInMilliseconds
@@ -1198,9 +1192,6 @@ class DefaultAudioPlayerAgent(
                                 override fun onDenied() {
                                 }
                             })
-                        it.playContext?.let { playContext ->
-                            playStackManager.add(playContext)
-                        }
                     }
                 }
             }
@@ -1602,4 +1593,6 @@ class DefaultAudioPlayerAgent(
             }, delay, TimeUnit.MILLISECONDS))
         }
     }
+
+    override fun getPlayContext(): PlayStackManagerInterface.PlayContext? = currentItem?.playContext
 }

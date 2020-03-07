@@ -40,7 +40,6 @@ class DefaultDisplayAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackManager: PlayStackManagerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
@@ -48,7 +47,8 @@ class DefaultDisplayAgent(
     , DisplayAgentInterface
     , InputProcessor
     , ControlFocusDirectiveHandler.Controller
-    , ControlScrollDirectiveHandler.Controller {
+    , ControlScrollDirectiveHandler.Controller
+    , PlayStackManagerInterface.PlayContextProvider {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
 
@@ -494,9 +494,6 @@ class DefaultDisplayAgent(
 
     private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
-        info.playContext?.let {
-            playStackManager.remove(it)
-        }
     }
 
     private fun executeRender(info: TemplateDirectiveInfo) {
@@ -600,9 +597,7 @@ class DefaultDisplayAgent(
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
                 }
-                it.playContext?.let { playContext ->
-                    playStackManager.add(playContext)
-                }
+
                 setHandlingCompleted(it)
             }
         }
@@ -871,5 +866,11 @@ class DefaultDisplayAgent(
         })
 
         return future.get()
+    }
+
+    override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {
+        val playContext = currentInfo?.playContext
+        Logger.d(TAG, "[getPlayContext] $playContext")
+        return playContext
     }
 }

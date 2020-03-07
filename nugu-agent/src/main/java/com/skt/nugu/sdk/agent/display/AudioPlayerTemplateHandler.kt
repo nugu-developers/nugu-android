@@ -30,9 +30,11 @@ import java.util.concurrent.*
 
 class AudioPlayerTemplateHandler(
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackManager: PlayStackManagerInterface,
     private val playStackPriority: Int
-) : AbstractDirectiveHandler(), AudioPlayerDisplayInterface, AudioPlayerMetadataDirectiveHandler.Listener {
+) : AbstractDirectiveHandler()
+    , AudioPlayerDisplayInterface
+    , AudioPlayerMetadataDirectiveHandler.Listener
+    , PlayStackManagerInterface.PlayContextProvider{
     companion object {
         private const val TAG = "AudioPlayerTemplateHandler"
         const val NAMESPACE = DefaultAudioPlayerAgent.NAMESPACE
@@ -174,9 +176,6 @@ class AudioPlayerTemplateHandler(
 
     private fun releaseSyncForce(info: TemplateDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
-        info.playContext?.let {
-            playStackManager.remove(it)
-        }
     }
 
     private fun executeRender(info: TemplateDirectiveInfo) {
@@ -222,9 +221,6 @@ class AudioPlayerTemplateHandler(
                     })
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
-                }
-                it.playContext?.let {playContext->
-                    playStackManager.add(playContext)
                 }
             }
         }
@@ -320,4 +316,6 @@ class AudioPlayerTemplateHandler(
             renderer?.update(info.getTemplateId(), jsonMetaData)
         }
     }
+
+    override fun getPlayContext(): PlayStackManagerInterface.PlayContext? = currentInfo?.playContext
 }
