@@ -15,35 +15,35 @@
  */
 package com.skt.nugu.sdk.agent
 
-import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioItem
-import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
-import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerPlaybackInfoProvider
+import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.agent.playback.PlaybackButton
-import com.skt.nugu.sdk.agent.playback.PlaybackRouter
-import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
+import com.skt.nugu.sdk.agent.payload.PlayStackControl
+import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackHandler
+import com.skt.nugu.sdk.agent.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
 import java.util.*
 import java.util.concurrent.*
@@ -74,6 +74,7 @@ class DefaultAudioPlayerAgent(
     enum class SourceType(val value: String) {
         @SerializedName("URL")
         URL("URL"),
+
         @SerializedName("ATTACHMENT")
         ATTACHMENT("ATTACHMENT")
     }
@@ -190,6 +191,17 @@ class DefaultAudioPlayerAgent(
         }
     }
 
+    val playbackInfoProvider = object : AudioPlayerPlaybackInfoProvider {
+        override fun getToken(): String? {
+            val current = currentItem ?: return null
+            return current.payload.audioItem.stream.token
+        }
+
+        override fun getOffsetInMilliseconds(): Long? = this@DefaultAudioPlayerAgent.getOffsetInMilliseconds()
+
+        override fun getPlayServiceId(): String? = currentItem?.playServiceId
+    }
+
     private val willBeHandleDirectiveLock = ReentrantLock()
     private var willBeHandlePauseDirectiveInfo: DirectiveInfo? = null
     private var willBeHandleStopDirectiveInfo: DirectiveInfo? = null
@@ -231,7 +243,10 @@ class DefaultAudioPlayerAgent(
     }
 
     init {
-        Logger.d(TAG, "[init] channelName: $channelName, enableDisplayLifeCycleManagement: $enableDisplayLifeCycleManagement")
+        Logger.d(
+            TAG,
+            "[init] channelName: $channelName, enableDisplayLifeCycleManagement: $enableDisplayLifeCycleManagement"
+        )
         mediaPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
     }
@@ -473,10 +488,10 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeResumeByButton() {
-        if(currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-            when(focus) {
+        if (currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
+            when (focus) {
                 FocusState.FOREGROUND -> {
-                    if(!mediaPlayer.resume(sourceId)) {
+                    if (!mediaPlayer.resume(sourceId)) {
                         Logger.w(TAG, "[executeResume] failed to resume: $sourceId")
                     }
                 }
@@ -511,7 +526,7 @@ class DefaultAudioPlayerAgent(
                 } else if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
                     val scheduler = lifeCycleScheduler
 
-                    if(scheduler != null) {
+                    if (scheduler != null) {
                         scheduler.onStoppedAfterFinished()
                     } else {
                         currentItem?.let {
@@ -539,7 +554,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> return
             AudioPlayerAgentInterface.State.PAUSED -> {
-                if(pauseReason == null) {
+                if (pauseReason == null) {
                     sendPlaybackPausedEvent()
                 }
                 pauseReason = reason
@@ -855,7 +870,7 @@ class DefaultAudioPlayerAgent(
             return
         }
 
-        if(pauseReason != null) {
+        if (pauseReason != null) {
             lifeCycleScheduler?.onPaused(id)
         }
 
@@ -1041,7 +1056,7 @@ class DefaultAudioPlayerAgent(
                     return
                 }
 
-                if(willBePreHandlingDirective.isNotEmpty()) {
+                if (willBePreHandlingDirective.isNotEmpty()) {
                     Logger.d(
                         TAG,
                         "[executeOnForegroundFocus] exist willBePreHandlingDirective (count: ${willBePreHandlingDirective.size})"
@@ -1232,11 +1247,12 @@ class DefaultAudioPlayerAgent(
         stateRequestToken: Int,
         sendToken: Boolean
     ) {
-        val playerActivity = if(currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {
-            AudioPlayerAgentInterface.State.PLAYING
-        } else {
-            currentActivity
-        }
+        val playerActivity =
+            if (currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {
+                AudioPlayerAgentInterface.State.PLAYING
+            } else {
+                currentActivity
+            }
 
         val policy = if (playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
             StateRefreshPolicy.ALWAYS
@@ -1294,11 +1310,11 @@ class DefaultAudioPlayerAgent(
                 currentItem?.apply {
                     val token = payload.audioItem.stream.token
                     val messageRequest = EventMessageRequest.Builder(
-                        jsonContext,
-                        NAMESPACE,
-                        EVENT_NAME_PLAYBACK_FAILED,
-                        VERSION
-                    )
+                            jsonContext,
+                            NAMESPACE,
+                            EVENT_NAME_PLAYBACK_FAILED,
+                            VERSION
+                        )
                         .payload(JsonObject().apply {
                             addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
                             addProperty(KEY_TOKEN, token)
@@ -1549,12 +1565,18 @@ class DefaultAudioPlayerAgent(
         }
 
         private fun refreshFinishDelayFutureIfRunning() {
-            Logger.d(TAG, "[$CLASS_TAG.refreshFinishDelayFutureIfRunning] $delayedReleaseAudioInfoFuture")
+            Logger.d(
+                TAG,
+                "[$CLASS_TAG.refreshFinishDelayFutureIfRunning] $delayedReleaseAudioInfoFuture"
+            )
             val copyDelayedReleaseAudioInfoFuture = delayedReleaseAudioInfoFuture
             delayedReleaseAudioInfoFuture = null
-            if(copyDelayedReleaseAudioInfoFuture != null) {
+            if (copyDelayedReleaseAudioInfoFuture != null) {
                 copyDelayedReleaseAudioInfoFuture.second.cancel(true)
-                delayNotifyOnReleaseAudioInfo(copyDelayedReleaseAudioInfoFuture.first, finishDelayAtMilliseconds)
+                delayNotifyOnReleaseAudioInfo(
+                    copyDelayedReleaseAudioInfoFuture.first,
+                    finishDelayAtMilliseconds
+                )
             }
         }
 
