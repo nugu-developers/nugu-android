@@ -46,6 +46,7 @@ import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlayCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
@@ -362,6 +363,13 @@ class NuguAndroidClient private constructor(
                             getMessageSender(),
                             getContextManager(),
                             playbackInfoProvider
+                        ).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
+
+                        AudioPlayerRequestPlayCommandDirectiveHandler(
+                            getMessageSender(),
+                            getContextManager()
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
                         }
