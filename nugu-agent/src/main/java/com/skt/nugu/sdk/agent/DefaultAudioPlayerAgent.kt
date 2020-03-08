@@ -23,6 +23,8 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerPlaybackInfoProvider
 import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
+import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlayCommandDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.DisplayInterface
@@ -36,6 +38,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
@@ -58,6 +61,7 @@ class DefaultAudioPlayerAgent(
     private val contextManager: ContextManagerInterface,
     private val playbackRouter: PlaybackRouter,
     private val playSynchronizer: PlaySynchronizerInterface,
+    private val directiveSequencer: DirectiveSequencerInterface,
     private val channelName: String,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
@@ -191,7 +195,7 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    val playbackInfoProvider = object : AudioPlayerPlaybackInfoProvider {
+    private val playbackInfoProvider = object : AudioPlayerPlaybackInfoProvider {
         override fun getToken(): String? {
             val current = currentItem ?: return null
             return current.payload.audioItem.stream.token
@@ -240,6 +244,21 @@ class DefaultAudioPlayerAgent(
                 executeCancelAudioInfo(this)
             }
         }
+    }
+
+    private val audioPlayerRequestPlaybackCommandDirectiveHandler = AudioPlayerRequestPlaybackCommandDirectiveHandler(
+        messageSender,
+        contextManager,
+        playbackInfoProvider
+    ).apply {
+        directiveSequencer.addDirectiveHandler(this)
+    }
+
+    private val audioPlayerRequestPlayCommandDirectiveHandler = AudioPlayerRequestPlayCommandDirectiveHandler(
+        messageSender,
+        contextManager
+    ).apply {
+        directiveSequencer.addDirectiveHandler(this)
     }
 
     init {
@@ -1617,4 +1636,9 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun getPlayContext(): PlayStackManagerInterface.PlayContext? = currentItem?.playContext
+
+    override fun setRequestCommandHandler(handler: AudioPlayerAgentInterface.RequestCommandHandler) {
+        audioPlayerRequestPlaybackCommandDirectiveHandler.setRequestCommandHandler(handler)
+        audioPlayerRequestPlayCommandDirectiveHandler.setRequestCommandHandler(handler)
+    }
 }

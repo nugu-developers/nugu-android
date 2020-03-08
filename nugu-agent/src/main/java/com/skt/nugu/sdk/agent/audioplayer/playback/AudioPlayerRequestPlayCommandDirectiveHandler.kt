@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.audioplayer.playback
 
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -41,6 +42,8 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
         private val REQUEST_PLAY_COMMAND = NamespaceAndName(NAMESPACE, NAME_REQUEST_PLAY_COMMAND)
     }
 
+    private var handler: AudioPlayerAgentInterface.RequestCommandHandler? = null
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
     }
@@ -53,11 +56,18 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
                 val header = info.directive.header
                 val payload = info.directive.payload
 
-                val message = EventMessageRequest.Builder(jsonContext, header.namespace, NAME_REQUEST_PLAY_COMMAND_ISSUED, VERSION)
-                    .payload(payload)
-                    .build()
+                if(handler?.handleRequestCommand(payload, header) != true) {
+                    val message = EventMessageRequest.Builder(
+                            jsonContext,
+                            header.namespace,
+                            NAME_REQUEST_PLAY_COMMAND_ISSUED,
+                            VERSION
+                        )
+                        .payload(payload)
+                        .build()
 
-                messageSender.sendMessage(message)
+                    messageSender.sendMessage(message)
+                }
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
@@ -76,5 +86,9 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
         configurations[REQUEST_PLAY_COMMAND] = nonBlockingPolicy
 
         return configurations
+    }
+
+    fun setRequestCommandHandler(handler: AudioPlayerAgentInterface.RequestCommandHandler) {
+        this.handler = handler
     }
 }
