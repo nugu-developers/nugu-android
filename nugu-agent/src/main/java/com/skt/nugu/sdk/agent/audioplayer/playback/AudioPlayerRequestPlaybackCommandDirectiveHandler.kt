@@ -3,6 +3,7 @@ package com.skt.nugu.sdk.agent.audioplayer.playback
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerPlaybackInfoProvider
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
@@ -43,6 +44,8 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
     }
 
+    private var handler: AudioPlayerAgentInterface.RequestCommandHandler? = null
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
     }
@@ -59,16 +62,23 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                     return
                 }
 
-                val header = info.directive.header
-                val message = EventMessageRequest.Builder(jsonContext, header.namespace, "${header.name}$NAME_ISSUED", VERSION)
-                    .payload(JsonObject().apply {
-                        addProperty("token", token)
-                        addProperty("offsetInMilliseconds", offsetInMilliseconds)
-                        addProperty("playServiceId", playServiceId)
-                    }.toString())
-                    .build()
+                if(handler?.handleRequestCommand(info.directive.payload, info.directive.header) != true) {
+                    val header = info.directive.header
+                    val message = EventMessageRequest.Builder(
+                            jsonContext,
+                            header.namespace,
+                            "${header.name}$NAME_ISSUED",
+                            VERSION
+                        )
+                        .payload(JsonObject().apply {
+                            addProperty("token", token)
+                            addProperty("offsetInMilliseconds", offsetInMilliseconds)
+                            addProperty("playServiceId", playServiceId)
+                        }.toString())
+                        .build()
 
-                messageSender.sendMessage(message)
+                    messageSender.sendMessage(message)
+                }
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
@@ -96,5 +106,9 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
         configurations[REQUEST_STOP_COMMAND] = nonBlockingPolicy
 
         return configurations
+    }
+
+    fun setRequestCommandHandler(handler: AudioPlayerAgentInterface.RequestCommandHandler) {
+        this.handler = handler
     }
 }

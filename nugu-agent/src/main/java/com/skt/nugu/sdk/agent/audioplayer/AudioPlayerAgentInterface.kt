@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
  * Interface for AudioPlayer Capability Agent
@@ -68,6 +68,12 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @param presenter the presenter to be set
      */
     fun setLyricsPresenter(presenter: LyricsPresenter?)
+
+    interface RequestCommandHandler {
+        fun handleRequestCommand(payload: String, header: Header): Boolean
+    }
+
+    fun setRequestCommandHandler(handler: RequestCommandHandler)
 
     /**
      * Starts or resumes playback.

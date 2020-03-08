@@ -76,12 +76,10 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
-import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractorFactory
-import java.util.concurrent.Future
 
 /**
  * Implementation of [ClientHelperInterface] for Android
@@ -333,6 +331,7 @@ class NuguAndroidClient private constructor(
                         getContextManager(),
                         playbackRouter,
                         getPlaySynchronizer(),
+                        getDirectiveSequencer(),
                         DefaultFocusChannel.CONTENT_CHANNEL_NAME,
                         DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY,
                         builder.enableDisplayLifeCycleManagement
@@ -357,21 +356,6 @@ class NuguAndroidClient private constructor(
                                 AudioPlayerDirectivePreProcessor()
                             )
                             audioPlayerMetadataDirectiveHandler.addListener(this)
-                        }
-
-                        AudioPlayerRequestPlaybackCommandDirectiveHandler(
-                            getMessageSender(),
-                            getContextManager(),
-                            playbackInfoProvider
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                        }
-
-                        AudioPlayerRequestPlayCommandDirectiveHandler(
-                            getMessageSender(),
-                            getContextManager()
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
                         }
 
                         getAudioPlayStackManager().addPlayContextProvider(this)
