@@ -509,6 +509,7 @@ class NuguAndroidClient private constructor(
                     override fun create(container: SdkContainer): DefaultBluetoothAgent =
                         with(container) {
                             DefaultBluetoothAgent(
+                                getAudioFocusManager(),
                                 getMessageSender(),
                                 getContextManager(),
                                 it

@@ -35,15 +35,21 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
+import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashMap
+import kotlin.concurrent.withLock
 
 
 class DefaultBluetoothAgent(
+    private val focusManager: FocusManagerInterface,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val bluetoothProvider : BluetoothProvider?
 ) : AbstractCapabilityAgent(),
+    FocusManagerInterface.OnFocusChangedListener,
     BluetoothAgentInterface {
     /**
      * This class handles providing configuration for the bluetooth Capability agent
@@ -130,11 +136,16 @@ class DefaultBluetoothAgent(
     private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()
 
+    private var pendingAVRCPCommand: AVRCPCommand? = null
+    private var focusOwnerReferences = HashSet<String>()
+    private val focusLock = ReentrantLock()
+
     init {
         /**
          * Performs initialization.
          */
         contextManager.setStateProvider(namespaceAndName, this)
+        focusManager.addListener(this)
     }
 
     internal data class StartDiscoverableModePayload(
@@ -443,7 +454,13 @@ class DefaultBluetoothAgent(
     }
 
     private fun executePause() {
-        listener?.onAVRCPCommand(AVRCPCommand.PAUSE)
+        focusLock.withLock {
+            if (focusOwnerReferences.isNotEmpty()) {
+                pendingAVRCPCommand = AVRCPCommand.PAUSE
+                return
+            }
+            listener?.onAVRCPCommand(AVRCPCommand.PAUSE)
+        }
     }
 
     private fun executeStartDiscoverableMode(durationInSeconds: Long) {
@@ -503,6 +520,36 @@ class DefaultBluetoothAgent(
                         eventBus.post(EVENT_NAME_MEDIACONTROL_PREVIOUS_SUCCEEDED)
                     }
                 }
+            }
+        }
+    }
+
+    private val ExternalAudioPlayerInterfaceName = "AndAudioFocusInteractor"
+    override fun onFocusChanged(
+        channelConfiguration: FocusManagerInterface.ChannelConfiguration,
+        newFocus: FocusState,
+        interfaceName: String
+    ) {
+        focusLock.withLock {
+            if (interfaceName == ExternalAudioPlayerInterfaceName) {
+                // do not add/remove AAFM when ExternalAudioPlayer focus changed.
+                return
+            }
+            when (newFocus) {
+                FocusState.FOREGROUND -> focusOwnerReferences.add(interfaceName)
+                FocusState.BACKGROUND -> {
+                }
+                FocusState.NONE ->  {
+                    focusOwnerReferences.remove(interfaceName)
+                    if(focusOwnerReferences.isEmpty()) {
+                        pendingAVRCPCommand?.let {
+                            listener?.onAVRCPCommand(it)
+                            pendingAVRCPCommand = null
+                        }
+                    }
+                    return@withLock
+                }
+                else -> {}
             }
         }
     }
