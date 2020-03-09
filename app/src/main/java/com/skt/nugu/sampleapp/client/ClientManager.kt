@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.external.jademarble.EndPointDetector
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
+import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
@@ -47,10 +48,11 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
 
     private lateinit var client: NuguAndroidClient
 
-    lateinit var ariaResource: SpeechRecognizerAggregator.KeywordResources
-    lateinit var tinkerbellResource: SpeechRecognizerAggregator.KeywordResources
+    lateinit var ariaResource: KeensenseKeywordDetector.KeywordResources
+    lateinit var tinkerbellResource: KeensenseKeywordDetector.KeywordResources
 
     private val audioSourceManager = AudioSourceManager(AudioRecordSourceFactory())
+    var keywordDetector: KeensenseKeywordDetector? = null
     lateinit var speechRecognizerAggregator: SpeechRecognizerAggregator
 
     var playerActivity: AudioPlayerAgentInterface.State = AudioPlayerAgentInterface.State.IDLE
@@ -114,22 +116,22 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 KeywordResourceProviderInterface {
                 private val assetsFolder =
                     context.getDir("skt_nugu_assets", Context.MODE_PRIVATE).absolutePath
-                private val aria = SpeechRecognizerAggregator.KeywordResources(
+                private val aria = KeensenseKeywordDetector.KeywordResources(
                     "아리아",
                     assetsFolder + File.separator + "skt_trigger_am_aria.raw",
                     assetsFolder + File.separator + "skt_trigger_search_aria.raw"
                 )
-                private val tinkerbell = SpeechRecognizerAggregator.KeywordResources(
+                private val tinkerbell = KeensenseKeywordDetector.KeywordResources(
                     "팅커벨",
                     assetsFolder + File.separator + "skt_trigger_am_tinkerbell.raw",
                     assetsFolder + File.separator + "skt_trigger_search_tinkerbell.raw"
                 )
 
-                override fun provideDefault(): SpeechRecognizerAggregator.KeywordResources = aria
+                override fun provideDefault(): KeensenseKeywordDetector.KeywordResources = aria
 
-                override fun provideAria(): SpeechRecognizerAggregator.KeywordResources = aria
+                override fun provideAria(): KeensenseKeywordDetector.KeywordResources = aria
 
-                override fun provideTinkerbell(): SpeechRecognizerAggregator.KeywordResources =
+                override fun provideTinkerbell(): KeensenseKeywordDetector.KeywordResources =
                     tinkerbell
             })
         }
@@ -162,8 +164,10 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             throw RuntimeException("asrAgent cannot be null")
         }
 
+        val keensenseKeywordDetector = KeensenseKeywordDetector(keywordResourceProvider.provideAria())
+        keywordDetector = keensenseKeywordDetector
         speechRecognizerAggregator = SpeechRecognizerAggregator(
-            keywordResourceProvider.provideAria(),
+            keensenseKeywordDetector,
             SpeechProcessorDelegate(asrAgent),
             audioSourceManager,
             Handler(Looper.getMainLooper())

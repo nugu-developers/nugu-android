@@ -18,23 +18,18 @@ package com.skt.nugu.sdk.platform.android.speechrecognizer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.skt.nugu.keensense.KeywordDetectorObserver
-import com.skt.nugu.keensense.KeywordDetectorStateObserver
-import com.skt.nugu.keensense.tyche.TycheKeywordDetector
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
-import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 
 class SpeechRecognizerAggregator(
-    private var keywordResource: KeywordResources,
+    private val keywordDetector: KeywordDetector,
     private val speechProcessor: SpeechProcessorDelegate,
     private val audioProvider: AudioProvider,
     private val handler: Handler = Handler(Looper.getMainLooper()),
@@ -45,18 +40,6 @@ class SpeechRecognizerAggregator(
         // To remove error, shorten TAG
         private const val TAG = "SpeechRecognizerAg"
     }
-
-    data class KeywordResources(
-        val keyword: String,
-        val netFilePath: String,
-        val searchFilePath: String
-    )
-
-    fun changeKeywordResource(keywordResource: KeywordResources) {
-        this.keywordResource = keywordResource
-    }
-
-    private val keywordDetector: TycheKeywordDetector = TycheKeywordDetector()
 
     private val executor = Executors.newSingleThreadExecutor(threadFactory)
     private val listeners = HashSet<SpeechRecognizerAggregatorInterface.OnStateChangeListener>()
@@ -74,11 +57,11 @@ class SpeechRecognizerAggregator(
     private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
 
     init {
-        keywordDetector.addDetectorStateObserver(object : KeywordDetectorStateObserver {
-            override fun onStateChange(state: KeywordDetectorStateObserver.State) {
-                Log.d(TAG, "[KeywordDetectorStateObserver::onStateChange] state: $state")
+        keywordDetector.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
+            override fun onStateChange(state: KeywordDetector.State) {
+                Log.d(TAG, "[KeywordDetector::onStateChange] state: $state")
                 executor.submit {
-                    if (state == KeywordDetectorStateObserver.State.ACTIVE) {
+                    if (state == KeywordDetector.State.ACTIVE) {
                         setState(SpeechRecognizerAggregatorInterface.State.WAITING)
                     } else {
                         val resultRunnable = keywordDetectorResultRunnable
@@ -104,7 +87,7 @@ class SpeechRecognizerAggregator(
                 executor.submit {
                     val aggregatorState = when (state) {
                         AudioEndPointDetector.State.EXPECTING_SPEECH -> {
-                            if (keywordDetector.getDetectorState() == KeywordDetectorStateObserver.State.ACTIVE) {
+                            if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
                                 keywordDetector.stopDetect()
                             }
                             isTriggerStoppingByStartListening = false
@@ -132,7 +115,7 @@ class SpeechRecognizerAggregator(
         callback: ASRAgentInterface.StartRecognitionCallback?
     ) {
         executor.submit {
-            if (keywordDetector.getDetectorState() == KeywordDetectorStateObserver.State.ACTIVE) {
+            if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
                 Log.w(TAG, "[startListeningWithTrigger] failed - already executing")
                 return@submit
             }
@@ -143,91 +126,64 @@ class SpeechRecognizerAggregator(
                 return@submit
             }
 
-            KeywordDetectorInput(inputStream).let {
-                val keyword = keywordResource.keyword
-                val audioFormat = audioProvider.getFormat()
-                val result = keywordDetector.startDetect(
-                    it,
-                    com.skt.nugu.keensense.AudioFormat(
-                        audioFormat.sampleRateHz,
-                        audioFormat.bitsPerSample,
-                        audioFormat.numChannels
-                    ),
-                    TycheKeywordDetector.KeywordResources(keywordResource.netFilePath, keywordResource.searchFilePath),
-                    object : KeywordDetectorObserver {
-                        override fun onDetected() {
-                            Log.d(
-                                TAG,
-                                "[onDetected] start: ${keywordDetector.getKeywordStartOffset()} , end : ${keywordDetector.getKeywordEndOffset()}"
-                            )
-                            keywordDetectorResultRunnable = Runnable {
-                                setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
-                                val wakeupInfo = try {
-                                    WakeupInfo(keyword, WakeupInfo.Boundary(
-                                        keywordDetector.getKeywordStartOffset()!!,
-                                        keywordDetector.getKeywordEndOffset()!!,
-                                        keywordDetector.getKeywordDetectOffset()!!
-                                    ))
-                                } catch (th: Throwable) {
-                                    null
-                                }
+            val audioFormat = audioProvider.getFormat()
+            keywordDetector.startDetect(inputStream, audioFormat, object: KeywordDetector.DetectorResultObserver {
+                override fun onDetected(wakeupInfo: WakeupInfo) {
+                    Log.d(
+                        TAG,
+                        "[onDetected] wakeupInfo: $wakeupInfo"
+                    )
 
-                                executeStartListeningInternal(
-                                    audioProvider.getFormat(),
-                                    wakeupInfo,
-                                    epdParam,
-                                    callback
-                                )
+                    keywordDetectorResultRunnable = Runnable {
+                        setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
 
-                                // To prevent releasing audio input resources, release after startListening.
-                                releaseInputResources()
-                            }
-                        }
+                        executeStartListeningInternal(
+                            audioProvider.getFormat(),
+                            wakeupInfo,
+                            epdParam,
+                            callback
+                        )
 
-                        override fun onStopped() {
-                            Log.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
-                            keywordDetectorResultRunnable = Runnable {
-                                if (isTriggerStoppingByStartListening) {
-                                    executeStartListeningInternal(
-                                        audioFormat,
-                                        this@SpeechRecognizerAggregator.wakeupInfo,
-                                        this@SpeechRecognizerAggregator.epdParam,
-                                        this@SpeechRecognizerAggregator.startListeningCallback
-                                    )
-                                    isTriggerStoppingByStartListening = false
-
-                                    // To prevent releasing audio input resources, release after startListening.
-                                    releaseInputResources()
-                                } else if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
-                                    releaseInputResources()
-                                    setState(SpeechRecognizerAggregatorInterface.State.STOP)
-                                } else {
-                                    releaseInputResources()
-                                }
-                            }
-                        }
-
-                        override fun onError(errorType: KeywordDetectorObserver.ErrorType) {
-                            Log.d(TAG, "[onError] errorType: $errorType")
-                            keywordDetectorResultRunnable = Runnable {
-                                setState(SpeechRecognizerAggregatorInterface.State.ERROR)
-                                releaseInputResources()
-                            }
-                        }
-
-                        private fun releaseInputResources() {
-                            it.release()
-                            audioProvider.releaseAudioInputStream(keywordDetector)
-                        }
-                    })
-
-                if (!result.get()) {
-                    it.release()
-                    Log.w(TAG, "[startListeningWithTrigger] failed - already executing ")
-                } else {
-                    Log.d(TAG, "[startListeningWithTrigger] start")
+                        // To prevent releasing audio input resources, release after startListening.
+                        releaseInputResources()
+                    }
                 }
-            }
+
+                override fun onStopped() {
+                    Log.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
+                    keywordDetectorResultRunnable = Runnable {
+                        if (isTriggerStoppingByStartListening) {
+                            executeStartListeningInternal(
+                                audioFormat,
+                                this@SpeechRecognizerAggregator.wakeupInfo,
+                                this@SpeechRecognizerAggregator.epdParam,
+                                this@SpeechRecognizerAggregator.startListeningCallback
+                            )
+                            isTriggerStoppingByStartListening = false
+
+                            // To prevent releasing audio input resources, release after startListening.
+                            releaseInputResources()
+                        } else if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
+                            releaseInputResources()
+                            setState(SpeechRecognizerAggregatorInterface.State.STOP)
+                        } else {
+                            releaseInputResources()
+                        }
+                    }
+                }
+
+                override fun onError(errorType: KeywordDetector.DetectorResultObserver.ErrorType) {
+                    Log.d(TAG, "[onError] errorType: $errorType")
+                    keywordDetectorResultRunnable = Runnable {
+                        setState(SpeechRecognizerAggregatorInterface.State.ERROR)
+                        releaseInputResources()
+                    }
+                }
+
+                private fun releaseInputResources() {
+                    audioProvider.releaseAudioInputStream(keywordDetector)
+                }
+            })
         }
     }
 
@@ -243,7 +199,7 @@ class SpeechRecognizerAggregator(
             )
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.WAITING -> {
-                    if(isTriggerStoppingByStartListening || keywordDetector.getDetectorState() == KeywordDetectorStateObserver.State.INACTIVE) {
+                    if(isTriggerStoppingByStartListening || keywordDetector.getDetectorState() == KeywordDetector.State.INACTIVE) {
                         Log.w(TAG, "[startListening] will be started after trigger stopped. skip request.")
                         return@submit
                     }
@@ -402,21 +358,6 @@ class SpeechRecognizerAggregator(
             for (listener in copyListeners) {
                 listener.onStateChanged(state)
             }
-        }
-    }
-
-    private class KeywordDetectorInput(audioInputStream: SharedDataStream) :
-        com.skt.nugu.keensense.AudioInput {
-        private val reader = audioInputStream.createReader()
-
-        override fun getPosition(): Long = reader.position()
-
-        override fun read(audioBuffer: ByteBuffer, sizeInBytes: Int): Int {
-            return reader.read(audioBuffer, 0, sizeInBytes)
-        }
-
-        fun release() {
-            reader.close()
         }
     }
 }
