@@ -47,7 +47,7 @@ This class provides a convenient way to manage "Keyword Detector" and "SpeechPro
 The constructor requires three parameters. Look at documentation about details.
 ```kotlin
 val speechRecognizerAggregator = SpeechRecognizerAggregator(
-									keywordResource, 
+									KeensenseKeywordDetector(keywordResource), 
 									SpeechProcessorDelegate(client?.asrAgent), 
 									audioSourceManager)
 ```
