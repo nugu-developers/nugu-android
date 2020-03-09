@@ -15,11 +15,11 @@
  */
 package com.skt.nugu.sampleapp.client
 
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
+import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 
 
 interface KeywordResourceProviderInterface {
-    fun provideDefault(): SpeechRecognizerAggregator.KeywordResources
-    fun provideAria(): SpeechRecognizerAggregator.KeywordResources
-    fun provideTinkerbell(): SpeechRecognizerAggregator.KeywordResources
+    fun provideDefault(): KeensenseKeywordDetector.KeywordResources
+    fun provideAria(): KeensenseKeywordDetector.KeywordResources
+    fun provideTinkerbell(): KeensenseKeywordDetector.KeywordResources
 }

@@ -132,9 +132,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         super.onResume()
         Log.d(TAG, "[onResume]")
         if (PreferenceHelper.triggerId(this) == 0) {
-            speechRecognizerAggregator.changeKeywordResource(ClientManager.ariaResource)
+            ClientManager.keywordDetector?.keywordResource = ClientManager.ariaResource
         } else {
-            speechRecognizerAggregator.changeKeywordResource(ClientManager.tinkerbellResource)
+            ClientManager.keywordDetector?.keywordResource = ClientManager.tinkerbellResource
         }
         speechRecognizerAggregator.addListener(this)
 
