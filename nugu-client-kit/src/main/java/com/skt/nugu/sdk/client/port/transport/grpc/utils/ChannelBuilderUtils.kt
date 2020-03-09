@@ -53,15 +53,12 @@ class ChannelBuilderUtils {
         }
 
         /** Shuts down the gRPC channel */
-        fun shutdown(channel : ManagedChannel?) {
+        fun shutdown(channel: ManagedChannel?) {
             channel?.apply {
                 try {
                     if (!shutdown().awaitTermination(1, TimeUnit.SECONDS)) {
                         Logger.d(TAG,  "Unable to gracefully shutdown the gRPC ManagedChannel. Will attempt an immediate shutdown.")
                         shutdownNow()
-                        if (!awaitTermination(60, TimeUnit.SECONDS)) {
-                            Logger.d(TAG, "Unable to forcefully shutdown the gRPC ManagedChannel.")
-                        }
                     }
                 } catch (e: InterruptedException) {
                     // (Re-)Cancel if current thread also interrupted
