@@ -1,8 +1,22 @@
 Change Log
 ==========
 
+Version 0.8.12 *(2020-03-09)*
+-----------------------------
+* New: Provide a way to map request & response 
+    * for TextAgent (#381)
+    * for ASRAgent (#383)
+* New: Support Request{XXX}Command for AudioPlayer v1.2
+* Fix: Not playing audio player for attachment (#367)
+* Fix: Not cleared audio player's display after stop on finished (#374)
+* Fix: Display's context not updated when enter DM (#376)
+* Fix: Tts player not working using two or more at same time (#384)
+* Improve: Add onStop at OnPlaybackListener (#369)
+* Improve: PlayContext's interface changed (set -> gathering) (#393)
+
+
 Version 0.8.11 *(2020-03-03)*
-----------------------------
+-----------------------------
 * New: Add listener for received directives (#359)
 * New: Add OnSendMessageListener (#361)
 * New: Add handler for text source directive (#365)
@@ -12,7 +26,7 @@ Version 0.8.11 *(2020-03-03)*
 * Improve: Change display timer management policy (#332)
 
 Version 0.8.10 *(2020-02-27)*
-----------------------------
+-----------------------------
 * New: Modify access to the attahcment manager (#344)
 * New: Support CallX directives for Display v1.2 (#341)
 * Fix: Prevent focus loss between DM and TTS (#346)
