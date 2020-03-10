@@ -211,11 +211,13 @@ class DefaultASRAgent(
             val payload = parseExpectSpeechPayload(info.directive)
             if (payload == null) {
                 setHandlingExpectSpeechFailed(
+                    payload,
                     info,
                     "[executePreHandleExpectSpeechDirective] invalid payload"
                 )
             } else if (state != ASRAgentInterface.State.IDLE && state != ASRAgentInterface.State.BUSY) {
                 setHandlingExpectSpeechFailed(
+                    payload,
                     info,
                     "[executePreHandleExpectSpeechDirective] not allowed state($state)"
                 )
@@ -270,12 +272,22 @@ class DefaultASRAgent(
 
 
     private fun executeHandleExpectSpeechDirective(info: DirectiveInfo) {
+        // Here we do not check validation of payload due to checked at preHandleExpectSpeech already.
+        val payload = parseExpectSpeechPayload(info.directive)
+
+        if (expectSpeechPayload == null) {
+            Logger.e(TAG, "[executeHandleExpectSpeechDirective] re-parse payload due to loss")
+            // re parse payload here.
+            expectSpeechPayload = payload
+        }
+
         if (!canRecognizing()) {
             Logger.w(
                 TAG,
                 "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
             )
             setHandlingExpectSpeechFailed(
+                payload,
                 info,
                 "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
             )
@@ -293,18 +305,11 @@ class DefaultASRAgent(
                 "[executeHandleExpectSpeechDirective] audioInputStream is null"
             )
             setHandlingExpectSpeechFailed(
+                payload,
                 info,
                 "[executeHandleExpectSpeechDirective] audioInputStream is null"
             )
             return
-        }
-
-        // Here we do not check validation of payload due to checked at preHandleExpectSpeech already.
-        if (expectSpeechPayload == null) {
-            Logger.e(TAG, "[executeHandleExpectSpeechDirective] re-parse payload due to loss")
-            // re parse payload here.
-            val payload = parseExpectSpeechPayload(info.directive)
-            expectSpeechPayload = payload
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
@@ -318,7 +323,7 @@ class DefaultASRAgent(
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
             ) {
                 setState(ASRAgentInterface.State.IDLE)
-                setHandlingExpectSpeechFailed(info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
+                setHandlingExpectSpeechFailed(payload, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
             }
         })
     }
@@ -381,9 +386,11 @@ class DefaultASRAgent(
         removeDirective(info)
     }
 
-    private fun setHandlingExpectSpeechFailed(info: DirectiveInfo, msg: String) {
+    private fun setHandlingExpectSpeechFailed(payload: ExpectSpeechPayload?, info: DirectiveInfo, msg: String) {
         setHandlingFailed(info, msg)
-        sendListenFailed()
+        payload?.let {
+            sendListenFailed(it)
+        }
     }
 
     private fun handleDirectiveException(info: DirectiveInfo) {
@@ -784,9 +791,9 @@ class DefaultASRAgent(
         return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
     }
 
-    private fun sendListenFailed() {
+    private fun sendListenFailed(payload: ExpectSpeechPayload?) {
         JsonObject().apply {
-            expectSpeechPayload?.let {
+            payload?.let {
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
             }
         }.apply {
