@@ -24,12 +24,15 @@ import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
+import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordPowerMeasure
+import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.PowerMeasure
 import java.nio.ByteBuffer
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.collections.ArrayList
 
 class KeensenseKeywordDetector(
-    var keywordResource: KeywordResources
+    var keywordResource: KeywordResources,
+    private val powerMeasure: PowerMeasure? = null
 ) : KeywordDetector {
     companion object {
         private const val TAG = "KeenKeywordDetector"
@@ -64,6 +67,9 @@ class KeensenseKeywordDetector(
     ): Boolean {
         KeywordDetectorInput(inputStream).let {
             val keyword = keywordResource.keyword
+            val keywordPowerMeasure = powerMeasure?.let { measure ->
+                KeywordPowerMeasure(measure)
+            }
 
             val result = detector.startDetect(
                 it,
@@ -78,7 +84,7 @@ class KeensenseKeywordDetector(
                 ),
                 object : KeywordDetectorObserver {
                     override fun onDetecting(buffer: ByteBuffer) {
-
+                        keywordPowerMeasure?.accumulate(buffer)
                     }
 
                     override fun onDetected() {
@@ -86,7 +92,7 @@ class KeensenseKeywordDetector(
                             detector.getKeywordStartOffset()!!,
                             detector.getKeywordEndOffset()!!,
                             detector.getKeywordDetectOffset()!!
-                        ), null))
+                        ), keywordPowerMeasure?.getEstimatedPower()))
                         it.release()
                     }
 
