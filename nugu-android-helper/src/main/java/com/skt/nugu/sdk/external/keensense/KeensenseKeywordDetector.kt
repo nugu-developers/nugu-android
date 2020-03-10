@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
 import java.nio.ByteBuffer
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.Future
+import kotlin.collections.ArrayList
 
 class KeensenseKeywordDetector(
     var keywordResource: KeywordResources
@@ -64,6 +64,7 @@ class KeensenseKeywordDetector(
     ): Boolean {
         KeywordDetectorInput(inputStream).let {
             val keyword = keywordResource.keyword
+
             val result = detector.startDetect(
                 it,
                 com.skt.nugu.keensense.AudioFormat(
@@ -76,12 +77,16 @@ class KeensenseKeywordDetector(
                     keywordResource.searchFilePath
                 ),
                 object : KeywordDetectorObserver {
+                    override fun onDetecting(buffer: ByteBuffer) {
+
+                    }
+
                     override fun onDetected() {
                         observer.onDetected(WakeupInfo(keyword, WakeupInfo.Boundary(
                             detector.getKeywordStartOffset()!!,
                             detector.getKeywordEndOffset()!!,
                             detector.getKeywordDetectOffset()!!
-                        )))
+                        ), null))
                         it.release()
                     }
 

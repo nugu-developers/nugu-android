@@ -19,10 +19,12 @@ package com.skt.nugu.sdk.agent.asr
  * The wakeup info
  * @param word the wakeup word
  * @param boundary the boundary position for which [word]
+ * @param power the power, may be null if not available.
  */
 data class WakeupInfo(
     val word: String,
-    val boundary: Boundary
+    val boundary: Boundary,
+    val power: Power? = null
 ) {
     /**
      * @param startPosition the start position of wakeupword.
@@ -33,5 +35,14 @@ data class WakeupInfo(
         val startPosition: Long,
         val endPosition: Long,
         val detectPosition: Long
+    )
+
+    /**
+     * @param speech the power of speech
+     * @param noise the power of noise
+     */
+    data class Power(
+        val speech: Float,
+        val noise: Float
     )
 }
