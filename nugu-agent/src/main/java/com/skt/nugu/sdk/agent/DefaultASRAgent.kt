@@ -480,10 +480,6 @@ class DefaultASRAgent(
         }
     }
 
-    private fun executeStartRecognitionOnContextFailure(error: ContextRequester.ContextRequestError) {
-        Logger.w(TAG, "[executeStartRecognitionOnContextFailure] error: $error")
-    }
-
     private fun executeOnFocusChanged(newFocus: FocusState) {
         Logger.d(TAG, "[executeOnFocusChanged] newFocus: $newFocus")
 
@@ -766,18 +762,20 @@ class DefaultASRAgent(
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable]")
-                executeStartRecognitionOnContextAvailable(
-                    audioInputStream,
-                    audioFormat,
-                    wakeupInfo,
-                    payload,
-                    param,
-                    callback,
-                    jsonContext)
+                executor.submit {
+                    executeStartRecognitionOnContextAvailable(
+                        audioInputStream,
+                        audioFormat,
+                        wakeupInfo,
+                        payload,
+                        param,
+                        callback,
+                        jsonContext)
+                }
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                executeStartRecognitionOnContextFailure(error)
+                Logger.w(TAG, "[onContextFailure] error: $error")
                 callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_TAKE_TOO_LONG_START_RECOGNITION)
             }
         })
