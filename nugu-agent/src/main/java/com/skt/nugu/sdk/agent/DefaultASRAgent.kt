@@ -520,12 +520,13 @@ class DefaultASRAgent(
         }
 
         executeSelectSpeechProcessor()
+        val tempExpectSpeechPayload = expectSpeechPayload
         currentSpeechRecognizer.start(
             inputStream,
             inputFormat,
             context,
             wakeupInfo,
-            expectSpeechPayload,
+            tempExpectSpeechPayload,
             endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             startRecognitionCallback,
             object : ASRAgentInterface.OnResultListener {
@@ -545,7 +546,7 @@ class DefaultASRAgent(
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
                         sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout()
+                        sendListenTimeout(tempExpectSpeechPayload)
                     }
                     speechToTextConverterEventObserver.onError(type)
                 }
@@ -801,9 +802,9 @@ class DefaultASRAgent(
         }
     }
 
-    private fun sendListenTimeout() {
+    private fun sendListenTimeout(payload: ExpectSpeechPayload?) {
         JsonObject().apply {
-            expectSpeechPayload?.let {
+            payload?.let {
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
             }
         }.apply {
