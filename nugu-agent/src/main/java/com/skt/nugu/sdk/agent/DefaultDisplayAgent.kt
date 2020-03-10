@@ -423,6 +423,9 @@ class DefaultDisplayAgent(
     private fun executeHandleCloseDirective(info: DirectiveInfo) {
         val closePayload =
             MessageFactory.create(info.directive.payload, ClosePayload::class.java)
+
+        setHandlingCompleted(info)
+
         if (closePayload == null) {
             Logger.w(TAG, "[executeHandleCloseDirective] (Close) no playServiceId at Payload.")
             sendCloseFailed(info, "")
