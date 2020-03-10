@@ -17,33 +17,33 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.asr.*
+import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
-import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.agent.asr.audio.Encoder
-import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.Executors
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
@@ -467,16 +467,24 @@ class DefaultASRAgent(
             }
         }
 
-        this.wakeupInfo = wakeupInfo
-        this.audioInputStream = audioInputStream
-        this.audioFormat = audioFormat
-        this.expectSpeechPayload = payload
-        this.endPointDetectorParam = param
-        this.startRecognitionCallback = callback
-        this.contextForRecognitionOnForegroundFocus = jsonContext
-
         if (focusState == FocusState.FOREGROUND) {
-            executeInternalStartRecognition(jsonContext)
+            executeInternalStartRecognition(
+                audioInputStream,
+                audioFormat,
+                wakeupInfo,
+                payload,
+                param,
+                callback,
+                jsonContext
+            )
+        } else {
+            this.audioInputStream = audioInputStream
+            this.audioFormat = audioFormat
+            this.wakeupInfo = wakeupInfo
+            this.expectSpeechPayload = payload
+            this.endPointDetectorParam = param
+            this.startRecognitionCallback = callback
+            this.contextForRecognitionOnForegroundFocus = jsonContext
         }
     }
 
@@ -487,44 +495,56 @@ class DefaultASRAgent(
 
         when (newFocus) {
             FocusState.FOREGROUND -> {
+                val inputStream = this.audioInputStream
+                val audioFormat = this.audioFormat
+                val wakeupInfo = this.wakeupInfo
+                val payload = this.expectSpeechPayload
+                val epdParam = this.endPointDetectorParam
+                val callback = this.startRecognitionCallback
                 val context = contextForRecognitionOnForegroundFocus
-                contextForRecognitionOnForegroundFocus = null
+
+                this.audioInputStream = null
+                this.audioFormat = null
+                this.wakeupInfo =  null
+                this.expectSpeechPayload = null
+                this.endPointDetectorParam = null
+                this.startRecognitionCallback = null
+                this.contextForRecognitionOnForegroundFocus = null
+
+                if (inputStream == null || audioFormat == null) {
+                    Logger.e(TAG, "[executeInternalStartRecognition] invalid audio input")
+                    callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+                    return
+                }
+
                 if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
-                    executeInternalStartRecognition(context)
+                    executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, payload, epdParam, callback, context)
                 }
             }
             FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
             FocusState.NONE -> executeStopRecognition(true)
         }
     }
-    
-    private fun executeInternalStartRecognition(context: String) {
+
+    private fun executeInternalStartRecognition(
+        audioInputStream: SharedDataStream,
+        audioFormat: AudioFormat,
+        wakeupInfo: WakeupInfo?,
+        payload: ExpectSpeechPayload?,
+        param: EndPointDetectorParam?,
+        callback: ASRAgentInterface.StartRecognitionCallback?,
+        jsonContext: String
+    ) {
         Logger.d(TAG, "[executeInternalStartRecognition]")
-
-        val inputStream = audioInputStream
-        if (inputStream == null) {
-            Logger.e(TAG, "[executeInternalStartRecognition] audioInputProcessor is null")
-            startRecognitionCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
-            return
-        }
-
-        val inputFormat = audioFormat
-        if (inputFormat == null) {
-            Logger.e(TAG, "[executeInternalStartRecognition] audioFormat is null")
-            startRecognitionCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
-            return
-        }
-
         executeSelectSpeechProcessor()
-        val tempExpectSpeechPayload = expectSpeechPayload
         currentSpeechRecognizer.start(
-            inputStream,
-            inputFormat,
-            context,
+            audioInputStream,
+            audioFormat,
+            jsonContext,
             wakeupInfo,
-            tempExpectSpeechPayload,
-            endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
-            startRecognitionCallback,
+            payload,
+            param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
+            callback,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult() {
                     speechToTextConverterEventObserver.onNoneResult()
@@ -542,7 +562,7 @@ class DefaultASRAgent(
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
                         sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(tempExpectSpeechPayload)
+                        sendListenTimeout(payload)
                     }
                     speechToTextConverterEventObserver.onError(type)
                 }
