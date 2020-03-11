@@ -868,11 +868,14 @@ class DefaultTTSAgent(
                         }.toString())
                         .build()
 
-                listener?.let {
-                    requestListenerMap[dialogRequestId] = it
+                if(messageSender.sendMessage(messageRequest)) {
+                    listener?.let {
+                        requestListenerMap[dialogRequestId] = it
+                    }
+                    onSendEventFinished(messageRequest.dialogRequestId)
+                } else {
+                    listener?.onError(dialogRequestId)
                 }
-                messageSender.sendMessage(messageRequest)
-                onSendEventFinished(messageRequest.dialogRequestId)
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
