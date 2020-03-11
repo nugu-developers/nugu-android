@@ -250,7 +250,9 @@ class DefaultTTSAgent(
     private fun setHandlingInvalidSpeakDirectiveReceived(info: DirectiveInfo) {
         Logger.d(TAG, "[setHandlingInvalidSpeakDirectiveReceived] info: $info")
         info.result.setFailed("Invalid Speak Directive")
-        requestListenerMap.remove(info.directive.getDialogRequestId())?.onError()
+        info.directive.getDialogRequestId().let {
+            requestListenerMap.remove(it)?.onError(it)
+        }
     }
 
     private fun executeHandle(info: DirectiveInfo) {
@@ -336,23 +338,23 @@ class DefaultTTSAgent(
         stateLock.withLock {
             Logger.d(TAG, "[setCurrentState] state: $state")
             currentState = state
-            currentInfo?.directive?.let {
+            currentInfo?.directive?.getDialogRequestId()?.let {
                 when(state) {
                     TTSAgentInterface.State.IDLE -> {
                         // no-op
                     }
                     TTSAgentInterface.State.PLAYING -> {
-                        requestListenerMap[it.getDialogRequestId()]?.onStart()
+                        requestListenerMap[it]?.onStart(it)
                     }
                     TTSAgentInterface.State.STOPPED -> {
-                        requestListenerMap.remove(it.getDialogRequestId())?.onStop()
+                        requestListenerMap.remove(it)?.onStop(it)
                     }
                     TTSAgentInterface.State.FINISHED -> {
-                        requestListenerMap.remove(it.getDialogRequestId())?.onFinish()
+                        requestListenerMap.remove(it)?.onFinish(it)
                     }
                 }
 
-                notifyObservers(state, it.getDialogRequestId())
+                notifyObservers(state, it)
             }
         }
     }
@@ -846,10 +848,11 @@ class DefaultTTSAgent(
         text: String,
         playServiceId: String,
         listener: TTSAgentInterface.OnPlaybackListener?
-    ) {
+    ): String {
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                val dialogRequestId = UUIDGeneration.timeUUID().toString()
                 val messageRequest =
                     EventMessageRequest.Builder(
                         jsonContext,
@@ -873,9 +876,11 @@ class DefaultTTSAgent(
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                listener?.onError()
+                listener?.onError(dialogRequestId)
             }
         }, namespaceAndName)
+
+        return dialogRequestId
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
@@ -888,7 +893,7 @@ class DefaultTTSAgent(
     ): Boolean = true
 
     override fun onResponseTimeout(dialogRequestId: String) {
-        requestListenerMap.remove(dialogRequestId)?.onError()
+        requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
     }
 
     override fun onDialogUXStateChanged(
