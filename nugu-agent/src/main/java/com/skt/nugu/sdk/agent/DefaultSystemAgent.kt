@@ -72,6 +72,9 @@ class DefaultSystemAgent(
         /// The server encountered a runtime error during TTS processing.
         const val CODE_TTS_SPEAKING_EXCEPTION = "TTS_SPEAKING_EXCEPTION"
 
+        /** reason of revoke **/
+        const val REASON_REVOKED_DEVICE = "REVOKED_DEVICE"
+
         /** directives */
         const val NAME_RESET_USER_INACTIVITY = "ResetUserInactivity"
         const val NAME_HANDOFF_CONNECTION = "HandoffConnection"
@@ -80,6 +83,7 @@ class DefaultSystemAgent(
         const val NAME_EXCEPTION = "Exception"
         const val NAME_ECHO = "Echo"
         const val NAME_NO_DIRECTIVES = "NoDirectives"
+        const val NAME_REVOKE = "Revoke"
 
         /** events */
         const val EVENT_NAME_SYNCHRONIZE_STATE = "SynchronizeState"
@@ -114,6 +118,10 @@ class DefaultSystemAgent(
         val NO_DIRECTIVES = NamespaceAndName(
             NAMESPACE,
             NAME_NO_DIRECTIVES
+        )
+        val REVOKE = NamespaceAndName(
+            NAMESPACE,
+            NAME_REVOKE
         )
 
         private const val KEY_INACTIVITY_EVENT_PAYLOAD = "inactiveTimeInSeconds"
@@ -160,6 +168,7 @@ class DefaultSystemAgent(
         configuration[EXCEPTION] = nonBlockingPolicy
         configuration[ECHO] = nonBlockingPolicy
         configuration[NO_DIRECTIVES] = nonBlockingPolicy
+        configuration[REVOKE] = nonBlockingPolicy
 
         return configuration
     }
@@ -208,6 +217,7 @@ class DefaultSystemAgent(
             NAME_UPDATE_STATE -> handleUpdateState(info)
             NAME_EXCEPTION -> handleException(info)
             NAME_ECHO -> handleEcho(info)
+            NAME_REVOKE -> handleRevoke(info)
             NAME_NO_DIRECTIVES -> {
             }
         }
@@ -245,6 +255,11 @@ class DefaultSystemAgent(
         val connectionTimeout: Int,
         @SerializedName("charge")
         val charge: String
+    )
+
+    internal data class RevokePayload(
+        @SerializedName("reason")
+        val reason: String
     )
 
     /**
@@ -305,6 +320,38 @@ class DefaultSystemAgent(
                         referrerDialogRequestId
                     }
                 )
+            }
+        }
+    }
+
+    /**
+     * Request all status information of device as Context
+     * @param info The directive currently being handled.
+     */
+    private fun handleRevoke(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleRevoke] $info")
+
+        val payload =
+            MessageFactory.create(info.directive.payload, RevokePayload::class.java)
+        if (payload == null) {
+            Logger.d(
+                TAG,
+                "[handleRevoke] invalid payload: ${info.directive.payload}"
+            )
+            return
+        }
+
+        executor.submit {
+            when (payload.reason) {
+                REASON_REVOKED_DEVICE -> {
+                    observers.forEach { it.onRevoke(SystemAgentInterface.RevokeReason.REVOKED_DEVICE) }
+                }
+                else -> {
+                    Logger.d(
+                        TAG,
+                        "[handleRevoke] unknown reason: ${payload.reason}"
+                    )
+                }
             }
         }
     }
