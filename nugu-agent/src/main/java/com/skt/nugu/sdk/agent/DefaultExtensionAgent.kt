@@ -141,7 +141,7 @@ class DefaultExtensionAgent(
             val currentClient = client
             if (currentClient != null) {
                 val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
-                if (currentClient.action(data.toString(), playServiceId)) {
+                if (currentClient.action(data.toString(), playServiceId, info.directive.header.dialogRequestId)) {
                     sendActionEvent(NAME_ACTION_SUCCEEDED, playServiceId, referrerDialogRequestId)
                 } else {
                     sendActionEvent(NAME_ACTION_FAILED, playServiceId, referrerDialogRequestId)

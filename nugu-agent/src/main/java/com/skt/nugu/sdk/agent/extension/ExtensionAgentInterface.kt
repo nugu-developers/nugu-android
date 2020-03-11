@@ -30,9 +30,10 @@ interface ExtensionAgentInterface {
          *
          * @param data the required data for action
          * @param playServiceId the playServiceId
+         * @param dialogRequestId the dialogRequestId for action
          * @return true: success, false: otherwise
          */
-        fun action(data: String, playServiceId: String): Boolean
+        fun action(data: String, playServiceId: String, dialogRequestId: String): Boolean
 
         /**
          * Return a data string in structured JSON.
