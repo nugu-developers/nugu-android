@@ -407,6 +407,12 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
+    override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
+        Log.d(TAG, "[onRevoke] The device has been revoked ($reason)")
+        ClientManager.getClient().disconnect()
+        PreferenceHelper.credentials(this@MainActivity, "")
+    }
+
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
         when(code) {
             SystemAgentInterface.ExceptionCode.PLAY_ROUTER_PROCESSING_EXCEPTION -> {

@@ -24,6 +24,9 @@ interface SystemAgentInterface {
         TTS_SPEAKING_EXCEPTION,
         UNAUTHORIZED_REQUEST_EXCEPTION
     }
+    enum class RevokeReason {
+        REVOKED_DEVICE
+    }
 
     /**
      * This interface is used by the System Capability agent
@@ -40,6 +43,11 @@ interface SystemAgentInterface {
          * @param description
          */
         fun onException(code: ExceptionCode, description: String?)
+
+        /**
+         * The device has been revoked.
+         */
+        fun onRevoke(reason: RevokeReason)
     }
 
     /**
