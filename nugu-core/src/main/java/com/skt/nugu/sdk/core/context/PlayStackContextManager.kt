@@ -74,18 +74,18 @@ class PlayStackContextManager(
      */
     private fun buildPlayStack(): List<String> {
         // use treemap to order (ascending)
-        val playStackMap = TreeMap<Int, String>()
+        val playStackMap = TreeMap<Long, String>()
 
         visualPlayStackProvider?.getPlayStack()?.apply {
             forEach {
                 // audio player stack's priority higher than visual, so plus 1.
-                playStackMap[it.priority * 2 + 1] = it.playServiceId
+                playStackMap[(it.priority * 2 + 1).toLong()] = it.playServiceId
             }
         }
 
         audioPlayStackProvider.getPlayStack().apply {
             forEach {
-                playStackMap[it.priority * 2 + 0] = it.playServiceId
+                playStackMap[(it.priority * 2 + 0).toLong()] = it.playServiceId
             }
         }
 
