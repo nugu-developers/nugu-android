@@ -77,11 +77,17 @@ interface TTSAgentInterface {
     fun stopTTS(cancelAssociation: Boolean)
 
     interface OnPlaybackListener {
-        fun onStart()
-        fun onStop()
-        fun onFinish()
-        fun onError()
+        fun onStart(dialogRequestId: String)
+        fun onStop(dialogRequestId: String)
+        fun onFinish(dialogRequestId: String)
+        fun onError(dialogRequestId: String)
     }
 
-    fun requestTTS(text: String, playServiceId:  String, listener: OnPlaybackListener?)
+    /**
+     * @param text the text which to synthesize to speech
+     * @param playServiceId the play service id
+     * @param listener the playback listener when notified when occur event
+     * @return the dialog request id for the request
+     */
+    fun requestTTS(text: String, playServiceId:  String, listener: OnPlaybackListener?): String
 }
