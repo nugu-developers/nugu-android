@@ -35,6 +35,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 
 class DefaultTextAgent(
@@ -72,12 +73,21 @@ class DefaultTextAgent(
     }
 
     private val requestListeners = HashMap<String, TextAgentInterface.RequestListener>()
+    private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
     override val namespaceAndName: NamespaceAndName =
         NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
+    }
+
+    override fun addInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {
+        internalTextSourceHandleListeners.add(listener)
+    }
+
+    override fun removeInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {
+        internalTextSourceHandleListeners.remove(listener)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -109,7 +119,22 @@ class DefaultTextAgent(
         if(textSourceHandler?.handleTextSource(info.directive.payload, info.directive.header) == true) {
             Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
         } else {
-            executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.getValidReferrerDialogRequestId(), null)
+            val dialogRequestId = executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.getValidReferrerDialogRequestId(), object: TextAgentInterface.RequestListener {
+                override fun onReceiveResponse(dialogRequestId: String) {
+                    internalTextSourceHandleListeners.forEach {
+                        it.onReceiveResponse(dialogRequestId)
+                    }
+                }
+
+                override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
+                    internalTextSourceHandleListeners.forEach {
+                        it.onError(dialogRequestId, type)
+                    }
+                }
+            })
+            internalTextSourceHandleListeners.forEach {
+                it.onRequested(dialogRequestId)
+            }
         }
     }
 
@@ -192,14 +217,6 @@ class DefaultTextAgent(
                 }
             }.toString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "").build()
-
-    private fun executeSendTextInputEvent(
-        text: String,
-        token: String,
-        info: DirectiveInfo
-    ) {
-        Logger.d(TAG, "[executeSendTextInputEvent] text: $text, token: $token")
-    }
 
     private fun executeSendTextInputEventInternal(
         text: String,
