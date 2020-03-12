@@ -523,11 +523,10 @@ class DefaultSystemAgent(
      * @param listener the listener that added
      */
     override fun addListener(listener: SystemAgentInterface.Listener) {
-        Logger.d(TAG, "[addAuthStateListener] observer: $listener")
+        Logger.d(TAG, "[addListener] observer: $listener")
         executor.submit {
             observers.add(listener)
         }
-
     }
 
     /**
@@ -535,7 +534,7 @@ class DefaultSystemAgent(
      * @param listener the listener that removed
      */
     override fun removeListener(listener: SystemAgentInterface.Listener) {
-        Logger.d(TAG, "[removeAuthStateListener] observer: $listener")
+        Logger.d(TAG, "[removeListener] observer: $listener")
         executor.submit {
             observers.remove(listener)
         }
