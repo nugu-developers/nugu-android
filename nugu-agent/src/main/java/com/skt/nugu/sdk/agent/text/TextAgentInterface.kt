@@ -42,6 +42,18 @@ interface TextAgentInterface {
     }
 
     /**
+     * The listener about textSource directive's internal handling event.
+     * If text source handled by given [TextSourceHandler], the listener is not called.
+     * The handler only called when handled at internally.
+     */
+    interface InternalTextSourceHandlerListener: RequestListener {
+        fun onRequested(dialogRequestId: String)
+    }
+
+    fun addInternalTextSourceHandlerListener(listener: InternalTextSourceHandlerListener)
+    fun removeInternalTextSourceHandlerListener(listener: InternalTextSourceHandlerListener)
+
+    /**
      * @param text the input text which to send request.
      * @param listener the listener for request
      * @return the dialogRequestId for request
