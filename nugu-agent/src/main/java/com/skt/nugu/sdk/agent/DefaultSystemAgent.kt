@@ -342,16 +342,14 @@ class DefaultSystemAgent(
         }
 
         executor.submit {
-            when (payload.reason) {
-                REASON_REVOKED_DEVICE -> {
-                    observers.forEach { it.onRevoke(SystemAgentInterface.RevokeReason.REVOKED_DEVICE) }
-                }
-                else -> {
-                    Logger.d(
-                        TAG,
-                        "[handleRevoke] unknown reason: ${payload.reason}"
-                    )
-                }
+            if (payload.reason == REASON_REVOKED_DEVICE) {
+                observers.forEach { it.onRevoke(SystemAgentInterface.RevokeReason.REVOKED_DEVICE) }
+            }
+            else {
+                Logger.d(
+                    TAG,
+                    "[handleRevoke] unknown reason: ${payload.reason}"
+                )
             }
         }
     }
