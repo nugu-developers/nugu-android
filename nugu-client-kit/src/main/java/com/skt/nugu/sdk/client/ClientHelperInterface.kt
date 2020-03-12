@@ -180,8 +180,9 @@ interface ClientHelperInterface {
      * @param text the source text for TTS
      * @param playServiceId the playServiceId
      * @param listener the listener for TTS playback
+     * @return the dialog request id for the request, null if failed.
      */
-    fun requestTTS(text: String, playServiceId: String, listener: TTSAgentInterface.OnPlaybackListener? = null)
+    fun requestTTS(text: String, playServiceId: String, listener: TTSAgentInterface.OnPlaybackListener? = null): String?
 
     /**
      * Stop current playing TTS
