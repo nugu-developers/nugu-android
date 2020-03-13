@@ -241,7 +241,20 @@ class DefaultAudioPlayerAgent(
 
         override fun requestReleaseSync(immediate: Boolean) {
             executor.submit {
-                executeCancelAudioInfo(this)
+                when {
+                    nextItem == this -> {
+                        Logger.d(TAG, "[requestReleaseSync] cancel next item")
+                        executeCancelNextItem()
+                    }
+                    currentItem == this -> {
+                        Logger.d(TAG, "[requestReleaseSync] cancel current item")
+                        executeStop(true)
+                    }
+                    else -> {
+                        Logger.d(TAG, "[requestReleaseSync] cancel outdated item")
+                        notifyOnReleaseAudioInfo(this, true)
+                    }
+                }
             }
         }
     }
@@ -268,23 +281,6 @@ class DefaultAudioPlayerAgent(
         )
         mediaPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
-    }
-
-    private fun executeCancelAudioInfo(audioInfo: AudioInfo) {
-        when {
-            nextItem == audioInfo -> {
-                Logger.d(TAG, "[executeCancelAudioInfo] cancel next item")
-                executeCancelNextItem()
-            }
-            currentItem == audioInfo -> {
-                Logger.d(TAG, "[executeCancelAudioInfo] cancel current item")
-                executeStop()
-            }
-            else -> {
-                Logger.d(TAG, "[executeCancelAudioInfo] cancel outdated item")
-                notifyOnReleaseAudioInfo(audioInfo, true)
-            }
-        }
     }
 
     private fun notifyOnReleaseAudioInfo(info: AudioInfo, immediately: Boolean) {
