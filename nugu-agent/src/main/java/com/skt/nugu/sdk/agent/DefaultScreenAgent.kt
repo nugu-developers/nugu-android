@@ -188,7 +188,7 @@ class DefaultScreenAgent(
         contextSetter.setState(namespaceAndName, JsonObject().apply {
             addProperty("version", VERSION)
             with(screen.getSettings()) {
-                addProperty("state", isOn)
+                addProperty("state", if(isOn) "ON" else "OFF")
                 addProperty("brightness", brightness)
             }
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
