@@ -301,6 +301,7 @@ class DefaultSpeakerAgent(
                         addProperty("name", it.key.name)
                         addProperty("minVolume", it.value.getMinVolume())
                         addProperty("maxVolume", it.value.getMaxVolume())
+                        addProperty("defaultVolumeStep", it.value.getDefaultVolumeStep())
 
                         val settings = it.value.getSpeakerSettings()
                         settings?.apply {

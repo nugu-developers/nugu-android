@@ -92,4 +92,13 @@ interface Speaker {
      * @return the minimum volume
      */
     fun getMinVolume(): Int
+
+    /**
+     * Get the default volume step of the speaker used when volumeUp/Down.
+     *
+     * Must be static value.
+     *
+     * @return the volume step
+     */
+    fun getDefaultVolumeStep(): Int
 }
