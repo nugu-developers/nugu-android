@@ -103,7 +103,8 @@ class DefaultDelegationAgent(
             defaultClient.onReceive(
                 payload.appId,
                 payload.playServiceId,
-                payload.data.toString()
+                payload.data.toString(),
+                info.directive.header.dialogRequestId
             )
             setHandlingCompleted(info)
         }

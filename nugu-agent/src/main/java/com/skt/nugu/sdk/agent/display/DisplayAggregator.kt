@@ -79,13 +79,14 @@ class DisplayAggregator(
                 templateId: String,
                 templateType: String,
                 templateContent: String,
-                dialogRequestId: String
+                dialogRequestId: String,
+                contextLayer: DisplayAgentInterface.ContextLayer
             ): Boolean = renderer.render(
                 templateId,
                 templateType,
                 templateContent,
                 dialogRequestId,
-                getAndRemoveTypeForTemplateAgent(dialogRequestId)
+                getAndRemoveTypeForTemplateAgent(dialogRequestId, contextLayer)
             )
 
             override fun clear(templateId: String, force: Boolean) =
@@ -124,8 +125,20 @@ class DisplayAggregator(
         })
     }
 
-    private fun getAndRemoveTypeForTemplateAgent(dialogRequestId: String): DisplayAggregatorInterface.Type {
-        return displayTypeMap.remove(dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
+    private fun getAndRemoveTypeForTemplateAgent(dialogRequestId: String, contextLayer: DisplayAgentInterface.ContextLayer): DisplayAggregatorInterface.Type {
+        val layer = when(contextLayer) {
+            DisplayAgentInterface.ContextLayer.MEDIA -> DisplayAggregatorInterface.Type.AUDIO_PLAYER
+            DisplayAgentInterface.ContextLayer.ALERT -> DisplayAggregatorInterface.Type.ALERT
+            DisplayAgentInterface.ContextLayer.CALL -> DisplayAggregatorInterface.Type.CALL
+            else -> DisplayAggregatorInterface.Type.INFOMATION
+        }
+
+        // for backward compatibility
+        return if(layer == DisplayAggregatorInterface.Type.INFOMATION) {
+            displayTypeMap.remove(dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
+        } else {
+            layer
+        }
     }
 
     override fun notifyUserInteraction(templateId: String) {

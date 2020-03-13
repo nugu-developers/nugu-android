@@ -349,6 +349,8 @@ class DirectiveProcessor(
         blockedMediums[BlockingPolicy.Medium.AUDIO] = directivesBeingHandled[BlockingPolicy.Medium.AUDIO] != null
         blockedMediums[BlockingPolicy.Medium.VISUAL] = directivesBeingHandled[BlockingPolicy.Medium.VISUAL] != null
 
+        Logger.d(TAG, "[getNextUnblockedDirectiveLocked] block mediums : ${directivesBeingHandled[BlockingPolicy.Medium.AUDIO]}/${directivesBeingHandled[BlockingPolicy.Medium.VISUAL]}")
+
         for (directiveAndPolicy in handlingQueue) {
             val currentUsingAudio = directiveAndPolicy.policy.mediums.audio
             val currentUsingVisual = directiveAndPolicy.policy.mediums.visual

@@ -22,6 +22,13 @@ import com.skt.nugu.sdk.agent.common.Direction
  */
 interface DisplayAgentInterface:
     DisplayInterface<DisplayAgentInterface.Renderer, DisplayAgentInterface.Controller> {
+    enum class ContextLayer(val priority: Int) {
+        CALL(400),
+        ALERT(300),
+        INFO(200),
+        MEDIA(100)
+    }
+
     /**
      * This should be called when occur interaction(input event such as touch, drag, etc...) for display
      *
@@ -47,7 +54,7 @@ interface DisplayAgentInterface:
          * @param dialogRequestId the dialog request id
          * @return true: if will render, false: otherwise
          */
-        fun render(templateId: String, templateType: String, templateContent: String, dialogRequestId: String): Boolean
+        fun render(templateId: String, templateType: String, templateContent: String, dialogRequestId: String, contextLayer: ContextLayer): Boolean
 
         /**
          * Used to notify the renderer when display should be cleared .
