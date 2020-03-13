@@ -22,5 +22,5 @@ interface DelegationClient {
     )
 
     fun getAppContext(): Context?
-    fun onReceive(appId: String, playServiceId: String, data: String)
+    fun onReceive(appId: String, playServiceId: String, data: String, dialogRequestId: String)
 }
