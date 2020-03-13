@@ -40,6 +40,8 @@ abstract class AndroidAudioSpeaker(
         if (Build.VERSION.SDK_INT < 28) 0
         else getAudioManager().getStreamMinVolume(streamType)
 
+    override fun getDefaultVolumeStep(): Int = 1
+
     override fun setVolume(volume: Int, rate: Speaker.Rate): Boolean {
         // TODO :apply rate
         getAudioManager().setStreamVolume(streamType, volume, getVolumeFlag())
