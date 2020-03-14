@@ -23,9 +23,9 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerPlaybackInfoProvider
 import com.skt.nugu.sdk.agent.audioplayer.ProgressTimer
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
-import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerPauseDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlayCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCommandDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.DisplayInterface
@@ -50,10 +50,6 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
 import java.util.concurrent.*
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
-import kotlin.concurrent.withLock
 
 class DefaultAudioPlayerAgent(
     private val mediaPlayer: MediaPlayerInterface,
@@ -136,6 +132,10 @@ class DefaultAudioPlayerAgent(
             NAMESPACE,
             NAME_STOP
         )
+        val PAUSE = NamespaceAndName(
+            NAMESPACE,
+            NAME_PAUSE
+        )
     }
 
     enum class PauseReason {
@@ -199,13 +199,11 @@ class DefaultAudioPlayerAgent(
             return current.payload.audioItem.stream.token
         }
 
-        override fun getOffsetInMilliseconds(): Long? = this@DefaultAudioPlayerAgent.getOffsetInMilliseconds()
+        override fun getOffsetInMilliseconds(): Long? =
+            this@DefaultAudioPlayerAgent.getOffsetInMilliseconds()
 
         override fun getPlayServiceId(): String? = currentItem?.playServiceId
     }
-
-    private val willBeHandleDirectiveLock = ReentrantLock()
-    private var willBeHandleStopDirectiveInfo: DirectiveInfo? = null
 
     inner class AudioInfo(
         val payload: PlayPayload,
@@ -256,29 +254,55 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private val pauseDirectiveController = object: AudioPlayerPauseDirectiveHandler.Controller {
-        private val willBeHandlePauseDirectives = ConcurrentHashMap<String, Directive>()
+    private val pauseDirectiveController = object : PlaybackDirectiveHandler.Controller {
+        private val willBeHandleDirectives = ConcurrentHashMap<String, Directive>()
 
-        override fun onReceivePause(directive: Directive) {
+        override fun onReceive(directive: Directive) {
             Logger.d(TAG, "[onReceivePause] ${directive.getMessageId()}")
-            willBeHandlePauseDirectives[directive.getMessageId()] = directive
+            willBeHandleDirectives[directive.getMessageId()] = directive
         }
 
-        override fun onExecutePause(directive: Directive) {
+        override fun onExecute(directive: Directive) {
             Logger.d(TAG, "[onExecutePause] ${directive.getMessageId()}")
             executor.submit {
-                if(willBeHandlePauseDirectives.remove(directive.getMessageId()) != null) {
+                if (willBeHandleDirectives.remove(directive.getMessageId()) != null) {
                     executePause(PauseReason.BY_PAUSE_DIRECTIVE)
                 }
             }
         }
 
-        override fun onCancelPause(directive: Directive) {
+        override fun onCancel(directive: Directive) {
             Logger.d(TAG, "[onCancelPause] ${directive.getMessageId()}")
-            willBeHandlePauseDirectives.remove(directive.getMessageId())
+            willBeHandleDirectives.remove(directive.getMessageId())
         }
 
-        fun hasPendingPause() = willBeHandlePauseDirectives.isNotEmpty()
+        fun willBeHandle() = willBeHandleDirectives.isNotEmpty()
+    }
+
+    private val stopDirectiveController = object : PlaybackDirectiveHandler.Controller {
+        private val willBeHandleDirectives = ConcurrentHashMap<String, Directive>()
+
+        override fun onReceive(directive: Directive) {
+            Logger.d(TAG, "[onReceiveStop] ${directive.getMessageId()}")
+            willBeHandleDirectives[directive.getMessageId()] = directive
+        }
+
+        override fun onExecute(directive: Directive) {
+            Logger.d(TAG, "[onExecuteStop] ${directive.getMessageId()}")
+            executor.submit {
+                if (willBeHandleDirectives.remove(directive.getMessageId()) != null) {
+                    executeCancelNextItem()
+                    executeStop()
+                }
+            }
+        }
+
+        override fun onCancel(directive: Directive) {
+            Logger.d(TAG, "[onCancelStop] ${directive.getMessageId()}")
+            willBeHandleDirectives.remove(directive.getMessageId())
+        }
+
+        fun willBeHandle() = willBeHandleDirectives.isNotEmpty()
     }
 
     private val audioPlayerRequestPlaybackCommandDirectiveHandler =
@@ -306,10 +330,22 @@ class DefaultAudioPlayerAgent(
         mediaPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
 
-        AudioPlayerPauseDirectiveHandler(pauseDirectiveController).apply {
+        // pause directive handler
+        PlaybackDirectiveHandler(
+            pauseDirectiveController,
+            Pair(PAUSE, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false))
+        ).apply {
             directiveGroupProcessor.addPostProcessedListener(this)
             directiveSequencer.addDirectiveHandler(this)
+        }
 
+        // stop directive handler
+        PlaybackDirectiveHandler(
+            stopDirectiveController,
+            Pair(STOP, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false))
+        ).apply {
+            directiveGroupProcessor.addPostProcessedListener(this)
+            directiveSequencer.addDirectiveHandler(this)
         }
     }
 
@@ -327,8 +363,7 @@ class DefaultAudioPlayerAgent(
     override fun onReceiveDirectives(directives: List<Directive>) {
         Logger.d(TAG, "[onReceiveDirectives]")
         val playbackDirective = directives.firstOrNull {
-            it.getNamespaceAndName() == PLAY ||
-                    it.getNamespaceAndName() == STOP
+            it.getNamespaceAndName() == PLAY
         } ?: return
 
         willBePreHandlingDirective[playbackDirective.getMessageId()] = playbackDirective
@@ -338,15 +373,7 @@ class DefaultAudioPlayerAgent(
         // no-op
         willBePreHandlingDirective.remove(info.directive.getMessageId())
         when (info.directive.getNamespaceAndName()) {
-            STOP -> preHandleStopDirective(info)
             PLAY -> preHandlePlayDirective(info)
-        }
-    }
-
-    private fun preHandleStopDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[preHandleStopDirective] info: $info")
-        willBeHandleDirectiveLock.withLock {
-            willBeHandleStopDirectiveInfo = info
         }
     }
 
@@ -380,7 +407,6 @@ class DefaultAudioPlayerAgent(
     override fun handleDirective(info: DirectiveInfo) {
         when (info.directive.getNamespaceAndName()) {
             PLAY -> handlePlayDirective(info)
-            STOP -> handleStopDirective(info)
             else -> handleUnknownDirective(info)
         }
     }
@@ -391,20 +417,6 @@ class DefaultAudioPlayerAgent(
         setHandlingCompleted(info)
         executor.submit {
             executeHandlePlayDirective(info)
-        }
-    }
-
-    private fun handleStopDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[handleStopDirective] info : $info")
-        setHandlingCompleted(info)
-        executor.submit {
-            willBeHandleDirectiveLock.withLock {
-                if (info == willBeHandleStopDirectiveInfo) {
-                    willBeHandleStopDirectiveInfo = null
-                }
-            }
-            executeCancelNextItem()
-            executeStop()
         }
     }
 
@@ -602,7 +614,6 @@ class DefaultAudioPlayerAgent(
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configuration[PLAY] = audioNonBlockingPolicy
-        configuration[STOP] = audioNonBlockingPolicy
 
         return configuration
     }
@@ -1041,20 +1052,18 @@ class DefaultAudioPlayerAgent(
                 return
             }
             AudioPlayerAgentInterface.State.PAUSED -> {
-                willBeHandleDirectiveLock.withLock {
-                    if (willBeHandleStopDirectiveInfo != null) {
-                        Logger.d(
-                            TAG,
-                            "[executeOnForegroundFocus] skip. will be pause or stop directive handled."
-                        )
-                        return
-                    }
-                }
-
-                if(pauseDirectiveController.hasPendingPause()) {
+                if (pauseDirectiveController.willBeHandle()) {
                     Logger.d(
                         TAG,
                         "[executeOnForegroundFocus] skip. will be pause directive handled."
+                    )
+                    return
+                }
+
+                if (stopDirectiveController.willBeHandle()) {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] skip. will be stop directive handled."
                     )
                     return
                 }
