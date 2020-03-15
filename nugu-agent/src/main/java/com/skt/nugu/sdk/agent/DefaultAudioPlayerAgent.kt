@@ -35,6 +35,7 @@ import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackHandler
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -63,12 +64,12 @@ class DefaultAudioPlayerAgent(
     private val channelName: String,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
-) : AbstractCapabilityAgent()
+) : CapabilityAgent
+    , ContextStateProvider
     , ChannelObserver
     , AudioPlayerAgentInterface
     , PlaybackHandler
     , MediaPlayerControlInterface.PlaybackEventListener
-    , DirectiveGroupProcessorInterface.Listener
     , AudioPlayerLyricsDirectiveHandler.VisibilityController
     , AudioPlayerLyricsDirectiveHandler.PagingController
     , PlayStackManagerInterface.PlayContextProvider {
@@ -161,8 +162,6 @@ class DefaultAudioPlayerAgent(
 
     private var currentItem: AudioInfo? = null
     private var nextItem: AudioInfo? = null
-
-    private val willBePreHandlingDirective = ConcurrentHashMap<String, Directive>()
 
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
@@ -262,6 +261,8 @@ class DefaultAudioPlayerAgent(
             willBeHandleDirectives[directive.getMessageId()] = directive
         }
 
+        override fun onPreExecute(directive: Directive): Boolean = true
+
         override fun onExecute(directive: Directive) {
             Logger.d(TAG, "[onExecutePause] ${directive.getMessageId()}")
             executor.submit {
@@ -287,6 +288,8 @@ class DefaultAudioPlayerAgent(
             willBeHandleDirectives[directive.getMessageId()] = directive
         }
 
+        override fun onPreExecute(directive: Directive): Boolean = true
+
         override fun onExecute(directive: Directive) {
             Logger.d(TAG, "[onExecuteStop] ${directive.getMessageId()}")
             executor.submit {
@@ -300,6 +303,61 @@ class DefaultAudioPlayerAgent(
         override fun onCancel(directive: Directive) {
             Logger.d(TAG, "[onCancelStop] ${directive.getMessageId()}")
             willBeHandleDirectives.remove(directive.getMessageId())
+        }
+
+        fun willBeHandle() = willBeHandleDirectives.isNotEmpty()
+    }
+
+    private val playDirectiveController = object : PlaybackDirectiveHandler.Controller {
+        private val willBeHandleDirectives = ConcurrentHashMap<String, Directive>()
+
+        override fun onReceive(directive: Directive) {
+            Logger.d(TAG, "[onReceivePlay] ${directive.getMessageId()}")
+            willBeHandleDirectives[directive.getMessageId()] = directive
+        }
+
+        override fun onPreExecute(directive: Directive): Boolean {
+            Logger.d(TAG, "[onPreExecutePlay] ${directive.getMessageId()}")
+            val playPayload = MessageFactory.create(directive.payload, PlayPayload::class.java) ?: return false
+
+            val playServiceId = playPayload.playServiceId
+            if (playServiceId.isBlank()) {
+                return false
+            }
+
+            val audioInfo = AudioInfo(playPayload, directive, playServiceId).apply {
+                playSynchronizer.prepareSync(this)
+            }
+
+            executor.submit {
+                executeCancelNextItem()
+                nextItem = audioInfo
+                executeStop()
+            }
+            return true
+        }
+
+        override fun onExecute(directive: Directive) {
+            Logger.d(TAG, "[onExecutePlay] ${directive.getMessageId()}")
+            executor.submit {
+                if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
+                    executeHandlePlayDirective(directive)
+                }
+            }
+        }
+
+        override fun onCancel(directive: Directive) {
+            Logger.d(TAG, "[onCancelPlay] ${directive.getMessageId()}")
+            willBeHandleDirectives.remove(directive.getMessageId())
+            cancelSync(directive)
+        }
+
+        private fun cancelSync(info: Directive) {
+            val item = nextItem ?: return
+
+            if (info.getMessageId() == item.directive.getMessageId()) {
+                notifyOnReleaseAudioInfo(item, true)
+            }
         }
 
         fun willBeHandle() = willBeHandleDirectives.isNotEmpty()
@@ -347,6 +405,15 @@ class DefaultAudioPlayerAgent(
             directiveGroupProcessor.addPostProcessedListener(this)
             directiveSequencer.addDirectiveHandler(this)
         }
+
+        // play directive handler
+        PlaybackDirectiveHandler(
+            playDirectiveController,
+            Pair(PLAY, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false))
+        ).apply {
+            directiveGroupProcessor.addPostProcessedListener(this)
+            directiveSequencer.addDirectiveHandler(this)
+        }
     }
 
     private fun notifyOnReleaseAudioInfo(info: AudioInfo, immediately: Boolean) {
@@ -357,66 +424,6 @@ class DefaultAudioPlayerAgent(
             } else {
                 playSynchronizer.releaseSync(this, this.onReleaseCallback)
             }
-        }
-    }
-
-    override fun onReceiveDirectives(directives: List<Directive>) {
-        Logger.d(TAG, "[onReceiveDirectives]")
-        val playbackDirective = directives.firstOrNull {
-            it.getNamespaceAndName() == PLAY
-        } ?: return
-
-        willBePreHandlingDirective[playbackDirective.getMessageId()] = playbackDirective
-    }
-
-    override fun preHandleDirective(info: DirectiveInfo) {
-        // no-op
-        willBePreHandlingDirective.remove(info.directive.getMessageId())
-        when (info.directive.getNamespaceAndName()) {
-            PLAY -> preHandlePlayDirective(info)
-        }
-    }
-
-    private fun preHandlePlayDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[preHandlePlayDirective] info : $info")
-        val playPayload = MessageFactory.create(info.directive.payload, PlayPayload::class.java)
-        if (playPayload == null) {
-            Logger.w(TAG, "[preHandlePlayDirective] invalid payload")
-            setHandlingFailed(info, "[preHandlePlayDirective] invalid payload")
-            return
-        }
-
-        val playServiceId = playPayload.playServiceId
-        if (playServiceId.isBlank()) {
-            Logger.w(TAG, "[preHandlePlayDirective] playServiceId is empty")
-            setHandlingFailed(info, "[preHandlePlayDirective] playServiceId is empty")
-            return
-        }
-
-        val audioInfo = AudioInfo(playPayload, info.directive, playServiceId).apply {
-            playSynchronizer.prepareSync(this)
-        }
-
-        executor.submit {
-            executeCancelNextItem()
-            nextItem = audioInfo
-            executeStop()
-        }
-    }
-
-    override fun handleDirective(info: DirectiveInfo) {
-        when (info.directive.getNamespaceAndName()) {
-            PLAY -> handlePlayDirective(info)
-            else -> handleUnknownDirective(info)
-        }
-    }
-
-    private fun handlePlayDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[handlePlayDirective] info : $info")
-
-        setHandlingCompleted(info)
-        executor.submit {
-            executeHandlePlayDirective(info)
         }
     }
 
@@ -432,27 +439,7 @@ class DefaultAudioPlayerAgent(
         notifyOnReleaseAudioInfo(item, true)
     }
 
-    private fun handleUnknownDirective(info: DirectiveInfo) {
-        Logger.w(TAG, "[handleUnknownDirective] info: $info")
-        removeDirective(info)
-    }
-
-    override fun cancelDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[cancelDirective] info: $info")
-        willBePreHandlingDirective.remove(info.directive.getMessageId())
-        cancelSync(info)
-        removeDirective(info)
-    }
-
-    private fun cancelSync(info: DirectiveInfo) {
-        val item = nextItem ?: return
-
-        if (info.directive.getMessageId() == item.directive.getMessageId()) {
-            notifyOnReleaseAudioInfo(item, true)
-        }
-    }
-
-    private fun executeHandlePlayDirective(info: DirectiveInfo) {
+    private fun executeHandlePlayDirective(info: Directive) {
         Logger.d(
             TAG,
             "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $focus"
@@ -496,7 +483,7 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun checkIfNextItemMatchWithInfo(info: DirectiveInfo): Boolean {
+    private fun checkIfNextItemMatchWithInfo(info: Directive): Boolean {
         val cacheNextItem = nextItem
         if (cacheNextItem == null) {
             Logger.e(TAG, "[checkIfNextItemMatchWithInfo] nextItem is null. maybe canceled")
@@ -505,9 +492,9 @@ class DefaultAudioPlayerAgent(
 
         Logger.d(
             TAG,
-            "[checkIfNextItemMatchWithInfo] item message id: ${cacheNextItem.directive.getMessageId()}, directive message id : ${info.directive.getMessageId()}"
+            "[checkIfNextItemMatchWithInfo] item message id: ${cacheNextItem.directive.getMessageId()}, directive message id : ${info.getMessageId()}"
         )
-        return cacheNextItem.directive.getMessageId() == info.directive.getMessageId()
+        return cacheNextItem.directive.getMessageId() == info.getMessageId()
     }
 
     private fun hasSameToken(
@@ -603,19 +590,6 @@ class DefaultAudioPlayerAgent(
                 }
             }
         }
-    }
-
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val audioNonBlockingPolicy = BlockingPolicy(
-            BlockingPolicy.MEDIUM_AUDIO,
-            false
-        )
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[PLAY] = audioNonBlockingPolicy
-
-        return configuration
     }
 
     override fun addListener(listener: AudioPlayerAgentInterface.Listener) {
@@ -1068,6 +1042,14 @@ class DefaultAudioPlayerAgent(
                     return
                 }
 
+                if (playDirectiveController.willBeHandle()) {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] skip. will be play directive handled."
+                    )
+                    return
+                }
+
                 if (pauseReason == PauseReason.BY_PAUSE_DIRECTIVE) {
                     Logger.d(
                         TAG,
@@ -1091,14 +1073,6 @@ class DefaultAudioPlayerAgent(
                         "[executeOnForegroundFocus] will be resume by next item"
                     )
                     executePlayNextItem()
-                    return
-                }
-
-                if (willBePreHandlingDirective.isNotEmpty()) {
-                    Logger.d(
-                        TAG,
-                        "[executeOnForegroundFocus] exist willBePreHandlingDirective (count: ${willBePreHandlingDirective.size})"
-                    )
                     return
                 }
 
@@ -1141,19 +1115,6 @@ class DefaultAudioPlayerAgent(
             executeCancelNextItem()
             executeStop()
         }
-    }
-
-    private fun executeHandleNextPlayItem() {
-        progressTimer.stop()
-        val currentPlayItem = nextItem
-        if (currentPlayItem == null) {
-            executeStop()
-            return
-        }
-    }
-
-    private fun executeResumeNextItem() {
-
     }
 
     private fun executePlayNextItem() {
@@ -1266,20 +1227,6 @@ class DefaultAudioPlayerAgent(
 
     private fun executeShouldResumeNextItem(currentToken: String, nextToken: String): Boolean {
         return currentToken == nextToken && !sourceId.isError() && currentActivity.isActive()
-    }
-
-    private fun setHandlingCompleted(info: DirectiveInfo) {
-        info.result.setCompleted()
-        removeDirective(info)
-    }
-
-    private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
-        info.result.setFailed(msg)
-        removeDirective(info)
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun provideState(

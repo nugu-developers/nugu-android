@@ -28,12 +28,16 @@ class PlaybackDirectiveHandler(
 ) : AbstractDirectiveHandler(), DirectiveGroupProcessorInterface.Listener {
     interface Controller {
         fun onReceive(directive: Directive)
+        fun onPreExecute(directive: Directive): Boolean
         fun onExecute(directive: Directive)
         fun onCancel(directive: Directive)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
-        // no-op
+        if(!controller.onPreExecute(info.directive)) {
+            removeDirective(info.directive.getMessageId())
+            info.result.setFailed("[preHandleDirective] failed")
+        }
     }
 
     override fun handleDirective(info: DirectiveInfo) {

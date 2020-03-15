@@ -358,8 +358,6 @@ class NuguAndroidClient private constructor(
                         }
 
                         getAudioPlayStackManager().addPlayContextProvider(this)
-                        getDirectiveGroupProcessor().addPostProcessedListener(this)
-                        getDirectiveSequencer().addDirectiveHandler(this)
                     }
                 }
             })
