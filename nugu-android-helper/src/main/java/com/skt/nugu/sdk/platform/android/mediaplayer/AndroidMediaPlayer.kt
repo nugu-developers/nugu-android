@@ -70,6 +70,7 @@ class AndroidMediaPlayer(
             player.prepare()
             playerActivity = AudioPlayerAgentInterface.State.PAUSED
         } catch (e: Exception) {
+            Log.e(TAG, "[setSource] $uri", e)
             return SourceId.ERROR()
         }
 
