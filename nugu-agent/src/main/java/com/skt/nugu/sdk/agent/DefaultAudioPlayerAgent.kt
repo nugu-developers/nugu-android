@@ -346,6 +346,9 @@ class DefaultAudioPlayerAgent(
                         waitFinishPreExecuteInfo = null
                     }
                 } else {
+                    // fetch only offset
+                    executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
+
                     // finish preExecute
                     waitFinishPreExecuteInfo = null
                 }
@@ -359,6 +362,20 @@ class DefaultAudioPlayerAgent(
             currentItem = item
             token = item.payload.audioItem.stream.token
 
+            executeFetchSource(item)
+            executeFetchOffset(item.payload.audioItem.stream.offsetInMilliseconds)
+
+            progressTimer.init(
+                item.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
+                    ?: ProgressTimer.NO_DELAY,
+                item.payload.audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
+                    ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
+            )
+
+            return true
+        }
+
+        private fun executeFetchSource(item: AudioInfo): Boolean {
             sourceId = when (item.payload.sourceType) {
                 SourceType.ATTACHMENT -> item.directive.getAttachmentReader()?.let { reader ->
                     mediaPlayer.setSource(reader)
@@ -375,22 +392,16 @@ class DefaultAudioPlayerAgent(
                 )
                 return false
             }
+            return true
+        }
 
-            if (mediaPlayer.getOffset(sourceId) != item.payload.audioItem.stream.offsetInMilliseconds) {
+        private fun executeFetchOffset(offsetInMilliseconds: Long) {
+            if (mediaPlayer.getOffset(sourceId) != offsetInMilliseconds) {
                 mediaPlayer.seekTo(
                     sourceId,
-                    item.payload.audioItem.stream.offsetInMilliseconds
+                    offsetInMilliseconds
                 )
             }
-
-            progressTimer.init(
-                item.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
-                    ?: ProgressTimer.NO_DELAY,
-                item.payload.audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
-                    ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
-            )
-
-            return true
         }
 
         override fun onExecute(directive: Directive) {
