@@ -169,7 +169,6 @@ class DefaultAudioPlayerAgent(
         MEDIA_PLAYER_INVALID_OFFSET
     private var playCalled = false
     private var stopCalled = false
-    private var pauseCalled = false
     private var pauseReason: PauseReason? = null
     private var progressTimer =
         ProgressTimer()
@@ -352,7 +351,7 @@ class DefaultAudioPlayerAgent(
                     // finish preExecute
                     waitFinishPreExecuteInfo = null
                 }
-            }
+        }
             return true
         }
 
@@ -423,8 +422,16 @@ class DefaultAudioPlayerAgent(
 
         override fun onCancel(directive: Directive) {
             Logger.d(TAG, "[onCancel::$INNER_TAG] ${directive.getMessageId()}")
-            willBeHandleDirectives.remove(directive.getMessageId())
-            cancelSync(directive)
+            executor.submit {
+                if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
+                    waitFinishPreExecuteInfo?.let {
+                        if (directive.getMessageId() == it.directive.getMessageId()) {
+                            notifyOnReleaseAudioInfo(it, true)
+                            waitFinishPreExecuteInfo = null
+                        }
+                    }
+                }
+            }
         }
 
         private fun executeHandlePlayDirective(info: Directive) {
@@ -456,17 +463,6 @@ class DefaultAudioPlayerAgent(
                 false
             } else {
                 current.payload.audioItem.stream.token == next.payload.audioItem.stream.token
-            }
-        }
-
-        private fun cancelSync(info: Directive) {
-            executor.submit {
-                waitFinishPreExecuteInfo?.let {
-                    if (info.getMessageId() == it.directive.getMessageId()) {
-                        notifyOnReleaseAudioInfo(it, true)
-                        waitFinishPreExecuteInfo = null
-                    }
-                }
             }
         }
 
@@ -629,7 +625,6 @@ class DefaultAudioPlayerAgent(
                 if (!mediaPlayer.pause(sourceId)) {
 
                 } else {
-                    pauseCalled = true
                     pauseReason = reason
                 }
             }
@@ -924,7 +919,6 @@ class DefaultAudioPlayerAgent(
             lifeCycleScheduler?.onPaused(id)
         }
 
-        pauseCalled = false
         progressTimer.pause()
 
         pauseReason?.let {
