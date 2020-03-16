@@ -161,14 +161,12 @@ class DefaultAudioPlayerAgent(
     private var focus: FocusState = FocusState.NONE
 
     private var currentItem: AudioInfo? = null
-    private var nextItem: AudioInfo? = null
 
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
     private var duration: Long =
         MEDIA_PLAYER_INVALID_OFFSET
-    private var playNextItemAfterStopped: Boolean = false
     private var playCalled = false
     private var stopCalled = false
     private var pauseCalled = false
@@ -179,6 +177,7 @@ class DefaultAudioPlayerAgent(
         ProgressTimer.ProgressProvider {
         override fun getProgress(): Long = getOffsetInMilliseconds()
     }
+
     private val progressListener = object :
         ProgressTimer.ProgressListener {
         override fun onProgressReportDelay(request: Long, actual: Long) {
@@ -212,10 +211,13 @@ class DefaultAudioPlayerAgent(
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
+                    Logger.d(TAG, "[onGranted] onReleased: ${directive.getMessageId()} , ${this@AudioInfo}")
                     if (focus != FocusState.NONE) {
                         if (currentItem == this@AudioInfo) {
                             currentItem = null
-                            focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
+                            if(!playDirectiveController.willBeHandle()) {
+                                focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
+                            }
                         }
                     }
 
@@ -236,13 +238,9 @@ class DefaultAudioPlayerAgent(
         override fun requestReleaseSync(immediate: Boolean) {
             executor.submit {
                 when {
-                    nextItem == this -> {
-                        Logger.d(TAG, "[requestReleaseSync] cancel next item")
-                        executeCancelNextItem()
-                    }
                     currentItem == this -> {
                         Logger.d(TAG, "[requestReleaseSync] cancel current item")
-                        executeStop(true)
+                        executeStop()
                     }
                     else -> {
                         Logger.d(TAG, "[requestReleaseSync] cancel outdated item")
@@ -294,7 +292,6 @@ class DefaultAudioPlayerAgent(
             Logger.d(TAG, "[onExecuteStop] ${directive.getMessageId()}")
             executor.submit {
                 if (willBeHandleDirectives.remove(directive.getMessageId()) != null) {
-                    executeCancelNextItem()
                     executeStop()
                 }
             }
@@ -309,15 +306,18 @@ class DefaultAudioPlayerAgent(
     }
 
     private val playDirectiveController = object : PlaybackDirectiveHandler.Controller {
+        private val INNER_TAG = "PlayDirectiveController"
         private val willBeHandleDirectives = ConcurrentHashMap<String, Directive>()
+        private var waitFinishPreExecuteInfo: AudioInfo? = null
+        private var waitPlayExecuteInfo: AudioInfo? = null
 
         override fun onReceive(directive: Directive) {
-            Logger.d(TAG, "[onReceivePlay] ${directive.getMessageId()}")
+            Logger.d(TAG, "[onReceive::$INNER_TAG] ${directive.getMessageId()}")
             willBeHandleDirectives[directive.getMessageId()] = directive
         }
 
         override fun onPreExecute(directive: Directive): Boolean {
-            Logger.d(TAG, "[onPreExecutePlay] ${directive.getMessageId()}")
+            Logger.d(TAG, "[onPreExecute::$INNER_TAG] ${directive.getMessageId()}")
             val playPayload = MessageFactory.create(directive.payload, PlayPayload::class.java) ?: return false
 
             val playServiceId = playPayload.playServiceId
@@ -325,42 +325,154 @@ class DefaultAudioPlayerAgent(
                 return false
             }
 
-            val audioInfo = AudioInfo(playPayload, directive, playServiceId).apply {
+            val nextAudioInfo = AudioInfo(playPayload, directive, playServiceId).apply {
                 playSynchronizer.prepareSync(this)
             }
 
             executor.submit {
-                executeCancelNextItem()
-                nextItem = audioInfo
-                executeStop()
+                waitFinishPreExecuteInfo?.let {
+                    notifyOnReleaseAudioInfo(it, true)
+                }
+                waitFinishPreExecuteInfo = nextAudioInfo
+
+                val currentAudioInfo = currentItem
+                if(!executeShouldResumeNextItem(currentAudioInfo, nextAudioInfo)) {
+                    // stop current if play new item.
+                    if(executeStop()) {
+                        // should wait until stopped (onPlayerStopped will be called)
+                    } else {
+                        // fetch now
+                        executeFetchItem(nextAudioInfo)
+                        waitFinishPreExecuteInfo = null
+                    }
+                } else {
+                    // finish preExecute
+                    waitFinishPreExecuteInfo = null
+                }
             }
             return true
         }
 
+        private fun executeFetchItem(item: AudioInfo): Boolean {
+            Logger.d(TAG, "[executeFetchItem] item: $item")
+            progressTimer.stop()
+            currentItem = item
+            token = item.payload.audioItem.stream.token
+
+            sourceId = when (item.payload.sourceType) {
+                SourceType.ATTACHMENT -> item.directive.getAttachmentReader()?.let { reader ->
+                    mediaPlayer.setSource(reader)
+                } ?: SourceId.ERROR()
+                else -> mediaPlayer.setSource(URI.create(item.payload.audioItem.stream.url))
+            }
+
+            if (sourceId.isError()) {
+                Logger.w(TAG, "[executePlayNextItem] failed to setSource")
+                executeOnPlaybackError(
+                    sourceId,
+                    ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                    "failed to setSource"
+                )
+                return false
+            }
+
+            if (mediaPlayer.getOffset(sourceId) != item.payload.audioItem.stream.offsetInMilliseconds) {
+                mediaPlayer.seekTo(
+                    sourceId,
+                    item.payload.audioItem.stream.offsetInMilliseconds
+                )
+            }
+
+            progressTimer.init(
+                item.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
+                    ?: ProgressTimer.NO_DELAY,
+                item.payload.audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
+                    ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
+            )
+
+            return true
+        }
+
         override fun onExecute(directive: Directive) {
-            Logger.d(TAG, "[onExecutePlay] ${directive.getMessageId()}")
+            Logger.d(TAG, "[onExecute::$INNER_TAG] ${directive.getMessageId()}")
             executor.submit {
                 if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
-                    executeHandlePlayDirective(directive)
+                    waitPlayExecuteInfo = null
+                    val copyWaitFinishPreExecuteInfo = waitFinishPreExecuteInfo
+                    if(copyWaitFinishPreExecuteInfo == null) {
+                        // preExecute finished (source fetched)
+                        executeHandlePlayDirective(directive)
+                    } else {
+                        // maybe waiting onPlayerStopped
+                        waitPlayExecuteInfo = copyWaitFinishPreExecuteInfo
+                    }
                 }
             }
         }
 
         override fun onCancel(directive: Directive) {
-            Logger.d(TAG, "[onCancelPlay] ${directive.getMessageId()}")
+            Logger.d(TAG, "[onCancel::$INNER_TAG] ${directive.getMessageId()}")
             willBeHandleDirectives.remove(directive.getMessageId())
             cancelSync(directive)
         }
 
-        private fun cancelSync(info: Directive) {
-            val item = nextItem ?: return
+        private fun executeHandlePlayDirective(info: Directive) {
+            Logger.d(
+                TAG,
+                "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $focus"
+            )
 
-            if (info.getMessageId() == item.directive.getMessageId()) {
-                notifyOnReleaseAudioInfo(item, true)
+            if (FocusState.FOREGROUND != focus) {
+                if (!focusManager.acquireChannel(
+                        channelName,
+                        this@DefaultAudioPlayerAgent,
+                        NAMESPACE
+                    )
+                ) {
+                    progressTimer.stop()
+                    sendPlaybackFailedEvent(
+                        ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                        "Could not acquire $channelName for $NAMESPACE"
+                    )
+                }
+            }  else {
+                executeOnForegroundFocus()
             }
         }
 
-        fun willBeHandle() = willBeHandleDirectives.isNotEmpty()
+        private fun executeShouldResumeNextItem(current: AudioInfo?, next: AudioInfo): Boolean {
+            return if(current == null || !currentActivity.isActive() || sourceId.isError()) {
+                false
+            } else {
+                current.payload.audioItem.stream.token == next.payload.audioItem.stream.token
+            }
+        }
+
+        private fun cancelSync(info: Directive) {
+            executor.submit {
+                waitFinishPreExecuteInfo?.let {
+                    if (info.getMessageId() == it.directive.getMessageId()) {
+                        notifyOnReleaseAudioInfo(it, true)
+                        waitFinishPreExecuteInfo = null
+                    }
+                }
+            }
+        }
+
+        fun onPlayerStopped() {
+            executor.submit {
+                waitFinishPreExecuteInfo?.let {
+                    waitFinishPreExecuteInfo = null
+                    executeFetchItem(it)
+                }
+                waitPlayExecuteInfo?.let {
+                    waitPlayExecuteInfo = null
+                    executeHandlePlayDirective(it.directive)
+                }
+            }
+        }
+
+        fun willBeHandle() = willBeHandleDirectives.isNotEmpty() || waitPlayExecuteInfo != null
     }
 
     private val audioPlayerRequestPlaybackCommandDirectiveHandler =
@@ -427,87 +539,6 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun executeCancelNextItem() {
-        val item = nextItem
-        nextItem = null
-
-        if (item == null) {
-            Logger.d(TAG, "[executeCancelNextItem] no next item.")
-            return
-        }
-        Logger.d(TAG, "[executeCancelNextItem] cancel next item : $item")
-        notifyOnReleaseAudioInfo(item, true)
-    }
-
-    private fun executeHandlePlayDirective(info: Directive) {
-        Logger.d(
-            TAG,
-            "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $focus"
-        )
-        if (!checkIfNextItemMatchWithInfo(info)) {
-            Logger.d(TAG, "[executeHandlePlayDirective] skip")
-            return
-        }
-
-        val hasSameToken = hasSameToken(currentItem, nextItem)
-
-        if (currentItem != null && currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-            pauseReason = if (hasSameToken) {
-                PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME
-            } else {
-                PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY
-            }
-        }
-
-        if (FocusState.FOREGROUND != focus) {
-            if (!focusManager.acquireChannel(
-                    channelName,
-                    this,
-                    NAMESPACE
-                )
-            ) {
-                progressTimer.stop()
-                sendPlaybackFailedEvent(
-                    ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                    "Could not acquire $channelName for $NAMESPACE"
-                )
-            }
-        } else if (currentActivity == AudioPlayerAgentInterface.State.PLAYING) {
-            if (hasSameToken) {
-                executePlayNextItem()
-            } else {
-                executeStop(true)
-            }
-        } else {
-            executeOnForegroundFocus()
-        }
-    }
-
-    private fun checkIfNextItemMatchWithInfo(info: Directive): Boolean {
-        val cacheNextItem = nextItem
-        if (cacheNextItem == null) {
-            Logger.e(TAG, "[checkIfNextItemMatchWithInfo] nextItem is null. maybe canceled")
-            return false
-        }
-
-        Logger.d(
-            TAG,
-            "[checkIfNextItemMatchWithInfo] item message id: ${cacheNextItem.directive.getMessageId()}, directive message id : ${info.getMessageId()}"
-        )
-        return cacheNextItem.directive.getMessageId() == info.getMessageId()
-    }
-
-    private fun hasSameToken(
-        currentItem: AudioInfo?,
-        nextItem: AudioInfo?
-    ): Boolean {
-        if (currentItem == null || nextItem == null) {
-            return false
-        }
-
-        return currentItem.payload.audioItem.stream.token == nextItem.payload.audioItem.stream.token
-    }
-
     private fun executeResumeByButton() {
         if (currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
             when (focus) {
@@ -531,10 +562,10 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun executeStop(startNextSong: Boolean = false) {
+    private fun executeStop(): Boolean {
         Logger.d(
             TAG,
-            "[executeStop] currentActivity: $currentActivity, startNextSong: $startNextSong"
+            "[executeStop] currentActivity: $currentActivity"
         )
         when (currentActivity) {
             AudioPlayerAgentInterface.State.IDLE,
@@ -543,6 +574,7 @@ class DefaultAudioPlayerAgent(
                 if (playCalled) {
                     if (mediaPlayer.stop(sourceId)) {
                         stopCalled = true
+                        return true
                     }
                 } else if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
                     val scheduler = lifeCycleScheduler
@@ -555,17 +587,18 @@ class DefaultAudioPlayerAgent(
                         }
                     }
                 }
-                return
             }
             AudioPlayerAgentInterface.State.PLAYING,
             AudioPlayerAgentInterface.State.PAUSED -> {
                 getOffsetInMilliseconds()
-                playNextItemAfterStopped = startNextSong
                 if (mediaPlayer.stop(sourceId)) {
                     stopCalled = true
+                    return true
                 }
             }
         }
+
+        return false
     }
 
     private fun executePause(reason: PauseReason) {
@@ -901,9 +934,8 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnPlaybackStopped(id: SourceId, isError: Boolean = false) {
-        Logger.d(TAG, "[executeOnPlaybackStopped] nextItem : $nextItem, isError: $isError")
+        Logger.d(TAG, "[executeOnPlaybackStopped] id: $id, isError: $isError / currentId: $sourceId")
         if (id.id != sourceId.id) {
-            Logger.e(TAG, "[executeOnPlaybackStopped] nextItem : $nextItem")
             return
         }
 
@@ -917,16 +949,7 @@ class DefaultAudioPlayerAgent(
                     sendPlaybackStoppedEvent()
                 }
                 changeActivity(AudioPlayerAgentInterface.State.STOPPED)
-
-                if (playNextItemAfterStopped) {
-                    if (focus == FocusState.FOREGROUND && nextItem != null) {
-                        executePlayNextItem()
-                    }
-                } else {
-                    if (nextItem == null) {
-                        handlePlaybackCompleted(true)
-                    }
-                }
+                handlePlaybackCompleted(true)
             }
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
@@ -936,12 +959,14 @@ class DefaultAudioPlayerAgent(
                 }
             }
         }
+
+        playDirectiveController.onPlayerStopped()
     }
 
     private fun executeOnPlaybackFinished(id: SourceId) {
         Logger.d(
             TAG,
-            "[executeOnPlaybackFinished] id: $id , currentActivity: ${currentActivity.name}, nextItem: $nextItem"
+            "[executeOnPlaybackFinished] id: $id , currentActivity: ${currentActivity.name}"
         )
         if (id.id != sourceId.id) {
             Logger.e(
@@ -957,11 +982,7 @@ class DefaultAudioPlayerAgent(
                 sendPlaybackFinishedEvent()
                 progressTimer.stop()
                 changeActivity(AudioPlayerAgentInterface.State.FINISHED)
-                if (nextItem == null) {
-                    handlePlaybackCompleted(false)
-                } else {
-                    executePlayNextItem()
-                }
+                handlePlaybackCompleted(false)
             }
             else -> {
 
@@ -1020,9 +1041,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> {
-                if (nextItem != null) {
-                    executePlayNextItem()
-                }
+                executeTryPlayCurrentItemIfReady()
                 return
             }
             AudioPlayerAgentInterface.State.PAUSED -> {
@@ -1063,7 +1082,6 @@ class DefaultAudioPlayerAgent(
                         TAG,
                         "[executeOnForegroundFocus] will be start next item after stop current item completely."
                     )
-                    executeStop(true)
                     return
                 }
 
@@ -1072,7 +1090,7 @@ class DefaultAudioPlayerAgent(
                         TAG,
                         "[executeOnForegroundFocus] will be resume by next item"
                     )
-                    executePlayNextItem()
+                    executeTryPlayCurrentItemIfReady()
                     return
                 }
 
@@ -1087,14 +1105,10 @@ class DefaultAudioPlayerAgent(
         }
     }
 
+
     private fun executeOnBackgroundFocus() {
         when (currentActivity) {
-            AudioPlayerAgentInterface.State.STOPPED -> {
-                if (playNextItemAfterStopped && nextItem != null) {
-                    playNextItemAfterStopped = false
-                    return
-                }
-            }
+            AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED,
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.PAUSED -> {
@@ -1112,121 +1126,40 @@ class DefaultAudioPlayerAgent(
 
     private fun executeOnNoneFocus() {
         if (currentActivity.isActive()) {
-            executeCancelNextItem()
             executeStop()
         }
     }
 
-    private fun executePlayNextItem() {
-        progressTimer.stop()
-        Logger.d(
-            TAG,
-            "[executePlayNextItem] nextItem: $nextItem, currentActivity: $currentActivity"
-        )
-        val currentPlayItem = nextItem
-        if (currentPlayItem == null) {
-            executeStop()
+
+    private fun executeTryPlayCurrentItemIfReady() {
+        val item = currentItem
+        if(item == null) {
+            Logger.w(TAG, "[executeTryPlayCurrentItemIfReady] currentItem is null.")
+            return
+        }
+        Logger.d(TAG, "[executeTryPlayCurrentItemIfReady] $item")
+
+        if (!mediaPlayer.play(sourceId)) {
+            Logger.w(TAG, "[executePlayNextItem] playFailed")
+            executeOnPlaybackError(
+                sourceId,
+                ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                "playFailed"
+            )
             return
         }
 
-        currentPlayItem.let {
-            currentItem?.let { info ->
-                notifyOnReleaseAudioInfo(info, true)
-            }
+        playCalled = true
 
-            currentItem = it
-            nextItem = null
-            val audioItem = it.payload.audioItem
-            if (!executeShouldResumeNextItem(token, audioItem.stream.token)) {
-                token = audioItem.stream.token
-                sourceId = when (it.payload.sourceType) {
-                    SourceType.ATTACHMENT -> it.directive.getAttachmentReader()?.let { reader ->
-                        mediaPlayer.setSource(reader)
-                    } ?: SourceId.ERROR()
-                    else -> mediaPlayer.setSource(URI.create(audioItem.stream.url))
-                }
-                if (sourceId.isError()) {
-                    Logger.w(TAG, "[executePlayNextItem] failed to setSource")
-                    executeOnPlaybackError(
-                        sourceId,
-                        ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                        "failed to setSource"
-                    )
-                    return
+        playSynchronizer.startSync(
+            item,
+            object : PlaySynchronizerInterface.OnRequestSyncListener {
+                override fun onGranted() {
                 }
 
-                if (mediaPlayer.getOffset(sourceId) != audioItem.stream.offsetInMilliseconds) {
-                    mediaPlayer.seekTo(
-                        sourceId,
-                        audioItem.stream.offsetInMilliseconds
-                    )
+                override fun onDenied() {
                 }
-
-                if (!mediaPlayer.play(sourceId)) {
-                    Logger.w(TAG, "[executePlayNextItem] playFailed")
-                    executeOnPlaybackError(
-                        sourceId,
-                        ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                        "playFailed"
-                    )
-                    return
-                }
-
-                playCalled = true
-
-                playSynchronizer.startSync(
-                    it,
-                    object : PlaySynchronizerInterface.OnRequestSyncListener {
-                        override fun onGranted() {
-                        }
-
-                        override fun onDenied() {
-                        }
-                    })
-
-                progressTimer.init(
-                    audioItem.stream.progressReport?.progressReportDelayInMilliseconds
-                        ?: ProgressTimer.NO_DELAY,
-                    audioItem.stream.progressReport?.progressReportIntervalInMilliseconds
-                        ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
-                )
-            } else {
-                // Resume or Seek cases
-                if (mediaPlayer.getOffset(sourceId) != audioItem.stream.offsetInMilliseconds) {
-                    mediaPlayer.seekTo(
-                        sourceId,
-                        audioItem.stream.offsetInMilliseconds
-                    )
-                }
-
-                if (currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-                    if (!mediaPlayer.resume(sourceId)) {
-                        Logger.w(TAG, "[executePlayNextItem] resumeFailed")
-                        executeOnPlaybackError(
-                            sourceId,
-                            ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                            "resumeFailed"
-                        )
-                        return
-                    } else {
-                        Logger.d(TAG, "[executePlayNextItem] resumeSucceeded")
-                        playSynchronizer.startSync(
-                            it,
-                            object : PlaySynchronizerInterface.OnRequestSyncListener {
-                                override fun onGranted() {
-                                }
-
-                                override fun onDenied() {
-                                }
-                            })
-                    }
-                }
-            }
-        }
-    }
-
-    private fun executeShouldResumeNextItem(currentToken: String, nextToken: String): Boolean {
-        return currentToken == nextToken && !sourceId.isError() && currentActivity.isActive()
+            })
     }
 
     override fun provideState(
@@ -1354,13 +1287,13 @@ class DefaultAudioPlayerAgent(
     private fun sendNextCommandIssued() {
         sendEventWithOffset(
             name = NAME_NEXT_COMMAND_ISSUED,
-            condition = { currentActivity.isActive() })
+            condition = { true })
     }
 
     private fun sendPreviousCommandIssued() {
         sendEventWithOffset(
             name = NAME_PREVIOUS_COMMAND_ISSUED,
-            condition = { currentActivity.isActive() })
+            condition = { true })
     }
 
     private fun sendPlayCommandIssued() {
@@ -1590,7 +1523,7 @@ class DefaultAudioPlayerAgent(
                     if (currentActivity != AudioPlayerAgentInterface.State.PAUSED) {
                         return@submit
                     }
-                    executeStop(false)
+                    executeStop()
                 }
             }, stopDelayForPausedSourceAtMinutes, TimeUnit.MINUTES))
         }
