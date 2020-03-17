@@ -112,6 +112,7 @@ class DefaultASRAgent(
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
     private var expectSpeechPayload: ExpectSpeechPayload? = null
+    private var referrerDialogRequestId: String? = null
     private var endPointDetectorParam: EndPointDetectorParam? = null
     private var startRecognitionCallback: ASRAgentInterface.StartRecognitionCallback? = null
 
@@ -313,7 +314,7 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, null, object: ASRAgentInterface.StartRecognitionCallback {
+        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, info.directive.getDialogRequestId(),null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
                 setHandlingCompleted(info)
             }
@@ -389,7 +390,7 @@ class DefaultASRAgent(
     private fun setHandlingExpectSpeechFailed(payload: ExpectSpeechPayload?, info: DirectiveInfo, msg: String) {
         setHandlingFailed(info, msg)
         payload?.let {
-            sendListenFailed(it)
+            sendListenFailed(it, info.directive.getDialogRequestId())
         }
     }
 
@@ -435,6 +436,7 @@ class DefaultASRAgent(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        referrerDialogRequestId: String?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String) {
@@ -473,6 +475,7 @@ class DefaultASRAgent(
                 audioFormat,
                 wakeupInfo,
                 payload,
+                referrerDialogRequestId,
                 param,
                 callback,
                 jsonContext
@@ -482,6 +485,7 @@ class DefaultASRAgent(
             this.audioFormat = audioFormat
             this.wakeupInfo = wakeupInfo
             this.expectSpeechPayload = payload
+            this.referrerDialogRequestId = referrerDialogRequestId
             this.endPointDetectorParam = param
             this.startRecognitionCallback = callback
             this.contextForRecognitionOnForegroundFocus = jsonContext
@@ -499,6 +503,7 @@ class DefaultASRAgent(
                 val audioFormat = this.audioFormat
                 val wakeupInfo = this.wakeupInfo
                 val payload = this.expectSpeechPayload
+                val referrerDialogRequestId = this.referrerDialogRequestId
                 val epdParam = this.endPointDetectorParam
                 val callback = this.startRecognitionCallback
                 val context = contextForRecognitionOnForegroundFocus
@@ -507,6 +512,7 @@ class DefaultASRAgent(
                 this.audioFormat = null
                 this.wakeupInfo =  null
                 this.expectSpeechPayload = null
+                this.referrerDialogRequestId = null
                 this.endPointDetectorParam = null
                 this.startRecognitionCallback = null
                 this.contextForRecognitionOnForegroundFocus = null
@@ -518,7 +524,7 @@ class DefaultASRAgent(
                 }
 
                 if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
-                    executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, payload, epdParam, callback, context)
+                    executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, payload, referrerDialogRequestId, epdParam, callback, context)
                 }
             }
             FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
@@ -531,6 +537,7 @@ class DefaultASRAgent(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        referrerDialogRequestId: String?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String
@@ -543,6 +550,7 @@ class DefaultASRAgent(
             jsonContext,
             wakeupInfo,
             payload,
+            referrerDialogRequestId,
             param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             callback,
             object : ASRAgentInterface.OnResultListener {
@@ -560,9 +568,9 @@ class DefaultASRAgent(
 
                 override fun onError(type: ASRAgentInterface.ErrorType) {
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendEvent(NAME_RESPONSE_TIMEOUT, JsonObject())
+                        sendResponseTimeout(payload, referrerDialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(payload)
+                        sendListenTimeout(payload, referrerDialogRequestId)
                     }
                     speechToTextConverterEventObserver.onError(type)
                 }
@@ -688,6 +696,7 @@ class DefaultASRAgent(
                     audioFormat,
                     wakeupInfo,
                     expectSpeechPayload,
+                    referrerDialogRequestId,
                     param,
                     callback
                 )
@@ -711,6 +720,7 @@ class DefaultASRAgent(
                     newAudioFormat,
                     null,
                     expectSpeechPayload,
+                    referrerDialogRequestId,
                     param,
                     callback
                 )
@@ -766,6 +776,7 @@ class DefaultASRAgent(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        referrerDialogRequestId: String?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?
     ) {
@@ -788,6 +799,7 @@ class DefaultASRAgent(
                         audioFormat,
                         wakeupInfo,
                         payload,
+                        referrerDialogRequestId,
                         param,
                         callback,
                         jsonContext)
@@ -810,33 +822,43 @@ class DefaultASRAgent(
         return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
     }
 
-    private fun sendListenFailed(payload: ExpectSpeechPayload?) {
+    private fun sendListenFailed(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
         JsonObject().apply {
             payload?.let {
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
             }
         }.apply {
-            sendEvent(NAME_LISTEN_FAILED, this)
+            sendEvent(NAME_LISTEN_FAILED, this, referrerDialogRequestId)
         }
     }
 
-    private fun sendListenTimeout(payload: ExpectSpeechPayload?) {
+    private fun sendResponseTimeout(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
         JsonObject().apply {
             payload?.let {
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
             }
         }.apply {
-            sendEvent(NAME_LISTEN_TIMEOUT, this)
+            sendEvent(NAME_RESPONSE_TIMEOUT, this, referrerDialogRequestId)
         }
     }
 
-    private fun sendEvent(name: String, payload: JsonObject) {
+    private fun sendListenTimeout(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
+        JsonObject().apply {
+            payload?.let {
+                addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
+            }
+        }.apply {
+            sendEvent(NAME_LISTEN_TIMEOUT, this, referrerDialogRequestId)
+        }
+    }
+
+    private fun sendEvent(name: String, payload: JsonObject, referrerDialogRequestId: String?) {
         messageSender.sendMessage(
             EventMessageRequest.Builder(
                 contextManager.getContextWithoutUpdate(
                     namespaceAndName
                 ), NAMESPACE, name, VERSION
-            ).payload(payload.toString()).build()
+            ).referrerDialogRequestId(referrerDialogRequestId ?: "").payload(payload.toString()).build()
         )
     }
 
