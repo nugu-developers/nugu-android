@@ -20,7 +20,6 @@ import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -72,7 +71,7 @@ class ControlScrollDirectiveHandler(
             return
         }
 
-        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+        val referrerDialogRequestId = info.directive.header.dialogRequestId
         if (controller.controlScroll(payload.playServiceId, payload.direction)) {
             sendControlScrollEvent(
                 info.directive.payload,

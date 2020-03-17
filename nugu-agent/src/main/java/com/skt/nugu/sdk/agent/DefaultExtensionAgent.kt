@@ -23,7 +23,6 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -140,7 +139,7 @@ class DefaultExtensionAgent(
         executor.submit {
             val currentClient = client
             if (currentClient != null) {
-                val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                val referrerDialogRequestId = info.directive.header.dialogRequestId
                 if (currentClient.action(data.toString(), playServiceId, info.directive.header.dialogRequestId)) {
                     sendActionEvent(NAME_ACTION_SUCCEEDED, playServiceId, referrerDialogRequestId)
                 } else {

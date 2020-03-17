@@ -22,7 +22,6 @@ import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -805,7 +804,7 @@ class DefaultDisplayAgent(
                     ).payload(JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
                     }.toString())
-                        .referrerDialogRequestId(info.directive.header.getValidReferrerDialogRequestId())
+                        .referrerDialogRequestId(info.directive.header.dialogRequestId)
                         .build()
                 )
             }
