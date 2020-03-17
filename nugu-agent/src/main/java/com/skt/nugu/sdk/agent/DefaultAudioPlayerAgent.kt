@@ -1358,7 +1358,7 @@ class DefaultAudioPlayerAgent(
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offset)
                         }.toString()
-                    ).build()
+                    ).referrerDialogRequestId(directive.getDialogRequestId()).build()
 
                     if (condition.invoke()) {
                         messageSender.sendMessage(messageRequest)
