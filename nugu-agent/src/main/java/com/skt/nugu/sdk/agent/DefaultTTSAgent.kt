@@ -118,7 +118,6 @@ class DefaultTTSAgent(
         var isPlaybackInitiated = false
         var isDelayedCancel = false
         var cancelByStop = false
-        var stopDirective: Directive? = null
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -285,10 +284,6 @@ class DefaultTTSAgent(
 
     private fun executeHandleStopDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[executeHandleStopDirective] info: $info")
-
-        currentInfo?.let {
-            it.stopDirective = info.directive
-        }
 
         if (currentInfo != null) {
             executeCancelCurrentSpeakInfo()
@@ -740,13 +735,7 @@ class DefaultTTSAgent(
 
         val playServiceId = info.getPlayServiceId()
         if (!playServiceId.isNullOrBlank()) {
-            val stopDirective = info.stopDirective
-            val referrerDialogRequestId = if(stopDirective != null) {
-                stopDirective.header.dialogRequestId
-            } else {
-                info.directive.header.dialogRequestId
-            }
-
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             sendEventWithToken(
                 NAMESPACE,
                 EVENT_SPEECH_STOPPED,
