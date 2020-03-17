@@ -71,7 +71,7 @@ class DefaultDisplayAgent(
         private const val NAME_IMAGELIST1 = "ImageList1"
         private const val NAME_IMAGELIST2 = "ImageList2"
         private const val NAME_IMAGELIST3 = "ImageList3"
-        private const val NAME_CUSTOMTEMPLATE = "CustomTemplate"
+        private const val NAME_CUSTOM_TEMPLATE = "CustomTemplate"
 
         private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
 
@@ -161,7 +161,7 @@ class DefaultDisplayAgent(
         )
         private val CUSTOM_TEMPLATE = NamespaceAndName(
             NAMESPACE,
-            NAME_CUSTOMTEMPLATE
+            NAME_CUSTOM_TEMPLATE
         )
 
         private val WEATHER1 = NamespaceAndName(
@@ -356,6 +356,11 @@ class DefaultDisplayAgent(
             val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
             if (payload == null) {
                 setHandlingFailed(info, "[preHandleDirective] invalid Payload")
+                return
+            }
+
+            if(info.directive.getNamespaceAndName() != CUSTOM_TEMPLATE && payload.token.isNullOrBlank()) {
+                setHandlingFailed(info, "[preHandleDirective] invalid payload: empty token")
                 return
             }
 
