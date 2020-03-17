@@ -813,7 +813,8 @@ class DefaultAudioPlayerAgent(
             return AudioPlayerAgentInterface.Context(
                 it.payload.audioItem.stream.token,
                 it.payload.audioItem.metaData?.template?.toString(),
-                getOffsetInMilliseconds()
+                getOffsetInMilliseconds(),
+                it.getDialogRequestId()
             )
         }
 
