@@ -21,6 +21,7 @@ import com.skt.nugu.silvertray.player.EventListener
 import com.skt.nugu.silvertray.player.Player
 import com.skt.nugu.silvertray.player.Status
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
+import com.skt.nugu.silvertray.player.DurationListener
 
 /**
  * Porting class silvertray's [Player] to use in NUGU SDK
@@ -36,6 +37,7 @@ class NuguOpusPlayer(private val streamType: Int) :
     private var status = Status.IDLE
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
     private var bufferEventListener: MediaPlayerControlInterface.BufferEventListener? = null
+    private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
 
     init {
         player.addListener(object : EventListener {
@@ -46,6 +48,12 @@ class NuguOpusPlayer(private val streamType: Int) :
             override fun onStatusChanged(status: Status) {
                 Log.d(TAG, "[onStatusChanged] status: $status")
                 handleStatusChanged(status)
+            }
+        })
+        player.addDurationListener(object : DurationListener {
+            override fun onFoundDuration(duration: Long) {
+                Log.d(TAG, "[onFoundDuration] duration: $duration")
+                durationListener?.onRetrieved(currentSourceId, duration)
             }
         })
     }
@@ -139,15 +147,15 @@ class NuguOpusPlayer(private val streamType: Int) :
         return MEDIA_PLAYER_INVALID_OFFSET
     }
 
-    override fun getDuration(id: SourceId): Long {
-        return MEDIA_PLAYER_INVALID_OFFSET
-    }
-
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
         this.playbackEventListener = listener
     }
 
     override fun setBufferEventListener(listener: MediaPlayerControlInterface.BufferEventListener) {
         this.bufferEventListener = listener
+    }
+
+    override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
+        this.durationListener = listener
     }
 }

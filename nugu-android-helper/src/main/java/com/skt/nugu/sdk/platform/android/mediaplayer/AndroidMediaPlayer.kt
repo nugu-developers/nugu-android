@@ -39,6 +39,7 @@ class AndroidMediaPlayer(
     private var playerActivity: AudioPlayerAgentInterface.State = AudioPlayerAgentInterface.State.IDLE
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
     private var bufferEventListener: MediaPlayerControlInterface.BufferEventListener? = null
+    private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
 
     init {
         player.setOnErrorListener { mp, what, extra ->
@@ -76,6 +77,15 @@ class AndroidMediaPlayer(
 
         currentSourceId.id++
 
+        Thread {
+            val duration = player.duration.toLong()
+            if(duration < 0) {
+                durationListener?.onRetrieved(currentSourceId,null)
+            } else {
+                durationListener?.onRetrieved(currentSourceId, duration)
+            }
+        }.start()
+        
         return currentSourceId
     }
 
@@ -150,19 +160,15 @@ class AndroidMediaPlayer(
         return MEDIA_PLAYER_INVALID_OFFSET
     }
 
-    override fun getDuration(id: SourceId): Long {
-        if (id.id == currentSourceId.id && playerActivity.isActive()) {
-            return player.duration.toLong()
-        }
-
-        return MEDIA_PLAYER_INVALID_OFFSET
-    }
-
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
         playbackEventListener = listener
     }
 
     override fun setBufferEventListener(listener: MediaPlayerControlInterface.BufferEventListener) {
         bufferEventListener = listener
+    }
+
+    override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
+        durationListener = listener
     }
 }

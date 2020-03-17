@@ -165,8 +165,7 @@ class DefaultAudioPlayerAgent(
     private var token: String = ""
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
-    private var duration: Long =
-        MEDIA_PLAYER_INVALID_OFFSET
+    private var duration: Long? = null
     private var playCalled = false
     private var stopCalled = false
     private var pauseReason: PauseReason? = null
@@ -505,6 +504,16 @@ class DefaultAudioPlayerAgent(
             "[init] channelName: $channelName, enableDisplayLifeCycleManagement: $enableDisplayLifeCycleManagement"
         )
         mediaPlayer.setPlaybackEventListener(this)
+        mediaPlayer.setOnDurationListener(object : MediaPlayerControlInterface.OnDurationListener {
+            override fun onRetrieved(id: SourceId, duration: Long?) {
+                executor.submit {
+                    Logger.d(TAG, "[onRetrieved] sourceId: $sourceId, id: $id, duration: $duration")
+                    if(sourceId == id) {
+                        this@DefaultAudioPlayerAgent.duration = duration
+                    }
+                }
+            }
+        })
         contextManager.setStateProvider(namespaceAndName, this)
 
         // pause directive handler
@@ -643,6 +652,18 @@ class DefaultAudioPlayerAgent(
         }
     }
 
+    override fun addOnDurationListener(listener: AudioPlayerAgentInterface.Listener) {
+        executor.submit {
+            activityListeners.add(listener)
+        }
+    }
+
+    override fun removeOnDurationListener(listener: AudioPlayerAgentInterface.Listener) {
+        executor.submit {
+            activityListeners.remove(listener)
+        }
+    }
+
     override fun play() {
         onButtonPressed(PlaybackButton.PLAY)
     }
@@ -673,8 +694,6 @@ class DefaultAudioPlayerAgent(
 
     override fun getOffset(): Long = getOffsetInMilliseconds() / 1000L
 
-    override fun getDuration(): Long = getDurationInMilliseconds() / 1000L
-
     private fun getOffsetInMilliseconds(): Long {
         if (!sourceId.isError()) {
             val offset = mediaPlayer.getOffset(sourceId)
@@ -684,17 +703,6 @@ class DefaultAudioPlayerAgent(
         }
 
         return offset
-    }
-
-    private fun getDurationInMilliseconds(): Long {
-        if (!sourceId.isError()) {
-            val temp = mediaPlayer.getDuration(sourceId)
-            if (temp != MEDIA_PLAYER_INVALID_OFFSET) {
-                duration = temp
-            }
-        }
-
-        return duration
     }
 
     override fun setFavorite(favorite: Boolean) {
@@ -1203,8 +1211,8 @@ class DefaultAudioPlayerAgent(
                 addProperty("token", token)
             }
             addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-            if (getDurationInMilliseconds() != MEDIA_PLAYER_INVALID_OFFSET) {
-                addProperty("durationInMilliseconds", getDurationInMilliseconds())
+            if (duration != MEDIA_PLAYER_INVALID_OFFSET) {
+                addProperty("durationInMilliseconds", duration)
             }
             lyricsPresenter?.getVisibility()?.let {
                 addProperty("lyricsVisible", it)

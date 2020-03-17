@@ -22,21 +22,27 @@ import java.net.URI
 class IntegratedMediaPlayer(
     private val audioPlayer: UriSourcePlayablePlayer,
     private val ttsPlayer: AttachmentPlayablePlayer
-) : MediaPlayerInterface, MediaPlayerControlInterface.PlaybackEventListener, MediaPlayerControlInterface.BufferEventListener {
+) : MediaPlayerInterface
+    , MediaPlayerControlInterface.PlaybackEventListener
+    , MediaPlayerControlInterface.BufferEventListener
+    , MediaPlayerControlInterface.OnDurationListener {
     companion object {
         private const val TAG = "IntegratedMediaPlayer"
     }
 
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
     private var bufferEventListener: MediaPlayerControlInterface.BufferEventListener? = null
+    private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
 
     private var activePlayer: MediaPlayerControlInterface? = null
 
     init {
         audioPlayer.setPlaybackEventListener(this)
         audioPlayer.setBufferEventListener(this)
+        audioPlayer.setOnDurationListener(this)
         ttsPlayer.setPlaybackEventListener(this)
         ttsPlayer.setBufferEventListener(this)
+        ttsPlayer.setOnDurationListener(this)
     }
 
     override fun setSource(attachmentReader: Attachment.Reader): SourceId {
@@ -61,14 +67,16 @@ class IntegratedMediaPlayer(
 
     override fun getOffset(id: SourceId): Long = activePlayer?.getOffset(id) ?: MEDIA_PLAYER_INVALID_OFFSET
 
-    override fun getDuration(id: SourceId): Long = activePlayer?.getDuration(id) ?: MEDIA_PLAYER_INVALID_OFFSET
-
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
         playbackEventListener = listener
     }
 
     override fun setBufferEventListener(listener: MediaPlayerControlInterface.BufferEventListener) {
         bufferEventListener = listener
+    }
+
+    override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
+        durationListener = listener
     }
 
     override fun onPlaybackStarted(id: SourceId) {
@@ -101,5 +109,9 @@ class IntegratedMediaPlayer(
 
     override fun onBufferRefilled(id: SourceId) {
         bufferEventListener?.onBufferRefilled(id)
+    }
+
+    override fun onRetrieved(id: SourceId, duration: Long?) {
+        durationListener?.onRetrieved(id, duration)
     }
 }
