@@ -96,6 +96,7 @@ class AudioPlayerLyricsDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
+        val referrerDialogRequestId = info.directive.getDialogRequestId()
         when(info.directive.getNamespaceAndName()) {
             SHOW_LYRICS,
             HIDE_LYRICS -> {
@@ -110,15 +111,15 @@ class AudioPlayerLyricsDirectiveHandler(
 
                 if(SHOW_LYRICS == info.directive.getNamespaceAndName()) {
                     if (visibilityController.show(playServiceId)) {
-                        sendVisibilityEvent("$NAME_SHOW_LYRICS$NAME_SUCCEEDED", playServiceId)
+                        sendVisibilityEvent("$NAME_SHOW_LYRICS$NAME_SUCCEEDED", playServiceId, referrerDialogRequestId)
                     } else {
-                        sendVisibilityEvent("$NAME_SHOW_LYRICS$NAME_FAILED", playServiceId)
+                        sendVisibilityEvent("$NAME_SHOW_LYRICS$NAME_FAILED", playServiceId, referrerDialogRequestId)
                     }
                 } else {
                     if (visibilityController.hide(playServiceId)) {
-                        sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_SUCCEEDED", playServiceId)
+                        sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_SUCCEEDED", playServiceId, referrerDialogRequestId)
                     } else {
-                        sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId)
+                        sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId, referrerDialogRequestId)
                     }
                 }
             }
@@ -132,9 +133,9 @@ class AudioPlayerLyricsDirectiveHandler(
 
                 with(payload) {
                     if(pageController.controlPage(playServiceId, direction)) {
-                        sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_SUCCEEDED", playServiceId, direction)
+                        sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_SUCCEEDED", playServiceId, direction, referrerDialogRequestId)
                     } else {
-                        sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_FAILED", playServiceId, direction)
+                        sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_FAILED", playServiceId, direction, referrerDialogRequestId)
                     }
                 }
             }
@@ -143,14 +144,19 @@ class AudioPlayerLyricsDirectiveHandler(
         setHandlingCompleted(info)
     }
 
-    private fun sendVisibilityEvent(name: String, playServiceId: String) {
-        contextManager.getContext(object: ContextRequester {
+    private fun sendVisibilityEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
+        contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                messageSender.sendMessage(EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(
-                  JsonObject().apply {
-                      addProperty("playServiceId", playServiceId)
-                  }.toString()
-                ).build())
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                        .payload(
+                            JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                            }.toString()
+                        )
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
+                )
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
@@ -158,15 +164,20 @@ class AudioPlayerLyricsDirectiveHandler(
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
     }
 
-    private fun sendPageControlEvent(name: String, playServiceId: String, direction: Direction) {
-        contextManager.getContext(object: ContextRequester {
+    private fun sendPageControlEvent(name: String, playServiceId: String, direction: Direction, referrerDialogRequestId: String) {
+        contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                messageSender.sendMessage(EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).payload(
-                    JsonObject().apply {
-                        addProperty("playServiceId", playServiceId)
-                        addProperty("direction", direction.name)
-                    }.toString()
-                ).build())
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                        .payload(
+                            JsonObject().apply {
+                                addProperty("playServiceId", playServiceId)
+                                addProperty("direction", direction.name)
+                            }.toString()
+                        )
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
+                )
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
