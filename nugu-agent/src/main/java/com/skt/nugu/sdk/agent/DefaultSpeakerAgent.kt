@@ -26,7 +26,6 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
@@ -209,7 +208,7 @@ class DefaultSpeakerAgent(
                 }
             }
 
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             if (success) {
                 sendSpeakerEvent("${NAME_SET_VOLUME}${NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
             } else {
@@ -245,7 +244,7 @@ class DefaultSpeakerAgent(
                 }
             }
 
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             if (success) {
                 sendSpeakerEvent("${NAME_SET_MUTE}${NAME_SUCCEEDED}", payload.playServiceId, referrerDialogRequestId)
             } else {

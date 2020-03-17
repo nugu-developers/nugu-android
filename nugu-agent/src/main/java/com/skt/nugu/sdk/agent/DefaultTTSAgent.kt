@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.util.TimeoutCondition
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -719,7 +718,7 @@ class DefaultTTSAgent(
 
         val playServiceId = info.getPlayServiceId()
         if (!playServiceId.isNullOrBlank()) {
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             sendEventWithToken(
                 NAMESPACE,
                 EVENT_SPEECH_STARTED,
@@ -743,9 +742,9 @@ class DefaultTTSAgent(
         if (!playServiceId.isNullOrBlank()) {
             val stopDirective = info.stopDirective
             val referrerDialogRequestId = if(stopDirective != null) {
-                stopDirective.header.getValidReferrerDialogRequestId()
+                stopDirective.header.dialogRequestId
             } else {
-                info.directive.header.getValidReferrerDialogRequestId()
+                info.directive.header.dialogRequestId
             }
 
             sendEventWithToken(
@@ -781,7 +780,7 @@ class DefaultTTSAgent(
 
         val playServiceId = info.getPlayServiceId()
         if (!playServiceId.isNullOrBlank()) {
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             sendEventWithToken(
                 NAMESPACE,
                 EVENT_SPEECH_FINISHED,

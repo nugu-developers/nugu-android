@@ -19,7 +19,6 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -83,7 +82,7 @@ class DefaultScreenAgent(
 
     override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             when (info.directive.getNamespaceAndName()) {
                 TURN_ON -> {
                     val payload =

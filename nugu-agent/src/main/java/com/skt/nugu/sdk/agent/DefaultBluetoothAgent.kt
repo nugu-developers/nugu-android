@@ -34,7 +34,6 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
@@ -288,7 +287,7 @@ class DefaultBluetoothAgent(
         setHandlingCompleted(info)
 
         executor.submit {
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
             eventBus.subscribe(arrayListOf(
                 EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED,
                 EVENT_NAME_START_DISCOVERABLE_MODE_FAILED), object : BluetoothEventBus.Listener {
@@ -332,7 +331,7 @@ class DefaultBluetoothAgent(
                         // avoid memory leaks
                         eventBus.clearAllSubscribers()
 
-                        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                        val referrerDialogRequestId = info.directive.header.dialogRequestId
                         return sendEvent(name, payload.playServiceId,referrerDialogRequestId)
                     }
                 })
@@ -351,7 +350,7 @@ class DefaultBluetoothAgent(
                     EVENT_NAME_MEDIACONTROL_PLAY_FAILED)
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
-                        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                        val referrerDialogRequestId = info.directive.header.dialogRequestId
                         return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
                     }
                 })
@@ -370,7 +369,7 @@ class DefaultBluetoothAgent(
                     EVENT_NAME_MEDIACONTROL_STOP_FAILED)
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
-                        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                        val referrerDialogRequestId = info.directive.header.dialogRequestId
                         return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
                     }
                 })
@@ -389,7 +388,7 @@ class DefaultBluetoothAgent(
                     EVENT_NAME_MEDIACONTROL_PAUSE_FAILED)
                 eventBus.subscribe(events , object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
-                        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                        val referrerDialogRequestId = info.directive.header.dialogRequestId
                         return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
                     }
                 })
@@ -408,7 +407,7 @@ class DefaultBluetoothAgent(
                     EVENT_NAME_MEDIACONTROL_NEXT_FAILED)
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
-                        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                        val referrerDialogRequestId = info.directive.header.dialogRequestId
                         return sendEvent(name, payload.playServiceId,referrerDialogRequestId)
                     }
                 })
@@ -428,7 +427,7 @@ class DefaultBluetoothAgent(
                     EVENT_NAME_MEDIACONTROL_PREVIOUS_FAILED)
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
-                        val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+                        val referrerDialogRequestId = info.directive.header.dialogRequestId
                         return sendEvent(name, payload.playServiceId,referrerDialogRequestId)
                     }
                 })

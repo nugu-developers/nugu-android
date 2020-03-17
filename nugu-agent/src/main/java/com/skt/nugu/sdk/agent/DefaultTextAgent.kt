@@ -20,7 +20,6 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -119,7 +118,7 @@ class DefaultTextAgent(
         if(textSourceHandler?.handleTextSource(info.directive.payload, info.directive.header) == true) {
             Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
         } else {
-            val dialogRequestId = executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.getValidReferrerDialogRequestId(), object: TextAgentInterface.RequestListener {
+            val dialogRequestId = executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
                 override fun onReceiveResponse(dialogRequestId: String) {
                     internalTextSourceHandleListeners.forEach {
                         it.onReceiveResponse(dialogRequestId)

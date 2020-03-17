@@ -22,7 +22,6 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.getValidReferrerDialogRequestId
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -103,7 +102,7 @@ class DefaultMicrophoneAgent(
 
         setHandlingCompleted(info)
         executor.submit {
-            val referrerDialogRequestId = info.directive.header.getValidReferrerDialogRequestId()
+            val referrerDialogRequestId = info.directive.header.dialogRequestId
 
             if (executeHandleSetMic(status)) {
                 sendEvent(
