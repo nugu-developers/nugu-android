@@ -31,9 +31,17 @@ interface MediaPlayerControlInterface {
     fun resume(id: SourceId): Boolean
     fun seekTo(id: SourceId, offsetInMilliseconds: Long): Boolean
     fun getOffset(id: SourceId): Long
-    fun getDuration(id: SourceId): Long
     fun setPlaybackEventListener(listener: PlaybackEventListener)
     fun setBufferEventListener(listener: BufferEventListener)
+    fun setOnDurationListener(listener: OnDurationListener)
+
+    interface OnDurationListener {
+        /**
+         * Notified when duration retrieved.
+         * @param duration the duration, null if not available.
+         */
+        fun onRetrieved(id: SourceId, duration: Long?)
+    }
 
     interface PlaybackEventListener {
         fun onPlaybackStarted(id: SourceId)

@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
@@ -38,6 +39,14 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
          * @param context current context
          */
         fun onStateChanged(activity: State, context: Context)
+    }
+
+    interface OnDurationListener {
+        /**
+         * Notified when duration retrieved.
+         * @param duration the duration, null if not available.
+         */
+        fun onRetrieved(duration: Long?, context: Context)
     }
 
     enum class State {
@@ -63,6 +72,17 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @param listener the listener that removed
      */
     fun removeListener(listener: Listener)
+
+    /** Add a listener to be called when duration retrieved
+     * @param listener the listener that added
+     */
+    fun addOnDurationListener(listener: OnDurationListener)
+
+    /**
+     * Remove a listener
+     * @param listener the listener that removed
+     */
+    fun removeOnDurationListener(listener: OnDurationListener)
 
     /** Set a presenter for lyrics
      * @param presenter the presenter to be set
@@ -112,13 +132,6 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @return the current offset in seconds
      */
     fun getOffset(): Long
-
-
-    /**
-     * Gets the current playback duration
-     * @return the current duration in seconds
-     */
-    fun getDuration(): Long
 
     /**
      * Set the favorite property if supported.

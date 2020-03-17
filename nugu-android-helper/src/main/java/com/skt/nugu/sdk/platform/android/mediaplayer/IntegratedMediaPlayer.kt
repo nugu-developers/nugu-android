@@ -22,21 +22,27 @@ import java.net.URI
 class IntegratedMediaPlayer(
     private val audioPlayer: UriSourcePlayablePlayer,
     private val ttsPlayer: AttachmentPlayablePlayer
-) : MediaPlayerInterface, MediaPlayerControlInterface.PlaybackEventListener, MediaPlayerControlInterface.BufferEventListener {
+) : MediaPlayerInterface
+    , MediaPlayerControlInterface.PlaybackEventListener
+    , MediaPlayerControlInterface.BufferEventListener
+    , MediaPlayerControlInterface.OnDurationListener {
     companion object {
         private const val TAG = "IntegratedMediaPlayer"
     }
 
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
     private var bufferEventListener: MediaPlayerControlInterface.BufferEventListener? = null
+    private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
 
     private var activePlayer: MediaPlayerControlInterface? = null
 
     init {
         audioPlayer.setPlaybackEventListener(this)
         audioPlayer.setBufferEventListener(this)
+        audioPlayer.setOnDurationListener(this)
         ttsPlayer.setPlaybackEventListener(this)
         ttsPlayer.setBufferEventListener(this)
+        ttsPlayer.setOnDurationListener(this)
     }
 
     override fun setSource(attachmentReader: Attachment.Reader): SourceId {
@@ -61,8 +67,6 @@ class IntegratedMediaPlayer(
 
     override fun getOffset(id: SourceId): Long = activePlayer?.getOffset(id) ?: MEDIA_PLAYER_INVALID_OFFSET
 
-    override fun getDuration(id: SourceId): Long = activePlayer?.getDuration(id) ?: MEDIA_PLAYER_INVALID_OFFSET
-
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
         playbackEventListener = listener
     }
@@ -71,35 +75,55 @@ class IntegratedMediaPlayer(
         bufferEventListener = listener
     }
 
+    override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
+        durationListener = listener
+    }
+
     override fun onPlaybackStarted(id: SourceId) {
-        playbackEventListener?.onPlaybackStarted(id)
+        playbackEventListener?.onPlaybackStarted(convertSourceId(id))
     }
 
     override fun onPlaybackFinished(id: SourceId) {
-        playbackEventListener?.onPlaybackFinished(id)
+        playbackEventListener?.onPlaybackFinished(convertSourceId(id))
     }
 
     override fun onPlaybackError(id: SourceId, type: ErrorType, error: String) {
-        playbackEventListener?.onPlaybackError(id, type, error)
+        playbackEventListener?.onPlaybackError(convertSourceId(id), type, error)
     }
 
     override fun onPlaybackPaused(id: SourceId) {
-        playbackEventListener?.onPlaybackPaused(id)
+        playbackEventListener?.onPlaybackPaused(convertSourceId(id))
     }
 
     override fun onPlaybackResumed(id: SourceId) {
-        playbackEventListener?.onPlaybackResumed(id)
+        playbackEventListener?.onPlaybackResumed(convertSourceId(id))
     }
 
     override fun onPlaybackStopped(id: SourceId) {
-        playbackEventListener?.onPlaybackStopped(id)
+        playbackEventListener?.onPlaybackStopped(convertSourceId(id))
     }
 
     override fun onBufferUnderrun(id: SourceId) {
-        bufferEventListener?.onBufferUnderrun(id)
+        bufferEventListener?.onBufferUnderrun(convertSourceId(id))
     }
 
     override fun onBufferRefilled(id: SourceId) {
-        bufferEventListener?.onBufferRefilled(id)
+        bufferEventListener?.onBufferRefilled(convertSourceId(id))
+    }
+
+    override fun onRetrieved(id: SourceId, duration: Long?) {
+        durationListener?.onRetrieved(convertSourceId(id), duration)
+    }
+
+    private fun convertSourceId(id: SourceId): SourceId {
+        if(id.isError()) {
+            return id
+        }
+
+        if(activePlayer == ttsPlayer) {
+            return SourceId(id.id * 2 + 0)
+        } else {
+            return SourceId(id.id * 2 + 1)
+        }
     }
 }
