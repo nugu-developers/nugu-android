@@ -60,6 +60,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                 putExtra(EXTRA_AUDIO_ITEM_ID, audioItemContext.audioItemId)
                 putExtra(EXTRA_AUDIO_ITEM_TEMPLATE, audioItemContext.audioItemTemplate)
                 putExtra(EXTRA_AUDIO_ITEM_OFFSET, audioItemContext.offset)
+                putExtra(EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID, audioItemContext.dialogRequestId)
             }
 
             context.startService(intent)
