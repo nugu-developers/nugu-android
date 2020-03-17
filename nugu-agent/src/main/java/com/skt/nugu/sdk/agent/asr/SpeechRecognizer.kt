@@ -44,6 +44,7 @@ interface SpeechRecognizer {
         context: String,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        referrerDialogRequestId: String?,
         epdParam: EndPointDetectorParam,
         recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?

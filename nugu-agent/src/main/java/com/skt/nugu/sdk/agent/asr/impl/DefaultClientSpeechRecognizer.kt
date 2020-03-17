@@ -84,6 +84,7 @@ class DefaultClientSpeechRecognizer(
         context: String,
         wakeupInfo: WakeupInfo?,
         payload: ExpectSpeechPayload?,
+        referrerDialogRequestId: String?,
         epdParam: EndPointDetectorParam,
         recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?
@@ -115,7 +116,8 @@ class DefaultClientSpeechRecognizer(
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
 //                wakeupBoundary = sendPositionAndWakeupBoundary.second
             ).toJsonString()
-        ).build()
+        ).referrerDialogRequestId(referrerDialogRequestId ?: "")
+            .build()
 
         currentRequest =
             RecognizeRequest(
