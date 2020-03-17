@@ -27,7 +27,8 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     data class Context(
         val audioItemId: String,
         val audioItemTemplate: String?,
-        var offset: Long
+        val offset: Long,
+        val dialogRequestId: String
     )
 
     /**

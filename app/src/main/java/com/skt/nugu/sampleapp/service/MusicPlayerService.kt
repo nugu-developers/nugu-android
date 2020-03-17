@@ -46,6 +46,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
         private const val EXTRA_AUDIO_ITEM_ID = "extra_audio_item_id"
         private const val EXTRA_AUDIO_ITEM_TEMPLATE = "extra_audio_item_template"
         private const val EXTRA_AUDIO_ITEM_OFFSET = "extra_audio_item_offset"
+        private const val EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID = "extra_audio_item_dialog_request_id"
 
         private const val ACTION_START_SERVICE = "ACTION_START_SERVICE"
         private const val ACTION_PLAY = "ACTION_PLAY"
@@ -106,7 +107,8 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
             AudioPlayerAgentInterface.Context(
                 getStringExtra(EXTRA_AUDIO_ITEM_ID),
                 getStringExtra(EXTRA_AUDIO_ITEM_TEMPLATE),
-                getLongExtra(EXTRA_AUDIO_ITEM_OFFSET, -1L)
+                getLongExtra(EXTRA_AUDIO_ITEM_OFFSET, -1L),
+                getStringExtra(EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID)
             )
         }
 
