@@ -495,11 +495,13 @@ class NuguAndroidClient private constructor(
                         override fun create(container: SdkContainer): DefaultDisplayAgent =
                             with(container) {
                                 DefaultDisplayAgent(
-                                    getContextManager(),
-                                    getMessageSender(),
                                     getPlaySynchronizer(),
-                                    getInputManagerProcessor(),
                                     DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY,
+                                    ElementSelectedEventHandler(
+                                        getContextManager(),
+                                        getMessageSender(),
+                                        getInputManagerProcessor()
+                                    ),
                                     builder.enableDisplayLifeCycleManagement
                                 ).apply {
                                     getDisplayPlayStackManager().addPlayContextProvider(this)

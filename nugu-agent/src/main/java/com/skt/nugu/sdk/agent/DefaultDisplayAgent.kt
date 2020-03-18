@@ -24,28 +24,19 @@ import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.*
 import java.util.concurrent.*
 import kotlin.collections.HashMap
 
 class DefaultDisplayAgent(
-    private val contextManager: ContextManagerInterface,
-    private val messageSender: MessageSender,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val inputProcessorManager: InputProcessorManagerInterface,
     private val playStackPriority: Int,
+    private val elementSelectedEventHandler: ElementSelectedEventHandler,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent, DisplayAgentInterface
     , ContextStateProvider
-    , InputProcessor
     , ControlFocusDirectiveHandler.Controller
     , ControlScrollDirectiveHandler.Controller
     , CloseDirectiveHandler.Controller
@@ -57,11 +48,6 @@ class DefaultDisplayAgent(
 
         const val NAMESPACE = "Display"
         const val VERSION = "1.2"
-
-        private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
-
-        private const val KEY_PLAY_SERVICE_ID = "playServiceId"
-        private const val KEY_TOKEN = "token"
     }
 
     data class TemplatePayload(
@@ -132,7 +118,6 @@ class DefaultDisplayAgent(
 
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
-    private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
     private var renderer: DisplayAgentInterface.Renderer? = null
 
     override val namespaceAndName: NamespaceAndName = NamespaceAndName(
@@ -141,7 +126,6 @@ class DefaultDisplayAgent(
     )
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this)
         contextLayerTimer?.apply {
             EnumSet.allOf(DisplayAgentInterface.ContextLayer::class.java).forEach {
                 put(it, DisplayTimer(TAG))
@@ -346,44 +330,14 @@ class DefaultDisplayAgent(
         token: String,
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
-        val dialogRequestId = UUIDGeneration.timeUUID().toString()
         val directiveInfo = templateDirectiveInfoMap[templateId]
             ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
-                if (messageSender.sendMessage(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            NAMESPACE,
-                            EVENT_NAME_ELEMENT_SELECTED,
-                            VERSION
-                        ).dialogRequestId(dialogRequestId).payload(
-                            JsonObject().apply {
-                                addProperty(KEY_TOKEN, token)
-                                directiveInfo.payload.playServiceId
-                                    ?.let {
-                                        addProperty(KEY_PLAY_SERVICE_ID, it)
-                                    }
-                            }.toString()
-                        ).build()
-                    )
-                ) {
-                    callback?.let {
-                        eventCallbacks.put(dialogRequestId, callback)
-                    }
-                    onSendEventFinished(dialogRequestId)
-                } else {
-                    callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
-                }
-            }
+        if(directiveInfo.payload.playServiceId.isNullOrBlank()) {
+            throw IllegalStateException("empty playServiceId: $templateId")
+        }
 
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
-            }
-        }, namespaceAndName)
-
-        return dialogRequestId
+        return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, callback)
     }
 
     override fun notifyUserInteraction(templateId: String) {
@@ -393,23 +347,6 @@ class DefaultDisplayAgent(
 
     override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
         this.renderer = renderer
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        eventCallbacks.remove(dialogRequestId)?.onSuccess(dialogRequestId)
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        eventCallbacks.remove(dialogRequestId)
-            ?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 
     private val pendingCloseSucceededEvents =
