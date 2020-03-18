@@ -503,7 +503,10 @@ class NuguAndroidClient private constructor(
                                     builder.enableDisplayLifeCycleManagement
                                 ).apply {
                                     getDisplayPlayStackManager().addPlayContextProvider(this)
-                                    getDirectiveSequencer().addDirectiveHandler(this)
+
+                                    RenderDirectiveHandler(this).apply {
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
 
                                     ControlFocusDirectiveHandler(
                                         this,

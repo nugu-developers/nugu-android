@@ -21,10 +21,9 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -44,13 +43,14 @@ class DefaultDisplayAgent(
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
-) : AbstractCapabilityAgent()
-    , DisplayAgentInterface
+) : CapabilityAgent, DisplayAgentInterface
+    , ContextStateProvider
     , InputProcessor
     , ControlFocusDirectiveHandler.Controller
     , ControlScrollDirectiveHandler.Controller
     , CloseDirectiveHandler.Controller
     , UpdateDirectiveHandler.Controller
+    , RenderDirectiveHandler.Controller
     , PlayStackManagerInterface.PlayContextProvider {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
@@ -58,191 +58,7 @@ class DefaultDisplayAgent(
         const val NAMESPACE = "Display"
         const val VERSION = "1.2"
 
-        // supported types for v1.0
-        private const val NAME_FULLTEXT1 = "FullText1"
-        private const val NAME_FULLTEXT2 = "FullText2"
-        private const val NAME_IMAGETEXT1 = "ImageText1"
-        private const val NAME_IMAGETEXT2 = "ImageText2"
-        private const val NAME_IMAGETEXT3 = "ImageText3"
-        private const val NAME_IMAGETEXT4 = "ImageText4"
-        private const val NAME_TEXTLIST1 = "TextList1"
-        private const val NAME_TEXTLIST2 = "TextList2"
-        private const val NAME_TEXTLIST3 = "TextList3"
-        private const val NAME_TEXTLIST4 = "TextList4"
-        private const val NAME_IMAGELIST1 = "ImageList1"
-        private const val NAME_IMAGELIST2 = "ImageList2"
-        private const val NAME_IMAGELIST3 = "ImageList3"
-        private const val NAME_CUSTOM_TEMPLATE = "CustomTemplate"
-
         private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
-
-        // supported types for v1.1
-        private const val NAME_WEATHER_1 = "Weather1"
-        private const val NAME_WEATHER_2 = "Weather2"
-        private const val NAME_WEATHER_3 = "Weather3"
-        private const val NAME_WEATHER_4 = "Weather4"
-        private const val NAME_WEATHER_5 = "Weather5"
-        private const val NAME_FULLIMAGE = "FullImage"
-
-        // supported for v1.2
-        private const val NAME_SCORE_1 = "Score1"
-        private const val NAME_SCORE_2 = "Score2"
-        private const val NAME_SEARCH_LIST_1 = "SearchList1"
-        private const val NAME_SEARCH_LIST_2 = "SearchList2"
-
-        private const val NAME_COMMERCE_LIST = "CommerceList"
-        private const val NAME_COMMERCE_OPTION = "CommerceOption"
-        private const val NAME_COMMERCE_PRICE = "CommercePrice"
-        private const val NAME_COMMERCE_INFO = "CommerceInfo"
-
-        private const val NAME_CALL_1 = "Call1"
-        private const val NAME_CALL_2 = "Call2"
-        private const val NAME_CALL_3 = "Call3"
-
-        private val FULLTEXT1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_FULLTEXT1
-        )
-        private val FULLTEXT2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_FULLTEXT2
-        )
-        private val IMAGETEXT1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGETEXT1
-        )
-        private val IMAGETEXT2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGETEXT2
-        )
-        private val IMAGETEXT3 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGETEXT3
-        )
-        private val IMAGETEXT4 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGETEXT4
-        )
-        private val TEXTLIST1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_TEXTLIST1
-        )
-        private val TEXTLIST2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_TEXTLIST2
-        )
-
-        private val TEXTLIST3 = NamespaceAndName(
-            NAMESPACE,
-            NAME_TEXTLIST3
-        )
-
-        private val TEXTLIST4 = NamespaceAndName(
-            NAMESPACE,
-            NAME_TEXTLIST4
-        )
-
-        private val IMAGELIST1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGELIST1
-        )
-        private val IMAGELIST2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGELIST2
-        )
-        private val IMAGELIST3 = NamespaceAndName(
-            NAMESPACE,
-            NAME_IMAGELIST3
-        )
-        private val CUSTOM_TEMPLATE = NamespaceAndName(
-            NAMESPACE,
-            NAME_CUSTOM_TEMPLATE
-        )
-
-        private val WEATHER1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_WEATHER_1
-        )
-
-        private val WEATHER2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_WEATHER_2
-        )
-
-        private val WEATHER3 = NamespaceAndName(
-            NAMESPACE,
-            NAME_WEATHER_3
-        )
-
-        private val WEATHER4 = NamespaceAndName(
-            NAMESPACE,
-            NAME_WEATHER_4
-        )
-
-        private val WEATHER5 = NamespaceAndName(
-            NAMESPACE,
-            NAME_WEATHER_5
-        )
-
-        private val FULLIMAGE = NamespaceAndName(
-            NAMESPACE,
-            NAME_FULLIMAGE
-        )
-
-        private val SCORE_1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_SCORE_1
-        )
-
-        private val SCORE_2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_SCORE_2
-        )
-
-        private val SEARCH_LIST_1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_SEARCH_LIST_1
-        )
-
-        private val SEARCH_LIST_2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_SEARCH_LIST_2
-        )
-
-        private val COMMERCE_LIST = NamespaceAndName(
-            NAMESPACE,
-            NAME_COMMERCE_LIST
-        )
-
-        private val COMMERCE_OPTION = NamespaceAndName(
-            NAMESPACE,
-            NAME_COMMERCE_OPTION
-        )
-
-        private val COMMERCE_PRICE = NamespaceAndName(
-            NAMESPACE,
-            NAME_COMMERCE_PRICE
-        )
-
-        private val COMMERCE_INFO = NamespaceAndName(
-            NAMESPACE,
-            NAME_COMMERCE_INFO
-        )
-
-        private val CALL_1 = NamespaceAndName(
-            NAMESPACE,
-            NAME_CALL_1
-        )
-
-        private val CALL_2 = NamespaceAndName(
-            NAMESPACE,
-            NAME_CALL_2
-        )
-
-        private val CALL_3 = NamespaceAndName(
-            NAMESPACE,
-            NAME_CALL_3
-        )
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
@@ -264,10 +80,11 @@ class DefaultDisplayAgent(
     }
 
     private inner class TemplateDirectiveInfo(
-        info: DirectiveInfo,
+        info: AbstractDirectiveHandler.DirectiveInfo,
         val payload: TemplatePayload
     ) : PlaySynchronizerInterface.SynchronizeObject
-        , DirectiveInfo by info {
+        , AbstractDirectiveHandler.DirectiveInfo by info {
+        var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 Logger.d(TAG, "[onReleaseCallback] granted : $this")
@@ -281,7 +98,7 @@ class DefaultDisplayAgent(
 
         override fun requestReleaseSync(immediate: Boolean) {
             executor.submit {
-                executeCancelUnknownInfo(this, immediate)
+                executeCancelUnknownInfo(getTemplateId(), immediate)
             }
         }
 
@@ -304,11 +121,12 @@ class DefaultDisplayAgent(
 
     private val pendingInfo = HashMap<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>()
     private val currentInfo = HashMap<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>()
-    private val contextLayerTimer: MutableMap<DisplayAgentInterface.ContextLayer, DisplayTimer>? = if(enableDisplayLifeCycleManagement) {
-        HashMap()
-    } else {
-        null
-    }
+    private val contextLayerTimer: MutableMap<DisplayAgentInterface.ContextLayer, DisplayTimer>? =
+        if (enableDisplayLifeCycleManagement) {
+            HashMap()
+        } else {
+            null
+        }
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
@@ -331,25 +149,7 @@ class DefaultDisplayAgent(
         }
     }
 
-    override fun preHandleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-        if (payload == null) {
-            setHandlingFailed(info, "[preHandleDirective] invalid Payload")
-            return
-        }
-
-        if (info.directive.getNamespaceAndName() != CUSTOM_TEMPLATE && payload.token.isNullOrBlank()) {
-            setHandlingFailed(info, "[preHandleDirective] invalid payload: empty token")
-            return
-        }
-
-        executor.submit {
-            executeCancelPendingInfo(payload.getContextLayerInternal())
-            executePreparePendingInfo(info, payload)
-        }
-    }
-
-    private fun executePreparePendingInfo(info: DirectiveInfo, payload: TemplatePayload) {
+    private fun executePreparePendingInfo(info: AbstractDirectiveHandler.DirectiveInfo, payload: TemplatePayload) {
         TemplateDirectiveInfo(info, payload).apply {
             templateDirectiveInfoMap[getTemplateId()] = this
             pendingInfo[payload.getContextLayerInternal()] = this
@@ -357,27 +157,26 @@ class DefaultDisplayAgent(
         }
     }
 
-    private fun executeCancelUnknownInfo(info: DirectiveInfo, immediate: Boolean) {
+    private fun executeCancelUnknownInfo(templateId: String, immediate: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] immediate: $immediate")
-        val current = findInfoMatchWithTemplateId(currentInfo, info.directive.getMessageId())
-        val pending = findInfoMatchWithTemplateId(pendingInfo, info.directive.getMessageId())
+        val current = findInfoMatchWithTemplateId(currentInfo, templateId)
+        val pending = findInfoMatchWithTemplateId(pendingInfo, templateId)
         if (current != null) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
-            val templateId = info.directive.getMessageId()
             val timer = contextLayerTimer?.get(current.payload.getContextLayerInternal())
             if (immediate) {
                 timer?.stop(templateId)
-                renderer?.clear(info.directive.getMessageId(), true)
+                renderer?.clear(templateId, true)
             } else {
                 timer?.stop(templateId)
                 timer?.start(templateId, current.getDuration()) {
-                    renderer?.clear(info.directive.getMessageId(), true)
+                    renderer?.clear(templateId, true)
                 }
             }
         } else if (pending != null) {
             executeCancelPendingInfo(pending.payload.getContextLayerInternal())
         } else {
-            templateDirectiveInfoMap[info.directive.getMessageId()]?.let {
+            templateDirectiveInfoMap[templateId]?.let {
                 executeCancelInfoInternal(it)
             }
         }
@@ -397,22 +196,16 @@ class DefaultDisplayAgent(
     private fun executeCancelInfoInternal(info: TemplateDirectiveInfo) {
         Logger.d(TAG, "[executeCancelInfoInternal] cancel pendingInfo : $info")
 
-        setHandlingFailed(info, "Canceled by the other display info")
+        info.renderResultListener?.onFailure("Canceled by the other display info")
+        info.renderResultListener = null
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
         releaseSyncImmediately(info)
     }
 
-    override fun handleDirective(info: DirectiveInfo) {
-        executor.submit {
-            when (info.directive.getNamespaceAndName()) {
-                else -> {
-                    executeHandleTemplateDirective(info)
-                }
-            }
-        }
-    }
-
-    private fun findInfoMatchWithTemplateId(from: Map<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>, templateId: String): TemplateDirectiveInfo? {
+    private fun findInfoMatchWithTemplateId(
+        from: Map<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>,
+        templateId: String
+    ): TemplateDirectiveInfo? {
         val matched = from.filter {
             it.value.getTemplateId() == templateId
         }
@@ -433,10 +226,10 @@ class DefaultDisplayAgent(
 
         from.forEach {
             val currentHighest = highest
-            if(currentHighest == null) {
+            if (currentHighest == null) {
                 highest = it
             } else {
-                if(currentHighest.key.priority < it.key.priority) {
+                if (currentHighest.key.priority < it.key.priority) {
                     highest = it
                 }
             }
@@ -452,18 +245,6 @@ class DefaultDisplayAgent(
         }
 
         return findHighestLayerFrom(matched)
-    }
-
-    private fun executeHandleTemplateDirective(info: DirectiveInfo) {
-        val templateInfo = findInfoMatchWithTemplateId(pendingInfo, info.directive.getMessageId())
-        if (templateInfo == null || (info.directive.getMessageId() != templateInfo.getTemplateId())) {
-            Logger.d(TAG, "[executeHandleTemplateDirective] skip, maybe canceled display info")
-            return
-        }
-
-        pendingInfo.remove(templateInfo.payload.getContextLayerInternal())
-        currentInfo[templateInfo.payload.getContextLayerInternal()] = templateInfo
-        executeRender(templateInfo)
     }
 
     private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
@@ -482,65 +263,12 @@ class DefaultDisplayAgent(
         ) ?: false
         if (!willBeRender) {
             // the renderer denied to render
-            setHandlingCompleted(info)
+            info.renderResultListener?.onSuccess()
+            info.renderResultListener = null
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
             playSynchronizer.releaseWithoutSync(info)
             clearInfoIfCurrent(info)
         }
-    }
-
-    override fun cancelDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[cancelDirective] info: $info")
-        executor.submit {
-            executeCancelUnknownInfo(info, true)
-        }
-    }
-
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val blockingPolicy = BlockingPolicy(
-            BlockingPolicy.MEDIUM_AUDIO,
-            true
-        )
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[FULLTEXT1] = blockingPolicy
-        configuration[FULLTEXT2] = blockingPolicy
-        configuration[IMAGETEXT1] = blockingPolicy
-        configuration[IMAGETEXT2] = blockingPolicy
-        configuration[IMAGETEXT3] = blockingPolicy
-        configuration[IMAGETEXT4] = blockingPolicy
-        configuration[TEXTLIST1] = blockingPolicy
-        configuration[TEXTLIST2] = blockingPolicy
-        configuration[TEXTLIST3] = blockingPolicy
-        configuration[TEXTLIST4] = blockingPolicy
-        configuration[IMAGELIST1] = blockingPolicy
-        configuration[IMAGELIST2] = blockingPolicy
-        configuration[IMAGELIST3] = blockingPolicy
-        configuration[CUSTOM_TEMPLATE] = blockingPolicy
-
-        configuration[WEATHER1] = blockingPolicy
-        configuration[WEATHER2] = blockingPolicy
-        configuration[WEATHER3] = blockingPolicy
-        configuration[WEATHER4] = blockingPolicy
-        configuration[WEATHER5] = blockingPolicy
-        configuration[FULLIMAGE] = blockingPolicy
-
-        configuration[SCORE_1] = blockingPolicy
-        configuration[SCORE_2] = blockingPolicy
-        configuration[SEARCH_LIST_1] = blockingPolicy
-        configuration[SEARCH_LIST_2] = blockingPolicy
-
-        configuration[COMMERCE_LIST] = blockingPolicy
-        configuration[COMMERCE_OPTION] = blockingPolicy
-        configuration[COMMERCE_PRICE] = blockingPolicy
-        configuration[COMMERCE_INFO] = blockingPolicy
-
-        configuration[CALL_1] = blockingPolicy
-        configuration[CALL_2] = blockingPolicy
-        configuration[CALL_3] = blockingPolicy
-
-        return configuration
     }
 
     override fun displayCardRendered(
@@ -571,7 +299,8 @@ class DefaultDisplayAgent(
                     templateControllerMap[templateId] = templateController
                 }
 
-                setHandlingCompleted(it)
+                it.renderResultListener?.onSuccess()
+                it.renderResultListener = null
             }
         }
     }
@@ -588,7 +317,8 @@ class DefaultDisplayAgent(
                 onDisplayCardCleared(it)
 
                 if (clearInfoIfCurrent(it)) {
-                    val nextInfo = pendingInfo.remove(it.payload.getContextLayerInternal()) ?: return@submit
+                    val nextInfo =
+                        pendingInfo.remove(it.payload.getContextLayerInternal()) ?: return@submit
                     currentInfo[it.payload.getContextLayerInternal()] = nextInfo
                     executeRender(nextInfo)
                 }
@@ -600,7 +330,7 @@ class DefaultDisplayAgent(
         pendingCloseSucceededEvents.remove(templateDirectiveInfo)?.onSuccess()
     }
 
-    private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
+    private fun clearInfoIfCurrent(info: AbstractDirectiveHandler.DirectiveInfo): Boolean {
         Logger.d(TAG, "[clearInfoIfCurrent]")
         val current = findInfoMatchWithTemplateId(currentInfo, info.directive.getMessageId())
         if (current != null) {
@@ -659,16 +389,6 @@ class DefaultDisplayAgent(
     override fun notifyUserInteraction(templateId: String) {
         val matchedInfo = findInfoMatchWithTemplateId(currentInfo, templateId) ?: return
         contextLayerTimer?.get(matchedInfo.payload.getContextLayerInternal())?.reset(templateId)
-    }
-
-    private fun setHandlingFailed(info: DirectiveInfo, description: String) {
-        info.result.setFailed(description)
-        removeDirective(info.directive.getMessageId())
-    }
-
-    private fun setHandlingCompleted(info: DirectiveInfo) {
-        info.result.setCompleted()
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
@@ -742,14 +462,19 @@ class DefaultDisplayAgent(
 
     override fun controlFocus(playServiceId: String, direction: Direction): Boolean {
         val future: Future<Boolean> = executor.submit(Callable {
-            val matchedCurrentRenderedInfo = findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId) ?: return@Callable false
+            val matchedCurrentRenderedInfo =
+                findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId)
+                    ?: return@Callable false
 
             val result =
-                templateControllerMap[matchedCurrentRenderedInfo.getTemplateId()]?.controlFocus(direction)
+                templateControllerMap[matchedCurrentRenderedInfo.getTemplateId()]?.controlFocus(
+                    direction
+                )
                     ?: false
 
             if (result) {
-                contextLayerTimer?.get(matchedCurrentRenderedInfo.payload.getContextLayerInternal())?.reset(matchedCurrentRenderedInfo.getTemplateId())
+                contextLayerTimer?.get(matchedCurrentRenderedInfo.payload.getContextLayerInternal())
+                    ?.reset(matchedCurrentRenderedInfo.getTemplateId())
             }
 
             return@Callable result
@@ -760,14 +485,19 @@ class DefaultDisplayAgent(
 
     override fun controlScroll(playServiceId: String, direction: Direction): Boolean {
         val future: Future<Boolean> = executor.submit(Callable {
-            val matchedCurrentRenderedInfo = findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId) ?: return@Callable false
+            val matchedCurrentRenderedInfo =
+                findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId)
+                    ?: return@Callable false
 
             val result =
-                templateControllerMap[matchedCurrentRenderedInfo.getTemplateId()]?.controlScroll(direction)
+                templateControllerMap[matchedCurrentRenderedInfo.getTemplateId()]?.controlScroll(
+                    direction
+                )
                     ?: false
 
             if (result) {
-                contextLayerTimer?.get(matchedCurrentRenderedInfo.payload.getContextLayerInternal())?.reset(matchedCurrentRenderedInfo.getTemplateId())
+                contextLayerTimer?.get(matchedCurrentRenderedInfo.payload.getContextLayerInternal())
+                    ?.reset(matchedCurrentRenderedInfo.getTemplateId())
             }
 
             return@Callable result
@@ -791,7 +521,7 @@ class DefaultDisplayAgent(
                 return@submit
             }
 
-            executeCancelUnknownInfo(currentRenderedInfo, true)
+            executeCancelUnknownInfo(currentRenderedInfo.getTemplateId(), true)
             sendCloseEventWhenClosed(currentRenderedInfo, listener)
         }
     }
@@ -813,12 +543,47 @@ class DefaultDisplayAgent(
             if (currentToken == token) {
                 renderer?.update(currentDisplayInfo.getTemplateId(), payload)
                 contextLayerTimer?.let {
-                    it[currentDisplayInfo.payload.getContextLayerInternal()]?.reset(currentDisplayInfo.getTemplateId())
+                    it[currentDisplayInfo.payload.getContextLayerInternal()]?.reset(
+                        currentDisplayInfo.getTemplateId()
+                    )
                 }
                 listener.onSuccess()
             } else {
                 listener.onFailure("no matched token (current:$currentToken / update:$token)")
             }
+        }
+    }
+
+    override fun preRender(info: RenderDirectiveHandler.RenderDirectiveInfo) {
+        executor.submit {
+            executeCancelPendingInfo(info.payload.getContextLayerInternal())
+            executePreparePendingInfo(info.info, info.payload)
+        }
+    }
+
+    override fun render(
+        messageId: String,
+        listener: RenderDirectiveHandler.Controller.OnResultListener
+    ) {
+        executor.submit {
+            val templateInfo = findInfoMatchWithTemplateId(pendingInfo, messageId)
+            if (templateInfo == null || (messageId != templateInfo.getTemplateId())) {
+                listener.onFailure("skip, maybe canceled display info")
+                return@submit
+            }
+
+            pendingInfo.remove(templateInfo.payload.getContextLayerInternal())
+            currentInfo[templateInfo.payload.getContextLayerInternal()] = templateInfo
+
+            // attach listener
+            templateInfo.renderResultListener = listener
+            executeRender(templateInfo)
+        }
+    }
+
+    override fun cancelRender(messageId: String) {
+        executor.submit {
+            executeCancelUnknownInfo(messageId, true)
         }
     }
 
