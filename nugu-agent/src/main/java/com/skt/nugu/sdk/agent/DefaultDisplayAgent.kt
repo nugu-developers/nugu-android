@@ -50,6 +50,7 @@ class DefaultDisplayAgent(
     , ControlFocusDirectiveHandler.Controller
     , ControlScrollDirectiveHandler.Controller
     , CloseDirectiveHandler.Controller
+    , UpdateDirectiveHandler.Controller
     , PlayStackManagerInterface.PlayContextProvider {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
@@ -97,8 +98,6 @@ class DefaultDisplayAgent(
         private const val NAME_CALL_1 = "Call1"
         private const val NAME_CALL_2 = "Call2"
         private const val NAME_CALL_3 = "Call3"
-
-        private const val NAME_UPDATE = "Update"
 
         private val FULLTEXT1 = NamespaceAndName(
             NAMESPACE,
@@ -245,16 +244,11 @@ class DefaultDisplayAgent(
             NAME_CALL_3
         )
 
-        private val UPDATE = NamespaceAndName(
-            NAMESPACE,
-            NAME_UPDATE
-        )
-
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
     }
 
-    private data class TemplatePayload(
+    data class TemplatePayload(
         @SerializedName("playServiceId")
         val playServiceId: String?,
         @SerializedName("token")
@@ -338,22 +332,20 @@ class DefaultDisplayAgent(
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
-        if (isTemplateDirective(info.directive.getNamespaceAndName())) {
-            val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-            if (payload == null) {
-                setHandlingFailed(info, "[preHandleDirective] invalid Payload")
-                return
-            }
+        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
+        if (payload == null) {
+            setHandlingFailed(info, "[preHandleDirective] invalid Payload")
+            return
+        }
 
-            if(info.directive.getNamespaceAndName() != CUSTOM_TEMPLATE && payload.token.isNullOrBlank()) {
-                setHandlingFailed(info, "[preHandleDirective] invalid payload: empty token")
-                return
-            }
+        if (info.directive.getNamespaceAndName() != CUSTOM_TEMPLATE && payload.token.isNullOrBlank()) {
+            setHandlingFailed(info, "[preHandleDirective] invalid payload: empty token")
+            return
+        }
 
-            executor.submit {
-                executeCancelPendingInfo(payload.getContextLayerInternal())
-                executePreparePendingInfo(info, payload)
-            }
+        executor.submit {
+            executeCancelPendingInfo(payload.getContextLayerInternal())
+            executePreparePendingInfo(info, payload)
         }
     }
 
@@ -413,9 +405,6 @@ class DefaultDisplayAgent(
     override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
             when (info.directive.getNamespaceAndName()) {
-                UPDATE -> {
-                    executeHandleUpdateDirective(info)
-                }
                 else -> {
                     executeHandleTemplateDirective(info)
                 }
@@ -463,36 +452,6 @@ class DefaultDisplayAgent(
         }
 
         return findHighestLayerFrom(matched)
-    }
-
-    private fun executeHandleUpdateDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, TemplatePayload::class.java)
-        if (payload?.token == null) {
-            setHandlingFailed(info, "[executeHandleUpdateDirective] invalid payload: $payload")
-            return
-        }
-
-        val currentDisplayInfo = findCurrentRenderedInfoMatchWithToken(payload.token)
-        if (currentDisplayInfo == null) {
-            setHandlingFailed(info, "[executeHandleUpdateDirective] failed: no current display matche with token: ${payload.token}")
-            return
-        }
-
-        val currentToken = currentDisplayInfo.payload.token
-        val updateToken = payload.token
-
-        if (currentToken == updateToken && !updateToken.isNullOrBlank()) {
-            renderer?.update(currentDisplayInfo.getTemplateId(), info.directive.payload)
-            contextLayerTimer?.let {
-                it[currentDisplayInfo.payload.getContextLayerInternal()]?.reset(currentDisplayInfo.getTemplateId())
-            }
-            setHandlingCompleted(info)
-        } else {
-            setHandlingFailed(
-                info,
-                "[executeHandleUpdateDirective] no matched token (current:$currentToken / update:$updateToken)"
-            )
-        }
     }
 
     private fun executeHandleTemplateDirective(info: DirectiveInfo) {
@@ -580,8 +539,6 @@ class DefaultDisplayAgent(
         configuration[CALL_1] = blockingPolicy
         configuration[CALL_2] = blockingPolicy
         configuration[CALL_3] = blockingPolicy
-
-        configuration[UPDATE] = blockingPolicy
 
         return configuration
     }
@@ -783,12 +740,6 @@ class DefaultDisplayAgent(
         }
     }.toString()
 
-    private fun isTemplateDirective(namespaceAndName: NamespaceAndName): Boolean =
-        when (namespaceAndName) {
-            UPDATE -> false
-            else -> true
-        }
-
     override fun controlFocus(playServiceId: String, direction: Direction): Boolean {
         val future: Future<Boolean> = executor.submit(Callable {
             val matchedCurrentRenderedInfo = findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId) ?: return@Callable false
@@ -842,6 +793,32 @@ class DefaultDisplayAgent(
 
             executeCancelUnknownInfo(currentRenderedInfo, true)
             sendCloseEventWhenClosed(currentRenderedInfo, listener)
+        }
+    }
+
+    override fun update(
+        token: String,
+        payload: String,
+        listener: UpdateDirectiveHandler.Controller.OnUpdateListener
+    ) {
+        executor.submit {
+            val currentDisplayInfo = findCurrentRenderedInfoMatchWithToken(token)
+            if (currentDisplayInfo == null) {
+                listener.onFailure("failed: no current display match with token: $token")
+                return@submit
+            }
+
+            val currentToken = currentDisplayInfo.payload.token
+
+            if (currentToken == token) {
+                renderer?.update(currentDisplayInfo.getTemplateId(), payload)
+                contextLayerTimer?.let {
+                    it[currentDisplayInfo.payload.getContextLayerInternal()]?.reset(currentDisplayInfo.getTemplateId())
+                }
+                listener.onSuccess()
+            } else {
+                listener.onFailure("no matched token (current:$currentToken / update:$token)")
+            }
         }
     }
 
