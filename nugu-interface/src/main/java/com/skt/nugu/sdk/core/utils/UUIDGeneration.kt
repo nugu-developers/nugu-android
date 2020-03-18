@@ -24,11 +24,11 @@ import java.util.Date
  * A class that represents an immutable universally unique identifier.
  * A UUID represents a 128-bit value.
  */
-class UUIDGeneration(private val data: ByteArray) {
+class UUIDGeneration {
     private var mostSigBits: Long = 0
     private var leastSigBits: Long = 0
 
-    init {
+    private constructor(data: ByteArray) {
         var msb: Long = 0
         var lsb: Long = 0
         assert(data.size == 16 || data.size == 8) { "data must be 16 or 8 bytes in length" }
@@ -42,6 +42,11 @@ class UUIDGeneration(private val data: ByteArray) {
                 lsb = lsb shl 8 or (data[i].toLong() and 0xff)
             }
         }
+        this.mostSigBits = msb
+        this.leastSigBits = lsb
+    }
+
+    private constructor(msb: Long, lsb: Long)  {
         this.mostSigBits = msb
         this.leastSigBits = lsb
     }
@@ -89,6 +94,9 @@ class UUIDGeneration(private val data: ByteArray) {
         return (hilo shr 32).toInt() xor hilo.toInt()
     }
 
+    fun getTime(): Long {
+        return (mostSigBits shr 24 and 0xffffffffffL) + BASE_TIME
+    }
 
     companion object {
         private const val TAG = "UUIDGeneration"
@@ -148,6 +156,20 @@ class UUIDGeneration(private val data: ByteArray) {
             }
 
             return UUIDGeneration(uuidBytes)
+        }
+
+        fun fromString( name : String ) : UUIDGeneration {
+            var mostSigBits = java.lang.Long.decode("0x" + name.substring(0,8)).toLong()
+            mostSigBits = mostSigBits shl 16
+            mostSigBits = mostSigBits or java.lang.Long.decode("0x" + name.substring(8,12)).toLong()
+            mostSigBits = mostSigBits shl 16
+            mostSigBits = mostSigBits or java.lang.Long.decode("0x" + name.substring(12,16)).toLong()
+
+            var leastSigBits = java.lang.Long.decode("0x" + name.substring(16,20)).toLong()
+            leastSigBits = leastSigBits shl 48
+            leastSigBits = leastSigBits or java.lang.Long.decode("0x" + name.substring(20,32)).toLong()
+
+            return UUIDGeneration(mostSigBits, leastSigBits)
         }
 
         /**
