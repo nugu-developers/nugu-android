@@ -49,6 +49,7 @@ class DefaultDisplayAgent(
     , InputProcessor
     , ControlFocusDirectiveHandler.Controller
     , ControlScrollDirectiveHandler.Controller
+    , CloseDirectiveHandler.Controller
     , PlayStackManagerInterface.PlayContextProvider {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
@@ -81,7 +82,6 @@ class DefaultDisplayAgent(
         private const val NAME_WEATHER_4 = "Weather4"
         private const val NAME_WEATHER_5 = "Weather5"
         private const val NAME_FULLIMAGE = "FullImage"
-        private const val NAME_CLOSE = "Close"
 
         // supported for v1.2
         private const val NAME_SCORE_1 = "Score1"
@@ -99,9 +99,6 @@ class DefaultDisplayAgent(
         private const val NAME_CALL_3 = "Call3"
 
         private const val NAME_UPDATE = "Update"
-
-        private const val NAME_SUCCEEDED = "Succeeded"
-        private const val NAME_FAILED = "Failed"
 
         private val FULLTEXT1 = NamespaceAndName(
             NAMESPACE,
@@ -193,11 +190,6 @@ class DefaultDisplayAgent(
             NAME_FULLIMAGE
         )
 
-        private val CLOSE = NamespaceAndName(
-            NAMESPACE,
-            NAME_CLOSE
-        )
-
         private val SCORE_1 = NamespaceAndName(
             NAMESPACE,
             NAME_SCORE_1
@@ -276,11 +268,6 @@ class DefaultDisplayAgent(
     ) {
         fun getContextLayerInternal() = contextLayer ?: DisplayAgentInterface.ContextLayer.INFO
     }
-
-    private data class ClosePayload(
-        @SerializedName("playServiceId")
-        val playServiceId: String
-    )
 
     private inner class TemplateDirectiveInfo(
         info: DirectiveInfo,
@@ -426,9 +413,6 @@ class DefaultDisplayAgent(
     override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
             when (info.directive.getNamespaceAndName()) {
-                CLOSE -> {
-                    executeHandleCloseDirective(info)
-                }
                 UPDATE -> {
                     executeHandleUpdateDirective(info)
                 }
@@ -437,32 +421,6 @@ class DefaultDisplayAgent(
                 }
             }
         }
-    }
-
-    private fun executeHandleCloseDirective(info: DirectiveInfo) {
-        val closePayload =
-            MessageFactory.create(info.directive.payload, ClosePayload::class.java)
-
-        setHandlingCompleted(info)
-
-        if (closePayload == null) {
-            Logger.w(TAG, "[executeHandleCloseDirective] (Close) no playServiceId at Payload.")
-            sendCloseFailed(info, "")
-            return
-        }
-
-        val currentRenderedInfo = findCurrentRenderedInfoMatchWithPlayServiceId(closePayload.playServiceId)
-        if (currentRenderedInfo == null) {
-            Logger.w(
-                TAG,
-                "[executeHandleCloseDirective] (Close) no current info matched with ${closePayload.playServiceId}."
-            )
-            sendCloseFailed(info, closePayload.playServiceId)
-            return
-        }
-
-        executeCancelUnknownInfo(currentRenderedInfo, true)
-        sendCloseEventWhenClosed(currentRenderedInfo, info)
     }
 
     private fun findInfoMatchWithTemplateId(from: Map<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>, templateId: String): TemplateDirectiveInfo? {
@@ -609,8 +567,6 @@ class DefaultDisplayAgent(
         configuration[WEATHER5] = blockingPolicy
         configuration[FULLIMAGE] = blockingPolicy
 
-        configuration[CLOSE] = blockingPolicy
-
         configuration[SCORE_1] = blockingPolicy
         configuration[SCORE_2] = blockingPolicy
         configuration[SEARCH_LIST_1] = blockingPolicy
@@ -684,15 +640,7 @@ class DefaultDisplayAgent(
     }
 
     private fun onDisplayCardCleared(templateDirectiveInfo: TemplateDirectiveInfo) {
-        val pendingCloseSucceededEvent = pendingCloseSucceededEvents[templateDirectiveInfo]
-            ?: return
-
-        val payload = MessageFactory.create(
-            pendingCloseSucceededEvent.directive.payload,
-            ClosePayload::class.java
-        ) ?: return
-
-        sendCloseSucceeded(pendingCloseSucceededEvent, payload.playServiceId)
+        pendingCloseSucceededEvents.remove(templateDirectiveInfo)?.onSuccess()
     }
 
     private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
@@ -788,43 +736,13 @@ class DefaultDisplayAgent(
     }
 
     private val pendingCloseSucceededEvents =
-        ConcurrentHashMap<TemplateDirectiveInfo, DirectiveInfo>()
+        ConcurrentHashMap<TemplateDirectiveInfo, CloseDirectiveHandler.Controller.OnCloseListener>()
 
     private fun sendCloseEventWhenClosed(
         closeTargetTemplateDirective: TemplateDirectiveInfo,
-        closeDirective: DirectiveInfo
+        listener: CloseDirectiveHandler.Controller.OnCloseListener
     ) {
-        pendingCloseSucceededEvents[closeTargetTemplateDirective] = closeDirective
-    }
-
-    private fun sendCloseEvent(eventName: String, info: DirectiveInfo, playServiceId: String) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
-                messageSender.sendMessage(
-                    EventMessageRequest.Builder(
-                        jsonContext,
-                        NAMESPACE,
-                        eventName,
-                        VERSION
-                    ).payload(JsonObject().apply {
-                        addProperty("playServiceId", playServiceId)
-                    }.toString())
-                        .referrerDialogRequestId(info.directive.header.dialogRequestId)
-                        .build()
-                )
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-            }
-        }, namespaceAndName)
-    }
-
-    private fun sendCloseSucceeded(info: DirectiveInfo, playServiceId: String) {
-        sendCloseEvent("$NAME_CLOSE$NAME_SUCCEEDED", info, playServiceId)
-    }
-
-    private fun sendCloseFailed(info: DirectiveInfo, playServiceId: String) {
-        sendCloseEvent("$NAME_CLOSE$NAME_FAILED", info, playServiceId)
+        pendingCloseSucceededEvents[closeTargetTemplateDirective] = listener
     }
 
     override fun provideState(
@@ -867,8 +785,7 @@ class DefaultDisplayAgent(
 
     private fun isTemplateDirective(namespaceAndName: NamespaceAndName): Boolean =
         when (namespaceAndName) {
-            UPDATE,
-            CLOSE -> false
+            UPDATE -> false
             else -> true
         }
 
@@ -906,6 +823,26 @@ class DefaultDisplayAgent(
         })
 
         return future.get()
+    }
+
+    override fun close(
+        playServiceId: String,
+        listener: CloseDirectiveHandler.Controller.OnCloseListener
+    ) {
+        executor.submit {
+            val currentRenderedInfo = findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId)
+            if (currentRenderedInfo == null) {
+                Logger.w(
+                    TAG,
+                    "[executeHandleCloseDirective] (Close) no current info matched with ${playServiceId}."
+                )
+                listener.onFailure()
+                return@submit
+            }
+
+            executeCancelUnknownInfo(currentRenderedInfo, true)
+            sendCloseEventWhenClosed(currentRenderedInfo, listener)
+        }
     }
 
     override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {

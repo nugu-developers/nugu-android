@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.core.inputprocessor
 
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
-import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive

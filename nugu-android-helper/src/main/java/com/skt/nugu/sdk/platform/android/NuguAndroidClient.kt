@@ -521,6 +521,10 @@ class NuguAndroidClient private constructor(
                                     ).apply {
                                         getDirectiveSequencer().addDirectiveHandler(this)
                                     }
+
+                                    CloseDirectiveHandler(this, getContextManager(), getMessageSender()).apply {
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
                                 }
                             }
                     })
