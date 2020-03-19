@@ -162,6 +162,8 @@ class NuguAndroidClient private constructor(
 
         internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
 
+        internal var enableDisplay: Boolean = true
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -248,6 +250,11 @@ class NuguAndroidClient private constructor(
          * @param handler the handler for text source directive. If not provided, default behavior at TextAgent.
          */
         fun textSourceHandler(handler: TextAgentInterface.TextSourceHandler?) = apply { this.textSourceHandler = handler }
+
+        /**
+         * @param enable the flag to enable or disable display.
+         */
+        fun enableDisplay(enable: Boolean) = apply { this.enableDisplay = enable }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -344,17 +351,19 @@ class NuguAndroidClient private constructor(
                             getDirectiveSequencer().addDirectiveHandler(this)
                         }
 
-                        AudioPlayerTemplateHandler(
-                            getPlaySynchronizer(),
-                            DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY
-                        ).apply {
-                            getDisplayPlayStackManager().addPlayContextProvider(this)
-                            setDisplay(this)
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                            getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
-                                AudioPlayerDirectivePreProcessor()
-                            )
-                            audioPlayerMetadataDirectiveHandler.addListener(this)
+                        if(builder.enableDisplay) {
+                            AudioPlayerTemplateHandler(
+                                getPlaySynchronizer(),
+                                DefaultFocusChannel.CONTENT_CHANNEL_PRIORITY
+                            ).apply {
+                                getDisplayPlayStackManager().addPlayContextProvider(this)
+                                setDisplay(this)
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                                getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
+                                    AudioPlayerDirectivePreProcessor()
+                                )
+                                audioPlayerMetadataDirectiveHandler.addListener(this)
+                            }
                         }
 
                         getAudioPlayStackManager().addPlayContextProvider(this)
@@ -479,28 +488,43 @@ class NuguAndroidClient private constructor(
                 }
             })
 
-            addAgentFactory(DefaultDisplayAgent.NAMESPACE, object: AgentFactory<DefaultDisplayAgent> {
-                override fun create(container: SdkContainer): DefaultDisplayAgent = with(container) {
-                    DefaultDisplayAgent(
-                        getContextManager(),
-                        getMessageSender(),
-                        getPlaySynchronizer(),
-                        getInputManagerProcessor(),
-                        DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY,
-                        builder.enableDisplayLifeCycleManagement
-                    ).apply {
-                        getDisplayPlayStackManager().addPlayContextProvider(this)
-                        getDirectiveSequencer().addDirectiveHandler(this)
+            if(builder.enableDisplay) {
+                addAgentFactory(
+                    DefaultDisplayAgent.NAMESPACE,
+                    object : AgentFactory<DefaultDisplayAgent> {
+                        override fun create(container: SdkContainer): DefaultDisplayAgent =
+                            with(container) {
+                                DefaultDisplayAgent(
+                                    getContextManager(),
+                                    getMessageSender(),
+                                    getPlaySynchronizer(),
+                                    getInputManagerProcessor(),
+                                    DefaultFocusChannel.DIALOG_CHANNEL_PRIORITY,
+                                    builder.enableDisplayLifeCycleManagement
+                                ).apply {
+                                    getDisplayPlayStackManager().addPlayContextProvider(this)
+                                    getDirectiveSequencer().addDirectiveHandler(this)
 
-                        ControlFocusDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                        }
-                        ControlScrollDirectiveHandler(this, getContextManager(), getMessageSender(), namespaceAndName).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                        }
-                    }
-                }
-            })
+                                    ControlFocusDirectiveHandler(
+                                        this,
+                                        getContextManager(),
+                                        getMessageSender(),
+                                        namespaceAndName
+                                    ).apply {
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
+                                    ControlScrollDirectiveHandler(
+                                        this,
+                                        getContextManager(),
+                                        getMessageSender(),
+                                        namespaceAndName
+                                    ).apply {
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
+                                }
+                            }
+                    })
+            }
 
             builder.bluetoothProvider?.let {
                 addAgentFactory(DefaultBluetoothAgent.NAMESPACE, object : AgentFactory<DefaultBluetoothAgent> {
