@@ -207,6 +207,7 @@ class DefaultAudioPlayerAgent(
         val directive: Directive,
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
+        var referrerDialogRequestId = directive.getDialogRequestId()
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
@@ -345,6 +346,11 @@ class DefaultAudioPlayerAgent(
                         waitFinishPreExecuteInfo = null
                     }
                 } else {
+                    currentAudioInfo?.let {
+                        // update referrerDialogRequestId
+                        nextAudioInfo.referrerDialogRequestId = it.referrerDialogRequestId
+                    }
+                    currentItem = nextAudioInfo
                     // fetch only offset
                     executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
 
@@ -1358,7 +1364,7 @@ class DefaultAudioPlayerAgent(
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offset)
                         }.toString()
-                    ).referrerDialogRequestId(directive.getDialogRequestId()).build()
+                    ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                     if (condition.invoke()) {
                         messageSender.sendMessage(messageRequest)
