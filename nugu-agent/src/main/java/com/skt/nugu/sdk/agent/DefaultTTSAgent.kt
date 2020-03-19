@@ -55,8 +55,7 @@ class DefaultTTSAgent(
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
-    private val channelName: String,
-    private val playStackPriority: Int
+    private val channelName: String
 ) : AbstractCapabilityAgent()
     , ChannelObserver
     , TTSAgentInterface
@@ -903,7 +902,7 @@ class DefaultTTSAgent(
         }
     }
 
-    private inner class PlayContextManager: TTSAgentInterface.Listener {
+    private inner class PlayContextManager : TTSAgentInterface.Listener {
         private val CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED = 7000L
         private var playContextValidTimestamp: Long = Long.MAX_VALUE
         private var currentPlayContext: PlayStackManagerInterface.PlayContext? = null
@@ -916,25 +915,27 @@ class DefaultTTSAgent(
             }
 
         override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
-            if(state == TTSAgentInterface.State.STOPPED) {
+            if (state == TTSAgentInterface.State.STOPPED) {
                 currentPlayContext = null
                 playContextValidTimestamp = Long.MAX_VALUE
-            } else if(state == TTSAgentInterface.State.FINISHED){
-                updateCurrentPlayContext(false)
-                playContextValidTimestamp = System.currentTimeMillis() + CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED
+            } else if (state == TTSAgentInterface.State.FINISHED) {
+                currentPlayContext?.let {
+                    currentPlayContext =
+                        PlayStackManagerInterface.PlayContext(it.playServiceId, it.timestamp, false)
+                    playContextValidTimestamp =
+                        System.currentTimeMillis() + CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED
+                }
             }
         }
 
         override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
-            updateCurrentPlayContext(true)
-            playContextValidTimestamp = Long.MAX_VALUE
-        }
-
-        private fun updateCurrentPlayContext(persistent: Boolean) {
-            currentInfo?.let {
-                it.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
-                    currentPlayContext = PlayStackManagerInterface.PlayContext(pushPlayServiceId, playStackPriority, persistent)
-                }
+            with(System.currentTimeMillis()) {
+                currentInfo?.payload?.playStackControl?.getPushPlayServiceId()
+                    ?.let { pushPlayServiceId ->
+                        currentPlayContext =
+                            PlayStackManagerInterface.PlayContext(pushPlayServiceId, this)
+                        playContextValidTimestamp = Long.MAX_VALUE
+                    }
             }
         }
     }
