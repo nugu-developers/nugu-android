@@ -29,8 +29,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import java.util.concurrent.*
 
 class AudioPlayerTemplateHandler(
-    private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackPriority: Int
+    private val playSynchronizer: PlaySynchronizerInterface
 ) : AbstractDirectiveHandler()
     , AudioPlayerDisplayInterface
     , AudioPlayerMetadataDirectiveHandler.Listener
@@ -100,9 +99,7 @@ class AudioPlayerTemplateHandler(
 
         fun getTemplateId(): String = directive.getMessageId()
 
-        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, playStackPriority)
-        }
+        var playContext: PlayStackManagerInterface.PlayContext? = null
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -221,6 +218,9 @@ class AudioPlayerTemplateHandler(
                     })
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
+                }
+                it.playContext = it.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
+                    PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
             }
         }

@@ -32,7 +32,6 @@ import kotlin.collections.HashMap
 
 class DefaultDisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val playStackPriority: Int,
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent, DisplayAgentInterface
@@ -100,9 +99,7 @@ class DefaultDisplayAgent(
             }
         }
 
-        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, playStackPriority)
-        }
+        var playContext: PlayStackManagerInterface.PlayContext? = null
     }
 
     private val pendingInfo = HashMap<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>()
@@ -285,6 +282,9 @@ class DefaultDisplayAgent(
 
                 it.renderResultListener?.onSuccess()
                 it.renderResultListener = null
+                it.playContext =  it.payload.playStackControl?.getPushPlayServiceId()?.let { pushPlayServiceId ->
+                    PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
+                }
             }
         }
     }

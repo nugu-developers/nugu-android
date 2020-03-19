@@ -18,10 +18,17 @@ package com.skt.nugu.sdk.core.interfaces.context
 interface PlayStackManagerInterface {
     data class PlayContext(
         val playServiceId: String,
-        val priority: Int,
+        val timestamp: Long,
         val persistent: Boolean = true
     ): Comparable<PlayContext> {
-        override fun compareTo(other: PlayContext): Int = other.priority - priority
+        override fun compareTo(other: PlayContext): Int {
+            val diff = other.timestamp - timestamp
+            return when {
+                diff > 0 -> 1
+                diff < 0 -> -1
+                else -> 0
+            }
+        }
     }
 
     interface PlayContextProvider {

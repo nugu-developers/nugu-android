@@ -229,9 +229,7 @@ class DefaultAudioPlayerAgent(
             }
         }
 
-        var playContext = payload.playStackControl?.getPushPlayServiceId()?.let {
-            PlayStackManagerInterface.PlayContext(it, playStackPriority)
-        }
+        var playContext: PlayStackManagerInterface.PlayContext? = null
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
@@ -366,6 +364,9 @@ class DefaultAudioPlayerAgent(
             progressTimer.stop()
             currentItem = item
             token = item.payload.audioItem.stream.token
+            item.playContext = item.payload.playStackControl?.getPushPlayServiceId()?.let {
+                PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis())
+            }
 
             executeFetchSource(item)
             executeFetchOffset(item.payload.audioItem.stream.offsetInMilliseconds)

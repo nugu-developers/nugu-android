@@ -36,20 +36,20 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
 
     override fun getPlayStack(): List<PlayStackProvider.PlayStackContext> {
         val playStack = TreeSet<PlayStackManagerInterface.PlayContext>()
-        var highestPriority: Int = Int.MIN_VALUE
+        var oldestTimestampOfPlayContext: Long = Long.MAX_VALUE
 
         providers.forEach {
             it.getPlayContext()?.let { playContext ->
                 playStack.add(playContext)
-                if(playContext.priority > highestPriority) {
-                    highestPriority = playContext.priority
+                if(playContext.timestamp < oldestTimestampOfPlayContext) {
+                    oldestTimestampOfPlayContext = playContext.timestamp
                 }
             }
         }
-        Logger.d(TAG, "[getPlayStack] provided : $playStack, highestPriority: $highestPriority")
+        Logger.d(TAG, "[getPlayStack] provided : $playStack, oldestTimestampOfPlayContext: $oldestTimestampOfPlayContext")
 
         val shouldBeExcluded:List<PlayStackManagerInterface.PlayContext> = playStack.filter {
-            it.priority < highestPriority && !it.persistent
+            it.timestamp > oldestTimestampOfPlayContext && !it.persistent
         }
         Logger.d(TAG, "[getPlayStack] shouldBeExcluded : $shouldBeExcluded")
 
@@ -57,7 +57,7 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
         val playStackContext = ArrayList<PlayStackProvider.PlayStackContext>()
 
         playStack.forEach {
-            playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.priority))
+            playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.timestamp))
         }
 
         Logger.d(TAG, "[getPlayStack] $playStackContext")

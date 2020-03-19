@@ -78,20 +78,19 @@ class PlayStackContextManager(
 
         visualPlayStackProvider?.getPlayStack()?.apply {
             forEach {
-                // audio player stack's priority higher than visual, so plus 1.
-                playStackMap[it.priority.toLong() * 2 + 1] = it.playServiceId
+                playStackMap[it.timestamp] = it.playServiceId
             }
         }
 
         audioPlayStackProvider.getPlayStack().apply {
             forEach {
-                playStackMap[it.priority.toLong() * 2 + 0] = it.playServiceId
+                playStackMap[it.timestamp] = it.playServiceId
             }
         }
 
         // remove duplicated value
         val playStackSet = LinkedHashSet<String>().apply {
-            playStackMap.forEach {
+            playStackMap.descendingMap().forEach {
                 add(it.value)
             }
         }
