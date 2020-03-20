@@ -109,7 +109,7 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
         speechEndPosition = null
         this.audioInputStreamReader = audioInputStreamReader
         this.audioFormat = audioFormat
-        audioInputStreamReader.let {
+        return audioInputStreamReader.let {
             endPointDetector.start(
                 object : AudioInput {
                     override fun getPosition(): Long = it.position()
@@ -123,10 +123,8 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
                 , timeoutInSeconds
                 , maxDurationInSeconds
                 , pauseLengthInMilliseconds
-            )
+            ).get()
         }
-
-        return true
     }
 
     override fun stopDetector() {
