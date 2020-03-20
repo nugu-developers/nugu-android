@@ -819,7 +819,7 @@ class DefaultASRAgent(
 
     private fun canRecognizing(): Boolean {
         // ASR은 IDLE이나 BUSY 상태일 경우에만 가능하다.
-        return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
+        return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY
     }
 
     private fun sendListenFailed(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
