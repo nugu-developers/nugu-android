@@ -690,6 +690,12 @@ class DefaultASRAgent(
     ) {
         Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream")
         executor.submit {
+            if(state == ASRAgentInterface.State.EXPECTING_SPEECH) {
+                Logger.w(TAG, "[startRecognition] cannot start recognize when EXPECT_SPEECH state.")
+                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
+                return@submit
+            }
+
             if (audioInputStream != null && audioFormat != null) {
                 executeStartRecognition(
                     audioInputStream,
@@ -819,7 +825,7 @@ class DefaultASRAgent(
 
     private fun canRecognizing(): Boolean {
         // ASR은 IDLE이나 BUSY 상태일 경우에만 가능하다.
-        return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY
+        return !state.isRecognizing() || state == ASRAgentInterface.State.BUSY || state == ASRAgentInterface.State.EXPECTING_SPEECH
     }
 
     private fun sendListenFailed(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
