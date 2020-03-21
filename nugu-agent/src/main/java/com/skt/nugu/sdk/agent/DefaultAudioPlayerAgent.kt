@@ -734,7 +734,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("favorite", favorite)
                             }.toString()
-                        ).build()
+                        ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -761,7 +761,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("repeat", mode.name)
                             }.toString()
-                        ).build()
+                        ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -788,7 +788,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("shuffle", shuffle)
                             }.toString()
-                        ).build()
+                        ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
