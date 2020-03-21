@@ -33,7 +33,6 @@ import kotlin.concurrent.withLock
 class ContextManager : ContextManagerInterface {
     companion object {
         private const val TAG = "ContextManager"
-        const val SUPPORTED_INTERFACES = "supportedInterfaces"
     }
 
     private data class StateInfo(
@@ -127,24 +126,16 @@ class ContextManager : ContextManagerInterface {
     private fun buildContext(): JsonObject {
         Logger.d(TAG, "[buildContext]")
         return JsonObject().apply {
-            val supportedInterfaces = JsonObject()
-            val client = JsonObject()
-
-            add(SUPPORTED_INTERFACES, supportedInterfaces)
-            add("client", client)
-
             for (it in namespaceNameToStateInfo) {
                 if (it.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETIMES == it.value.refreshPolicy) {
                     // pass
                 } else {
-                    if (it.key.namespace == SUPPORTED_INTERFACES) {
-                        supportedInterfaces.add(
-                            it.key.name,
-                            JsonParser().parse(it.value.jsonState).asJsonObject
-                        )
-                    } else if (it.key.namespace == "client") {
-                        client.add(it.key.name, JsonParser().parse(it.value.jsonState))
+                    var jsonObject = getAsJsonObject(it.key.namespace)
+                    if(jsonObject == null) {
+                        jsonObject = JsonObject()
+                        add(it.key.namespace, jsonObject)
                     }
+                    jsonObject.add(it.key.name, JsonParser().parse(it.value.jsonState))
                 }
             }
         }
