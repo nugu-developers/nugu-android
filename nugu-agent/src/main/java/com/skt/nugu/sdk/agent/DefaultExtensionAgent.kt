@@ -41,7 +41,7 @@ class DefaultExtensionAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
     private val inputProcessorManager: InputProcessorManagerInterface
-) : AbstractCapabilityAgent()
+) : AbstractCapabilityAgent(NAMESPACE)
     , ExtensionAgentInterface
     , InputProcessor {
 
@@ -72,8 +72,6 @@ class DefaultExtensionAgent(
         private const val PAYLOAD_DATA = "data"
     }
 
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
     private val executor = Executors.newSingleThreadExecutor()
     private val issueCommandCallbackMap = ConcurrentHashMap<String, ExtensionAgentInterface.OnCommandIssuedCallback>()
 

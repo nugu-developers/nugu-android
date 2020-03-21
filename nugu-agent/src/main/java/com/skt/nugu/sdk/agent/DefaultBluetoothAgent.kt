@@ -43,7 +43,7 @@ class DefaultBluetoothAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val bluetoothProvider : BluetoothProvider?
-) : AbstractCapabilityAgent(),
+) : AbstractCapabilityAgent(NAMESPACE),
     BluetoothAgentInterface {
     /**
      * This class handles providing configuration for the bluetooth Capability agent
@@ -124,8 +124,6 @@ class DefaultBluetoothAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()

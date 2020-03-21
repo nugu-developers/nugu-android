@@ -43,7 +43,7 @@ class DefaultDelegationAgent(
     private val messageSender: MessageSender,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val defaultClient: DelegationClient
-) : AbstractCapabilityAgent(), DelegationAgentInterface, InputProcessor {
+) : AbstractCapabilityAgent(NAMESPACE), DelegationAgentInterface, InputProcessor {
 
     internal data class DelegatePayload(
         @SerializedName("appId")
@@ -68,9 +68,6 @@ class DefaultDelegationAgent(
             NAME_DELEGATE
         )
     }
-
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     private val executor = Executors.newSingleThreadExecutor()
 

@@ -36,7 +36,7 @@ import java.util.concurrent.Executors
 class DefaultSpeakerAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender
-) : AbstractCapabilityAgent(), SpeakerManagerInterface {
+) : AbstractCapabilityAgent(NAMESPACE), SpeakerManagerInterface {
     companion object {
         private const val TAG = "SpeakerManager"
 
@@ -91,9 +91,6 @@ class DefaultSpeakerAgent(
     private val speakerMap: MutableMap<Speaker.Type, Speaker> = HashMap()
 
     private val executor = Executors.newSingleThreadExecutor()
-
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)

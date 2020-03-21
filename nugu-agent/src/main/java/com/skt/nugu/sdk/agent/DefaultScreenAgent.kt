@@ -34,7 +34,7 @@ class DefaultScreenAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
     private val screen: Screen
-) : AbstractCapabilityAgent() {
+) : AbstractCapabilityAgent(NAMESPACE) {
     companion object {
         private const val TAG = "ScreenAgent"
         const val NAMESPACE = "Screen"
@@ -70,9 +70,6 @@ class DefaultScreenAgent(
         @SerializedName("brightness")
         val brightness: Long
     )
-
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     private val executor = Executors.newSingleThreadExecutor()
 
