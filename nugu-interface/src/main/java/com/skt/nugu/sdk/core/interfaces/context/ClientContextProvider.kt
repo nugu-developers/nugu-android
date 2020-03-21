@@ -18,6 +18,9 @@ package com.skt.nugu.sdk.core.interfaces.context
 
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 
+/**
+ * Interface to provide context of client's element
+ */
 interface ClientContextProvider : ContextStateProvider {
     override val namespaceAndName: NamespaceAndName
         get() = NamespaceAndName("client", getName())
