@@ -42,7 +42,7 @@ class DefaultTextAgent(
     private val contextManager: ContextManagerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val textSourceHandler: TextAgentInterface.TextSourceHandler?
-) : AbstractCapabilityAgent()
+) : AbstractCapabilityAgent(NAMESPACE)
     , InputProcessor
     , TextAgentInterface
     , DialogSessionManagerInterface.OnSessionStateChangeListener {
@@ -74,8 +74,6 @@ class DefaultTextAgent(
     private val requestListeners = HashMap<String, TextAgentInterface.RequestListener>()
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)

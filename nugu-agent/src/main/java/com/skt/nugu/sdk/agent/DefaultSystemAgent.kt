@@ -128,9 +128,6 @@ class DefaultSystemAgent(
         const val SECONDS = 1000L
     }
 
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
-
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
     private var inActiveFuture: ScheduledFuture<*>? = null
     //private var eventTimer = Timer()

@@ -26,7 +26,7 @@ abstract class AbstractSystemAgent (
     protected val messageSender: MessageSender,
     protected val connectionManager: ConnectionManagerInterface,
     protected val contextManager: ContextManagerInterface
-) : AbstractCapabilityAgent(),
+) : AbstractCapabilityAgent(NAMESPACE),
     ConnectionStatusListener, SystemAgentInterface, ContextRequester {
     companion object {
         const val NAMESPACE = "System"

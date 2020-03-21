@@ -16,7 +16,8 @@
 package com.skt.nugu.sdk.agent
 
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 
 /**
  * This is a base class for CapabilityAgent which should perform following roles:
@@ -24,6 +25,12 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
  * * should handle directives which provided
  * * should provide an capability context's state
  */
-abstract class AbstractCapabilityAgent : CapabilityAgent
+abstract class AbstractCapabilityAgent(private val interfaceName: String) : CapabilityAgent
     , AbstractDirectiveHandler()
-    , ContextStateProvider
+    , SupportedInterfaceContextProvider {
+
+    final override val namespaceAndName: NamespaceAndName
+        get() = super.namespaceAndName
+
+    override fun getInterfaceName(): String = interfaceName
+}

@@ -59,7 +59,7 @@ class DefaultASRAgent(
     endPointDetector: AudioEndPointDetector?,
     private val defaultEpdTimeoutMillis: Long,
     private val channelName: String
-) : AbstractCapabilityAgent()
+) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
     , DialogSessionManagerInterface.OnSessionStateChangeListener
     , SpeechRecognizer.OnStateChangeListener
@@ -163,12 +163,6 @@ class DefaultASRAgent(
                 }
             }
         }
-
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName(
-            "supportedInterfaces",
-            NAMESPACE
-        )
 
     init {
         serverEpdSpeechRecognizer =

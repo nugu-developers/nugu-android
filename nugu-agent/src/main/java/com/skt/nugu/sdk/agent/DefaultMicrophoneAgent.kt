@@ -34,7 +34,7 @@ class DefaultMicrophoneAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val defaultMicrophone: Microphone?
-) : AbstractCapabilityAgent(), Microphone.OnSettingChangeListener {
+) : AbstractCapabilityAgent(NAMESPACE), Microphone.OnSettingChangeListener {
     internal data class SetMicPayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
@@ -60,8 +60,6 @@ class DefaultMicrophoneAgent(
         const val KEY_STATUS = "status"
     }
 
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
     private val executor = Executors.newSingleThreadExecutor()
 
     init {

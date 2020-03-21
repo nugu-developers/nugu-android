@@ -56,7 +56,7 @@ class DefaultTTSAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val channelName: String
-) : AbstractCapabilityAgent()
+) : AbstractCapabilityAgent(NAMESPACE)
     , ChannelObserver
     , TTSAgentInterface
     , InputProcessor
@@ -182,9 +182,6 @@ class DefaultTTSAgent(
     private var isAlreadyPausing = false
 
     private val playContextManager = PlayContextManager()
-
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     init {
         Logger.d(TAG, "[init]")
