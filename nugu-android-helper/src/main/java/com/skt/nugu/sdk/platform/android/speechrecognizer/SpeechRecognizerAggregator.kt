@@ -29,7 +29,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 
 class SpeechRecognizerAggregator(
-    private val keywordDetector: KeywordDetector,
+    private val keywordDetector: KeywordDetector?,
     private val speechProcessor: SpeechProcessorDelegate,
     private val audioProvider: AudioProvider,
     private val handler: Handler = Handler(Looper.getMainLooper()),
@@ -57,7 +57,7 @@ class SpeechRecognizerAggregator(
     private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
 
     init {
-        keywordDetector.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
+        keywordDetector?.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
             override fun onStateChange(state: KeywordDetector.State) {
                 Log.d(TAG, "[KeywordDetector::onStateChange] state: $state")
                 executor.submit {
@@ -87,7 +87,7 @@ class SpeechRecognizerAggregator(
                 executor.submit {
                     val aggregatorState = when (state) {
                         AudioEndPointDetector.State.EXPECTING_SPEECH -> {
-                            if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
+                            if (keywordDetector?.getDetectorState() == KeywordDetector.State.ACTIVE) {
                                 keywordDetector.stopDetect()
                             }
                             isTriggerStoppingByStartListening = false
@@ -114,6 +114,11 @@ class SpeechRecognizerAggregator(
         epdParam: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?
     ) {
+        if(keywordDetector == null) {
+            Log.w(TAG, "[startListeningWithTrigger] ignored: keywordDetector is null")
+            return
+        }
+
         executor.submit {
             if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
                 Log.w(TAG, "[startListeningWithTrigger] failed - already executing")
@@ -195,11 +200,11 @@ class SpeechRecognizerAggregator(
         executor.submit {
             Log.d(
                 TAG,
-                "[startListening] on executor - wakeupInfo: $wakeupInfo, state: $state, keywordDetectorState: ${keywordDetector.getDetectorState()}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
+                "[startListening] on executor - wakeupInfo: $wakeupInfo, state: $state, keywordDetectorState: ${keywordDetector?.getDetectorState()}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
             )
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.WAITING -> {
-                    if(isTriggerStoppingByStartListening || keywordDetector.getDetectorState() == KeywordDetector.State.INACTIVE) {
+                    if(isTriggerStoppingByStartListening || keywordDetector?.getDetectorState() == KeywordDetector.State.INACTIVE) {
                         Log.w(TAG, "[startListening] will be started after trigger stopped. skip request.")
                         return@submit
                     }
@@ -277,7 +282,7 @@ class SpeechRecognizerAggregator(
         executor.submit {
             Log.d(TAG, "[stop] on executor")
             when (state) {
-                SpeechRecognizerAggregatorInterface.State.WAITING -> keywordDetector.stopDetect()
+                SpeechRecognizerAggregatorInterface.State.WAITING -> keywordDetector?.stopDetect()
                 SpeechRecognizerAggregatorInterface.State.WAKEUP,
                 SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
                 SpeechRecognizerAggregatorInterface.State.SPEECH_START,
@@ -303,6 +308,11 @@ class SpeechRecognizerAggregator(
     }
 
     override fun stopTrigger() {
+        if(keywordDetector == null) {
+            Log.w(TAG, "[stopTrigger] ignored: keywordDetector is null")
+            return
+        }
+
         Log.d(TAG, "[stopTrigger]")
         executor.submit {
             executeStopTrigger()
@@ -312,7 +322,7 @@ class SpeechRecognizerAggregator(
     private fun executeStopTrigger() {
         Log.d(TAG, "[executeStopTrigger]")
         if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
-            keywordDetector.stopDetect()
+            keywordDetector?.stopDetect()
         }
     }
 
