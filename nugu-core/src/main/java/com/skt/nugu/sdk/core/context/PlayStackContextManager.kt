@@ -17,10 +17,7 @@ package com.skt.nugu.sdk.core.context
 
 import com.google.gson.JsonArray
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.Executors
@@ -36,16 +33,15 @@ class PlayStackContextManager(
     contextManager: ContextManagerInterface,
     private val audioPlayStackProvider: PlayStackProvider,
     private val visualPlayStackProvider: PlayStackProvider?
-) : ContextStateProvider {
+) : ClientContextProvider {
     companion object {
         private const val TAG = "PlayStackContextManager"
 
-        private const val CONTEXT_NAMESPACE = "client"
         private const val PROVIDER_NAME = "playStack"
     }
 
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName(CONTEXT_NAMESPACE, PROVIDER_NAME)
+    override fun getName(): String = PROVIDER_NAME
+
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
