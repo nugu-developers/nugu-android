@@ -18,15 +18,12 @@ package com.skt.nugu.sdk.agent.battery
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.context.*
 
 class DefaultBatteryAgent(
     private val batteryStatusProvider: BatteryStatusProvider,
     contextStateProviderRegistry: ContextStateProviderRegistry
-) : CapabilityAgent, ContextStateProvider {
+) : CapabilityAgent, SupportedInterfaceContextProvider {
     companion object {
         private const val TAG = "BatteryAgent"
 
@@ -34,11 +31,11 @@ class DefaultBatteryAgent(
         private const val VERSION = "1.0"
     }
 
-    override val namespaceAndName: NamespaceAndName = NamespaceAndName("supportedInterfaces", NAMESPACE)
-
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
     }
+
+    override fun getInterfaceName(): String = NAMESPACE
 
     override fun provideState(
         contextSetter: ContextSetterInterface,

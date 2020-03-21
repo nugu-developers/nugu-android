@@ -22,9 +22,10 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
+import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 
-class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface, ContextStateProvider {
+class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
+    SupportedInterfaceContextProvider {
     companion object {
         private const val TAG = "DefaultLocationAgent"
 
@@ -34,8 +35,7 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface, ContextSta
 
     private var locationProvider: LocationProvider? = null
 
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
+    override fun getInterfaceName(): String = NAMESPACE
 
     override fun setLocationProvider(provider: LocationProvider) {
         locationProvider = provider
