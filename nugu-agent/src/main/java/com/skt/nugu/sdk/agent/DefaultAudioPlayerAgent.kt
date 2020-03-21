@@ -65,7 +65,7 @@ class DefaultAudioPlayerAgent(
     private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent
-    , ContextStateProvider
+    , SupportedInterfaceContextProvider
     , ChannelObserver
     , AudioPlayerAgentInterface
     , PlaybackHandler
@@ -152,8 +152,6 @@ class DefaultAudioPlayerAgent(
     private val activityListeners =
         LinkedHashSet<AudioPlayerAgentInterface.Listener>()
     private val durationListeners = LinkedHashSet<AudioPlayerAgentInterface.OnDurationListener>()
-    override val namespaceAndName: NamespaceAndName =
-        NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -557,6 +555,8 @@ class DefaultAudioPlayerAgent(
             directiveSequencer.addDirectiveHandler(this)
         }
     }
+
+    override fun getInterfaceName(): String = NAMESPACE
 
     private fun notifyOnReleaseAudioInfo(info: AudioInfo, immediately: Boolean) {
         Logger.d(TAG, "[notifyOnReleaseAudioInfo] $info")
