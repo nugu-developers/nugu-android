@@ -1385,15 +1385,12 @@ class DefaultAudioPlayerAgent(
         executor.submit {
             Logger.w(TAG, "[onButtonPressed] button: $button, state : $currentActivity")
             when (button) {
-                PlaybackButton.PLAY -> {
-                    executeResumeByButton()
-//                    sendPlayCommandIssued()
-                }
-                PlaybackButton.PAUSE -> {
-                    executePause(PauseReason.BY_PAUSE_DIRECTIVE)
-//                    sendPauseCommandIssued()
-                }
-                PlaybackButton.STOP -> sendStopCommandIssued()
+                PlaybackButton.PLAY -> executeResumeByButton()
+                                        //sendPlayCommandIssued()
+                PlaybackButton.PAUSE -> executePause(PauseReason.BY_PAUSE_DIRECTIVE)
+                                        //sendPauseCommandIssued()
+                PlaybackButton.STOP -> executeStop()
+                                        //sendStopCommandIssued()
                 PlaybackButton.NEXT -> sendNextCommandIssued()
                 PlaybackButton.PREVIOUS -> sendPreviousCommandIssued()
             }
