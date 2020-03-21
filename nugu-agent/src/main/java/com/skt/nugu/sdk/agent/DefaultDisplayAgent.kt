@@ -35,7 +35,7 @@ class DefaultDisplayAgent(
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent, DisplayAgentInterface
-    , ContextStateProvider
+    , SupportedInterfaceContextProvider
     , ControlFocusDirectiveHandler.Controller
     , ControlScrollDirectiveHandler.Controller
     , CloseDirectiveHandler.Controller
@@ -117,11 +117,6 @@ class DefaultDisplayAgent(
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private var renderer: DisplayAgentInterface.Renderer? = null
 
-    override val namespaceAndName: NamespaceAndName = NamespaceAndName(
-        "supportedInterfaces",
-        NAMESPACE
-    )
-
     init {
         contextLayerTimer?.apply {
             EnumSet.allOf(DisplayAgentInterface.ContextLayer::class.java).forEach {
@@ -129,6 +124,8 @@ class DefaultDisplayAgent(
             }
         }
     }
+
+    override fun getInterfaceName(): String = NAMESPACE
 
     private fun executePreparePendingInfo(info: AbstractDirectiveHandler.DirectiveInfo, payload: TemplatePayload) {
         TemplateDirectiveInfo(info, payload).apply {
