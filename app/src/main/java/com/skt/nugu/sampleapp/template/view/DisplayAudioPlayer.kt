@@ -30,6 +30,8 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
         setContentView(R.layout.view_display_audioplayer)
     }
 
+    val background by lazy { findViewById<ImageView>(R.id.iv_background) }
+
     val image by lazy { findViewById<ImageView>(R.id.iv_content_image) }
 
     val header by lazy { findViewById<TextView>(R.id.tv_content_header) }
