@@ -21,6 +21,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import java.net.URLDecoder
@@ -129,6 +130,7 @@ class NuguOAuth private constructor(
      * Request an authentication with auth code
      */
     fun login(stateListener: AuthStateListener?) {
+        Logger.d(TAG, "[login]")
         clearAuthorization()
 
         stateListener?.let {
@@ -143,6 +145,7 @@ class NuguOAuth private constructor(
      * Executes logout(Disconnect) the device in a thread.
      */
     override fun logout() {
+        Logger.d(TAG, "[logout]")
         executor.submit {
             clearAuthorization()
         }
@@ -175,6 +178,7 @@ class NuguOAuth private constructor(
      * @param token The auth token
      */
     fun clearAuthorization() {
+        Logger.d(TAG, "[clearAuthorization]")
         client.getCredentials().clear()
         setAuthState(AuthStateListener.State.UNINITIALIZED)
     }
@@ -184,6 +188,7 @@ class NuguOAuth private constructor(
      * @param token The auth token
      */
     private fun setAuthorization(token: String) {
+        Logger.d(TAG, "[setAuthorization]")
         client.getCredentials().accessToken = token
         setAuthState(AuthStateListener.State.REFRESHED)
     }
