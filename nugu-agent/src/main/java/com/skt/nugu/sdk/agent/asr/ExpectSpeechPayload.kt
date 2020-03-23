@@ -24,8 +24,6 @@ data class ExpectSpeechPayload private constructor(
     val sessionId: String,
     @SerializedName("playServiceId")
     val playServiceId: String?,
-    @SerializedName("property")
-    val property: String?,
     @SerializedName("domainTypes")
     val domainTypes: Array<String>?
 ) {
@@ -38,7 +36,6 @@ data class ExpectSpeechPayload private constructor(
         if (timeoutInMilliseconds != other.timeoutInMilliseconds) return false
         if (sessionId != other.sessionId) return false
         if (playServiceId != other.playServiceId) return false
-        if (property != other.property) return false
         if (domainTypes != null) {
             if (other.domainTypes == null) return false
             if (!domainTypes.contentEquals(other.domainTypes)) return false
@@ -51,7 +48,6 @@ data class ExpectSpeechPayload private constructor(
         var result = timeoutInMilliseconds.hashCode()
         result = 31 * result + sessionId.hashCode()
         result = 31 * result + (playServiceId?.hashCode() ?: 0)
-        result = 31 * result + (property?.hashCode() ?: 0)
         result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
         return result
     }

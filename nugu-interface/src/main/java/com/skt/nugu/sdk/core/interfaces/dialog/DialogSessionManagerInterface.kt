@@ -23,7 +23,6 @@ package com.skt.nugu.sdk.core.interfaces.dialog
 interface DialogSessionManagerInterface {
     data class DialogSessionInfo(
         val sessionId: String,
-        val property: String?,
         val domainTypes: Array<String>?,
         val playServiceId: String?
     ) {
@@ -34,7 +33,6 @@ interface DialogSessionManagerInterface {
             other as DialogSessionInfo
 
             if (sessionId != other.sessionId) return false
-            if (property != other.property) return false
             if (domainTypes != null) {
                 if (other.domainTypes == null) return false
                 if (!domainTypes.contentEquals(other.domainTypes)) return false
@@ -46,7 +44,6 @@ interface DialogSessionManagerInterface {
 
         override fun hashCode(): Int {
             var result = sessionId.hashCode()
-            result = 31 * result + (property?.hashCode() ?: 0)
             result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
             result = 31 * result + (playServiceId?.hashCode() ?: 0)
             return result
@@ -54,11 +51,11 @@ interface DialogSessionManagerInterface {
     }
 
     interface OnSessionStateChangeListener {
-        fun onSessionOpened(sessionId: String, property: String?, domainTypes: Array<String>?, playServiceId: String?)
+        fun onSessionOpened(sessionId: String, domainTypes: Array<String>?, playServiceId: String?)
         fun onSessionClosed(sessionId: String)
     }
 
-    fun openSession(sessionId: String, property: String?, domainTypes: Array<String>?, playServiceId: String?)
+    fun openSession(sessionId: String, domainTypes: Array<String>?, playServiceId: String?)
     fun closeSession()
 
     fun addListener(listener: OnSessionStateChangeListener)

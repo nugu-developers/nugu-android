@@ -202,9 +202,6 @@ class DefaultTextAgent(
                     info.playServiceId?.let {
                         addProperty("playServiceId", it)
                     }
-                    info.property?.let {
-                        addProperty("property", it)
-                    }
 
                     info.domainTypes?.let { domainTypes ->
                         add("domainTypes", JsonArray().apply {
@@ -277,14 +274,12 @@ class DefaultTextAgent(
 
     override fun onSessionOpened(
         sessionId: String,
-        property: String?,
         domainTypes: Array<String>?,
         playServiceId: String?
     ) {
         dialogSessionInfo =
             DialogSessionManagerInterface.DialogSessionInfo(
                 sessionId,
-                property,
                 domainTypes,
                 playServiceId
             )

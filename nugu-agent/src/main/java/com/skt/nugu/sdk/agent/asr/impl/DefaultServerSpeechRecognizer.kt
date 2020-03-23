@@ -108,7 +108,6 @@ class DefaultServerSpeechRecognizer(
                 codec = AsrRecognizeEventPayload.CODEC_SPEEX,
                 sessionId = payload?.sessionId,
                 playServiceId = payload?.playServiceId,
-                property = payload?.property,
                 domainTypes = payload?.domainTypes,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
