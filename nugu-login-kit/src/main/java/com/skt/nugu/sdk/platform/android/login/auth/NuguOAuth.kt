@@ -63,7 +63,10 @@ class NuguOAuth private constructor(
             context: Context,
             authServerBaseUrl: String = BASE_AUTH_URL
         ): NuguOAuth {
-            instance = NuguOAuth(context, authServerBaseUrl)
+            Logger.d(TAG, "[create]")
+            if(instance == null) {
+                instance = NuguOAuth(context, authServerBaseUrl)
+            }
             return instance as NuguOAuth
         }
 
