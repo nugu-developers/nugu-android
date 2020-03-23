@@ -112,7 +112,6 @@ internal class RegistryClient(private var address: String) : Transport {
                                         )
                                         .setPort(it.asJsonObject.get("port").asInt)
                                         .setHostName(it.asJsonObject.get("hostname").asString)
-                                        .setAddress(it.asJsonObject.get("address").asString)
                                         .setRetryCountLimit(it.asJsonObject.get("retryCountLimit").asInt)
                                         .setConnectionTimeout(it.asJsonObject.get("connectionTimeout").asInt)
                                 )

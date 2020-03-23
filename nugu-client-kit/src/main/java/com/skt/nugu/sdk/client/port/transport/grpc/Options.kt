@@ -19,8 +19,6 @@ package com.skt.nugu.sdk.client.port.transport.grpc
  * Provides options for transport
  */
 data class Options(
-    /** Returns the address. */
-    val address: String,
     /** Returns the hostname. */
     val hostname: String,
     /** Returns the port. */
