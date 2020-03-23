@@ -237,10 +237,10 @@ class RenderDirectiveHandler(
             return
         }
 
-        if (info.directive.getNamespaceAndName() != CUSTOM_TEMPLATE && payload.token.isNullOrBlank()) {
-            setHandlingFailed(info, "[preHandleDirective] invalid payload: empty token")
-            return
-        }
+//        if (info.directive.getNamespaceAndName() != CUSTOM_TEMPLATE && payload.token.isNullOrBlank()) {
+//            setHandlingFailed(info, "[preHandleDirective] invalid payload: empty token")
+//            return
+//        }
 
         controller.preRender(RenderDirectiveInfo(info, payload))
     }
