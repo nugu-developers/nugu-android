@@ -705,22 +705,25 @@ class DefaultTTSAgent(
 
     private fun executePlaybackStarted() {
         Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
-
         val info = currentInfo ?: return
-
         setCurrentState(TTSAgentInterface.State.PLAYING)
+        sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
+    }
 
+    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo) {
         val playServiceId = info.getPlayServiceId()
-        if (!playServiceId.isNullOrBlank()) {
-            val referrerDialogRequestId = info.directive.header.dialogRequestId
-            sendEventWithToken(
-                NAMESPACE,
-                EVENT_SPEECH_STARTED,
-                playServiceId,
-                info.payload.token,
-                referrerDialogRequestId
-            )
+        if(playServiceId.isNullOrBlank()) {
+            Logger.d(TAG, "[sendPlaybackEvent] skip : playServiceId: $playServiceId")
+            return
         }
+
+        sendEventWithToken(
+            NAMESPACE,
+            name,
+            playServiceId,
+            info.payload.token,
+            info.directive.header.dialogRequestId
+        )
     }
 
     private fun executePlaybackStopped() {
@@ -733,17 +736,7 @@ class DefaultTTSAgent(
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.STOPPED)
 
-        val playServiceId = info.getPlayServiceId()
-        if (!playServiceId.isNullOrBlank()) {
-            val referrerDialogRequestId = info.directive.header.dialogRequestId
-            sendEventWithToken(
-                NAMESPACE,
-                EVENT_SPEECH_STOPPED,
-                playServiceId,
-                info.payload.token,
-                referrerDialogRequestId
-            )
-        }
+        sendPlaybackEvent(EVENT_SPEECH_STOPPED, info)
 
         with(info) {
             if (cancelByStop) {
@@ -768,17 +761,7 @@ class DefaultTTSAgent(
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.FINISHED)
 
-        val playServiceId = info.getPlayServiceId()
-        if (!playServiceId.isNullOrBlank()) {
-            val referrerDialogRequestId = info.directive.header.dialogRequestId
-            sendEventWithToken(
-                NAMESPACE,
-                EVENT_SPEECH_FINISHED,
-                playServiceId,
-                info.payload.token,
-                referrerDialogRequestId
-            )
-        }
+        sendPlaybackEvent(EVENT_SPEECH_FINISHED, info)
 
         setHandlingCompleted()
         releaseSync(info)
