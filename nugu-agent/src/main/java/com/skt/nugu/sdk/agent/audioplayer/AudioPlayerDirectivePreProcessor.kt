@@ -111,7 +111,7 @@ class AudioPlayerDirectivePreProcessor :
                     UUIDGeneration.timeUUID().toString(),
                     name,
                     namespace,
-                    AudioPlayerTemplateHandler.VERSION,
+                    AudioPlayerTemplateHandler.VERSION.toString(),
                     header.referrerDialogRequestId
                 ), template
             )

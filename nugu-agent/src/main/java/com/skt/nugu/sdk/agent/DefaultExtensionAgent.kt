@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -56,7 +57,7 @@ class DefaultExtensionAgent(
         private const val TAG = "DefaultExtensionAgent"
 
         const val NAMESPACE = "Extension"
-        const val VERSION = "1.1"
+        private val VERSION = Version(1,1)
 
         private const val NAME_ACTION = "Action"
         private const val NAME_ACTION_SUCCEEDED = "ActionSucceeded"
@@ -89,7 +90,7 @@ class DefaultExtensionAgent(
     }
 
     private fun buildContext(): String = JsonObject().apply {
-        addProperty("version", VERSION)
+        addProperty("version", VERSION.toString())
         client?.getData()?.let {
             try {
                 add("data", JsonParser.parseString(it).asJsonObject)
@@ -187,7 +188,7 @@ class DefaultExtensionAgent(
         Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                     .payload(JsonObject().apply {
                         addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
                     }.toString())
@@ -218,7 +219,7 @@ class DefaultExtensionAgent(
 
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, NAME_COMMAND_ISSUED, VERSION)
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, NAME_COMMAND_ISSUED, VERSION.toString())
                     .dialogRequestId(dialogRequestId)
                     .payload(JsonObject().apply {
                         addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)

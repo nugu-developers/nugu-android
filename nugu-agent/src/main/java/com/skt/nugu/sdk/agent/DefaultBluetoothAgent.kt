@@ -34,6 +34,7 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
@@ -52,7 +53,7 @@ class DefaultBluetoothAgent(
         private const val TAG = "DefaultBluetoothAgent"
 
         const val NAMESPACE = "Bluetooth"
-        const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
 
         /** directives */
         const val NAME_START_DISCOVERABLE_MODE = "StartDiscoverableMode"
@@ -168,7 +169,7 @@ class DefaultBluetoothAgent(
         executor.submit {
             bluetoothProvider?.let {
                 val context = JsonObject().apply {
-                    addProperty("version", VERSION)
+                    addProperty("version", VERSION.toString())
 
                     it.device()?.let { hostController ->
                         add("device", JsonObject().apply {
@@ -231,7 +232,7 @@ class DefaultBluetoothAgent(
 
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                     .referrerDialogRequestId(referrerDialogRequestId)
                     .payload(JsonObject().apply {
                         addProperty(KEY_PLAY_SERVICE_ID, playServiceId)

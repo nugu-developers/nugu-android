@@ -37,7 +37,7 @@ class AudioPlayerTemplateHandler(
     companion object {
         private const val TAG = "AudioPlayerTemplateHandler"
         const val NAMESPACE = DefaultAudioPlayerAgent.NAMESPACE
-        const val VERSION = DefaultAudioPlayerAgent.VERSION
+        val VERSION = DefaultAudioPlayerAgent.VERSION
 
         private const val NAME_AUDIOPLAYER_TEMPLATE1 = "Template1"
         private const val NAME_AUDIOPLAYER_TEMPLATE2 = "Template2"

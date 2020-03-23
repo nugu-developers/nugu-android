@@ -104,7 +104,7 @@ class DefaultClientSpeechRecognizer(
             context,
             DefaultASRAgent.RECOGNIZE.namespace,
             DefaultASRAgent.RECOGNIZE.name,
-            DefaultASRAgent.VERSION
+            DefaultASRAgent.VERSION.toString()
         ).payload(
             AsrRecognizeEventPayload(
                 codec = AsrRecognizeEventPayload.CODEC_SPEEX,
@@ -360,7 +360,7 @@ class DefaultClientSpeechRecognizer(
                     it.context,
                     DefaultASRAgent.NAMESPACE,
                     DefaultASRAgent.EVENT_STOP_RECOGNIZE,
-                    DefaultASRAgent.VERSION
+                    DefaultASRAgent.VERSION.toString()
                 ).referrerDialogRequestId(it.dialogRequestId).build()
             )
         }

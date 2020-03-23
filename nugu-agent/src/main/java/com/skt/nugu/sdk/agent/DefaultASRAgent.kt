@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -69,7 +70,7 @@ class DefaultASRAgent(
         private const val TAG = "DefaultASRAgent"
 
         const val NAMESPACE = "ASR"
-        const val VERSION = "1.0"
+        val VERSION = Version(1,0)
 
         const val NAME_EXPECT_SPEECH = "ExpectSpeech"
         const val NAME_RECOGNIZE = "Recognize"
@@ -421,7 +422,7 @@ class DefaultASRAgent(
     private fun buildContext(): String = JsonObject().apply {
         addProperty(
             "version",
-            VERSION
+            VERSION.toString()
         )
     }.toString()
 
@@ -866,7 +867,7 @@ class DefaultASRAgent(
             EventMessageRequest.Builder(
                 contextManager.getContextWithoutUpdate(
                     namespaceAndName
-                ), NAMESPACE, name, VERSION
+                ), NAMESPACE, name, VERSION.toString()
             ).referrerDialogRequestId(referrerDialogRequestId ?: "").payload(payload.toString()).build()
         )
     }

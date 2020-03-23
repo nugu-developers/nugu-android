@@ -20,6 +20,7 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -59,7 +60,7 @@ class DefaultTextAgent(
         private const val TAG = "TextAgent"
 
         const val NAMESPACE = "Text"
-        const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
 
         private const val NAME_TEXT_SOURCE = "TextSource"
 
@@ -173,7 +174,7 @@ class DefaultTextAgent(
         stateRequestToken: Int
     ) {
         contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION)
+            addProperty("version", VERSION.toString())
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 
@@ -187,7 +188,7 @@ class DefaultTextAgent(
             context,
             NAMESPACE,
             NAME_TEXT_INPUT,
-            VERSION
+            VERSION.toString()
         ).dialogRequestId(dialogRequestId)
             .payload(
             JsonObject().apply

@@ -29,7 +29,7 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     companion object {
         const val NAMESPACE =
             DefaultAudioPlayerAgent.NAMESPACE
-        const val VERSION =
+        val VERSION =
             DefaultAudioPlayerAgent.VERSION
 
         // v1.1

@@ -40,7 +40,7 @@ class AudioPlayerLyricsDirectiveHandler(
 
         private const val NAMESPACE =
             DefaultAudioPlayerAgent.NAMESPACE
-        private const val VERSION =
+        private val VERSION =
             DefaultAudioPlayerAgent.VERSION
 
         // v1.1
@@ -148,7 +148,7 @@ class AudioPlayerLyricsDirectiveHandler(
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
@@ -168,7 +168,7 @@ class AudioPlayerLyricsDirectiveHandler(
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
