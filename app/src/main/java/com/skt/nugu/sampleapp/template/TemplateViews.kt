@@ -27,6 +27,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomViewTarget
+import com.bumptech.glide.request.target.ImageViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
@@ -116,20 +117,10 @@ class TemplateViews {
                         }
 
                         item.content.backgroundColor?.let {
-                            this.setBackgroundColor(parseColor(it, ContextCompat.getColor(context, R.color.white)))
+                            background.setBackgroundColor(parseColor(it, ContextCompat.getColor(context, R.color.white)))
                         }
                         item.content.backgroundImageUrl?.let {
-                            Glide.with(this).load(it).into(object : CustomViewTarget<View, Drawable>(this) {
-                                override fun onLoadFailed(errorDrawable: Drawable?) {
-                                }
-
-                                override fun onResourceCleared(placeholder: Drawable?) {
-                                }
-
-                                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                                    view.background = resource
-                                }
-                            })
+                            Glide.with(this).load(it).into(background)
                         }
 
                         prev.setOnClickListener {
