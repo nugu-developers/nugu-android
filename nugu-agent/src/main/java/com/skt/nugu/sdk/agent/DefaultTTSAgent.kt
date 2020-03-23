@@ -83,8 +83,8 @@ class DefaultTTSAgent(
         const val NAMESPACE = "TTS"
         private val VERSION = Version(1,0)
 
-        const val NAME_SPEAK = "Speak"
-        const val NAME_STOP = "Stop"
+        private const val NAME_SPEAK = "Speak"
+        private const val NAME_STOP = "Stop"
 
         val SPEAK = NamespaceAndName(
             NAMESPACE,
@@ -95,9 +95,9 @@ class DefaultTTSAgent(
             NAME_STOP
         )
 
-        const val EVENT_SPEECH_STARTED = "SpeechStarted"
-        const val EVENT_SPEECH_FINISHED = "SpeechFinished"
-        const val EVENT_SPEECH_STOPPED = "SpeechStopped"
+        private const val EVENT_SPEECH_STARTED = "SpeechStarted"
+        private const val EVENT_SPEECH_FINISHED = "SpeechFinished"
+        private const val EVENT_SPEECH_STOPPED = "SpeechStopped"
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
@@ -715,6 +715,7 @@ class DefaultTTSAgent(
                 NAMESPACE,
                 EVENT_SPEECH_STARTED,
                 playServiceId,
+                info.payload.token,
                 referrerDialogRequestId
             )
         }
@@ -737,6 +738,7 @@ class DefaultTTSAgent(
                 NAMESPACE,
                 EVENT_SPEECH_STOPPED,
                 playServiceId,
+                info.payload.token,
                 referrerDialogRequestId
             )
         }
@@ -771,6 +773,7 @@ class DefaultTTSAgent(
                 NAMESPACE,
                 EVENT_SPEECH_FINISHED,
                 playServiceId,
+                info.payload.token,
                 referrerDialogRequestId
             )
         }
@@ -801,6 +804,7 @@ class DefaultTTSAgent(
         namespace: String,
         name: String,
         playServiceId: String,
+        token: String,
         referrerDialogRequestId: String
     ) {
         contextManager.getContext(object :
@@ -811,6 +815,7 @@ class DefaultTTSAgent(
                         .payload(
                             JsonObject().apply {
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                                addProperty(KEY_TOKEN, token)
                             }.toString()
                         )
                         .referrerDialogRequestId(referrerDialogRequestId)
