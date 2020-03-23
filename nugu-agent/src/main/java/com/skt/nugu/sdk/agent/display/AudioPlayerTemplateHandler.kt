@@ -68,7 +68,7 @@ class AudioPlayerTemplateHandler(
         @SerializedName("playServiceId")
         val playServiceId: String?,
         @SerializedName("token")
-        val token: String?,
+        val token: String,
         @SerializedName("duration")
         val duration: String?,
         @SerializedName("playStackControl")
@@ -108,6 +108,8 @@ class AudioPlayerTemplateHandler(
             setHandlingFailed(info, "[preHandleDirective] invalid Payload")
             return
         }
+
+        Logger.d(TAG, "[preHandleDirective] $payload")
 
         executor.submit {
             executeCancelPendingInfo()
@@ -164,10 +166,19 @@ class AudioPlayerTemplateHandler(
                 Logger.d(TAG, "[handleDirective] skip, maybe canceled display info")
                 return@submit
             }
-
             pendingInfo = null
-            currentInfo = templateInfo
-            executeRender(templateInfo)
+
+            val current = currentInfo
+            if(current != null && current.payload.token == templateInfo.payload.token && current.payload.playServiceId == templateInfo.payload.playServiceId) {
+                // just update
+                renderer?.update(current.getTemplateId(), templateInfo.directive.payload)
+                setHandlingCompleted(info)
+                templateDirectiveInfoMap.remove(info.directive.getMessageId())
+                playSynchronizer.releaseWithoutSync(templateInfo)
+            } else {
+                currentInfo = templateInfo
+                executeRender(templateInfo)
+            }
         }
     }
 

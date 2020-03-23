@@ -96,6 +96,7 @@ class AudioPlayerDirectivePreProcessor :
     ): Directive? {
         return try {
             template.addProperty("playServiceId", playPayload.playServiceId)
+            playPayload.audioItem.stream.token
 
             val type = template.getAsJsonPrimitive("type").asString.split(".")
             val namespace = type[0]
@@ -104,6 +105,10 @@ class AudioPlayerDirectivePreProcessor :
             playPayload.playStackControl?.let {
                 template.add("playStackControl", it.toJsonObject())
             }
+
+            // add token to identify audio item
+            // this is not a good idea but to prevent side effect, add this field.
+            template.addProperty("token", playPayload.audioItem.stream.token)
    
             MessageFactory.createDirective(
                 null, Header(
