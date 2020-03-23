@@ -501,6 +501,7 @@ class NuguAndroidClient private constructor(
                                     ),
                                     builder.enableDisplayLifeCycleManagement
                                 ).apply {
+                                    getContextManager().setStateProvider(namespaceAndName, this)
                                     getDisplayPlayStackManager().addPlayContextProvider(this)
 
                                     RenderDirectiveHandler(this).apply {
