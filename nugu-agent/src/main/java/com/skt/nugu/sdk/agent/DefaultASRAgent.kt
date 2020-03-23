@@ -227,7 +227,6 @@ class DefaultASRAgent(
         expectSpeechPayload = payload
         dialogSessionManager.openSession(
             payload.sessionId,
-            payload.property,
             payload.domainTypes,
             payload.playServiceId
         )
@@ -869,7 +868,6 @@ class DefaultASRAgent(
 
     override fun onSessionOpened(
         sessionId: String,
-        property: String?,
         domainTypes: Array<String>?,
         playServiceId: String?
     ) {

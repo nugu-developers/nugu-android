@@ -123,7 +123,6 @@ class DialogUXStateAggregator(
 
     override fun onSessionOpened(
         sessionId: String,
-        property: String?,
         domainTypes: Array<String>?,
         playServiceId: String?
     ) {

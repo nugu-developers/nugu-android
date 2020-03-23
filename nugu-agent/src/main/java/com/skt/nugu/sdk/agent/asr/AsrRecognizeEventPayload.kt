@@ -22,7 +22,6 @@ data class AsrRecognizeEventPayload(
     private val codec: String,
     private val sessionId: String? = null,
     private val playServiceId: String? = null,
-    private val property: String?, // TODO: Client에서 관여할 property가 아닌 것 같음.
     private val domainTypes: Array<String>? = null,
     private val language: String? = null,
     private val endpointing: String,
@@ -52,9 +51,6 @@ data class AsrRecognizeEventPayload(
         }
         playServiceId?.let {
             addProperty("playServiceId", playServiceId)
-        }
-        property?.let {
-            addProperty("property", property)
         }
         domainTypes?.let {
             add("domainTypes", JsonArray().apply {
