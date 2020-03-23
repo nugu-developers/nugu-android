@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -93,6 +94,12 @@ class DefaultClientSpeechRecognizer(
             TAG,
             "[startProcessor] wakeupInfo:$wakeupInfo, currentInputPosition: ${audioInputStream.getPosition()}"
         )
+        if(currentRequest != null) {
+            recognitionCallback?.onError(UUIDGeneration.timeUUID().toString(),
+                ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER
+            )
+            return
+        }
 
 //        val sendPositionAndWakeupBoundary =
 //            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
