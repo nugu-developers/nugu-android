@@ -187,7 +187,7 @@ class NuguOAuth private constructor(
      * Sets a auth token and update to the devicegateway
      * @param token The auth token
      */
-    private fun setAuthorization(token: String) {
+    fun setAuthorization(token: String) {
         Logger.d(TAG, "[setAuthorization]")
         client.getCredentials().accessToken = token
         setAuthState(AuthStateListener.State.REFRESHED)
