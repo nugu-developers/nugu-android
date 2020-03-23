@@ -317,8 +317,12 @@ class DefaultASRAgent(
                 dialogRequestId: String,
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
             ) {
-                setState(ASRAgentInterface.State.IDLE)
-                setHandlingExpectSpeechFailed(payload, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
+                if(state == ASRAgentInterface.State.EXPECTING_SPEECH) {
+                    setState(ASRAgentInterface.State.IDLE)
+                    setHandlingExpectSpeechFailed(payload, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
+                } else {
+                    setHandlingCompleted(info)
+                }
             }
         })
     }
