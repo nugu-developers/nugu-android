@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent.system
 
 import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -30,7 +31,7 @@ abstract class AbstractSystemAgent (
     ConnectionStatusListener, SystemAgentInterface, ContextRequester {
     companion object {
         const val NAMESPACE = "System"
-        const val VERSION = "1.0"
+        val VERSION = Version(1,0)
     }
 
     abstract fun shutdown()

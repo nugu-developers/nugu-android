@@ -196,7 +196,7 @@ class DefaultSystemAgent(
     }
 
     private fun buildContext(): String = JsonObject().apply {
-        addProperty("version", VERSION)
+        addProperty("version", VERSION.toString())
     }.toString()
 
     /**
@@ -420,7 +420,7 @@ class DefaultSystemAgent(
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 messageSender.sendMessage(
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION).also {
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString()).also {
                         if (payload != null) {
                             it.payload(payload)
                         }

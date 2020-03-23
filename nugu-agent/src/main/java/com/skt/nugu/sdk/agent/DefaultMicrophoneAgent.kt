@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -46,7 +47,7 @@ class DefaultMicrophoneAgent(
         private const val TAG = "MicrophoneAgent"
 
         const val NAMESPACE = "Mic"
-        const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
 
         const val NAME_SET_MIC = "SetMic"
         private const val NAME_SET_MIC_SUCCEEDED = "SetMicSucceeded"
@@ -133,7 +134,7 @@ class DefaultMicrophoneAgent(
                         jsonContext,
                         NAMESPACE,
                         eventName,
-                        VERSION
+                        VERSION.toString()
                     ).payload(JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
                         addProperty("micStatus", micStatus)
@@ -198,7 +199,7 @@ class DefaultMicrophoneAgent(
         }
 
         contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION)
+            addProperty("version", VERSION.toString())
             addProperty("micStatus", micStatus)
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }

@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent.battery
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
@@ -28,7 +29,7 @@ class DefaultBatteryAgent(
         private const val TAG = "BatteryAgent"
 
         const val NAMESPACE = "Battery"
-        private const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
     }
 
     init {
@@ -51,7 +52,7 @@ class DefaultBatteryAgent(
     }
 
     private fun buildContext(): String = JsonObject().apply {
-        addProperty("version", VERSION)
+        addProperty("version", VERSION.toString())
         batteryStatusProvider.let {
             val level = it.getBatteryLevel()
             val charging = it.isCharging()

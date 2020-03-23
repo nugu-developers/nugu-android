@@ -35,6 +35,7 @@ import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackHandler
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
@@ -97,7 +98,7 @@ class DefaultAudioPlayerAgent(
         private const val TAG = "AudioPlayerAgent"
 
         const val NAMESPACE = "AudioPlayer"
-        const val VERSION = "1.2"
+        val VERSION = Version(1,2)
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
@@ -728,7 +729,7 @@ class DefaultAudioPlayerAgent(
                             jsonContext,
                             NAMESPACE,
                             NAME_FAVORITE_COMMAND_ISSUED,
-                            VERSION
+                            VERSION.toString()
                         ).payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
@@ -755,7 +756,7 @@ class DefaultAudioPlayerAgent(
                             jsonContext,
                             NAMESPACE,
                             NAME_REPEAT_COMMAND_ISSUED,
-                            VERSION
+                            VERSION.toString()
                         ).payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
@@ -782,7 +783,7 @@ class DefaultAudioPlayerAgent(
                             jsonContext,
                             NAMESPACE,
                             NAME_SHUFFLE_COMMAND_ISSUED,
-                            VERSION
+                            VERSION.toString()
                         ).payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
@@ -1227,7 +1228,7 @@ class DefaultAudioPlayerAgent(
         }
 
         contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION)
+            addProperty("version", VERSION.toString())
             addProperty("playerActivity", playerActivity.name)
             if (token.isNotBlank() && currentActivity != AudioPlayerAgentInterface.State.IDLE) {
                 addProperty("token", token)
@@ -1279,7 +1280,7 @@ class DefaultAudioPlayerAgent(
                             jsonContext,
                             NAMESPACE,
                             EVENT_NAME_PLAYBACK_FAILED,
-                            VERSION
+                            VERSION.toString()
                         )
                         .payload(JsonObject().apply {
                             addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
@@ -1358,7 +1359,7 @@ class DefaultAudioPlayerAgent(
                         jsonContext,
                         NAMESPACE,
                         eventName,
-                        VERSION
+                        VERSION.toString()
                     ).payload(
                         JsonObject().apply {
                             addProperty("playServiceId", playServiceId)

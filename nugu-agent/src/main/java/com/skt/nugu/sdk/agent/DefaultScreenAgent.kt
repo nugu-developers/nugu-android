@@ -19,6 +19,7 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
@@ -38,7 +39,7 @@ class DefaultScreenAgent(
     companion object {
         private const val TAG = "ScreenAgent"
         const val NAMESPACE = "Screen"
-        private const val VERSION = "1,0"
+        private val VERSION = Version(1,0)
 
         private const val NAME_TURN_ON = "TurnOn"
         private const val NAME_TURN_OFF = "TurnOff"
@@ -135,7 +136,7 @@ class DefaultScreenAgent(
     private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
-                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION)
+                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                     .payload(JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
                     }.toString())
@@ -182,7 +183,7 @@ class DefaultScreenAgent(
         stateRequestToken: Int
     ) {
         contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION)
+            addProperty("version", VERSION.toString())
             with(screen.getSettings()) {
                 addProperty("state", if(isOn) "ON" else "OFF")
                 addProperty("brightness", brightness)

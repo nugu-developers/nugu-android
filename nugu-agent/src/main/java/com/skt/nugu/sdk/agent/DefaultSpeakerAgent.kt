@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
@@ -41,7 +42,7 @@ class DefaultSpeakerAgent(
         private const val TAG = "SpeakerManager"
 
         const val NAMESPACE = "Speaker"
-        const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
 
         private const val NAME_SET_VOLUME = "SetVolume"
         private const val NAME_SET_MUTE = "SetMute"
@@ -290,7 +291,7 @@ class DefaultSpeakerAgent(
     ) {
         Logger.d(TAG, "[provideState]")
         contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION)
+            addProperty("version", VERSION.toString())
             add("volumes", JsonArray().apply {
                 speakerMap.forEach {
                     add(JsonObject().apply {
@@ -314,7 +315,7 @@ class DefaultSpeakerAgent(
         contextManager.getContext(object : ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 val request =
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, eventName, VERSION)
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, eventName, VERSION.toString())
                         .payload(JsonObject().apply {
                             addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
                         }.toString())

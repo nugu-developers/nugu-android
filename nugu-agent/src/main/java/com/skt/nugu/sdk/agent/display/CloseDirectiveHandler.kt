@@ -119,7 +119,7 @@ class CloseDirectiveHandler(
                             jsonContext,
                             DefaultDisplayAgent.NAMESPACE,
                             eventName,
-                            DefaultDisplayAgent.VERSION
+                            DefaultDisplayAgent.VERSION.toString()
                         ).payload(JsonObject().apply {
                             addProperty("playServiceId", playServiceId)
                         }.toString())

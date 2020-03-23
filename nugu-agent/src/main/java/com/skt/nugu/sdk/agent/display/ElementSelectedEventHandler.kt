@@ -51,7 +51,7 @@ class ElementSelectedEventHandler(
                             jsonContext,
                             DefaultDisplayAgent.NAMESPACE,
                             EVENT_NAME_ELEMENT_SELECTED,
-                            DefaultDisplayAgent.VERSION
+                            DefaultDisplayAgent.VERSION.toString()
                         ).dialogRequestId(dialogRequestId).payload(
                             JsonObject().apply {
                                 addProperty(KEY_TOKEN, token)

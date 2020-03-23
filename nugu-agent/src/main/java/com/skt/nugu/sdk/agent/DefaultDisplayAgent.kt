@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
@@ -46,7 +47,7 @@ class DefaultDisplayAgent(
         private const val TAG = "DisplayTemplateAgent"
 
         const val NAMESPACE = "Display"
-        const val VERSION = "1.2"
+        val VERSION = Version(1,2)
     }
 
     data class TemplatePayload(
@@ -374,7 +375,7 @@ class DefaultDisplayAgent(
     private fun buildContext(info: TemplateDirectiveInfo?): String = JsonObject().apply {
         addProperty(
             "version",
-            VERSION
+            VERSION.toString()
         )
         info?.payload?.let {
             addProperty("playServiceId", it.playServiceId)

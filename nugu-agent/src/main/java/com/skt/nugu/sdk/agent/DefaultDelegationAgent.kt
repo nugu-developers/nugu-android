@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
@@ -58,7 +59,7 @@ class DefaultDelegationAgent(
         private const val TAG = "DelegationAgent"
 
         const val NAMESPACE = "Delegation"
-        const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
 
         private const val NAME_DELEGATE = "Delegate"
         private const val NAME_REQUEST = "Request"
@@ -157,7 +158,7 @@ class DefaultDelegationAgent(
         } ?: return null
 
         return JsonObject().apply {
-            addProperty("version", VERSION)
+            addProperty("version", VERSION.toString())
             addProperty("playServiceId", appContext.playServiceId)
             add("data", jsonData)
         }
@@ -192,7 +193,7 @@ class DefaultDelegationAgent(
                             jsonContext,
                             NAMESPACE,
                             NAME_REQUEST,
-                            VERSION
+                            VERSION.toString()
                         ).payload(JsonObject().apply {
                             addProperty("playServiceId", playServiceId)
                             add("data", jsonData)

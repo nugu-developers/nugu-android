@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.util.TimeoutCondition
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -80,7 +81,7 @@ class DefaultTTSAgent(
         private const val TAG = "DefaultTTSAgent"
 
         const val NAMESPACE = "TTS"
-        const val VERSION = "1.0"
+        private val VERSION = Version(1,0)
 
         const val NAME_SPEAK = "Speak"
         const val NAME_STOP = "Stop"
@@ -614,7 +615,7 @@ class DefaultTTSAgent(
     }
 
     private fun buildContext(): JsonObject = JsonObject().apply {
-        addProperty("version", VERSION)
+        addProperty("version", VERSION.toString())
         addProperty(
             "ttsActivity", when (currentState) {
                 TTSAgentInterface.State.PLAYING -> TTSAgentInterface.State.PLAYING.name
@@ -806,7 +807,7 @@ class DefaultTTSAgent(
             ContextRequester {
             override fun onContextAvailable(jsonContext: String) {
                 val messageRequest =
-                    EventMessageRequest.Builder(jsonContext, namespace, name, VERSION)
+                    EventMessageRequest.Builder(jsonContext, namespace, name, VERSION.toString())
                         .payload(
                             JsonObject().apply {
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
@@ -842,7 +843,7 @@ class DefaultTTSAgent(
                         jsonContext,
                         NAMESPACE,
                         NAME_SPEECH_PLAY,
-                        VERSION
+                        VERSION.toString()
                     ).dialogRequestId(dialogRequestId)
                         .payload(JsonObject().apply {
                             addProperty("format", Format.TEXT.name)

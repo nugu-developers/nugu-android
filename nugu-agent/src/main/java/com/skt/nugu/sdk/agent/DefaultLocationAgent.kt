@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.location.LocationProvider
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 
@@ -30,7 +31,8 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
         private const val TAG = "DefaultLocationAgent"
 
         const val NAMESPACE = "Location"
-        const val VERSION = "1.0"
+
+        private val VERSION = Version(1,0)
     }
 
     private var locationProvider: LocationProvider? = null
@@ -57,7 +59,7 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
     private fun buildContext(): String = JsonObject().apply {
         addProperty(
             "version",
-            VERSION
+            VERSION.toString()
         )
         val location = locationProvider?.getLocation()
         if (location != null) {

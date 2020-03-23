@@ -114,7 +114,7 @@ class ControlScrollDirectiveHandler(
                         jsonContext,
                         namespaceAndName.namespace,
                         name,
-                        DefaultDisplayAgent.VERSION
+                        DefaultDisplayAgent.VERSION.toString()
                     ).payload(payload)
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()

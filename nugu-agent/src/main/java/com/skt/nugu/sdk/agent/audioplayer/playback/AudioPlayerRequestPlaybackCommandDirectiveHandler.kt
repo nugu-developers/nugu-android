@@ -20,7 +20,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
     companion object {
         const val NAMESPACE =
             DefaultAudioPlayerAgent.NAMESPACE
-        const val VERSION =
+        val VERSION =
             DefaultAudioPlayerAgent.VERSION
 
         // v1.2
@@ -68,7 +68,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                             jsonContext,
                             header.namespace,
                             "${header.name}$NAME_ISSUED",
-                            VERSION
+                            VERSION.toString()
                         )
                         .payload(JsonObject().apply {
                             addProperty("token", token)
