@@ -142,8 +142,7 @@ class DefaultAudioPlayerAgent(
 
     enum class PauseReason {
         BY_PAUSE_DIRECTIVE,
-        BY_PLAY_DIRECTIVE_FOR_RESUME,
-        BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY,
+        BY_PLAY_DIRECTIVE,
         INTERNAL_LOGIC,
     }
 
@@ -445,6 +444,10 @@ class DefaultAudioPlayerAgent(
                 TAG,
                 "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $focus"
             )
+
+            if(currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
+                pauseReason = PauseReason.BY_PLAY_DIRECTIVE
+            }
 
             if (FocusState.FOREGROUND != focus) {
                 if (!focusManager.acquireChannel(
@@ -1113,18 +1116,10 @@ class DefaultAudioPlayerAgent(
                     return
                 }
 
-                if (pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_NEXT_PLAY) {
+                if (pauseReason == PauseReason.BY_PLAY_DIRECTIVE) {
                     Logger.d(
                         TAG,
-                        "[executeOnForegroundFocus] will be start next item after stop current item completely."
-                    )
-                    return
-                }
-
-                if (pauseReason == PauseReason.BY_PLAY_DIRECTIVE_FOR_RESUME) {
-                    Logger.d(
-                        TAG,
-                        "[executeOnForegroundFocus] will be resume by next item"
+                        "[executeOnForegroundFocus] will be play"
                     )
                     executeTryPlayCurrentItemIfReady()
                     return
