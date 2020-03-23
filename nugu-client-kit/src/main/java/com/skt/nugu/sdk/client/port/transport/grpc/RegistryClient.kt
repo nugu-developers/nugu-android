@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import devicegateway.grpc.Charge
 import devicegateway.grpc.Protocol
 import java.io.IOException
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.*
 import java.util.concurrent.Executors
@@ -57,6 +58,7 @@ internal class RegistryClient(private var address: String) : Transport {
 
         val client = OkHttpClient().apply {
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
+            connectionPool = ConnectionPool(0, 1)
         }
         val httpUrl = HttpUrl.Builder()
             .scheme(HTTPS_SCHEME)
@@ -70,78 +72,77 @@ internal class RegistryClient(private var address: String) : Transport {
             .header("Accept", "application/json")
             .header("Authorization", token ?: "")
             .build()
-        try {
-            val response = client.newCall(request).enqueue(object : Callback {
-                override fun onFailure(request: Request?, e: IOException?) {
-                    Logger.e(TAG, "A failure occurred during getPolicy", e)
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(request: Request?, e: IOException?) {
+                Logger.e(TAG, "A failure occurred during getPolicy", e)
+                if(e is UnknownHostException) {
+                    observer.onError(ChangedReason.DNS_TIMEDOUT)
+                } else if(e is SocketTimeoutException) {
+                    observer.onError(ChangedReason.CONNECTION_TIMEDOUT)
+                } else {
                     observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
                 }
+            }
 
-                override fun onResponse(response: Response?) {
-                    val code = response?.code()
-                    when (code) {
-                        HttpURLConnection.HTTP_OK -> {
-                            val jsonObject =
-                                JsonParser().parse(response.body().string()).asJsonObject
-                            if (!(jsonObject.has("healthCheckPolicy") && jsonObject.has("serverPolicies"))) {
-                                observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
-                                return
-                            }
+            override fun onResponse(response: Response?) {
+                val code = response?.code()
+                when (code) {
+                    HttpURLConnection.HTTP_OK -> {
+                        val jsonObject =
+                            JsonParser().parse(response.body().string()).asJsonObject
+                        if (!(jsonObject.has("healthCheckPolicy") && jsonObject.has("serverPolicies"))) {
+                            observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
+                            return
+                        }
 
-                            val policyBuilder = PolicyResponse.newBuilder()
-                            jsonObject.get("healthCheckPolicy").apply {
-                                policyBuilder.setHealthCheckPolicy(
-                                    PolicyResponse.HealthCheckPolicy.newBuilder()
-                                        .setBeta(asJsonObject.get("beta").asFloat)
-                                        .setAccumulationTime(asJsonObject.get("accumulationTime").asInt)
-                                        .setHealthCheckTimeout(asJsonObject.get("healthCheckTimeout").asInt)
-                                        .setRetryCountLimit(asJsonObject.get("retryCountLimit").asInt)
-                                        .setRetryDelay(asJsonObject.get("retryDelay").asInt)
-                                        .setTtl(asJsonObject.get("ttl").asInt)
-                                        .setTtlMax(asJsonObject.get("ttlMax").asInt)
-                                )
-                            }
-                            jsonObject.get("serverPolicies").asJsonArray.forEach {
-                                policyBuilder.addServerPolicy(
-                                    PolicyResponse.ServerPolicy.newBuilder()
-                                        .setProtocolValue(
-                                            Protocol.valueOf(it.asJsonObject.get("protocol").asString.toUpperCase()).ordinal
-                                        )
-                                        .setChargeValue(
-                                            Charge.valueOf(it.asJsonObject.get("charge").asString.toUpperCase()).ordinal
-                                        )
-                                        .setPort(it.asJsonObject.get("port").asInt)
-                                        .setHostName(it.asJsonObject.get("hostname").asString)
-                                        .setRetryCountLimit(it.asJsonObject.get("retryCountLimit").asInt)
-                                        .setConnectionTimeout(it.asJsonObject.get("connectionTimeout").asInt)
-                                )
-                            }
-                            notifyPolicy(policyBuilder.build(), observer)
+                        val policyBuilder = PolicyResponse.newBuilder()
+                        jsonObject.get("healthCheckPolicy").apply {
+                            policyBuilder.setHealthCheckPolicy(
+                                PolicyResponse.HealthCheckPolicy.newBuilder()
+                                    .setBeta(asJsonObject.get("beta").asFloat)
+                                    .setAccumulationTime(asJsonObject.get("accumulationTime").asInt)
+                                    .setHealthCheckTimeout(asJsonObject.get("healthCheckTimeout").asInt)
+                                    .setRetryCountLimit(asJsonObject.get("retryCountLimit").asInt)
+                                    .setRetryDelay(asJsonObject.get("retryDelay").asInt)
+                                    .setTtl(asJsonObject.get("ttl").asInt)
+                                    .setTtlMax(asJsonObject.get("ttlMax").asInt)
+                            )
                         }
-                        HttpURLConnection.HTTP_UNAUTHORIZED,
-                        HttpURLConnection.HTTP_FORBIDDEN -> {
-                            observer.onError(ChangedReason.INVALID_AUTH)
+                        jsonObject.get("serverPolicies").asJsonArray.forEach {
+                            policyBuilder.addServerPolicy(
+                                PolicyResponse.ServerPolicy.newBuilder()
+                                    .setProtocolValue(
+                                        Protocol.valueOf(it.asJsonObject.get("protocol").asString.toUpperCase()).ordinal
+                                    )
+                                    .setChargeValue(
+                                        Charge.valueOf(it.asJsonObject.get("charge").asString.toUpperCase()).ordinal
+                                    )
+                                    .setPort(it.asJsonObject.get("port").asInt)
+                                    .setHostName(it.asJsonObject.get("hostname").asString)
+                                    .setRetryCountLimit(it.asJsonObject.get("retryCountLimit").asInt)
+                                    .setConnectionTimeout(it.asJsonObject.get("connectionTimeout").asInt)
+                            )
                         }
-                        else -> {
-                            cachedPolicy?.let {
-                                notifyPolicy(it, observer)
-                            } ?: run {
-                                when (code) {
-                                    in 400..499 -> observer.onError(ChangedReason.INTERNAL_ERROR)
-                                    in 500..599 -> observer.onError(ChangedReason.SERVER_INTERNAL_ERROR)
-                                    else -> observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
-                                }
+                        notifyPolicy(policyBuilder.build(), observer)
+                    }
+                    HttpURLConnection.HTTP_UNAUTHORIZED,
+                    HttpURLConnection.HTTP_FORBIDDEN -> {
+                        observer.onError(ChangedReason.INVALID_AUTH)
+                    }
+                    else -> {
+                        cachedPolicy?.let {
+                            notifyPolicy(it, observer)
+                        } ?: run {
+                            when (code) {
+                                in 400..499 -> observer.onError(ChangedReason.INTERNAL_ERROR)
+                                in 500..599 -> observer.onError(ChangedReason.SERVER_INTERNAL_ERROR)
+                                else -> observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
                             }
                         }
                     }
                 }
-            })
-        } catch (e: UnknownHostException) {
-            observer.onError(ChangedReason.DNS_TIMEDOUT)
-        } catch (e: IOException) {
-            Logger.e(TAG, "An exception occurred during getPolicy", e)
-            observer.onError(ChangedReason.CONNECTION_TIMEDOUT)
-        }
+            }
+        })
     }
 
     private fun notifyPolicy(policy: PolicyResponse?, observer: Observer) {
