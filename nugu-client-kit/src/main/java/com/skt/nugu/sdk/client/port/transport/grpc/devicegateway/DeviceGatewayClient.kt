@@ -101,7 +101,6 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
 
         policy.apply {
             val option = Options(
-                address = this.address,
                 retryCountLimit= this.retryCountLimit,
                 port = this.port,
                 connectionTimeout = this.connectionTimeout,

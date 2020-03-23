@@ -35,12 +35,8 @@ class ChannelBuilderUtils {
             authorization: String?
         ): ManagedChannelBuilder<*> {
             val channelBuilder = ManagedChannelBuilder
-                .forAddress(options.address, options.port)
+                .forAddress(options.hostname, options.port)
                 .userAgent(userAgent())
-
-            if (!options.hostname.isBlank()) {
-                channelBuilder.overrideAuthority(options.hostname)
-            }
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
                     authorization ?: ""
