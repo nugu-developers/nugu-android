@@ -109,6 +109,7 @@ class DefaultASRAgent(
 
     private var focusState = FocusState.NONE
 
+    private var isRequested: Boolean = false
     private var audioInputStream: SharedDataStream? = null
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
@@ -442,6 +443,11 @@ class DefaultASRAgent(
             TAG,
             "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState"
         )
+        if(isRequested) {
+            callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+            return
+        }
+
         if (state == ASRAgentInterface.State.RECOGNIZING) {
             Logger.e(
                 TAG,
@@ -467,6 +473,7 @@ class DefaultASRAgent(
             }
         }
 
+        isRequested = true
         if (focusState == FocusState.FOREGROUND) {
             executeInternalStartRecognition(
                 audioInputStream,
@@ -580,6 +587,7 @@ class DefaultASRAgent(
         )
 
         clearPreHandledExpectSpeech()
+        isRequested = false
     }
 
     private fun removeDirective(info: DirectiveInfo) {
