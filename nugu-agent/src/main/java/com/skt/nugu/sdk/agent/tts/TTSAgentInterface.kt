@@ -85,9 +85,9 @@ interface TTSAgentInterface {
 
     /**
      * @param text the text which to synthesize to speech
-     * @param playServiceId the play service id
+     * @param playServiceId the playServiceId which request tts, null if not specified.
      * @param listener the playback listener when notified when occur event
      * @return the dialog request id for the request
      */
-    fun requestTTS(text: String, playServiceId:  String, listener: OnPlaybackListener?): String
+    fun requestTTS(text: String, playServiceId: String?, listener: OnPlaybackListener?): String
 }

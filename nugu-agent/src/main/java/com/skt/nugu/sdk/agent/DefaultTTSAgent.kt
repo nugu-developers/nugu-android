@@ -819,7 +819,7 @@ class DefaultTTSAgent(
 
     override fun requestTTS(
         text: String,
-        playServiceId: String,
+        playServiceId: String?,
         listener: TTSAgentInterface.OnPlaybackListener?
     ): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
@@ -836,7 +836,9 @@ class DefaultTTSAgent(
                         .payload(JsonObject().apply {
                             addProperty("format", Format.TEXT.name)
                             addProperty("text", text)
-                            addProperty("playServiceId", playServiceId)
+                            playServiceId?.let {
+                                addProperty("playServiceId", it)
+                            }
                             addProperty("token", UUIDGeneration.timeUUID().toString())
                         }.toString())
                         .build()
