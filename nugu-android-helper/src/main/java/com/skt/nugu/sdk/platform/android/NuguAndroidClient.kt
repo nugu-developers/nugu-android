@@ -733,7 +733,7 @@ class NuguAndroidClient private constructor(
 
     override fun requestTTS(
         text: String,
-        playServiceId: String,
+        playServiceId: String?,
         listener: TTSAgentInterface.OnPlaybackListener?
     ): String? = ttsAgent?.requestTTS(text, playServiceId, listener)
 
