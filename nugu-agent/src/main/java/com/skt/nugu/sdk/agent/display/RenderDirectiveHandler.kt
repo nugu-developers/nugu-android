@@ -71,6 +71,8 @@ class RenderDirectiveHandler(
         private const val NAME_CALL_2 = "Call2"
         private const val NAME_CALL_3 = "Call3"
 
+        private const val NAME_TIMER = "Timer"
+
         private val FULLTEXT1 = NamespaceAndName(
             DefaultDisplayAgent.NAMESPACE,
             NAME_FULLTEXT1
@@ -220,6 +222,11 @@ class RenderDirectiveHandler(
             DefaultDisplayAgent.NAMESPACE,
             NAME_CALL_3
         )
+
+        private val TIMER = NamespaceAndName(
+            DefaultDisplayAgent.NAMESPACE,
+            NAME_TIMER
+        )
     }
 
     interface Controller {
@@ -313,6 +320,8 @@ class RenderDirectiveHandler(
         configuration[CALL_1] = blockingPolicy
         configuration[CALL_2] = blockingPolicy
         configuration[CALL_3] = blockingPolicy
+
+        configuration[TIMER] = blockingPolicy
 
         return configuration
     }
