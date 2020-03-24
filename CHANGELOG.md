@@ -1,6 +1,40 @@
 Change Log
 ==========
 
+Version 0.8.13 *(2020-03-23)*
+-----------------------------
+* New: Aplly PCM power measure for KeywordDetector (#392)
+    * (Caution) SpeechRecognizerAggregator's constructor changed.
+* New: Apply context layer for Display (#427)
+* New: Add System.Revoke Directrive
+* New: Apply defaultVolumeStep for Speaker (#430) 
+* New: Enable AudioPlayer v1.2 (#373)
+* Fix: ExpectSpeech's payload not included at ListenTimeout/ListenFailed event (#404)
+* Fix: Close directive not completed (#408)
+* Fix: ASR recognition started twice at same time (#410)
+* Fix: Not working prev/next command for AudioPlayer (#433)
+* Fix: Wrong state value at Screen's context (#435)
+* Fix: Manage sourceId for IntegratedMediaPlayer correctly (#442)
+* Fix: Missing token for TTS's playback event (#481)
+* Fix: Crash at sample application (#501)
+* Fix: The credential have been cleared (#432)
+* Improve: Request & Response mapping
+    * at Extension, Text, TTS, AudioPlayer agetns
+* Improve: strictly check token for render directives (#449)
+* Improve: Apply updated referrerDialogRequestId (#451)
+    * AudioPlayer, TTS, Agent
+* Improve: Provide way to create UUID from dialogRequestId (#453)
+* Improve: Add flag to enable or disable for Display (#460)
+* Improve: Support duration and offset for attachment (#440)
+* Improve: Manage playStack using timestamp (#458)
+* Improve: Stop media player when request stop by agent (#471)
+* Improve: Remove property field at ExpectSpeech (#483)
+* Improve: Support nullable keyword detector for SpeechRecognizerAggregator (#473)
+* Improve: Update silvertray v4.1.12
+* Improve: Apply update for AudioPlayer display. (#490)
+* Improve: Deprecated address of serverPolicies in registry (#505)
+
+
 Version 0.8.12 *(2020-03-09)*
 -----------------------------
 * New: Provide a way to map request & response 
