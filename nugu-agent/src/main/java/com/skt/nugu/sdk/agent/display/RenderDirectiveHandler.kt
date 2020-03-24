@@ -54,8 +54,11 @@ class RenderDirectiveHandler(
         private const val NAME_FULLIMAGE = "FullImage"
 
         // supported for v1.2
+        private const val NAME_FULLTEXT3 = "FullText3"
+        
         private const val NAME_SCORE_1 = "Score1"
         private const val NAME_SCORE_2 = "Score2"
+
         private const val NAME_SEARCH_LIST_1 = "SearchList1"
         private const val NAME_SEARCH_LIST_2 = "SearchList2"
 
@@ -76,6 +79,11 @@ class RenderDirectiveHandler(
             DefaultDisplayAgent.NAMESPACE,
             NAME_FULLTEXT2
         )
+        private val FULLTEXT3 = NamespaceAndName(
+            DefaultDisplayAgent.NAMESPACE,
+            NAME_FULLTEXT3
+        )
+
         private val IMAGETEXT1 = NamespaceAndName(
             DefaultDisplayAgent.NAMESPACE,
             NAME_IMAGETEXT1
@@ -271,6 +279,7 @@ class RenderDirectiveHandler(
 
         configuration[FULLTEXT1] = blockingPolicy
         configuration[FULLTEXT2] = blockingPolicy
+        configuration[FULLTEXT3] = blockingPolicy
         configuration[IMAGETEXT1] = blockingPolicy
         configuration[IMAGETEXT2] = blockingPolicy
         configuration[IMAGETEXT3] = blockingPolicy
