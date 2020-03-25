@@ -206,6 +206,7 @@ class DefaultAudioPlayerAgent(
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
         var referrerDialogRequestId = directive.getDialogRequestId()
+        var isFetched = false
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
@@ -236,7 +237,9 @@ class DefaultAudioPlayerAgent(
                 when {
                     currentItem == this -> {
                         Logger.d(TAG, "[requestReleaseSync] cancel current item")
-                        executeStop()
+                        if(!executeStop()) {
+                            notifyOnReleaseAudioInfo(this, true)
+                        }
                     }
                     else -> {
                         Logger.d(TAG, "[requestReleaseSync] cancel outdated item")
@@ -366,7 +369,9 @@ class DefaultAudioPlayerAgent(
                 PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis())
             }
 
-            executeFetchSource(item)
+            if(executeFetchSource(item)) {
+                item.isFetched = true
+            }
             executeFetchOffset(item.payload.audioItem.stream.offsetInMilliseconds)
 
             progressTimer.init(
@@ -619,6 +624,11 @@ class DefaultAudioPlayerAgent(
                         currentItem?.let {
                             notifyOnReleaseAudioInfo(it, true)
                         }
+                    }
+                } else if(currentItem?.isFetched == true) {
+                    if (mediaPlayer.stop(sourceId)) {
+                        stopCalled = true
+                        return true
                     }
                 }
             }
