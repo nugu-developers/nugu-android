@@ -209,6 +209,24 @@ class DefaultTextAgent(
                             }
                         })
                     }
+
+                    info.context?.let {asrContext ->
+                        add("asrContext", JsonObject().apply {
+                            asrContext.task?.let {
+                                addProperty("task",it)
+                            }
+                            asrContext.sceneId?.let {
+                                addProperty("sceneId",it)
+                            }
+                            asrContext.sceneText?.let {sceneText ->
+                                add("sceneText", JsonArray().apply {
+                                    sceneText.forEach {
+                                        add(it)
+                                    }
+                                })
+                            }
+                        })
+                    }
                 }
             }.toString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "").build()
@@ -274,13 +292,15 @@ class DefaultTextAgent(
     override fun onSessionOpened(
         sessionId: String,
         domainTypes: Array<String>?,
-        playServiceId: String?
+        playServiceId: String?,
+        context: DialogSessionManagerInterface.Context?
     ) {
         dialogSessionInfo =
             DialogSessionManagerInterface.DialogSessionInfo(
                 sessionId,
                 domainTypes,
-                playServiceId
+                playServiceId,
+                context
             )
     }
 

@@ -124,7 +124,8 @@ class DialogUXStateAggregator(
     override fun onSessionOpened(
         sessionId: String,
         domainTypes: Array<String>?,
-        playServiceId: String?
+        playServiceId: String?,
+        context: DialogSessionManagerInterface.Context?
     ) {
         executor.submit {
             dialogModeEnabled = true

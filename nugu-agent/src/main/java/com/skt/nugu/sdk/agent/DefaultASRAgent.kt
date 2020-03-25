@@ -227,10 +227,20 @@ class DefaultASRAgent(
     private fun executePreHandleExpectSpeechInternal(payload: ExpectSpeechPayload) {
         Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, payload: $payload")
         expectSpeechPayload = payload
+        val asrContext = payload.asrContext
         dialogSessionManager.openSession(
             payload.sessionId,
             payload.domainTypes,
-            payload.playServiceId
+            payload.playServiceId,
+            if(asrContext != null) {
+                DialogSessionManagerInterface.Context(
+                    asrContext.task,
+                    asrContext.sceneId,
+                    asrContext.sceneText
+                )
+            } else {
+                null
+            }
         )
     }
 
@@ -882,7 +892,8 @@ class DefaultASRAgent(
     override fun onSessionOpened(
         sessionId: String,
         domainTypes: Array<String>?,
-        playServiceId: String?
+        playServiceId: String?,
+        context: DialogSessionManagerInterface.Context?
     ) {
         currentSessionId = sessionId
         executor.submit {
