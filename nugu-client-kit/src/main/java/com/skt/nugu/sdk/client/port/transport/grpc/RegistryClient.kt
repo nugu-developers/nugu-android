@@ -21,16 +21,11 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.squareup.okhttp.*
-import devicegateway.grpc.PolicyResponse
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
-import devicegateway.grpc.Charge
-import devicegateway.grpc.Protocol
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.util.*
-import java.util.concurrent.Executors
 
 /**
  *  Implementation of registry
@@ -38,7 +33,7 @@ import java.util.concurrent.Executors
 internal class RegistryClient(private var address: String) : Transport {
     companion object {
         private const val TAG = "RegistryClient"
-        var cachedPolicy: PolicyResponse? = null
+        var cachedPolicy: Policy? = null
         const val GRPC_PROTOCOL = "H2_GRPC"
         const val HTTPS_SCHEME = "https"
     }
@@ -46,7 +41,7 @@ internal class RegistryClient(private var address: String) : Transport {
     private val isShutdown = AtomicBoolean(false)
 
     interface Observer {
-        fun onCompleted(policy: PolicyResponse?)
+        fun onCompleted(policy: Policy?)
         fun onError(reason: ChangedReason)
     }
 
@@ -94,36 +89,8 @@ internal class RegistryClient(private var address: String) : Transport {
                             observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
                             return
                         }
-
-                        val policyBuilder = PolicyResponse.newBuilder()
-                        jsonObject.get("healthCheckPolicy").apply {
-                            policyBuilder.setHealthCheckPolicy(
-                                PolicyResponse.HealthCheckPolicy.newBuilder()
-                                    .setBeta(asJsonObject.get("beta").asFloat)
-                                    .setAccumulationTime(asJsonObject.get("accumulationTime").asInt)
-                                    .setHealthCheckTimeout(asJsonObject.get("healthCheckTimeout").asInt)
-                                    .setRetryCountLimit(asJsonObject.get("retryCountLimit").asInt)
-                                    .setRetryDelay(asJsonObject.get("retryDelay").asInt)
-                                    .setTtl(asJsonObject.get("ttl").asInt)
-                                    .setTtlMax(asJsonObject.get("ttlMax").asInt)
-                            )
-                        }
-                        jsonObject.get("serverPolicies").asJsonArray.forEach {
-                            policyBuilder.addServerPolicy(
-                                PolicyResponse.ServerPolicy.newBuilder()
-                                    .setProtocolValue(
-                                        Protocol.valueOf(it.asJsonObject.get("protocol").asString.toUpperCase()).ordinal
-                                    )
-                                    .setChargeValue(
-                                        Charge.valueOf(it.asJsonObject.get("charge").asString.toUpperCase()).ordinal
-                                    )
-                                    .setPort(it.asJsonObject.get("port").asInt)
-                                    .setHostName(it.asJsonObject.get("hostname").asString)
-                                    .setRetryCountLimit(it.asJsonObject.get("retryCountLimit").asInt)
-                                    .setConnectionTimeout(it.asJsonObject.get("connectionTimeout").asInt)
-                            )
-                        }
-                        notifyPolicy(policyBuilder.build(), observer)
+                        val policy = Gson().fromJson(jsonObject, Policy::class.java)
+                        notifyPolicy(policy, observer)
                     }
                     HttpURLConnection.HTTP_UNAUTHORIZED,
                     HttpURLConnection.HTTP_FORBIDDEN -> {
@@ -145,7 +112,7 @@ internal class RegistryClient(private var address: String) : Transport {
         })
     }
 
-    private fun notifyPolicy(policy: PolicyResponse?, observer: Observer) {
+    private fun notifyPolicy(policy: Policy?, observer: Observer) {
         observer.onCompleted(policy)
         // cache setting
         cachedPolicy = policy

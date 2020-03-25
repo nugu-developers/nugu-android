@@ -16,7 +16,8 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
 import com.google.protobuf.ByteString
-import com.skt.nugu.sdk.client.port.transport.grpc.Options
+import com.skt.nugu.sdk.client.port.transport.grpc.Policy
+import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
@@ -38,11 +39,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  *  Implementation of DeviceGateway
  **/
-internal class DeviceGatewayClient(policyResponse: PolicyResponse,
-                          private var messageConsumer: MessageConsumer?,
-                          private var transportObserver: Observer?,
-                          private val authorization: String?,
-                          var isHandOff: Boolean)
+internal class DeviceGatewayClient(policy: Policy,
+                                   private var messageConsumer: MessageConsumer?,
+                                   private var transportObserver: Observer?,
+                                   private val authorization: String?,
+                                   var isHandOff: Boolean)
     : Transport
     , PingService.Observer
     , EventStreamService.Observer {
@@ -50,7 +51,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
         private const val TAG = "DeviceGatewayClient"
     }
 
-    private val policies = ConcurrentLinkedQueue(policyResponse.serverPolicyList)
+    private val policies = ConcurrentLinkedQueue(policy.serverPolicy)
     private var backoff : BackOff = BackOff.DEFAULT()
 
     private var currentChannel: ManagedChannel? = null
@@ -58,8 +59,8 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
     private var pingService: PingService? = null
     private var eventStreamService: EventStreamService? = null
     private var crashReportService: CrashReportService? = null
-    private var currentPolicy : PolicyResponse.ServerPolicy? = nextPolicy()
-    private var healthCheckPolicy = policyResponse.healthCheckPolicy
+    private var currentPolicy : ServerPolicy? = nextPolicy()
+    private var healthCheckPolicy = policy.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
 
@@ -73,7 +74,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
      * Set a policy.
      * @return the ServerPolicy
      */
-    private fun nextPolicy(): PolicyResponse.ServerPolicy? {
+    private fun nextPolicy(): ServerPolicy? {
         backoff.reset()
         currentPolicy = policies.poll()
         currentPolicy?.let {
@@ -100,16 +101,7 @@ internal class DeviceGatewayClient(policyResponse: PolicyResponse,
         }
 
         policy.apply {
-            val option = Options(
-                retryCountLimit= this.retryCountLimit,
-                port = this.port,
-                connectionTimeout = this.connectionTimeout,
-                hostname = this.hostName,
-                charge = this.charge.toString(),
-                protocol = this.protocol.toString()
-            )
-
-            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(option, authorization).build()
+            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(this, authorization).build()
             currentChannel.also {
                 pingService = PingService(VoiceServiceGrpc.newBlockingStub(it),
                     healthCheckPolicy,

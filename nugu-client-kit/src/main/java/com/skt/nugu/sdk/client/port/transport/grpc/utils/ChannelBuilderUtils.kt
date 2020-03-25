@@ -15,8 +15,8 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
-import com.skt.nugu.sdk.client.port.transport.grpc.Options
 import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
+import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.SdkVersion
 import io.grpc.*
@@ -31,11 +31,11 @@ class ChannelBuilderUtils {
 
         /** configures the gRPC channel. */
         fun createChannelBuilderWith(
-            options: Options,
+            policy: ServerPolicy,
             authorization: String?
         ): ManagedChannelBuilder<*> {
             val channelBuilder = ManagedChannelBuilder
-                .forAddress(options.hostname, options.port)
+                .forAddress(policy.hostname, policy.port)
                 .userAgent(userAgent())
             return channelBuilder.intercept(
                 HeaderClientInterceptor(

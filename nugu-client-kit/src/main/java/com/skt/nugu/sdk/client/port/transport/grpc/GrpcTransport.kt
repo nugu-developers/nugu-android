@@ -25,7 +25,6 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
-import devicegateway.grpc.PolicyResponse
 import java.util.concurrent.Executors
 
 /**
@@ -95,7 +94,7 @@ internal class GrpcTransport private constructor(
         setState(DetailedState.CONNECTING_REGISTRY)
 
         registryClient.getPolicy(getAuthorization(), object : RegistryClient.Observer {
-            override fun onCompleted(policy: PolicyResponse?) {
+            override fun onCompleted(policy: Policy?) {
                 // succeeded, then it should be connection to DeviceGateway
                 policy?.let {
                     tryConnectToDeviceGateway(it)
@@ -155,7 +154,7 @@ internal class GrpcTransport private constructor(
      * @param policy Policy received from the registry server
      * @return true is success, otherwise false
      */
-    private fun tryConnectToDeviceGateway(policy: PolicyResponse): Boolean {
+    private fun tryConnectToDeviceGateway(policy: Policy): Boolean {
         checkAuthorizationIfEmpty {
             setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
@@ -273,17 +272,20 @@ internal class GrpcTransport private constructor(
         }
 
         executor.submit{
-            // create PolicyResponse
-            val policy = PolicyResponse.newBuilder()
-                .setHealthCheckPolicy(healthCheckPolicy)
-                .addServerPolicy(
-                    PolicyResponse.ServerPolicy.newBuilder()
-                        .setPort(port)
-                        .setHostName(hostname)
-                        .setAddress(address)
-                        .setRetryCountLimit(retryCountLimit)
-                        .setConnectionTimeout(connectionTimeout)
-                ).build()
+            val policy =
+                Policy(
+                    healthCheckPolicy = healthCheckPolicy,
+                    serverPolicy = listOf(
+                        ServerPolicy(
+                            protocol = protocol,
+                            hostname = hostname,
+                            port = port,
+                            retryCountLimit = retryCountLimit,
+                            connectionTimeout = connectionTimeout,
+                            charge = charge
+                        )
+                    )
+                )
             tryConnectToDeviceGateway(policy)
         }
     }

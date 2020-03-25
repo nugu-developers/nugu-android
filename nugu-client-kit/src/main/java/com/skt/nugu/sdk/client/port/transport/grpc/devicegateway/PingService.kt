@@ -15,9 +15,9 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
+import com.skt.nugu.sdk.client.port.transport.grpc.HealthCheckPolicy
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.PingRequest
-import devicegateway.grpc.PolicyResponse
 import devicegateway.grpc.VoiceServiceGrpc
 import io.grpc.Status
 import java.util.*
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 internal class PingService(
     blockingStub: VoiceServiceGrpc.VoiceServiceBlockingStub,
-    private val healthCheckPolicy: PolicyResponse.HealthCheckPolicy,
+    private val healthCheckPolicy: HealthCheckPolicy,
     observer: Observer
 ) {
     private val timeout: Long = healthCheckPolicy.healthCheckTimeout.toLong()
