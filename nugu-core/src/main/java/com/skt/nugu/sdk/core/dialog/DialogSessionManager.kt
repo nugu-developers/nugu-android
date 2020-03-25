@@ -30,12 +30,13 @@ class DialogSessionManager : DialogSessionManagerInterface {
     override fun openSession(
         sessionId: String,
         domainTypes: Array<String>?,
-        playServiceId: String?
+        playServiceId: String?,
+        context: DialogSessionManagerInterface.Context?
     ) {
         Logger.d(TAG, "[openSession] $sessionId")
         currentSessionId = sessionId
         listeners.forEach {
-            it.onSessionOpened(sessionId, domainTypes, playServiceId)
+            it.onSessionOpened(sessionId, domainTypes, playServiceId, context)
         }
     }
 

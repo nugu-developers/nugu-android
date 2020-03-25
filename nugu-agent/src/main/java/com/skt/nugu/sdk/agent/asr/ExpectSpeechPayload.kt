@@ -25,8 +25,43 @@ data class ExpectSpeechPayload private constructor(
     @SerializedName("playServiceId")
     val playServiceId: String?,
     @SerializedName("domainTypes")
-    val domainTypes: Array<String>?
+    val domainTypes: Array<String>?,
+    @SerializedName("asrContext")
+    val asrContext: AsrContext?
 ) {
+    data class AsrContext(
+        @SerializedName("task")
+        val task: String?,
+        @SerializedName("sceneId")
+        val sceneId: String?,
+        @SerializedName("sceneText")
+        val sceneText: Array<String>?
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as AsrContext
+
+            if (task != other.task) return false
+            if (sceneId != other.sceneId) return false
+            if (sceneText != null) {
+                if (other.sceneText == null) return false
+                if (!sceneText.contentEquals(other.sceneText)) return false
+            } else if (other.sceneText != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = task?.hashCode() ?: 0
+            result = 31 * result + (sceneId?.hashCode() ?: 0)
+            result = 31 * result + (sceneText?.contentHashCode() ?: 0)
+            return result
+        }
+
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -40,6 +75,7 @@ data class ExpectSpeechPayload private constructor(
             if (other.domainTypes == null) return false
             if (!domainTypes.contentEquals(other.domainTypes)) return false
         } else if (other.domainTypes != null) return false
+        if (asrContext != other.asrContext) return false
 
         return true
     }
@@ -49,6 +85,7 @@ data class ExpectSpeechPayload private constructor(
         result = 31 * result + sessionId.hashCode()
         result = 31 * result + (playServiceId?.hashCode() ?: 0)
         result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
+        result = 31 * result + (asrContext?.hashCode() ?: 0)
         return result
     }
 }

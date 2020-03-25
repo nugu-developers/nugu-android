@@ -23,6 +23,7 @@ data class AsrRecognizeEventPayload(
     private val sessionId: String? = null,
     private val playServiceId: String? = null,
     private val domainTypes: Array<String>? = null,
+    private val asrContext: ExpectSpeechPayload.AsrContext? = null,
     private val language: String? = null,
     private val endpointing: String,
     private val encoding: String? = null,
@@ -59,6 +60,24 @@ data class AsrRecognizeEventPayload(
                 }
             })
         }
+        asrContext?.let { asrContext ->
+            add("asrContext", JsonObject().apply {
+                asrContext.task?.let {
+                    addProperty("task",it)
+                }
+                asrContext.sceneId?.let {
+                    addProperty("sceneId",it)
+                }
+                asrContext.sceneText?.let {sceneText ->
+                    add("sceneText", JsonArray().apply {
+                        sceneText.forEach {
+                            add(it)
+                        }
+                    })
+                }
+            })
+        }
+
         language?.let {
             addProperty("language", language)
         }

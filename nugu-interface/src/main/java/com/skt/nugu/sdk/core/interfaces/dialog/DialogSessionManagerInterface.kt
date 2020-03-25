@@ -21,10 +21,40 @@ package com.skt.nugu.sdk.core.interfaces.dialog
  * This manage dialog session.
  */
 interface DialogSessionManagerInterface {
+    data class Context(
+        val task: String?,
+        val sceneId: String?,
+        val sceneText: Array<String>?
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Context
+
+            if (task != other.task) return false
+            if (sceneId != other.sceneId) return false
+            if (sceneText != null) {
+                if (other.sceneText == null) return false
+                if (!sceneText.contentEquals(other.sceneText)) return false
+            } else if (other.sceneText != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = task?.hashCode() ?: 0
+            result = 31 * result + (sceneId?.hashCode() ?: 0)
+            result = 31 * result + (sceneText?.contentHashCode() ?: 0)
+            return result
+        }
+    }
+
     data class DialogSessionInfo(
         val sessionId: String,
         val domainTypes: Array<String>?,
-        val playServiceId: String?
+        val playServiceId: String?,
+        val context: Context?
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -38,6 +68,7 @@ interface DialogSessionManagerInterface {
                 if (!domainTypes.contentEquals(other.domainTypes)) return false
             } else if (other.domainTypes != null) return false
             if (playServiceId != other.playServiceId) return false
+            if (context != other.context) return false
 
             return true
         }
@@ -46,16 +77,17 @@ interface DialogSessionManagerInterface {
             var result = sessionId.hashCode()
             result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
             result = 31 * result + (playServiceId?.hashCode() ?: 0)
+            result = 31 * result + (context?.hashCode() ?: 0)
             return result
         }
     }
 
     interface OnSessionStateChangeListener {
-        fun onSessionOpened(sessionId: String, domainTypes: Array<String>?, playServiceId: String?)
+        fun onSessionOpened(sessionId: String, domainTypes: Array<String>?, playServiceId: String?, context: Context?)
         fun onSessionClosed(sessionId: String)
     }
 
-    fun openSession(sessionId: String, domainTypes: Array<String>?, playServiceId: String?)
+    fun openSession(sessionId: String, domainTypes: Array<String>?, playServiceId: String?, context: Context?)
     fun closeSession()
 
     fun addListener(listener: OnSessionStateChangeListener)
