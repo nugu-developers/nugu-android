@@ -174,6 +174,12 @@ class DisplayAggregator(
         }
     }
 
+    override fun displayCardRenderFailed(templateId: String) {
+        lock.withLock {
+            requestAgentMap.remove(templateId)
+        }?.displayCardRenderFailed(templateId)
+    }
+
     override fun displayCardCleared(templateId: String) {
         lock.withLock {
             requestAgentMap.remove(templateId)

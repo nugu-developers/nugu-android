@@ -237,27 +237,40 @@ class AudioPlayerTemplateHandler(
         }
     }
 
+    override fun displayCardRenderFailed(templateId: String) {
+        executor.submit {
+            templateDirectiveInfoMap[templateId]?.let {
+                Logger.d(TAG, "[onRenderFailed] ${it.getTemplateId()}")
+                cleanupInfo(templateId, it)
+            }
+        }
+    }
+
     override fun displayCardCleared(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
-                setHandlingCompleted(it)
-                templateDirectiveInfoMap.remove(templateId)
-                templateControllerMap.remove(templateId)
-                releaseSyncForce(it)
-
-                if (clearInfoIfCurrent(it)) {
-                    val nextInfo = pendingInfo
-                    pendingInfo = null
-                    currentInfo = nextInfo
-
-                    if(nextInfo == null) {
-                        return@submit
-                    }
-
-                    executeRender(nextInfo)
-                }
+                cleanupInfo(templateId, it)
             }
+        }
+    }
+
+    private fun cleanupInfo(templateId: String, info: TemplateDirectiveInfo) {
+        setHandlingCompleted(info)
+        templateDirectiveInfoMap.remove(templateId)
+        templateControllerMap.remove(templateId)
+        releaseSyncForce(info)
+
+        if (clearInfoIfCurrent(info)) {
+            val nextInfo = pendingInfo
+            pendingInfo = null
+            currentInfo = nextInfo
+
+            if(nextInfo == null) {
+                return
+            }
+
+            executeRender(nextInfo)
         }
     }
 

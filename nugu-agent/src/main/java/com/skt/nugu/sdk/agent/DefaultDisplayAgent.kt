@@ -287,24 +287,39 @@ class DefaultDisplayAgent(
         }
     }
 
+    override fun displayCardRenderFailed(templateId: String) {
+        executor.submit {
+            templateDirectiveInfoMap[templateId]?.let {
+                Logger.d(TAG, "[onRenderFailed] ${it.getTemplateId()}")
+                cleanupInfo(templateId, it)
+                it.renderResultListener?.onFailure("failed at renderer")
+                it.renderResultListener = null
+            }
+        }
+    }
+
     override fun displayCardCleared(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
-                contextLayerTimer?.get(it.payload.getContextLayerInternal())?.stop(templateId)
-                templateDirectiveInfoMap.remove(templateId)
-                templateControllerMap.remove(templateId)
-                releaseSyncImmediately(it)
-
-                onDisplayCardCleared(it)
-
-                if (clearInfoIfCurrent(it)) {
-                    val nextInfo =
-                        pendingInfo.remove(it.payload.getContextLayerInternal()) ?: return@submit
-                    currentInfo[it.payload.getContextLayerInternal()] = nextInfo
-                    executeRender(nextInfo)
-                }
+                cleanupInfo(templateId, it)
             }
+        }
+    }
+
+    private fun cleanupInfo(templateId: String, info: TemplateDirectiveInfo) {
+        contextLayerTimer?.get(info.payload.getContextLayerInternal())?.stop(templateId)
+        templateDirectiveInfoMap.remove(templateId)
+        templateControllerMap.remove(templateId)
+        releaseSyncImmediately(info)
+
+        onDisplayCardCleared(info)
+
+        if (clearInfoIfCurrent(info)) {
+            val nextInfo =
+                pendingInfo.remove(info.payload.getContextLayerInternal()) ?: return
+            currentInfo[info.payload.getContextLayerInternal()] = nextInfo
+            executeRender(nextInfo)
         }
     }
 

@@ -1422,6 +1422,10 @@ class DefaultAudioPlayerAgent(
         displayDelegate?.displayCardRendered(templateId, controller)
     }
 
+    override fun displayCardRenderFailed(templateId: String) {
+        displayDelegate?.displayCardRenderFailed(templateId)
+    }
+
     override fun displayCardCleared(templateId: String) {
         displayDelegate?.displayCardCleared(templateId)
     }

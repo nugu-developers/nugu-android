@@ -44,6 +44,15 @@ interface DisplayInterface<Renderer, Controller> {
     fun displayCardRendered(templateId: String, controller: Controller?)
 
     /**
+     * Notifies the display that has been render failed.
+     *
+     * This should be called when the display rendering failed by the renderer.
+     *
+     * @param templateId the templateId that has been render failed.
+     */
+    fun displayCardRenderFailed(templateId: String)
+
+    /**
      * Notifies the display that has been cleared.
      *
      * This should be called when the display cleared by the renderer.
