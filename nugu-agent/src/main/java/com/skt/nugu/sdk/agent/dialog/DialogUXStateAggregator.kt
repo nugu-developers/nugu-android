@@ -101,6 +101,14 @@ class DialogUXStateAggregator(
         isTtsPreparing = true
     }
 
+    override fun onError(dialogRequestId: String) {
+        isTtsPreparing = false
+
+        executor.submit {
+            tryEnterIdleState()
+        }
+    }
+
     override fun onStateChanged(state: ASRAgentInterface.State) {
         Logger.d(TAG, "[onStateChanged-ASR] state: $state")
         asrState = state

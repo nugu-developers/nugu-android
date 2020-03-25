@@ -766,14 +766,17 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackError(type: ErrorType, error: String) {
+        Logger.e(TAG, "[executePlaybackError] type: $type, error: $error")
+        val info = currentInfo ?: return
+        listeners.forEach {
+            it.onError(info.getDialogRequestId())
+        }
+
         stateLock.withLock {
             if (currentState == TTSAgentInterface.State.STOPPED) {
                 return
             }
         }
-
-        Logger.e(TAG, "[executePlaybackError] type: $type, error: $error")
-        val info = currentInfo ?: return
 
         setCurrentState(TTSAgentInterface.State.STOPPED)
         with(info) {
@@ -915,14 +918,16 @@ class DefaultTTSAgent(
         }
 
         override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
-            with(System.currentTimeMillis()) {
-                currentInfo?.payload?.playStackControl?.getPushPlayServiceId()
-                    ?.let { pushPlayServiceId ->
-                        currentPlayContext =
-                            PlayStackManagerInterface.PlayContext(pushPlayServiceId, this)
-                        playContextValidTimestamp = Long.MAX_VALUE
-                    }
-            }
+            currentInfo?.payload?.playStackControl?.getPushPlayServiceId()
+                ?.let { pushPlayServiceId ->
+                    currentPlayContext =
+                        PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
+                    playContextValidTimestamp = Long.MAX_VALUE
+                }
+        }
+
+        override fun onError(dialogRequestId: String) {
+            // no-op
         }
     }
 
