@@ -8,8 +8,8 @@ publishing {
 
     def userName = properties['maven.userName']
     def passWord = properties['maven.password']
-//    def mavenTarget = "maven-releases"
-    def mavenTarget = "maven-snapshots"
+    def mavenTarget = "maven-releases"
+//    def mavenTarget = "maven-snapshots"
 
     repositories {
         maven {

@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 0.8.14 *(2020-03-25)*
+-----------------------------
+* New: Support FullText3 for display (#507)
+* New: Support Timer for display v1.3 (#507)
+* New: Apply asrContext payload (#516)
+* Fix: Disable connectionPool
+* Improve: Update silvertray v4.1.13 (#509)
+* Improve: Nullable playServiceId for requestTTS (#511)
+* Improve: Handle tts error case (#518)
+
+
 Version 0.8.13 *(2020-03-23)*
 -----------------------------
 * New: Aplly PCM power measure for KeywordDetector (#392)
