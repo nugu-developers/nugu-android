@@ -886,7 +886,7 @@ class DefaultTTSAgent(
                 return@submit
             }
 
-            if(currentFocus != FocusState.NONE) {
+            if(currentFocus != FocusState.NONE && currentInfo == null) {
                 focusManager.releaseChannel(channelName, this)
                 currentFocus = FocusState.NONE
             }
