@@ -75,6 +75,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                             addProperty("offsetInMilliseconds", offsetInMilliseconds)
                             addProperty("playServiceId", playServiceId)
                         }.toString())
+                        .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
                     messageSender.sendMessage(message)
