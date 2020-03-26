@@ -64,6 +64,7 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
                             VERSION.toString()
                         )
                         .payload(payload)
+                        .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
                     messageSender.sendMessage(message)
