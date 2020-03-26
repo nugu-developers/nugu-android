@@ -182,7 +182,6 @@ class NuguOAuth private constructor(
                 )
             }.onSuccess {
                 setAuthState(AuthStateListener.State.REFRESHED)
-                setResult(true)
             }.onFailure {
                 // If UnAuthenticatedException in AuthorizationFlow,
                 // remove existing token from cache.
