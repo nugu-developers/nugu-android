@@ -206,7 +206,6 @@ class NuguOAuth private constructor(
         if (result && client.isExpired()) {
             Log.d(TAG, "Authentication failed because the accessToken was invalid, ${result}")
             setAuthState(AuthStateListener.State.EXPIRED)
-            executeAuthorization()
         }
         return result
     }
