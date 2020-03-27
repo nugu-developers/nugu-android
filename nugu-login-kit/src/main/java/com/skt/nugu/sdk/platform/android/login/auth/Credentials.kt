@@ -28,7 +28,9 @@ data class Credentials(
     /** The NUGU refresh token **/
     var refreshToken: String,
     /** The lifetime in seconds of the access token **/
-    var expiresInSecond: Long,
+    var expiresIn: Long,
+    /** The issued Time **/
+    var issuedTime: Long,
     /** OAuth Access Token Type **/
     var tokenType: String
 ) {
@@ -38,8 +40,9 @@ data class Credentials(
      */
     fun clear() {
         accessToken = ""
-        expiresInSecond = 0
         refreshToken = ""
+        expiresIn = 0
+        issuedTime = 0
         tokenType = ""
     }
 
@@ -50,7 +53,8 @@ data class Credentials(
         val json = JSONObject()
         json.put("access_token", accessToken)
         json.put("token_type", tokenType)
-        json.put("expires_in", expiresInSecond)
+        json.put("expires_in", expiresIn)
+        json.put("issued_time", issuedTime)
         json.put("refresh_token", refreshToken)
         return json.toString()
     }
@@ -64,7 +68,8 @@ data class Credentials(
         fun DEFAULT() = Credentials(
             accessToken = "",
             refreshToken = "",
-            expiresInSecond = 0,
+            expiresIn = 0,
+            issuedTime = 0,
             tokenType = ""
         )
 
@@ -82,9 +87,10 @@ data class Credentials(
             JSONObject(string).apply {
                 return Credentials(
                     accessToken = getString("access_token"),
-                    expiresInSecond = Date().time + getLong("expires_in") * 1000L,
+                    expiresIn = getLong("expires_in"),
+                    issuedTime = if(!has("issued_time")) Date().time else getLong("issued_time"),
                     tokenType = getString("token_type"),
-                    refreshToken = if (!has("refresh_token")) "" else get("refresh_token").toString()
+                    refreshToken = if (!has("refresh_token")) "" else getString("refresh_token")
                 )
             }
         }
@@ -106,8 +112,11 @@ data class Credentials(
          * The lifetime in seconds of the access token.
          * A time when credentials should be considered expired.
          */
-        private var expiresInSecond: Long = 0
-
+        private var expiresIn: Long = 0
+        /**
+         * The issue time associated with the access token.
+         */
+        private var issuedTime: Long = 0
         /**
          * OAuth Access Token Type
          * @see [https://tools.ietf.org/html/rfc6750]
@@ -120,7 +129,8 @@ data class Credentials(
         fun build() = Credentials(
             accessToken,
             refreshToken,
-            expiresInSecond,
+            expiresIn,
+            issuedTime,
             tokenType
         )
     }

@@ -57,7 +57,6 @@ internal class NuguOAuthClient(private val baseUrl: String) {
 
     companion object {
         private const val TAG = "NuguOAuthClient"
-        private const val maxDelayBeforeRefresh: Int = 0
         private const val maxDelayForRetry: Long = 15L * 1000L /*second in ms*/
         /** Max number of times a request is retried before failing.  */
         private const val maxRetries = 5
@@ -146,7 +145,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     fun isExpired(): Boolean {
         // Add a delay to be sure to not make a request with an expired token
         val now = Date().time
-        return credential.expiresInSecond - now < maxDelayBeforeRefresh
+        return (credential.expiresIn * 1000) + credential.issuedTime > now
     }
 
     /**
