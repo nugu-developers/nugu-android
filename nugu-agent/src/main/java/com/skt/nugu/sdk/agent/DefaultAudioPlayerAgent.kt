@@ -951,7 +951,7 @@ class DefaultAudioPlayerAgent(
         if (!mediaPlayer.stop(sourceId)) {
             Logger.e(TAG, "[executeOnPlaybackPlayingOnLostFocus] stop failed")
         } else {
-            Logger.d(TAG, "[executeOnPlaybackPlayingOnLostFocus] pause Succeeded")
+            Logger.d(TAG, "[executeOnPlaybackPlayingOnLostFocus] stop Succeeded")
         }
     }
 
@@ -1167,9 +1167,7 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnNoneFocus() {
-        if (currentActivity.isActive()) {
-            executeStop()
-        }
+        executeStop()
     }
 
 
