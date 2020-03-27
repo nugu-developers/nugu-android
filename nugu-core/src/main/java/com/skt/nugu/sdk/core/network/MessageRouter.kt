@@ -64,6 +64,7 @@ class MessageRouter(
      * Begin the process of establishing an DeviceGateway connection.
      */
     override fun enable() {
+        Logger.d(TAG, "[enable] called")
         val isConnectedOrConnecting = activeTransport?.isConnectedOrConnecting() ?: false
         if (!isConnectedOrConnecting) {
             setConnectionStatus(
@@ -99,6 +100,7 @@ class MessageRouter(
      * Close the DeviceGateway connection.
      */
     override fun disable() {
+        Logger.d(TAG, "[disable] called")
         disconnectAllTransport()
     }
 
@@ -115,7 +117,10 @@ class MessageRouter(
      * @return true is success, otherwise false
      */
     override fun sendMessage(messageRequest: MessageRequest) : Boolean {
-        val result = activeTransport?.send(messageRequest) ?: false
+        val result = activeTransport?.send(messageRequest) ?: run {
+            Logger.d(TAG, "[sendMessage] failed, $this" )
+            false
+        }
 
         messageSenderListeners.forEach {
             it.onPostSendMessage(messageRequest, result)
@@ -259,5 +264,19 @@ class MessageRouter(
                 handoffTransport = this
             }
         }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
+    }
+
+    /**
+     * Returns a string representation of the object.
+     */
+    override fun toString(): String {
+        val builder = StringBuilder("MessageRouter : ")
+            .append("activeTransport: ").append(activeTransport)
+            .append(", handoffTransport: ").append(handoffTransport)
+            .append(", observer: ").append(observer)
+            .append(", messageSenderListeners: ").append(messageSenderListeners.size)
+            .append(", status: ").append(status)
+            .append(", reason: ").append(reason)
+        return builder.toString()
     }
 }
