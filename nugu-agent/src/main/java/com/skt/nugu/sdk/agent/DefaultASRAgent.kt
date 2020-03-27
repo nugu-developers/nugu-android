@@ -328,7 +328,8 @@ class DefaultASRAgent(
                 dialogRequestId: String,
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
             ) {
-                if(state == ASRAgentInterface.State.EXPECTING_SPEECH) {
+                if(state == ASRAgentInterface.State.EXPECTING_SPEECH && !isRequested) {
+                    // back to idle state only when failed to request
                     setState(ASRAgentInterface.State.IDLE)
                     setHandlingExpectSpeechFailed(payload, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
                 } else {
