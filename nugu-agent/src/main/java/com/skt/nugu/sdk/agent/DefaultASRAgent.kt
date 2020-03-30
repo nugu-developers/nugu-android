@@ -158,10 +158,10 @@ class DefaultASRAgent(
                 }
             }
 
-            override fun onCancel() {
+            override fun onCancel(cause: ASRAgentInterface.CancelCause) {
                 Logger.d(TAG, "[onCancel]")
                 onResultListeners.forEach {
-                    it.onCancel()
+                    it.onCancel(cause)
                 }
             }
         }
@@ -544,7 +544,7 @@ class DefaultASRAgent(
                 }
             }
             FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
-            FocusState.NONE -> executeStopRecognition(true)
+            FocusState.NONE -> executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
         }
     }
 
@@ -591,8 +591,8 @@ class DefaultASRAgent(
                     speechToTextConverterEventObserver.onError(type)
                 }
 
-                override fun onCancel() {
-                    speechToTextConverterEventObserver.onCancel()
+                override fun onCancel(cause: ASRAgentInterface.CancelCause) {
+                    speechToTextConverterEventObserver.onCancel(cause)
                 }
             }
         )
@@ -751,10 +751,10 @@ class DefaultASRAgent(
         }
     }
 
-    override fun stopRecognition(cancel: Boolean) {
-        Logger.d(TAG, "[stopRecognition]")
+    override fun stopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
+        Logger.d(TAG, "[stopRecognition] $cancel, $cause")
         executor.submit {
-            executeStopRecognition(cancel)
+            executeStopRecognition(cancel, cause)
         }
     }
 
@@ -836,8 +836,8 @@ class DefaultASRAgent(
         })
     }
 
-    private fun executeStopRecognition(cancel: Boolean) {
-        currentSpeechRecognizer.stop(cancel)
+    private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
+        currentSpeechRecognizer.stop(cancel, cause)
     }
 
     private fun canRecognizing(): Boolean {

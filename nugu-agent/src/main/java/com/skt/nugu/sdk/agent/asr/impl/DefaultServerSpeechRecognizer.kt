@@ -44,7 +44,9 @@ class DefaultServerSpeechRecognizer(
         val senderThread: SpeechRecognizeAttachmentSenderThread,
         val eventMessage: EventMessageRequest,
         val resultListener: ASRAgentInterface.OnResultListener?
-    )
+    ) {
+        var cancelCause: ASRAgentInterface.CancelCause? = null
+    }
 
     override var enablePartialResult: Boolean = true
         set(value) {
@@ -180,8 +182,9 @@ class DefaultServerSpeechRecognizer(
         )
     }
 
-    override fun stop(cancel: Boolean) {
+    override fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
         if(cancel) {
+            currentRequest?.cancelCause = cause
             currentRequest?.senderThread?.requestStop()
         } else {
             currentRequest?.senderThread?.requestFinish()
@@ -319,7 +322,7 @@ class DefaultServerSpeechRecognizer(
     }
 
     private fun handleCancel() {
-        currentRequest?.resultListener?.onCancel()
+        currentRequest?.resultListener?.onCancel(currentRequest?.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API)
         currentRequest = null
         setState(SpeechRecognizer.State.STOP)
     }

@@ -90,6 +90,26 @@ interface ASRAgentInterface {
     }
 
     /**
+     * The cause for cancel
+     */
+    enum class CancelCause {
+        /**
+         * Caused by client call
+         */
+        LOCAL_API,
+
+        /**
+         * Caused by too low power for wakeup
+         */
+        WAKEUP_POWER,
+
+        /**
+         * Caused by loss focus
+         */
+        LOSS_FOCUS
+    }
+
+    /**
      * Interface of a listener to be called when there has been changes of state
      */
     interface OnStateChangeListener {
@@ -128,7 +148,7 @@ interface ASRAgentInterface {
         /**
          * Called when canceled.
          */
-        fun onCancel()
+        fun onCancel(cause: CancelCause)
     }
 
     /**
@@ -172,7 +192,7 @@ interface ASRAgentInterface {
     /**
      * Stop current recognition
      */
-    fun stopRecognition(cancel: Boolean = true)
+    fun stopRecognition(cancel: Boolean = true, cause: CancelCause = CancelCause.LOCAL_API)
 
     /** Add a listener to be called when a state changed.
      * @param listener the state listener that added

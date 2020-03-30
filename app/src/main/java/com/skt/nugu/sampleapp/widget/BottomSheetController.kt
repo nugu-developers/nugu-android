@@ -29,6 +29,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sampleapp.utils.SoundPoolCompat
+import com.skt.nugu.sdk.core.utils.Logger
 
 class BottomSheetController(
     private val activity: Activity,
@@ -181,8 +182,9 @@ class BottomSheetController(
         }
     }
 
-    override fun onCancel() {
+    override fun onCancel(cause: ASRAgentInterface.CancelCause) {
         // no-op
+        Logger.d(TAG, "[onCancel] $cause")
     }
 
     override fun onError(type: ASRAgentInterface.ErrorType) {

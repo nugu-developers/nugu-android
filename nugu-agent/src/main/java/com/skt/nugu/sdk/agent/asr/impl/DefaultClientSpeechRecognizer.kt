@@ -54,7 +54,9 @@ class DefaultClientSpeechRecognizer(
         val resultListener: ASRAgentInterface.OnResultListener?
     ) {
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
+
         var stopByCancel: Boolean? = null
+        var cancelCause: ASRAgentInterface.CancelCause? = null
     }
 
 
@@ -162,9 +164,10 @@ class DefaultClientSpeechRecognizer(
         }
     }
 
-    override fun stop(cancel: Boolean) {
+    override fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
         if (epdState.isActive()) {
             currentRequest?.stopByCancel = cancel
+            currentRequest?.cancelCause = cause
             endPointDetector.stopDetector()
         }
 
@@ -342,7 +345,7 @@ class DefaultClientSpeechRecognizer(
     }
 
     private fun handleCancel() {
-        currentRequest?.resultListener?.onCancel()
+        currentRequest?.resultListener?.onCancel(currentRequest?.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API)
         currentRequest = null
         setState(SpeechRecognizer.State.STOP)
     }
