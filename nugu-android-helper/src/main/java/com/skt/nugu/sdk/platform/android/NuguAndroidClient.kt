@@ -41,6 +41,7 @@ import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.CancelRecognizeDirectiveHandler
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
@@ -296,6 +297,10 @@ class NuguAndroidClient private constructor(
                             getDirectiveSequencer().addDirectiveHandler(this)
                             getDialogSessionManager().addListener(this)
                             dialogUXStateAggregator.addListener(this)
+
+                            CancelRecognizeDirectiveHandler(this).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
                         }
                     }
                 }
