@@ -90,7 +90,7 @@ class DefaultServerSpeechRecognizer(
                         (boundary.startPosition - sendPosition) / bytesPerSample,
                         (boundary.endPosition - sendPosition) / bytesPerSample,
                         (boundary.detectPosition - sendPosition) / bytesPerSample
-                    )
+                    ), power
                 )
             }
         } else {

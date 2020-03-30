@@ -104,6 +104,12 @@ class DefaultClientSpeechRecognizer(
 //        val sendPositionAndWakeupBoundary =
 //            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
 
+        val payloadWakeup = if(wakeupInfo?.power != null){
+            PayloadWakeup(null, null, wakeupInfo.power)
+        } else {
+            null
+        }
+
         // Do not deliver wakeup info when client epd mode.
         val sendPositionAndWakeupBoundary = Pair(null, null)
 
@@ -119,8 +125,8 @@ class DefaultClientSpeechRecognizer(
                 playServiceId = payload?.playServiceId,
                 domainTypes = payload?.domainTypes,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
-                encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE
-//                wakeupBoundary = sendPositionAndWakeupBoundary.second
+                encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
+                wakeup = payloadWakeup
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .build()
