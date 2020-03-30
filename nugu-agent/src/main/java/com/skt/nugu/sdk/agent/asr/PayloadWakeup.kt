@@ -19,10 +19,12 @@ package com.skt.nugu.sdk.agent.asr
  * The wakeup info for payload
  * @param word the wakeup word
  * @param boundary the boundary sample position for which [word]
+ * @param power the power, may be null if not available.
  */
 data class PayloadWakeup (
-    val word: String,
-    val boundary: Boundary
+    val word: String?,
+    val boundary: Boundary?,
+    val power: WakeupInfo.Power?
 ) {
     /**
      * @param startSamplePosition the start sample position of wakeupword.

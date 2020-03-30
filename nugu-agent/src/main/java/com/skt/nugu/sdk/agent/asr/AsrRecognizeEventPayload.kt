@@ -88,12 +88,22 @@ data class AsrRecognizeEventPayload(
 
         wakeup?.let {
             add("wakeup", JsonObject().apply {
-               addProperty("word", it.word)
-                add("boundary", JsonObject().apply {
-                    addProperty("start", it.boundary.startSamplePosition)
-                    addProperty("end", it.boundary.endSamplePosition)
-                    addProperty("detection", it.boundary.detectSamplePosition)
-                })
+                it.word?.let {
+                    addProperty("word", it)
+                }
+                it.boundary?.let {
+                    add("boundary", JsonObject().apply {
+                        addProperty("start", it.startSamplePosition)
+                        addProperty("end", it.endSamplePosition)
+                        addProperty("detection", it.detectSamplePosition)
+                    })
+                }
+                it.power?.let {
+                    add("power", JsonObject().apply {
+                        addProperty("noise", it.noise)
+                        addProperty("speech", it.speech)
+                    })
+                }
             })
         }
     }.toString()
