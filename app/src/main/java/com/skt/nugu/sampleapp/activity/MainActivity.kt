@@ -327,13 +327,15 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         if(status == ConnectionStatusListener.Status.CONNECTING) {
             when(reason) {
                 ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR,
-                ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT ,
-                ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT ,
+                ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT,
+                ConnectionStatusListener.ChangedReason.CONNECTION_ERROR,
+                ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT,
+                ConnectionStatusListener.ChangedReason.REQUEST_TIMEDOUT,
                 ConnectionStatusListener.ChangedReason.PING_TIMEDOUT,
                 ConnectionStatusListener.ChangedReason.FAILURE_PROTOCOL_ERROR,
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
-                ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR ,
-                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT ,
+                ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
+                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT,
                 ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
                     /** checking connection status for debugging. **/
                     NuguSnackbar.with(findViewById(R.id.drawer_layout))
@@ -344,19 +346,21 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 else -> { /* nothing to do */ }
             }
         } else if(status == ConnectionStatusListener.Status.DISCONNECTED) {
-            when(reason) {
+            when (reason) {
                 ConnectionStatusListener.ChangedReason.NONE,
                 ConnectionStatusListener.ChangedReason.SUCCESS,
-                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST -> { /** no error **/ }
+                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST,
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> { /** no error **/ }
                 ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR,
-                ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT ,
-                ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT ,
+                ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT,
+                ConnectionStatusListener.ChangedReason.CONNECTION_ERROR,
+                ConnectionStatusListener.ChangedReason.CONNECTION_TIMEDOUT,
+                ConnectionStatusListener.ChangedReason.REQUEST_TIMEDOUT,
                 ConnectionStatusListener.ChangedReason.PING_TIMEDOUT,
                 ConnectionStatusListener.ChangedReason.FAILURE_PROTOCOL_ERROR,
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
-                ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR ,
-                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT ,
-                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
+                ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
+                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT -> {
                     /** If you want to reconnect to the server, run the code below.
                         But it can be recursive, so you need to manage the count of attempts.
                         if(attempts++ < maxAttempts) {

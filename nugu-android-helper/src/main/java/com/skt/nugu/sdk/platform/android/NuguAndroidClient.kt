@@ -40,7 +40,6 @@ import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
 import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.client.NuguClient
-import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.CancelRecognizeDirectiveHandler
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
@@ -75,6 +74,7 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.sound.SoundProvider
+import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
@@ -151,7 +151,7 @@ class NuguAndroidClient private constructor(
             override fun createExternalSpeaker(): Speaker? = null
         }
         internal var defaultEpdTimeoutMillis: Long = 10000L
-        internal var transportFactory: TransportFactory = GrpcTransportFactory()
+        internal var transportFactory: TransportFactory = DefaultTransportFactory()
         internal var endPointDetector: AudioEndPointDetector? = null
         internal var batteryStatusProvider: BatteryStatusProvider? =
             AndroidBatteryStatusProvider(context)
