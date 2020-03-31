@@ -34,6 +34,8 @@ import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
 import com.skt.nugu.sdk.core.interfaces.context.ClientContextProvider
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
@@ -59,6 +61,25 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
     var playerActivity: AudioPlayerAgentInterface.State = AudioPlayerAgentInterface.State.IDLE
 
     private val executor = Executors.newSingleThreadExecutor()
+
+    private val directiveHandlingListener = object: DirectiveSequencerInterface.OnDirectiveHandlingListener {
+        private val TAG = "DirectiveEvent"
+        override fun onRequested(directive: Directive) {
+            Log.d(TAG, "[onRequested] ${directive.header}")
+        }
+
+        override fun onCompleted(directive: Directive) {
+            Log.d(TAG, "[onCompleted] ${directive.header}")
+        }
+
+        override fun onCanceled(directive: Directive) {
+            Log.d(TAG, "[onCanceled] ${directive.header}")
+        }
+
+        override fun onFailed(directive: Directive, description: String) {
+            Log.d(TAG, "[onFailed] ${directive.header} , $description")
+        }
+    }
 
     var initialized = false
     var observer: Observer? = null
@@ -158,6 +179,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         ).build()
 
         client.addAudioPlayerListener(this)
+        client.addOnDirectiveHandlingListener(directiveHandlingListener)
 
         val asrAgent = client.asrAgent
         if(asrAgent == null) {

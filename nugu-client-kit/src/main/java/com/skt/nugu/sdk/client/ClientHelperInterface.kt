@@ -34,6 +34,7 @@ import java.util.concurrent.Future
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
 /**
@@ -251,4 +252,16 @@ interface ClientHelperInterface {
      * @param listener the listener that will removed
      */
     fun removeOnSendMessageListener(listener: MessageSender.OnSendMessageListener)
+
+    /**
+     * Add listener to be notified when occur event of directive handling.
+     * @param listener the listener that will add
+     */
+    fun addOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener)
+
+    /**
+     * Remove listener
+     * @param listener the listener that will removed
+     */
+    fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener)
 }

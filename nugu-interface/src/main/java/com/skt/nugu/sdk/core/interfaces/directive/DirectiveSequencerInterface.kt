@@ -21,6 +21,15 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
  * Interface for sequencing and handling directives.
  */
 interface DirectiveSequencerInterface {
+    interface OnDirectiveHandlingListener {
+        fun onRequested(directive: Directive)
+        fun onCompleted(directive: Directive)
+        fun onCanceled(directive: Directive)
+        fun onFailed(directive: Directive, description: String)
+    }
+
+    fun addOnDirectiveHandlingListener(listener: OnDirectiveHandlingListener)
+    fun removeOnDirectiveHandlingListener(listener: OnDirectiveHandlingListener)
     fun addDirectiveHandler(handler: DirectiveHandler): Boolean
     fun removeDirectiveHandler(handler: DirectiveHandler): Boolean
     fun setDialogRequestId(dialogRequestId: String)
