@@ -72,6 +72,7 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.Logger
@@ -786,5 +787,13 @@ class NuguAndroidClient private constructor(
 
     override fun removeOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
         client.getSdkContainer().getMessageSender().removeOnSendMessageListener(listener)
+    }
+
+    override fun addOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
+        client.getSdkContainer().getDirectiveSequencer().addOnDirectiveHandlingListener(listener)
+    }
+
+    override fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
+        client.getSdkContainer().getDirectiveSequencer().removeOnDirectiveHandlingListener(listener)
     }
 }

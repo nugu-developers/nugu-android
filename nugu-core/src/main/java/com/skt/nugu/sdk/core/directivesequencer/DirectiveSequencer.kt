@@ -74,6 +74,14 @@ class DirectiveSequencer :
         return true
     }
 
+    override fun addOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
+        directiveProcessor.addOnDirectiveHandlingListener(listener)
+    }
+
+    override fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
+        directiveProcessor.removeOnDirectiveHandlingListener(listener)
+    }
+
     override fun addDirectiveHandler(handler: DirectiveHandler): Boolean {
         return directiveRouter.addDirectiveHandler(handler)
     }

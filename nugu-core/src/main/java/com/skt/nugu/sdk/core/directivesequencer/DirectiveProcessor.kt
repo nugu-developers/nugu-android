@@ -16,10 +16,12 @@
 package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
@@ -36,10 +38,16 @@ class DirectiveProcessor(
         private val directive: Directive
     ) : com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult {
         override fun setCompleted() {
+            listeners.forEach {
+                it.onCompleted(directive)
+            }
             onHandlingCompleted(directive)
         }
 
         override fun setFailed(description: String) {
+            listeners.forEach {
+                it.onFailed(directive, description)
+            }
             onHandlingFailed(directive, description)
         }
     }
@@ -70,8 +78,18 @@ class DirectiveProcessor(
     }
     private var isEnabled = true
 
+    private var listeners = CopyOnWriteArraySet<DirectiveSequencerInterface.OnDirectiveHandlingListener>()
+
     init {
         processingLoop.start()
+    }
+
+    fun addOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
+        listeners.add(listener)
+    }
+
+    fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
+        listeners.remove(listener)
     }
 
     fun setDialogRequestId(dialogRequestId: String) {
@@ -280,6 +298,9 @@ class DirectiveProcessor(
         lock.unlock()
         for (directive in copyCancelingQueue) {
             directiveRouter.cancelDirective(directive)
+            listeners.forEach {
+                it.onCanceled(directive)
+            }
         }
         lock.lock()
         return true
@@ -311,7 +332,15 @@ class DirectiveProcessor(
 
             handleDirectiveCalled = true
             lock.unlock()
+            listeners.forEach {
+                it.onRequested(directive)
+            }
             val handleDirectiveSucceeded = directiveRouter.handleDirective(directive)
+            if(!handleDirectiveSucceeded) {
+                listeners.forEach {
+                    it.onFailed(directive, "no handler for directive")
+                }
+            }
             lock.lock()
 
             // if handle failed or directive is not blocking
