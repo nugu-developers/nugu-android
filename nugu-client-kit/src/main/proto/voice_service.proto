@@ -19,6 +19,8 @@ option java_outer_classname = "VoiceServiceProto";
 
 service VoiceService {
     rpc EventStream(stream Upstream) returns (stream Downstream);
+    rpc Events(stream Upstream) returns (stream Downstream);
+    rpc Directives(DirectivesRequest) returns (stream Downstream);
     rpc Ping(PingRequest) returns (PingResponse);
     rpc SendCrashReport(CrashReportRequest) returns (CrashReportResponse);
 }
@@ -65,6 +67,8 @@ message Attachment {
     int32 seq = 2;
     bytes content = 3;
     bool is_end = 4;
+
+    // 16 characters / ShortUUID, https://tde.sktelecom.com/wiki/pages/viewpage.action?pageId=232002413
     string parent_message_id = 5;
     string media_type = 6;
 }
@@ -73,13 +77,25 @@ message Header {
     string namespace = 1;
     string name = 2;
     string version = 6;
+
+    // 16 characters / ShortUUID, https://tde.sktelecom.com/wiki/pages/viewpage.action?pageId=232002413
     string message_id = 4;
+
+    // 32 characters / TimeUUID, https://tde.sktelecom.com/wiki/pages/viewpage.action?pageId=232002413
     string dialog_request_id = 5;
+
+    // 32 characters / TimeUUID
     string referrer_dialog_request_id = 7;
+
+    string timestamp = 8 [deprecated=true];
+}
+
+message DirectivesRequest {
+
 }
 
 message PingRequest {
-
+    int32 version = 1;
 }
 
 message PingResponse {

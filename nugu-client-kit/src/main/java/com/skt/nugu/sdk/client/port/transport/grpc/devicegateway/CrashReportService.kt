@@ -18,16 +18,18 @@ package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
+import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.util.concurrent.TimeUnit
 /**
  * This class is designed to manage crashreport of DeviceGateway
  */
-internal class CrashReportService(val blockingStub: VoiceServiceGrpc.VoiceServiceBlockingStub) {
+internal class CrashReportService(val channel: ManagedChannel) {
     companion object {
         private const val TAG = "CrashReportService"
         private const val defaultTimeout: Long = 1000 * 10L
     }
+    var blockingStub : VoiceServiceGrpc.VoiceServiceBlockingStub? = null
 
     fun sendCrashReport(crashReportMessageRequest : CrashReportMessageRequest) : Boolean {
         val builder =
@@ -40,13 +42,17 @@ internal class CrashReportService(val blockingStub: VoiceServiceGrpc.VoiceServic
             .addCrashReport(builder).build()
 
         try {
-            val response = blockingStub.withDeadlineAfter(
+            if(blockingStub == null) {
+                blockingStub = VoiceServiceGrpc.newBlockingStub(channel)
+            }
+            val response = blockingStub!!.withDeadlineAfter(
                 defaultTimeout,
                 TimeUnit.MILLISECONDS
             ).sendCrashReport(request)
         } catch (th: Throwable) {
             val status = Status.fromThrowable(th)
             Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
+            blockingStub = null
             return false
         }
         return true
