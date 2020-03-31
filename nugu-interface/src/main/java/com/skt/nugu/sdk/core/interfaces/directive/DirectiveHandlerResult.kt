@@ -28,6 +28,7 @@ interface DirectiveHandlerResult {
     /**
      * Should be called when directive handling failed by [DirectiveHandler].
      * @param description the description for failure.
+     * @param cancelAll if true, try to cancel all related directives. (default: true)
      */
-    fun setFailed(description: String)
+    fun setFailed(description: String, cancelAll: Boolean = true)
 }
