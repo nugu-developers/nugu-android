@@ -738,10 +738,10 @@ class DefaultTTSAgent(
 
         with(info) {
             if (cancelByStop) {
-                result.setFailed("playback stopped")
+                result.setFailed("playback stopped", true)
                 releaseSyncImmediately(this)
             } else {
-                result.setCompleted()
+                result.setFailed("playback stopped", false)
                 releaseSync(this)
             }
         }
