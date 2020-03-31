@@ -50,8 +50,14 @@ interface ConnectionStatusListener {
         /** The connection attempt failed due to DNS resolution timeout. */
         DNS_TIMEDOUT,
 
+        /** The connection attempt failed. */
+        CONNECTION_ERROR,
+
         /** The connection attempt failed due to timeout. */
         CONNECTION_TIMEDOUT,
+
+        /** The request attempt failed due to timeout. */
+        REQUEST_TIMEDOUT,
 
         /** The access credentials provided to server were invalid. */
         INVALID_AUTH,

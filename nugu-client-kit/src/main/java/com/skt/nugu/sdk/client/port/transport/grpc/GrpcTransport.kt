@@ -25,13 +25,14 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
+import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayTransport
 import java.util.concurrent.Executors
 
 /**
  * Class to create and manage an gRPC transport
  */
 internal class GrpcTransport private constructor(
-    address: String,
+    private val serverInfo: NuguServerInfo,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
@@ -43,13 +44,13 @@ internal class GrpcTransport private constructor(
         private const val TAG = "GrpcTransport"
 
         fun create(
-            address: String,
+            serverInfo: NuguServerInfo,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
         ): Transport {
             return GrpcTransport(
-                address,
+                serverInfo,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -59,13 +60,17 @@ internal class GrpcTransport private constructor(
 
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayClient? = null
-    private var registryClient: RegistryClient = RegistryClient(address = address)
+    private var registryClient: RegistryClient = RegistryClient(serverInfo)
     private val executor = Executors.newSingleThreadExecutor()
 
     /** @return the bearer token **/
     private fun getAuthorization() = authDelegate.getAuthorization()?:""
     /** @return the detail state **/
     private fun getDetailedState() = state.getDetailedState()
+
+    init {
+        serverInfo.checkServerSettings()
+    }
 
     /**
      * connect from deviceGatewayClient and registryClient.
@@ -93,6 +98,12 @@ internal class GrpcTransport private constructor(
         }
         setState(DetailedState.CONNECTING_REGISTRY)
 
+        if(!serverInfo.keepConnection) {
+            Logger.d(TAG,"[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
+            return tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(serverInfo))
+
+        }
+
         registryClient.getPolicy(getAuthorization(), object : RegistryClient.Observer {
             override fun onCompleted(policy: Policy?) {
                 // succeeded, then it should be connection to DeviceGateway
@@ -116,15 +127,9 @@ internal class GrpcTransport private constructor(
         return true
     }
 
-    private val deviceGatewayObserver = object : DeviceGatewayClient.Observer {
+    private val deviceGatewayObserver = object : DeviceGatewayTransport.TransportObserver {
         override fun onConnected() {
             setState(DetailedState.CONNECTED)
-
-            val isHandOff = deviceGatewayClient?.isHandOff ?: false
-            if(isHandOff) {
-                deviceGatewayClient?.isHandOff = false
-                Logger.d(TAG,"[onConnected] Handoff changed : $isHandOff")
-            }
         }
 
         override fun onError(reason: ChangedReason) {
@@ -170,6 +175,7 @@ internal class GrpcTransport private constructor(
 
         DeviceGatewayClient(
             policy,
+            serverInfo.keepConnection,
             messageConsumer,
             deviceGatewayObserver,
             getAuthorization(),
