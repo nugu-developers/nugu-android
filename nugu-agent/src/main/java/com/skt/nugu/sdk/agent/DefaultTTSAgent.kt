@@ -485,10 +485,10 @@ class DefaultTTSAgent(
             TTSAgentInterface.State.STOPPED,
             TTSAgentInterface.State.FINISHED -> {
                 currentInfo?.apply {
-                    result.setCompleted()
                     if (isPlaybackInitiated) {
                         stopPlaying()
                     } else {
+                        result.setCompleted()
                         releaseSyncImmediately(this)
                     }
                 }
