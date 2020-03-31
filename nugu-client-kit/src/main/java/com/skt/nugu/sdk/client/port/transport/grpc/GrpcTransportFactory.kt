@@ -26,10 +26,10 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
  * @param option the options for GrpcTransport
  */
 
-class GrpcTransportFactory(private val address: String =  DEFAULT_ADDRESS) : TransportFactory {
-    companion object {
-        const val DEFAULT_ADDRESS = "reg-http.sktnugu.com"
-    }
+class GrpcTransportFactory(
+    private val serverInfo: NuguServerInfo = NuguServerInfo.Default()
+) : TransportFactory {
+
     /**
      * Create a Transport.
      */
@@ -39,7 +39,7 @@ class GrpcTransportFactory(private val address: String =  DEFAULT_ADDRESS) : Tra
         transportObserver: TransportListener
     ): Transport {
         return GrpcTransport.create(
-            address,
+            serverInfo,
             authDelegate,
             messageConsumer,
             transportObserver

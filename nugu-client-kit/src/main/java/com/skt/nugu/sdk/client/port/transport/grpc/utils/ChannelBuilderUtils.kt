@@ -39,7 +39,7 @@ class ChannelBuilderUtils {
                 .userAgent(userAgent())
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
-                    authorization ?: ""
+                    authorization.toString()
                 )
             )
         }
