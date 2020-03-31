@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.context
 
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -175,17 +176,21 @@ class ContextManager : ContextManagerInterface {
     ): JsonObject {
         val namespaceJsonObject = context.getAsJsonObject(namespaceAndName.namespace)
         val entrySet = namespaceJsonObject.entrySet()
-        val shouldBeRemoveKeys = HashSet<String>()
         entrySet.forEach {
             if (it.key != namespaceAndName.name) {
-                shouldBeRemoveKeys.add(it.key)
+                filterOut(it.value.asJsonObject, "version")
             }
-        }
-        shouldBeRemoveKeys.forEach {
-            namespaceJsonObject.remove(it)
         }
 
         return context
+    }
+
+    private fun filterOut(jsonObject: JsonObject, include: String) {
+        jsonObject.entrySet().filterNot {
+            it.key == include
+        }.forEach {
+            jsonObject.remove(it.key)
+        }
     }
 
     override fun setStateProvider(
