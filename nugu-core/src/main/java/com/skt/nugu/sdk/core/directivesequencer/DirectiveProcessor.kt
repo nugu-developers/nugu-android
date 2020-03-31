@@ -44,11 +44,12 @@ class DirectiveProcessor(
             onHandlingCompleted(directive)
         }
 
-        override fun setFailed(description: String) {
+        override fun setFailed(description: String, cancelAll: Boolean) {
             listeners.forEach {
                 it.onFailed(directive, description)
             }
-            onHandlingFailed(directive, description)
+
+            onHandlingFailed(directive, description, cancelAll)
         }
     }
 
@@ -251,11 +252,13 @@ class DirectiveProcessor(
         }
     }
 
-    private fun onHandlingFailed(directive: Directive, description: String) {
-        Logger.d(TAG, "[onHandlingFailed] messageId: ${directive.getMessageId()} ,description : $description")
+    private fun onHandlingFailed(directive: Directive, description: String, cancelAll: Boolean) {
+        Logger.d(TAG, "[onHandlingFailed] messageId: ${directive.getMessageId()} ,description : $description, cancelAll: $cancelAll")
         lock.withLock {
             removeDirectiveLocked(directive)
-            scrubDialogRequestIdLocked(directive.getDialogRequestId())
+            if(cancelAll) {
+                scrubDialogRequestIdLocked(directive.getDialogRequestId())
+            }
         }
     }
 
