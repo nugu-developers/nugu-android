@@ -389,7 +389,14 @@ class DefaultAudioPlayerAgent(
                 SourceType.ATTACHMENT -> item.directive.getAttachmentReader()?.let { reader ->
                     mediaPlayer.setSource(reader)
                 } ?: SourceId.ERROR()
-                else -> mediaPlayer.setSource(URI.create(item.payload.audioItem.stream.url))
+                else -> {
+                    try {
+                        mediaPlayer.setSource(URI.create(item.payload.audioItem.stream.url.trim()))
+                    } catch (th: Throwable) {
+                        Logger.w(TAG, "[executePlayNextItem] failed to create uri", th)
+                        SourceId.ERROR()
+                    }
+                }
             }
 
             if (sourceId.isError()) {
