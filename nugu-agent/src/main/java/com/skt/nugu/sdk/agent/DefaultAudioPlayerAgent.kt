@@ -1225,26 +1225,26 @@ class DefaultAudioPlayerAgent(
                 currentActivity
             }
 
-        val policy = if (playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
-            StateRefreshPolicy.ALWAYS
-        } else {
-            StateRefreshPolicy.NEVER
-        }
-
         contextSetter.setState(namespaceAndName, JsonObject().apply {
             addProperty("version", VERSION.toString())
             addProperty("playerActivity", playerActivity.name)
-            if (token.isNotBlank() && currentActivity != AudioPlayerAgentInterface.State.IDLE) {
-                addProperty("token", token)
+
+            if(playerActivity != AudioPlayerAgentInterface.State.IDLE) {
+                if(token.isNotBlank()) {
+                    addProperty("token", token)
+                }
+
+                addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
+
+                if (duration != null && duration != MEDIA_PLAYER_INVALID_OFFSET) {
+                    addProperty("durationInMilliseconds", duration)
+                }
+
+                lyricsPresenter?.getVisibility()?.let {
+                    addProperty("lyricsVisible", it)
+                }
             }
-            addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-            if (duration != null && duration != MEDIA_PLAYER_INVALID_OFFSET) {
-                addProperty("durationInMilliseconds", duration)
-            }
-            lyricsPresenter?.getVisibility()?.let {
-                addProperty("lyricsVisible", it)
-            }
-        }.toString(), policy, stateRequestToken)
+        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 
     private fun sendPlaybackStartedEvent() {
