@@ -71,6 +71,7 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
+import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
@@ -166,6 +167,8 @@ class NuguAndroidClient private constructor(
 
         internal var enableDisplay: Boolean = true
 
+        internal var soundProvider : SoundProvider? = null
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         /**
@@ -257,6 +260,11 @@ class NuguAndroidClient private constructor(
          * @param enable the flag to enable or disable display.
          */
         fun enableDisplay(enable: Boolean) = apply { this.enableDisplay = enable }
+
+        /**
+         * @param provider the provider for content URIs for sounds.
+         */
+        fun soundProvider(provider: SoundProvider?) = apply { this.soundProvider = provider }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -548,6 +556,22 @@ class NuguAndroidClient private constructor(
                     override fun create(container: SdkContainer): DefaultBluetoothAgent =
                         with(container) {
                             DefaultBluetoothAgent(
+                                getMessageSender(),
+                                getContextManager(),
+                                it
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
+                            }
+                        }
+                })
+            }
+
+            builder.soundProvider?.let {
+                addAgentFactory(DefaultSoundAgent.NAMESPACE, object : AgentFactory<DefaultSoundAgent> {
+                    override fun create(container: SdkContainer): DefaultSoundAgent =
+                        with(container) {
+                            DefaultSoundAgent(
+                                builder.playerFactory.createBeepPlayer(),
                                 getMessageSender(),
                                 getContextManager(),
                                 it
