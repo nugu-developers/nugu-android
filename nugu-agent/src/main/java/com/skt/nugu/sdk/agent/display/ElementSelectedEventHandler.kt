@@ -72,10 +72,7 @@ class ElementSelectedEventHandler(
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
             }
-        }, NamespaceAndName(
-            "supportedInterfaces",
-            DefaultDisplayAgent.NAMESPACE)
-        )
+        })
 
         return dialogRequestId
     }
