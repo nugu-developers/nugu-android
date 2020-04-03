@@ -205,7 +205,7 @@ class DefaultAudioPlayerAgent(
         val directive: Directive,
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
-        var referrerDialogRequestId = directive.getDialogRequestId()
+        var activeAudioInfo = this
         var isFetched = false
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -345,11 +345,11 @@ class DefaultAudioPlayerAgent(
                         waitFinishPreExecuteInfo = null
                     }
                 } else {
+                    playSynchronizer.releaseWithoutSync(nextAudioInfo)
                     currentAudioInfo?.let {
-                        // update referrerDialogRequestId
-                        nextAudioInfo.referrerDialogRequestId = it.referrerDialogRequestId
+                        it.activeAudioInfo = nextAudioInfo
                     }
-                    currentItem = nextAudioInfo
+
                     // fetch only offset
                     executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
 
@@ -756,7 +756,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("favorite", favorite)
                             }.toString()
-                        ).referrerDialogRequestId(referrerDialogRequestId).build()
+                        ).referrerDialogRequestId(getDialogRequestId()).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -783,7 +783,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("repeat", mode.name)
                             }.toString()
-                        ).referrerDialogRequestId(referrerDialogRequestId).build()
+                        ).referrerDialogRequestId(getDialogRequestId()).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -810,7 +810,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("shuffle", shuffle)
                             }.toString()
-                        ).referrerDialogRequestId(referrerDialogRequestId).build()
+                        ).referrerDialogRequestId(getDialogRequestId()).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -1179,7 +1179,7 @@ class DefaultAudioPlayerAgent(
 
 
     private fun executeTryPlayCurrentItemIfReady() {
-        val item = currentItem
+        val item = currentItem?.activeAudioInfo
         if(item == null) {
             Logger.w(TAG, "[executeTryPlayCurrentItemIfReady] currentItem is null.")
             return
@@ -1198,15 +1198,17 @@ class DefaultAudioPlayerAgent(
 
         playCalled = true
 
-        playSynchronizer.startSync(
-            item,
-            object : PlaySynchronizerInterface.OnRequestSyncListener {
-                override fun onGranted() {
-                }
+        if(item == currentItem) {
+            playSynchronizer.startSync(
+                item,
+                object : PlaySynchronizerInterface.OnRequestSyncListener {
+                    override fun onGranted() {
+                    }
 
-                override fun onDenied() {
-                }
-            })
+                    override fun onDenied() {
+                    }
+                })
+        }
     }
 
     override fun provideState(
@@ -1377,7 +1379,7 @@ class DefaultAudioPlayerAgent(
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offset)
                         }.toString()
-                    ).referrerDialogRequestId(referrerDialogRequestId).build()
+                    ).referrerDialogRequestId(getDialogRequestId()).build()
 
                     if (condition.invoke()) {
                         messageSender.sendMessage(messageRequest)
