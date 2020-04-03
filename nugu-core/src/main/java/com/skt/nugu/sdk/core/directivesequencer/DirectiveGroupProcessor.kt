@@ -42,10 +42,8 @@ class DirectiveGroupProcessor(
         postPreprocessedListeners.forEach {
             it.onReceiveDirectives(processedDirectives)
         }
-        
-        processedDirectives.forEach {
-            directiveSequencer.onDirective(it)
-        }
+
+        directiveSequencer.onDirectives(processedDirectives)
     }
 
     override fun addPreProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {

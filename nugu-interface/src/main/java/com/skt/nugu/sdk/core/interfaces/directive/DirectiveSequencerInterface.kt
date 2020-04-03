@@ -33,7 +33,7 @@ interface DirectiveSequencerInterface {
     fun addDirectiveHandler(handler: DirectiveHandler): Boolean
     fun removeDirectiveHandler(handler: DirectiveHandler): Boolean
     fun setDialogRequestId(dialogRequestId: String)
-    fun onDirective(directive: Directive): Boolean
+    fun onDirectives(directives: List<Directive>): Boolean
     fun disable()
     fun enable()
 }

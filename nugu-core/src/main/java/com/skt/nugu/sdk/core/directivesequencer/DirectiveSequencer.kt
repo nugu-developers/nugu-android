@@ -33,12 +33,12 @@ class DirectiveSequencer :
     private val directiveRouter = DirectiveRouter()
     private val directiveProcessor: DirectiveProcessor
 
-    private val receivingQueue: Deque<Directive> = ArrayDeque<Directive>()
+    private val receivingQueue: Deque<List<Directive>> = ArrayDeque()
 
     private val receivingThread: LoopThread = object : LoopThread() {
         override fun onLoop() {
             while(true) {
-                if(!receiveDirective()){
+                if(!receiveDirectives()){
                     lock.withLock {
                         if(receivingQueue.isEmpty()) {
                             return
@@ -58,19 +58,16 @@ class DirectiveSequencer :
         receivingThread.start()
     }
 
-    private fun receiveDirective(): Boolean {
+    private fun receiveDirectives(): Boolean {
         Logger.d(TAG, "[receiveDirective]")
-        val directive = lock.withLock {
+        val directives = lock.withLock {
             if (receivingQueue.isEmpty()) {
                 return false
             }
             receivingQueue.pop()
         }
 
-        if (!directiveProcessor.onDirective(directive)) {
-            Logger.e(TAG, "[receiveDirective] failed to handle directive: $directive")
-        }
-
+        directiveProcessor.onDirectives(directives)
         return true
     }
 
@@ -94,15 +91,14 @@ class DirectiveSequencer :
         return directiveProcessor.setDialogRequestId(dialogRequestId)
     }
 
-    override fun onDirective(directive: Directive): Boolean {
-        Logger.d(TAG, "[onDirective] : $directive")
+    override fun onDirectives(directives: List<Directive>): Boolean {
         lock.withLock {
             if (!isEnabled) {
                 Logger.w(TAG, "[onDirective] failed, $TAG was disabled")
                 return false
             }
 
-            receivingQueue.offer(directive)
+            receivingQueue.offer(directives)
             receivingThread.wakeAll()
             return true
         }

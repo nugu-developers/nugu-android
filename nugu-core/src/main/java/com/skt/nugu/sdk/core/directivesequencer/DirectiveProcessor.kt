@@ -99,15 +99,16 @@ class DirectiveProcessor(
         }
     }
 
-    fun onDirective(directive: Directive): Boolean {
+    fun onDirectives(directives: List<Directive>) {
+        directives.forEach {
+            onDirective(it)
+        }
+    }
+
+    private fun onDirective(directive: Directive): Boolean {
         Logger.d(TAG, "[onDirective] $directive")
         directiveLock.withLock {
             lock.withLock {
-                if (shouldDropDirective(directive)) {
-                    Logger.d(TAG, "[onDirective] drop directive : $directive")
-                    return true
-                }
-
                 directiveBeingPreHandled = directive
             }
 
@@ -122,6 +123,7 @@ class DirectiveProcessor(
                 directiveBeingPreHandled = null
 
                 if (!preHandled) {
+                    Logger.d(TAG, "[onDirective] directive handling failed at preHandleDirective().")
                     return false
                 }
 
@@ -131,9 +133,6 @@ class DirectiveProcessor(
             }
         }
     }
-
-    private fun shouldDropDirective(directive: Directive): Boolean = false // for test set to false
-    //directive.getDialogRequestId().isNotEmpty() && directive.getDialogRequestId() != dialogRequestId
 
     private fun setDialogRequestIdLocked(dialogRequestId: String) {
         if (this.dialogRequestId == dialogRequestId) {
