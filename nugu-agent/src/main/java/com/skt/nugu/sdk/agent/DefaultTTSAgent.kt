@@ -19,7 +19,7 @@ package com.skt.nugu.sdk.agent
 //import javax.annotation.concurrent.ThreadSafe
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
@@ -56,13 +56,14 @@ class DefaultTTSAgent(
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
-    private val channelName: String
+    private val channelName: String,
+    private val focusHolderManager: FocusHolderManager
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ChannelObserver
     , TTSAgentInterface
     , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
-    , DialogUXStateAggregatorInterface.Listener
+    , FocusHolderManager.OnStateChangeListener
     , PlayStackManagerInterface.PlayContextProvider {
 
     internal data class SpeakPayload(
@@ -114,6 +115,7 @@ class DefaultTTSAgent(
         info: DirectiveInfo,
         val payload: SpeakPayload
     ) : PlaySynchronizerInterface.SynchronizeObject
+        , FocusHolderManager.FocusHolder
         , DirectiveInfo by info {
         var isPlaybackInitiated = false
         var isDelayedCancel = false
@@ -122,6 +124,7 @@ class DefaultTTSAgent(
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
+                    focusHolderManager.abandon(this@SpeakDirectiveInfo)
                     removeDirective(directive.getMessageId())
                     clear()
 
@@ -217,6 +220,7 @@ class DefaultTTSAgent(
             }
 
             playSynchronizer.prepareSync(speakInfo)
+            focusHolderManager.request(speakInfo)
             executor.submit {
                 executePreHandleSpeakDirective(speakInfo)
             }
@@ -466,6 +470,7 @@ class DefaultTTSAgent(
                 override fun onDenied() {
                 }
             })
+        focusHolderManager.request(info)
     }
 
     private fun executeStateChange() {
@@ -877,12 +882,10 @@ class DefaultTTSAgent(
         requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
     }
 
-    override fun onDialogUXStateChanged(
-        newState: DialogUXStateAggregatorInterface.DialogUXState,
-        dialogMode: Boolean
-    ) {
+    override fun onStateChanged(state: FocusHolderManager.State) {
+        Logger.d(TAG, "[onStateChanged-FocusHolder] $state")
         executor.submit {
-            if(newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+            if(state != FocusHolderManager.State.UNHOLD) {
                 return@submit
             }
 
