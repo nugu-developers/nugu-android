@@ -56,18 +56,14 @@ interface BluetoothAgentInterface {
         // A Previous command.
         PREVIOUS
     }
-
+    data class DiscoverableStartResult(
+        val success: Boolean,
+        val hasPairedDevices: Boolean
+    )
     /**
      * The Bluetooth events.
      */
     sealed class BluetoothEvent {
-        /**
-         * Event indicating that a local device has changed to discoverable mode(startDiscoverable, finishDiscoverable).
-         */
-        class StartDiscoverableEvent(val hasPairedDevices: Boolean) : BluetoothEvent()
-        class StartDiscoverableFailedEvent(val hasPairedDevices: Boolean) : BluetoothEvent()
-        class FinishDiscoverableEvent : BluetoothEvent()
-        class FinishDiscoverableFailedEvent : BluetoothEvent()
         /**
          * Event indicating that a remote device has changed to connections(Connected, ConnectFailed, Disconnected).
          */
@@ -84,8 +80,8 @@ interface BluetoothAgentInterface {
      * @param event a [BluetoothEvent]
      */
     interface Listener {
-        fun onDiscoverableStart(durationInSeconds: Long = 0)
-        fun onDiscoverableFinish()
+        fun onDiscoverableStart(durationInSeconds: Long = 0) : DiscoverableStartResult
+        fun onDiscoverableFinish() : Boolean
         fun onAVRCPCommand(command: AVRCPCommand)
     }
 
