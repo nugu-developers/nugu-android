@@ -51,6 +51,7 @@ import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
+import com.skt.nugu.sdk.agent.dialog.DialogFocusHolderManager
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -71,8 +72,10 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
+import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -279,6 +282,8 @@ class NuguAndroidClient private constructor(
 
     private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
 
+    private val dialogChannelFocusHolderManager = DialogFocusHolderManager(FocusHolderManagerImpl(builder.dialogUXStateTransitionDelay))
+
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate
     ).logger(AndroidLogger())
@@ -301,11 +306,12 @@ class NuguAndroidClient private constructor(
                             SpeexEncoder(),
                             builder.endPointDetector,
                             builder.defaultEpdTimeoutMillis,
-                            DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                            DefaultFocusChannel.DIALOG_CHANNEL_NAME,
+                            dialogChannelFocusHolderManager
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
                             getDialogSessionManager().addListener(this)
-                            dialogUXStateAggregator.addListener(this)
+                            dialogChannelFocusHolderManager.addOnStateChangeListener(this)
 
                             CancelRecognizeDirectiveHandler(this).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
@@ -393,11 +399,12 @@ class NuguAndroidClient private constructor(
                         getContextManager(),
                         getPlaySynchronizer(),
                         getInputManagerProcessor(),
-                        DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                        DefaultFocusChannel.DIALOG_CHANNEL_NAME,
+                        dialogChannelFocusHolderManager
                     ).apply {
                         getAudioPlayStackManager().addPlayContextProvider(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
-                        dialogUXStateAggregator.addListener(this)
+                        dialogChannelFocusHolderManager.addOnStateChangeListener(this)
                     }
                 }
             })
@@ -663,6 +670,7 @@ class NuguAndroidClient private constructor(
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
         client.getSdkContainer().getDialogSessionManager().addListener(dialogUXStateAggregator)
+        client.getSdkContainer().getDialogSessionManager().addListener(dialogChannelFocusHolderManager)
     }
 
     override fun connect() {

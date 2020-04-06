@@ -23,7 +23,8 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
-import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
+import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
@@ -59,13 +60,15 @@ class DefaultASRAgent(
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
     private val defaultEpdTimeoutMillis: Long,
-    private val channelName: String
+    private val channelName: String,
+    private val focusHolderManager: FocusHolderManager
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
     , DialogSessionManagerInterface.OnSessionStateChangeListener
     , SpeechRecognizer.OnStateChangeListener
     , ChannelObserver
-    , DialogUXStateAggregatorInterface.Listener {
+    , FocusHolderManager.OnStateChangeListener
+    , FocusHolderManager.FocusHolder {
     companion object {
         private const val TAG = "DefaultASRAgent"
 
@@ -682,12 +685,9 @@ class DefaultASRAgent(
         }
     }
 
-    override fun onDialogUXStateChanged(
-        newState: DialogUXStateAggregatorInterface.DialogUXState,
-        dialogMode: Boolean
-    ) {
+    override fun onStateChanged(state: FocusHolderManager.State) {
         executor.submit {
-            if(newState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+            if(state != FocusHolderManager.State.UNHOLD) {
                 return@submit
             }
 
@@ -774,10 +774,16 @@ class DefaultASRAgent(
         }
 
         Logger.d(TAG, "[setState] $state")
-        if (state == ASRAgentInterface.State.IDLE && expectSpeechPayload == null) {
-            currentSessionId?.let {
-                dialogSessionManager.closeSession()
+        if (state == ASRAgentInterface.State.IDLE) {
+            if(expectSpeechPayload == null) {
+                currentSessionId?.let {
+                    dialogSessionManager.closeSession()
+                }
             }
+
+            focusHolderManager.abandon(this)
+        } else {
+            focusHolderManager.request(this)
         }
 
 //        if (!state.isRecognizing()) {
