@@ -288,21 +288,16 @@ class DefaultBluetoothAgent(
         executor.submit {
             val referrerDialogRequestId = info.directive.header.dialogRequestId
             eventBus.subscribe(arrayListOf(
-                EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED,
-                EVENT_NAME_START_DISCOVERABLE_MODE_FAILED), object : BluetoothEventBus.Listener {
-                override fun call(name: String, value: Any): Boolean {
-                    return sendEvent(name, payload.playServiceId, referrerDialogRequestId, value as Boolean)
-                }
-            }).subscribe(arrayListOf(
                 EVENT_NAME_CONNECT_SUCCEEDED,
                 EVENT_NAME_CONNECT_FAILED,
                 EVENT_NAME_DISCONNECT_SUCCEEDED,
-                EVENT_NAME_DISCONNECT_FAILED), object : BluetoothEventBus.Listener {
+                EVENT_NAME_DISCONNECT_FAILED
+            ), object : BluetoothEventBus.Listener {
                 override fun call(name: String): Boolean {
                     return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
                 }
             })
-            executeStartDiscoverableMode(payload.durationInSeconds)
+            executeStartDiscoverableMode(payload, referrerDialogRequestId)
         }
     }
 
@@ -323,18 +318,9 @@ class DefaultBluetoothAgent(
 
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
-                eventBus.subscribe(arrayListOf(
-                    EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED,
-                    EVENT_NAME_FINISH_DISCOVERABLE_MODE_FAILED) , object : BluetoothEventBus.Listener {
-                    override fun call(name: String): Boolean {
-                        // avoid memory leaks
-                        eventBus.clearAllSubscribers()
-
-                        val referrerDialogRequestId = info.directive.header.dialogRequestId
-                        return sendEvent(name, payload.playServiceId,referrerDialogRequestId)
-                    }
-                })
-                executeFinishDiscoverableMode()
+                eventBus.clearAllSubscribers()
+                val referrerDialogRequestId = info.directive.header.dialogRequestId
+                executeFinishDiscoverableMode(payload.playServiceId, referrerDialogRequestId)
             }
         }
     }
@@ -455,32 +441,54 @@ class DefaultBluetoothAgent(
         listener?.onAVRCPCommand(AVRCPCommand.PAUSE)
     }
 
-    private fun executeStartDiscoverableMode(durationInSeconds: Long) {
-        listener?.onDiscoverableStart(durationInSeconds = durationInSeconds)
+    private fun executeStartDiscoverableMode(
+        payload: StartDiscoverableModePayload,
+        referrerDialogRequestId: String
+    ) {
+        listener?.onDiscoverableStart(payload.durationInSeconds)?.apply {
+            Logger.d(TAG, "discoverable start (success:$success)")
+            if (success) {
+                sendEvent(
+                    EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED,
+                    payload.playServiceId,
+                    referrerDialogRequestId,
+                    hasPairedDevices
+                )
+            } else {
+                sendEvent(
+                    EVENT_NAME_START_DISCOVERABLE_MODE_FAILED,
+                    payload.playServiceId,
+                    referrerDialogRequestId,
+                    hasPairedDevices
+                )
+            }
+        }
     }
 
-    private fun executeFinishDiscoverableMode() {
-        listener?.onDiscoverableFinish()
+    private fun executeFinishDiscoverableMode(
+        playServiceId: String,
+        referrerDialogRequestId: String
+    ) {
+        listener?.onDiscoverableFinish()?.let { success ->
+            Logger.d(TAG, "discoverable finish (success:$success)")
+            if (success) {
+                sendEvent(
+                    EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED,
+                    playServiceId,
+                    referrerDialogRequestId
+                )
+            } else {
+                sendEvent(
+                    EVENT_NAME_FINISH_DISCOVERABLE_MODE_FAILED,
+                    playServiceId,
+                    referrerDialogRequestId
+                )
+            }
+        }
     }
 
     override fun sendBluetoothEvent(event: BluetoothEvent): Boolean {
         when (event) {
-            is BluetoothEvent.StartDiscoverableEvent-> {
-                Logger.d(TAG, "discoverable start")
-                return eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED, event.hasPairedDevices)
-            }
-            is BluetoothEvent.StartDiscoverableFailedEvent -> {
-                Logger.d(TAG, "discoverable start failed")
-                return eventBus.post(EVENT_NAME_START_DISCOVERABLE_MODE_FAILED, event.hasPairedDevices)
-            }
-            is BluetoothEvent.FinishDiscoverableEvent -> {
-                Logger.d(TAG, "discoverable finish")
-                return eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_SUCCEEDED)
-            }
-            is BluetoothEvent.FinishDiscoverableFailedEvent -> {
-                Logger.d(TAG, "discoverable finish failed")
-                return eventBus.post(EVENT_NAME_FINISH_DISCOVERABLE_MODE_FAILED)
-            }
             is BluetoothEvent.ConnectedEvent -> {
                 Logger.d(TAG, "connected device")
                 return eventBus.post(EVENT_NAME_CONNECT_SUCCEEDED)
