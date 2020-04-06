@@ -113,10 +113,15 @@ class DefaultSoundAgent(
         setHandlingCompleted(info)
 
         executor.submit {
-            val beepName = payload.beepName
             val playServiceId = payload.playServiceId
             val referrerDialogRequestId = info.directive.header.dialogRequestId
-
+            val beepName = try {
+                SoundProvider.BeepName.valueOf(payload.beepName)
+            } catch (e: IllegalArgumentException) {
+                Logger.d(TAG, "[handleBeep] No enum constant : ${payload.beepName}")
+                sendBeepFailedEvent(playServiceId, referrerDialogRequestId)
+                return@submit
+            }
             val sourceId = mediaPlayer.setSource(soundProvider.getContentUri(beepName))
             if (!sourceId.isError() && mediaPlayer.play(sourceId)) {
                 sendBeepSucceededEvent(playServiceId, referrerDialogRequestId)
