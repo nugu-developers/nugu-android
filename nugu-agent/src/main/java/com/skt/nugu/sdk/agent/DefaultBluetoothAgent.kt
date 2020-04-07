@@ -224,8 +224,11 @@ class DefaultBluetoothAgent(
         this.listener = listener
     }
 
-    private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId : String, hasPairedDevices: Boolean? = null): Boolean {
-        val waitResult = CountDownLatch(1)
+    private fun sendEventSync(name: String, playServiceId: String, referrerDialogRequestId : String, hasPairedDevices: Boolean? = null): Boolean {
+        return sendEvent(name, playServiceId, referrerDialogRequestId, hasPairedDevices,  CountDownLatch(1))
+    }
+
+    private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId : String, hasPairedDevices: Boolean? = null, waitResult : CountDownLatch? = null): Boolean {
         var result = false
 
         contextManager.getContext(object : ContextRequester {
@@ -240,15 +243,15 @@ class DefaultBluetoothAgent(
                     }.toString()).build()
 
                 result = messageSender.sendMessage(request)
-                waitResult.countDown()
+                waitResult?.countDown()
             }
 
             override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                waitResult.countDown()
+                waitResult?.countDown()
             }
         }, namespaceAndName)
 
-        waitResult.await()
+        waitResult?.await()
         return result
     }
 
@@ -294,7 +297,7 @@ class DefaultBluetoothAgent(
                 EVENT_NAME_DISCONNECT_FAILED
             ), object : BluetoothEventBus.Listener {
                 override fun call(name: String): Boolean {
-                    return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
+                    return sendEventSync(name, payload.playServiceId, referrerDialogRequestId)
                 }
             })
             executeStartDiscoverableMode(payload, referrerDialogRequestId)
@@ -336,7 +339,7 @@ class DefaultBluetoothAgent(
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
                         val referrerDialogRequestId = info.directive.header.dialogRequestId
-                        return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
+                        return sendEventSync(name, payload.playServiceId, referrerDialogRequestId)
                     }
                 })
                 executePlay()
@@ -355,7 +358,7 @@ class DefaultBluetoothAgent(
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
                         val referrerDialogRequestId = info.directive.header.dialogRequestId
-                        return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
+                        return sendEventSync(name, payload.playServiceId, referrerDialogRequestId)
                     }
                 })
                 executeStop()
@@ -374,7 +377,7 @@ class DefaultBluetoothAgent(
                 eventBus.subscribe(events , object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
                         val referrerDialogRequestId = info.directive.header.dialogRequestId
-                        return sendEvent(name, payload.playServiceId, referrerDialogRequestId)
+                        return sendEventSync(name, payload.playServiceId, referrerDialogRequestId)
                     }
                 })
                 executePause()
@@ -393,7 +396,7 @@ class DefaultBluetoothAgent(
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
                         val referrerDialogRequestId = info.directive.header.dialogRequestId
-                        return sendEvent(name, payload.playServiceId,referrerDialogRequestId)
+                        return sendEventSync(name, payload.playServiceId,referrerDialogRequestId)
                     }
                 })
 
@@ -413,7 +416,7 @@ class DefaultBluetoothAgent(
                 eventBus.subscribe(events, object : BluetoothEventBus.Listener {
                     override fun call(name: String): Boolean {
                         val referrerDialogRequestId = info.directive.header.dialogRequestId
-                        return sendEvent(name, payload.playServiceId,referrerDialogRequestId)
+                        return sendEventSync(name, payload.playServiceId,referrerDialogRequestId)
                     }
                 })
                 executePrevious()
