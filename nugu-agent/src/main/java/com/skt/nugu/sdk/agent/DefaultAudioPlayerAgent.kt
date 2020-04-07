@@ -1248,10 +1248,10 @@ class DefaultAudioPlayerAgent(
                 if (duration != null && duration != MEDIA_PLAYER_INVALID_OFFSET) {
                     addProperty("durationInMilliseconds", duration)
                 }
+            }
 
-                lyricsPresenter?.getVisibility()?.let {
-                    addProperty("lyricsVisible", it)
-                }
+            lyricsPresenter?.getVisibility()?.let {
+                addProperty("lyricsVisible", it)
             }
         }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
