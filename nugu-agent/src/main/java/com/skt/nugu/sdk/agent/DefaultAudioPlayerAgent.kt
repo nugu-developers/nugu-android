@@ -350,6 +350,15 @@ class DefaultAudioPlayerAgent(
                         it.activeAudioInfo = nextAudioInfo
                     }
 
+                    with(nextAudioInfo.directive) {
+                        // consume
+                        if(nextAudioInfo.payload.sourceType == SourceType.ATTACHMENT) {
+                            getAttachmentReader()
+                        }
+                        // destroy
+                        destroy()
+                    }
+
                     // fetch only offset
                     executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
 
