@@ -908,7 +908,6 @@ class DefaultAudioPlayerAgent(
 
     private fun executeOnPlaybackStarted(id: SourceId) {
         Logger.d(TAG, "[executeOnPlaybackStarted] id: $id, focus: $focus")
-        playCalled = false
         progressTimer.start()
         sendPlaybackStartedEvent()
         executeOnPlaybackPlayingInternal(id)
@@ -927,6 +926,8 @@ class DefaultAudioPlayerAgent(
         if (id.id != sourceId.id) {
             return
         }
+
+        playCalled = false
 
         // check focus state due to focus can be change after mediaPlayer.start().
         when (focus) {
