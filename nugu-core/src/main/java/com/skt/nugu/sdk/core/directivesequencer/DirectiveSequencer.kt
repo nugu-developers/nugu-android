@@ -15,13 +15,17 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashMap
 import kotlin.concurrent.withLock
 
 class DirectiveSequencer :
@@ -31,7 +35,7 @@ class DirectiveSequencer :
     }
 
     private val directiveRouter = DirectiveRouter()
-    private val directiveProcessor: DirectiveProcessor
+    private val directiveProcessors = HashMap<String, DirectiveProcessor>()
 
     private val receivingQueue: Deque<List<Directive>> = ArrayDeque()
 
@@ -51,15 +55,16 @@ class DirectiveSequencer :
 
     private var isEnabled = true
     private val lock = ReentrantLock()
+    private var listeners = CopyOnWriteArraySet<DirectiveSequencerInterface.OnDirectiveHandlingListener>()
+    private val processorRemoveExecutor = ScheduledThreadPoolExecutor(1)
 
     init {
         Logger.d(TAG, "[init]")
-        directiveProcessor = DirectiveProcessor(directiveRouter)
         receivingThread.start()
     }
 
     private fun receiveDirectives(): Boolean {
-        Logger.d(TAG, "[receiveDirective]")
+        Logger.d(TAG, "[receiveDirectives]")
         val directives = lock.withLock {
             if (receivingQueue.isEmpty()) {
                 return false
@@ -67,16 +72,82 @@ class DirectiveSequencer :
             receivingQueue.pop()
         }
 
-        directiveProcessor.onDirectives(directives)
+        if(directives.isEmpty()) {
+            return false
+        }
+
+        val key = directives.first().getDialogRequestId()
+        var processor = directiveProcessors[key]
+        if(processor == null) {
+            Logger.d(TAG, "[receiveDirectives] create directive processor : $key")
+            processor = DirectiveProcessor(directiveRouter, object: DirectiveSequencerInterface.OnDirectiveHandlingListener {
+                override fun onRequested(directive: Directive) {
+                    listeners.forEach {
+                        it.onRequested(directive)
+                    }
+                }
+
+                override fun onCompleted(directive: Directive) {
+                    listeners.forEach {
+                        it.onCompleted(directive)
+                    }
+                    processor?.let {
+                        processorRemoveExecutor.schedule(
+                            { tryRemoveDirectiveProcessor(it, key) },
+                            10,
+                            TimeUnit.SECONDS
+                        )
+                    }
+                }
+
+                override fun onCanceled(directive: Directive) {
+                    listeners.forEach {
+                        it.onCanceled(directive)
+                    }
+                    processor?.let {
+                        processorRemoveExecutor.schedule(
+                            { tryRemoveDirectiveProcessor(it, key) },
+                            10,
+                            TimeUnit.SECONDS
+                        )
+                    }
+                }
+
+                override fun onFailed(directive: Directive, description: String) {
+                    listeners.forEach {
+                        it.onFailed(directive, description)
+                    }
+                    processor?.let {
+                        processorRemoveExecutor.schedule(
+                            { tryRemoveDirectiveProcessor(it, key) },
+                            10,
+                            TimeUnit.SECONDS
+                        )
+                    }
+                }
+
+                private fun tryRemoveDirectiveProcessor(processor: DirectiveProcessor, dialogRequestId: String) {
+                    if(!processor.existDirectiveWillBeHandle()) {
+                        Logger.d(TAG, "[receiveDirectives] remove directive processor : $dialogRequestId")
+                        processor.shutdown()
+                        directiveProcessors.remove(dialogRequestId)
+                    }
+                }
+            })
+
+            directiveProcessors[key] = processor
+        }
+        processor.onDirectives(directives)
+
         return true
     }
 
     override fun addOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
-        directiveProcessor.addOnDirectiveHandlingListener(listener)
+        listeners.add(listener)
     }
 
     override fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
-        directiveProcessor.removeOnDirectiveHandlingListener(listener)
+        listeners.remove(listener)
     }
 
     override fun addDirectiveHandler(handler: DirectiveHandler): Boolean {
@@ -85,10 +156,6 @@ class DirectiveSequencer :
 
     override fun removeDirectiveHandler(handler: DirectiveHandler): Boolean {
         return directiveRouter.removeDirectiveHandler(handler)
-    }
-
-    override fun setDialogRequestId(dialogRequestId: String) {
-        return directiveProcessor.setDialogRequestId(dialogRequestId)
     }
 
     override fun onDirectives(directives: List<Directive>): Boolean {
@@ -107,8 +174,9 @@ class DirectiveSequencer :
     override fun disable() {
         lock.withLock {
             isEnabled = false
-            directiveProcessor.setDialogRequestId("")
-            directiveProcessor.disable()
+            directiveProcessors.forEach {
+                it.value.disable()
+            }
             // wake receivingThread to cancel queued directives.
             receivingThread.wakeAll()
         }
@@ -117,7 +185,6 @@ class DirectiveSequencer :
     override fun enable() {
         lock.withLock {
             isEnabled = true
-            directiveProcessor.enable()
             receivingThread.wakeAll()
         }
     }

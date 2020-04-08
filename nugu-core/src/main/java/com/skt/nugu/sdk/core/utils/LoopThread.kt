@@ -15,18 +15,34 @@
  */
 package com.skt.nugu.sdk.core.utils
 
-abstract class LoopThread : Thread() {
+abstract class LoopThread(
+) : Thread() {
     private val wakeLoop = Object()
+    private var requestStop = false
+    private var isFinished = false
+    private var skipWaitIfNotRunningYet = false
 
     override fun run() {
         super.run()
+        try {
+            Logger.d("LoopThread", "[run] start :$this")
+            while (!requestStop) {
+                synchronized(wakeLoop) {
+                    if(skipWaitIfNotRunningYet) {
+                       skipWaitIfNotRunningYet = false
+                    } else {
+                        wakeLoop.wait()
+                    }
+                }
+                if (requestStop) {
+                    return
+                }
 
-        while (true) {
-            synchronized(wakeLoop) {
-                wakeLoop.wait()
+                onLoop()
             }
-
-            onLoop()
+        } finally {
+            isFinished = true
+            Logger.d("LoopThread", "[run] finish :$this")
         }
     }
 
@@ -38,9 +54,19 @@ abstract class LoopThread : Thread() {
         }
     }
 
-    fun wakeAll() {
+    fun wakeAll(skipWaitIfNotRunningYet: Boolean = false) {
         synchronized(wakeLoop) {
+            this.skipWaitIfNotRunningYet = skipWaitIfNotRunningYet
             wakeLoop.notifyAll()
         }
+    }
+
+    fun requestStop() {
+        if(isFinished) {
+            return
+        }
+        Logger.d("LoopThread", "[requestStop] $this")
+        requestStop = true
+        wakeAll()
     }
 }

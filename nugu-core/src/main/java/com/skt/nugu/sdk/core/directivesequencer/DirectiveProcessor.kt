@@ -28,7 +28,8 @@ import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class DirectiveProcessor(
-    private val directiveRouter: DirectiveRouter
+    private val directiveRouter: DirectiveRouter,
+    private val directiveHandlingListener: DirectiveSequencerInterface.OnDirectiveHandlingListener
 ) {
     companion object {
         private const val TAG = "DirectiveProcessor"
@@ -38,17 +39,12 @@ class DirectiveProcessor(
         private val directive: Directive
     ) : com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult {
         override fun setCompleted() {
-            listeners.forEach {
-                it.onCompleted(directive)
-            }
+            directiveHandlingListener.onCompleted(directive)
             onHandlingCompleted(directive)
         }
 
         override fun setFailed(description: String, cancelAll: Boolean) {
-            listeners.forEach {
-                it.onFailed(directive, description)
-            }
-
+            directiveHandlingListener.onFailed(directive, description)
             onHandlingFailed(directive, description, cancelAll)
         }
     }
@@ -79,18 +75,9 @@ class DirectiveProcessor(
     }
     private var isEnabled = true
 
-    private var listeners = CopyOnWriteArraySet<DirectiveSequencerInterface.OnDirectiveHandlingListener>()
 
     init {
         processingLoop.start()
-    }
-
-    fun addOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
-        listeners.add(listener)
-    }
-
-    fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
-        listeners.remove(listener)
     }
 
     fun setDialogRequestId(dialogRequestId: String) {
@@ -102,6 +89,12 @@ class DirectiveProcessor(
     fun onDirectives(directives: List<Directive>) {
         directives.forEach {
             onDirective(it)
+        }
+    }
+
+    fun existDirectiveWillBeHandle(): Boolean {
+        return lock.withLock {
+            handlingQueue.isNotEmpty()
         }
     }
 
@@ -128,7 +121,7 @@ class DirectiveProcessor(
                 }
 
                 handlingQueue.offer(DirectiveAndPolicy(directive, directiveRouter.getPolicy(directive)))
-                processingLoop.wakeAll()
+                processingLoop.wakeAll(true)
                 return true
             }
         }
@@ -237,10 +230,11 @@ class DirectiveProcessor(
         }
     }
 
-    fun enable(): Boolean {
+    fun shutdown() {
+        Logger.d(TAG, "[shutdown]")
         lock.withLock {
-            isEnabled = true
-            return true
+            isEnabled = false
+            processingLoop.requestStop()
         }
     }
 
@@ -300,9 +294,7 @@ class DirectiveProcessor(
         lock.unlock()
         for (directive in copyCancelingQueue) {
             directiveRouter.cancelDirective(directive)
-            listeners.forEach {
-                it.onCanceled(directive)
-            }
+            directiveHandlingListener.onCanceled(directive)
         }
         lock.lock()
         return true
@@ -334,14 +326,10 @@ class DirectiveProcessor(
 
             handleDirectiveCalled = true
             lock.unlock()
-            listeners.forEach {
-                it.onRequested(directive)
-            }
+            directiveHandlingListener.onRequested(directive)
             val handleDirectiveSucceeded = directiveRouter.handleDirective(directive)
             if(!handleDirectiveSucceeded) {
-                listeners.forEach {
-                    it.onFailed(directive, "no handler for directive")
-                }
+                directiveHandlingListener.onFailed(directive, "no handler for directive")
             }
             lock.lock()
 
