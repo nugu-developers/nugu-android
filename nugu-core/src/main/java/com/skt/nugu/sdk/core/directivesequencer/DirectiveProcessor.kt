@@ -59,7 +59,7 @@ class DirectiveProcessor(
     )
 
     private var directiveBeingPreHandled: Directive? = null
-    private val directivesBeingHandled: MutableMap<BlockingPolicy.Medium, Directive?> = HashMap()
+    private val directivesBeingHandled: MutableMap<String, MutableMap<BlockingPolicy.Medium, Directive>> = HashMap()
     private var cancelingQueue = ArrayDeque<Directive>()
     private var handlingQueue = ArrayDeque<DirectiveAndPolicy>()
     private val directiveLock = ReentrantLock()
@@ -175,29 +175,37 @@ class DirectiveProcessor(
         return false
     }
 
-    private fun clearDirectiveBeingHandledLocked(policy: BlockingPolicy) {
-        if (policy.mediums.audio && directivesBeingHandled[BlockingPolicy.Medium.AUDIO] != null) {
-            directivesBeingHandled[BlockingPolicy.Medium.AUDIO] = null
-        }
+    private fun clearDirectiveBeingHandledLocked(dialogRequestId: String, policy: BlockingPolicy) {
+        directivesBeingHandled[dialogRequestId]?.let {
+            if (policy.mediums.audio && it[BlockingPolicy.Medium.AUDIO] != null) {
+                it.remove(BlockingPolicy.Medium.AUDIO)
+            }
 
-        if (policy.mediums.visual && directivesBeingHandled[BlockingPolicy.Medium.VISUAL] != null) {
-            directivesBeingHandled[BlockingPolicy.Medium.VISUAL] = null
+            if (policy.mediums.visual && it[BlockingPolicy.Medium.VISUAL] != null) {
+                it.remove(BlockingPolicy.Medium.VISUAL)
+            }
+
+            if(it.isEmpty()) {
+                directivesBeingHandled.remove(dialogRequestId)
+            }
         }
     }
 
     private fun clearDirectiveBeingHandledLocked(shouldClear: (Directive) -> Boolean): Set<Directive> {
         val freed = HashSet<Directive>()
 
-        var directive = directivesBeingHandled[BlockingPolicy.Medium.AUDIO]
-        if (directive != null && shouldClear(directive)) {
-            freed.add(directive)
-            directivesBeingHandled[BlockingPolicy.Medium.AUDIO] = null
-        }
+        directivesBeingHandled.forEach {
+            var directive = it.value[BlockingPolicy.Medium.AUDIO]
+            if (directive != null && shouldClear(directive)) {
+                freed.add(directive)
+                it.value.remove(BlockingPolicy.Medium.AUDIO)
+            }
 
-        directive = directivesBeingHandled[BlockingPolicy.Medium.VISUAL]
-        if (directive != null && shouldClear(directive)) {
-            freed.add(directive)
-            directivesBeingHandled[BlockingPolicy.Medium.VISUAL] = null
+            directive = it.value[BlockingPolicy.Medium.VISUAL]
+            if (directive != null && shouldClear(directive)) {
+                freed.add(directive)
+                it.value.remove(BlockingPolicy.Medium.VISUAL)
+            }
         }
 
         return freed
@@ -250,13 +258,19 @@ class DirectiveProcessor(
             }
         }
 
-        if (directivesBeingHandled[BlockingPolicy.Medium.AUDIO] != null && directivesBeingHandled[BlockingPolicy.Medium.AUDIO] == directive) {
-            Logger.d(TAG, "[removeDirectiveLocked] audio blocking lock removed")
-            directivesBeingHandled[BlockingPolicy.Medium.AUDIO] = null
-        }
+        directivesBeingHandled[directive.getDialogRequestId()]?.let {
+            if (it[BlockingPolicy.Medium.AUDIO] == directive) {
+                Logger.d(TAG, "[removeDirectiveLocked] audio blocking lock removed")
+                it.remove(BlockingPolicy.Medium.AUDIO)
+            }
 
-        if (directivesBeingHandled[BlockingPolicy.Medium.VISUAL] != null && directivesBeingHandled[BlockingPolicy.Medium.VISUAL] == directive) {
-            directivesBeingHandled[BlockingPolicy.Medium.VISUAL] = null
+            if (it[BlockingPolicy.Medium.VISUAL] == directive) {
+                it.remove(BlockingPolicy.Medium.VISUAL)
+            }
+
+            if(it.isEmpty()) {
+                directivesBeingHandled.remove(directive.getDialogRequestId())
+            }
         }
 
         if (cancelingQueue.isNotEmpty() || handlingQueue.isNotEmpty()) {
@@ -322,7 +336,7 @@ class DirectiveProcessor(
 
             // if handle failed or directive is not blocking
             if (!handleDirectiveSucceeded || !policy.isBlocking) {
-                clearDirectiveBeingHandledLocked(policy)
+                clearDirectiveBeingHandledLocked(directive.getDialogRequestId(), policy)
             }
 
             if (!handleDirectiveSucceeded) {
@@ -338,38 +352,55 @@ class DirectiveProcessor(
     }
 
     private fun setDirectiveBeingHandledLocked(directive: Directive, policy: BlockingPolicy) {
+        val key = directive.getDialogRequestId()
         if (policy.mediums.audio) {
-            directivesBeingHandled[BlockingPolicy.Medium.AUDIO] = directive
+            var map = directivesBeingHandled[key]
+            if(map == null) {
+                map = HashMap()
+                directivesBeingHandled[key] = map
+            }
+            map[BlockingPolicy.Medium.AUDIO] = directive
         }
 
         if (policy.mediums.visual) {
-            directivesBeingHandled[BlockingPolicy.Medium.VISUAL] = directive
+            var map = directivesBeingHandled[key]
+            if(map == null) {
+                map = HashMap()
+                directivesBeingHandled[key] = map
+            }
+            map[BlockingPolicy.Medium.VISUAL] = directive
         }
     }
 
     private fun getNextUnblockedDirectiveLocked(): DirectiveAndPolicy? {
         // A medium is considered blocked if a previous blocking directive hasn't been completed yet.
-        val blockedMediums: MutableMap<BlockingPolicy.Medium, Boolean> = HashMap()
+        val blockedMediumsMap: MutableMap<String, MutableMap<BlockingPolicy.Medium, Boolean>> = HashMap()
 
         // Mark mediums used by blocking directives being handled as blocked.
-        blockedMediums[BlockingPolicy.Medium.AUDIO] = directivesBeingHandled[BlockingPolicy.Medium.AUDIO] != null
-        blockedMediums[BlockingPolicy.Medium.VISUAL] = directivesBeingHandled[BlockingPolicy.Medium.VISUAL] != null
+        directivesBeingHandled.forEach {src ->
+            blockedMediumsMap[src.key] = HashMap<BlockingPolicy.Medium, Boolean>().also { dst->
+                src.value.forEach {
+                    dst[it.key] = true
+                }
+            }
+        }
 
-        Logger.d(TAG, "[getNextUnblockedDirectiveLocked] block mediums : ${directivesBeingHandled[BlockingPolicy.Medium.AUDIO]}/${directivesBeingHandled[BlockingPolicy.Medium.VISUAL]}")
+        Logger.d(TAG, "[getNextUnblockedDirectiveLocked] block mediums : $blockedMediumsMap")
 
         for (directiveAndPolicy in handlingQueue) {
+            val blockedMediums = blockedMediumsMap[directiveAndPolicy.directive.getDialogRequestId()]
+                ?: return directiveAndPolicy
+
             val currentUsingAudio = directiveAndPolicy.policy.mediums.audio
             val currentUsingVisual = directiveAndPolicy.policy.mediums.visual
 
-            if ((currentUsingAudio && blockedMediums[BlockingPolicy.Medium.AUDIO]!!) ||
-                (currentUsingVisual && blockedMediums[BlockingPolicy.Medium.VISUAL]!!)
+            if ((currentUsingAudio && blockedMediums[BlockingPolicy.Medium.AUDIO] == true) ||
+                (currentUsingVisual && blockedMediums[BlockingPolicy.Medium.VISUAL] == true)
             ) {
                 // if the current directive is blocking, block its Mediums.
                 if (directiveAndPolicy.policy.isBlocking) {
-                    blockedMediums[BlockingPolicy.Medium.AUDIO] =
-                        (blockedMediums[BlockingPolicy.Medium.AUDIO]!! || currentUsingAudio)
-                    blockedMediums[BlockingPolicy.Medium.VISUAL] =
-                        (blockedMediums[BlockingPolicy.Medium.AUDIO]!! || currentUsingVisual)
+                    blockedMediums[BlockingPolicy.Medium.AUDIO] = (blockedMediums[BlockingPolicy.Medium.AUDIO] == true) || currentUsingAudio
+                    blockedMediums[BlockingPolicy.Medium.VISUAL] = (blockedMediums[BlockingPolicy.Medium.VISUAL] == true) || currentUsingVisual
                 }
             } else {
                 return directiveAndPolicy
