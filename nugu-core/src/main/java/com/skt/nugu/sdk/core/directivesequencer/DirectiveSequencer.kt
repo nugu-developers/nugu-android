@@ -90,10 +90,6 @@ class DirectiveSequencer :
         return directiveRouter.removeDirectiveHandler(handler)
     }
 
-    override fun setDialogRequestId(dialogRequestId: String) {
-        return directiveProcessor.setDialogRequestId(dialogRequestId)
-    }
-
     override fun onDirective(directive: Directive): Boolean {
         Logger.d(TAG, "[onDirective] : $directive")
         lock.withLock {
@@ -111,7 +107,6 @@ class DirectiveSequencer :
     override fun disable() {
         lock.withLock {
             isEnabled = false
-            directiveProcessor.setDialogRequestId("")
             directiveProcessor.disable()
             // wake receivingThread to cancel queued directives.
             receivingThread.wakeAll()
