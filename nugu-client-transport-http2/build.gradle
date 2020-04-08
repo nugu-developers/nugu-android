@@ -1,0 +1,32 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+compileJava.options.encoding = "UTF-8"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    if (isReleaseMode) {
+        api "com.skt.nugu.sdk:nugu-interface:$version"
+        implementation "com.skt.nugu.sdk:nugu-core:$version"
+    } else {
+        api project(':nugu-interface')
+        implementation project(':nugu-core')
+    }
+
+    implementation("com.google.code.gson:gson:2.7")
+    implementation("com.squareup.okhttp3:okhttp:4.4.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.4.0")
+}
+
+apply from: '../javadoc.gradle'
+apply from: '../publish.gradle'

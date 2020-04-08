@@ -1,1 +1,1 @@
-include ':nugu-core', ':nugu-client-kit', ':nugu-android-helper', ':nugu-interface', ':nugu-ux-kit', ':nugu-login-kit', ':app' , ':nugu-agent'
+include ':nugu-core', ':nugu-client-kit', ':nugu-android-helper', ':nugu-interface', ':nugu-ux-kit', ':nugu-login-kit', ':app' , ':nugu-agent', ':nugu-client-transport-http2'
