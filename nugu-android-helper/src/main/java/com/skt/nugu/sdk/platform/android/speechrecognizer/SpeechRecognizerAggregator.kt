@@ -112,7 +112,8 @@ class SpeechRecognizerAggregator(
 
     override fun startListeningWithTrigger(
         epdParam: EndPointDetectorParam?,
-        callback: ASRAgentInterface.StartRecognitionCallback?
+        triggerCallback: SpeechRecognizerAggregatorInterface.TriggerCallback?,
+        listeningCallback: ASRAgentInterface.StartRecognitionCallback?
     ) {
         if(keywordDetector == null) {
             Log.w(TAG, "[startListeningWithTrigger] ignored: keywordDetector is null")
@@ -132,7 +133,7 @@ class SpeechRecognizerAggregator(
             }
 
             val audioFormat = audioProvider.getFormat()
-            keywordDetector.startDetect(inputStream, audioFormat, object: KeywordDetector.DetectorResultObserver {
+            val isStarted = keywordDetector.startDetect(inputStream, audioFormat, object: KeywordDetector.DetectorResultObserver {
                 override fun onDetected(wakeupInfo: WakeupInfo) {
                     Log.d(
                         TAG,
@@ -141,12 +142,13 @@ class SpeechRecognizerAggregator(
 
                     keywordDetectorResultRunnable = Runnable {
                         setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
+                        triggerCallback?.onTriggerFinished(wakeupInfo)
 
                         executeStartListeningInternal(
                             audioProvider.getFormat(),
                             wakeupInfo,
                             epdParam,
-                            callback
+                            listeningCallback
                         )
 
                         // To prevent releasing audio input resources, release after startListening.
@@ -157,7 +159,10 @@ class SpeechRecognizerAggregator(
                 override fun onStopped() {
                     Log.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
                     keywordDetectorResultRunnable = Runnable {
+
                         if (isTriggerStoppingByStartListening) {
+                            triggerCallback?.onTriggerFinished(null)
+
                             executeStartListeningInternal(
                                 audioFormat,
                                 this@SpeechRecognizerAggregator.wakeupInfo,
@@ -171,8 +176,10 @@ class SpeechRecognizerAggregator(
                         } else if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
                             releaseInputResources()
                             setState(SpeechRecognizerAggregatorInterface.State.STOP)
+                            triggerCallback?.onTriggerFinished(null)
                         } else {
                             releaseInputResources()
+                            triggerCallback?.onTriggerFinished(null)
                         }
                     }
                 }
@@ -181,6 +188,7 @@ class SpeechRecognizerAggregator(
                     Log.d(TAG, "[onError] errorType: $errorType")
                     keywordDetectorResultRunnable = Runnable {
                         setState(SpeechRecognizerAggregatorInterface.State.ERROR)
+                        triggerCallback?.onTriggerFinished(null)
                         releaseInputResources()
                     }
                 }
@@ -189,6 +197,12 @@ class SpeechRecognizerAggregator(
                     audioProvider.releaseAudioInputStream(keywordDetector)
                 }
             })
+
+            if(isStarted) {
+                triggerCallback?.onTriggerStarted(inputStream, audioFormat)
+            } else {
+                triggerCallback?.onTriggerFinished(null)
+            }
         }
     }
 
