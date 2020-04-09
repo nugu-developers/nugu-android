@@ -18,6 +18,8 @@ package com.skt.nugu.sdk.platform.android.speechrecognizer
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 
 /**
  * Utility interface for speech recognition
@@ -78,13 +80,18 @@ interface SpeechRecognizerAggregatorInterface {
         fun onStateChanged(state: State)
     }
 
+    interface TriggerCallback {
+        fun onTriggerStarted(inputStream: SharedDataStream, format: AudioFormat)
+        fun onTriggerFinished(wakeupInfo: WakeupInfo?)
+    }
+
     /**
      * Start recognizing
      *
      * Start keyword detector first.
      * After detection, start end point detector
      */
-    fun startListeningWithTrigger(epdParam: EndPointDetectorParam? = null, callback: ASRAgentInterface.StartRecognitionCallback? = null)
+    fun startListeningWithTrigger(epdParam: EndPointDetectorParam? = null, triggerCallback: TriggerCallback? = null, listeningCallback: ASRAgentInterface.StartRecognitionCallback? = null)
 
     /**
      * Start keyword detector.
