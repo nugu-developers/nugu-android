@@ -205,7 +205,7 @@ class DefaultAudioPlayerAgent(
         val directive: Directive,
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
-        var activeAudioInfo = this
+        var activeAudioInfo:AudioInfo? = this
         var isFetched = false
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -1061,6 +1061,7 @@ class DefaultAudioPlayerAgent(
         Logger.d(TAG, "[handlePlaybackCompleted] byStop: $byStop")
         progressTimer.stop()
 
+        currentItem?.activeAudioInfo = null
         val dialogRequestId = currentItem?.directive?.getDialogRequestId()
         if (dialogRequestId.isNullOrBlank()) {
             return
