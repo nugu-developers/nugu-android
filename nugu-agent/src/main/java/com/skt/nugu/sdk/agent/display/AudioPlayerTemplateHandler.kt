@@ -80,6 +80,8 @@ class AudioPlayerTemplateHandler(
         val payload: TemplatePayload
     ) : PlaySynchronizerInterface.SynchronizeObject
         , DirectiveInfo by info {
+        var sourceTemplateId = info.directive.getMessageId()
+
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 Logger.d(TAG, "[onReleaseCallback] granted : $this")
@@ -134,7 +136,12 @@ class AudioPlayerTemplateHandler(
             executeCancelPendingInfo()
         } else {
             templateDirectiveInfoMap[info.directive.getMessageId()]?.let {
-                executeCancelInfoInternal(it)
+                if(it.getTemplateId() == info.directive.getMessageId()) {
+                    Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated")
+                    executeCancelInfoInternal(it)
+                } else {
+                    Logger.d(TAG, "[executeCancelUnknownInfo] skip outdated (maybe updated)")
+                }
             }
         }
     }
@@ -169,14 +176,20 @@ class AudioPlayerTemplateHandler(
             pendingInfo = null
 
             val current = currentInfo
+            currentInfo = templateInfo
             if(current != null && current.payload.token == templateInfo.payload.token && current.payload.playServiceId == templateInfo.payload.playServiceId) {
                 // just update
-                renderer?.update(current.getTemplateId(), templateInfo.directive.payload)
+                Logger.d(TAG, "[handleDirective] update directive")
+                templateInfo.sourceTemplateId = current.sourceTemplateId
+                templateInfo.playContext = templateInfo.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
+                    PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
+                }
+                renderer?.update(templateInfo.sourceTemplateId, templateInfo.directive.payload)
                 setHandlingCompleted(info)
                 templateDirectiveInfoMap.remove(info.directive.getMessageId())
-                playSynchronizer.releaseWithoutSync(templateInfo)
+                templateDirectiveInfoMap[current.sourceTemplateId] = templateInfo
+                releaseSyncForce(current)
             } else {
-                currentInfo = templateInfo
                 executeRender(templateInfo)
             }
         }
