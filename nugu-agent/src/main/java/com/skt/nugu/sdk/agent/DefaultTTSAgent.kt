@@ -361,16 +361,12 @@ class DefaultTTSAgent(
     }
 
     private fun executePrepareSpeakInfo(speakInfo: SpeakDirectiveInfo) {
-        executeCancelAllSpeakInfo()
+        executeCancelPreparedSpeakInfo()
+        executeCancelCurrentSpeakInfo(false)
 
         with(speakInfo) {
             preparedSpeakInfo = this
         }
-    }
-
-    private fun executeCancelAllSpeakInfo() {
-        executeCancelPreparedSpeakInfo()
-        executeCancelCurrentSpeakInfo()
     }
 
     private fun executeCancelPreparedSpeakInfo() {
