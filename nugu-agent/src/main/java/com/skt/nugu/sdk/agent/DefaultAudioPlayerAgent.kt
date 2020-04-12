@@ -63,7 +63,6 @@ class DefaultAudioPlayerAgent(
     private val directiveSequencer: DirectiveSequencerInterface,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val channelName: String,
-    private val playStackPriority: Int,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
@@ -501,6 +500,7 @@ class DefaultAudioPlayerAgent(
 
         fun onPlayerStopped() {
             executor.submit {
+                Logger.d(TAG, "[onPlayerStopped] waitFinishPreExecuteInfo: $waitFinishPreExecuteInfo, waitPlayExecuteInfo: $waitPlayExecuteInfo")
                 waitFinishPreExecuteInfo?.let {
                     waitFinishPreExecuteInfo = null
                     executeFetchItem(it)
@@ -623,7 +623,7 @@ class DefaultAudioPlayerAgent(
     private fun executeStop(): Boolean {
         Logger.d(
             TAG,
-            "[executeStop] currentActivity: $currentActivity"
+            "[executeStop] currentActivity: $currentActivity, playCalled: $playCalled, currentItem: $currentItem"
         )
         when (currentActivity) {
             AudioPlayerAgentInterface.State.IDLE,
@@ -864,7 +864,7 @@ class DefaultAudioPlayerAgent(
     private fun changeActivity(activity: AudioPlayerAgentInterface.State) {
         Logger.d(TAG, "[changeActivity] $currentActivity/$activity")
         currentActivity = activity
-        executeProvideState(contextManager, namespaceAndName, 0, false)
+        executeProvideState(contextManager, namespaceAndName, 0)
         notifyOnActivityChanged()
     }
 
@@ -1230,15 +1230,14 @@ class DefaultAudioPlayerAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            executeProvideState(contextSetter, namespaceAndName, stateRequestToken, true)
+            executeProvideState(contextSetter, namespaceAndName, stateRequestToken)
         }
     }
 
     private fun executeProvideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
-        stateRequestToken: Int,
-        sendToken: Boolean
+        stateRequestToken: Int
     ) {
         val playerActivity =
             if (currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {

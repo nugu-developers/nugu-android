@@ -120,7 +120,7 @@ class AndroidMediaPlayer(
     }
 
     override fun pause(id: SourceId): Boolean {
-        Log.d(TAG, "[pause] $id")
+        Log.d(TAG, "[pause] $id, ${player.isPlaying}")
         if (id.id == currentSourceId.id && player.isPlaying) {
             player.pause()
             playerActivity = AudioPlayerAgentInterface.State.PAUSED
