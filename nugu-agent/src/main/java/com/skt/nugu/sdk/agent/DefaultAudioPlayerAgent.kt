@@ -207,7 +207,8 @@ class DefaultAudioPlayerAgent(
         val directive: Directive,
         val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
-        var activeAudioInfo:AudioInfo? = this
+        var referrerDialogRequestId: String = getDialogRequestId()
+        var sourceAudioInfo:AudioInfo? = this
         var isFetched = false
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -238,6 +239,11 @@ class DefaultAudioPlayerAgent(
             executor.submit {
                 when {
                     currentItem == this -> {
+                        if(playDirectiveController.willBeHandle()) {
+                            Logger.d(TAG, "[requestReleaseSync] try cancel current item but skip (handle it by play directive)")
+                            return@submit
+                        }
+
                         Logger.d(TAG, "[requestReleaseSync] cancel current item")
                         if(!executeStop()) {
                             notifyOnReleaseAudioInfo(this, true)
@@ -347,9 +353,13 @@ class DefaultAudioPlayerAgent(
                         waitFinishPreExecuteInfo = null
                     }
                 } else {
-                    playSynchronizer.releaseWithoutSync(nextAudioInfo)
+                    Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - will be resume ${directive.getMessageId()}")
+                    currentItem = nextAudioInfo
                     currentAudioInfo?.let {
-                        it.activeAudioInfo = nextAudioInfo
+                        playSynchronizer.releaseWithoutSync(it)
+                        nextAudioInfo.referrerDialogRequestId = it.referrerDialogRequestId
+                        nextAudioInfo.sourceAudioInfo = it
+                        nextAudioInfo.playContext = it.playContext
                     }
 
                     with(nextAudioInfo.directive) {
@@ -767,7 +777,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("favorite", favorite)
                             }.toString()
-                        ).referrerDialogRequestId(getDialogRequestId()).build()
+                        ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -794,7 +804,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("repeat", mode.name)
                             }.toString()
-                        ).referrerDialogRequestId(getDialogRequestId()).build()
+                        ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -821,7 +831,7 @@ class DefaultAudioPlayerAgent(
                                 addProperty("playServiceId", playServiceId)
                                 addProperty("shuffle", shuffle)
                             }.toString()
-                        ).referrerDialogRequestId(getDialogRequestId()).build()
+                        ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                         messageSender.sendMessage(messageRequest)
                     }
@@ -1063,7 +1073,7 @@ class DefaultAudioPlayerAgent(
         Logger.d(TAG, "[handlePlaybackCompleted] byStop: $byStop")
         progressTimer.stop()
 
-        currentItem?.activeAudioInfo = null
+        currentItem?.sourceAudioInfo = null
         val dialogRequestId = currentItem?.directive?.getDialogRequestId()
         if (dialogRequestId.isNullOrBlank()) {
             return
@@ -1192,9 +1202,10 @@ class DefaultAudioPlayerAgent(
 
 
     private fun executeTryPlayCurrentItemIfReady() {
-        val item = currentItem?.activeAudioInfo
-        if(item == null) {
-            Logger.w(TAG, "[executeTryPlayCurrentItemIfReady] currentItem is null.")
+        val item = currentItem
+        val sourceItem = currentItem?.sourceAudioInfo
+        if(item == null || sourceItem == null) {
+            Logger.w(TAG, "[executeTryPlayCurrentItemIfReady] no item to try play")
             return
         }
         Logger.d(TAG, "[executeTryPlayCurrentItemIfReady] $item")
@@ -1211,17 +1222,15 @@ class DefaultAudioPlayerAgent(
 
         playCalled = true
 
-        if(item == currentItem) {
-            playSynchronizer.startSync(
-                item,
-                object : PlaySynchronizerInterface.OnRequestSyncListener {
-                    override fun onGranted() {
-                    }
+        playSynchronizer.startSync(
+            item,
+            object : PlaySynchronizerInterface.OnRequestSyncListener {
+                override fun onGranted() {
+                }
 
-                    override fun onDenied() {
-                    }
-                })
-        }
+                override fun onDenied() {
+                }
+            })
     }
 
     override fun provideState(
@@ -1392,7 +1401,7 @@ class DefaultAudioPlayerAgent(
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offset)
                         }.toString()
-                    ).referrerDialogRequestId(getDialogRequestId()).build()
+                    ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                     if (condition.invoke()) {
                         messageSender.sendMessage(messageRequest)
