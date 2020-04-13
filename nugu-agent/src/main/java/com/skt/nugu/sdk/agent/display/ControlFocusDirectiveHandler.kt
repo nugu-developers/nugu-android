@@ -111,7 +111,7 @@ class ControlFocusDirectiveHandler(
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(
                         jsonContext,
-                        namespaceAndName.namespace,
+                        namespaceAndName.name,
                         name,
                         DefaultDisplayAgent.VERSION.toString()
                     ).payload(payload)

@@ -112,7 +112,7 @@ class ControlScrollDirectiveHandler(
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(
                         jsonContext,
-                        namespaceAndName.namespace,
+                        namespaceAndName.name,
                         name,
                         DefaultDisplayAgent.VERSION.toString()
                     ).payload(payload)
