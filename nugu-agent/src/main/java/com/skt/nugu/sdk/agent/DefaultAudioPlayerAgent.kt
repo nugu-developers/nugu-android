@@ -188,8 +188,6 @@ class DefaultAudioPlayerAgent(
     }
 
     private val playbackInfoProvider = object : AudioPlayerPlaybackInfoProvider {
-        override fun getCurrentState(): AudioPlayerAgentInterface.State = currentActivity
-
         override fun getToken(): String? {
             val current = currentItem ?: return null
             return current.payload.audioItem.stream.token
