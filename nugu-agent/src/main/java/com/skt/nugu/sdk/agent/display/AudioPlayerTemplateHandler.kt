@@ -129,9 +129,10 @@ class AudioPlayerTemplateHandler(
 
     private fun executeCancelUnknownInfo(info: DirectiveInfo, force: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] force: $force")
-        if (info.directive.getMessageId() == currentInfo?.getTemplateId()) {
+        val current = currentInfo
+        if (info.directive.getMessageId() == current?.getTemplateId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
-            renderer?.clear(info.directive.getMessageId(), force)
+            renderer?.clear(current.sourceTemplateId, force)
         } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
             executeCancelPendingInfo()
         } else {
