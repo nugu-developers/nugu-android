@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.agent.bluetooth
 
 /**
- * Inteface to provide bluetooth
+ * Interface to provide bluetooth
  */
 interface BluetoothProvider {
     fun device() : BluetoothHost?

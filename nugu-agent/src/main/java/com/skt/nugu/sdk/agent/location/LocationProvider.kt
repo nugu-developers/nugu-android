@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.agent.location
 
 /**
- * Inteface to provide location
+ * Interface to provide location
  */
 interface LocationProvider {
     /**

@@ -26,14 +26,15 @@ interface NuguOAuthInterface {
      * @return true is authorized, otherwise false
      */
     fun isLogin(): Boolean
+
     /**
      * Set the authorization options
      * @param options is [NuguOAuthOptions]
      */
     fun setOptions(options: Any)
+
     /**
-     * Immediately logout(remove) the authorization.
-     * @param listener Listener to receive authorization state events.
+     * Immediately logout the authorization.
      */
     fun logout()
 
@@ -41,24 +42,23 @@ interface NuguOAuthInterface {
      * Helper function to extract out AuthCode from the getIntent for login.
      * @return true is successful extract of authCode, otherwise false
      */
-    fun hasAuthCodeFromIntent(intent : Any) : Boolean
+    fun hasAuthCodeFromIntent(intent: Any): Boolean
 
     /**
      * Gets an Intent to start the Nugu login flow for startActivity
      * @return The Intent used for start the login flow.
      */
-    fun getLoginIntent() : Any
+    fun getLoginIntent(): Any
 
     /**
      * Start a login with browser. Only Type1
      * @param activity The activity making the call.
      * @param listener Listener to receive result.
      */
-    fun loginByWebbrowser(activity: Activity, listener : OnLoginListener)
+    fun loginByWebbrowser(activity: Activity, listener: OnLoginListener)
 
     /**
      * Start a login with credentials. Only Type2
-     * @param activity The activity making the call.
      * @param listener Listener to receive result.
      */
     fun login(listener: OnLoginListener)
@@ -71,7 +71,7 @@ interface NuguOAuthInterface {
      * When our session expires, we can exchange the refresh token to get new auth tokens.
      * > Auth tokens are not the same as a Refresh token
      */
-    fun loginSilently(refreshToken : String, listener: OnLoginListener)
+    fun loginSilently(refreshToken: String, listener: OnLoginListener)
 
     /**
      * Start a login without browser. Only Type1
