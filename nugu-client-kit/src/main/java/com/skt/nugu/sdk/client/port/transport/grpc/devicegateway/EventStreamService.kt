@@ -25,6 +25,8 @@ import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import java.lang.reflect.Field
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * This class is designed to manage eventstream of DeviceGateway
@@ -36,6 +38,7 @@ internal class EventStreamService(
     companion object {
         private const val TAG = "EventStreamService"
     }
+    private val streamLock = ReentrantLock()
     private val isShutdown = AtomicBoolean(false)
 
     interface Observer {
@@ -140,11 +143,13 @@ internal class EventStreamService(
 
     fun sendAttachmentMessage(attachment: AttachmentMessage) : Boolean {
         try {
-            eventStream?.onNext(
-                Upstream.newBuilder()
-                    .setAttachmentMessage(attachment)
-                    .build()
-            )
+            streamLock.withLock {
+                eventStream?.onNext(
+                    Upstream.newBuilder()
+                        .setAttachmentMessage(attachment)
+                        .build()
+                )
+            }
         } catch (ignored: IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
             return false
@@ -153,12 +158,15 @@ internal class EventStreamService(
     }
 
     fun sendEventMessage(event: EventMessage) : Boolean {
+        Logger.d(TAG, "[sendEventMessage]")
         try {
-            eventStream?.onNext(
-                Upstream.newBuilder()
-                    .setEventMessage(event)
-                    .build()
-            )
+            streamLock.withLock {
+                eventStream?.onNext(
+                    Upstream.newBuilder()
+                        .setEventMessage(event)
+                        .build()
+                )
+            }
         } catch (ignored : IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
             return false
@@ -169,7 +177,9 @@ internal class EventStreamService(
     fun shutdown() {
         if(isShutdown.compareAndSet(false, true)) {
             try {
-                eventStream?.onCompleted()
+                streamLock.withLock {
+                    eventStream?.onCompleted()
+                }
             } catch (ignored : IllegalStateException) {
                 // Perhaps, call already half-closed
             }
@@ -177,6 +187,5 @@ internal class EventStreamService(
         else {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
-
     }
 }
