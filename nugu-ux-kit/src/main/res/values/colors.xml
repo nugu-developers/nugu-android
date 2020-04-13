@@ -3,7 +3,7 @@
     <color name="rounded_button_shape_background">#ffffff</color>
     <color name="rounded_button_shape_border_color">#d7dce1</color>
 
-    <color name="snackbar_backround">#323232</color>
+    <color name="snackbar_background">#323232</color>
     <color name="snackbar_border_color">#33000000</color>
 
     <!--chiptray item -->

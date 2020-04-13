@@ -47,7 +47,7 @@ import java.util.concurrent.Executors
  * * provide client for NUGU
  */
 object ClientManager : AudioPlayerAgentInterface.Listener {
-    private const val TAG = "ClientMananger"
+    private const val TAG = "ClientManager"
 
     private lateinit var client: NuguAndroidClient
 

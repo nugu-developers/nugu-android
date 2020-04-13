@@ -248,7 +248,7 @@ interface ClientHelperInterface {
     fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener)
 
     /**
-     * Remove listener to be notified when send messasge
+     * Remove listener to be notified when send message
      * @param listener the listener that will removed
      */
     fun removeOnSendMessageListener(listener: MessageSender.OnSendMessageListener)
