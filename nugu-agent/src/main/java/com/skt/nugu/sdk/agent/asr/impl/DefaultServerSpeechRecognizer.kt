@@ -113,7 +113,12 @@ class DefaultServerSpeechRecognizer(
                 domainTypes = payload?.domainTypes,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
-                wakeup = payloadWakeupInfo
+                wakeup = payloadWakeupInfo,
+                timeout = AsrRecognizeEventPayload.Timeout(
+                    epdParam.timeoutInSeconds * 1000L,
+                    epdParam.maxDurationInSeconds * 1000L,
+                    10 * 1000L // TODO : fixed at 10sec now.
+                )
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .build()

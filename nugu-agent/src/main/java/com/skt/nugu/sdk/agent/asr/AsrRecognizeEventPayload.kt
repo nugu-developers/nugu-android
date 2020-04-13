@@ -27,7 +27,8 @@ data class AsrRecognizeEventPayload(
     private val language: String? = null,
     private val endpointing: String,
     private val encoding: String? = null,
-    private val wakeup: PayloadWakeup? = null
+    private val wakeup: PayloadWakeup? = null,
+    private val timeout: Timeout? = null
 ) {
     companion object {
         const val CODEC_SPEEX = "SPEEX"
@@ -44,6 +45,12 @@ data class AsrRecognizeEventPayload(
         const val ENCODING_PARTIAL = "PARTIAL"
         const val ENCODING_COMPLETE = "COMPLETE"
     }
+
+    data class Timeout(
+        val listen: Long,
+        val maxSpeech: Long,
+        val response: Long
+    )
 
     fun toJsonString(): String = JsonObject().apply {
         addProperty("codec", codec)
@@ -63,12 +70,12 @@ data class AsrRecognizeEventPayload(
         asrContext?.let { asrContext ->
             add("asrContext", JsonObject().apply {
                 asrContext.task?.let {
-                    addProperty("task",it)
+                    addProperty("task", it)
                 }
                 asrContext.sceneId?.let {
-                    addProperty("sceneId",it)
+                    addProperty("sceneId", it)
                 }
-                asrContext.sceneText?.let {sceneText ->
+                asrContext.sceneText?.let { sceneText ->
                     add("sceneText", JsonArray().apply {
                         sceneText.forEach {
                             add(it)
@@ -104,6 +111,14 @@ data class AsrRecognizeEventPayload(
                         addProperty("speech", it.speech)
                     })
                 }
+            })
+        }
+
+        timeout?.let {
+            add("timeout", JsonObject().apply {
+                addProperty("listen", it.listen)
+                addProperty("maxSpeech", it.maxSpeech)
+                addProperty("response", it.response)
             })
         }
     }.toString()
