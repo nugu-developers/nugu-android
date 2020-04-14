@@ -1,6 +1,43 @@
 Change Log
 ==========
 
+Version 0.8.15 *(2020-04-14)*
+-----------------------------
+* New: DisplayAgent - Add render failed notify (#522)
+* New: AudioPlayerAgent - Apply RDRID at Request{XXX}event (#526)
+* New: ASRAgent - Send power of wakeup (#546)
+* New: ASRAgent - Apply CancelRecognize directive (#545)
+* New: Add listener for directive handling (#543)
+* New: Implement sound agent
+* New: Add trigger callback (#584)
+* Fix: AudioPlayerAgent -Not stopped for already fetched item (#520)
+* Fix: ASRAgent - Back to idle state only request failed (#532)
+* Fix: TTSAgent - Carefully release focus of TTS (#529)
+* Fix: Auth - expiresIn correctly
+* Fix: Exception for URI.create (#555)
+* Fix: Add User-Agent header for Registry
+* Fix: Display not cleared after back/forward (AudioPlayer's resume) (#562)
+* Fix: Remove Start/FinishDiscoverableEvent
+* Fix: Fix wrong namespace for control events (#609)
+    * ControlFocus/Scroll's Succeeded or Failed
+* Improve: GrpcTransport - Parsing of policy for Registrty
+* Improve: AudioPlaeyrAgent - Add playServiceId comparison (#535)
+    * To decide whether to resume or not, add playServiceId comparison.
+* Improve: Apply new context policy (#550)
+    * when filter context, include version only.
+* Improve: Update AudioPlayer context always (#553)
+* Improve: Include full context for ElementSelected (#564)
+* Improve: Focus managemnt - Apply focus holder manager (#567)
+* Improve: Change beepName from string to enum
+* Improve: Apply blocking policy per dialogRequestId (#566)
+* Improve: Update silverTray v4.1.5
+* Improve: Update built-in agent version
+    * ASR: 1.1
+	* Delegation : 1.1
+	* TTS : 1.1
+	* Text : 1.1
+	* System : 1.1
+
 Version 0.8.14 *(2020-03-25)*
 -----------------------------
 * New: Support FullText3 for display (#507)
