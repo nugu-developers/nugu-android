@@ -59,7 +59,7 @@ class DefaultDelegationAgent(
         private const val TAG = "DelegationAgent"
 
         const val NAMESPACE = "Delegation"
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1,1)
 
         private const val NAME_DELEGATE = "Delegate"
         private const val NAME_REQUEST = "Request"

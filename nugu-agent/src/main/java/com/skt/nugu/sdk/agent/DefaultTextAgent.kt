@@ -60,7 +60,7 @@ class DefaultTextAgent(
         private const val TAG = "TextAgent"
 
         const val NAMESPACE = "Text"
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1,1)
 
         private const val NAME_TEXT_SOURCE = "TextSource"
 
