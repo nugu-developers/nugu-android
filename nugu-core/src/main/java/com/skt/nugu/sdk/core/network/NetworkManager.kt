@@ -16,10 +16,8 @@
 package com.skt.nugu.sdk.core.network
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.*
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -128,12 +126,18 @@ class NetworkManager private constructor(
         connectionStatusObservers.forEach { it.onConnectionStatusChanged(status,reason) }
     }
 
-    /** Called when receive an message
-     * @param message the received message
-     */
-    override fun receive(message: String) {
-        messageObservers.forEach { it.receive(message) }
+    override fun receiveDirectives(directives: List<DirectiveMessage>) {
+        messageObservers.forEach {
+            it.receiveDirectives(directives)
+        }
     }
+
+    override fun receiveAttachment(attachment: AttachmentMessage) {
+        messageObservers.forEach {
+            it.receiveAttachment(attachment)
+        }
+    }
+
     /**
      *  handoff connection from SystemCapability
      */

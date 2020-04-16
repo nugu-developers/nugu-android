@@ -16,17 +16,14 @@
 package com.skt.nugu.sdk.core.network
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
 
 /**
  * This interface class allows notifications from a MessageRouter
  */
-interface MessageRouterObserverInterface {
+interface MessageRouterObserverInterface: MessageObserver {
     /**
      * This function will be called when the connection status changes.
      */
     fun onConnectionStatusChanged(status: ConnectionStatusListener.Status, reason : ConnectionStatusListener.ChangedReason)
-    /**
-     * This function will be called when a Message arrives from DeviceGateway.
-     **/
-    fun receive(message: String)
 }
