@@ -31,7 +31,8 @@ import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
-import devicegateway.grpc.*
+import devicegateway.grpc.AttachmentMessage
+import devicegateway.grpc.DirectiveMessage
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.net.ConnectException
@@ -290,8 +291,9 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     /**
+
      * attachment received
-     * @param json Json string
+     * @param attachmentMessage
      */
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
         messageConsumer?.consumeAttachment(attachmentMessage.toAttachmentMessage())
@@ -299,7 +301,7 @@ internal class DeviceGatewayClient(policy: Policy,
 
     /**
      * directive received
-     * @param json Json string
+     * @param directiveMessage
      */
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
         handleConnectedIfNeeded()
