@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.core.interfaces.message
+package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
-/**
- * An interface which allows a derived class to consume a Message from DeviceGateway.
- */
-interface MessageConsumer {
-    /**
-     * Called when a message has been received from DeviceGateway.
-     * @param message the received message
-     */
-    fun consumeMessage(message: Any)
+import com.google.gson.FieldNamingStrategy
+import java.lang.reflect.Field
+
+class UnderscoresNamingStrategy : FieldNamingStrategy {
+    override fun translateName(f: Field): String {
+        val index = f.name.lastIndexOf("_")
+        return if (index == -1 || index != f.name.lastIndex) {
+            f.name
+        } else {
+            f.name.substring(0, index)
+        }
+    }
 }

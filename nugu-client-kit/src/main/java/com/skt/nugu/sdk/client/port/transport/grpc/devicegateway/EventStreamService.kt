@@ -15,15 +15,13 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
-import com.google.gson.ExclusionStrategy
-import com.google.gson.FieldAttributes
-import com.google.gson.FieldNamingStrategy
-import com.google.gson.GsonBuilder
+import com.google.gson.*
+import com.skt.nugu.sdk.client.port.transport.grpc.utils.UnderscoresNamingStrategy
+import com.skt.nugu.sdk.client.port.transport.grpc.utils.UnknownFieldsExclusionStrategy
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
-import java.lang.reflect.Field
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -40,10 +38,13 @@ internal class EventStreamService(
     }
     private val streamLock = ReentrantLock()
     private val isShutdown = AtomicBoolean(false)
+    val gson = GsonBuilder().setFieldNamingStrategy(UnderscoresNamingStrategy())
+        .addSerializationExclusionStrategy(UnknownFieldsExclusionStrategy())
+        .create()
 
     interface Observer {
-        fun onReceiveDirectives(json: String)
-        fun onReceiveAttachment(json: String)
+        fun onReceiveDirectives(json: JsonObject)
+        fun onReceiveAttachment(json: JsonObject)
         fun onError(status: Status)
     }
 
@@ -56,7 +57,13 @@ internal class EventStreamService(
                     Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                         downstream.directiveMessage?.let {
                             if (it.directivesCount > 0) {
-                                observer.onReceiveDirectives(toJson(downstream.directiveMessage))
+                                try {
+                                    gson.toJsonTree(downstream.directiveMessage).asJsonObject.let {
+                                        observer.onReceiveDirectives(it)
+                                    }
+                                } catch (e: Throwable) {
+                                    Logger.e(TAG, "[directiveMessage] Error occurred while parsing json, $e")
+                                }
                             }
                             if(checkIfDirectiveIsUnauthorizedRequestException(it)) {
                                 observer.onError(Status.UNAUTHENTICATED)
@@ -66,7 +73,13 @@ internal class EventStreamService(
                     Downstream.MessageCase.ATTACHMENT_MESSAGE -> {
                         downstream.attachmentMessage?.let {
                             if (it.hasAttachment()) {
-                                observer.onReceiveAttachment(toJson(downstream.attachmentMessage))
+                                try {
+                                    gson.toJsonTree(downstream.attachmentMessage).asJsonObject.let {
+                                        observer.onReceiveAttachment(it)
+                                    }
+                                } catch (e: Throwable) {
+                                    Logger.e(TAG, "[attachmentMessage] Error occurred while parsing json, $e")
+                                }
                             }
                         }
                     }
@@ -88,39 +101,6 @@ internal class EventStreamService(
                 if(!isShutdown.get()) {
                     Logger.d(TAG, "[onCompleted] Stream is completed")
                     observer.onError(Status.UNKNOWN)
-                }
-            }
-
-            private fun toJson(src: Any): String {
-                return GsonBuilder().setFieldNamingStrategy(UnderscoresNamingStrategy())
-                    .addSerializationExclusionStrategy(UnknownFieldsExclusionStrategy())
-                    .create().toJson(src)
-            }
-
-            // directives_ to directives
-            inner class UnderscoresNamingStrategy : FieldNamingStrategy {
-                override fun translateName(f: Field): String {
-                    val index = f.name.lastIndexOf("_")
-                    return if (index == -1 || index != f.name.lastIndex) {
-                        f.name
-                    } else {
-                        f.name.substring(0, index)
-                    }
-                }
-            }
-
-            inner class UnknownFieldsExclusionStrategy : ExclusionStrategy {
-                override fun shouldSkipField(f: FieldAttributes): Boolean {
-                    return when (f.name) {
-                        "unknownFields",
-                        "memoizedSerializedSize",
-                        "memoizedHashCode" -> true
-                        else -> false
-                    }
-                }
-
-                override fun shouldSkipClass(clazz: Class<*>): Boolean {
-                    return false
                 }
             }
 

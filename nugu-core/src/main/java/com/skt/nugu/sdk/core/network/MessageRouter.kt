@@ -151,7 +151,7 @@ class MessageRouter(
     /**
      * Notify the receive observer when the message has changed.
      */
-    private fun notifyObserverOnReceived(message: String) {
+    private fun notifyObserverOnReceived(message: Any) {
         observer?.receive(message)
     }
 
@@ -243,7 +243,7 @@ class MessageRouter(
      * @see [setConnectionStatus]
      * @param message the message received
      */
-    override fun consumeMessage(message: String) {
+    override fun consumeMessage(message: Any) {
         notifyObserverOnReceived(message)
     }
 

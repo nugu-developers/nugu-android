@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
+import com.google.gson.JsonObject
 import com.google.protobuf.ByteString
 import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
@@ -264,11 +265,11 @@ internal class DeviceGatewayClient(policy: Policy,
         Logger.d(TAG, "onPingRequestAcknowledged")
     }
 
-    override fun onReceiveDirectives(json: String) {
+    override fun onReceiveDirectives(json: JsonObject) {
         messageConsumer?.consumeMessage(json)
     }
 
-    override fun onReceiveAttachment(json: String) {
+    override fun onReceiveAttachment(json: JsonObject) {
         messageConsumer?.consumeMessage(json)
     }
 

@@ -22,5 +22,5 @@ interface MessageObserver {
     /** Called when receive an message
      * @param message the received message
      */
-    fun receive(message: String)
+    fun receive(message: Any)
 }

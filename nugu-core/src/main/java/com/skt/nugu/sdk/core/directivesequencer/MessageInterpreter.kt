@@ -43,14 +43,14 @@ class MessageInterpreter(
 
     private val gson = Gson()
 
-    override fun receive(message: String) {
+    override fun receive(message: Any) {
         // message의 parsing을 담당.
         try {
-            val jsonObject = JsonParser().parse(message).asJsonObject
+            val jsonObject = message as JsonObject
             when {
                 jsonObject.has(KEY_DIRECTIVES) -> onReceiveDirectives(jsonObject)
                 jsonObject.has(KEY_ATTACHMENT) -> onReceiveAttachment(jsonObject)
-                else -> onReceiveUnknownMessage(message)
+                else -> onReceiveUnknownMessage(jsonObject)
             }
         } catch (e: Exception) {
             onReceiveUnknownMessage(message)
@@ -102,7 +102,7 @@ class MessageInterpreter(
         }
     }
 
-    private fun onReceiveUnknownMessage(message: String) {
+    private fun onReceiveUnknownMessage(message: Any) {
         Logger.e(TAG, "[onReceiveUnknownMessage] $message")
     }
 

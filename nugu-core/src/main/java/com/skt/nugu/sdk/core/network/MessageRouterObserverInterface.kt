@@ -28,5 +28,5 @@ interface MessageRouterObserverInterface {
     /**
      * This function will be called when a Message arrives from DeviceGateway.
      **/
-    fun receive(message: String)
+    fun receive(message: Any)
 }

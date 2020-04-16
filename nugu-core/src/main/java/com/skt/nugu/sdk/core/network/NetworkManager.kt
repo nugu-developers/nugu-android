@@ -131,7 +131,7 @@ class NetworkManager private constructor(
     /** Called when receive an message
      * @param message the received message
      */
-    override fun receive(message: String) {
+    override fun receive(message: Any) {
         messageObservers.forEach { it.receive(message) }
     }
     /**
