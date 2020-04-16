@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.Chan
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.skt.nugu.sdk.core.utils.UserAgent
 import okhttp3.*
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -100,7 +100,7 @@ class RegistryClient(
         val request = Request.Builder().url(httpUrl)
             .header("Accept", APPLICATION_JSON)
             .header("Authorization", authDelegate.getAuthorization().toString())
-            .header("User-Agent","OpenSDK/" + SdkVersion.currentVersion)
+            .header("User-Agent", UserAgent.toString())
             .build()
         try {
             client.newCall(request).enqueue(object : Callback {

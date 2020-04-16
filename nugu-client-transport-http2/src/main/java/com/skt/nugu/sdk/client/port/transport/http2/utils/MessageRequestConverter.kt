@@ -42,11 +42,25 @@ object MessageRequestConverter {
     }
 
     fun MessageRequest.toStringMessage() : String {
-        return when(this) {
+        return when (this) {
             is AttachmentMessageRequest -> {
-                val temp = this.copy()
-                temp.byteArray = null
-                temp.toString() + "byteArray size = " + this.byteArray?.size
+                StringBuilder().apply {
+                    append(this.javaClass.simpleName)
+                    append("(")
+                    append("messageId=${messageId}")
+                    append(",dialogRequestId=${dialogRequestId}")
+                    append(",context=${context}")
+                    append(",namespace=${namespace}")
+                    append(",name=${name}")
+                    append(",version=${version}")
+                    append(",referrerDialogRequestId=${referrerDialogRequestId}")
+                    append(",seq=${seq}")
+                    append(",isEnd=${isEnd}")
+                    append(",parentMessageId=${parentMessageId}")
+                    append(",mediaType=${mediaType}")
+                    append(",content size=${byteArray?.size}")
+                    append(")")
+                }.toString()
             }
             else -> this.toString()
         }
