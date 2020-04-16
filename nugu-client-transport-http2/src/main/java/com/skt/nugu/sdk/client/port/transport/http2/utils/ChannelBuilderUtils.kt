@@ -20,7 +20,7 @@ import com.skt.nugu.sdk.client.port.transport.http2.interceptors.SecurityInterce
 import com.skt.nugu.sdk.client.port.transport.http2.interceptors.UserAgentInterceptor
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.skt.nugu.sdk.core.utils.UserAgent
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.logging.HttpLoggingInterceptor
@@ -49,7 +49,7 @@ class ChannelBuilderUtils {
                 )
                 .addInterceptor(
                     UserAgentInterceptor(
-                        "OpenSDK/" + SdkVersion.currentVersion
+                        UserAgent.toString()
                     )
                 )
                 .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
@@ -57,9 +57,6 @@ class ChannelBuilderUtils {
                 .build()
         }
 
-        private fun userAgent(): String {
-            return "OpenSDK/" + SdkVersion.currentVersion
-        }
 
         /** Shuts down the gRPC channel */
         fun shutdown(executor: ExecutorService, client: OkHttpClient) {

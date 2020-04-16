@@ -22,6 +22,8 @@ import com.skt.nugu.sdk.client.port.transport.http2.utils.ChannelBuilderUtils.Co
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toStringMessage
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
+import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
@@ -299,18 +301,18 @@ internal class DeviceGatewayClient(
 
     /**
      * Directive received
-     * @param json Json string
+     * @param directiveMessage
      */
-    override fun onReceiveDirectives(json: String) {
+    override fun onReceiveDirectives(directiveMessage: List<DirectiveMessage>) {
         handleConnectedIfNeeded()
-        messageConsumer?.consumeMessage(json)
+        messageConsumer?.consumeDirectives(directiveMessage)
     }
 
     /**
      * Attachment received
-     * @param json Json string
+     * @param attachmentMessage
      */
-    override fun onReceiveAttachment(json: String) {
-        messageConsumer?.consumeMessage(json)
+    override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
+        messageConsumer?.consumeAttachment(attachmentMessage)
     }
 }
