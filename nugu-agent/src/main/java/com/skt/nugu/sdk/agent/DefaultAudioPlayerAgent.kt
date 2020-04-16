@@ -975,6 +975,11 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnPlaybackPlayingOnLostFocus() {
+        if(stopCalled) {
+            Logger.e(TAG, "[executeOnPlaybackPlayingOnLostFocus] stop already called")
+            return
+        }
+
         if (!mediaPlayer.stop(sourceId)) {
             Logger.e(TAG, "[executeOnPlaybackPlayingOnLostFocus] stop failed")
         } else {
