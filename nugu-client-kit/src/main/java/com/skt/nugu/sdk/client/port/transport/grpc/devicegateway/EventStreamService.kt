@@ -15,10 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
-import com.google.gson.ExclusionStrategy
-import com.google.gson.FieldAttributes
-import com.google.gson.FieldNamingStrategy
-import com.google.gson.GsonBuilder
+import com.google.gson.*
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.Status
@@ -42,8 +39,8 @@ internal class EventStreamService(
     private val isShutdown = AtomicBoolean(false)
 
     interface Observer {
-        fun onReceiveDirectives(json: String)
-        fun onReceiveAttachment(json: String)
+        fun onReceiveDirectives(directiveMessage: DirectiveMessage)
+        fun onReceiveAttachment(attachmentMessage: AttachmentMessage)
         fun onError(status: Status)
     }
 
@@ -56,7 +53,7 @@ internal class EventStreamService(
                     Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                         downstream.directiveMessage?.let {
                             if (it.directivesCount > 0) {
-                                observer.onReceiveDirectives(toJson(downstream.directiveMessage))
+                                observer.onReceiveDirectives(downstream.directiveMessage)
                             }
                             if(checkIfDirectiveIsUnauthorizedRequestException(it)) {
                                 observer.onError(Status.UNAUTHENTICATED)
@@ -66,7 +63,7 @@ internal class EventStreamService(
                     Downstream.MessageCase.ATTACHMENT_MESSAGE -> {
                         downstream.attachmentMessage?.let {
                             if (it.hasAttachment()) {
-                                observer.onReceiveAttachment(toJson(downstream.attachmentMessage))
+                                observer.onReceiveAttachment(downstream.attachmentMessage)
                             }
                         }
                     }

@@ -19,8 +19,13 @@ package com.skt.nugu.sdk.core.interfaces.message
  * The observer to be called when receive an message
  */
 interface MessageObserver {
-    /** Called when receive an message
-     * @param message the received message
+    /** Called when receive directives
+     * @param directives the received directives
      */
-    fun receive(message: String)
+    fun receiveDirectives(directives: List<DirectiveMessage>)
+
+    /** Called when receive an attachment
+     * @param attachment the received attachment
+     */
+    fun receiveAttachment(attachment: AttachmentMessage)
 }

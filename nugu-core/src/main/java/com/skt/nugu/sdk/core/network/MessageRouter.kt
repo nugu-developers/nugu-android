@@ -16,10 +16,8 @@
 package com.skt.nugu.sdk.core.network
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
-import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
@@ -149,13 +147,6 @@ class MessageRouter(
     }
 
     /**
-     * Notify the receive observer when the message has changed.
-     */
-    private fun notifyObserverOnReceived(message: String) {
-        observer?.receive(message)
-    }
-
-    /**
      * Get the status of the connection.
      */
     override fun getConnectionStatus(): ConnectionStatusListener.Status {
@@ -238,13 +229,12 @@ class MessageRouter(
         )
     }
 
-    /**
-     * receive the message from transport, then it is notify
-     * @see [setConnectionStatus]
-     * @param message the message received
-     */
-    override fun consumeMessage(message: String) {
-        notifyObserverOnReceived(message)
+    override fun consumeDirectives(directives: List<DirectiveMessage>) {
+        observer?.receiveDirectives(directives)
+    }
+
+    override fun consumeAttachment(attachment: AttachmentMessage) {
+        observer?.receiveAttachment(attachment)
     }
 
     /**

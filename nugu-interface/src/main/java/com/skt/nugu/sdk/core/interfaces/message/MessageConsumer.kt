@@ -19,9 +19,13 @@ package com.skt.nugu.sdk.core.interfaces.message
  * An interface which allows a derived class to consume a Message from DeviceGateway.
  */
 interface MessageConsumer {
-    /**
-     * Called when a message has been received from DeviceGateway.
-     * @param message the received message
+    /** Called when directives has been received from DeviceGateway.
+     * @param directives the received directives
      */
-    fun consumeMessage(message: String)
+    fun consumeDirectives(directives: List<DirectiveMessage>)
+
+    /** Called when an attachment has been received from DeviceGateway.
+     * @param attachment the received attachment
+     */
+    fun consumeAttachment(attachment: AttachmentMessage)
 }

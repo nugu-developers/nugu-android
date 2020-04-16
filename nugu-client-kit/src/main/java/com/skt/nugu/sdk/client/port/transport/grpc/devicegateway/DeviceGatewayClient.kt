@@ -23,10 +23,10 @@ import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
 import io.grpc.ManagedChannel
@@ -264,12 +264,46 @@ internal class DeviceGatewayClient(policy: Policy,
         Logger.d(TAG, "onPingRequestAcknowledged")
     }
 
-    override fun onReceiveDirectives(json: String) {
-        messageConsumer?.consumeMessage(json)
+    override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
+        messageConsumer?.consumeDirectives(convertToDirectives(directiveMessage))
     }
 
-    override fun onReceiveAttachment(json: String) {
-        messageConsumer?.consumeMessage(json)
+    private fun convertToDirectives(directiveMessage: DirectiveMessage): List<com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage> {
+        val directives = ArrayList<com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage>()
+
+        directiveMessage.directivesList.forEach {
+            directives.add(com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage(convertHeader(it.header), it.payload))
+        }
+
+        return directives
+    }
+
+    override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
+        messageConsumer?.consumeAttachment(convertToAttachmentMessage(attachmentMessage))
+    }
+
+    private fun convertToAttachmentMessage(attachmentMessage: AttachmentMessage): com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage {
+        return with(attachmentMessage.attachment) {
+            com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage(
+                content.toByteArray(),
+                convertHeader(header),
+                isEnd,
+                parentMessageId,
+                seq,
+                mediaType
+            )
+        }
+    }
+
+    private fun convertHeader(header: Header): com.skt.nugu.sdk.core.interfaces.message.Header = with(header) {
+        com.skt.nugu.sdk.core.interfaces.message.Header(
+            dialogRequestId,
+            messageId,
+            name,
+            namespace,
+            version,
+            referrerDialogRequestId
+        )
     }
 
     private fun toProtobufMessage(request: AttachmentMessageRequest): AttachmentMessage {
