@@ -15,14 +15,8 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2.devicegateway
 
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
+import com.google.gson.Gson
 import com.google.gson.JsonParser
-import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartParser
-import com.skt.nugu.sdk.core.utils.Logger
-import okhttp3.Response
-import okio.Buffer
-import java.nio.charset.Charset
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLICATION_JSON
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLICATION_JSON_UTF8
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLICATION_OPUS
@@ -37,11 +31,23 @@ import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.NAMESP
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.PARENT_MESSAGE_ID
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.REFERRER_DIALOG_REQUEST_ID
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.VERSION
+import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartParser
+import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
+import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
+import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.utils.Logger
+import okhttp3.Response
+import okio.Buffer
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 
 class ResponseHandler {
-    data class ExtractFilename(val seq: String, val isEnd: Boolean)
+    data class ExtractFilename(val seq: Int, val isEnd: Boolean)
 
     companion object {
+        private val gson = Gson()
+
         private const val TAG = "ResponseHandler"
 
         fun Response.handleResponse(observer: DeviceGatewayTransport): Boolean {
@@ -71,15 +77,14 @@ class ResponseHandler {
                                         headers,
                                         body
                                     )
-                                observer.onReceiveAttachment(attachment.toString())
+                                observer.onReceiveAttachment(attachment)
                             }
                             APPLICATION_JSON_UTF8,
                             APPLICATION_JSON -> {
-                                handleDirectives(
+                                val directives = handleDirectives(
                                     body
-                                ) { directives ->
-                                    observer.onReceiveDirectives(directives.toString())
-                                }
+                                )
+                                observer.onReceiveDirectives(directives)
                             }
                             else -> {
                                 throw Exception("unknown content type (${headers[CONTENT_TYPE]})")
@@ -89,67 +94,47 @@ class ResponseHandler {
                 }).start()
         }
 
-        private fun handleDirectives(body: Buffer, block: (JsonObject) -> Unit) {
+        private fun handleDirectives(body: Buffer) : List<DirectiveMessage> {
+            val directives = ArrayList<DirectiveMessage>()
             val json = JsonParser().parse(body.readString(Charset.defaultCharset())).asJsonObject
             json.getAsJsonArray("directives").forEach {
-                val header = it.asJsonObject["header"]
-                val directives = JsonObject().apply {
-                    this.add("directives", JsonArray().apply {
-                        add(JsonObject().apply {
-                            this.add("header", header)
-                            this.addProperty("payload", it.asJsonObject["payload"].toString())
-                        })
-                    })
-                }
-                block(directives)
+                val header = gson.fromJson(it.asJsonObject["header"], Header::class.java)
+                directives.add(DirectiveMessage(header, it.asJsonObject["payload"].toString()))
             }
+            return directives
         }
 
-        private fun handleAttachment(headers: Map<String, String>, body: Buffer): JsonObject {
+        private fun handleAttachment(headers: Map<String, String>, body: Buffer): AttachmentMessage {
             val splitFilename = extractFilenames(headers[FILENAME])
+            val defaultValue = ""
             val contentLength = headers[CONTENT_LENGTH]?.toLong() ?: body.size
-            val content = JsonObject().apply {
-                this.add("bytes", JsonArray().apply {
-                    body.readByteArray(contentLength).forEach {
-                        add(it)
-                    }
-                })
-            }
 
-            val header = JsonObject().apply {
-                this.addProperty("dialogRequestId", headers[DIALOG_REQUEST_ID])
-                this.addProperty("messageId", headers[MESSAGE_ID])
-                this.addProperty("name", headers[NAME])
-                this.addProperty("namespace", headers[NAMESPACE])
-                this.addProperty(
-                    "referrerDialogRequestId",
-                    headers[REFERRER_DIALOG_REQUEST_ID] ?: ""
-                )
-                this.addProperty("version", headers[VERSION])
-            }
+            val header = Header(
+                dialogRequestId = headers.getOrDefault(DIALOG_REQUEST_ID,defaultValue),
+                messageId = headers.getOrDefault(MESSAGE_ID, defaultValue),
+                name = headers.getOrDefault(NAME,defaultValue),
+                namespace = headers.getOrDefault(NAMESPACE,defaultValue),
+                version = headers.getOrDefault(VERSION, defaultValue),
+                referrerDialogRequestId = headers.getOrDefault(REFERRER_DIALOG_REQUEST_ID,defaultValue)
+            )
 
-            return JsonObject().apply {
-                this.add("attachment", JsonObject().apply {
-                    this.add("header", header)
-                    this.add("content", content)
-                    splitFilename?.let {
-                        this.addProperty("isEnd", splitFilename.isEnd)
-                        this.addProperty("seq", splitFilename.seq)
-                    }
-                    this.addProperty("parentMessageId", headers[PARENT_MESSAGE_ID])
-                    this.addProperty("mediaType", headers[CONTENT_TYPE])
-                })
-            }
+            return AttachmentMessage(
+                content = ByteBuffer.wrap(body.readByteArray(contentLength)),
+                header = header,
+                isEnd = splitFilename.isEnd,
+                seq = splitFilename.seq,
+                parentMessageId = headers.getOrDefault(PARENT_MESSAGE_ID, defaultValue),
+                mediaType = headers.getOrDefault(CONTENT_TYPE, defaultValue))
         }
 
-        private fun extractFilenames(name: String?): ExtractFilename? {
+        private fun extractFilenames(name: String?): ExtractFilename {
             val filenames = name.toString().split(";".toRegex())
             if (filenames.size == 2) {
                 val seq = filenames[0]
                 val isEnd = (filenames[1] == "end")
-                return ExtractFilename(seq, isEnd)
+                return ExtractFilename(seq.toInt(), isEnd)
             }
-            return null
+            return ExtractFilename(0, true)
         }
     }
 

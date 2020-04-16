@@ -67,7 +67,7 @@ internal class RegistryClient(private var address: String) : Transport {
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
             .header("Authorization", token.toString())
-            .header("User-Agent",UserAgent.toString())
+            .header("User-Agent", UserAgent.toString())
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(request: Request?, e: IOException?) {
