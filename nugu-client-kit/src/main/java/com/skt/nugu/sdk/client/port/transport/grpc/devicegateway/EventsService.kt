@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.GsonUtils
+import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.MessageRequestConverter.toProtobufMessage
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -46,6 +46,7 @@ internal class EventsService(
     private val isShutdown = AtomicBoolean(false)
     private var activeUpstream: StreamObserver<Upstream>? = null
     private val streamLock = ReentrantLock()
+    private var lastSentEventMessage : EventMessageRequest? = null
 
     private fun obtainUpstream(): StreamObserver<Upstream>? {
         if (isShutdown.get()) {
@@ -94,10 +95,16 @@ internal class EventsService(
         override fun onError(t: Throwable) {
             if (!isShutdown.get()) {
                 val status = Status.fromThrowable(t)
-                Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
                 if(status.code == Status.Code.DEADLINE_EXCEEDED) {
-                    // // // // 
+                    // TODO :: When sending Asr.Recognize and not sending Attachment
+                    if(lastSentEventMessage?.checkIfEventMessageIsAsrRecognize() == true) {
+                        Logger.d(TAG, "[onError] Perhaps Asr.Recognize was canceled(no error)")
+                        halfClose()
+                        return
+                    }
                 }
+
+                Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
                 halfClose()
                 observer.onError(status)
             }
@@ -106,6 +113,7 @@ internal class EventsService(
         override fun onCompleted() {
             Logger.d(TAG, "[onCompleted] Stream is completed")
             halfClose()
+            lastSentEventMessage = null
         }
     }
 
@@ -126,6 +134,7 @@ internal class EventsService(
             Logger.w(TAG, "[sendAttachmentMessage] already shutdown")
             return false
         }
+        lastSentEventMessage = null
         try {
             streamLock.withLock {
                 obtainUpstream()?.apply {
@@ -149,7 +158,7 @@ internal class EventsService(
             Logger.w(TAG, "[sendEventMessage] already shutdown")
             return false
         }
-
+        lastSentEventMessage = event
         try {
             streamLock.withLock {
                 obtainUpstream()?.apply {
