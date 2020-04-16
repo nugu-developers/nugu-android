@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.utils
 
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import devicegateway.grpc.DirectiveMessage
 
 object DirectivePreconditions {
@@ -33,4 +34,13 @@ object DirectivePreconditions {
         return false
     }
 
+    fun EventMessageRequest.checkIfEventMessageIsAsrRecognize(): Boolean {
+        val namespace = "ASR"
+        val name = "Recognize"
+
+        if (this.namespace == namespace && this.name == name) {
+            return true
+        }
+        return false
+    }
 }

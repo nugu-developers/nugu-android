@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.GsonUtils
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.DirectivesRequest
 import devicegateway.grpc.Downstream
