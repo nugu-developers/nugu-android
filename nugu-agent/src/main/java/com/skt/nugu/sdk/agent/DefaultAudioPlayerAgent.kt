@@ -210,13 +210,11 @@ class DefaultAudioPlayerAgent(
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
-                    Logger.d(TAG, "[onGranted] onReleased: ${directive.getMessageId()} , ${this@AudioInfo}")
-                    if (focus != FocusState.NONE) {
-                        if (currentItem == this@AudioInfo) {
-                            currentItem = null
-                            if(!playDirectiveController.willBeHandle()) {
-                                focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
-                            }
+                    Logger.d(TAG, "[onGranted] onReleased: ${directive.getMessageId()} , ${this@AudioInfo}, $focus")
+                    if (currentItem == this@AudioInfo) {
+                        currentItem = null
+                        if (!playDirectiveController.willBeHandle() && focus != FocusState.NONE) {
+                            focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
                         }
                     }
 
