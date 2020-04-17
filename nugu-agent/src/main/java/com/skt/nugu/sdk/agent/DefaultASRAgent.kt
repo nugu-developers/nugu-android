@@ -24,7 +24,6 @@ import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
-import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
@@ -194,7 +193,6 @@ class DefaultASRAgent(
 
         initialSpeechProcessor.addListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
-        contextManager.setState(namespaceAndName, buildContext(), StateRefreshPolicy.NEVER)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
