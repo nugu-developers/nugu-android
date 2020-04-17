@@ -173,7 +173,7 @@ class DefaultTextAgent(
     ) {
         contextSetter.setState(namespaceAndName, JsonObject().apply {
             addProperty("version", VERSION.toString())
-        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+        }.toString(), StateRefreshPolicy.NEVER, stateRequestToken)
     }
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?): String {

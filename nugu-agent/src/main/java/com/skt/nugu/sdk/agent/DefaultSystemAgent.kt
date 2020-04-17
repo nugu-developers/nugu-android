@@ -190,7 +190,7 @@ class DefaultSystemAgent(
         contextSetter.setState(
             namespaceAndName,
             buildContext(),
-            StateRefreshPolicy.ALWAYS,
+            StateRefreshPolicy.NEVER,
             stateRequestToken
         )
     }
