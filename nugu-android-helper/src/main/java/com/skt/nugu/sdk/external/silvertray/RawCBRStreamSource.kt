@@ -35,16 +35,6 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
         private const val HEADER_BUFFER_SIZE = 8
     }
 
-    private val inputStream = PipedInputStream()
-    private val outputStream = PipedOutputStream()
-
-    private val readAttachmentThread = Executors.newSingleThreadExecutor()
-    private var readAttachmentFuture: Future<*>? = null
-
-    init {
-        outputStream.connect(inputStream)
-    }
-
     private val format: MediaFormat by lazy {
         object : MediaFormat {
             override fun getMimeType(): String {
@@ -72,25 +62,6 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
     private var currentFrame: ByteArray? = null
 
     override fun readSampleData(buffer: ByteBuffer, offset: Int): Int {
-        // start read thread
-        if (readAttachmentFuture == null) {
-            readAttachmentFuture = readAttachmentThread.submit {
-                outputStream.use { outputStream ->
-                    val temp = ByteArray(1024)
-                    var readCount = 0
-                    try {
-                        while (Thread.currentThread().isInterrupted == false &&
-                            kotlin.run {  readCount = attachmentReader.read(temp, 0, temp.size); readCount }  > 0) {
-                            outputStream.write(temp, 0, readCount)
-                        }
-                    } catch (e: InterruptedException){
-                        Log.d(TAG, "[readSampleData] read attachment tread has been interrupted")
-                        Thread.currentThread().interrupt()
-                    }
-                }
-            }
-        }
-
         // return current frame if exist
         currentFrame?.let {
             buffer.put(it)
@@ -101,7 +72,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
         val headerBuffer = ByteArray(HEADER_BUFFER_SIZE)
         var headerReadTotal = 0
         var headerReadCount = 0
-        while (run { headerReadCount = inputStream.read(headerBuffer, headerReadTotal, HEADER_BUFFER_SIZE - headerReadTotal)
+        while (run { headerReadCount = attachmentReader.read(headerBuffer, headerReadTotal, HEADER_BUFFER_SIZE - headerReadTotal)
                 headerReadTotal += headerReadCount
                 headerReadTotal } < HEADER_BUFFER_SIZE) {
             if (headerReadCount < 0) {
@@ -121,7 +92,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
         var totalCount = 0
         var readCount = 0
         val payloadBuffer = ByteArray(inputSize)
-        while ( run { readCount = inputStream.read(payloadBuffer, totalCount, inputSize - totalCount)
+        while ( run { readCount = attachmentReader.read(payloadBuffer, totalCount, inputSize - totalCount)
                 totalCount += readCount
                 totalCount }  < inputSize) {
             if (readCount < 0) {
@@ -147,9 +118,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
     }
 
     override fun release() {
-        readAttachmentFuture?.cancel(true) // interrupt
-        readAttachmentThread.shutdown()
-        inputStream.close()
+        attachmentReader.close()
     }
 
     override fun getMediaFormat(): MediaFormat {
