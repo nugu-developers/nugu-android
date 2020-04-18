@@ -134,36 +134,38 @@ class DefaultASRAgent(
 
     private val speechToTextConverterEventObserver =
         object : ASRAgentInterface.OnResultListener {
-            override fun onNoneResult() {
+            override fun onNoneResult(dialogRequestId: String) {
+                Logger.d(TAG, "[onNoneResult] $dialogRequestId")
                 onResultListeners.forEach {
-                    it.onNoneResult()
+                    it.onNoneResult(dialogRequestId)
                 }
             }
 
-            override fun onPartialResult(result: String) {
-                Logger.d(TAG, "[onPartialResult] $result")
+            override fun onPartialResult(result: String, dialogRequestId: String) {
+                Logger.d(TAG, "[onPartialResult] $result, $dialogRequestId")
                 onResultListeners.forEach {
-                    it.onPartialResult(result)
+                    it.onPartialResult(result, dialogRequestId)
                 }
             }
 
-            override fun onCompleteResult(result: String) {
+            override fun onCompleteResult(result: String, dialogRequestId: String) {
+                Logger.d(TAG, "[onCompleteResult] $result, $dialogRequestId")
                 onResultListeners.forEach {
-                    it.onCompleteResult(result)
+                    it.onCompleteResult(result, dialogRequestId)
                 }
             }
 
-            override fun onError(errorType: ASRAgentInterface.ErrorType) {
-                Logger.w(TAG, "[onError] $errorType")
+            override fun onError(errorType: ASRAgentInterface.ErrorType, dialogRequestId: String) {
+                Logger.w(TAG, "[onError] $errorType, $dialogRequestId")
                 onResultListeners.forEach {
-                    it.onError(errorType)
+                    it.onError(errorType, dialogRequestId)
                 }
             }
 
-            override fun onCancel(cause: ASRAgentInterface.CancelCause) {
-                Logger.d(TAG, "[onCancel] $cause")
+            override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
+                Logger.d(TAG, "[onCancel] $cause, $dialogRequestId")
                 onResultListeners.forEach {
-                    it.onCancel(cause)
+                    it.onCancel(cause, dialogRequestId)
                 }
             }
         }
@@ -565,29 +567,32 @@ class DefaultASRAgent(
             param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             callback,
             object : ASRAgentInterface.OnResultListener {
-                override fun onNoneResult() {
-                    speechToTextConverterEventObserver.onNoneResult()
+                override fun onNoneResult(dialogRequestId: String) {
+                    speechToTextConverterEventObserver.onNoneResult(dialogRequestId)
                 }
 
-                override fun onPartialResult(result: String) {
-                    speechToTextConverterEventObserver.onPartialResult(result)
+                override fun onPartialResult(result: String, dialogRequestId: String) {
+                    speechToTextConverterEventObserver.onPartialResult(result, dialogRequestId)
                 }
 
-                override fun onCompleteResult(result: String) {
-                    speechToTextConverterEventObserver.onCompleteResult(result)
+                override fun onCompleteResult(result: String, dialogRequestId: String) {
+                    speechToTextConverterEventObserver.onCompleteResult(result, dialogRequestId)
                 }
 
-                override fun onError(type: ASRAgentInterface.ErrorType) {
+                override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
                         sendResponseTimeout(payload, referrerDialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
                         sendListenTimeout(payload, referrerDialogRequestId)
                     }
-                    speechToTextConverterEventObserver.onError(type)
+                    speechToTextConverterEventObserver.onError(type, dialogRequestId)
                 }
 
-                override fun onCancel(cause: ASRAgentInterface.CancelCause) {
-                    speechToTextConverterEventObserver.onCancel(cause)
+                override fun onCancel(
+                    cause: ASRAgentInterface.CancelCause,
+                    dialogRequestId: String
+                ) {
+                    speechToTextConverterEventObserver.onCancel(cause, dialogRequestId)
                 }
             }
         )

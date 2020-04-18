@@ -221,13 +221,13 @@ class DefaultServerSpeechRecognizer(
 
         when (payload.state) {
             AsrNotifyResultPayload.State.PARTIAL -> {
-                resultListener?.onPartialResult(payload.result ?: "")
+                resultListener?.onPartialResult(payload.result ?: "", request.eventMessage.dialogRequestId)
             }
             AsrNotifyResultPayload.State.COMPLETE -> {
-                resultListener?.onCompleteResult(payload.result ?: "")
+                resultListener?.onCompleteResult(payload.result ?: "", request.eventMessage.dialogRequestId)
             }
             AsrNotifyResultPayload.State.NONE -> {
-                resultListener?.onNoneResult()
+                resultListener?.onNoneResult(request.eventMessage.dialogRequestId)
             }
             AsrNotifyResultPayload.State.ERROR -> {
                 request.senderThread.requestStop()
@@ -323,13 +323,17 @@ class DefaultServerSpeechRecognizer(
     }
 
     private fun handleError(errorType: ASRAgentInterface.ErrorType) {
-        currentRequest?.resultListener?.onError(errorType)
+        currentRequest?.let {
+            it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
+        }
         currentRequest = null
         setState(SpeechRecognizer.State.STOP)
     }
 
     private fun handleCancel() {
-        currentRequest?.resultListener?.onCancel(currentRequest?.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API)
+        currentRequest?.let {
+            it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
+        }
         currentRequest = null
         setState(SpeechRecognizer.State.STOP)
     }

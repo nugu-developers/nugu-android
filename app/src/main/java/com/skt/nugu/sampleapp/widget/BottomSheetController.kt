@@ -182,12 +182,12 @@ class BottomSheetController(
         }
     }
 
-    override fun onCancel(cause: ASRAgentInterface.CancelCause) {
+    override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
         // no-op
         Logger.d(TAG, "[onCancel] $cause")
     }
 
-    override fun onError(type: ASRAgentInterface.ErrorType) {
+    override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
         when(type) {
             ASRAgentInterface.ErrorType.ERROR_NETWORK ,
             ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT ,
@@ -211,7 +211,7 @@ class BottomSheetController(
         }
     }
 
-    override fun onNoneResult() {
+    override fun onNoneResult(dialogRequestId: String) {
         bottomSheet.post {
             if(PreferenceHelper.enableRecognitionBeep(activity)) {
                 SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
@@ -219,13 +219,13 @@ class BottomSheetController(
         }
     }
 
-    override fun onPartialResult(result: String) {
+    override fun onPartialResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
             sttResult.text = result
         }
     }
 
-    override fun onCompleteResult(result: String) {
+    override fun onCompleteResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
             sttResult.text = result
 

@@ -132,28 +132,28 @@ interface ASRAgentInterface {
         /**
          * Called when there is no matched result.
          */
-        fun onNoneResult()
+        fun onNoneResult(dialogRequestId: String)
         /**
          * Called when received a partial recognized text.
          * @param result recognized text
          */
-        fun onPartialResult(result: String)
+        fun onPartialResult(result: String, dialogRequestId: String)
         /**
          * Called when received a complete recognized text.
          *
          * @param result recognized text
          */
-        fun onCompleteResult(result: String)
+        fun onCompleteResult(result: String, dialogRequestId: String)
         /**
          * Called when occur error on recognizing.
          * @param type reason for error
          */
-        fun onError(type: ErrorType)
+        fun onError(type: ErrorType, dialogRequestId: String)
 
         /**
          * Called when canceled.
          */
-        fun onCancel(cause: CancelCause)
+        fun onCancel(cause: CancelCause, dialogRequestId: String)
     }
 
     /**
