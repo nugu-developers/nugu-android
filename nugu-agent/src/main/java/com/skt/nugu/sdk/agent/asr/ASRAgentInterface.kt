@@ -106,7 +106,12 @@ interface ASRAgentInterface {
         /**
          * Caused by loss focus
          */
-        LOSS_FOCUS
+        LOSS_FOCUS,
+
+        /**
+         * Caused by session closed
+         */
+        SESSION_CLOSED
     }
 
     /**

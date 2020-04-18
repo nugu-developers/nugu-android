@@ -161,7 +161,7 @@ class DefaultASRAgent(
             }
 
             override fun onCancel(cause: ASRAgentInterface.CancelCause) {
-                Logger.d(TAG, "[onCancel]")
+                Logger.d(TAG, "[onCancel] $cause")
                 onResultListeners.forEach {
                     it.onCancel(cause)
                 }
@@ -212,12 +212,6 @@ class DefaultASRAgent(
                     payload,
                     info,
                     "[executePreHandleExpectSpeechDirective] invalid payload"
-                )
-            } else if (state != ASRAgentInterface.State.IDLE && state != ASRAgentInterface.State.BUSY) {
-                setHandlingExpectSpeechFailed(
-                    payload,
-                    info,
-                    "[executePreHandleExpectSpeechDirective] not allowed state($state)"
                 )
             } else {
                 executePreHandleExpectSpeechInternal(payload)
@@ -900,6 +894,7 @@ class DefaultASRAgent(
         playServiceId: String?,
         context: DialogSessionManagerInterface.Context?
     ) {
+        Logger.d(TAG, "[onSessionOpened] $sessionId")
         currentSessionId = sessionId
         executor.submit {
             onMultiturnListeners.forEach {
@@ -909,6 +904,7 @@ class DefaultASRAgent(
     }
 
     override fun onSessionClosed(sessionId: String) {
+        Logger.d(TAG, "[onSessionClosed] $sessionId")
         if (currentSessionId != sessionId) {
             Logger.e(TAG, "[onSessionClosed] current: $currentSessionId, closed: $sessionId")
         }
@@ -918,5 +914,6 @@ class DefaultASRAgent(
                 it.onMultiturnStateChanged(false)
             }
         }
+        executeStopRecognition(true, ASRAgentInterface.CancelCause.SESSION_CLOSED)
     }
 }

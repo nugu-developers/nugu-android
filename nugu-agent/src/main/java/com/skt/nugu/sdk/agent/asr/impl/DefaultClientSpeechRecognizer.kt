@@ -172,6 +172,7 @@ class DefaultClientSpeechRecognizer(
 
     override fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
         if (epdState.isActive()) {
+            Logger.d(TAG, "[stop] cancel: $cancel, cause: $cause")
             currentRequest?.stopByCancel = cancel
             currentRequest?.cancelCause = cause
             endPointDetector.stopDetector()
