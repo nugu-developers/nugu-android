@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
 import com.google.protobuf.ByteString
+import com.google.protobuf.UnsafeByteOperations
 import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
@@ -33,6 +34,7 @@ import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.net.ConnectException
 import java.net.UnknownHostException
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -325,7 +327,7 @@ internal class DeviceGatewayClient(policy: Policy,
                 .setMediaType(mediaType)
                 .setContent(
                     if (byteArray != null) {
-                        ByteString.copyFrom(byteArray)
+                        UnsafeByteOperations.unsafeWrap(ByteBuffer.wrap(byteArray))
                     } else {
                         ByteString.EMPTY
                     }
@@ -363,9 +365,23 @@ internal class DeviceGatewayClient(policy: Policy,
     private fun toStringMessage(request: MessageRequest) : String {
         return when(request) {
             is AttachmentMessageRequest -> {
-                val temp = request.copy()
-                temp.byteArray = null
-                temp.toString()
+                StringBuilder().apply {
+                    append(request.javaClass.simpleName)
+                    append("(")
+                        append("messageId=${request.messageId}")
+                        append(",dialogRequestId=${request.dialogRequestId}")
+                        append("context=${request.context}")
+                        append(",namespace=${request.namespace}")
+                        append(",name=${request.name}")
+                        append(",version=${request.version}")
+                        append(",referrerDialogRequestId=${request.referrerDialogRequestId}")
+                        append(",seq=${request.seq}")
+                        append(",isEnd=${request.isEnd}")
+                        append(",parentMessageId=${request.parentMessageId}")
+                        append(",mediaType=${request.mediaType}")
+                        append(",content size=${request.byteArray?.size}")
+                    append(")")
+                }.toString()
             }
             else -> request.toString()
         }
