@@ -43,5 +43,5 @@ data class AttachmentMessageRequest(
     val isEnd: Boolean,
     val parentMessageId: String,
     val mediaType: String,
-    var byteArray: ByteArray?
+    val byteArray: ByteArray?
 ) : MessageRequest
