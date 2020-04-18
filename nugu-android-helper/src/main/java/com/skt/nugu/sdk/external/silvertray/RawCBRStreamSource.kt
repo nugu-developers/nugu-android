@@ -19,12 +19,8 @@ import android.util.Log
 import com.skt.nugu.silvertray.codec.MediaFormat
 import com.skt.nugu.silvertray.source.DataSource
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
-import java.io.ByteArrayOutputStream
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
+import com.skt.nugu.sdk.core.utils.Logger
 import java.nio.ByteBuffer
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
 
 internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reader): DataSource {
     companion object {
@@ -59,20 +55,22 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
         }
     }
 
-    private var currentFrame: ByteArray? = null
+    private var currentBuffer: ByteBuffer? = null
+    private var currentFrameSize: Int? = null
 
     override fun readSampleData(buffer: ByteBuffer, offset: Int): Int {
         // return current frame if exist
-        currentFrame?.let {
-            buffer.put(it)
-            return it.size
+        currentBuffer?.let {
+            currentFrameSize?.let { size ->
+                buffer.put(it)
+                return size
+            }
         }
 
         // load new frame
-        val headerBuffer = ByteArray(HEADER_BUFFER_SIZE)
         var headerReadTotal = 0
         var headerReadCount = 0
-        while (run { headerReadCount = attachmentReader.read(headerBuffer, headerReadTotal, HEADER_BUFFER_SIZE - headerReadTotal)
+        while (run { headerReadCount = attachmentReader.read(buffer, headerReadTotal, HEADER_BUFFER_SIZE - headerReadTotal)
                 headerReadTotal += headerReadCount
                 headerReadTotal } < HEADER_BUFFER_SIZE) {
             if (headerReadCount < 0) {
@@ -82,8 +80,8 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
             Log.w(TAG, "[readSampleData] Failed to read header. retry ($headerReadCount)")
         }
 
-        val inputSize = ((headerBuffer[0].toInt() and 0xFF) shl 24) or ((headerBuffer[1].toInt() and 0xFF) shl 16) or
-                ((headerBuffer[2].toInt() and 0xFF) shl 8) or ((headerBuffer[3].toInt() and 0xFF) shl 0)
+        val inputSize = ((buffer[0].toInt() and 0xFF) shl 24) or ((buffer[1].toInt() and 0xFF) shl 16) or
+                ((buffer[2].toInt() and 0xFF) shl 8) or ((buffer[3].toInt() and 0xFF) shl 0)
         if (inputSize <= 0) {
             Log.e(TAG, "[readSampleData] Failed to get input size ($inputSize)")
             return 0
@@ -91,8 +89,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
 
         var totalCount = 0
         var readCount = 0
-        val payloadBuffer = ByteArray(inputSize)
-        while ( run { readCount = attachmentReader.read(payloadBuffer, totalCount, inputSize - totalCount)
+        while ( run { readCount = attachmentReader.read(buffer, buffer.position(), inputSize - totalCount)
                 totalCount += readCount
                 totalCount }  < inputSize) {
             if (readCount < 0) {
@@ -100,21 +97,15 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
                 return 0
             }
         }
-        // return received data
-        ByteArrayOutputStream().use {
-            it.write(headerBuffer)
-            it.write(payloadBuffer)
-            it.toByteArray().also { frame ->
-                buffer.put(frame)
-                currentFrame = frame
-                return frame.size
-            }
-        }
-        return 0
+
+        currentBuffer = buffer
+        currentFrameSize = HEADER_BUFFER_SIZE + totalCount
+
+        return totalCount + HEADER_BUFFER_SIZE
     }
 
     override fun advance() {
-        currentFrame = null
+        currentBuffer = null
     }
 
     override fun release() {
