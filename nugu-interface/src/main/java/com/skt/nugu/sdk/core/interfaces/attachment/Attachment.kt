@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.core.interfaces.attachment
 
+import java.nio.ByteBuffer
+
 /**
  * The attachment interface
  */
@@ -64,6 +66,15 @@ interface Attachment {
          * @return the total number of bytes which read, or or -1 if cannot read anymore because of various reason.
          */
         fun read(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int
+
+        /** Read bytes from attachment
+         * @param byteBuffer the byte buffer into which the data is read.
+         * @param offsetInBytes the start offset in data
+         * @param sizeInBytes the maximum number of bytes to read
+         *
+         * @return the total number of bytes which read, or or -1 if cannot read anymore because of various reason.
+         */
+        fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int
 
         /**
          * Close the reader

@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.attachment
 
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.utils.Logger
+import java.nio.ByteBuffer
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -82,6 +83,30 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
             }
 
             override fun read(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int {
+                return readInternal(offsetInBytes, sizeInBytes) {src, srcOffset, dstOffsetInBytes, readSize ->
+                    System.arraycopy(
+                        src,
+                        srcOffset,
+                        bytes,
+                        dstOffsetInBytes,
+                        readSize
+                    )
+                }
+            }
+
+            override fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int {
+                byteBuffer.position(offsetInBytes)
+
+                return readInternal(offsetInBytes, sizeInBytes) {src, srcOffset, _, readSize ->
+                    byteBuffer.put(src, srcOffset, readSize)
+                }
+            }
+
+            private fun readInternal(
+                offsetInBytes: Int,
+                sizeInBytes: Int,
+                readFunction: (ByteArray, Int, Int, Int) -> Unit
+            ): Int {
                 var dstOffsetInBytes = offsetInBytes
                 var leftSizeInBytes = sizeInBytes
 
@@ -95,13 +120,7 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                             val readableSize = source.size - contentPosition
                             val readSize = Math.min(readableSize, leftSizeInBytes)
 
-                            System.arraycopy(
-                                source,
-                                contentPosition,
-                                bytes,
-                                dstOffsetInBytes,
-                                readSize
-                            )
+                            readFunction.invoke(source, contentPosition, dstOffsetInBytes, readSize)
 
                             contentPosition += readSize
                             if (contentPosition == source.size) {
@@ -136,7 +155,6 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
 
                 isReading = false
 
-                Logger.d(TAG, "[read] $sizeInBytes, $leftSizeInBytes / id: $attachmentId")
                 return sizeInBytes - leftSizeInBytes
             }
 
