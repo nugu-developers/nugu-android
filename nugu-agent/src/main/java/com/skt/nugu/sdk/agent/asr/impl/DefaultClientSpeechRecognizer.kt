@@ -180,6 +180,8 @@ class DefaultClientSpeechRecognizer(
         // TODO : stop at SPEECH_END
     }
 
+    override fun isRecognizing(): Boolean = currentRequest != null
+
     override fun addListener(listener: SpeechRecognizer.OnStateChangeListener) {
         listeners.add(listener)
     }

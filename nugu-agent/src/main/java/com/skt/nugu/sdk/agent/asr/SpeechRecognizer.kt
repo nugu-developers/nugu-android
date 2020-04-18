@@ -52,6 +52,8 @@ interface SpeechRecognizer {
 
     fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause)
 
+    fun isRecognizing(): Boolean
+
     fun addListener(listener: OnStateChangeListener)
     fun removeListener(listener: OnStateChangeListener)
 
