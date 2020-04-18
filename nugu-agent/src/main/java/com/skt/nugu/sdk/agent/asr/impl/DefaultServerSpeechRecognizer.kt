@@ -196,6 +196,8 @@ class DefaultServerSpeechRecognizer(
         }
     }
 
+    override fun isRecognizing(): Boolean = currentRequest != null
+
     override fun addListener(listener: SpeechRecognizer.OnStateChangeListener) {
         listeners.add(listener)
     }

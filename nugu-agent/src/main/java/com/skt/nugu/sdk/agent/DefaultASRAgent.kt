@@ -689,7 +689,7 @@ class DefaultASRAgent(
                 return@submit
             }
 
-            if(focusState != FocusState.NONE) {
+            if(focusState != FocusState.NONE && !currentSpeechRecognizer.isRecognizing()) {
                 focusManager.releaseChannel(channelName, this)
                 focusState = FocusState.NONE
             }

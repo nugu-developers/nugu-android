@@ -466,7 +466,7 @@ class DefaultTTSAgent(
                 override fun onDenied() {
                 }
             })
-        focusHolderManager.request(info)
+        focusHolderManager.abandon(info)
     }
 
     private fun executeStateChange() {

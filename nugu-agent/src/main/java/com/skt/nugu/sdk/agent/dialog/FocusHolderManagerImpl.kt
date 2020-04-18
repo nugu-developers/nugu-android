@@ -39,6 +39,7 @@ class FocusHolderManagerImpl(
     private val tryEnterUnholdStateRunnable: Runnable = Runnable {
         executor.submit {
             if (state == FocusHolderManager.State.HOLD && holders.isEmpty()) {
+                Logger.d(TAG, "[tryEnterUnholdStateRunnable] unhold")
                 state = FocusHolderManager.State.UNHOLD
                 listeners.forEach {
                     it.onStateChanged(FocusHolderManager.State.UNHOLD)
@@ -59,6 +60,7 @@ class FocusHolderManagerImpl(
         holders.add(holder)
 
         executor.submit {
+            Logger.d(TAG, "[request] holder: $holder, state: $state, size: ${holders.size}")
             if (state == FocusHolderManager.State.UNHOLD) {
                 state = FocusHolderManager.State.HOLD
                 listeners.forEach {
@@ -66,8 +68,6 @@ class FocusHolderManagerImpl(
                 }
             }
         }
-
-        Logger.d(TAG, "[request] holder: $holder, state: $state, size: ${holders.size}")
     }
 
     override fun abandon(holder: FocusHolderManager.FocusHolder) {
