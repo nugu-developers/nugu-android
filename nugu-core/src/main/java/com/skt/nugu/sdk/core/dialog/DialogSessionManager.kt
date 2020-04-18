@@ -34,6 +34,9 @@ class DialogSessionManager : DialogSessionManagerInterface {
         context: DialogSessionManagerInterface.Context?
     ) {
         Logger.d(TAG, "[openSession] $sessionId")
+        currentSessionId?.let {
+            closeSession()
+        }
         currentSessionId = sessionId
         listeners.forEach {
             it.onSessionOpened(sessionId, domainTypes, playServiceId, context)
