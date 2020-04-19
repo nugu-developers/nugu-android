@@ -466,7 +466,7 @@ class DefaultTTSAgent(
                 override fun onDenied() {
                 }
             })
-        focusHolderManager.abandon(info)
+        focusHolderManager.request(info)
     }
 
     private fun executeStateChange() {
@@ -879,8 +879,8 @@ class DefaultTTSAgent(
     }
 
     override fun onStateChanged(state: FocusHolderManager.State) {
-        Logger.d(TAG, "[onStateChanged-FocusHolder] $state")
         executor.submit {
+            Logger.d(TAG, "[onStateChanged-FocusHolder] $state , $currentFocus, $currentInfo")
             if(state != FocusHolderManager.State.UNHOLD) {
                 return@submit
             }
