@@ -217,10 +217,17 @@ class ContextManager : ContextManagerInterface {
         stateRequestToken: Int
     ): ContextSetterInterface.SetStateResult {
         stateProviderLock.withLock {
-            Logger.d(
-                TAG,
-                "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, policy: $refreshPolicy, $stateRequestToken"
-            )
+            if(jsonState == null) {
+                Logger.d(
+                    TAG,
+                    "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, currentState: ${namespaceNameToStateInfo[namespaceAndName]?.jsonState}, policy: $refreshPolicy, $stateRequestToken"
+                )
+            } else {
+                Logger.d(
+                    TAG,
+                    "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, policy: $refreshPolicy, $stateRequestToken"
+                )
+            }
             if (0 == stateRequestToken) {
                 return updateStateLocked(namespaceAndName, jsonState, refreshPolicy)
             }

@@ -180,6 +180,8 @@ class DefaultTTSAgent(
     //    @GuardedBy("stateLock")
     private var desireState = TTSAgentInterface.State.IDLE
 
+    private var lastStateForContext: TTSAgentInterface.State? = null
+
     private var sourceId: SourceId = SourceId.ERROR()
 
     private var isAlreadyStopping = false
@@ -606,9 +608,16 @@ class DefaultTTSAgent(
                 }
             }
 
+            val context = if(currentState == lastStateForContext) {
+                null
+            } else {
+                lastStateForContext = currentState
+                buildContext().toString()
+            }
+
             contextSetter.setState(
                 namespaceAndName,
-                buildContext().toString(),
+                context,
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
