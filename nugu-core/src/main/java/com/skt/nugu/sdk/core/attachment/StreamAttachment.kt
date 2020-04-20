@@ -71,6 +71,7 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
         hasCreatedReader = true
         return object : Attachment.Reader, BufferEventListener {
             private var contentIndex = 0
+            private var chunkIndex = 0
             private var isClosing = false
             private var isReading = false
             private val waitLock = Object()
@@ -93,6 +94,30 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                 return readInternal(offsetInBytes, sizeInBytes) {src,_ ->
                     byteBuffer.put(src)
                 }
+            }
+
+            override fun readChunk(): ByteBuffer? {
+                while(!isClosing) {
+                    lock.read {
+                        if(attachmentContents.size > chunkIndex) {
+                            return attachmentContents[chunkIndex++]
+                        }
+
+                        if(reachEnd) {
+                            return null
+                        }
+                    }
+
+                    if (!isClosing && !reachEnd) {
+                        synchronized(waitLock) {
+                            if (!isClosing && !reachEnd) {
+                                waitLock.wait(50)
+                            }
+                        }
+                    }
+                }
+
+                return null
             }
 
             private fun readInternal(

@@ -63,7 +63,7 @@ interface Attachment {
          * @param offsetInBytes the start offset in data
          * @param sizeInBytes the maximum number of bytes to read
          *
-         * @return the total number of bytes which read, or or -1 if cannot read anymore because of various reason.
+         * @return the total number of bytes which read, or -1 if cannot read anymore because of various reason.
          */
         fun read(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int
 
@@ -72,9 +72,15 @@ interface Attachment {
          * @param offsetInBytes the start offset in data
          * @param sizeInBytes the maximum number of bytes to read
          *
-         * @return the total number of bytes which read, or or -1 if cannot read anymore because of various reason.
+         * @return the total number of bytes which read, or -1 if cannot read anymore because of various reason.
          */
         fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int
+
+        /** Read chunk buffer from attachment.
+         * The next call will return next chunk. This is independent of other read api.
+         * @return the next chunk, or null if reader closed or no more next chunk.
+         */
+        fun readChunk(): ByteBuffer?
 
         /**
          * Close the reader
