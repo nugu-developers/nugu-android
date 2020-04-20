@@ -74,6 +74,8 @@ class DefaultScreenAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
 
+    private var lastUpdatedSettings: Screen.Settings? = null
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
     }
@@ -182,12 +184,20 @@ class DefaultScreenAgent(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION.toString())
-            with(screen.getSettings()) {
-                addProperty("state", if(isOn) "ON" else "OFF")
-                addProperty("brightness", brightness)
-            }
-        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+        val settings = screen.getSettings()
+        val context = if(settings == lastUpdatedSettings) {
+            null
+        } else {
+            lastUpdatedSettings = settings
+            JsonObject().apply {
+                addProperty("version", VERSION.toString())
+                with(settings) {
+                    addProperty("state", if(isOn) "ON" else "OFF")
+                    addProperty("brightness", brightness)
+                }
+            }.toString()
+        }
+
+        contextSetter.setState(namespaceAndName, context, StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 }
