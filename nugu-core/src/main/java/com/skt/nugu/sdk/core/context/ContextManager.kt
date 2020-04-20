@@ -212,14 +212,14 @@ class ContextManager : ContextManagerInterface {
 
     override fun setState(
         namespaceAndName: NamespaceAndName,
-        jsonState: String,
+        jsonState: String?,
         refreshPolicy: StateRefreshPolicy,
         stateRequestToken: Int
     ): ContextSetterInterface.SetStateResult {
         stateProviderLock.withLock {
             Logger.d(
                 TAG,
-                "[setState] namespaceAndName: $namespaceAndName, context: $jsonState, policy: $refreshPolicy, $stateRequestToken"
+                "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, policy: $refreshPolicy, $stateRequestToken"
             )
             if (0 == stateRequestToken) {
                 return updateStateLocked(namespaceAndName, jsonState, refreshPolicy)
@@ -244,7 +244,7 @@ class ContextManager : ContextManagerInterface {
 
     private fun updateStateLocked(
         namespaceAndName: NamespaceAndName,
-        jsonState: String,
+        jsonState: String?,
         refreshPolicy: StateRefreshPolicy
     ): ContextSetterInterface.SetStateResult {
         val stateInfo = namespaceNameToStateInfo[namespaceAndName]
@@ -255,13 +255,18 @@ class ContextManager : ContextManagerInterface {
                     ContextSetterInterface.SetStateResult.STATE_PROVIDER_NOT_REGISTERED
                 }
                 StateRefreshPolicy.NEVER -> {
-                    namespaceNameToStateInfo[namespaceAndName] =
-                        StateInfo(null, jsonState, refreshPolicy)
+                    jsonState?.let {
+                        namespaceNameToStateInfo[namespaceAndName] =
+                            StateInfo(null, jsonState, refreshPolicy)
+                    }
                     ContextSetterInterface.SetStateResult.SUCCESS
                 }
             }
         } else {
-            stateInfo.jsonState = jsonState
+            jsonState?.let {
+                // only update when not null
+                stateInfo.jsonState = jsonState
+            }
             stateInfo.refreshPolicy = refreshPolicy
             ContextSetterInterface.SetStateResult.SUCCESS
         }

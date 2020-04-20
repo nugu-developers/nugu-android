@@ -24,5 +24,5 @@ interface ContextSetterInterface {
         STATE_TOKEN_OUTDATED
     }
 
-    fun setState(namespaceAndName: NamespaceAndName, jsonState: String, refreshPolicy: StateRefreshPolicy, stateRequestToken: Int = 0): SetStateResult
+    fun setState(namespaceAndName: NamespaceAndName, jsonState: String?, refreshPolicy: StateRefreshPolicy, stateRequestToken: Int = 0): SetStateResult
 }
