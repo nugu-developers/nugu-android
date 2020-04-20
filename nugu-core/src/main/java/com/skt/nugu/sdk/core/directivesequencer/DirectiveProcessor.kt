@@ -136,7 +136,7 @@ class DirectiveProcessor(
 
         Logger.d(TAG, "[scrubDialogRequestIdLocked] dialogRequestId : $dialogRequestId")
 
-        var changed = cancelDirectiveBeingPreHandledLocked()
+        var changed = cancelDirectiveBeingPreHandledLocked(dialogRequestId)
 
 
         val freed = clearDirectiveBeingHandledLocked {
@@ -162,10 +162,10 @@ class DirectiveProcessor(
         handlingQueue = temp
     }
 
-    private fun cancelDirectiveBeingPreHandledLocked(): Boolean {
+    private fun cancelDirectiveBeingPreHandledLocked(dialogRequestId: String): Boolean {
         directiveBeingPreHandled?.let {
             val id = it.getDialogRequestId()
-            if (id.isNotEmpty()) {
+            if (id == dialogRequestId) {
                 cancelingQueue.offer(directiveBeingPreHandled)
                 directiveBeingPreHandled = null
                 return true
