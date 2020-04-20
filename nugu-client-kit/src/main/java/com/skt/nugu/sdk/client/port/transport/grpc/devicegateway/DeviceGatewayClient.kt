@@ -287,7 +287,7 @@ internal class DeviceGatewayClient(policy: Policy,
     private fun convertToAttachmentMessage(attachmentMessage: AttachmentMessage): com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage {
         return with(attachmentMessage.attachment) {
             com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage(
-                content.toByteArray(),
+                content.asReadOnlyByteBuffer(),
                 convertHeader(header),
                 isEnd,
                 parentMessageId,

@@ -15,9 +15,11 @@
  */
 package com.skt.nugu.sdk.core.interfaces.message
 
+import java.nio.ByteBuffer
+
 /**
  * data class for attachment message
- * @param content the binary stream data
+ * @param content the binary data
  * @param header the header
  * @param isEnd the end flag of attachment
  * @param parentMessageId the parent message id which associated with attachment
@@ -25,36 +27,10 @@ package com.skt.nugu.sdk.core.interfaces.message
  * @param mediaType the mime type for attachment
  */
 data class AttachmentMessage(
-    val content: ByteArray,
+    val content: ByteBuffer,
     val header: Header,
     val isEnd: Boolean,
     val parentMessageId: String,
     val seq: Int,
     val mediaType: String
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as AttachmentMessage
-
-        if (!content.contentEquals(other.content)) return false
-        if (header != other.header) return false
-        if (isEnd != other.isEnd) return false
-        if (parentMessageId != other.parentMessageId) return false
-        if (seq != other.seq) return false
-        if (mediaType != other.mediaType) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = content.contentHashCode()
-        result = 31 * result + header.hashCode()
-        result = 31 * result + isEnd.hashCode()
-        result = 31 * result + parentMessageId.hashCode()
-        result = 31 * result + seq
-        result = 31 * result + mediaType.hashCode()
-        return result
-    }
-}
+)

@@ -45,7 +45,7 @@ class MessageInterpreter(
     }
 
     override fun receiveAttachment(attachment: AttachmentMessage) {
-        Logger.d(TAG, "[receiveAttachment] ${attachment.header}, content: ${attachment.content.size}, seq: ${attachment.seq}, isEnd: ${attachment.isEnd}, mediaType: ${attachment.mediaType}, parentMessageId: ${attachment.parentMessageId}")
+        Logger.d(TAG, "[receiveAttachment] ${attachment.header}, content: ${attachment.content.capacity()}, seq: ${attachment.seq}, isEnd: ${attachment.isEnd}, mediaType: ${attachment.mediaType}, parentMessageId: ${attachment.parentMessageId}")
         attachmentManager.onAttachment(attachment)
     }
 

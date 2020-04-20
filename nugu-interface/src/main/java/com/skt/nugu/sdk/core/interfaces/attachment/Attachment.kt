@@ -37,10 +37,10 @@ interface Attachment {
      * Provides an interface for writing data into the attachment
      */
     interface Writer {
-        /** Write bytes into the attachment
-         * @param bytes the data to write
+        /** Write buffer into the attachment
+         * @param buffer the data to write
          */
-        fun write(bytes: ByteArray)
+        fun write(buffer: ByteBuffer)
 
         /**
          * Close the writer
