@@ -33,14 +33,14 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
     }
 
     private val bufferEventListeners = HashSet<BufferEventListener>()
-    private val attachmentContents = ArrayList<ByteArray>()
+    private val attachmentContents = ArrayList<ByteBuffer>()
     private var reachEnd = false
     private val lock = ReentrantReadWriteLock()
     private val writer: Attachment.Writer = object : Attachment.Writer {
-        override fun write(bytes: ByteArray) {
+        override fun write(buffer: ByteBuffer) {
             lock.write {
-                attachmentContents.add(bytes)
-                Logger.d(TAG, "[write] size : ${bytes.size} / id: $attachmentId")
+                attachmentContents.add(buffer)
+                Logger.d(TAG, "[write] limit: ${buffer.limit()} / capacity: ${buffer.capacity()} / id: $attachmentId")
             }
 
             notifyBufferFilled()
@@ -71,7 +71,6 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
         hasCreatedReader = true
         return object : Attachment.Reader, BufferEventListener {
             private var contentIndex = 0
-            private var contentPosition = 0
             private var isClosing = false
             private var isReading = false
             private val waitLock = Object()
@@ -83,29 +82,23 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
             }
 
             override fun read(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int {
-                return readInternal(offsetInBytes, sizeInBytes) {src, srcOffset, dstOffsetInBytes, readSize ->
-                    System.arraycopy(
-                        src,
-                        srcOffset,
-                        bytes,
-                        dstOffsetInBytes,
-                        readSize
-                    )
+                return readInternal(offsetInBytes, sizeInBytes) {src, dstOffsetInBytes ->
+                    src.get(bytes, dstOffsetInBytes, src.remaining())
                 }
             }
 
             override fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int {
                 byteBuffer.position(offsetInBytes)
 
-                return readInternal(offsetInBytes, sizeInBytes) {src, srcOffset, _, readSize ->
-                    byteBuffer.put(src, srcOffset, readSize)
+                return readInternal(offsetInBytes, sizeInBytes) {src,_ ->
+                    byteBuffer.put(src)
                 }
             }
 
             private fun readInternal(
                 offsetInBytes: Int,
                 sizeInBytes: Int,
-                readFunction: (ByteArray, Int, Int, Int) -> Unit
+                readFunction: (ByteBuffer, Int) -> Unit
             ): Int {
                 var dstOffsetInBytes = offsetInBytes
                 var leftSizeInBytes = sizeInBytes
@@ -117,14 +110,13 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                     lock.read {
                         if (attachmentContents.size > contentIndex) {
                             val source = attachmentContents[contentIndex]
-                            val readableSize = source.size - contentPosition
-                            val readSize = Math.min(readableSize, leftSizeInBytes)
+                            val readSize = Math.min(source.remaining(), leftSizeInBytes)
+                            val sourceLimit = source.limit()
+                            source.limit(source.position() + readSize)
+                            readFunction.invoke(source, dstOffsetInBytes)
+                            source.limit(sourceLimit)
 
-                            readFunction.invoke(source, contentPosition, dstOffsetInBytes, readSize)
-
-                            contentPosition += readSize
-                            if (contentPosition == source.size) {
-                                contentPosition = 0
+                            if (!source.hasRemaining()) {
                                 contentIndex++
                             }
 
