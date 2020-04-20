@@ -62,10 +62,13 @@ class DefaultMicrophoneAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
+    private var lastUpdatedMicSettings: Microphone.Settings? = null
+
 
     init {
         defaultMicrophone?.addListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setState(namespaceAndName, buildContext(defaultMicrophone?.getSettings()), StateRefreshPolicy.ALWAYS, 0)
     }
 
     override fun onSettingsChanged(settings: Microphone.Settings) {
@@ -187,22 +190,24 @@ class DefaultMicrophoneAgent(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState]")
-        val micStatus = if (defaultMicrophone == null) {
-            "OFF"
-        } else {
-            if (defaultMicrophone.getSettings().onOff) {
-                "ON"
-            } else {
-                "OFF"
-            }
-        }
+        executor.submit {
+            Logger.d(TAG, "[provideState]")
+            val micSettings = defaultMicrophone?.getSettings()
 
-        contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION.toString())
-            addProperty("micStatus", micStatus)
-        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            val context = if(lastUpdatedMicSettings == micSettings || micSettings == null) {
+                null
+            } else {
+                buildContext(micSettings)
+            }
+
+            contextSetter.setState(namespaceAndName, context, StateRefreshPolicy.ALWAYS, stateRequestToken)
+        }
     }
+
+    private fun buildContext(micSettings: Microphone.Settings?) = JsonObject().apply {
+        addProperty("version", VERSION.toString())
+        addProperty("micStatus", if(micSettings?.onOff == true) "ON" else "OFF")
+    }.toString()
 
     private fun removeDirective(info: DirectiveInfo) {
         removeDirective(info.directive.getMessageId())
