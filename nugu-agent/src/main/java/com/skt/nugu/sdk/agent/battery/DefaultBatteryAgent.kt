@@ -19,7 +19,10 @@ import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 
 class DefaultBatteryAgent(
     private val batteryStatusProvider: BatteryStatusProvider,
@@ -36,6 +39,10 @@ class DefaultBatteryAgent(
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
     }
 
+    private var hasBeenContextUpdated = false
+    private var lastUpdatedBatteryLevel: Int? = null
+    private var lastUpdatedCharging: Boolean? = null
+
     override fun getInterfaceName(): String = NAMESPACE
 
     override fun provideState(
@@ -43,27 +50,33 @@ class DefaultBatteryAgent(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
+        val level = batteryStatusProvider.getBatteryLevel()
+        val charging = batteryStatusProvider.isCharging()
+
+        val context = if(lastUpdatedBatteryLevel != level || lastUpdatedCharging != charging || !hasBeenContextUpdated) {
+            hasBeenContextUpdated = true
+            lastUpdatedBatteryLevel = level
+            lastUpdatedCharging = charging
+            buildContext(level, charging)
+        } else {
+            null
+        }
         contextSetter.setState(
             namespaceAndName,
-            buildContext(),
+            context,
             StateRefreshPolicy.ALWAYS,
             stateRequestToken
         )
     }
 
-    private fun buildContext(): String = JsonObject().apply {
+    private fun buildContext(level: Int, charging: Boolean?): String = JsonObject().apply {
         addProperty("version", VERSION.toString())
-        batteryStatusProvider.let {
-            val level = it.getBatteryLevel()
-            val charging = it.isCharging()
+        if (level > 0) {
+            addProperty("level", level)
+        }
 
-            if (level > 0) {
-                addProperty("level", level)
-            }
-
-            if(charging != null) {
-                addProperty("charging", charging)
-            }
+        if (charging != null) {
+            addProperty("charging", charging)
         }
     }.toString()
 }
