@@ -560,7 +560,7 @@ class DefaultAudioPlayerAgent(
                 }
             }
         })
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
 
         // pause directive handler
         PlaybackDirectiveHandler(
@@ -1244,6 +1244,10 @@ class DefaultAudioPlayerAgent(
         }
     }
 
+    private fun buildCompactContext() = JsonObject().apply {
+        addProperty("version", VERSION.toString())
+    }
+
     private fun executeProvideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -1256,8 +1260,7 @@ class DefaultAudioPlayerAgent(
                 currentActivity
             }
 
-        contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION.toString())
+        contextSetter.setState(namespaceAndName, buildCompactContext().apply {
             addProperty("playerActivity", playerActivity.name)
 
             if(playerActivity != AudioPlayerAgentInterface.State.IDLE) {

@@ -80,15 +80,18 @@ class DefaultExtensionAgent(
 
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
     }
 
     override fun setClient(client: ExtensionAgentInterface.Client) {
         this.client = client
     }
 
-    private fun buildContext(): String = JsonObject().apply {
+    private fun buildCompactContext() = JsonObject().apply {
         addProperty("version", VERSION.toString())
+    }
+
+    private fun buildContext(): String = buildCompactContext().apply {
         client?.getData()?.let {
             try {
                 add("data", JsonParser.parseString(it).asJsonObject)

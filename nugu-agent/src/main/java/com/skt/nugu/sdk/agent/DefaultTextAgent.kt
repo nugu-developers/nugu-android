@@ -77,7 +77,7 @@ class DefaultTextAgent(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactState().toString())
     }
 
     override fun addInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {
@@ -171,9 +171,11 @@ class DefaultTextAgent(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION.toString())
-        }.toString(), StateRefreshPolicy.NEVER, stateRequestToken)
+        contextSetter.setState(namespaceAndName, buildCompactState().toString(), StateRefreshPolicy.NEVER, stateRequestToken)
+    }
+
+    private fun buildCompactState() = JsonObject().apply {
+        addProperty("version", VERSION.toString())
     }
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?): String {

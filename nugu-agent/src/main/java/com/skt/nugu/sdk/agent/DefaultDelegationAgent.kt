@@ -22,15 +22,12 @@ import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
@@ -40,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 class DefaultDelegationAgent(
-    private val contextGetter: ContextGetterInterface,
+    private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val defaultClient: DelegationClient
@@ -74,6 +71,17 @@ class DefaultDelegationAgent(
 
     private val requestListenerMap =
         ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
+
+    init {
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        // update delegate initial state
+        contextManager.setState(
+            namespaceAndName,
+            "",
+            StateRefreshPolicy.SOMETIMES,
+            0
+        )
+    }
 
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
@@ -145,6 +153,10 @@ class DefaultDelegationAgent(
         }
     }
 
+    private fun buildCompactContext() = JsonObject().apply {
+        addProperty("version", VERSION.toString())
+    }
+
     private fun buildContext(appContext: DelegationClient.Context?): JsonObject? {
         if (appContext == null) {
             return null
@@ -157,8 +169,7 @@ class DefaultDelegationAgent(
             null
         } ?: return null
 
-        return JsonObject().apply {
-            addProperty("version", VERSION.toString())
+        return buildCompactContext().apply {
             addProperty("playServiceId", appContext.playServiceId)
             add("data", jsonData)
         }
@@ -186,7 +197,7 @@ class DefaultDelegationAgent(
         }
 
         executor.submit {
-            contextGetter.getContext(object : ContextRequester {
+            contextManager.getContext(object : ContextRequester {
                 override fun onContextAvailable(jsonContext: String) {
                     messageSender.sendMessage(
                         EventMessageRequest.Builder(

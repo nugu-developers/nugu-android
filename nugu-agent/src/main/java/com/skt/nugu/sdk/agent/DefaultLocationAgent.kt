@@ -24,11 +24,14 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
+class DefaultLocationAgent(
+    contextManager: ContextManagerInterface
+) : CapabilityAgent, LocationAgentInterface,
     SupportedInterfaceContextProvider {
     companion object {
         private const val TAG = "DefaultLocationAgent"
@@ -43,6 +46,10 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
     private var isFirstContextUpdate = true
     private var lastUpdatedLocation: Location? = null
     private var contextUpdateLock = ReentrantLock()
+
+    init {
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+    }
 
     override fun getInterfaceName(): String = NAMESPACE
 
@@ -73,6 +80,13 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
                 stateRequestToken
             )
         }
+    }
+
+    private fun buildCompactContext() = JsonObject().apply {
+        addProperty(
+            "version",
+            VERSION.toString()
+        )
     }
 
     private fun buildContext(location: Location?): String = JsonObject().apply {

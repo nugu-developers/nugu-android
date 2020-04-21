@@ -194,7 +194,7 @@ class DefaultASRAgent(
         nextStartSpeechRecognizer = initialSpeechProcessor
 
         initialSpeechProcessor.addListener(this)
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildContext())
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {

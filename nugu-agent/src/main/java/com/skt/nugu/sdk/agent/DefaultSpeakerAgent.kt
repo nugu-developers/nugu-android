@@ -94,7 +94,7 @@ class DefaultSpeakerAgent(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactState().toString())
     }
 
     private fun executeSetVolume(
@@ -342,8 +342,7 @@ class DefaultSpeakerAgent(
             }
 
             if(changed) {
-                contextSetter.setState(namespaceAndName, JsonObject().apply {
-                    addProperty("version", VERSION.toString())
+                contextSetter.setState(namespaceAndName, buildCompactState().apply {
                     add("volumes", JsonArray().apply {
                         lastUpdatedSpeaker.forEach {
                             add(JsonObject().apply {
@@ -364,6 +363,10 @@ class DefaultSpeakerAgent(
                 contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
             }
         }
+    }
+
+    private fun buildCompactState() = JsonObject().apply {
+        addProperty("version", VERSION.toString())
     }
 
     private fun sendSpeakerEvent(eventName: String, playServiceId: String, referrerDialogRequestId: String) {

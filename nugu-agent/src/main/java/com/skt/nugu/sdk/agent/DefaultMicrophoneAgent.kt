@@ -67,7 +67,7 @@ class DefaultMicrophoneAgent(
 
     init {
         defaultMicrophone?.addListener(this)
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         contextManager.setState(namespaceAndName, buildContext(defaultMicrophone?.getSettings()), StateRefreshPolicy.ALWAYS, 0)
     }
 
@@ -204,8 +204,11 @@ class DefaultMicrophoneAgent(
         }
     }
 
-    private fun buildContext(micSettings: Microphone.Settings?) = JsonObject().apply {
+    private fun buildCompactContext() = JsonObject().apply {
         addProperty("version", VERSION.toString())
+    }
+
+    private fun buildContext(micSettings: Microphone.Settings?) = buildCompactContext().apply {
         addProperty("micStatus", if(micSettings?.onOff == true) "ON" else "OFF")
     }.toString()
 
