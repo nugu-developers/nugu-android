@@ -124,10 +124,17 @@ class DefaultBluetoothAgent(
         )
     }
 
+    data class BluetoothContext(
+        val hostController: BluetoothHost?,
+        val activeDevice: BluetoothDevice?
+    )
+
     private val executor = Executors.newSingleThreadExecutor()
 
     private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()
+
+    private var lastUpdatedBluetoothContext: BluetoothContext? = null
 
     init {
         /**
@@ -170,23 +177,35 @@ class DefaultBluetoothAgent(
     ) {
         executor.submit {
             bluetoothProvider?.let {
-                val context = buildCompactContext().apply {
-                    it.device()?.let { hostController ->
-                        add("device", JsonObject().apply {
-                            addProperty("name", hostController.name)
-                            addProperty("status", hostController.state.value)
-                        })
-                    }
+                val prevBluetoothContext = lastUpdatedBluetoothContext
+                val currentBluetoothContext = BluetoothContext(
+                    it.device(),
+                    it.activeDevice()
+                )
+                lastUpdatedBluetoothContext = currentBluetoothContext
 
-                    it.activeDevice()?.let { bluetoothDevice ->
-                        add("activeDevice", JsonObject().apply {
-                            addProperty("id", bluetoothDevice.address)
-                            addProperty("name", bluetoothDevice.name)
-                            addProperty("streaming", bluetoothDevice.streaming.value)
-                        })
-                    }
+                val context = if(prevBluetoothContext == currentBluetoothContext) {
+                    Logger.d(TAG, "[provideState] skip update")
+                    null
+                } else {
+                    Logger.d(TAG, "[provideState] do update")
+                    buildCompactContext().apply {
+                        currentBluetoothContext.hostController?.let { hostController ->
+                            add("device", JsonObject().apply {
+                                addProperty("name", hostController.name)
+                                addProperty("status", hostController.state.value)
+                            })
+                        }
 
-                }.toString()
+                        currentBluetoothContext.activeDevice?.let { bluetoothDevice ->
+                            add("activeDevice", JsonObject().apply {
+                                addProperty("id", bluetoothDevice.address)
+                                addProperty("name", bluetoothDevice.name)
+                                addProperty("streaming", bluetoothDevice.streaming.value)
+                            })
+                        }
+                    }.toString()
+                }
 
                 contextSetter.setState(
                     namespaceAndName,
