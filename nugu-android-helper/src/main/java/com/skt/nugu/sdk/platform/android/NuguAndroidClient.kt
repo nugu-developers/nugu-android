@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.MediaPlayer
 import com.skt.nugu.sdk.agent.*
@@ -134,6 +135,7 @@ class NuguAndroidClient private constructor(
             override fun createBeepPlayer(): UriSourcePlayablePlayer =
                 AndroidMediaPlayer(context, MediaPlayer())
         }
+
         internal var speakerFactory: SpeakerFactory = object : SpeakerFactory {
             override fun createNuguSpeaker(): Speaker? =
                 object : AndroidAudioSpeaker(context, AudioManager.STREAM_MUSIC) {
@@ -173,6 +175,17 @@ class NuguAndroidClient private constructor(
         internal var soundProvider : SoundProvider? = null
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
+
+        internal var clientVersion: String? = null
+            get() = try {
+                if (field.isNullOrBlank()) {
+                    context.let {
+                        it.packageManager.getPackageInfo(it.packageName, 0).versionName
+                    }
+                } else field
+            } catch (t: PackageManager.NameNotFoundException) {
+                null
+            }
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -271,6 +284,8 @@ class NuguAndroidClient private constructor(
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
+
+        fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
 
         fun build(): NuguAndroidClient {
             return NuguAndroidClient(this)
@@ -586,6 +601,10 @@ class NuguAndroidClient private constructor(
                             }
                         }
                 })
+            }
+
+            builder.clientVersion?.let {
+                clientVersion(it)
             }
         }
         .build()
