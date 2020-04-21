@@ -48,6 +48,7 @@ class SpeechRecognizerAggregator(
 
     // should be run in executor.
     private var keywordDetectorResultRunnable: Runnable? = null
+    private var keywordDetectorInactivationRunnable: Runnable? = null
 
     private var isTriggerStoppingByStartListening = false
 
@@ -55,12 +56,15 @@ class SpeechRecognizerAggregator(
     private var wakeupInfo: WakeupInfo? = null
     private var epdParam: EndPointDetectorParam? = null
     private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
+    private var keywordDetectorState = KeywordDetector.State.INACTIVE
 
     init {
         keywordDetector?.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
             override fun onStateChange(state: KeywordDetector.State) {
                 Log.d(TAG, "[KeywordDetector::onStateChange] state: $state")
                 executor.submit {
+                    keywordDetectorState = state
+
                     if (state == KeywordDetector.State.ACTIVE) {
                         setState(SpeechRecognizerAggregatorInterface.State.WAITING)
                     } else {
@@ -73,6 +77,9 @@ class SpeechRecognizerAggregator(
                             Log.e(TAG, "[executeOnKeywordDetectorStateChanged] keywordDetectorResultRunnable is null!!!")
                         }
                         isTriggerStoppingByStartListening = false
+
+                        keywordDetectorInactivationRunnable?.run()
+                        keywordDetectorInactivationRunnable = null
                     }
                 }
             }
@@ -102,9 +109,16 @@ class SpeechRecognizerAggregator(
 
                     if (!state.isActive()) {
                         audioProvider.releaseAudioInputStream(speechProcessor)
+                        if(keywordDetectorState == KeywordDetector.State.ACTIVE) {
+                            keywordDetectorInactivationRunnable = Runnable {
+                                setState(aggregatorState)
+                            }
+                        } else {
+                            setState(aggregatorState)
+                        }
+                    } else {
+                        setState(aggregatorState)
                     }
-
-                    setState(aggregatorState)
                 }
             }
         })
