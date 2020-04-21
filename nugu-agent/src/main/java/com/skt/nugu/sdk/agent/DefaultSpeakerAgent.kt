@@ -284,31 +284,86 @@ class DefaultSpeakerAgent(
         removeDirective(info.directive.getMessageId())
     }
 
+    data class SpeakerContext(
+        val minVolume: Int,
+        val maxVolume: Int,
+        val defaultVolumeStep: Int,
+        var settings: Speaker.SpeakerSettings?
+    )
+
+    private val lastUpdatedSpeaker = HashMap<Speaker.Type, SpeakerContext>()
+    private var isFirstContextUpdate = true
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState]")
-        contextSetter.setState(namespaceAndName, JsonObject().apply {
-            addProperty("version", VERSION.toString())
-            add("volumes", JsonArray().apply {
-                speakerMap.forEach {
-                    add(JsonObject().apply {
-                        addProperty("name", it.key.name)
-                        addProperty("minVolume", it.value.getMinVolume())
-                        addProperty("maxVolume", it.value.getMaxVolume())
-                        addProperty("defaultVolumeStep", it.value.getDefaultVolumeStep())
+        executor.submit {
+            Logger.d(TAG, "[provideState]")
+            val changed: Boolean = if(isFirstContextUpdate) {
+                isFirstContextUpdate = false
 
-                        val settings = it.value.getSpeakerSettings()
-                        settings?.apply {
-                            addProperty("volume", volume)
-                            addProperty("muted", mute)
+                speakerMap.forEach {
+                    lastUpdatedSpeaker[it.key] = SpeakerContext(
+                        it.value.getMinVolume(),
+                        it.value.getMaxVolume(),
+                        it.value.getDefaultVolumeStep(),
+                        it.value.getSpeakerSettings()
+                    )
+                }
+                true
+            } else {
+                if (speakerMap.keys == lastUpdatedSpeaker.keys) {
+                    var changed = false
+                    speakerMap.forEach { speaker ->
+                        speaker.value.getSpeakerSettings().let { settings ->
+                            lastUpdatedSpeaker[speaker.key].let { updatedSpeaker ->
+                                if (settings != updatedSpeaker?.settings) {
+                                    changed = true
+                                    updatedSpeaker?.settings = settings
+                                }
+                            }
+                        }
+                    }
+                    changed
+                } else {
+                    lastUpdatedSpeaker.clear()
+                    speakerMap.forEach {
+                        lastUpdatedSpeaker[it.key] = SpeakerContext(
+                            it.value.getMinVolume(),
+                            it.value.getMaxVolume(),
+                            it.value.getDefaultVolumeStep(),
+                            it.value.getSpeakerSettings()
+                        )
+                    }
+                    true
+                }
+            }
+
+            if(changed) {
+                contextSetter.setState(namespaceAndName, JsonObject().apply {
+                    addProperty("version", VERSION.toString())
+                    add("volumes", JsonArray().apply {
+                        lastUpdatedSpeaker.forEach {
+                            add(JsonObject().apply {
+                                addProperty("name", it.key.name)
+                                addProperty("minVolume", it.value.minVolume)
+                                addProperty("maxVolume", it.value.maxVolume)
+                                addProperty("defaultVolumeStep", it.value.defaultVolumeStep)
+
+                                it.value.settings?.apply {
+                                    addProperty("volume", volume)
+                                    addProperty("muted", mute)
+                                }
+                            })
                         }
                     })
-                }
-            })
-        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            } else {
+                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
+            }
+        }
     }
 
     private fun sendSpeakerEvent(eventName: String, playServiceId: String, referrerDialogRequestId: String) {
