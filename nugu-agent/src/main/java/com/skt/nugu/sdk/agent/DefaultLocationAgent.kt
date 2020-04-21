@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.location.Location
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
@@ -24,6 +25,8 @@ import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
     SupportedInterfaceContextProvider {
@@ -37,6 +40,10 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
 
     private var locationProvider: LocationProvider? = null
 
+    private var isFirstContextUpdate = true
+    private var lastUpdatedLocation: Location? = null
+    private var contextUpdateLock = ReentrantLock()
+
     override fun getInterfaceName(): String = NAMESPACE
 
     override fun setLocationProvider(provider: LocationProvider) {
@@ -48,24 +55,36 @@ class DefaultLocationAgent : CapabilityAgent, LocationAgentInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        contextSetter.setState(
-            namespaceAndName,
-            buildContext(),
-            StateRefreshPolicy.ALWAYS,
-            stateRequestToken
-        )
+        contextUpdateLock.withLock {
+            val location = locationProvider?.getLocation()
+
+            val context = if (isFirstContextUpdate || location != lastUpdatedLocation) {
+                isFirstContextUpdate = false
+                lastUpdatedLocation = location
+                buildContext(location)
+            } else {
+                null
+            }
+
+            contextSetter.setState(
+                namespaceAndName,
+                context,
+                StateRefreshPolicy.ALWAYS,
+                stateRequestToken
+            )
+        }
     }
 
-    private fun buildContext(): String = JsonObject().apply {
+    private fun buildContext(location: Location?): String = JsonObject().apply {
         addProperty(
             "version",
             VERSION.toString()
         )
-        val location = locationProvider?.getLocation()
-        if (location != null) {
+
+        location?.let {
             add("current", JsonObject().apply {
-                addProperty("latitude", location.latitude)
-                addProperty("longitude", location.longitude)
+                addProperty("latitude", it.latitude)
+                addProperty("longitude", it.longitude)
             })
         }
     }.toString()
