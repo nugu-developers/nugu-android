@@ -27,7 +27,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
-import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.skt.nugu.sdk.core.utils.UserAgent
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
 import com.skt.nugu.sdk.core.context.ContextManager
@@ -71,6 +71,8 @@ class NuguClient private constructor(
 
         // sdk version for userAgent
         internal var sdkVersion: String = "1.0"
+        // client version for userAgent
+        internal var clientVersion: String = "1.0"
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -81,6 +83,7 @@ class NuguClient private constructor(
 
         fun logger(logger: LogInterface) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
+        fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
         fun build() = NuguClient(this)
     }
 
@@ -114,7 +117,7 @@ class NuguClient private constructor(
     init {
         with(builder) {
             Logger.logger = logger
-            SdkVersion.currentVersion = sdkVersion
+            UserAgent.setVersion(sdkVersion, clientVersion)
             val directiveGroupProcessor = DirectiveGroupProcessor(
                 directiveSequencer
             ).apply {

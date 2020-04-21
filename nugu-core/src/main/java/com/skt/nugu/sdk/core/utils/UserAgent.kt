@@ -18,11 +18,29 @@ package com.skt.nugu.sdk.core.utils
 /**
  * Provides version of sdk
  */
-class SdkVersion {
+class UserAgent {
     companion object {
         /**
          * Returns the sdk version
          */
-        var currentVersion = "1.0.0"
+        private var sdkVersion = "1.0.0"
+
+        /**
+         * Returns the client version
+         */
+        private var clientVersion = "1.0.0"
+
+        fun setVersion(sdkVersion: String, clientVersion: String) {
+            this.sdkVersion = sdkVersion
+            this.clientVersion = clientVersion
+        }
+
+        override fun toString(): String {
+            val builder = StringBuilder()
+                .append("OpenSDK").append("/").append(sdkVersion)
+                .append(" ")
+                .append("Client").append("/").append(clientVersion)
+            return builder.toString()
+        }
     }
 }

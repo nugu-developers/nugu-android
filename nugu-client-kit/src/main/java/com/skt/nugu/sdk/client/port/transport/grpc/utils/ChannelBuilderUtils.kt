@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc.utils
 import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.skt.nugu.sdk.core.utils.UserAgent
 import io.grpc.*
 import java.util.concurrent.TimeUnit
 
@@ -45,7 +45,7 @@ class ChannelBuilderUtils {
         }
 
         private fun userAgent(): String {
-            return "OpenSDK/" + SdkVersion.currentVersion
+            return UserAgent.toString()
         }
 
         /** Shuts down the gRPC channel */

@@ -20,7 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.Chan
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.SdkVersion
+import com.skt.nugu.sdk.core.utils.UserAgent
 import com.squareup.okhttp.*
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
@@ -67,7 +67,7 @@ internal class RegistryClient(private var address: String) : Transport {
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
             .header("Authorization", token.toString())
-            .header("User-Agent","OpenSDK/" + SdkVersion.currentVersion)
+            .header("User-Agent",UserAgent.toString())
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(request: Request?, e: IOException?) {
