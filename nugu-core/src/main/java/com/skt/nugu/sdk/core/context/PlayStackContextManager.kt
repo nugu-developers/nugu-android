@@ -43,6 +43,8 @@ class PlayStackContextManager(
     override fun getName(): String = PROVIDER_NAME
 
     private val executor = Executors.newSingleThreadExecutor()
+    private var lastUpdatedPlayStack: List<String>? = null
+
 
     init {
         contextManager.setStateProvider(namespaceAndName, this, null)
@@ -53,14 +55,34 @@ class PlayStackContextManager(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
+        val prevPlayStack = lastUpdatedPlayStack
+        val currentPlayStack = buildPlayStack()
+        lastUpdatedPlayStack = currentPlayStack
+
+        val context = if(currentPlayStack == prevPlayStack) {
+            Logger.d(TAG, "[provideState] skip update")
+            null
+        } else {
+            Logger.d(TAG, "[provideState] do update")
+            buildContext(currentPlayStack)
+        }
+
         executor.submit {
             contextSetter.setState(
                 namespaceAndName,
-                buildContext(),
+                context,
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
         }
+    }
+
+    private fun buildContext(playStack: List<String>): String {
+        return JsonArray().apply {
+            playStack.forEach {
+                add(it)
+            }
+        }.toString()
     }
 
     /**
@@ -101,13 +123,5 @@ class PlayStackContextManager(
         Logger.d(TAG, "[buildPlayStack] playStack: $playStackList, map: $playStackMap")
 
         return playStackList
-    }
-
-    private fun buildContext(): String {
-        return JsonArray().apply {
-            buildPlayStack().forEach {
-                add(it)
-            }
-        }.toString()
     }
 }
