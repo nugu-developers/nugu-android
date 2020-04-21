@@ -66,7 +66,11 @@ class DefaultSoundAgent(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactState().toString())
+    }
+
+    private fun buildCompactState() = JsonObject().apply {
+        addProperty("version", VERSION.toString())
     }
 
     override fun provideState(
@@ -76,13 +80,9 @@ class DefaultSoundAgent(
     ) {
         executor.submit {
             soundProvider.let {
-                val context = JsonObject().apply {
-                    addProperty("version", VERSION.toString())
-                }.toString()
-
                 contextSetter.setState(
                     namespaceAndName,
-                    context,
+                    buildCompactState().toString(),
                     StateRefreshPolicy.NEVER,
                     stateRequestToken
                 )

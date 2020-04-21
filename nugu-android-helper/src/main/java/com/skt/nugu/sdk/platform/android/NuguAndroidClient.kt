@@ -442,7 +442,6 @@ class NuguAndroidClient private constructor(
                                 it
                             ).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
-                                getContextManager().setStateProvider(namespaceAndName, this)
                             }
                         }
                 })
@@ -458,14 +457,6 @@ class NuguAndroidClient private constructor(
                                 it
                             ).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
-                                getContextManager().setStateProvider(namespaceAndName, this)
-                                // update delegate initial state
-                                getContextManager().setState(
-                                    namespaceAndName,
-                                    "",
-                                    StateRefreshPolicy.SOMETIMES,
-                                    0
-                                )
                             }
                         }
                 })
@@ -487,9 +478,7 @@ class NuguAndroidClient private constructor(
             }
             addAgentFactory(DefaultLocationAgent.NAMESPACE, object: AgentFactory<DefaultLocationAgent> {
                 override fun create(container: SdkContainer): DefaultLocationAgent = with(container) {
-                    DefaultLocationAgent().apply {
-                        getContextManager().setStateProvider(namespaceAndName, this)
-                    }
+                    DefaultLocationAgent(getContextManager())
                 }
             })
             addAgentFactory(DefaultTextAgent.NAMESPACE, object: AgentFactory<DefaultTextAgent> {
@@ -519,9 +508,9 @@ class NuguAndroidClient private constructor(
                                         getMessageSender(),
                                         getInputManagerProcessor()
                                     ),
+                                    getContextManager(),
                                     builder.enableDisplayLifeCycleManagement
                                 ).apply {
-                                    getContextManager().setStateProvider(namespaceAndName, this)
                                     getDisplayPlayStackManager().addPlayContextProvider(this)
 
                                     RenderDirectiveHandler(this).apply {

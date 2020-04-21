@@ -36,7 +36,7 @@ class DefaultBatteryAgent(
     }
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
     }
 
     private var hasBeenContextUpdated = false
@@ -69,8 +69,11 @@ class DefaultBatteryAgent(
         )
     }
 
-    private fun buildContext(level: Int, charging: Boolean?): String = JsonObject().apply {
+    private fun buildCompactContext() = JsonObject().apply {
         addProperty("version", VERSION.toString())
+    }
+
+    private fun buildContext(level: Int, charging: Boolean?): String = buildCompactContext().apply {
         if (level > 0) {
             addProperty("level", level)
         }

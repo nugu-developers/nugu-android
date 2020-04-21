@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.context
 
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -38,7 +39,8 @@ class ContextManager : ContextManagerInterface {
 
     private data class StateInfo(
         var stateProvider: ContextStateProvider?,
-        var jsonState: String = "",
+        var compactState: JsonObject? = null,
+        var fullState: JsonElement? = null,
         var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS,
         var updatedFlag: Boolean = false
     )
@@ -65,8 +67,7 @@ class ContextManager : ContextManagerInterface {
                 sendContextToRequesters()
             } else {
                 // Timeout
-                sendContextAndClearQueue(
-                    null,
+                sendContextFailureAndClearQueue(
                     ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT
                 )
             }
@@ -121,11 +122,36 @@ class ContextManager : ContextManagerInterface {
     private fun sendContextToRequesters() {
         Logger.d(TAG, "[sendContextToRequesters]")
 
-        val jsonContext = stateProviderLock.withLock {
+        val context = stateProviderLock.withLock {
             buildContext()
         }
 
-        sendContextAndClearQueue(jsonContext, null)
+        Logger.d(TAG, "[sendContextAndClearQueue]")
+        synchronized(contextRequesterQueue) {
+            val fullContext = if(contextRequesterQueue.any {
+                it.second == null
+            }) {
+                stateProviderLock.withLock {
+                    context.toString()
+                }
+            } else {
+                null
+            }
+
+            while (contextRequesterQueue.isNotEmpty()) {
+                with(contextRequesterQueue.poll()) {
+                    val namespaceAndName = second
+                    val strContext: String = if(namespaceAndName == null) {
+                        fullContext!!
+                    } else {
+                        stateProviderLock.withLock {
+                            buildCompactContextFrom(context, namespaceAndName).toString()
+                        }
+                    }
+                    first.onContextAvailable(strContext)
+                }
+            }
+        }
     }
 
     private fun buildContext(): JsonObject {
@@ -141,24 +167,30 @@ class ContextManager : ContextManagerInterface {
                 }
                 set.add(it.key.name)
                 if (!it.value.updatedFlag) {
-                    updateStateInfoAt(tempJsonContext, it)
+                    updateFullStateInfoAt(tempJsonContext, it, true)
                 }
             }
             Logger.d(TAG, "[buildContext] exist last built json context.")
 
-            // remove context should be removed
+//            // remove context should be removed
             namespaceAndNameMap.forEach {
-                val shouldBeRemoved = HashSet<String>()
                 val jsonObject = tempJsonContext.get(it.key).asJsonObject
-                jsonObject.entrySet().forEach { entry ->
-                    if (!it.value.contains(entry.key)) {
-                        shouldBeRemoved.add(entry.key)
-                    }
+                jsonObject.entrySet().filterNot { entry->
+                    it.value.contains(entry.key)
+                }.forEach { removeItem->
+                    jsonObject.remove(removeItem.key)
                 }
-
-                shouldBeRemoved.forEach { removeKey ->
-                    jsonObject.remove(removeKey)
-                }
+//                val shouldBeRemoved = HashSet<String>()
+//                val jsonObject = tempJsonContext.get(it.key).asJsonObject
+//                jsonObject.entrySet().forEach { entry ->
+//                    if (!it.value.contains(entry.key)) {
+//                        shouldBeRemoved.add(entry.key)
+//                    }
+//                }
+//
+//                shouldBeRemoved.forEach { removeKey ->
+//                    jsonObject.remove(removeKey)
+//                }
             }
 
             tempJsonContext
@@ -167,7 +199,7 @@ class ContextManager : ContextManagerInterface {
             // create context
             JsonObject().apply {
                 for (it in namespaceNameToStateInfo) {
-                    updateStateInfoAt(this, it)
+                    updateFullStateInfoAt(this, it, true)
                 }
 
                 lastBuiltJsonContext = this
@@ -175,12 +207,13 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    private fun updateStateInfoAt(
+    private fun updateFullStateInfoAt(
         jsonObject: JsonObject,
-        state: MutableMap.MutableEntry<NamespaceAndName, StateInfo>
+        state: MutableMap.MutableEntry<NamespaceAndName, StateInfo>,
+        updateFlag: Boolean
     ) {
         with(jsonObject) {
-            if (state.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETIMES == state.value.refreshPolicy) {
+            if (state.value.fullState == null && StateRefreshPolicy.SOMETIMES == state.value.refreshPolicy) {
                 // pass
             } else {
                 var namespaceJsonObject = getAsJsonObject(state.key.namespace)
@@ -188,66 +221,50 @@ class ContextManager : ContextManagerInterface {
                     namespaceJsonObject = JsonObject()
                     add(state.key.namespace, namespaceJsonObject)
                 }
-                namespaceJsonObject.add(state.key.name, JsonParser().parse(state.value.jsonState))
+                namespaceJsonObject.add(state.key.name, state.value.fullState)
             }
-            state.value.updatedFlag = true
+            if(updateFlag) {
+                state.value.updatedFlag = true
+            }
         }
     }
 
-    private fun sendContextAndClearQueue(
-        context: JsonObject?,
-        contextRequestError: ContextRequester.ContextRequestError?
-    ) {
-        Logger.d(TAG, "[sendContextAndClearQueue]")
-        val strAllContext = context.toString()
-        val jsonParser = JsonParser()
-
-        synchronized(contextRequesterQueue) {
-            while (contextRequesterQueue.isNotEmpty()) {
-                with(contextRequesterQueue.poll()) {
-                    if (context != null) {
-                        val namespaceAndName = second
-                        val strContext = if (namespaceAndName == null) {
-                            strAllContext
-                        } else {
-                            val filterOutContext = filterOutContextBy(namespaceAndName, jsonParser.parse(strAllContext).asJsonObject)
-                            filterOutContext.toString()
-                        }
-                        first.onContextAvailable(strContext)
-                    } else {
-                        first.onContextFailure(contextRequestError!!)
-                    }
+    private fun updateCompactStateInfoAt(jsonObject: JsonObject, state: MutableMap.MutableEntry<NamespaceAndName, StateInfo>) {
+        with(jsonObject) {
+            if (state.value.fullState == null && StateRefreshPolicy.SOMETIMES == state.value.refreshPolicy) {
+                // pass
+            } else {
+                var namespaceJsonObject = getAsJsonObject(state.key.namespace)
+                if (namespaceJsonObject == null) {
+                    namespaceJsonObject = JsonObject()
+                    add(state.key.namespace, namespaceJsonObject)
+                }
+                if(state.value.compactState != null) {
+                    namespaceJsonObject.add(state.key.name, state.value.compactState)
+                } else {
+                    namespaceJsonObject.add(state.key.name, state.value.fullState)
                 }
             }
         }
     }
 
-    private fun filterOutContextBy(
-        namespaceAndName: NamespaceAndName,
-        context: JsonObject
-    ): JsonObject {
-        val namespaceJsonObject = context.getAsJsonObject(namespaceAndName.namespace)
-        val entrySet = namespaceJsonObject.entrySet()
-        entrySet.forEach {
-            if (it.key != namespaceAndName.name) {
-                filterOut(it.value.asJsonObject, "version")
+    private fun sendContextFailureAndClearQueue(
+        contextRequestError: ContextRequester.ContextRequestError
+    ) {
+        Logger.d(TAG, "[sendContextAndClearQueue]")
+        synchronized(contextRequesterQueue) {
+            while (contextRequesterQueue.isNotEmpty()) {
+                with(contextRequesterQueue.poll()) {
+                    first.onContextFailure(contextRequestError)
+                }
             }
-        }
-
-        return context
-    }
-
-    private fun filterOut(jsonObject: JsonObject, include: String) {
-        jsonObject.entrySet().filterNot {
-            it.key == include
-        }.forEach {
-            jsonObject.remove(it.key)
         }
     }
 
     override fun setStateProvider(
         namespaceAndName: NamespaceAndName,
-        stateProvider: ContextStateProvider?
+        stateProvider: ContextStateProvider?,
+        compactState: String?
     ) {
         stateProviderLock.withLock {
             if (stateProvider == null) {
@@ -255,9 +272,10 @@ class ContextManager : ContextManagerInterface {
             } else {
                 val stateInfo = namespaceNameToStateInfo[namespaceAndName]
                 if (stateInfo == null) {
-                    namespaceNameToStateInfo[namespaceAndName] = StateInfo(stateProvider)
+                    namespaceNameToStateInfo[namespaceAndName] = StateInfo(stateProvider, if(compactState != null) JsonParser().parse(compactState).asJsonObject else null)
                 } else {
                     stateInfo.stateProvider = stateProvider
+                    stateInfo.compactState = if(compactState != null) JsonParser().parse(compactState).asJsonObject else null
                 }
             }
         }
@@ -273,7 +291,7 @@ class ContextManager : ContextManagerInterface {
             if(jsonState == null) {
                 Logger.d(
                     TAG,
-                    "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, currentState: ${namespaceNameToStateInfo[namespaceAndName]?.jsonState}, policy: $refreshPolicy, $stateRequestToken"
+                    "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, currentState: ${namespaceNameToStateInfo[namespaceAndName]?.fullState}, policy: $refreshPolicy, $stateRequestToken"
                 )
             } else {
                 Logger.d(
@@ -317,7 +335,11 @@ class ContextManager : ContextManagerInterface {
                 StateRefreshPolicy.NEVER -> {
                     jsonState?.let {
                         namespaceNameToStateInfo[namespaceAndName] =
-                            StateInfo(null, jsonState, refreshPolicy)
+                            StateInfo(null, null, if(jsonState.isNotEmpty()) {
+                                JsonParser().parse(jsonState)
+                            } else {
+                                null
+                            }, refreshPolicy)
                     }
                     ContextSetterInterface.SetStateResult.SUCCESS
                 }
@@ -325,7 +347,11 @@ class ContextManager : ContextManagerInterface {
         } else {
             jsonState?.let {
                 // only update when not null
-                stateInfo.jsonState = jsonState
+                if(jsonState.isNotEmpty()) {
+                    stateInfo.fullState = JsonParser().parse(jsonState)
+                } else {
+                    stateInfo.fullState = null
+                }
                 stateInfo.updatedFlag = false
             }
             stateInfo.refreshPolicy = refreshPolicy
@@ -346,13 +372,27 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String {
-        val context = buildContext()
+    override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String = stateProviderLock.withLock {
+        buildCompactContextFrom(buildContext(), namespaceAndName).toString()
+    }
 
+    private fun buildCompactContextFrom(context: JsonObject, namespaceAndName: NamespaceAndName?): JsonObject {
         return if(namespaceAndName == null) {
             context
         } else {
-            filterOutContextBy(namespaceAndName, context)
-        }.toString()
+            try {
+                JsonObject().apply {
+                    for (it in namespaceNameToStateInfo) {
+                        if(it.key != namespaceAndName) {
+                            updateCompactStateInfoAt(this, it)
+                        } else {
+                            updateFullStateInfoAt(this, it, false)
+                        }
+                    }
+                }
+            } catch (th: Throwable) {
+                context
+            }
+        }
     }
 }

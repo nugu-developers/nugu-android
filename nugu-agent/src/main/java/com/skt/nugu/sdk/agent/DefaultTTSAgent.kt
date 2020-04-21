@@ -192,7 +192,7 @@ class DefaultTTSAgent(
     init {
         Logger.d(TAG, "[init]")
         speechPlayer.setPlaybackEventListener(this)
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
 
         addListener(playContextManager)
     }
@@ -624,8 +624,11 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun buildContext(): JsonObject = JsonObject().apply {
+    private fun buildCompactContext() = JsonObject().apply {
         addProperty("version", VERSION.toString())
+    }
+
+    private fun buildContext(): JsonObject = buildCompactContext().apply {
         addProperty(
             "ttsActivity", when (currentState) {
                 TTSAgentInterface.State.PLAYING -> TTSAgentInterface.State.PLAYING.name

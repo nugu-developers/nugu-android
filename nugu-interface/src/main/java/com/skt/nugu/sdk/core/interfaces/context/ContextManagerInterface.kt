@@ -23,7 +23,7 @@ interface ContextGetterInterface {
 }
 
 interface ContextStateProviderRegistry {
-    fun setStateProvider(namespaceAndName: NamespaceAndName, stateProvider: ContextStateProvider?)
+    fun setStateProvider(namespaceAndName: NamespaceAndName, stateProvider: ContextStateProvider?, compactState: String?)
 }
 
 interface ContextManagerInterface

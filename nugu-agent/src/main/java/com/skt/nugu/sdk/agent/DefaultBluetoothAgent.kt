@@ -133,7 +133,7 @@ class DefaultBluetoothAgent(
         /**
          * Performs initialization.
          */
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
     }
 
     internal data class StartDiscoverableModePayload(
@@ -159,6 +159,10 @@ class DefaultBluetoothAgent(
         return configuration
     }
 
+    private fun buildCompactContext() = JsonObject().apply {
+        addProperty("version", VERSION.toString())
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -166,9 +170,7 @@ class DefaultBluetoothAgent(
     ) {
         executor.submit {
             bluetoothProvider?.let {
-                val context = JsonObject().apply {
-                    addProperty("version", VERSION.toString())
-
+                val context = buildCompactContext().apply {
                     it.device()?.let { hostController ->
                         add("device", JsonObject().apply {
                             addProperty("name", hostController.name)

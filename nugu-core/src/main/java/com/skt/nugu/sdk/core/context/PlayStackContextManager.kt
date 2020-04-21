@@ -45,7 +45,7 @@ class PlayStackContextManager(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, null)
     }
 
     override fun provideState(

@@ -213,7 +213,7 @@ class NuguClient private constructor(
         namespaceAndName: NamespaceAndName,
         stateProvider: ContextStateProvider?
     ) {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, stateProvider)
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, stateProvider, null)
     }
 
     fun addSystemAgentListener(listener: SystemAgentInterface.Listener) {

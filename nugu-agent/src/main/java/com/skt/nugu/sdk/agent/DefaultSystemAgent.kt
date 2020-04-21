@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.system.*
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
@@ -140,7 +139,7 @@ class DefaultSystemAgent(
         /**
          * Performs initialization.
          */
-        contextManager.setStateProvider(namespaceAndName, this)
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         onUserActive()
         connectionManager.addConnectionStatusListener(this)
     }
@@ -189,15 +188,15 @@ class DefaultSystemAgent(
     ) {
         contextSetter.setState(
             namespaceAndName,
-            buildContext(),
+            buildCompactContext().toString(),
             StateRefreshPolicy.NEVER,
             stateRequestToken
         )
     }
 
-    private fun buildContext(): String = JsonObject().apply {
+    private fun buildCompactContext() = JsonObject().apply {
         addProperty("version", VERSION.toString())
-    }.toString()
+    }
 
     /**
      * Handle the action specified by the directive

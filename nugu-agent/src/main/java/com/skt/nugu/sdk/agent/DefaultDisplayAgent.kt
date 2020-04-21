@@ -34,6 +34,7 @@ import kotlin.collections.HashMap
 class DefaultDisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
+    contextStateProviderRegistry: ContextStateProviderRegistry,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent, DisplayAgentInterface
     , SupportedInterfaceContextProvider
@@ -119,6 +120,7 @@ class DefaultDisplayAgent(
     private var renderer: DisplayAgentInterface.Renderer? = null
 
     init {
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         contextLayerTimer?.apply {
             EnumSet.allOf(DisplayAgentInterface.ContextLayer::class.java).forEach {
                 put(it, DisplayTimer(TAG))
@@ -387,11 +389,14 @@ class DefaultDisplayAgent(
         }
     }
 
-    private fun buildContext(info: TemplateDirectiveInfo?): String = JsonObject().apply {
+    private fun buildCompactContext() = JsonObject().apply {
         addProperty(
             "version",
             VERSION.toString()
         )
+    }
+
+    private fun buildContext(info: TemplateDirectiveInfo?): String = buildCompactContext().apply {
         info?.payload?.let {
             addProperty("playServiceId", it.playServiceId)
             addProperty("token", it.token)

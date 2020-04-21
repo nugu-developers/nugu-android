@@ -76,6 +76,10 @@ class DefaultScreenAgent(
 
     private var lastUpdatedSettings: Screen.Settings? = null
 
+    init {
+        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+    }
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
     }
@@ -189,8 +193,7 @@ class DefaultScreenAgent(
             null
         } else {
             lastUpdatedSettings = settings
-            JsonObject().apply {
-                addProperty("version", VERSION.toString())
+            buildCompactContext().apply {
                 with(settings) {
                     addProperty("state", if(isOn) "ON" else "OFF")
                     addProperty("brightness", brightness)
@@ -199,5 +202,9 @@ class DefaultScreenAgent(
         }
 
         contextSetter.setState(namespaceAndName, context, StateRefreshPolicy.ALWAYS, stateRequestToken)
+    }
+
+    private fun buildCompactContext() =  JsonObject().apply {
+        addProperty("version", VERSION.toString())
     }
 }
