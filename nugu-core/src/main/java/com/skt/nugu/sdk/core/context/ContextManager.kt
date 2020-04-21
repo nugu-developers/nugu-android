@@ -126,7 +126,6 @@ class ContextManager : ContextManagerInterface {
             buildContext()
         }
 
-        Logger.d(TAG, "[sendContextAndClearQueue]")
         synchronized(contextRequesterQueue) {
             val fullContext = if(contextRequesterQueue.any {
                 it.second == null
@@ -159,6 +158,7 @@ class ContextManager : ContextManagerInterface {
         return if(tempJsonContext != null) {
             // update context should be updated
             val namespaceAndNameMap = HashMap<String, MutableSet<String>>()
+            var updateCount = 0
             for (it in namespaceNameToStateInfo) {
                 var set = namespaceAndNameMap[it.key.namespace]
                 if(set == null) {
@@ -168,11 +168,11 @@ class ContextManager : ContextManagerInterface {
                 set.add(it.key.name)
                 if (!it.value.updatedFlag) {
                     updateFullStateInfoAt(tempJsonContext, it, true)
+                    updateCount++
                 }
             }
-            Logger.d(TAG, "[buildContext] exist last built json context.")
-
-//            // remove context should be removed
+            // remove context should be removed
+            var removeCount = 0
             namespaceAndNameMap.forEach {
                 val jsonObject = tempJsonContext.get(it.key).asJsonObject
                 jsonObject.entrySet().filterNot { entry->
@@ -180,19 +180,9 @@ class ContextManager : ContextManagerInterface {
                 }.forEach { removeItem->
                     jsonObject.remove(removeItem.key)
                 }
-//                val shouldBeRemoved = HashSet<String>()
-//                val jsonObject = tempJsonContext.get(it.key).asJsonObject
-//                jsonObject.entrySet().forEach { entry ->
-//                    if (!it.value.contains(entry.key)) {
-//                        shouldBeRemoved.add(entry.key)
-//                    }
-//                }
-//
-//                shouldBeRemoved.forEach { removeKey ->
-//                    jsonObject.remove(removeKey)
-//                }
             }
 
+            Logger.d(TAG, "[buildContext] build context: updated: $updateCount, removed: $removeCount.")
             tempJsonContext
         } else {
             Logger.d(TAG, "[buildContext] first build context")
@@ -213,10 +203,10 @@ class ContextManager : ContextManagerInterface {
         updateFlag: Boolean
     ) {
         with(jsonObject) {
+            var namespaceJsonObject = getAsJsonObject(state.key.namespace)
             if (state.value.fullState == null && StateRefreshPolicy.SOMETIMES == state.value.refreshPolicy) {
-                // pass
+                namespaceJsonObject?.remove(state.key.name)
             } else {
-                var namespaceJsonObject = getAsJsonObject(state.key.namespace)
                 if (namespaceJsonObject == null) {
                     namespaceJsonObject = JsonObject()
                     add(state.key.namespace, namespaceJsonObject)
@@ -231,10 +221,10 @@ class ContextManager : ContextManagerInterface {
 
     private fun updateCompactStateInfoAt(jsonObject: JsonObject, state: MutableMap.MutableEntry<NamespaceAndName, StateInfo>) {
         with(jsonObject) {
+            var namespaceJsonObject = getAsJsonObject(state.key.namespace)
             if (state.value.fullState == null && StateRefreshPolicy.SOMETIMES == state.value.refreshPolicy) {
-                // pass
+                namespaceJsonObject?.remove(state.key.name)
             } else {
-                var namespaceJsonObject = getAsJsonObject(state.key.namespace)
                 if (namespaceJsonObject == null) {
                     namespaceJsonObject = JsonObject()
                     add(state.key.namespace, namespaceJsonObject)
