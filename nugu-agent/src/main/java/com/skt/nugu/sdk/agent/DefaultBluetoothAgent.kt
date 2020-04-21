@@ -176,11 +176,17 @@ class DefaultBluetoothAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            bluetoothProvider?.let {
+            if(bluetoothProvider == null) {
+                contextSetter.setState(
+                    namespaceAndName, buildCompactContext().toString(),
+                    StateRefreshPolicy.NEVER,
+                    stateRequestToken
+                )
+            } else {
                 val prevBluetoothContext = lastUpdatedBluetoothContext
                 val currentBluetoothContext = BluetoothContext(
-                    it.device(),
-                    it.activeDevice()
+                    bluetoothProvider.device(),
+                    bluetoothProvider.activeDevice()
                 )
                 lastUpdatedBluetoothContext = currentBluetoothContext
 
@@ -214,7 +220,6 @@ class DefaultBluetoothAgent(
                     stateRequestToken
                 )
             }
-
         }
     }
 
