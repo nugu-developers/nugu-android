@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
@@ -38,7 +39,8 @@ class ContextManager : ContextManagerInterface {
     private data class StateInfo(
         var stateProvider: ContextStateProvider?,
         var jsonState: String = "",
-        var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS
+        var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS,
+        var updatedFlag: Boolean = false
     )
 
     private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
@@ -47,6 +49,9 @@ class ContextManager : ContextManagerInterface {
     private val pendingOnStateProviders = HashSet<NamespaceAndName>()
     private val stateProviderLock = ReentrantLock()
     private var stateRequestToken: Int = 0
+    private var lastBuiltJsonContext: JsonObject? = null
+
+
     private val updateStatesThread: LoopThread = object : LoopThread() {
         private val PROVIDE_STATE_DEFAULT_TIMEOUT = 2000L
 
@@ -124,20 +129,68 @@ class ContextManager : ContextManagerInterface {
     }
 
     private fun buildContext(): JsonObject {
-        Logger.d(TAG, "[buildContext]")
-        return JsonObject().apply {
+        val tempJsonContext = lastBuiltJsonContext
+        return if(tempJsonContext != null) {
+            // update context should be updated
+            val namespaceAndNameMap = HashMap<String, MutableSet<String>>()
             for (it in namespaceNameToStateInfo) {
-                if (it.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETIMES == it.value.refreshPolicy) {
-                    // pass
-                } else {
-                    var jsonObject = getAsJsonObject(it.key.namespace)
-                    if(jsonObject == null) {
-                        jsonObject = JsonObject()
-                        add(it.key.namespace, jsonObject)
-                    }
-                    jsonObject.add(it.key.name, JsonParser().parse(it.value.jsonState))
+                var set = namespaceAndNameMap[it.key.namespace]
+                if(set == null) {
+                    set = HashSet()
+                    namespaceAndNameMap[it.key.namespace] = set
+                }
+                set.add(it.key.name)
+                if (!it.value.updatedFlag) {
+                    updateStateInfoAt(tempJsonContext, it)
                 }
             }
+            Logger.d(TAG, "[buildContext] exist last built json context.")
+
+            // remove context should be removed
+            namespaceAndNameMap.forEach {
+                val shouldBeRemoved = HashSet<String>()
+                val jsonObject = tempJsonContext.get(it.key).asJsonObject
+                jsonObject.entrySet().forEach { entry ->
+                    if (!it.value.contains(entry.key)) {
+                        shouldBeRemoved.add(entry.key)
+                    }
+                }
+
+                shouldBeRemoved.forEach { removeKey ->
+                    jsonObject.remove(removeKey)
+                }
+            }
+
+            tempJsonContext
+        } else {
+            Logger.d(TAG, "[buildContext] first build context")
+            // create context
+            JsonObject().apply {
+                for (it in namespaceNameToStateInfo) {
+                    updateStateInfoAt(this, it)
+                }
+
+                lastBuiltJsonContext = this
+            }
+        }
+    }
+
+    private fun updateStateInfoAt(
+        jsonObject: JsonObject,
+        state: MutableMap.MutableEntry<NamespaceAndName, StateInfo>
+    ) {
+        with(jsonObject) {
+            if (state.value.jsonState.isEmpty() && StateRefreshPolicy.SOMETIMES == state.value.refreshPolicy) {
+                // pass
+            } else {
+                var namespaceJsonObject = getAsJsonObject(state.key.namespace)
+                if (namespaceJsonObject == null) {
+                    namespaceJsonObject = JsonObject()
+                    add(state.key.namespace, namespaceJsonObject)
+                }
+                namespaceJsonObject.add(state.key.name, JsonParser().parse(state.value.jsonState))
+            }
+            state.value.updatedFlag = true
         }
     }
 
@@ -273,6 +326,7 @@ class ContextManager : ContextManagerInterface {
             jsonState?.let {
                 // only update when not null
                 stateInfo.jsonState = jsonState
+                stateInfo.updatedFlag = false
             }
             stateInfo.refreshPolicy = refreshPolicy
             ContextSetterInterface.SetStateResult.SUCCESS
