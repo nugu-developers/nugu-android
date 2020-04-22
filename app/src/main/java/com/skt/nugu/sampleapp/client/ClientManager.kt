@@ -205,9 +205,9 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 stateRequestToken: Int
             ) {
                 val wakeupWord = if (PreferenceHelper.triggerId(context) == 0) {
-                    "아리아"
+                    "\"아리아\""
                 } else {
-                    "팅커벨"
+                    "\"팅커벨\""
                 }
                 contextSetter.setState(
                     namespaceAndName,
