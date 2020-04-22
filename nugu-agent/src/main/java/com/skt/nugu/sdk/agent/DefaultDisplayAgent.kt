@@ -104,6 +104,17 @@ class DefaultDisplayAgent(
         var playContext: PlayStackManagerInterface.PlayContext? = null
     }
 
+    data class DisplayContext(
+        val playServiceId: String?,
+        val token: String?,
+        val focusedItemToken: String?,
+        val visibleTokenList: List<String>?
+    ) {
+        companion object {
+            val EMPTY_CONTEXT = DisplayContext(null, null, null, null)
+        }
+    }
+
     private val pendingInfo = HashMap<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>()
     private val currentInfo = HashMap<DisplayAgentInterface.ContextLayer, TemplateDirectiveInfo>()
     private val contextLayerTimer: MutableMap<DisplayAgentInterface.ContextLayer, DisplayTimer>? =
@@ -118,6 +129,8 @@ class DefaultDisplayAgent(
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private var renderer: DisplayAgentInterface.Renderer? = null
+
+    private var lastUpdatedContext: DisplayContext? = null
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
@@ -380,12 +393,39 @@ class DefaultDisplayAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
+            val info = findHighestLayerFrom(currentInfo)
+            val prevContext = lastUpdatedContext
+            val currentContext = if(prevContext == null) {
+                DisplayContext.EMPTY_CONTEXT
+            } else {
+                createDisplayContext(info)
+            }
+            lastUpdatedContext = currentContext
+
+            val strContext = if(prevContext == currentContext) {
+                Logger.d(TAG, "[provideState] skip update")
+                null
+            } else {
+                Logger.d(TAG, "[provideState] do update")
+                buildContext(currentContext)
+            }
+
             contextSetter.setState(
                 namespaceAndName,
-                buildContext(findHighestLayerFrom(currentInfo)),
+                strContext,
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
+        }
+    }
+
+    private fun createDisplayContext(info: TemplateDirectiveInfo?): DisplayContext {
+        return if(info == null) {
+            DisplayContext.EMPTY_CONTEXT
+        } else {
+            with(info.payload) {
+                DisplayContext(playServiceId, token, templateControllerMap[info.getTemplateId()]?.getFocusedItemToken(), templateControllerMap[info.getTemplateId()]?.getVisibleTokenList())
+            }
         }
     }
 
@@ -396,22 +436,22 @@ class DefaultDisplayAgent(
         )
     }
 
-    private fun buildContext(info: TemplateDirectiveInfo?): String = buildCompactContext().apply {
-        info?.payload?.let {
-            addProperty("playServiceId", it.playServiceId)
-            addProperty("token", it.token)
-            templateControllerMap[info.getTemplateId()]?.let { controller ->
-                controller.getFocusedItemToken()?.let { focusedItemToken ->
-                    addProperty("focusedItemToken", focusedItemToken)
+    private fun buildContext(info: DisplayContext): String = buildCompactContext().apply {
+        info.playServiceId?.let {
+            addProperty("playServiceId", it)
+        }
+        info.token?.let {
+            addProperty("token", it)
+        }
+        info.focusedItemToken?.let {
+            addProperty("focusedItemToken", it)
+        }
+        info.visibleTokenList?.let {
+            add("visibleTokenList", JsonArray().apply {
+                it.forEach { token ->
+                    add(token)
                 }
-                controller.getVisibleTokenList()?.let { visibleTokenList ->
-                    add("visibleTokenList", JsonArray().apply {
-                        visibleTokenList.forEach { token ->
-                            add(token)
-                        }
-                    })
-                }
-            }
+            })
         }
     }.toString()
 
