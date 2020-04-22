@@ -122,8 +122,6 @@ class DefaultASRAgent(
 
     private var contextForRecognitionOnForegroundFocus: String? = null
 
-    private var initialDialogUXStateReceived: Boolean = false
-
     private var currentAudioProvider: AudioProvider? = null
     private val speechProcessorLock = ReentrantLock()
 
@@ -277,11 +275,14 @@ class DefaultASRAgent(
     private fun executeHandleExpectSpeechDirective(info: DirectiveInfo) {
         // Here we do not check validation of payload due to checked at preHandleExpectSpeech already.
         val payload = parseExpectSpeechPayload(info.directive)
+        if(payload == null) {
+            setHandlingFailed(info, "[executeHandleExpectSpeechDirective] invalid payload")
+            return
+        }
 
-        if (expectSpeechPayload == null) {
-            Logger.e(TAG, "[executeHandleExpectSpeechDirective] re-parse payload due to loss")
-            // re parse payload here.
-            expectSpeechPayload = payload
+        if(payload.sessionId != expectSpeechPayload?.sessionId) {
+            setHandlingFailed(info, "[executeHandleExpectSpeechDirective] not match with current session (${payload.sessionId} / ${expectSpeechPayload?.sessionId})")
+            return
         }
 
         if (!canRecognizing()) {
@@ -316,7 +317,7 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechPayload, info.directive.getDialogRequestId(),null, object: ASRAgentInterface.StartRecognitionCallback {
+        executeStartRecognition(audioInputStream, audioFormat, null, payload, info.directive.getDialogRequestId(),null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
                 setHandlingCompleted(info)
             }
@@ -772,6 +773,7 @@ class DefaultASRAgent(
 
         Logger.d(TAG, "[setState] $state")
         if (state == ASRAgentInterface.State.IDLE) {
+            Logger.d(TAG, "[setState] currentSessionId: $currentSessionId, $expectSpeechPayload")
             if(expectSpeechPayload == null) {
                 currentSessionId?.let {
                     dialogSessionManager.closeSession()
@@ -794,6 +796,7 @@ class DefaultASRAgent(
     }
 
     private fun clearPreHandledExpectSpeech() {
+        Logger.d(TAG, "[clearPreHandledExpectSpeech]")
         expectSpeechPayload = null
     }
 
