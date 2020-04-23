@@ -38,6 +38,8 @@ class ContextManager : ContextManagerInterface {
     )
 
     private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
+    private val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
+
     private val contextRequesterQueue: Queue<Pair<ContextRequester, NamespaceAndName?>> =
         LinkedList()
     private val pendingOnStateProviders = HashSet<NamespaceAndName>()
@@ -116,8 +118,8 @@ class ContextManager : ContextManagerInterface {
 
         synchronized(contextRequesterQueue) {
             val fullContext = if(contextRequesterQueue.any {
-                it.second == null
-            }) {
+                    it.second == null
+                }) {
                 stateProviderLock.withLock {
                     buildContext(null)
                 }
@@ -147,33 +149,30 @@ class ContextManager : ContextManagerInterface {
         // write
         var keyIndex = 0
         append('{')
-        namespaceNameToStateInfo.keys.groupBy {
-            it.namespace
-        }.forEach {
+
+        namespaceToNameStateInfo.forEach { namespaceEntry ->
             if (keyIndex > 0) {
                 append(',')
             }
             keyIndex++
 
-            append("\"${it.key}\":")
+            append("\"${namespaceEntry.key}\":")
             append('{')
             var valueIndex = 0
-            it.value.forEach { stateKey ->
-                namespaceNameToStateInfo[stateKey]?.let { stateInfo ->
-                    if (stateInfo.fullState.isEmpty() && stateInfo.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
-                        // pass
-                    } else {
-                        if (valueIndex > 0) {
-                            append(',')
-                        }
-                        valueIndex++
+            namespaceEntry.value.forEach {
+                if (it.value.fullState.isEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
+                    // pass
+                } else {
+                    if (valueIndex > 0) {
+                        append(',')
+                    }
+                    valueIndex++
 
-                        append("\"${stateKey.name}\":")
-                        if (namespaceAndName == null || namespaceAndName == stateKey || stateInfo.compactState == null) {
-                            append(stateInfo.fullState)
-                        } else {
-                            append(stateInfo.compactState)
-                        }
+                    append("\"${it.key}\":")
+                    if (namespaceAndName == null || (namespaceAndName.namespace == namespaceEntry.key && namespaceAndName.name == it.key) || it.value.compactState == null) {
+                        append(it.value.fullState)
+                    } else {
+                        append(it.value.compactState)
                     }
                 }
             }
@@ -203,16 +202,27 @@ class ContextManager : ContextManagerInterface {
         stateProviderLock.withLock {
             if (stateProvider == null) {
                 namespaceNameToStateInfo.remove(namespaceAndName)
+                namespaceToNameStateInfo[namespaceAndName.namespace]?.remove(namespaceAndName.name)
             } else {
                 val stateInfo = namespaceNameToStateInfo[namespaceAndName]
                 if (stateInfo == null) {
-                    namespaceNameToStateInfo[namespaceAndName] = StateInfo(stateProvider, compactState)
+                    createNewStateInfo(namespaceAndName, StateInfo(stateProvider, compactState))
                 } else {
                     stateInfo.stateProvider = stateProvider
                     stateInfo.compactState = compactState
                 }
             }
         }
+    }
+
+    private fun createNewStateInfo(namespaceAndName: NamespaceAndName, stateInfo: StateInfo) {
+        namespaceNameToStateInfo[namespaceAndName] = stateInfo
+        var map = namespaceToNameStateInfo[namespaceAndName.namespace]
+        if(map == null) {
+            map = HashMap()
+            namespaceToNameStateInfo[namespaceAndName.namespace] = map
+        }
+        map[namespaceAndName.name] = stateInfo
     }
 
     override fun setState(
@@ -268,8 +278,7 @@ class ContextManager : ContextManagerInterface {
                 }
                 StateRefreshPolicy.NEVER -> {
                     jsonState?.let {
-                        namespaceNameToStateInfo[namespaceAndName] =
-                            StateInfo(null, null, jsonState, refreshPolicy)
+                        createNewStateInfo(namespaceAndName, StateInfo(null, null, jsonState, refreshPolicy))
                     }
                     ContextSetterInterface.SetStateResult.SUCCESS
                 }
