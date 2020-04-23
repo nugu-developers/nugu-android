@@ -44,6 +44,8 @@ class ContextManager : ContextManagerInterface {
     private val stateProviderLock = ReentrantLock()
     private var stateRequestToken: Int = 0
 
+    private val stringBuilderForContext = StringBuilder(8192)
+
     private val updateStatesThread: LoopThread = object : LoopThread() {
         private val PROVIDE_STATE_DEFAULT_TIMEOUT = 2000L
 
@@ -117,7 +119,7 @@ class ContextManager : ContextManagerInterface {
                 it.second == null
             }) {
                 stateProviderLock.withLock {
-                    buildContext(null).toString()
+                    buildContext(null)
                 }
             } else {
                 null
@@ -130,7 +132,7 @@ class ContextManager : ContextManagerInterface {
                         fullContext!!
                     } else {
                         stateProviderLock.withLock {
-                            buildContext(namespaceAndName).toString()
+                            buildContext(namespaceAndName)
                         }
                     }
                     first.onContextAvailable(strContext)
@@ -139,50 +141,46 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    private fun buildContext(namespaceAndName: NamespaceAndName?): String {
-        val start = System.nanoTime()
-        val result = StringBuilder().apply {
-            var keyIndex = 0
+    private fun buildContext(namespaceAndName: NamespaceAndName?): String = stringBuilderForContext.apply {
+        // clear
+        delete(0, length)
+        // write
+        var keyIndex = 0
+        append('{')
+        namespaceNameToStateInfo.keys.groupBy {
+            it.namespace
+        }.forEach {
+            if (keyIndex > 0) {
+                append(',')
+            }
+            keyIndex++
+
+            append("\"${it.key}\":")
             append('{')
-            namespaceNameToStateInfo.keys.groupBy {
-                it.namespace
-            }.forEach {
-                if (keyIndex > 0) {
-                    append(',')
-                }
-                keyIndex++
+            var valueIndex = 0
+            it.value.forEach { stateKey ->
+                namespaceNameToStateInfo[stateKey]?.let { stateInfo ->
+                    if (stateInfo.fullState.isEmpty() && stateInfo.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
+                        // pass
+                    } else {
+                        if (valueIndex > 0) {
+                            append(',')
+                        }
+                        valueIndex++
 
-                append("\"${it.key}\":")
-                append('{')
-                var valueIndex = 0
-                it.value.forEach { stateKey ->
-                    namespaceNameToStateInfo[stateKey]?.let { stateInfo ->
-                        if (stateInfo.fullState.isEmpty() && stateInfo.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
-                            // pass
+                        append("\"${stateKey.name}\":")
+                        if (namespaceAndName == null || namespaceAndName == stateKey || stateInfo.compactState == null) {
+                            append(stateInfo.fullState)
                         } else {
-                            if (valueIndex > 0) {
-                                append(',')
-                            }
-                            valueIndex++
-
-                            append("\"${stateKey.name}\":")
-                            if (namespaceAndName == null || namespaceAndName == stateKey || stateInfo.compactState == null) {
-                                append(stateInfo.fullState)
-                            } else {
-                                append(stateInfo.compactState)
-                            }
+                            append(stateInfo.compactState)
                         }
                     }
                 }
-                append('}')
             }
             append('}')
-        }.toString()
-
-        Logger.d(TAG, "[buildContext] takes: ${System.nanoTime() - start}")
-
-        return result
-    }
+        }
+        append('}')
+    }.toString()
 
     private fun sendContextFailureAndClearQueue(
         contextRequestError: ContextRequester.ContextRequestError
@@ -300,6 +298,6 @@ class ContextManager : ContextManagerInterface {
     }
 
     override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String = stateProviderLock.withLock {
-        buildContext(namespaceAndName).toString()
+        buildContext(namespaceAndName)
     }
 }
