@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.agent.util.TimeoutCondition
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
@@ -45,9 +44,8 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 class DefaultTTSAgent(
     private val speechPlayer: MediaPlayerInterface,
@@ -82,7 +80,7 @@ class DefaultTTSAgent(
         private const val TAG = "DefaultTTSAgent"
 
         const val NAMESPACE = "TTS"
-        private val VERSION = Version(1,1)
+        private val VERSION = Version(1, 1)
 
         private const val NAME_SPEAK = "Speak"
         private const val NAME_STOP = "Stop"
@@ -174,9 +172,9 @@ class DefaultTTSAgent(
     private var preparedSpeakInfo: SpeakDirectiveInfo? = null
     private var currentInfo: SpeakDirectiveInfo? = null
 
-    private val stateLock = ReentrantLock()
     //    @GuardedBy("stateLock")
     private var currentState = TTSAgentInterface.State.IDLE
+
     //    @GuardedBy("stateLock")
     private var desireState = TTSAgentInterface.State.IDLE
 
@@ -317,42 +315,26 @@ class DefaultTTSAgent(
         }
     }
 
-    //    @GuardedBy("stateLock")
-    private fun setDesireState(newFocus: FocusState) {
-        desireState = when (newFocus) {
-            FocusState.FOREGROUND -> TTSAgentInterface.State.PLAYING
-            else -> TTSAgentInterface.State.STOPPED
-        }
-    }
-
-    private fun setDesireState(state: TTSAgentInterface.State) {
-        stateLock.withLock {
-            desireState = state
-        }
-    }
-
     private fun setCurrentState(state: TTSAgentInterface.State) {
-        stateLock.withLock {
-            Logger.d(TAG, "[setCurrentState] state: $state")
-            currentState = state
-            currentInfo?.directive?.getDialogRequestId()?.let {
-                when(state) {
-                    TTSAgentInterface.State.IDLE -> {
-                        // no-op
-                    }
-                    TTSAgentInterface.State.PLAYING -> {
-                        requestListenerMap[it]?.onStart(it)
-                    }
-                    TTSAgentInterface.State.STOPPED -> {
-                        requestListenerMap.remove(it)?.onStop(it)
-                    }
-                    TTSAgentInterface.State.FINISHED -> {
-                        requestListenerMap.remove(it)?.onFinish(it)
-                    }
+        Logger.d(TAG, "[setCurrentState] state: $state")
+        currentState = state
+        currentInfo?.directive?.getDialogRequestId()?.let {
+            when (state) {
+                TTSAgentInterface.State.IDLE -> {
+                    // no-op
                 }
-
-                notifyObservers(state, it)
+                TTSAgentInterface.State.PLAYING -> {
+                    requestListenerMap[it]?.onStart(it)
+                }
+                TTSAgentInterface.State.STOPPED -> {
+                    requestListenerMap.remove(it)?.onStop(it)
+                }
+                TTSAgentInterface.State.FINISHED -> {
+                    requestListenerMap.remove(it)?.onFinish(it)
+                }
             }
+
+            notifyObservers(state, it)
         }
     }
 
@@ -400,7 +382,7 @@ class DefaultTTSAgent(
         with(info) {
             cancelByStop = cancelAssociation
             if (isPlaybackInitiated) {
-                setDesireState(TTSAgentInterface.State.STOPPED)
+                desireState = TTSAgentInterface.State.STOPPED
                 stopPlaying()
             } else {
                 isDelayedCancel = true
@@ -417,7 +399,7 @@ class DefaultTTSAgent(
         }
 
         if (currentFocus == FocusState.FOREGROUND) {
-            onFocusChanged(currentFocus)
+            executeOnFocusChanged(currentFocus)
         } else {
             if (!focusManager.acquireChannel(
                     channelName,
@@ -434,69 +416,46 @@ class DefaultTTSAgent(
 
     override fun onFocusChanged(newFocus: FocusState) {
         Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
+        executor.submit {
+            executeOnFocusChanged(newFocus)
+        }
+    }
 
+    private fun executeOnFocusChanged(newFocus: FocusState) {
+        Logger.d(TAG, "[executeOnFocusChanged] newFocus: $newFocus")
         currentFocus = newFocus
-        setDesireState(newFocus)
+        desireState = when (newFocus) {
+            FocusState.FOREGROUND -> TTSAgentInterface.State.PLAYING
+            else -> TTSAgentInterface.State.STOPPED
+        }
         if (currentState == desireState) {
             return
         }
 
         when (newFocus) {
             FocusState.FOREGROUND -> {
-                executor.submit {
-                    currentInfo?.let {
-                        startSync(it)
-                    }
+                currentInfo?.let {
+                    val countDownLatch = CountDownLatch(1)
+                    focusHolderManager.request(it)
+                    playSynchronizer.startSync(it,
+                        object : PlaySynchronizerInterface.OnRequestSyncListener {
+                            override fun onGranted() {
+                                executeTransitState()
+                                countDownLatch.countDown()
+                            }
+
+                            override fun onDenied() {
+                                countDownLatch.countDown()
+                            }
+                        })
+                    countDownLatch.await()
                 }
             }
             FocusState.BACKGROUND -> {
-                transitState()
+                executeTransitState()
             }
             FocusState.NONE -> {
-                transitState()
-            }
-        }
-    }
-
-    private fun startSync(info: SpeakDirectiveInfo) {
-        playSynchronizer.startSync(info,
-            object : PlaySynchronizerInterface.OnRequestSyncListener {
-                override fun onGranted() {
-                    transitState()
-                }
-
-                override fun onDenied() {
-                }
-            })
-        focusHolderManager.request(info)
-    }
-
-    private fun executeStateChange() {
-        val newState = stateLock.withLock {
-            desireState
-        }
-        Logger.d(TAG, "[executeStateChange] newState: $newState")
-
-        when (newState) {
-            TTSAgentInterface.State.PLAYING -> {
-                currentInfo?.apply {
-                    isPlaybackInitiated = true
-                    startPlaying(this)
-                }
-            }
-
-            TTSAgentInterface.State.STOPPED,
-            TTSAgentInterface.State.FINISHED -> {
-                currentInfo?.apply {
-                    if (isPlaybackInitiated) {
-                        stopPlaying()
-                    } else {
-                        result.setCompleted()
-                        releaseSyncImmediately(this)
-                    }
-                }
-            }
-            else -> {
+                executeTransitState()
             }
         }
     }
@@ -538,14 +497,6 @@ class DefaultTTSAgent(
                 isAlreadyStopping = true
             }
         }
-    }
-
-    private fun releaseForegroundFocus() {
-        Logger.d(TAG, "[releaseForegroundFocus]")
-        stateLock.withLock {
-            currentFocus = FocusState.NONE
-        }
-        focusManager.releaseChannel(channelName, this)
     }
 
     private fun createValidateSpeakInfo(
@@ -608,7 +559,7 @@ class DefaultTTSAgent(
                 }
             }
 
-            val context = if(currentState == lastStateForContext) {
+            val context = if (currentState == lastStateForContext) {
                 null
             } else {
                 lastStateForContext = currentState
@@ -638,28 +589,36 @@ class DefaultTTSAgent(
         )
     }
 
-    private fun transitState() {
-        val futureExecuteStateChange = executor.submit {
-            executeStateChange()
+    private fun executeTransitState() {
+        val newState = desireState
+        Logger.d(TAG, "[executeStateChange] newState: $newState")
+
+        when (newState) {
+            TTSAgentInterface.State.PLAYING -> {
+                currentInfo?.apply {
+                    isPlaybackInitiated = true
+                    startPlaying(this)
+                }
+            }
+
+            TTSAgentInterface.State.STOPPED,
+            TTSAgentInterface.State.FINISHED -> {
+                currentInfo?.apply {
+                    if (isPlaybackInitiated) {
+                        stopPlaying()
+                    } else {
+                        result.setCompleted()
+                        releaseSyncImmediately(this)
+                    }
+                }
+            }
+            else -> {
+            }
         }
 
-        futureExecuteStateChange.get() // wait
-
-        object : TimeoutCondition<Boolean>(100L, { currentState == desireState }) {
-            override fun onCondition(): Boolean {
-                return true
-            }
-
-            override fun onTimeout(): Boolean {
-                return false
-            }
-        }.get()
-
-        executor.submit {
-            val speakInfo = currentInfo
-            if (speakInfo != null && speakInfo.isDelayedCancel) {
-                executeCancelCurrentSpeakInfo()
-            }
+        val speakInfo = currentInfo
+        if (speakInfo != null && speakInfo.isDelayedCancel) {
+            executeCancelCurrentSpeakInfo()
         }
     }
 
@@ -723,7 +682,7 @@ class DefaultTTSAgent(
 
     private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo) {
         val playServiceId = info.getPlayServiceId()
-        if(playServiceId.isNullOrBlank()) {
+        if (playServiceId.isNullOrBlank()) {
             Logger.d(TAG, "[sendPlaybackEvent] skip : playServiceId: $playServiceId")
             return
         }
@@ -738,10 +697,8 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackStopped() {
-        stateLock.withLock {
-            if (currentState == TTSAgentInterface.State.STOPPED) {
-                return
-            }
+        if (currentState == TTSAgentInterface.State.STOPPED) {
+            return
         }
         Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
         val info = currentInfo ?: return
@@ -761,10 +718,8 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackFinished() {
-        stateLock.withLock {
-            if (currentState == TTSAgentInterface.State.FINISHED) {
-                return
-            }
+        if (currentState == TTSAgentInterface.State.FINISHED) {
+            return
         }
 
         Logger.d(TAG, "[executePlaybackFinished] $currentInfo")
@@ -785,10 +740,8 @@ class DefaultTTSAgent(
             it.onError(info.getDialogRequestId())
         }
 
-        stateLock.withLock {
-            if (currentState == TTSAgentInterface.State.STOPPED) {
-                return
-            }
+        if (currentState == TTSAgentInterface.State.STOPPED) {
+            return
         }
 
         setCurrentState(TTSAgentInterface.State.STOPPED)
@@ -859,7 +812,7 @@ class DefaultTTSAgent(
                         }.toString())
                         .build()
 
-                if(messageSender.sendMessage(messageRequest)) {
+                if (messageSender.sendMessage(messageRequest)) {
                     listener?.let {
                         requestListenerMap[dialogRequestId] = it
                     }
@@ -893,11 +846,11 @@ class DefaultTTSAgent(
     override fun onStateChanged(state: FocusHolderManager.State) {
         executor.submit {
             Logger.d(TAG, "[onStateChanged-FocusHolder] $state , $currentFocus, $currentInfo")
-            if(state != FocusHolderManager.State.UNHOLD) {
+            if (state != FocusHolderManager.State.UNHOLD) {
                 return@submit
             }
 
-            if(currentFocus != FocusState.NONE && currentInfo == null) {
+            if (currentFocus != FocusState.NONE && currentInfo == null) {
                 focusManager.releaseChannel(channelName, this)
                 currentFocus = FocusState.NONE
             }
@@ -934,7 +887,10 @@ class DefaultTTSAgent(
             currentInfo?.payload?.playStackControl?.getPushPlayServiceId()
                 ?.let { pushPlayServiceId ->
                     currentPlayContext =
-                        PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
+                        PlayStackManagerInterface.PlayContext(
+                            pushPlayServiceId,
+                            System.currentTimeMillis()
+                        )
                     playContextValidTimestamp = Long.MAX_VALUE
                 }
         }
