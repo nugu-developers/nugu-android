@@ -145,7 +145,7 @@ class ContextManager : ContextManagerInterface {
 
     private fun buildContext(namespaceAndName: NamespaceAndName?): String = stringBuilderForContext.apply {
         // clear
-        delete(0, length)
+        setLength(0)
         // write
         var keyIndex = 0
         append('{')
