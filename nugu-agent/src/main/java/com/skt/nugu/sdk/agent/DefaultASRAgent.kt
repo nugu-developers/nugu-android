@@ -76,7 +76,7 @@ class DefaultASRAgent(
 
         const val NAME_EXPECT_SPEECH = "ExpectSpeech"
         const val NAME_RECOGNIZE = "Recognize"
-        private const val NAME_NOTIFY_RESULT = "NotifyResult"
+        const val NAME_NOTIFY_RESULT = "NotifyResult"
 
         private const val NAME_LISTEN_TIMEOUT = "ListenTimeout"
         private const val NAME_LISTEN_FAILED = "ListenFailed"
@@ -374,11 +374,8 @@ class DefaultASRAgent(
             return
         }
 
-        val state = notifyResultPayload.state
-        val result = notifyResultPayload.result
-
         executor.submit {
-            currentSpeechRecognizer.notifyResult(state.name, result)
+            currentSpeechRecognizer.notifyResult(info.directive, notifyResultPayload)
             setHandlingCompleted(info)
         }
     }

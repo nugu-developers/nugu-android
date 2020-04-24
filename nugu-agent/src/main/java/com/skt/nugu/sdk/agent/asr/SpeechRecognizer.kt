@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent.asr
 
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 interface SpeechRecognizer {
     enum class State {
@@ -57,5 +58,5 @@ interface SpeechRecognizer {
     fun addListener(listener: OnStateChangeListener)
     fun removeListener(listener: OnStateChangeListener)
 
-    fun notifyResult(state: String, result: String?)
+    fun notifyResult(directive: Directive, payload: AsrNotifyResultPayload)
 }
