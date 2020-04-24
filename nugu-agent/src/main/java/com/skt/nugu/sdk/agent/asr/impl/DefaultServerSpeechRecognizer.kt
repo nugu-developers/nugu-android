@@ -29,6 +29,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashSet
 import kotlin.math.max
 
 class DefaultServerSpeechRecognizer(
@@ -46,6 +47,8 @@ class DefaultServerSpeechRecognizer(
         val resultListener: ASRAgentInterface.OnResultListener?
     ) {
         var cancelCause: ASRAgentInterface.CancelCause? = null
+        val shouldBeHandledResult = HashSet<String>()
+        var receiveResponse = false
     }
 
     override var enablePartialResult: Boolean = true
@@ -206,16 +209,13 @@ class DefaultServerSpeechRecognizer(
         listeners.remove(listener)
     }
 
-    override fun notifyResult(state: String, result: String?) {
-        val enumState = AsrNotifyResultPayload.State.values().find { it.name == state }
-        val payload =
-            AsrNotifyResultPayload(
-                enumState!!,
-                result
-            )
+    override fun notifyResult(
+        directive: Directive,
+        payload: AsrNotifyResultPayload
+    ) {
         val request = currentRequest ?: return
 
-        Logger.d(TAG, "[notifyResult] state: $state, result: $result, listener: $request")
+        Logger.d(TAG, "[notifyResult] $payload, listener: $request")
 
         val resultListener: ASRAgentInterface.OnResultListener? = request.resultListener
 
@@ -247,6 +247,13 @@ class DefaultServerSpeechRecognizer(
                 request.senderThread.requestFinish()
                 onSendEventFinished(request.eventMessage.dialogRequestId)
                 setState(SpeechRecognizer.State.SPEECH_END)
+            }
+        }
+
+        synchronized(request) {
+            request.shouldBeHandledResult.remove(directive.getMessageId())
+            if (request.shouldBeHandledResult.isEmpty() && request.receiveResponse) {
+                handleFinish()
             }
         }
     }
@@ -293,7 +300,7 @@ class DefaultServerSpeechRecognizer(
             return false
         }
 
-        if (dialogRequestId == request.eventMessage.dialogRequestId) {
+        if (dialogRequestId != request.eventMessage.dialogRequestId) {
             Logger.e(
                 TAG,
                 "[onReceiveResponse] invalid : (receive: $dialogRequestId, current: ${request.eventMessage.dialogRequestId})"
@@ -303,13 +310,27 @@ class DefaultServerSpeechRecognizer(
 
         val receiveResponse = directives.filter { it.header.namespace != DefaultASRAgent.NAMESPACE }.any()
 
-        return if(receiveResponse) {
-            Logger.d(TAG, "[onReceiveDirectives] receive response")
-            handleFinish()
-            true
-        } else {
-            Logger.d(TAG, "[onReceiveDirectives] receive asr response")
-            false
+        return synchronized(request) {
+            if (receiveResponse) {
+                if (request.shouldBeHandledResult.isEmpty()) {
+                    Logger.d(TAG, "[onReceiveResponse] receive response : no result should be handled, handleFinish()")
+                    handleFinish()
+                } else {
+                    Logger.d(TAG, "[onReceiveResponse] receive response : exist result should be handled, pend handling.")
+                    request.receiveResponse = true
+                }
+                true
+            } else {
+                directives.filter { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT }
+                    .forEach {
+                        request.shouldBeHandledResult.add(it.getMessageId())
+                    }
+                Logger.d(
+                    TAG,
+                    "[onReceiveResponse] receive asr response : ${request.shouldBeHandledResult.size}"
+                )
+                false
+            }
         }
     }
 

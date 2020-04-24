@@ -57,6 +57,8 @@ class DefaultClientSpeechRecognizer(
 
         var stopByCancel: Boolean? = null
         var cancelCause: ASRAgentInterface.CancelCause? = null
+        val shouldBeHandledResult = HashSet<String>()
+        var receiveResponse = false
     }
 
 
@@ -191,16 +193,13 @@ class DefaultClientSpeechRecognizer(
         listeners.remove(listener)
     }
 
-    override fun notifyResult(state: String, result: String?) {
-        val enumState = AsrNotifyResultPayload.State.values().find { it.name == state }
-        val payload =
-            AsrNotifyResultPayload(
-                enumState!!,
-                result
-            )
+    override fun notifyResult(
+        directive: Directive,
+        payload: AsrNotifyResultPayload
+    ) {
         val request = currentRequest ?: return
 
-        Logger.d(TAG, "[notifyResult] state: $state, result: $result, listener: $request")
+        Logger.d(TAG, "[notifyResult] $payload, listener: $request")
 
         val resultListener: ASRAgentInterface.OnResultListener? = request.resultListener
 
@@ -229,6 +228,13 @@ class DefaultClientSpeechRecognizer(
             else -> {
                 // AsrNotifyResultPayload.State.SOS or AsrNotifyResultPayload.State.EOS
                 // ignore server's wrong message
+            }
+        }
+
+        synchronized(request) {
+            request.shouldBeHandledResult.remove(directive.getMessageId())
+            if (request.shouldBeHandledResult.isEmpty() && request.receiveResponse) {
+                handleFinish()
             }
         }
     }
@@ -415,15 +421,43 @@ class DefaultClientSpeechRecognizer(
         dialogRequestId: String,
         directives: List<Directive>
     ): Boolean {
+        val request = currentRequest
+        if (request == null) {
+            Logger.e(TAG, "[onReceiveResponse] invalid : request is null")
+            return false
+        }
+
+        if (dialogRequestId != request.eventMessage.dialogRequestId) {
+            Logger.e(
+                TAG,
+                "[onReceiveResponse] invalid : (receive: $dialogRequestId, current: ${request.eventMessage.dialogRequestId})"
+            )
+            return false
+        }
+
         val receiveResponse = directives.filter { it.header.namespace != DefaultASRAgent.NAMESPACE }.any()
 
-        return if(receiveResponse) {
-            Logger.d(TAG, "[onReceiveDirectives] receive response")
-            handleFinish()
-            true
-        } else {
-            Logger.d(TAG, "[onReceiveDirectives] receive asr response")
-            false
+        return synchronized(request) {
+            if (receiveResponse) {
+                if (request.shouldBeHandledResult.isEmpty()) {
+                    Logger.d(TAG, "[onReceiveResponse] receive response : no result should be handled, handleFinish()")
+                    handleFinish()
+                } else {
+                    Logger.d(TAG, "[onReceiveResponse] receive response : exist result should be handled, pend handling.")
+                    request.receiveResponse = true
+                }
+                true
+            } else {
+                directives.filter { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT }
+                    .forEach {
+                        request.shouldBeHandledResult.add(it.getMessageId())
+                    }
+                Logger.d(
+                    TAG,
+                    "[onReceiveResponse] receive asr response : ${request.shouldBeHandledResult.size}"
+                )
+                false
+            }
         }
     }
 
