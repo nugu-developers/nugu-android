@@ -124,12 +124,6 @@ class DefaultServerSpeechRecognizer(
             .build()
 
         if (messageSender.sendMessage(eventMessage)) {
-            val listeningTimeoutSec: Long = if(payload != null) {
-                (payload.timeoutInMilliseconds / 1000L)
-            } else {
-                epdParam.timeoutInSeconds.toLong()
-            }
-
             val thread = createSenderThread(
                 audioInputStream,
                 audioFormat,
@@ -146,7 +140,7 @@ class DefaultServerSpeechRecognizer(
             timeoutFuture?.cancel(true)
             timeoutFuture = timeoutScheduler.schedule({
                 handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
-            }, listeningTimeoutSec, TimeUnit.SECONDS)
+            }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
         } else {
             Logger.w(TAG, "[startProcessor] failed to send recognize event")
         }

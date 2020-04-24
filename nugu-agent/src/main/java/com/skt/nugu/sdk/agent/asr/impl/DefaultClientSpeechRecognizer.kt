@@ -145,16 +145,10 @@ class DefaultClientSpeechRecognizer(
                 resultListener
             )
 
-        val listeningTimeoutSec:Int = if(payload != null) {
-            (payload.timeoutInMilliseconds / 1000L).toInt()
-        } else {
-            epdParam.timeoutInSeconds
-        }
-
         if (!endPointDetector.startDetector(
                 audioInputStream.createReader(),
                 audioFormat,
-                listeningTimeoutSec,
+                epdParam.timeoutInSeconds,
                 epdParam.maxDurationInSeconds,
                 epdParam.pauseLengthInMilliseconds
             )
