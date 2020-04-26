@@ -118,6 +118,7 @@ class DefaultTTSAgent(
         var isPlaybackInitiated = false
         var isDelayedCancel = false
         var cancelByStop = false
+        var state = TTSAgentInterface.State.IDLE
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -382,8 +383,10 @@ class DefaultTTSAgent(
         with(info) {
             cancelByStop = cancelAssociation
             if (isPlaybackInitiated) {
-                desireState = TTSAgentInterface.State.STOPPED
-                stopPlaying()
+                if(state != TTSAgentInterface.State.FINISHED && state != TTSAgentInterface.State.STOPPED) {
+                    desireState = TTSAgentInterface.State.STOPPED
+                    stopPlaying()
+                }
             } else {
                 isDelayedCancel = true
             }
@@ -677,6 +680,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.PLAYING)
+        info.state = TTSAgentInterface.State.PLAYING
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
     }
 
@@ -703,6 +707,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.STOPPED)
+        info.state = TTSAgentInterface.State.STOPPED
 
         sendPlaybackEvent(EVENT_SPEECH_STOPPED, info)
 
@@ -726,6 +731,7 @@ class DefaultTTSAgent(
 
         val info = currentInfo ?: return
         setCurrentState(TTSAgentInterface.State.FINISHED)
+        info.state = TTSAgentInterface.State.FINISHED
 
         sendPlaybackEvent(EVENT_SPEECH_FINISHED, info)
 
@@ -745,6 +751,7 @@ class DefaultTTSAgent(
         }
 
         setCurrentState(TTSAgentInterface.State.STOPPED)
+        info.state = TTSAgentInterface.State.STOPPED
         with(info) {
             result.setFailed("Playback Error (type: $type, error: $error)")
         }
