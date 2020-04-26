@@ -548,14 +548,14 @@ class DefaultTTSAgent(
     ) {
         executor.submit {
             if (currentState == TTSAgentInterface.State.PLAYING) {
+                // just log error
+                // context always updated if requested.
                 if (currentInfo == null) {
                     Logger.e(TAG, "[provideState] failed: currentInfo is null")
-                    return@submit
                 }
 
                 if (sourceId.isError()) {
                     Logger.e(TAG, "[provideState] failed: sourceId is error")
-                    return@submit
                 }
             }
 
