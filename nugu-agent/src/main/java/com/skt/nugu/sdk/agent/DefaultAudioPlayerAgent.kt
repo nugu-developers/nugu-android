@@ -612,9 +612,10 @@ class DefaultAudioPlayerAgent(
                     }
                 }
                 FocusState.BACKGROUND -> {
-                    // TODO : Should determine policy in this case.
-                    // Should be resume on foregrounded? If so, clear pause reason to resume on foreground.
-                    // pauseReason = null
+                    // The behavior should be same with when sent event.
+                    if(focusManager.acquireChannel(channelName, this, NAMESPACE)) {
+                        pauseReason = null
+                    }
                 }
                 FocusState.NONE -> {
                     // no-op
