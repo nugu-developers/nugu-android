@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.asr
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 interface SpeechRecognizer {
     enum class State {
@@ -34,10 +35,15 @@ interface SpeechRecognizer {
     }
 
     interface OnStateChangeListener {
-        fun onStateChanged(state: State)
+        fun onStateChanged(state: State, request: Request)
     }
 
     var enablePartialResult: Boolean
+
+    interface Request {
+        val eventMessage: EventMessageRequest
+        val sessionId: String?
+    }
 
     fun start(
         audioInputStream: SharedDataStream,
@@ -47,9 +53,8 @@ interface SpeechRecognizer {
         payload: ExpectSpeechPayload?,
         referrerDialogRequestId: String?,
         epdParam: EndPointDetectorParam,
-        recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?
-    )
+    ): Request?
 
     fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause)
 
