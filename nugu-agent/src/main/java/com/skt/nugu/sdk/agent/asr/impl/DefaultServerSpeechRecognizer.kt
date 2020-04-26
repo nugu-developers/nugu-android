@@ -43,9 +43,11 @@ class DefaultServerSpeechRecognizer(
 
     private data class RecognizeRequest(
         val senderThread: SpeechRecognizeAttachmentSenderThread,
-        val eventMessage: EventMessageRequest,
+        override val eventMessage: EventMessageRequest,
+        val expectSpeechPayload: ExpectSpeechPayload?,
         val resultListener: ASRAgentInterface.OnResultListener?
-    ) {
+    ) : SpeechRecognizer.Request {
+        override val sessionId: String? = expectSpeechPayload?.sessionId
         var cancelCause: ASRAgentInterface.CancelCause? = null
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
@@ -75,13 +77,15 @@ class DefaultServerSpeechRecognizer(
         payload: ExpectSpeechPayload?,
         referrerDialogRequestId: String?,
         epdParam: EndPointDetectorParam,
-        recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?
-    ) {
+    ): SpeechRecognizer.Request? {
         Logger.d(
             TAG,
             "[startProcessor] wakeupInfo:$wakeupInfo, currentInputPosition: ${audioInputStream.getPosition()}"
         )
+        if(currentRequest != null) {
+            return null
+        }
 
         val payloadWakeupInfo: PayloadWakeup?
         val sendPosition: Long?
@@ -133,19 +137,23 @@ class DefaultServerSpeechRecognizer(
                 sendPosition,
                 eventMessage
             )
-            currentRequest =
+            val request =
                 RecognizeRequest(
-                    thread, eventMessage, resultListener
+                    thread, eventMessage, payload, resultListener
                 )
+            currentRequest = request
             thread.start()
 
-            setState(SpeechRecognizer.State.EXPECTING_SPEECH)
+            setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
             timeoutFuture?.cancel(true)
             timeoutFuture = timeoutScheduler.schedule({
                 handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
             }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+
+            return request
         } else {
             Logger.w(TAG, "[startProcessor] failed to send recognize event")
+            return null
         }
     }
 
@@ -233,14 +241,14 @@ class DefaultServerSpeechRecognizer(
             AsrNotifyResultPayload.State.SOS -> {
                 timeoutFuture?.cancel(true)
                 timeoutFuture = null
-                setState(SpeechRecognizer.State.SPEECH_START)
+                setState(SpeechRecognizer.State.SPEECH_START, request)
             }
             AsrNotifyResultPayload.State.EOS -> {
                 timeoutFuture?.cancel(true)
                 timeoutFuture = null
                 request.senderThread.requestFinish()
                 onSendEventFinished(request.eventMessage.dialogRequestId)
-                setState(SpeechRecognizer.State.SPEECH_END)
+                setState(SpeechRecognizer.State.SPEECH_END, request)
             }
         }
 
@@ -252,17 +260,17 @@ class DefaultServerSpeechRecognizer(
         }
     }
 
-    private fun setState(state: SpeechRecognizer.State) {
+    private fun setState(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {
         Logger.d(TAG, "[setState] prev: ${this.state} / next: $state")
 
         this.state = state
 
-        notifyObservers(state)
+        notifyObservers(state, request)
     }
 
-    private fun notifyObservers(state: SpeechRecognizer.State) {
+    private fun notifyObservers(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {
         listeners.forEach {
-            it.onStateChanged(state)
+            it.onStateChanged(state, request)
         }
     }
 
@@ -333,23 +341,25 @@ class DefaultServerSpeechRecognizer(
     }
 
     private fun handleFinish() {
-        currentRequest = null
-        setState(SpeechRecognizer.State.STOP)
+        currentRequest?.let {
+            currentRequest = null
+            setState(SpeechRecognizer.State.STOP, it)
+        }
     }
 
     private fun handleError(errorType: ASRAgentInterface.ErrorType) {
         currentRequest?.let {
             it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
+            currentRequest = null
+            setState(SpeechRecognizer.State.STOP, it)
         }
-        currentRequest = null
-        setState(SpeechRecognizer.State.STOP)
     }
 
     private fun handleCancel() {
         currentRequest?.let {
             it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
+            currentRequest = null
+            setState(SpeechRecognizer.State.STOP, it)
         }
-        currentRequest = null
-        setState(SpeechRecognizer.State.STOP)
     }
 }

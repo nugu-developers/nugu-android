@@ -112,6 +112,8 @@ class DefaultASRAgent(
     private var focusState = FocusState.NONE
 
     private var isRequested: Boolean = false
+    private var currentRequest: SpeechRecognizer.Request? = null
+
     private var audioInputStream: SharedDataStream? = null
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
@@ -300,14 +302,10 @@ class DefaultASRAgent(
 
         currentAudioProvider = audioProvider
 
-        val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
+        val audioInputStream: SharedDataStream? = null//audioProvider.acquireAudioInputStream(this)
         val audioFormat: AudioFormat = audioProvider.getFormat()
 
         if (audioInputStream == null) {
-            Logger.w(
-                TAG,
-                "[executeHandleExpectSpeechDirective] audioInputStream is null"
-            )
             setHandlingExpectSpeechFailed(
                 payload,
                 info,
@@ -394,8 +392,17 @@ class DefaultASRAgent(
 
     private fun setHandlingExpectSpeechFailed(payload: ExpectSpeechPayload?, info: DirectiveInfo, msg: String) {
         setHandlingFailed(info, msg)
+        closeCurrentSessionIfMatchWith(payload)
         payload?.let {
             sendListenFailed(it, info.directive.getDialogRequestId())
+        }
+    }
+
+    private fun closeCurrentSessionIfMatchWith(payload: ExpectSpeechPayload?) {
+        currentSessionId?.let {
+            if(it == payload?.sessionId) {
+                dialogSessionManager.closeSession()
+            }
         }
     }
 
@@ -555,7 +562,7 @@ class DefaultASRAgent(
     ) {
         Logger.d(TAG, "[executeInternalStartRecognition]")
         executeSelectSpeechProcessor()
-        currentSpeechRecognizer.start(
+        currentRequest = currentSpeechRecognizer.start(
             audioInputStream,
             audioFormat,
             jsonContext,
@@ -563,7 +570,6 @@ class DefaultASRAgent(
             payload,
             referrerDialogRequestId,
             param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
-            callback,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(dialogRequestId: String) {
                     speechToTextConverterEventObserver.onNoneResult(dialogRequestId)
@@ -593,7 +599,13 @@ class DefaultASRAgent(
                     speechToTextConverterEventObserver.onCancel(cause, dialogRequestId)
                 }
             }
-        )
+        ).also {
+            if(it == null) {
+                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+            } else {
+                callback?.onSuccess(it.eventMessage.dialogRequestId)
+            }
+        }
 
         clearPreHandledExpectSpeech()
         isRequested = false
@@ -657,8 +669,8 @@ class DefaultASRAgent(
         }
     }
 
-    override fun onStateChanged(state: SpeechRecognizer.State) {
-        Logger.d(TAG, "[SpeechProcessorInterface] state: $state")
+    override fun onStateChanged(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {
+        Logger.d(TAG, "[SpeechProcessorInterface] state: $state, request: $request")
         executor.submit {
             val aipState = when (state) {
                 SpeechRecognizer.State.EXPECTING_SPEECH -> {
@@ -673,6 +685,7 @@ class DefaultASRAgent(
                 SpeechRecognizer.State.STOP -> {
                     currentAudioProvider?.releaseAudioInputStream(this)
                     currentAudioProvider = null
+                    currentRequest = null
                     ASRAgentInterface.State.IDLE
                 }
             }
@@ -843,6 +856,15 @@ class DefaultASRAgent(
         currentSpeechRecognizer.stop(cancel, cause)
     }
 
+    private fun executeStopRecognitionBySessionClosed(sessionId: String) {
+        currentRequest?.let {
+            if(it.sessionId == sessionId) {
+                Logger.d(TAG, "[executeStopRecognitionBySessionClosed] sessionId: $sessionId")
+                currentSpeechRecognizer.stop(true, ASRAgentInterface.CancelCause.SESSION_CLOSED)
+            }
+        }
+    }
+
     private fun canRecognizing(): Boolean {
         // It is possible to start recognition internally when
         // * ASR State == IDLE
@@ -919,6 +941,6 @@ class DefaultASRAgent(
                 it.onMultiturnStateChanged(false)
             }
         }
-        executeStopRecognition(true, ASRAgentInterface.CancelCause.SESSION_CLOSED)
+        executeStopRecognitionBySessionClosed(sessionId)
     }
 }

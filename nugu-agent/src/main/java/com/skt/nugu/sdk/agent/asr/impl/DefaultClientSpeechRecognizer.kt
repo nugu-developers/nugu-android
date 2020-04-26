@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -43,16 +42,17 @@ class DefaultClientSpeechRecognizer(
         private const val TAG = "DefaultClientSpeechRecognizer"
     }
 
-    private data class RecognizeRequest(
+    private data class RecognizeRequest (
         val audioInputStream: SharedDataStream,
         val audioFormat: AudioFormat,
         val wakeupInfo: WakeupInfo?,
         val sendPositionAndWakeupBoundary: Pair<Long?, WakeupBoundary?>,
         var senderThread: SpeechRecognizeAttachmentSenderThread?,
-        val eventMessage: EventMessageRequest,
-        val recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
+        override val eventMessage: EventMessageRequest,
+        val expectSpeechPayload: ExpectSpeechPayload?,
         val resultListener: ASRAgentInterface.OnResultListener?
-    ) {
+    ): SpeechRecognizer.Request {
+        override val sessionId: String? = expectSpeechPayload?.sessionId
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
 
         var stopByCancel: Boolean? = null
@@ -91,18 +91,14 @@ class DefaultClientSpeechRecognizer(
         payload: ExpectSpeechPayload?,
         referrerDialogRequestId: String?,
         epdParam: EndPointDetectorParam,
-        recognitionCallback: ASRAgentInterface.StartRecognitionCallback?,
         resultListener: ASRAgentInterface.OnResultListener?
-    ) {
+    ): SpeechRecognizer.Request? {
         Logger.d(
             TAG,
             "[startProcessor] wakeupInfo:$wakeupInfo, currentInputPosition: ${audioInputStream.getPosition()}"
         )
         if(currentRequest != null) {
-            recognitionCallback?.onError(UUIDGeneration.timeUUID().toString(),
-                ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER
-            )
-            return
+            return null
         }
 
 //        val sendPositionAndWakeupBoundary =
@@ -135,7 +131,7 @@ class DefaultClientSpeechRecognizer(
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .build()
 
-        currentRequest =
+        val request =
             RecognizeRequest(
                 audioInputStream,
                 audioFormat,
@@ -143,10 +139,10 @@ class DefaultClientSpeechRecognizer(
                 sendPositionAndWakeupBoundary,
                 null,
                 eventMessage,
-                recognitionCallback,
+                payload,
                 resultListener
             )
-
+        currentRequest = request
         if (!endPointDetector.startDetector(
                 audioInputStream.createReader(),
                 audioFormat,
@@ -156,13 +152,12 @@ class DefaultClientSpeechRecognizer(
             )
         ) {
             Logger.e(TAG, "[startProcessor] failed to start epd.")
-            currentRequest?.recognitionCallback?.onError(eventMessage.dialogRequestId,
-                ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER
-            )
             currentRequest = null
+            return null
         } else {
             Logger.d(TAG, "[startProcessor] started")
-            currentRequest?.recognitionCallback?.onSuccess(eventMessage.dialogRequestId)
+            return request
+
         }
     }
 
@@ -300,7 +295,7 @@ class DefaultClientSpeechRecognizer(
 
         epdState = state
 
-        setState(speechProcessorState)
+        setState(speechProcessorState, request)
     }
 
     private fun startSpeechSenderThread(request: RecognizeRequest, speechStartPosition: Long?) {
@@ -356,22 +351,24 @@ class DefaultClientSpeechRecognizer(
     private fun handleCancel() {
         currentRequest?.let {
             it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
+            currentRequest = null
+            setState(SpeechRecognizer.State.STOP, it)
         }
-        currentRequest = null
-        setState(SpeechRecognizer.State.STOP)
     }
 
     private fun handleError(errorType: ASRAgentInterface.ErrorType) {
         currentRequest?.let {
             it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
+            currentRequest = null
+            setState(SpeechRecognizer.State.STOP, it)
         }
-        currentRequest = null
-        setState(SpeechRecognizer.State.STOP)
     }
 
     private fun handleFinish() {
-        currentRequest = null
-        setState(SpeechRecognizer.State.STOP)
+        currentRequest?.let {
+            currentRequest = null
+            setState(SpeechRecognizer.State.STOP, it)
+        }
     }
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
@@ -388,7 +385,7 @@ class DefaultClientSpeechRecognizer(
         }
     }
 
-    private fun setState(state: SpeechRecognizer.State) {
+    private fun setState(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {
         stateLock.withLock {
             Logger.d(TAG, "[setState] prev: ${this.state} / next: $state")
             if (this.state == state) {
@@ -398,12 +395,12 @@ class DefaultClientSpeechRecognizer(
             this.state = state
         }
 
-        notifyObservers(state)
+        notifyObservers(state, request)
     }
 
-    private fun notifyObservers(state: SpeechRecognizer.State) {
+    private fun notifyObservers(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {
         listeners.forEach {
-            it.onStateChanged(state)
+            it.onStateChanged(state, request)
         }
     }
 
