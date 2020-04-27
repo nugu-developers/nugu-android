@@ -302,7 +302,7 @@ class DefaultASRAgent(
 
         currentAudioProvider = audioProvider
 
-        val audioInputStream: SharedDataStream? = null//audioProvider.acquireAudioInputStream(this)
+        val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
         val audioFormat: AudioFormat = audioProvider.getFormat()
 
         if (audioInputStream == null) {
