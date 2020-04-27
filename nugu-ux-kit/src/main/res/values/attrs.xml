@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <declare-styleable name="NuguButton">
+        <attr name="types" format="enum">
+            <enum name="fab" value="0" />
+            <enum name="button" value="1" />
+        </attr>
+        <attr name="colors" format="enum">
+            <enum name="blue" value="0" />
+            <enum name="white" value="1" />
+        </attr>
+    </declare-styleable>
+
     <declare-styleable name="NuguFloatingActionButton">
         <attr name="fab_micLargeDrawable" format="reference"/>
         <attr name="fab_nuguLargeDrawable" format="reference"/>

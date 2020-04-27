@@ -1,16 +1,11 @@
 <resources>
-    <!-- chiptray view-->
-    <dimen name="chiptray_start_margin">24dp</dimen>
-    <dimen name="chiptray_item_margin">4dp</dimen>
-    <dimen name="chiptray_height">68dp</dimen>
-    <dimen name="chiptray_margin_bottom">8dp</dimen>
-
+    <!-- chips view-->
+    <dimen name="chips_item_margin">8dp</dimen>
     <!-- chiptray item-->
-    <dimen name="chips_height">44dp</dimen>
-    <dimen name="chips_text_size">16sp</dimen>
+    <dimen name="chips_height">40dp</dimen>
 
     <!-- @res rounded_button_selector.xml -->
-    <dimen name="rounded_button_shape_border_radius">22dp</dimen>
+    <dimen name="rounded_button_shape_border_radius">20dp</dimen>
     <dimen name="rounded_button_shape_border_width">0.5dp</dimen>
 
     <!-- snackbar -->

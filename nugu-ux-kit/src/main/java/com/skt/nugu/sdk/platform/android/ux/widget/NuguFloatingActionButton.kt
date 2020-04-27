@@ -57,6 +57,7 @@ import com.skt.nugu.sdk.platform.android.ux.R
  * @attr ref R.styleable#NuguFloatingActionButton_fab_sizes
  */
 
+@Deprecated("Use NuguButton")
 class NuguFloatingActionButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
