@@ -19,38 +19,44 @@ import android.app.Activity
 import android.support.design.widget.BottomSheetBehavior
 import android.util.Log
 import android.view.View
-import android.widget.*
-import com.skt.nugu.sdk.platform.android.ux.widget.ChipTrayView
-import com.skt.nugu.sdk.platform.android.ux.widget.VoiceChromeView
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
+import android.widget.FrameLayout
+import android.widget.TextView
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sampleapp.utils.SoundPoolCompat
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
 
-class BottomSheetController(
+
+class ChromeWindowController(
     private val activity: Activity,
-    private val callback: OnBottomSheetCallback
+    private val callback: OnChromeWindowCallback
 ) : SpeechRecognizerAggregatorInterface.OnStateChangeListener
     , DialogUXStateAggregatorInterface.Listener
     , ASRAgentInterface.OnResultListener {
 
     companion object {
-        private const val TAG = "BottomSheetController"
+        private const val TAG = "ChromeWindowController"
 
         private const val DELAY_TIME_LONG = 1500L
         private const val DELAY_TIME_SHORT = 150L
     }
 
-    interface OnBottomSheetCallback {
+    interface OnChromeWindowCallback {
         fun onExpandStarted()
         fun onHiddenFinished()
     }
 
-    private var dialogMode: Boolean = false
+    private var isDialogMode: Boolean = false
+
+    private val finishRunnable = Runnable {
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+    }
 
     private val bottomSheet: FrameLayout by lazy {
         activity.findViewById<FrameLayout>(R.id.fl_bottom_sheet)
@@ -60,24 +66,28 @@ class BottomSheetController(
         BottomSheetBehavior.from(bottomSheet)
     }
 
-    private val voiceChromeInfoLayout: FrameLayout by lazy {
-        activity.findViewById<FrameLayout>(R.id.fl_voice_chrome_info)
-    }
-
-    private val sttResult:TextView by lazy {
+    private val sttTextView:TextView by lazy {
         activity.findViewById<TextView>(R.id.tv_stt)
     }
 
-    private val voiceChrome : VoiceChromeView by lazy {
-        activity.findViewById<VoiceChromeView>(R.id.voice_chrome)
+    private val voiceChrome : NuguVoiceChromeView by lazy {
+        activity.findViewById<NuguVoiceChromeView>(R.id.voice_chrome)
     }
 
-    private val chipTray : ChipTrayView by lazy {
-        activity.findViewById<ChipTrayView>(R.id.chipTray)
+    private val chipsView : NuguChipsView by lazy {
+        activity.findViewById<NuguChipsView>(R.id.chipsView)
     }
 
-    private val btnClose: ImageView by lazy {
-        activity.findViewById<ImageView>(R.id.btn_close)
+    fun getHeight() : Int {
+        return bottomSheet.height
+    }
+
+    fun isShown() : Boolean {
+        return bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
+    }
+
+    fun dismiss() {
+        finishImmediately()
     }
 
     init {
@@ -88,89 +98,54 @@ class BottomSheetController(
             }
 
             override fun onStateChanged(bottomSheet: View, newState: Int) {
+                Logger.d(TAG, "[onStateChanged] $newState")
                 when(newState) {
+                    BottomSheetBehavior.STATE_COLLAPSED -> {
+                        finishImmediately()
+                    }
                     BottomSheetBehavior.STATE_HIDDEN -> callback.onHiddenFinished()
                 }
             }
         })
+        chipsView.setOnChipsClickListener(object : NuguChipsView.OnItemClickListener {
+            override fun onItemClick(text: String, isAction: Boolean) {
+                ClientManager.getClient().requestTextInput(text)
+            }
+        })
+    }
 
-        chipTray.apply {
-//            addAll(activity.resources.getStringArray(R.array.chips))
-            setOnChipsClickListener(object : ChipTrayView.OnChipsClickListener {
-                override fun onClick(text: String) {
-                    ClientManager.getClient().requestTextInput(text)
-                    sttResult.text = text
-                }
-            })
-        }
+    private fun updateUtteranceGuide() {
+        val items = ArrayList<NuguChipsView.Item>()
+        //items.add(NuguChipsView.Item("안녕", true))
+        chipsView.addAll(items)
+    }
 
-        btnClose.setOnClickListener {
-            ClientManager.speechRecognizerAggregator.stopListening(false)
-        }
+    private fun setResult(text : String) {
+        sttTextView.text = text
+        sttTextView.visibility = View.VISIBLE
+        chipsView.visibility = if(text.isEmpty()) View.VISIBLE else View.GONE
     }
 
     override fun onStateChanged(state: SpeechRecognizerAggregatorInterface.State) {
         bottomSheet.post {
             Log.d(TAG, "[onStateChanged] state: $state")
             voiceChromeController.onStateChanged(state)
-            when(state){
-                SpeechRecognizerAggregatorInterface.State.WAKEUP -> {
-
-                }
-                SpeechRecognizerAggregatorInterface.State.WAITING -> {
-//                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-                }
-                SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH -> {
-                    sttResult.text = ""
-                    cancelFinishDelayed()
-                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-                    callback.onExpandStarted()
-                }
-                SpeechRecognizerAggregatorInterface.State.SPEECH_START -> {
-                    cancelFinishDelayed()
-                }
-                SpeechRecognizerAggregatorInterface.State.SPEECH_END -> {
-                    
-                }
-                SpeechRecognizerAggregatorInterface.State.STOP -> {
-                    finishImmediately()
-                }
-                SpeechRecognizerAggregatorInterface.State.ERROR,
-                SpeechRecognizerAggregatorInterface.State.TIMEOUT -> {
-                    if (PreferenceHelper.enableRecognitionBeep(activity)) {
-                        SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
-                    }
-                }
-            }
         }
     }
 
     override fun onDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState, dialogMode: Boolean) {
         bottomSheet.post {
             Log.d(TAG, "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode")
-            this.dialogMode = dialogMode
 
-            if(dialogMode) {
-                voiceChromeInfoLayout.visibility = View.GONE
-                btnClose.visibility = View.GONE
-            } else {
-                voiceChromeInfoLayout.visibility = View.VISIBLE
-                btnClose.visibility = View.VISIBLE
-            }
-            bottomSheet.invalidate()
-
+            this.isDialogMode = dialogMode
             voiceChromeController.onDialogUXStateChanged(newState, dialogMode)
 
             when(newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
-                    if (PreferenceHelper.enableWakeupBeep(activity)) {
-                        SoundPoolCompat.play(SoundPoolCompat.LocalBeep.WAKEUP)
-                    }
+                    handleExpecting()
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                    if (!dialogMode) {
-                        finishImmediately()
-                    }
+                    handleSpeaking()
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
                     finishDelayed(DELAY_TIME_LONG)
@@ -182,29 +157,46 @@ class BottomSheetController(
         }
     }
 
+    private fun handleExpecting() {
+        setResult("")
+        updateUtteranceGuide()
+        cancelFinishDelayed()
+
+        if (PreferenceHelper.enableWakeupBeep(activity)) {
+            SoundPoolCompat.play(SoundPoolCompat.LocalBeep.WAKEUP)
+        }
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        callback.onExpandStarted()
+    }
+
+    private fun handleSpeaking() {
+        if(!isDialogMode) {
+            finishImmediately()
+            return
+        }
+        cancelFinishDelayed()
+        sttTextView.visibility = if(chipsView.size() > 0) View.GONE else View.VISIBLE
+        chipsView.visibility = View.VISIBLE
+    }
+
     override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
-        // no-op
         Logger.d(TAG, "[onCancel] $cause")
     }
 
     override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
-        when(type) {
-            ASRAgentInterface.ErrorType.ERROR_NETWORK ,
-            ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT ,
-            ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT -> {
-                bottomSheet.post {
+        bottomSheet.post {
+            when(type) {
+                ASRAgentInterface.ErrorType.ERROR_NETWORK ,
+                ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT ,
+                ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT -> {
                     if (PreferenceHelper.enableRecognitionBeep(activity)) {
                         SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
                     }
                 }
-            }
-            ASRAgentInterface.ErrorType.ERROR_UNKNOWN -> {
-                bottomSheet.post {
+                ASRAgentInterface.ErrorType.ERROR_UNKNOWN -> {
                     SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NOTACCEPTABLE_ERROR)
                 }
-            }
-            ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT -> {
-                bottomSheet.post {
+                ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT -> {
                     SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_REQUEST_TIMEOUT_ERROR)
                 }
             }
@@ -213,7 +205,7 @@ class BottomSheetController(
 
     override fun onNoneResult(dialogRequestId: String) {
         bottomSheet.post {
-            if(PreferenceHelper.enableRecognitionBeep(activity)) {
+            if (PreferenceHelper.enableRecognitionBeep(activity)) {
                 SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
             }
         }
@@ -221,13 +213,13 @@ class BottomSheetController(
 
     override fun onPartialResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
-            sttResult.text = result
+            setResult(result)
         }
     }
 
     override fun onCompleteResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
-            sttResult.text = result
+            setResult(result)
 
             if(PreferenceHelper.enableRecognitionBeep(activity)) {
                 SoundPoolCompat.play(SoundPoolCompat.LocalBeep.SUCCESS)
@@ -249,18 +241,13 @@ class BottomSheetController(
         bottomSheet.post(finishRunnable)
     }
 
-    private val finishRunnable = Runnable {
-        Log.d(TAG, "[finishRunnable] called")
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-    }
-
     private val voiceChromeController = object : SpeechRecognizerAggregatorInterface.OnStateChangeListener, DialogUXStateAggregatorInterface.Listener {
         override fun onStateChanged(state: SpeechRecognizerAggregatorInterface.State) {
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.ERROR,
                 SpeechRecognizerAggregatorInterface.State.TIMEOUT,
                 SpeechRecognizerAggregatorInterface.State.STOP -> {
-                    voiceChrome.stopAnimation()
+                  //  voiceChrome.stopAnimation()
                 }
                 else -> {
                     // nothing to do
@@ -271,16 +258,16 @@ class BottomSheetController(
         override fun onDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState, dialogMode: Boolean) {
             when (newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
-                    voiceChrome.startAnimation(VoiceChromeView.Animation.WAITING)
+                    voiceChrome.startAnimation(NuguVoiceChromeView.Animation.WAITING)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.LISTENING -> {
-                    voiceChrome.startAnimation(VoiceChromeView.Animation.LISTENING)
+                    voiceChrome.startAnimation(NuguVoiceChromeView.Animation.LISTENING)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.THINKING -> {
-                    voiceChrome.startAnimation(VoiceChromeView.Animation.THINKING)
+                    voiceChrome.startAnimation(NuguVoiceChromeView.Animation.THINKING)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                    voiceChrome.startAnimation(VoiceChromeView.Animation.SPEAKING)
+                    voiceChrome.startAnimation(NuguVoiceChromeView.Animation.SPEAKING)
                 }
                 else -> {
                     // nothing to do

@@ -4,7 +4,7 @@
     <string name="nugu_redirect_scheme">YOUR REDIRECT URI SCHEME</string>
     <string name="nugu_redirect_host">YOUR REDIRECT URI HOST</string>
 
-    <string name="textview_result_hint">말씀해주세요</string>
+    <string name="guide_text">말씀해주세요</string>
     <string name="not_supported">half feature is not yet supported.</string>
     <string name="authorization_failure_message">please try again in a few minutes.</string>
 
@@ -16,6 +16,7 @@
 
     <string name="connection_failed">Connection to server failed.</string>
     <string name="reconnecting">Reconnecting</string>
+    <string name="volume_mute">휴대폰 미디어 볼륨이 무음상태입니다.\n휴대폰의 볼륨을 조절해주세요.</string>
 
     <string name="menu_setting">setting</string>
     <string name="setting_enable_nugu">인공지능 NUGU 사용하기</string>
@@ -25,23 +26,5 @@
     <string name="setting_enable_recognition_beep">인식 성공 효과음</string>
     <string name="setting_auth_type">계정선택</string>
     <string name="setting_logout">로그아웃</string>
-
-    <!-- Chips Array -->
-    <string-array name="chips">
-        <item>클래식매니저 들려줘</item>
-        <item>템플릿에서 이미지리스트2</item>
-        <item>템플릿 텍스트 1</item>
-        <item>템플릿 텍스트 2</item>
-        <item>템플릿 텍스트 3</item>
-        <item>템플릿 이미지 1</item>
-        <item>템플릿 이미지 2</item>
-        <item>템플릿 이미지 3</item>
-        <item>템플릿 이미지 4</item>
-        <item>템플릿 이미지 5</item>
-        <item>템플릿 리스트 1</item>
-        <item>템플릿 리스트 2</item>
-        <item>템플릿 리스트 3</item>
-        <item>템플릿 커스텀</item>
-    </string-array>
 
 </resources>

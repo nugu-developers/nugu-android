@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * A Voice Chrome View is a animated view designed by Nugu Design guide.
  * See https://github.com/airbnb/lottie-android
  */
+@Deprecated("Use NuguVoiceChromeView")
 class VoiceChromeView : FrameLayout {
     /**
      * Provides animation information

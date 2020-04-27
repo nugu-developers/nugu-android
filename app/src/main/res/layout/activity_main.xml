@@ -30,23 +30,19 @@
 
         <include layout="@layout/content_main"/>
 
-        <include layout="@layout/bottom_sheet_voice_chrome"/>
+        <include layout="@layout/bottom_sheet_voice_window"/>
 
-        <com.skt.nugu.sdk.platform.android.ux.widget.NuguFloatingActionButton
-                android:id="@+id/fab"
-                android:layout_width="@dimen/fab_size_large"
-                android:layout_height="@dimen/fab_size_large"
-                app:fab_micLargeDrawable="@drawable/nugu_btn_large_mic"
-                app:fab_nuguLargeDrawable="@drawable/nugu_btn_large_nugu"
-                app:fab_micStandardDrawable="@drawable/nugu_btn_mic"
-                app:fab_nuguStandardDrawable="@drawable/nugu_btn_nugu"
-                app:fab_color="#009DFF"
-                app:fab_sizes="standard"
-                app:fab_autoPlay="true"
-                app:fab_loop="true"
-                android:layout_gravity="bottom|center"
-                android:contentDescription="@string/button_fab_description"
-                android:layout_margin="@dimen/button_fab_margin"/>
+        <com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
+            android:id="@+id/fab"
+            app:colors="blue"
+            app:types="fab"
+            android:contentDescription="@string/button_fab_description"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
     </android.support.design.widget.CoordinatorLayout>
 
     <android.support.design.widget.NavigationView
