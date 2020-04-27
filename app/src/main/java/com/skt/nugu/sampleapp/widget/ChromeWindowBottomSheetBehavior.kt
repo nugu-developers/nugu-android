@@ -25,18 +25,16 @@ import android.view.View
 import com.skt.nugu.sampleapp.client.ClientManager
 
 
-class VoiceChromeBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
+class ChromeWindowBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
     constructor() : super()
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
     override fun onInterceptTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent): Boolean {
         if (event.action === MotionEvent.ACTION_DOWN && state == STATE_EXPANDED) {
-
             val outRect = Rect()
             child.getGlobalVisibleRect(outRect)
-
             if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
-                ClientManager.speechRecognizerAggregator.stopListening()
+                state = STATE_COLLAPSED
             }
         }
 
@@ -46,6 +44,5 @@ class VoiceChromeBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
     override fun onTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent): Boolean {
         // disable drag
         return false
-//        return super.onTouchEvent(parent, child, event)
     }
 }

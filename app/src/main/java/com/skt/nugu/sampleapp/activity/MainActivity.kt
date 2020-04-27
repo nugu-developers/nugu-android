@@ -27,12 +27,12 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.platform.android.ux.widget.NuguFloatingActionButton
-import com.skt.nugu.sdk.platform.android.ux.widget.Snackbar
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguSnackbar
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
@@ -42,8 +42,10 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
-import com.skt.nugu.sampleapp.widget.BottomSheetController
+import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener
@@ -65,8 +67,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     @Volatile
     private var connectionStatus: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
 
-    private val btnStartListening: NuguFloatingActionButton by lazy {
-        findViewById<NuguFloatingActionButton>(R.id.fab)
+    private val btnStartListening: NuguButton by lazy {
+        findViewById<NuguButton>(R.id.fab)
     }
     private val drawerLayout: DrawerLayout by lazy {
         findViewById<DrawerLayout>(R.id.drawer_layout)
@@ -86,8 +88,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         OnRequestPermissionResultHandler(this)
     }
     
-    private lateinit var bottomSheetController: BottomSheetController
-    private var bottomSheetVisibility = View.INVISIBLE
+    private lateinit var chromeWindowController: ChromeWindowController
 
     private val speechRecognizerAggregator: SpeechRecognizerAggregator by lazy {
         ClientManager.speechRecognizerAggregator
@@ -109,15 +110,14 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
 
-        bottomSheetController = BottomSheetController(this, object : BottomSheetController.OnBottomSheetCallback {
+        chromeWindowController = ChromeWindowController(this, object : ChromeWindowController.OnChromeWindowCallback {
             override fun onExpandStarted() {
-                bottomSheetVisibility = View.VISIBLE
                 btnStartListening.visibility = View.INVISIBLE
             }
 
             override fun onHiddenFinished() {
-                bottomSheetVisibility = View.INVISIBLE
                 btnStartListening.visibility = View.VISIBLE
+                speechRecognizerAggregator.stopListening()
             }
         }).apply {
             speechRecognizerAggregator.addListener(this)
@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onDestroy() {
-        bottomSheetController.apply {
+        chromeWindowController.apply {
             speechRecognizerAggregator.removeListener(this)
             ClientManager.getClient().removeDialogUXStateListener(this)
             ClientManager.getClient().removeASRResultListener(this)
@@ -199,8 +199,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onBackPressed() {
-        if(bottomSheetVisibility == View.VISIBLE) {
-            ClientManager.speechRecognizerAggregator.stopListening()
+        if(chromeWindowController.isShown()) {
+            chromeWindowController.dismiss()
             return
         }
 
@@ -256,24 +256,28 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     override fun onStateChanged(state: SpeechRecognizerAggregatorInterface.State) {
         Log.d(TAG, "[onStateChanged::$state]")
-        runOnUiThread {
-            if (speechRecognizerAggregatorState != state) {
-                when (state) {
-                    SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH -> {
-                        if (VolumeUtils.isMute(this)) {
-                            VolumeUtils.unMute(this)
+        if (speechRecognizerAggregatorState != state) {
+            when (state) {
+                SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH -> {
+                    if (VolumeUtils.isMute(this)) {
+                        runOnUiThread {
+                            NuguToast.with(findViewById(R.id.drawer_layout))
+                                .message(R.string.volume_mute)
+                                .yOffset(findViewById<FrameLayout>(R.id.fl_bottom_sheet).height)
+                                .duration(NuguSnackbar.LENGTH_SHORT)
+                                .show()
                         }
                     }
-                    else -> {
-                    }
+                }
+                else -> {
                 }
             }
-
-            if(state != SpeechRecognizerAggregatorInterface.State.ERROR) {
-                tryStartListeningWithTrigger()
-            }
-            speechRecognizerAggregatorState = state
         }
+
+        if(state != SpeechRecognizerAggregatorInterface.State.ERROR) {
+            tryStartListeningWithTrigger()
+        }
+        speechRecognizerAggregatorState = state
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -288,15 +292,13 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private fun updateView() {
         // Set the enabled state of this [btnStartListening]
         runOnUiThread {
-            btnStartListening.isEnabled = isConnected()
-            //
-            if (PreferenceHelper.enableTrigger(this)) {
-                btnStartListening.resumeAnimation()
-            } else {
-                btnStartListening.stopAnimation()
+            if(!PreferenceHelper.enableNugu(this)) {
+                btnStartListening.visibility = View.INVISIBLE
+                return@runOnUiThread
             }
 
-            if (PreferenceHelper.enableNugu(this) && bottomSheetVisibility == View.INVISIBLE) {
+            btnStartListening.isEnabled = isConnected()
+            if (!chromeWindowController.isShown()) {
                 btnStartListening.visibility = View.VISIBLE
             } else {
                 btnStartListening.visibility = View.INVISIBLE
@@ -326,9 +328,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT ,
                 ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
                     /** checking connection status for debugging. **/
-                    Snackbar.with(findViewById(R.id.drawer_layout))
+                    NuguSnackbar.with(findViewById(R.id.drawer_layout))
                         .message(R.string.reconnecting)
-                        .duration(Snackbar.LENGTH_SHORT)
+                        .duration(NuguSnackbar.LENGTH_SHORT)
                         .show()
                 }
                 else -> { /* nothing to do */ }
@@ -353,9 +355,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                             ClientManager.getClient().connect()
                         }
                      **/
-                    Snackbar.with(findViewById(R.id.drawer_layout))
+                    NuguSnackbar.with(findViewById(R.id.drawer_layout))
                         .message(R.string.connection_failed)
-                        .duration(Snackbar.LENGTH_LONG)
+                        .duration(NuguSnackbar.LENGTH_LONG)
                         .show()
 
                     val cm = this.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -378,9 +380,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                                 }
                                 AuthStateListener.State.UNRECOVERABLE_ERROR -> {
                                     Log.d(TAG, "Authentication failed")
-                                    Snackbar.with(findViewById(R.id.drawer_layout))
+                                    NuguSnackbar.with(findViewById(R.id.drawer_layout))
                                         .message(R.string.authentication_failed)
-                                        .duration(Snackbar.LENGTH_LONG)
+                                        .duration(NuguSnackbar.LENGTH_LONG)
                                         .show()
                                     SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_UNAUTHORIZED_ERROR)
                                     return false

@@ -26,6 +26,7 @@ import android.support.design.widget.Snackbar as AndroidSnackbar
  * Wrapper class to customise android.support.design.widget.Snackbar
  * @param fab is parent view
  */
+@Deprecated("Use NuguSnackbar")
 class Snackbar(val fab: View) {
     /**
      * Callback class for Snackbar instances
