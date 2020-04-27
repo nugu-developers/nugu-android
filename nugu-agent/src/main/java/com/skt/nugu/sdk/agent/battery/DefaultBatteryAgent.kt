@@ -50,8 +50,8 @@ class DefaultBatteryAgent(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        val level = batteryStatusProvider.getBatteryLevel()
-        val charging = batteryStatusProvider.isCharging()
+        val level = batteryStatusProvider.getBatteryLevel().coerceIn(0, 100)
+        val charging = batteryStatusProvider.isCharging() ?: false
 
         val context = if(lastUpdatedBatteryLevel != level || lastUpdatedCharging != charging || !hasBeenContextUpdated) {
             hasBeenContextUpdated = true
@@ -73,13 +73,8 @@ class DefaultBatteryAgent(
         addProperty("version", VERSION.toString())
     }
 
-    private fun buildContext(level: Int, charging: Boolean?): String = buildCompactContext().apply {
-        if (level > 0) {
-            addProperty("level", level)
-        }
-
-        if (charging != null) {
-            addProperty("charging", charging)
-        }
+    private fun buildContext(level: Int, charging: Boolean): String = buildCompactContext().apply {
+        addProperty("level", level)
+        addProperty("charging", charging)
     }.toString()
 }
