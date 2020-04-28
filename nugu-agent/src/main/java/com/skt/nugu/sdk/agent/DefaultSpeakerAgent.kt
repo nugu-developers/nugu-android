@@ -25,9 +25,9 @@ import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -370,8 +370,8 @@ class DefaultSpeakerAgent(
     }
 
     private fun sendSpeakerEvent(eventName: String, playServiceId: String, referrerDialogRequestId: String) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val request =
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, eventName, VERSION.toString())
                         .payload(JsonObject().apply {
@@ -380,9 +380,6 @@ class DefaultSpeakerAgent(
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
                 messageSender.sendMessage(request)
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         })
     }

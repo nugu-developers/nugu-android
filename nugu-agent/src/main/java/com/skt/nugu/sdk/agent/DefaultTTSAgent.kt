@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -766,9 +767,8 @@ class DefaultTTSAgent(
         token: String,
         referrerDialogRequestId: String
     ) {
-        contextManager.getContext(object :
-            ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val messageRequest =
                     EventMessageRequest.Builder(jsonContext, namespace, name, VERSION.toString())
                         .payload(
@@ -782,9 +782,6 @@ class DefaultTTSAgent(
                 messageSender.sendMessage(messageRequest)
 
                 Logger.d(TAG, "[sendEventWithToken] $messageRequest")
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
     }
@@ -800,8 +797,8 @@ class DefaultTTSAgent(
     ): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val messageRequest =
                     EventMessageRequest.Builder(
                         jsonContext,
@@ -827,10 +824,6 @@ class DefaultTTSAgent(
                 } else {
                     listener?.onError(dialogRequestId)
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                listener?.onError(dialogRequestId)
             }
         }, namespaceAndName)
 

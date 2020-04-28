@@ -20,10 +20,10 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -112,23 +112,20 @@ class CloseDirectiveHandler(
     }
 
     private fun sendCloseEvent(eventName: String, info: DirectiveInfo, playServiceId: String) {
-        contextGetter.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(
-                            jsonContext,
-                            DefaultDisplayAgent.NAMESPACE,
-                            eventName,
-                            DefaultDisplayAgent.VERSION.toString()
-                        ).payload(JsonObject().apply {
-                            addProperty("playServiceId", playServiceId)
-                        }.toString())
+                        jsonContext,
+                        DefaultDisplayAgent.NAMESPACE,
+                        eventName,
+                        DefaultDisplayAgent.VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        addProperty("playServiceId", playServiceId)
+                    }.toString())
                         .referrerDialogRequestId(info.directive.header.dialogRequestId)
                         .build()
                 )
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, NamespaceAndName(
             "supportedInterfaces",

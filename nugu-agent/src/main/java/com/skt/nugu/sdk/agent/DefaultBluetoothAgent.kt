@@ -34,8 +34,8 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
 
@@ -257,8 +257,8 @@ class DefaultBluetoothAgent(
     private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId : String, hasPairedDevices: Boolean? = null, waitResult : CountDownLatch? = null): Boolean {
         var result = false
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                     .referrerDialogRequestId(referrerDialogRequestId)
                     .payload(JsonObject().apply {
@@ -269,10 +269,6 @@ class DefaultBluetoothAgent(
                     }.toString()).build()
 
                 result = messageSender.sendMessage(request)
-                waitResult?.countDown()
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 waitResult?.countDown()
             }
         }, namespaceAndName)

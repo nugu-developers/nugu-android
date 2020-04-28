@@ -19,11 +19,11 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
@@ -241,8 +241,8 @@ class DefaultTextAgent(
     ): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
                     createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
@@ -256,11 +256,6 @@ class DefaultTextAgent(
                         }
                     }
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                Logger.d(TAG, "[onContextFailure] error: $error")
-                listener?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_UNKNOWN)
             }
         })
 

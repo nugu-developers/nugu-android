@@ -5,9 +5,9 @@ import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerPlaybackInfoProvider
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -52,8 +52,8 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
     override fun handleDirective(info: DirectiveInfo) {
         setHandlingCompleted(info)
-        contextGetter.getContext(object: ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val token = playbackInfoProvider.getToken()
                 val offsetInMilliseconds = playbackInfoProvider.getOffsetInMilliseconds()
                 val playServiceId = playbackInfoProvider.getPlayServiceId()
@@ -65,11 +65,11 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                 if(handler?.handleRequestCommand(info.directive.payload, info.directive.header) != true) {
                     val header = info.directive.header
                     val message = EventMessageRequest.Builder(
-                            jsonContext,
-                            header.namespace,
-                            "${header.name}$NAME_ISSUED",
-                            VERSION.toString()
-                        )
+                        jsonContext,
+                        header.namespace,
+                        "${header.name}$NAME_ISSUED",
+                        VERSION.toString()
+                    )
                         .payload(JsonObject().apply {
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offsetInMilliseconds)
@@ -80,9 +80,6 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
                     messageSender.sendMessage(message)
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
     }

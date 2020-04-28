@@ -20,10 +20,10 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -145,8 +145,8 @@ class AudioPlayerLyricsDirectiveHandler(
     }
 
     private fun sendVisibilityEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .payload(
@@ -158,15 +158,12 @@ class AudioPlayerLyricsDirectiveHandler(
                         .build()
                 )
             }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-            }
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
     }
 
     private fun sendPageControlEvent(name: String, playServiceId: String, direction: Direction, referrerDialogRequestId: String) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .payload(
@@ -178,9 +175,6 @@ class AudioPlayerLyricsDirectiveHandler(
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
                 )
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
     }
