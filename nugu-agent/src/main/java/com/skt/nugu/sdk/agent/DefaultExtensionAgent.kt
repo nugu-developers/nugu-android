@@ -22,10 +22,10 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -187,8 +187,8 @@ class DefaultExtensionAgent(
 
     private fun sendActionEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
         Logger.d(TAG, "[sendEvent] name: $name, playServiceId: $playServiceId")
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                     .payload(JsonObject().apply {
                         addProperty(PAYLOAD_PLAY_SERVICE_ID, playServiceId)
@@ -197,9 +197,6 @@ class DefaultExtensionAgent(
                     .build()
 
                 messageSender.sendMessage(request)
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
     }
@@ -218,8 +215,8 @@ class DefaultExtensionAgent(
 
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, NAME_COMMAND_ISSUED, VERSION.toString())
                     .dialogRequestId(dialogRequestId)
                     .payload(JsonObject().apply {
@@ -235,10 +232,6 @@ class DefaultExtensionAgent(
                     }
                     onSendEventFinished(dialogRequestId)
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                callback?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.REQUEST_FAIL)
             }
         }, namespaceAndName)
 

@@ -19,9 +19,9 @@ package com.skt.nugu.sdk.agent.audioplayer.playback
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -51,27 +51,24 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         info.result.setCompleted()
         removeDirective(info.directive.getMessageId())
-        contextGetter.getContext(object: ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val header = info.directive.header
                 val payload = info.directive.payload
 
                 if(handler?.handleRequestCommand(payload, header) != true) {
                     val message = EventMessageRequest.Builder(
-                            jsonContext,
-                            header.namespace,
-                            NAME_REQUEST_PLAY_COMMAND_ISSUED,
-                            VERSION.toString()
-                        )
+                        jsonContext,
+                        header.namespace,
+                        NAME_REQUEST_PLAY_COMMAND_ISSUED,
+                        VERSION.toString()
+                    )
                         .payload(payload)
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
                     messageSender.sendMessage(message)
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
     }

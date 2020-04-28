@@ -20,6 +20,7 @@ import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -197,8 +198,8 @@ class DefaultDelegationAgent(
         }
 
         executor.submit {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
                     messageSender.sendMessage(
                         EventMessageRequest.Builder(
                             jsonContext,
@@ -211,11 +212,6 @@ class DefaultDelegationAgent(
                         }.toString()).dialogRequestId(dialogRequestId).build()
                     )
                     onSendEventFinished(dialogRequestId)
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                    requestListenerMap.remove(dialogRequestId)
-                        ?.onError(DelegationAgentInterface.Error.UNKNOWN)
                 }
             })
         }

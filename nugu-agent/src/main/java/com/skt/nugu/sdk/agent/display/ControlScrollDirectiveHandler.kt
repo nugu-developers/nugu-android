@@ -19,10 +19,10 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -107,8 +107,8 @@ class ControlScrollDirectiveHandler(
         name: String,
         referrerDialogRequestId: String
     ) {
-        contextGetter.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(
                         jsonContext,
@@ -119,9 +119,6 @@ class ControlScrollDirectiveHandler(
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
                 )
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
     }

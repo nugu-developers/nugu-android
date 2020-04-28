@@ -34,6 +34,7 @@ import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackHandler
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -760,8 +761,8 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun setFavorite(favorite: Boolean) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 executor.submit {
                     currentItem?.apply {
                         val messageRequest = EventMessageRequest.Builder(
@@ -780,15 +781,12 @@ class DefaultAudioPlayerAgent(
                     }
                 }
             }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-            }
         }, namespaceAndName)
     }
 
     override fun setRepeatMode(mode: AudioPlayerAgentInterface.RepeatMode) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object: IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 executor.submit {
                     currentItem?.apply {
                         val messageRequest = EventMessageRequest.Builder(
@@ -807,15 +805,12 @@ class DefaultAudioPlayerAgent(
                     }
                 }
             }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-            }
         }, namespaceAndName)
     }
 
     override fun setShuffle(shuffle: Boolean) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 executor.submit {
                     currentItem?.apply {
                         val messageRequest = EventMessageRequest.Builder(
@@ -833,9 +828,6 @@ class DefaultAudioPlayerAgent(
                         messageSender.sendMessage(messageRequest)
                     }
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
     }
@@ -1311,16 +1303,16 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun sendPlaybackFailedEvent(type: ErrorType, errorMsg: String) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 currentItem?.apply {
                     val token = payload.audioItem.stream.token
                     val messageRequest = EventMessageRequest.Builder(
-                            jsonContext,
-                            NAMESPACE,
-                            EVENT_NAME_PLAYBACK_FAILED,
-                            VERSION.toString()
-                        )
+                        jsonContext,
+                        NAMESPACE,
+                        EVENT_NAME_PLAYBACK_FAILED,
+                        VERSION.toString()
+                    )
                         .payload(JsonObject().apply {
                             addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
                             addProperty(KEY_TOKEN, token)
@@ -1344,9 +1336,6 @@ class DefaultAudioPlayerAgent(
 
                     messageSender.sendMessage(messageRequest)
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
     }
@@ -1391,8 +1380,8 @@ class DefaultAudioPlayerAgent(
 
     private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
         currentItem?.apply {
-            contextManager.getContext(object : ContextRequester {
-                override fun onContextAvailable(jsonContext: String) {
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
                     val token = payload.audioItem.stream.token
                     val messageRequest = EventMessageRequest.Builder(
                         jsonContext,
@@ -1413,9 +1402,6 @@ class DefaultAudioPlayerAgent(
                     } else {
                         Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
                     }
-                }
-
-                override fun onContextFailure(error: ContextRequester.ContextRequestError) {
                 }
             }, namespaceAndName)
         }

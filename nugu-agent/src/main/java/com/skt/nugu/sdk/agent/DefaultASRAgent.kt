@@ -25,11 +25,11 @@ import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
@@ -829,9 +829,9 @@ class DefaultASRAgent(
             return
         }
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
-                Logger.d(TAG, "[onContextAvailable]")
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                Logger.d(TAG, "[onContext]")
                 executor.submit {
                     executeStartRecognitionOnContextAvailable(
                         audioInputStream,
@@ -843,11 +843,6 @@ class DefaultASRAgent(
                         callback,
                         jsonContext)
                 }
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-                Logger.w(TAG, "[onContextFailure] error: $error")
-                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_TAKE_TOO_LONG_START_RECOGNITION)
             }
         })
     }

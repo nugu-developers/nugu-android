@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.system.*
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -416,8 +417,8 @@ class DefaultSystemAgent(
             namespaceAndName
         }
 
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 messageSender.sendMessage(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString()).also {
                         if (payload != null) {
@@ -429,10 +430,6 @@ class DefaultSystemAgent(
                         }
                     }.build()
                 )
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
-
             }
         }, tempNamespaceAndName)
     }
@@ -490,7 +487,10 @@ class DefaultSystemAgent(
         // no-op
     }
 
-    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+    override fun onContextFailure(
+        error: ContextRequester.ContextRequestError,
+        jsonContext: String
+    ) {
         // no-op
     }
 

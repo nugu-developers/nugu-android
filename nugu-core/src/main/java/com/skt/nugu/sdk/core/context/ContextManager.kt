@@ -61,9 +61,7 @@ class ContextManager : ContextManagerInterface {
                 sendContextToRequesters()
             } else {
                 // Timeout
-                sendContextFailureAndClearQueue(
-                    ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT
-                )
+                sendContextToRequesters(ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT)
             }
         }
 
@@ -113,7 +111,7 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    private fun sendContextToRequesters() {
+    private fun sendContextToRequesters(error: ContextRequester.ContextRequestError? = null) {
         Logger.d(TAG, "[sendContextToRequesters]")
 
         synchronized(contextRequesterQueue) {
@@ -137,7 +135,11 @@ class ContextManager : ContextManagerInterface {
                             buildContext(namespaceAndName)
                         }
                     }
-                    first.onContextAvailable(strContext)
+                    if(error == null) {
+                        first.onContextAvailable(strContext)
+                    } else {
+                        first.onContextFailure(error, strContext)
+                    }
                 }
             }
         }
@@ -180,19 +182,6 @@ class ContextManager : ContextManagerInterface {
         }
         append('}')
     }.toString()
-
-    private fun sendContextFailureAndClearQueue(
-        contextRequestError: ContextRequester.ContextRequestError
-    ) {
-        Logger.d(TAG, "[sendContextAndClearQueue]")
-        synchronized(contextRequesterQueue) {
-            while (contextRequesterQueue.isNotEmpty()) {
-                with(contextRequesterQueue.poll()) {
-                    first.onContextFailure(contextRequestError)
-                }
-            }
-        }
-    }
 
     override fun setStateProvider(
         namespaceAndName: NamespaceAndName,

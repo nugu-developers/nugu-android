@@ -55,7 +55,10 @@ class PlaybackController(
         }
     }
 
-    override fun onContextFailure(error: ContextRequester.ContextRequestError) {
+    override fun onContextFailure(
+        error: ContextRequester.ContextRequestError,
+        jsonContext: String
+    ) {
         Logger.d(TAG, "[onContextFailure]")
 
         executor.submit {

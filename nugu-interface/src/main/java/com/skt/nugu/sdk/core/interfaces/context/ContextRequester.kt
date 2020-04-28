@@ -22,5 +22,5 @@ interface ContextRequester {
     }
 
     fun onContextAvailable(jsonContext: String)
-    fun onContextFailure(error: ContextRequestError)
+    fun onContextFailure(error: ContextRequestError, jsonContext: String)
 }

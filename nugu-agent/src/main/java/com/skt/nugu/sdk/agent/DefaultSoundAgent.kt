@@ -19,11 +19,11 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.sound.SoundProvider
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -172,8 +172,8 @@ class DefaultSoundAgent(
     }
 
     private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
-        contextManager.getContext(object : ContextRequester {
-            override fun onContextAvailable(jsonContext: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
                 val request =
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .payload(JsonObject().apply {
@@ -183,9 +183,6 @@ class DefaultSoundAgent(
                         .build()
 
                 messageSender.sendMessage(request)
-            }
-
-            override fun onContextFailure(error: ContextRequester.ContextRequestError) {
             }
         }, namespaceAndName)
     }
