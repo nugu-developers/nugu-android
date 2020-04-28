@@ -24,6 +24,7 @@ import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -281,6 +282,7 @@ class SpeechRecognizerAggregator(
                 epdParam,
                 object: ASRAgentInterface.StartRecognitionCallback {
                     override fun onSuccess(dialogRequestId: String) {
+                        Logger.d(TAG, "[executeStartListeningInternal] onSuccess")
                         countDownLatch.countDown()
                         callback?.onSuccess(dialogRequestId)
                     }
@@ -289,6 +291,7 @@ class SpeechRecognizerAggregator(
                         dialogRequestId: String,
                         errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
                     ) {
+                        Logger.d(TAG, "[executeStartListeningInternal] onError: $errorType")
                         setState(SpeechRecognizerAggregatorInterface.State.ERROR)
                         countDownLatch.countDown()
                         callback?.onError(dialogRequestId, errorType)

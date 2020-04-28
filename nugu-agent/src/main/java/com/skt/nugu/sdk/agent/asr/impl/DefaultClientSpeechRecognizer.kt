@@ -71,6 +71,7 @@ class DefaultClientSpeechRecognizer(
             field = value
         }
 
+    private val startLock = ReentrantLock()
     private val stateLock = ReentrantLock()
     private var state = SpeechRecognizer.State.STOP
     private var epdState = AudioEndPointDetector.State.STOP
@@ -142,22 +143,24 @@ class DefaultClientSpeechRecognizer(
                 payload,
                 resultListener
             )
-        currentRequest = request
-        if (!endPointDetector.startDetector(
-                audioInputStream.createReader(),
-                audioFormat,
-                epdParam.timeoutInSeconds,
-                epdParam.maxDurationInSeconds,
-                epdParam.pauseLengthInMilliseconds
-            )
-        ) {
-            Logger.e(TAG, "[startProcessor] failed to start epd.")
-            currentRequest = null
-            return null
-        } else {
-            Logger.d(TAG, "[startProcessor] started")
-            return request
 
+        return startLock.withLock {
+            currentRequest = request
+            if (!endPointDetector.startDetector(
+                    audioInputStream.createReader(),
+                    audioFormat,
+                    epdParam.timeoutInSeconds,
+                    epdParam.maxDurationInSeconds,
+                    epdParam.pauseLengthInMilliseconds
+                )
+            ) {
+                Logger.e(TAG, "[startProcessor] failed to start epd.")
+                currentRequest = null
+                null
+            } else {
+                Logger.d(TAG, "[startProcessor] started")
+                request
+            }
         }
     }
 
@@ -231,7 +234,9 @@ class DefaultClientSpeechRecognizer(
     override fun onStateChanged(state: AudioEndPointDetector.State) {
         Logger.d(TAG, "[onStateChanged] AudioEndPointDetector prev: ${this.epdState} / next: $state , $currentRequest")
 
-        val request = currentRequest
+        val request = startLock.withLock {
+            currentRequest
+        }
 
         if(request == null) {
             Logger.e(TAG, "[onStateChanged] null request. check this!!!")
