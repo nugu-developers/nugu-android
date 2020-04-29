@@ -1303,9 +1303,10 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun sendPlaybackFailedEvent(type: ErrorType, errorMsg: String) {
+        val item = currentItem
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
-                currentItem?.apply {
+                item?.apply {
                     val token = payload.audioItem.stream.token
                     val messageRequest = EventMessageRequest.Builder(
                         jsonContext,
