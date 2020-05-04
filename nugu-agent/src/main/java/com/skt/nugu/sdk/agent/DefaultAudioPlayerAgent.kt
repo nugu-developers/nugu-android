@@ -325,6 +325,7 @@ class DefaultAudioPlayerAgent(
 
             val playServiceId = playPayload.playServiceId
             if (playServiceId.isBlank()) {
+                Logger.w(TAG, "[onPreExecute::$INNER_TAG] empty playServiceId")
                 return false
             }
 
@@ -340,16 +341,19 @@ class DefaultAudioPlayerAgent(
 
                 val currentAudioInfo = currentItem
                 if(!executeShouldResumeNextItem(currentAudioInfo, nextAudioInfo)) {
+                    Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - play new item: ${directive.getMessageId()}")
                     // stop current if play new item.
                     if(executeStop()) {
                         // should wait until stopped (onPlayerStopped will be called)
                     } else {
                         // fetch now
-                        executeFetchItem(nextAudioInfo)
+                        if(executeFetchItem(nextAudioInfo)) {
+                            waitPlayExecuteInfo = nextAudioInfo
+                        }
                         waitFinishPreExecuteInfo = null
                     }
                 } else {
-                    Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - will be resume ${directive.getMessageId()}")
+                    Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - will be resume: ${directive.getMessageId()}")
                     currentItem = nextAudioInfo
                     currentAudioInfo?.let {
                         playSynchronizer.releaseWithoutSync(it)
@@ -386,11 +390,6 @@ class DefaultAudioPlayerAgent(
                 PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis())
             }
 
-            if(executeFetchSource(item)) {
-                item.isFetched = true
-            }
-            executeFetchOffset(item.payload.audioItem.stream.offsetInMilliseconds)
-
             progressTimer.init(
                 item.payload.audioItem.stream.progressReport?.progressReportDelayInMilliseconds
                     ?: ProgressTimer.NO_DELAY,
@@ -398,7 +397,13 @@ class DefaultAudioPlayerAgent(
                     ?: ProgressTimer.NO_INTERVAL, progressListener, progressProvider
             )
 
-            return true
+            return if(executeFetchSource(item)) {
+                item.isFetched = true
+                executeFetchOffset(item.payload.audioItem.stream.offsetInMilliseconds)
+                true
+            } else {
+                false
+            }
         }
 
         private fun executeFetchSource(item: AudioInfo): Boolean {
@@ -441,14 +446,14 @@ class DefaultAudioPlayerAgent(
             Logger.d(TAG, "[onExecute::$INNER_TAG] ${directive.getMessageId()}")
             executor.submit {
                 if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
-                    waitPlayExecuteInfo = null
-                    val copyWaitFinishPreExecuteInfo = waitFinishPreExecuteInfo
-                    if(copyWaitFinishPreExecuteInfo == null) {
-                        // preExecute finished (source fetched)
-                        executeHandlePlayDirective(directive)
-                    } else {
-                        // maybe waiting onPlayerStopped
-                        waitPlayExecuteInfo = copyWaitFinishPreExecuteInfo
+                    waitPlayExecuteInfo?.let {
+                        if(it.directive.getMessageId() == directive.getMessageId()) {
+                            waitPlayExecuteInfo = null
+                            // preExecute finished (source fetched)
+                            executeHandlePlayDirective(directive)
+                        } else {
+                            Logger.d(TAG, "[onExecute::$INNER_TAG] miss matched: ${directive.getMessageId()} : ${it.directive.getMessageId()}")
+                        }
                     }
                 }
             }
@@ -510,7 +515,9 @@ class DefaultAudioPlayerAgent(
                 Logger.d(TAG, "[onPlayerStopped] waitFinishPreExecuteInfo: $waitFinishPreExecuteInfo, waitPlayExecuteInfo: $waitPlayExecuteInfo")
                 waitFinishPreExecuteInfo?.let {
                     waitFinishPreExecuteInfo = null
-                    executeFetchItem(it)
+                    if(executeFetchItem(it)) {
+                        waitPlayExecuteInfo = it
+                    }
                 }
                 waitPlayExecuteInfo?.let {
                     waitPlayExecuteInfo = null
