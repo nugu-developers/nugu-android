@@ -585,9 +585,9 @@ class DefaultASRAgent(
 
                 override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendResponseTimeout(payload, referrerDialogRequestId)
+                        sendResponseTimeout(payload, dialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(payload, referrerDialogRequestId)
+                        sendListenTimeout(payload, dialogRequestId)
                     }
                     speechToTextConverterEventObserver.onError(type, dialogRequestId)
                 }
@@ -878,7 +878,7 @@ class DefaultASRAgent(
         }
     }
 
-    private fun sendResponseTimeout(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
+    private fun sendResponseTimeout(payload: ExpectSpeechPayload?, referrerDialogRequestId: String) {
         JsonObject().apply {
             payload?.let {
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
@@ -888,7 +888,7 @@ class DefaultASRAgent(
         }
     }
 
-    private fun sendListenTimeout(payload: ExpectSpeechPayload?, referrerDialogRequestId: String?) {
+    private fun sendListenTimeout(payload: ExpectSpeechPayload?, referrerDialogRequestId: String) {
         JsonObject().apply {
             payload?.let {
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
