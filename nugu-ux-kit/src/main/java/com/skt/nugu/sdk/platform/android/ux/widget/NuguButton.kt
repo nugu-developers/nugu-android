@@ -1,17 +1,21 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
-import android.graphics.Rect
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.drawable.StateListDrawable
 import android.os.Build
-import android.os.Parcelable
+import android.os.Handler
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
-import android.util.Log
+import android.util.DisplayMetrics
 import android.view.View
 import android.widget.FrameLayout
 import com.skt.nugu.sdk.platform.android.ux.R
 
+/**
+ * A NuguButton is a circular button designed by Nugu Design guide.
+ */
 class NuguButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -28,12 +32,53 @@ class NuguButton @JvmOverloads constructor(
     private var nuguButtonType: Int = 0
     private var nuguButtonColor: Int = 0
 
-    val drawableRes: MutableMap<String, Int> = HashMap()
+    private val drawableRes: MutableMap<String, Int> = HashMap()
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+
+    private var numberOfDots = 3
+    private val animationHandler = Handler()
+    private var activeDotIndex = 0
+    private var inactiveColor = 0
+        get() {
+            return when (nuguButtonColor) {
+                COLOR_BLUE -> 0xffffffff.toInt()
+                else -> 0xff009dff.toInt()
+            }
+        }
+    private var activeColor = 0
+        get() {
+            return when (nuguButtonColor) {
+                COLOR_BLUE -> 0xff00E688.toInt()
+                else -> 0xff16FFA0.toInt()
+            }
+        }
+
+    private val dotAnimationRunnable by lazy {
+        object : Runnable {
+            override fun run() {
+                if (activeDotIndex == numberOfDots - 1) {
+                    activeDotIndex = 0
+                } else {
+                    activeDotIndex++
+                }
+                invalidate()
+                animationHandler.postDelayed(this, 160 * 3)
+            }
+        }
+    }
+    fun isFab() = nuguButtonType == TYPE_FAB
 
     init {
         init(attrs)
+        initView()
         loadDrawableRes()
         setupDrawable()
+    }
+
+    companion object {
+        fun dpToPx(dp: Float, context: Context): Int {
+            return (dp * (context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).toInt()
+        }
     }
 
     // initialize custom attributes
@@ -44,7 +89,9 @@ class NuguButton @JvmOverloads constructor(
             nuguButtonType = getInt(R.styleable.NuguButton_types, TYPE_FAB)
             nuguButtonColor = getInt(R.styleable.NuguButton_colors, COLOR_BLUE)
         }.recycle()
+    }
 
+    private fun initView() {
         isClickable = true
         isFocusable = true
     }
@@ -60,16 +107,17 @@ class NuguButton @JvmOverloads constructor(
         drawableRes["fab_white"] = R.drawable.fab_white
         drawableRes["fab_white_pressed"] = R.drawable.fab_white_pressed
         drawableRes["fab_disabled"] = R.drawable.fab_disabled
+        drawableRes["btn_blue_activated"] = R.drawable.btn_blue_activated
+        drawableRes["btn_white_activated"] = R.drawable.btn_white_activated
+        drawableRes["fab_blue_activated"] = R.drawable.btn_blue_activated
+        drawableRes["fab_white_activated"] = R.drawable.btn_white_activated
     }
 
     /**
      * Set background color
      */
     private fun setupDrawable() {
-        val states = StateListDrawable()
-        states.setExitFadeDuration(android.R.integer.config_shortAnimTime)
-
-        val type = when(nuguButtonType) {
+        val type = when (nuguButtonType) {
             TYPE_FAB -> {
                 "fab"
             }
@@ -78,7 +126,7 @@ class NuguButton @JvmOverloads constructor(
             }
             else -> throw IllegalStateException(nuguButtonType.toString())
         }
-        val color = when(nuguButtonColor) {
+        val color = when (nuguButtonColor) {
             COLOR_BLUE -> {
                 "blue"
             }
@@ -88,26 +136,23 @@ class NuguButton @JvmOverloads constructor(
             else -> throw IllegalArgumentException(nuguButtonColor.toString())
         }
 
+        val states = StateListDrawable()
+        // states.setExitFadeDuration(android.R.integer.config_shortAnimTime)
         states.addState(
-            intArrayOf(-android.R.attr.state_pressed),
+            intArrayOf(android.R.attr.state_activated),
             ContextCompat.getDrawable(
                 context,
-                drawableRes[type + "_" + color] ?: throw IllegalArgumentException(type + "_" + color)
+                drawableRes[type + "_" + color + "_" + "activated"]
+                    ?: throw IllegalArgumentException(type + "_" + "activated")
             )
         )
+
         states.addState(
-            intArrayOf(android.R.attr.state_pressed),
+            intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_pressed),
             ContextCompat.getDrawable(
                 context,
-                drawableRes[type + "_" + color + "_" +"pressed"]
-                    ?: throw IllegalArgumentException(type + "_" + color + "_" +"pressed")
-            )
-        )
-        states.addState(
-            intArrayOf(android.R.attr.state_enabled),
-            ContextCompat.getDrawable(
-                context,
-                drawableRes[type + "_" + color] ?: throw IllegalArgumentException(type + "_" + color)
+                drawableRes[type + "_" + color]
+                    ?: throw IllegalArgumentException(type + "_" + color)
             )
         )
 
@@ -117,6 +162,15 @@ class NuguButton @JvmOverloads constructor(
                 context,
                 drawableRes[type + "_" + "disabled"]
                     ?: throw IllegalArgumentException(type + "_" + "disabled")
+            )
+        )
+
+        states.addState(
+            intArrayOf(android.R.attr.state_pressed),
+            ContextCompat.getDrawable(
+                context,
+                drawableRes[type + "_" + color + "_" + "pressed"]
+                    ?: throw IllegalArgumentException(type + "_" + color + "_" + "pressed")
             )
         )
         background = states
@@ -131,6 +185,43 @@ class NuguButton @JvmOverloads constructor(
             // This is needed to mimic newer platform behavior.
             // https://stackoverflow.com/a/53625860/715633
             onVisibilityChanged(this, visibility)
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        animationHandler.removeCallbacks(dotAnimationRunnable)
+        super.onDetachedFromWindow()
+    }
+
+    override fun setActivated(activated: Boolean) {
+        super.setActivated(activated)
+        if (activated && isEnabled) {
+            animationHandler.post(dotAnimationRunnable)
+        } else {
+            animationHandler.removeCallbacks(dotAnimationRunnable)
+        }
+    }
+
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+
+        if (isActivated && isEnabled) {
+            val dotSize = dpToPx(4F, context)
+            val dotSpacing = dpToPx(8F, context)
+            // Centering the dots in the middle of the canvas
+            val singleDotSize = dotSpacing + dotSize
+            val combinedDotSize = singleDotSize * numberOfDots - dotSpacing
+            val startingX = ((width - combinedDotSize) / 2)
+            val startingY = (height) / 2
+
+            for (i in 0 until numberOfDots) {
+                val x = startingX + i * singleDotSize
+                paint.color = if (i == activeDotIndex) activeColor else inactiveColor
+                canvas?.drawCircle(
+                    (x + dotSize / 2).toFloat(),
+                    startingY.toFloat(), (dotSize / 2).toFloat(), paint
+                )
+            }
         }
     }
 }
