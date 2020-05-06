@@ -112,11 +112,19 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         chromeWindowController = ChromeWindowController(this, object : ChromeWindowController.OnChromeWindowCallback {
             override fun onExpandStarted() {
-                btnStartListening.visibility = View.INVISIBLE
+                if(btnStartListening.isFab()) {
+                    btnStartListening.visibility = View.INVISIBLE
+                } else /* Type is button */{
+                    btnStartListening.isActivated = true
+                }
             }
 
             override fun onHiddenFinished() {
-                btnStartListening.visibility = View.VISIBLE
+                if(btnStartListening.isFab()) {
+                    btnStartListening.visibility = View.VISIBLE
+                }  else /* Type is button */{
+                    btnStartListening.isActivated = false
+                }
                 speechRecognizerAggregator.stopListening()
             }
         }).apply {
