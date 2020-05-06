@@ -24,6 +24,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.ux.R
 import android.support.design.widget.Snackbar
+import android.view.ViewGroup
 
 
 /**
@@ -131,7 +132,7 @@ class NuguSnackbar(val parentView: View) {
         // 8 is margin from all the sides
         val margin8 = dpToPx(8).toInt()
         val margin20 = dpToPx(8).toInt()
-        val params = view.layoutParams as CoordinatorLayout.LayoutParams
+        val params = view.layoutParams as ViewGroup.MarginLayoutParams
         view.layoutParams = params.apply {
             setMargins(margin8, 0, margin8, margin20)
             width = FrameLayout.LayoutParams.MATCH_PARENT
