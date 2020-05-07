@@ -53,16 +53,10 @@ data class EventMessageRequest(
         private val name: String,
         private val version: String
     ) {
-        private var messageId: String = UUIDGeneration.timeUUID().toString()
         private var dialogRequestId: String = UUIDGeneration.timeUUID().toString()
+        private val messageId: String = UUIDGeneration.timeUUID().toString()
         private var payload: String = "{}"
         private var referrerDialogRequestId: String = ""
-
-        /**
-         * Set messageId
-         * @param messageId the messageId to be set
-         */
-        fun messageId(messageId: String) = apply { this.messageId = messageId }
 
         /**
          * Set dialogRequestId
