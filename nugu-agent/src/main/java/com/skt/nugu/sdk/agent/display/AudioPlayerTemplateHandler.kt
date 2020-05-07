@@ -351,7 +351,7 @@ class AudioPlayerTemplateHandler(
                 return@submit
             }
 
-            renderer?.update(info.getTemplateId(), jsonMetaData)
+            renderer?.update(info.sourceTemplateId, jsonMetaData)
         }
     }
 
