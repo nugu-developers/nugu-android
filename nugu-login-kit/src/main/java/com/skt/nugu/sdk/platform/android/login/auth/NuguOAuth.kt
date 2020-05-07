@@ -323,7 +323,6 @@ class NuguOAuth private constructor(
         checkRedirectUri()
 
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             activity.startActivityForResult(this, REQUEST_LOGIN)
         }
     }
