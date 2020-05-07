@@ -116,6 +116,7 @@ class DefaultTTSAgent(
     ) : PlaySynchronizerInterface.SynchronizeObject
         , FocusHolderManager.FocusHolder
         , DirectiveInfo by info {
+        var sourceId: SourceId = SourceId.ERROR()
         var isPlaybackInitiated = false
         var isDelayedCancel = false
         var cancelByStop = false
@@ -132,7 +133,6 @@ class DefaultTTSAgent(
                         Logger.d(TAG, "[onReleased] this is currentInfo")
 
                         currentInfo = null
-                        sourceId = SourceId.ERROR()
 
                         val nextInfo = preparedSpeakInfo
                         if (nextInfo != null) {
@@ -181,8 +181,6 @@ class DefaultTTSAgent(
     private var desireState = TTSAgentInterface.State.IDLE
 
     private var lastStateForContext: TTSAgentInterface.State? = null
-
-    private var sourceId: SourceId = SourceId.ERROR()
 
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
@@ -386,7 +384,7 @@ class DefaultTTSAgent(
             if (isPlaybackInitiated) {
                 if(state != TTSAgentInterface.State.FINISHED && state != TTSAgentInterface.State.STOPPED) {
                     desireState = TTSAgentInterface.State.STOPPED
-                    stopPlaying()
+                    stopPlaying(info)
                 }
             } else {
                 isDelayedCancel = true
@@ -467,8 +465,8 @@ class DefaultTTSAgent(
     private fun startPlaying(info: SpeakDirectiveInfo) {
         info.directive.getAttachmentReader()?.let {
             with(speechPlayer.setSource(it)) {
-                sourceId = this
-                Logger.d(TAG, "[startPlaying] sourceId: $sourceId, info: $info")
+                info.sourceId = this
+                Logger.d(TAG, "[startPlaying] sourceId: $this, info: $info")
                 when {
                     isError() -> executePlaybackError(
                         ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
@@ -487,15 +485,15 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun stopPlaying() {
+    private fun stopPlaying(info: SpeakDirectiveInfo) {
         Logger.d(TAG, "[stopPlaying]")
 
         when {
-            sourceId.isError() -> {
+            info.sourceId.isError() -> {
             }
             isAlreadyStopping -> {
             }
-            !speechPlayer.stop(sourceId) -> {
+            !speechPlayer.stop(info.sourceId) -> {
             }
             else -> {
                 isAlreadyStopping = true
@@ -551,14 +549,13 @@ class DefaultTTSAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
+            val info = currentInfo
             if (currentState == TTSAgentInterface.State.PLAYING) {
                 // just log error
                 // context always updated if requested.
-                if (currentInfo == null) {
+                if (info == null) {
                     Logger.e(TAG, "[provideState] failed: currentInfo is null")
-                }
-
-                if (sourceId.isError()) {
+                } else if(info.sourceId.isError()) {
                     Logger.e(TAG, "[provideState] failed: sourceId is error")
                 }
             }
@@ -609,7 +606,7 @@ class DefaultTTSAgent(
             TTSAgentInterface.State.FINISHED -> {
                 currentInfo?.apply {
                     if (isPlaybackInitiated) {
-                        stopPlaying()
+                        stopPlaying(this)
                     } else {
                         result.setCompleted()
                         releaseSyncImmediately(this)
@@ -617,6 +614,7 @@ class DefaultTTSAgent(
                 }
             }
             else -> {
+
             }
         }
 
@@ -628,6 +626,12 @@ class DefaultTTSAgent(
 
     override fun onPlaybackStarted(id: SourceId) {
         Logger.d(TAG, "[onPlaybackStarted] id: $id")
+        currentInfo?.let {
+            if(id.id == it.sourceId.id) {
+                it.state = TTSAgentInterface.State.PLAYING
+            }
+        }
+
         executeOnPlaybackEvent(id) {
             executePlaybackStarted()
         }
@@ -643,6 +647,12 @@ class DefaultTTSAgent(
 
     override fun onPlaybackStopped(id: SourceId) {
         Logger.d(TAG, "[onPlaybackStopped] id: $id")
+        currentInfo?.let {
+            if(id.id == it.sourceId.id) {
+                it.state = TTSAgentInterface.State.STOPPED
+            }
+        }
+
         executeOnPlaybackEvent(id) {
             executePlaybackStopped()
         }
@@ -650,6 +660,12 @@ class DefaultTTSAgent(
 
     override fun onPlaybackFinished(id: SourceId) {
         Logger.d(TAG, "[onPlaybackFinished] id: $id")
+        currentInfo?.let {
+            if(id.id == it.sourceId.id) {
+                it.state = TTSAgentInterface.State.FINISHED
+            }
+        }
+
         executeOnPlaybackEvent(id) {
             executePlaybackFinished()
         }
@@ -657,13 +673,19 @@ class DefaultTTSAgent(
 
     override fun onPlaybackError(id: SourceId, type: ErrorType, error: String) {
         Logger.e(TAG, "[onPlaybackError] id: $id, type: $type, error: $error")
+        currentInfo?.let {
+            if(id.id == it.sourceId.id) {
+                it.state = TTSAgentInterface.State.STOPPED
+            }
+        }
+
         executor.submit {
             executePlaybackError(type, error)
         }
     }
 
     private fun executeOnPlaybackEvent(id: SourceId, event: () -> Unit) {
-        if (id.id != sourceId.id) {
+        if (id.id != currentInfo?.sourceId?.id) {
             executor.submit {
                 executePlaybackError(
                     ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
