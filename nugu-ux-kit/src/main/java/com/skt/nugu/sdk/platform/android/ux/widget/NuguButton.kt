@@ -62,7 +62,7 @@ class NuguButton @JvmOverloads constructor(
                     activeDotIndex++
                 }
                 invalidate()
-                animationHandler.postDelayed(this, 160 * 3)
+                animationHandler.postDelayed(this, 660)
             }
         }
     }
