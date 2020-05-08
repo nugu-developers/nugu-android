@@ -1,6 +1,33 @@
 Change Log
 ==========
 
+Version 0.8.16 *(2020-05-08)*
+-----------------------------
+* New: Add dialogRequestId at ASR result listener.
+* Fix: Add clientVersion to user-agent header
+* Fix: AudioPlayer agent issue
+    * handle fetch's failure
+* Fix: ASR agent issue
+    * close previous session if new open.
+    * handle ExpectSpeech's cancel correctly.
+    * wrong recognizer's state changes.
+    * missing result directive
+* Fix: Alway update tts's context.
+* Fix: Wrong referrerDialogRequestId for ASR's event.
+* Fix: Wrong update call of Display.
+* Improve: Attachment access performance
+* Improve: Optimize memory management
+    * minimize GC
+* Improve: Deprecate timeoutInMillis at ExpectSpeech
+* Improve: detemine behavior for audioplayer's resume request.
+* Improve: Prevent calling stop when alread stop or finished for TTS's Player
+* Improve: Update battery context
+* Improve: Use context even if timeout.
+* Improve: Component Design Updated.
+    * NuguButton
+    * VoiceChrome
+
+
 Version 0.8.15 *(2020-04-14)*
 -----------------------------
 * New: DisplayAgent - Add render failed notify (#522)
