@@ -411,10 +411,25 @@ class DefaultASRAgent(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        if (info.directive.getName() == NAME_EXPECT_SPEECH) {
-            clearPreHandledExpectSpeech()
+        executor.submit {
+            if (info.directive.getName() == NAME_EXPECT_SPEECH) {
+                val payload = parseExpectSpeechPayload(info.directive)
+                if(payload != null) {
+                    val request = currentRequest
+                    if (request == null) {
+                        expectSpeechPayload?.let {
+                            if(it.sessionId == payload.sessionId) {
+                                clearPreHandledExpectSpeech()
+                                closeCurrentSessionIfMatchWith(it)
+                            }
+                        }
+                    } else {
+                        executeStopRecognitionBySessionClosed(payload.sessionId)
+                    }
+                }
+            }
+            removeDirective(info)
         }
-        removeDirective(info)
     }
 
     override fun provideState(
