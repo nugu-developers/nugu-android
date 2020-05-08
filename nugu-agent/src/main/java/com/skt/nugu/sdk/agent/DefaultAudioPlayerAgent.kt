@@ -526,7 +526,7 @@ class DefaultAudioPlayerAgent(
             }
         }
 
-        fun willBeHandle() = willBeHandleDirectives.isNotEmpty() || waitPlayExecuteInfo != null
+        fun willBeHandle() = willBeHandleDirectives.isNotEmpty() || waitFinishPreExecuteInfo!= null || waitPlayExecuteInfo != null
     }
 
     private val audioPlayerRequestPlaybackCommandDirectiveHandler =
