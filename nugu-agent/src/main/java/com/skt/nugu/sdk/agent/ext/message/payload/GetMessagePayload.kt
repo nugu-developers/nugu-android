@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.message
+package com.skt.nugu.sdk.agent.ext.message.payload
 
-import com.skt.nugu.sdk.agent.ext.message.handler.GetMessageDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.handler.SendMessageDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.message.Candidate
 
-interface MessageClient
-    : SendCandidatesDirectiveHandler.Controller
-    , SendMessageDirectiveHandler.Controller
-    , GetMessageDirectiveHandler.Controller {
-    fun getContext(): Context
-}
+data class GetMessagePayload(
+    val playServiceId: String,
+    val recipient: Candidate?
+)
