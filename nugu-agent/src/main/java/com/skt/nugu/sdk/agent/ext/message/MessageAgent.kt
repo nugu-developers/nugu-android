@@ -19,7 +19,9 @@ package com.skt.nugu.sdk.agent.ext.message
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.message.handler.SendMessageDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
+import com.skt.nugu.sdk.agent.ext.message.payload.SendMessagePayload
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -38,7 +40,8 @@ class MessageAgent(
 )
     : CapabilityAgent
     , SupportedInterfaceContextProvider
-    , SendCandidatesDirectiveHandler.Controller {
+    , SendCandidatesDirectiveHandler.Controller
+    , SendMessageDirectiveHandler.Controller {
     companion object {
         private const val TAG = "MessageAgent"
         const val NAMESPACE = "Message"
@@ -56,6 +59,7 @@ class MessageAgent(
 
         directiveSequencer.apply {
             addDirectiveHandler(SendCandidatesDirectiveHandler(this@MessageAgent, messageSender, contextGetter))
+            addDirectiveHandler(SendMessageDirectiveHandler(this@MessageAgent, messageSender, contextGetter))
         }
     }
 
@@ -91,5 +95,11 @@ class MessageAgent(
         return executor.submit(Callable {
             client.getCandidateList(payload)
         }).get()
+    }
+
+    override fun sendMessage(payload: SendMessagePayload, callback: EventCallback) {
+        executor.submit {
+            client.sendMessage(payload, callback)
+        }
     }
 }

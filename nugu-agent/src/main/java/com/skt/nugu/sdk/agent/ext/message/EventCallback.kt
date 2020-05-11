@@ -16,11 +16,7 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
-import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.handler.SendMessageDirectiveHandler
-
-interface MessageClient
-    : SendCandidatesDirectiveHandler.Controller
-    , SendMessageDirectiveHandler.Controller {
-    fun getContext(): Context
+interface EventCallback {
+    fun onSuccess()
+    fun onFailure(errorCode: String)
 }
