@@ -18,8 +18,10 @@ package com.skt.nugu.sdk.agent.ext.message
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.message.handler.GetMessageDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.handler.SendMessageDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.message.payload.GetMessagePayload
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.ext.message.payload.SendMessagePayload
 import com.skt.nugu.sdk.agent.version.Version
@@ -37,16 +39,16 @@ class MessageAgent(
     contextGetter: ContextGetterInterface,
     messageSender: MessageSender,
     directiveSequencer: DirectiveSequencerInterface
-)
-    : CapabilityAgent
+) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , SendCandidatesDirectiveHandler.Controller
-    , SendMessageDirectiveHandler.Controller {
+    , SendMessageDirectiveHandler.Controller
+    , GetMessageDirectiveHandler.Controller {
     companion object {
         private const val TAG = "MessageAgent"
         const val NAMESPACE = "Message"
 
-        val VERSION = Version(1,0)
+        val VERSION = Version(1, 0)
     }
 
     override fun getInterfaceName(): String = NAMESPACE
@@ -55,11 +57,34 @@ class MessageAgent(
     private var currentContext: Context? = null
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(
+            namespaceAndName,
+            this,
+            buildCompactContext().toString()
+        )
 
         directiveSequencer.apply {
-            addDirectiveHandler(SendCandidatesDirectiveHandler(this@MessageAgent, messageSender, contextGetter))
-            addDirectiveHandler(SendMessageDirectiveHandler(this@MessageAgent, messageSender, contextGetter))
+            addDirectiveHandler(
+                SendCandidatesDirectiveHandler(
+                    this@MessageAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+            addDirectiveHandler(
+                SendMessageDirectiveHandler(
+                    this@MessageAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+            addDirectiveHandler(
+                GetMessageDirectiveHandler(
+                    this@MessageAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
         }
     }
 
@@ -74,19 +99,24 @@ class MessageAgent(
     ) {
         executor.submit {
             val context = client.getContext()
-            if(currentContext != context) {
+            if (currentContext != context) {
                 currentContext = context
-                    contextSetter.setState(namespaceAndName, buildCompactContext().apply {
-                        context.candidates?.let {
-                            add("candidates", JsonArray().apply {
-                                it.forEach {
-                                    add(it.toJsonObject())
-                                }
-                            })
-                        }
-                    }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+                contextSetter.setState(namespaceAndName, buildCompactContext().apply {
+                    context.candidates?.let {
+                        add("candidates", JsonArray().apply {
+                            it.forEach {
+                                add(it.toJsonObject())
+                            }
+                        })
+                    }
+                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
             } else {
-                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
+                contextSetter.setState(
+                    namespaceAndName,
+                    null,
+                    StateRefreshPolicy.ALWAYS,
+                    stateRequestToken
+                )
             }
         }
     }
@@ -100,6 +130,15 @@ class MessageAgent(
     override fun sendMessage(payload: SendMessagePayload, callback: EventCallback) {
         executor.submit {
             client.sendMessage(payload, callback)
+        }
+    }
+
+    override fun getMessageList(
+        payload: GetMessagePayload,
+        callback: GetMessageDirectiveHandler.Callback
+    ) {
+        executor.submit {
+            client.getMessageList(payload, callback)
         }
     }
 }
