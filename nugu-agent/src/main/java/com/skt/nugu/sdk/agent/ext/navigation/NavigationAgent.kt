@@ -17,9 +17,11 @@
 package com.skt.nugu.sdk.agent.ext.navigation
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.navigation.handler.RemoveStopoverDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.navigation.handler.SetStopoverDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.navigation.handler.StartRouteDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.navigation.payload.RemoveStopoverPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.SendPoiCandidatesPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.SetStopoverPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.StartRoutePayload
@@ -43,6 +45,7 @@ class NavigationAgent(
     , SendPoiCandidatesDirectiveHandler.Controller
     , StartRouteDirectiveHandler.Controller
     , SetStopoverDirectiveHandler.Controller
+    , RemoveStopoverDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "Navigation"
@@ -60,6 +63,7 @@ class NavigationAgent(
             addDirectiveHandler(SendPoiCandidatesDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
             addDirectiveHandler(StartRouteDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
             addDirectiveHandler(SetStopoverDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
+            addDirectiveHandler(RemoveStopoverDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
         }
     }
 
@@ -112,6 +116,15 @@ class NavigationAgent(
     ) {
         executor.submit {
             client.setStopover(payload, callback)
+        }
+    }
+
+    override fun removeStopover(
+        payload: RemoveStopoverPayload,
+        callback: RemoveStopoverDirectiveHandler.Callback
+    ) {
+        executor.submit {
+            client.removeStopover(payload, callback)
         }
     }
 }
