@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.PlayDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.SearchDirectiveHandler
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -32,19 +33,34 @@ class MediaPlayerAgent(
     messageSender: MessageSender,
     contextGetter: ContextGetterInterface,
     directiveSequencer: DirectiveSequencerInterface
-) : CapabilityAgent, SupportedInterfaceContextProvider,
-        PlayDirectiveHandler.Controller
-{
+) : CapabilityAgent
+    , SupportedInterfaceContextProvider
+    , PlayDirectiveHandler.Controller
+    , SearchDirectiveHandler.Controller {
     companion object {
         private const val TAG = "MediaPlayerAgent"
 
         const val NAMESPACE = "MediaPlayer"
-        val VERSION = Version(1,0)
+        val VERSION = Version(1, 0)
     }
 
     init {
         directiveSequencer.apply {
-            addDirectiveHandler(PlayDirectiveHandler(this@MediaPlayerAgent, messageSender, contextGetter))
+            addDirectiveHandler(
+                PlayDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+
+            addDirectiveHandler(
+                SearchDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
         }
     }
 
@@ -62,6 +78,15 @@ class MediaPlayerAgent(
     override fun play(payload: PlayPayload, callback: PlayDirectiveHandler.Controller.Callback) {
         executor.submit {
             mediaPlayer.play(payload, callback)
+        }
+    }
+
+    override fun search(
+        payload: PlayPayload,
+        callback: SearchDirectiveHandler.Controller.Callback
+    ) {
+        executor.submit {
+            mediaPlayer.search(payload, callback)
         }
     }
 }
