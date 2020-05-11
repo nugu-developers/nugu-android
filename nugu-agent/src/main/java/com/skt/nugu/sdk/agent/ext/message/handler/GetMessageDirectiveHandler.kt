@@ -19,7 +19,7 @@ package com.skt.nugu.sdk.agent.ext.message.handler
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.Candidate
+import com.skt.nugu.sdk.agent.ext.message.Contact
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.GetMessagePayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -44,7 +44,7 @@ class GetMessageDirectiveHandler (
     }
 
     interface Callback {
-        fun onSuccess(messages: List<Candidate>?)
+        fun onSuccess(messages: List<Contact>?)
         fun onFailure(errorCode: String)
     }
 
@@ -64,7 +64,7 @@ class GetMessageDirectiveHandler (
         } else {
             info.result.setCompleted()
             controller.getMessageList(payload, object : Callback {
-                override fun onSuccess(messages: List<Candidate>?) {
+                override fun onSuccess(messages: List<Contact>?) {
                     contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
                             messageSender.sendMessage(

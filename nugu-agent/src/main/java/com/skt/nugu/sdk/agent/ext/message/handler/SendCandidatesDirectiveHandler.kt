@@ -19,7 +19,7 @@ package com.skt.nugu.sdk.agent.ext.message.handler
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.Candidate
+import com.skt.nugu.sdk.agent.ext.message.Contact
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -43,7 +43,7 @@ class SendCandidatesDirectiveHandler(
     }
 
     interface Controller {
-        fun getCandidateList(payload: SendCandidatesPayload): List<Candidate>?
+        fun getCandidateList(payload: SendCandidatesPayload): List<Contact>?
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {

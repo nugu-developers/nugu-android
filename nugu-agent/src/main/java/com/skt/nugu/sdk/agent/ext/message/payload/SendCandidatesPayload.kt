@@ -16,12 +16,12 @@
 
 package com.skt.nugu.sdk.agent.ext.message.payload
 
-import com.skt.nugu.sdk.agent.ext.message.Candidate
+import com.skt.nugu.sdk.agent.ext.message.Contact
 
 data class SendCandidatesPayload(
     val playServiceId: String,
     val recipientName: String,
-    val candidates: Array<Candidate>?
+    val candidates: Array<Contact>?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
