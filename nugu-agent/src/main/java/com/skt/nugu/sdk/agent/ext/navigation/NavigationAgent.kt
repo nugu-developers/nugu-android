@@ -18,8 +18,10 @@ package com.skt.nugu.sdk.agent.ext.navigation
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.navigation.handler.SetStopoverDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.navigation.handler.StartRouteDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.navigation.payload.SendPoiCandidatesPayload
+import com.skt.nugu.sdk.agent.ext.navigation.payload.SetStopoverPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.StartRoutePayload
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -40,6 +42,7 @@ class NavigationAgent(
     , SupportedInterfaceContextProvider
     , SendPoiCandidatesDirectiveHandler.Controller
     , StartRouteDirectiveHandler.Controller
+    , SetStopoverDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "Navigation"
@@ -56,6 +59,7 @@ class NavigationAgent(
         directiveSequencer.apply {
             addDirectiveHandler(SendPoiCandidatesDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
             addDirectiveHandler(StartRouteDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
+            addDirectiveHandler(SetStopoverDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
         }
     }
 
@@ -99,6 +103,15 @@ class NavigationAgent(
     ) {
         executor.submit {
             client.startRoute(payload, callback)
+        }
+    }
+
+    override fun setStopover(
+        payload: SetStopoverPayload,
+        callback: SetStopoverDirectiveHandler.Callback
+    ) {
+        executor.submit {
+            client.setStopover(payload, callback)
         }
     }
 }
