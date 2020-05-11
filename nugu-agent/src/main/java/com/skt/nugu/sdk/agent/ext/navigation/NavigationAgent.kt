@@ -17,20 +17,26 @@
 package com.skt.nugu.sdk.agent.ext.navigation
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.navigation.payload.SendPoiCandidatesPayload
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class NavigationAgent(
     private val client: NavigationClient,
-    contextStateProviderRegistry: ContextStateProviderRegistry
+    contextStateProviderRegistry: ContextStateProviderRegistry,
+    contextGetter: ContextGetterInterface,
+    messageSender: MessageSender,
+    directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
+    , SendPoiCandidatesDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "Navigation"
@@ -44,6 +50,9 @@ class NavigationAgent(
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        directiveSequencer.apply {
+            addDirectiveHandler(SendPoiCandidatesDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
+        }
     }
 
     private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -72,5 +81,11 @@ class NavigationAgent(
                 contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
             }
         }
+    }
+
+    override fun getCandidateList(payload: SendPoiCandidatesPayload): List<Poi>? {
+        return executor.submit(Callable {
+            client.getCandidateList(payload)
+        }).get()
     }
 }

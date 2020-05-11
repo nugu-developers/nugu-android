@@ -16,6 +16,8 @@
 
 package com.skt.nugu.sdk.agent.ext.navigation
 
-interface NavigationClient {
+import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
+
+interface NavigationClient: SendPoiCandidatesDirectiveHandler.Controller {
     fun getContext(): Context
 }
