@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
+import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.*
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -42,6 +43,7 @@ class MediaPlayerAgent(
     , ResumeDirectiveHandler.Controller
     , PauseDirectiveHandler.Controller
     , RewindDirectiveHandler.Controller
+    , ToggleDirectiveHandler.Controller
 {
     companion object {
         private const val TAG = "MediaPlayerAgent"
@@ -115,6 +117,14 @@ class MediaPlayerAgent(
                     contextGetter
                 )
             )
+
+            addDirectiveHandler(
+                ToggleDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
         }
     }
 
@@ -174,6 +184,12 @@ class MediaPlayerAgent(
     override fun rewind(payload: Payload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.rewind(payload, callback)
+        }
+    }
+
+    override fun toggle(payload: TogglePayload, callback: EventCallback) {
+        executor.submit {
+            mediaPlayer.toggle(payload, callback)
         }
     }
 }

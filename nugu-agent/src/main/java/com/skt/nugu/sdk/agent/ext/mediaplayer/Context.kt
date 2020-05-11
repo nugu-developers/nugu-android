@@ -18,24 +18,4 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 data class Context(
     val toggle: Toggle?
-) {
-    /**
-     * toggle information.
-     * If not supported, should be null.
-     * When create event, exclude field not supported.
-     */
-    data class Toggle(
-        /**
-         * repeat, null if not supported
-         */
-        val repeat: String?,
-        /**
-         * like, null if not supported
-         */
-        val like: String?,
-        /**
-         * shuffle, null if not supported
-         */
-        val shuffle: String?
-    )
-}
+)

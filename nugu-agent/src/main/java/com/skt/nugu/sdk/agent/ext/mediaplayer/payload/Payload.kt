@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.mediaplayer
+package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
 data class Payload(
     val playServiceId: String,
