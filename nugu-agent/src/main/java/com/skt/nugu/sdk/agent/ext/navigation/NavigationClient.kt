@@ -27,5 +27,11 @@ interface NavigationClient
     , SetStopoverDirectiveHandler.Controller
     , RemoveStopoverDirectiveHandler.Controller
 {
+    interface OnRouteFinishListener {
+        fun onRouteFinished(playServiceId: String)
+    }
+
     fun getContext(): Context
+
+    fun setRouteFinishListener(listener: OnRouteFinishListener)
 }

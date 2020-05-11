@@ -25,20 +25,22 @@ import com.skt.nugu.sdk.agent.ext.navigation.payload.RemoveStopoverPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.SendPoiCandidatesPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.SetStopoverPayload
 import com.skt.nugu.sdk.agent.ext.navigation.payload.StartRoutePayload
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class NavigationAgent(
     private val client: NavigationClient,
+    private val contextGetter: ContextGetterInterface,
+    private val messageSender: MessageSender,
     contextStateProviderRegistry: ContextStateProviderRegistry,
-    contextGetter: ContextGetterInterface,
-    messageSender: MessageSender,
     directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
@@ -46,10 +48,12 @@ class NavigationAgent(
     , StartRouteDirectiveHandler.Controller
     , SetStopoverDirectiveHandler.Controller
     , RemoveStopoverDirectiveHandler.Controller
-{
+    , NavigationClient.OnRouteFinishListener {
     companion object {
         const val NAMESPACE = "Navigation"
-        val VERSION = Version(1,0)
+        val VERSION = Version(1, 0)
+
+        private const val NAME_ROUTE_FINISHED = "RouteFinished"
     }
 
     override fun getInterfaceName(): String = NAMESPACE
@@ -58,13 +62,43 @@ class NavigationAgent(
     private var currentContext: Context? = null
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(
+            namespaceAndName,
+            this,
+            buildCompactContext().toString()
+        )
         directiveSequencer.apply {
-            addDirectiveHandler(SendPoiCandidatesDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
-            addDirectiveHandler(StartRouteDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
-            addDirectiveHandler(SetStopoverDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
-            addDirectiveHandler(RemoveStopoverDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
+            addDirectiveHandler(
+                SendPoiCandidatesDirectiveHandler(
+                    this@NavigationAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+            addDirectiveHandler(
+                StartRouteDirectiveHandler(
+                    this@NavigationAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+            addDirectiveHandler(
+                SetStopoverDirectiveHandler(
+                    this@NavigationAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+            addDirectiveHandler(
+                RemoveStopoverDirectiveHandler(
+                    this@NavigationAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
         }
+
+        client.setRouteFinishListener(this)
     }
 
     private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -78,7 +112,7 @@ class NavigationAgent(
     ) {
         executor.submit {
             val context = client.getContext()
-            if(currentContext != context) {
+            if (currentContext != context) {
                 val result = contextSetter.setState(namespaceAndName, buildCompactContext().apply {
                     add("destination", context.destination.toJsonObject())
                     add("route", context.route.toJsonObject())
@@ -86,11 +120,16 @@ class NavigationAgent(
                     addProperty("carrier", context.carrier)
                 }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
 
-                if(result == ContextSetterInterface.SetStateResult.SUCCESS) {
+                if (result == ContextSetterInterface.SetStateResult.SUCCESS) {
                     currentContext = context
                 }
             } else {
-                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
+                contextSetter.setState(
+                    namespaceAndName,
+                    null,
+                    StateRefreshPolicy.ALWAYS,
+                    stateRequestToken
+                )
             }
         }
     }
@@ -126,5 +165,28 @@ class NavigationAgent(
         executor.submit {
             client.removeStopover(payload, callback)
         }
+    }
+
+    override fun onRouteFinished(playServiceId: String) {
+        executor.submit {
+            executeOnRouteFinished(playServiceId)
+        }
+    }
+
+    private fun executeOnRouteFinished(playServiceId: String) {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        NAME_ROUTE_FINISHED,
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        addProperty("playServiceId", playServiceId)
+                    }.toString()).build()
+                )
+            }
+        })
     }
 }
