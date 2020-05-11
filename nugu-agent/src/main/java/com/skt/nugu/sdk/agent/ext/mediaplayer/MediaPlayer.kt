@@ -17,8 +17,11 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.PlayDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.SearchDirectiveHandler
 
 /**
  * MediaPlayer interface for MediaPlayerAgent
  */
-interface MediaPlayer : PlayDirectiveHandler.Controller
+interface MediaPlayer
+    : PlayDirectiveHandler.Controller
+    , SearchDirectiveHandler.Controller
