@@ -29,3 +29,4 @@ interface MediaPlayer
     , MoveDirectiveHandler.Controller
     , ResumeDirectiveHandler.Controller
     , PauseDirectiveHandler.Controller
+    , RewindDirectiveHandler.Controller

@@ -41,6 +41,7 @@ class MediaPlayerAgent(
     , MoveDirectiveHandler.Controller
     , ResumeDirectiveHandler.Controller
     , PauseDirectiveHandler.Controller
+    , RewindDirectiveHandler.Controller
 {
     companion object {
         private const val TAG = "MediaPlayerAgent"
@@ -106,6 +107,14 @@ class MediaPlayerAgent(
                     contextGetter
                 )
             )
+
+            addDirectiveHandler(
+                RewindDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
         }
     }
 
@@ -159,6 +168,12 @@ class MediaPlayerAgent(
     override fun pause(payload: Payload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.pause(payload, callback)
+        }
+    }
+
+    override fun rewind(payload: Payload, callback: EventCallback) {
+        executor.submit {
+            mediaPlayer.rewind(payload, callback)
         }
     }
 }
