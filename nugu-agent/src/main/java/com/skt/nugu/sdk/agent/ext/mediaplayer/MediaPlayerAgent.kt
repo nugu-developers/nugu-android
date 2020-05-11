@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class MediaPlayerAgent(
@@ -44,6 +45,7 @@ class MediaPlayerAgent(
     , PauseDirectiveHandler.Controller
     , RewindDirectiveHandler.Controller
     , ToggleDirectiveHandler.Controller
+    , GetInfoDirectiveHandler.Controller
 {
     companion object {
         private const val TAG = "MediaPlayerAgent"
@@ -191,5 +193,11 @@ class MediaPlayerAgent(
         executor.submit {
             mediaPlayer.toggle(payload, callback)
         }
+    }
+
+    override fun getInfo(payload: GetInfoPayload): Map<GetInfoPayload.InfoItem, String>? {
+        return executor.submit(Callable {
+            mediaPlayer.getInfo(payload)
+        }).get()
     }
 }
