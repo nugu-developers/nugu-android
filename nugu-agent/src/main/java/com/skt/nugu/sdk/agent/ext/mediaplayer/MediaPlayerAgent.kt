@@ -16,14 +16,13 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.*
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import java.util.concurrent.Callable
@@ -33,6 +32,7 @@ class MediaPlayerAgent(
     private val mediaPlayer: MediaPlayer,
     messageSender: MessageSender,
     contextGetter: ContextGetterInterface,
+    contextStateProviderRegistry: ContextStateProviderRegistry,
     directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
@@ -55,6 +55,7 @@ class MediaPlayerAgent(
     }
 
     init {
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         directiveSequencer.apply {
             addDirectiveHandler(
                 PlayDirectiveHandler(
@@ -132,13 +133,45 @@ class MediaPlayerAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
 
+    private var currentContext: Context? = null
+
     override fun getInterfaceName(): String = NAMESPACE
+
+    private fun buildCompactContext(): JsonObject = JsonObject().apply {
+        addProperty("version", VERSION.toString())
+    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
+        executor.submit {
+            val context = mediaPlayer.getContext()
+
+            if (currentContext != context) {
+                currentContext = context
+                contextSetter.setState(namespaceAndName, buildCompactContext().apply {
+                    with(context) {
+                        addProperty("playerActivity", playerActivity.name)
+                        toggle?.let {
+                            it.repeat?.let { repeat ->
+                                addProperty("repeat", repeat)
+                            }
+                            it.like?.let { like ->
+                                addProperty("like", like)
+
+                            }
+                            it.shuffle?.let { shuffle ->
+                                addProperty("shuffle", shuffle)
+                            }
+                        }
+                    }
+                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            } else {
+                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
+            }
+        }
     }
 
     override fun play(payload: PlayPayload, callback: EventCallback) {
