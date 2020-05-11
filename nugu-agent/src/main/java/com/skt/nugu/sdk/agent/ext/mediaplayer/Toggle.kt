@@ -16,17 +16,22 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
-data class MovePayload(
-    val playServiceId: String,
+/**
+ * toggle information.
+ * If not supported, should be null.
+ * When create event, exclude field not supported.
+ */
+data class Toggle(
     /**
-     * the unique string to identify
+     * repeat, null if not supported
      */
-    val token: String,
-    val directive: Direction,
-    val sec: Long
-) {
-    enum class Direction {
-        FORWARD,
-        BACKWARD
-    }
-}
+    val repeat: String?,
+    /**
+     * like, null if not supported
+     */
+    val like: Boolean?,
+    /**
+     * shuffle, null if not supported
+     */
+    val shuffle: Boolean?
+)
