@@ -58,6 +58,7 @@ class GetInfoDirectiveHandler(
                                     }
                                 })
                             }.toString())
+                                .referrerDialogRequestId(info.directive.getDialogRequestId())
                                 .build()
                         )
                     }

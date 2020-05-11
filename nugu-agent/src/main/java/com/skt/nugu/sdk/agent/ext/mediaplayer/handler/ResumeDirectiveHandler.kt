@@ -74,6 +74,7 @@ class ResumeDirectiveHandler(
                                         addProperty("message", message)
                                     }
                                 }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
                             )
                         }
@@ -94,6 +95,7 @@ class ResumeDirectiveHandler(
                                     addProperty("token", payload.token)
                                     addProperty("reason", reason)
                                 }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
                             )
                         }
