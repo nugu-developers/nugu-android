@@ -16,9 +16,9 @@
 
 package com.skt.nugu.sdk.agent.ext.message.payload
 
-import com.skt.nugu.sdk.agent.ext.message.Candidate
+import com.skt.nugu.sdk.agent.ext.message.Contact
 
 data class GetMessagePayload(
     val playServiceId: String,
-    val recipient: Candidate?
+    val recipient: Contact?
 )
