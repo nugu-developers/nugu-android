@@ -16,6 +16,7 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.NextDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.PlayDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.PreviousDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.SearchDirectiveHandler
@@ -38,7 +39,9 @@ class MediaPlayerAgent(
     , SupportedInterfaceContextProvider
     , PlayDirectiveHandler.Controller
     , SearchDirectiveHandler.Controller
-    , PreviousDirectiveHandler.Controller {
+    , PreviousDirectiveHandler.Controller
+    , NextDirectiveHandler.Controller
+{
     companion object {
         private const val TAG = "MediaPlayerAgent"
 
@@ -66,6 +69,14 @@ class MediaPlayerAgent(
 
             addDirectiveHandler(
                 PreviousDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+
+            addDirectiveHandler(
+                NextDirectiveHandler(
                     this@MediaPlayerAgent,
                     messageSender,
                     contextGetter
@@ -100,6 +111,12 @@ class MediaPlayerAgent(
     override fun previous(payload: PreviousPayload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.previous(payload, callback)
+        }
+    }
+
+    override fun next(payload: PreviousPayload, callback: EventCallback) {
+        executor.submit {
+            mediaPlayer.next(payload, callback)
         }
     }
 }
