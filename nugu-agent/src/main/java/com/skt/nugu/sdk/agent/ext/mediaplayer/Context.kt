@@ -17,5 +17,6 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 data class Context(
+    val playerActivity: PlayerActivity,
     val toggle: Toggle?
 )

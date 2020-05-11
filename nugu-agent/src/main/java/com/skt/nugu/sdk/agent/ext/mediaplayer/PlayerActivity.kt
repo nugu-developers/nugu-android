@@ -16,21 +16,9 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
-import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
-
-/**
- * MediaPlayer interface for MediaPlayerAgent
- */
-interface MediaPlayer
-    : PlayDirectiveHandler.Controller
-    , SearchDirectiveHandler.Controller
-    , PreviousDirectiveHandler.Controller
-    , NextDirectiveHandler.Controller
-    , MoveDirectiveHandler.Controller
-    , ResumeDirectiveHandler.Controller
-    , PauseDirectiveHandler.Controller
-    , RewindDirectiveHandler.Controller
-    , ToggleDirectiveHandler.Controller
-    , GetInfoDirectiveHandler.Controller {
-    fun getContext(): Context
+enum class PlayerActivity {
+    IDLE,
+    PLAYING,
+    STOPPED,
+    PAUSED
 }
