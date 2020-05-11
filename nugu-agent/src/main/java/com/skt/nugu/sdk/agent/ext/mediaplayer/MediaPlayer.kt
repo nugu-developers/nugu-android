@@ -16,6 +16,7 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.NextDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.PlayDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.PreviousDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.SearchDirectiveHandler
@@ -27,3 +28,4 @@ interface MediaPlayer
     : PlayDirectiveHandler.Controller
     , SearchDirectiveHandler.Controller
     , PreviousDirectiveHandler.Controller
+    , NextDirectiveHandler.Controller
