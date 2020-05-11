@@ -16,6 +16,8 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
-interface MessageClient {
+import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
+
+interface MessageClient: SendCandidatesDirectiveHandler.Controller {
     fun getContext(): Context
 }
