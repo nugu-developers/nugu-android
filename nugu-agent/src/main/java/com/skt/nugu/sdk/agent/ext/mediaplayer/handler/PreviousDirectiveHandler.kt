@@ -20,7 +20,7 @@ import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
-import com.skt.nugu.sdk.agent.ext.mediaplayer.PlayPayload
+import com.skt.nugu.sdk.agent.ext.mediaplayer.PreviousPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -29,21 +29,21 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
-class PlayDirectiveHandler(
+class PreviousDirectiveHandler(
     private val controller: Controller,
     private val messageSender: MessageSender,
     private val contextGetter: ContextGetterInterface
 ): AbstractDirectiveHandler() {
     companion object {
-        private const val NAME_PLAY = "Play"
+        private const val NAME_PREVIOUS = "Previous"
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
 
-        private val PLAY = NamespaceAndName(MediaPlayerAgent.NAMESPACE, NAME_PLAY)
+        private val PREVIOUS = NamespaceAndName(MediaPlayerAgent.NAMESPACE, NAME_PREVIOUS)
     }
 
     interface Controller {
-        fun play(payload: PlayPayload, callback: EventCallback)
+        fun previous(payload: PreviousPayload, callback: EventCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -53,12 +53,12 @@ class PlayDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         removeDirective(info.directive.getMessageId())
 
-        val payload = MessageFactory.create(info.directive.payload, PlayPayload::class.java)
+        val payload = MessageFactory.create(info.directive.payload, PreviousPayload::class.java)
         if(payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.play(payload, object: EventCallback {
+            controller.previous(payload, object: EventCallback {
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
@@ -66,7 +66,7 @@ class PlayDirectiveHandler(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
-                                    "$NAME_PLAY$NAME_SUCCEEDED",
+                                    "${NAME_PREVIOUS}${NAME_SUCCEEDED}",
                                     MediaPlayerAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
@@ -88,7 +88,7 @@ class PlayDirectiveHandler(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
-                                    "$NAME_PLAY$NAME_FAILED",
+                                    "${NAME_PREVIOUS}${NAME_FAILED}",
                                     MediaPlayerAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
@@ -111,7 +111,7 @@ class PlayDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[PLAY] = BlockingPolicy()
+        configuration[PREVIOUS] = BlockingPolicy()
 
         return configuration
     }
