@@ -75,6 +75,7 @@ class PlayDirectiveHandler(
                                         addProperty("message", message)
                                     }
                                 }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
                             )
                         }
@@ -95,6 +96,7 @@ class PlayDirectiveHandler(
                                     addProperty("token", payload.token)
                                     addProperty("reason", reason)
                                 }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
                             )
                         }
