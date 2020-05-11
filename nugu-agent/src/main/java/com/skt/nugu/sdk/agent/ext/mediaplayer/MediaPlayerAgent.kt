@@ -39,6 +39,8 @@ class MediaPlayerAgent(
     , PreviousDirectiveHandler.Controller
     , NextDirectiveHandler.Controller
     , MoveDirectiveHandler.Controller
+    , ResumeDirectiveHandler.Controller
+    , PauseDirectiveHandler.Controller
 {
     companion object {
         private const val TAG = "MediaPlayerAgent"
@@ -88,6 +90,22 @@ class MediaPlayerAgent(
                     contextGetter
                 )
             )
+
+            addDirectiveHandler(
+                ResumeDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+
+            addDirectiveHandler(
+                PauseDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
         }
     }
 
@@ -129,6 +147,18 @@ class MediaPlayerAgent(
     override fun move(payload: MovePayload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.move(payload, callback)
+        }
+    }
+
+    override fun resume(payload: Payload, callback: EventCallback) {
+        executor.submit {
+            mediaPlayer.resume(payload, callback)
+        }
+    }
+
+    override fun pause(payload: Payload, callback: EventCallback) {
+        executor.submit {
+            mediaPlayer.pause(payload, callback)
         }
     }
 }
