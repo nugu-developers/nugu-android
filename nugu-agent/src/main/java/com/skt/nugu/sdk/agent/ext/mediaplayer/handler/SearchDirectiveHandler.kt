@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.PlayPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -42,12 +43,7 @@ class SearchDirectiveHandler (
     }
 
     interface Controller {
-        interface Callback {
-            fun onSuccess(message:String?)
-            fun onFailure(reason: String)
-        }
-
-        fun search(payload: PlayPayload, callback: Callback)
+        fun search(payload: PlayPayload, callback: EventCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -62,7 +58,7 @@ class SearchDirectiveHandler (
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.search(payload, object: Controller.Callback {
+            controller.search(payload, object: EventCallback {
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
