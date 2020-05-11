@@ -374,6 +374,7 @@ class DefaultAudioPlayerAgent(
                     // fetch only offset
                     executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
 
+                    waitPlayExecuteInfo = nextAudioInfo
                     // finish preExecute
                     waitFinishPreExecuteInfo = null
                 }
