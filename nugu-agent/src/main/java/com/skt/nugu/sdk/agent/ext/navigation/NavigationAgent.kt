@@ -18,7 +18,9 @@ package com.skt.nugu.sdk.agent.ext.navigation
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.navigation.handler.StartRouteDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.navigation.payload.SendPoiCandidatesPayload
+import com.skt.nugu.sdk.agent.ext.navigation.payload.StartRoutePayload
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -37,6 +39,7 @@ class NavigationAgent(
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , SendPoiCandidatesDirectiveHandler.Controller
+    , StartRouteDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "Navigation"
@@ -52,6 +55,7 @@ class NavigationAgent(
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         directiveSequencer.apply {
             addDirectiveHandler(SendPoiCandidatesDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
+            addDirectiveHandler(StartRouteDirectiveHandler(this@NavigationAgent, messageSender, contextGetter))
         }
     }
 
@@ -87,5 +91,14 @@ class NavigationAgent(
         return executor.submit(Callable {
             client.getCandidateList(payload)
         }).get()
+    }
+
+    override fun startRoute(
+        payload: StartRoutePayload,
+        callback: StartRouteDirectiveHandler.Callback
+    ) {
+        executor.submit {
+            client.startRoute(payload, callback)
+        }
     }
 }

@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.navigation
+package com.skt.nugu.sdk.agent.ext.navigation.payload
 
-import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.navigation.handler.StartRouteDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.navigation.Poi
 
-interface NavigationClient
-    : SendPoiCandidatesDirectiveHandler.Controller
-    , StartRouteDirectiveHandler.Controller
-{
-    fun getContext(): Context
-}
+data class StartRoutePayload(
+    val playServiceId: String,
+    val destination: Poi
+)
