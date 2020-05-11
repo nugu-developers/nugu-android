@@ -17,5 +17,5 @@
 package com.skt.nugu.sdk.agent.ext.message
 
 data class Context(
-    val candidates: List<Candidate>?
+    val candidates: List<Contact>?
 )

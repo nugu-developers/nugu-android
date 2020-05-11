@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.ext.message
 
 import com.google.gson.JsonObject
 
-data class Candidate(
+data class Contact(
     val name: String,
     val type: Type,
     val number: String?,

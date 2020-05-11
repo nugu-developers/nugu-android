@@ -121,7 +121,7 @@ class MessageAgent(
         }
     }
 
-    override fun getCandidateList(payload: SendCandidatesPayload): List<Candidate>? {
+    override fun getCandidateList(payload: SendCandidatesPayload): List<Contact>? {
         return executor.submit(Callable {
             client.getCandidateList(payload)
         }).get()
