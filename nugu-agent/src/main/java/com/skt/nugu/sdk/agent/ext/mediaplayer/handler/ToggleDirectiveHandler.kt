@@ -20,7 +20,7 @@ import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
-import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.Payload
+import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.TogglePayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -29,21 +29,21 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
-class PauseDirectiveHandler(
+class ToggleDirectiveHandler (
     private val controller: Controller,
     private val messageSender: MessageSender,
     private val contextGetter: ContextGetterInterface
 ): AbstractDirectiveHandler() {
     companion object {
-        private const val NAME_PAUSE = "Pause"
+        private const val NAME_TOGGLE = "Toggle"
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
 
-        private val PAUSE = NamespaceAndName(MediaPlayerAgent.NAMESPACE, NAME_PAUSE)
+        private val TOGGLE = NamespaceAndName(MediaPlayerAgent.NAMESPACE, NAME_TOGGLE)
     }
 
     interface Controller {
-        fun pause(payload: Payload, callback: EventCallback)
+        fun toggle(payload: TogglePayload, callback: EventCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -52,12 +52,12 @@ class PauseDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         removeDirective(info.directive.getMessageId())
 
-        val payload = MessageFactory.create(info.directive.payload, Payload::class.java)
+        val payload = MessageFactory.create(info.directive.payload, TogglePayload::class.java)
         if(payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.pause(payload, object: EventCallback {
+            controller.toggle(payload, object: EventCallback {
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
@@ -65,7 +65,7 @@ class PauseDirectiveHandler(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
-                                    "${NAME_PAUSE}${NAME_SUCCEEDED}",
+                                    "${NAME_TOGGLE}${NAME_SUCCEEDED}",
                                     MediaPlayerAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
@@ -87,7 +87,7 @@ class PauseDirectiveHandler(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
-                                    "${NAME_PAUSE}${NAME_FAILED}",
+                                    "${NAME_TOGGLE}${NAME_FAILED}",
                                     MediaPlayerAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
@@ -110,7 +110,7 @@ class PauseDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[PAUSE] = BlockingPolicy()
+        configuration[TOGGLE] = BlockingPolicy()
 
         return configuration
     }
