@@ -16,16 +16,10 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
-import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
-
-/**
- * MediaPlayer interface for MediaPlayerAgent
- */
-interface MediaPlayer
-    : PlayDirectiveHandler.Controller
-    , SearchDirectiveHandler.Controller
-    , PreviousDirectiveHandler.Controller
-    , NextDirectiveHandler.Controller
-    , MoveDirectiveHandler.Controller
-    , ResumeDirectiveHandler.Controller
-    , PauseDirectiveHandler.Controller
+data class Payload(
+    val playServiceId: String,
+    /**
+     * the unique string to identify
+     */
+    val token: String
+)
