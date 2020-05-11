@@ -17,23 +17,5 @@
 package com.skt.nugu.sdk.agent.ext.message
 
 data class Context(
-    val candidates: Array<Candidate>?
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Context
-
-        if (candidates != null) {
-            if (other.candidates == null) return false
-            if (!candidates.contentEquals(other.candidates)) return false
-        } else if (other.candidates != null) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return candidates?.contentHashCode() ?: 0
-    }
-}
+    val candidates: List<Candidate>?
+)

@@ -16,6 +16,8 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
+import com.google.gson.JsonObject
+
 data class Candidate(
     val name: String,
     val type: Type,
@@ -30,5 +32,25 @@ data class Candidate(
         EXCHANGE,
         T114,
         NONE
+    }
+
+    fun toJsonObject() = JsonObject().apply {
+        addProperty("name", name)
+        addProperty("type", type.name)
+        number?.let {
+            addProperty("number", it)
+        }
+        profileImgUrl?.let {
+            addProperty("profileImgUrl", it)
+        }
+        message?.let {
+            addProperty("message", it)
+        }
+        time?.let {
+            addProperty("time", it)
+        }
+        score?.let {
+            addProperty("score", it)
+        }
     }
 }
