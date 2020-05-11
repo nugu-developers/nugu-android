@@ -17,14 +17,8 @@
 package com.skt.nugu.sdk.agent.ext.navigation
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.ext.navigation.handler.RemoveStopoverDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.navigation.handler.SendPoiCandidatesDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.navigation.handler.SetStopoverDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.navigation.handler.StartRouteDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.navigation.payload.RemoveStopoverPayload
-import com.skt.nugu.sdk.agent.ext.navigation.payload.SendPoiCandidatesPayload
-import com.skt.nugu.sdk.agent.ext.navigation.payload.SetStopoverPayload
-import com.skt.nugu.sdk.agent.ext.navigation.payload.StartRoutePayload
+import com.skt.nugu.sdk.agent.ext.navigation.handler.*
+import com.skt.nugu.sdk.agent.ext.navigation.payload.*
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -48,7 +42,9 @@ class NavigationAgent(
     , StartRouteDirectiveHandler.Controller
     , SetStopoverDirectiveHandler.Controller
     , RemoveStopoverDirectiveHandler.Controller
-    , NavigationClient.OnRouteFinishListener {
+    , NavigationClient.OnRouteFinishListener
+    , AskInfoDirectiveHandler.Controller
+{
     companion object {
         const val NAMESPACE = "Navigation"
         val VERSION = Version(1, 0)
@@ -91,6 +87,14 @@ class NavigationAgent(
             )
             addDirectiveHandler(
                 RemoveStopoverDirectiveHandler(
+                    this@NavigationAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+
+            addDirectiveHandler(
+                AskInfoDirectiveHandler(
                     this@NavigationAgent,
                     messageSender,
                     contextGetter
@@ -188,5 +192,11 @@ class NavigationAgent(
                 )
             }
         })
+    }
+
+    override fun askInfo(payload: AskInfoPayload, callback: AskInfoDirectiveHandler.Callback) {
+        executor.submit {
+            client.askInfo(payload, callback)
+        }
     }
 }

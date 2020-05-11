@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.navigation
+package com.skt.nugu.sdk.agent.ext.navigation.payload
 
-import com.skt.nugu.sdk.agent.ext.navigation.handler.*
-
-interface NavigationClient
-    : SendPoiCandidatesDirectiveHandler.Controller
-    , StartRouteDirectiveHandler.Controller
-    , SetStopoverDirectiveHandler.Controller
-    , RemoveStopoverDirectiveHandler.Controller
-    , AskInfoDirectiveHandler.Controller
-{
-    interface OnRouteFinishListener {
-        fun onRouteFinished(playServiceId: String)
-    }
-
-    fun getContext(): Context
-
-    fun setRouteFinishListener(listener: OnRouteFinishListener)
-}
+data class AskInfoPayload(
+    val playServiceId: String
+)
