@@ -45,7 +45,7 @@ class FocusManager(
      */
     //@GuardedBy("activeChannels")
     private val activeChannels = TreeSet<Channel>()
-    private val executor = DequeSingleThreadExecutor()
+    private val executor = Executors.newSingleThreadExecutor()
 
     private val listeners = CopyOnWriteArraySet<FocusManagerInterface.OnFocusChangedListener>()
 
@@ -92,16 +92,6 @@ class FocusManager(
         })
     }
 
-    override fun stopForegroundActivity() {
-        val foregroundChannel = getHighestPriorityActiveChannel()
-        if (foregroundChannel == null) {
-            return
-        }
-
-        executor.submitFirst {
-            stopForegroundActivityHelper(foregroundChannel, foregroundChannel.getInterfaceName())
-        }
-    }
 
     private fun acquireChannelHelper(
         channelToAcquire: Channel,

@@ -240,7 +240,6 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(dialogClient, FocusState.FOREGROUND)
 
-        focusManager.stopForegroundActivity()
         assertFocusChange(dialogClient, FocusState.NONE)
     }
 
@@ -273,15 +272,12 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(contentClient, FocusState.BACKGROUND)
 
-        focusManager.stopForegroundActivity()
         assertFocusChange(dialogClient, FocusState.NONE)
         assertFocusChange(alertsClient, FocusState.FOREGROUND)
 
-        focusManager.stopForegroundActivity()
         assertFocusChange(alertsClient, FocusState.NONE)
         assertFocusChange(contentClient, FocusState.FOREGROUND)
 
-        focusManager.stopForegroundActivity()
         assertFocusChange(contentClient, FocusState.NONE)
     }
 
@@ -296,7 +292,6 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(dialogClient, FocusState.FOREGROUND)
 
-        focusManager.stopForegroundActivity()
         assertFocusChange(dialogClient, FocusState.NONE)
 
         Assert.assertTrue(
@@ -408,7 +403,6 @@ class FocusManagerTest : FocusChangeManager() {
             )
         }
 
-        focusManager.stopForegroundActivity()
         assertFocusChange(dialogClient, FocusState.NONE) //  wait focus changed
         assertFocusChange(contentClient, FocusState.FOREGROUND) //  wait focus changed
         for (listener in listeners) {
@@ -472,7 +466,5 @@ class FocusManagerTest : FocusChangeManager() {
         while (activeListeners.isNotEmpty()) {
             focusManager.removeListener(activeListeners.removeAt(0))
         }
-
-        focusManager.stopForegroundActivity()
     }
 }
