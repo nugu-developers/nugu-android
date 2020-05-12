@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 0.8.17 *(2020-05-12)*
+-----------------------------
+* Fix: Ensure execution order of focus request (#703)
+* Fix: Resume not work after explicit pause (#707).
+
 Version 0.8.16 *(2020-05-08)*
 -----------------------------
 * New: Add dialogRequestId at ASR result listener.
