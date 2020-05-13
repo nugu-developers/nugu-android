@@ -121,6 +121,7 @@ class DefaultServerSpeechRecognizer(
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
                 wakeup = payloadWakeupInfo,
+                asrContext = payload?.asrContext,
                 timeout = AsrRecognizeEventPayload.Timeout(
                     epdParam.timeoutInSeconds * 1000L,
                     epdParam.maxDurationInSeconds * 1000L,
