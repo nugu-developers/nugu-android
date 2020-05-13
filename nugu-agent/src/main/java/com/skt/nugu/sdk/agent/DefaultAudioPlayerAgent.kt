@@ -83,6 +83,11 @@ class DefaultAudioPlayerAgent(
         ATTACHMENT("ATTACHMENT")
     }
 
+    enum class StopReason {
+        PLAY_ANOTHER,
+        STOP
+    }
+
     data class PlayPayload(
         @SerializedName("sourceType")
         val sourceType: SourceType?,
@@ -167,6 +172,7 @@ class DefaultAudioPlayerAgent(
     private var duration: Long? = null
     private var playCalled = false
     private var stopCalled = false
+    private var stopReason: StopReason? = null
     private var pauseReason: PauseReason? = null
     private var progressTimer =
         ProgressTimer()
@@ -343,7 +349,7 @@ class DefaultAudioPlayerAgent(
                 if(!executeShouldResumeNextItem(currentAudioInfo, nextAudioInfo)) {
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - play new item: ${directive.getMessageId()}")
                     // stop current if play new item.
-                    if(executeStop()) {
+                    if(executeStop(StopReason.PLAY_ANOTHER)) {
                         // should wait until stopped (onPlayerStopped will be called)
                     } else {
                         // fetch now
@@ -636,10 +642,10 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun executeStop(): Boolean {
+    private fun executeStop(reason: StopReason = StopReason.STOP): Boolean {
         Logger.d(
             TAG,
-            "[executeStop] currentActivity: $currentActivity, playCalled: $playCalled, currentItem: $currentItem"
+            "[executeStop] currentActivity: $currentActivity, playCalled: $playCalled, currentItem: $currentItem, reason: $reason"
         )
         when (currentActivity) {
             AudioPlayerAgentInterface.State.IDLE,
@@ -647,6 +653,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.FINISHED -> {
                 if (playCalled) {
                     if (mediaPlayer.stop(sourceId)) {
+                        stopReason = reason
                         stopCalled = true
                         return true
                     }
@@ -662,6 +669,7 @@ class DefaultAudioPlayerAgent(
                     }
                 } else if(currentItem?.isFetched == true) {
                     if (mediaPlayer.stop(sourceId)) {
+                        stopReason = reason
                         stopCalled = true
                         return true
                     }
@@ -671,6 +679,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.PAUSED -> {
                 getOffsetInMilliseconds()
                 if (mediaPlayer.stop(sourceId)) {
+                    stopReason = reason
                     stopCalled = true
                     return true
                 }
@@ -1027,7 +1036,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.PAUSED -> {
                 progressTimer.stop()
                 if (!isError) {
-                    sendPlaybackStoppedEvent()
+                    sendPlaybackStoppedEvent(stopReason ?: StopReason.STOP)
                 }
                 changeActivity(AudioPlayerAgentInterface.State.STOPPED)
                 handlePlaybackCompleted(true)
@@ -1041,6 +1050,7 @@ class DefaultAudioPlayerAgent(
             }
         }
 
+        stopReason = null
         playDirectiveController.onPlayerStopped()
     }
 
@@ -1290,8 +1300,31 @@ class DefaultAudioPlayerAgent(
         sendEventWithOffset(EVENT_NAME_PLAYBACK_FINISHED)
     }
 
-    private fun sendPlaybackStoppedEvent() {
-        sendEventWithOffset(EVENT_NAME_PLAYBACK_STOPPED)
+    private fun sendPlaybackStoppedEvent(stopReason: StopReason) {
+        val offset = getOffsetInMilliseconds()
+        currentItem?.apply {
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
+                    val token = payload.audioItem.stream.token
+                    val messageRequest = EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        EVENT_NAME_PLAYBACK_STOPPED,
+                        VERSION.toString()
+                    ).payload(
+                        JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                            addProperty("token", token)
+                            addProperty("offsetInMilliseconds", offset)
+                            addProperty("reason", stopReason.name)
+                        }.toString()
+                    ).referrerDialogRequestId(referrerDialogRequestId).build()
+
+                    messageSender.sendMessage(messageRequest)
+                    Logger.d(TAG, "[sendEvent] $messageRequest")
+                }
+            }, namespaceAndName)
+        }
     }
 
     private fun sendPlaybackPausedEvent() {
