@@ -16,7 +16,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
     private val messageSender: MessageSender,
     private val contextGetter: ContextGetterInterface,
     private val playbackInfoProvider: AudioPlayerPlaybackInfoProvider
-): AbstractDirectiveHandler() {
+) : AbstractDirectiveHandler() {
     companion object {
         const val NAMESPACE =
             DefaultAudioPlayerAgent.NAMESPACE
@@ -35,13 +35,23 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
         private const val NAME_COMMAND = "Command"
 
         private const val NAME_ISSUED = "Issued"
+        private const val NAME_FAILED = "Failed"
 
-        private val REQUEST_RESUME_COMMAND = NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_RESUME$NAME_COMMAND")
-        private val REQUEST_NEXT_COMMAND = NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_NEXT$NAME_COMMAND")
-        private val REQUEST_PREVIOUS_COMMAND = NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_PREVIOUS$NAME_COMMAND")
-        private val REQUEST_PAUSE_COMMAND = NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_PAUSE$NAME_COMMAND")
-        private val REQUEST_STOP_COMMAND = NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_STOP$NAME_COMMAND")
+        private val REQUEST_RESUME_COMMAND =
+            NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_RESUME$NAME_COMMAND")
+        private val REQUEST_NEXT_COMMAND =
+            NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_NEXT$NAME_COMMAND")
+        private val REQUEST_PREVIOUS_COMMAND =
+            NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_PREVIOUS$NAME_COMMAND")
+        private val REQUEST_PAUSE_COMMAND =
+            NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_PAUSE$NAME_COMMAND")
+        private val REQUEST_STOP_COMMAND =
+            NamespaceAndName(NAMESPACE, "$NAME_REQUEST$NAME_STOP$NAME_COMMAND")
+    }
 
+    enum class Type {
+        INVALID_COMMAND,
+        UNKNOWN,ERROR
     }
 
     private var handler: AudioPlayerAgentInterface.RequestCommandHandler? = null
@@ -52,29 +62,64 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
     override fun handleDirective(info: DirectiveInfo) {
         setHandlingCompleted(info)
-        contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 val token = playbackInfoProvider.getToken()
                 val offsetInMilliseconds = playbackInfoProvider.getOffsetInMilliseconds()
                 val playServiceId = playbackInfoProvider.getPlayServiceId()
 
-                if(token.isNullOrBlank() || offsetInMilliseconds == null || playServiceId.isNullOrBlank()) {
+                val header = info.directive.header
+                if (token.isNullOrBlank() || offsetInMilliseconds == null || playServiceId.isNullOrBlank()) {
+                    val message = EventMessageRequest.Builder(
+                        jsonContext,
+                        header.namespace,
+                        "$NAME_REQUEST$NAME_COMMAND$NAME_FAILED",
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        add("error", JsonObject().apply {
+                            addProperty("type",Type.INVALID_COMMAND.name)
+                            addProperty("message","Invalid State. Details: token: $token, offsetInMilliseconds: $offsetInMilliseconds, playServiceId: $playServiceId")
+                        })
+                    }.toString())
+                        .referrerDialogRequestId(info.directive.getDialogRequestId())
+                        .build()
+
+                    messageSender.sendMessage(message)
+
                     return
                 }
 
-                if(handler?.handleRequestCommand(info.directive.payload, info.directive.header) != true) {
-                    val header = info.directive.header
+                if (handler?.handleRequestCommand(
+                        info.directive.payload,
+                        info.directive.header
+                    ) != true
+                ) {
                     val message = EventMessageRequest.Builder(
                         jsonContext,
                         header.namespace,
                         "${header.name}$NAME_ISSUED",
                         VERSION.toString()
-                    )
-                        .payload(JsonObject().apply {
-                            addProperty("token", token)
-                            addProperty("offsetInMilliseconds", offsetInMilliseconds)
-                            addProperty("playServiceId", playServiceId)
-                        }.toString())
+                    ).payload(JsonObject().apply {
+                        addProperty("token", token)
+                        addProperty("offsetInMilliseconds", offsetInMilliseconds)
+                        addProperty("playServiceId", playServiceId)
+                    }.toString())
+                        .referrerDialogRequestId(info.directive.getDialogRequestId())
+                        .build()
+
+                    messageSender.sendMessage(message)
+                } else {
+                    val message = EventMessageRequest.Builder(
+                        jsonContext,
+                        header.namespace,
+                        "$NAME_REQUEST$NAME_COMMAND$NAME_FAILED",
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        add("error", JsonObject().apply {
+                            addProperty("type",Type.UNKNOWN.name)
+                            addProperty("message","The handler refused to execute.")
+                        })
+                    }.toString())
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
