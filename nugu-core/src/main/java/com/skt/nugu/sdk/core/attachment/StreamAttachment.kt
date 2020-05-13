@@ -172,7 +172,13 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
 
                 isReading = false
 
-                return sizeInBytes - leftSizeInBytes
+                val read = sizeInBytes - leftSizeInBytes
+
+                return if(read == 0 && isClosing) {
+                    -1
+                } else {
+                    read
+                }
             }
 
             override fun close() {
