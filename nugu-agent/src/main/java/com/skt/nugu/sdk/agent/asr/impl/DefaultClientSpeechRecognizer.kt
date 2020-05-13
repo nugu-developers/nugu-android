@@ -125,6 +125,7 @@ class DefaultClientSpeechRecognizer(
                 sessionId = payload?.sessionId,
                 playServiceId = payload?.playServiceId,
                 domainTypes = payload?.domainTypes,
+                asrContext = payload?.asrContext,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
                 wakeup = payloadWakeup
