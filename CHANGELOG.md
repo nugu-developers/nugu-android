@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.8.18 *(2020-05-13)*
+-----------------------------
+* Fix: Add missing asrContext for ASR.Recognize event
+
 Version 0.8.17 *(2020-05-12)*
 -----------------------------
 * Fix: Ensure execution order of focus request (#703)
