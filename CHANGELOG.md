@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.8.19 *(2020-05-13)*
+-----------------------------
+* Fix: return value for read API of Attachment's Reader
+
 Version 0.8.18 *(2020-05-13)*
 -----------------------------
 * Fix: Add missing asrContext for ASR.Recognize event
