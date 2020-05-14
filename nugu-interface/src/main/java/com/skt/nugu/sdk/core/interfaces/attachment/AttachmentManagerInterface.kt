@@ -25,7 +25,7 @@ interface AttachmentManagerInterface {
      * Create an reader for attachment
      * @param attachmentId the attachment Id for attachment
      */
-    fun createReader(attachmentId: String): Attachment.Reader
+    fun createReader(attachmentId: String): Attachment.Reader?
     /**
      * Called when the attachmentManager no longer need to manage attachment.
      * @param attachmentId the attachment Id
