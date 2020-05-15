@@ -4,20 +4,22 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.ext.phonecall.handler.*
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.*
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class PhoneCallAgent(
     private val client: PhoneCallClient,
     contextStateProviderRegistry: ContextStateProviderRegistry,
-    contextGetter: ContextGetterInterface,
-    messageSender: MessageSender,
+    private val contextGetter: ContextGetterInterface,
+    private val messageSender: MessageSender,
     directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
@@ -26,27 +28,46 @@ class PhoneCallAgent(
     , EndCallDirectiveHandler.Controller
     , AcceptCallDirectiveHandler.Controller
     , BlockingIncomingCallDirectiveHandler.Controller
-{
+    , PhoneCallClient.OnStateChangeListener {
     companion object {
         const val NAMESPACE = "PhoneCall"
-        val VERSION = Version(1,0)
+        val VERSION = Version(1, 0)
     }
 
     override fun getInterfaceName(): String = NAMESPACE
 
     private val executor = Executors.newSingleThreadExecutor()
+    private var state = State.IDLE
     private var currentContext: Context? = null
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(
+            namespaceAndName,
+            this,
+            buildCompactContext().toString()
+        )
 
         directiveSequencer.apply {
-            addDirectiveHandler(SendCandidatesDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
-            addDirectiveHandler(MakeCallDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
+            addDirectiveHandler(
+                SendCandidatesDirectiveHandler(
+                    this@PhoneCallAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+            addDirectiveHandler(
+                MakeCallDirectiveHandler(
+                    this@PhoneCallAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
             addDirectiveHandler(EndCallDirectiveHandler(this@PhoneCallAgent))
             addDirectiveHandler(AcceptCallDirectiveHandler(this@PhoneCallAgent))
             addDirectiveHandler(BlockingIncomingCallDirectiveHandler(this@PhoneCallAgent))
         }
+
+        client.addOnStateChangeListener(this)
     }
 
     private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -60,14 +81,14 @@ class PhoneCallAgent(
     ) {
         executor.submit {
             val context = client.getContext()
-            if(currentContext != context) {
+            if (currentContext != context) {
                 val result = contextSetter.setState(namespaceAndName, buildCompactContext().apply {
-                    addProperty("state", context.state.name)
+                    addProperty("state", state.name)
                     context.intent?.let {
                         addProperty("intent", it.name)
                     }
                     context.callType?.let {
-                        addProperty("callType",it.name)
+                        addProperty("callType", it.name)
                     }
                     context.candidates?.let {
                         add("candidates", JsonArray().apply {
@@ -78,11 +99,16 @@ class PhoneCallAgent(
                     }
                 }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
 
-                if(result == ContextSetterInterface.SetStateResult.SUCCESS) {
+                if (result == ContextSetterInterface.SetStateResult.SUCCESS) {
                     currentContext = context
                 }
             } else {
-                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
+                contextSetter.setState(
+                    namespaceAndName,
+                    null,
+                    StateRefreshPolicy.ALWAYS,
+                    stateRequestToken
+                )
             }
         }
     }
@@ -115,5 +141,109 @@ class PhoneCallAgent(
         executor.submit {
             client.blockingIncomingCall(payload)
         }
+    }
+
+    override fun onIdle(playServiceId: String) {
+        executor.submit {
+            if (state == State.IDLE) {
+                return@submit
+            }
+
+            state = State.IDLE
+
+            // CallEnded
+            sendCallEndedEvent(playServiceId)
+        }
+    }
+
+    override fun onOutgoing() {
+        executor.submit {
+            if (state == State.IDLE) {
+
+            } else {
+                // Invalid Transition
+            }
+            state = State.OUTGOING
+        }
+    }
+
+    override fun onEstablished(playServiceId: String) {
+        executor.submit {
+            if (state == State.OUTGOING || state == State.INCOMING) {
+                // CallEstablished
+                sendCallEstablishedEvent(playServiceId)
+            } else {
+                // Invalid Transition
+            }
+            state = State.ESTABLISHED
+        }
+    }
+
+    override fun onIncoming(
+        playServiceId: String,
+        callerName: String,
+        missedInCallHistory: String
+    ) {
+        executor.submit {
+            if (state == State.IDLE) {
+                // CallArrived
+                sendCallArrivedEvent(playServiceId, callerName, missedInCallHistory)
+            } else {
+                // Invalid Transition
+            }
+            state = State.INCOMING
+        }
+    }
+
+    private fun sendCallArrivedEvent(
+        playServiceId: String,
+        callerName: String,
+        missedInCallHistory: String
+    ) {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, "CallArrived", VERSION.toString())
+                        .payload(JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                            addProperty("callerName", callerName)
+                            addProperty("missedInCallHistory", missedInCallHistory)
+                        }.toString())
+                        .build()
+                )
+            }
+        })
+    }
+
+    private fun sendCallEndedEvent(
+        playServiceId: String
+    ) {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, "CallEnded", VERSION.toString())
+                        .payload(JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                        }.toString())
+                        .build()
+                )
+            }
+        })
+    }
+
+    private fun sendCallEstablishedEvent(
+        playServiceId: String
+    ) {
+        contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.sendMessage(
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, "CallEstablished", VERSION.toString())
+                        .payload(JsonObject().apply {
+                            addProperty("playServiceId", playServiceId)
+                        }.toString())
+                        .build()
+                )
+            }
+        })
     }
 }
