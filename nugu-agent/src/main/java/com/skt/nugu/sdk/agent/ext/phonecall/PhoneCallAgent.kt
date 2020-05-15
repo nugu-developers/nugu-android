@@ -2,7 +2,9 @@ package com.skt.nugu.sdk.agent.ext.phonecall
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.phonecall.handler.MakeCallDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.handler.SendCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.phonecall.payload.MakeCallPayload
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -22,6 +24,7 @@ class PhoneCallAgent(
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , SendCandidatesDirectiveHandler.Controller
+    , MakeCallDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "PhoneCall"
@@ -38,6 +41,7 @@ class PhoneCallAgent(
 
         directiveSequencer.apply {
             addDirectiveHandler(SendCandidatesDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
+            addDirectiveHandler(MakeCallDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
         }
     }
 
@@ -83,5 +87,11 @@ class PhoneCallAgent(
         return executor.submit(Callable {
             client.getCandidateList(payload)
         }).get()
+    }
+
+    override fun makeCall(payload: MakeCallPayload, callback: MakeCallDirectiveHandler.Callback) {
+        executor.submit {
+            client.makeCall(payload, callback)
+        }
     }
 }
