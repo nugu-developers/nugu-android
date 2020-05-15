@@ -2,9 +2,11 @@ package com.skt.nugu.sdk.agent.ext.phonecall
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.phonecall.handler.AcceptCallDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.handler.EndCallDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.handler.MakeCallDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.handler.SendCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.phonecall.payload.AcceptCallPayload
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.EndCallPayload
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.MakeCallPayload
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
@@ -28,6 +30,7 @@ class PhoneCallAgent(
     , SendCandidatesDirectiveHandler.Controller
     , MakeCallDirectiveHandler.Controller
     , EndCallDirectiveHandler.Controller
+    , AcceptCallDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "PhoneCall"
@@ -46,6 +49,7 @@ class PhoneCallAgent(
             addDirectiveHandler(SendCandidatesDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
             addDirectiveHandler(MakeCallDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
             addDirectiveHandler(EndCallDirectiveHandler(this@PhoneCallAgent))
+            addDirectiveHandler(AcceptCallDirectiveHandler(this@PhoneCallAgent))
         }
     }
 
@@ -102,6 +106,12 @@ class PhoneCallAgent(
     override fun endCall(payload: EndCallPayload) {
         executor.submit {
             client.endCall(payload)
+        }
+    }
+
+    override fun acceptCall(payload: AcceptCallPayload) {
+        executor.submit {
+            client.acceptCall(payload)
         }
     }
 }
