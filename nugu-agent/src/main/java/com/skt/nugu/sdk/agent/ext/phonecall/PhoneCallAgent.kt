@@ -2,14 +2,8 @@ package com.skt.nugu.sdk.agent.ext.phonecall
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.ext.phonecall.handler.AcceptCallDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.phonecall.handler.EndCallDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.phonecall.handler.MakeCallDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.phonecall.handler.SendCandidatesDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.AcceptCallPayload
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.EndCallPayload
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.MakeCallPayload
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
+import com.skt.nugu.sdk.agent.ext.phonecall.handler.*
+import com.skt.nugu.sdk.agent.ext.phonecall.payload.*
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -31,6 +25,7 @@ class PhoneCallAgent(
     , MakeCallDirectiveHandler.Controller
     , EndCallDirectiveHandler.Controller
     , AcceptCallDirectiveHandler.Controller
+    , BlockingIncomingCallDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "PhoneCall"
@@ -50,6 +45,7 @@ class PhoneCallAgent(
             addDirectiveHandler(MakeCallDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
             addDirectiveHandler(EndCallDirectiveHandler(this@PhoneCallAgent))
             addDirectiveHandler(AcceptCallDirectiveHandler(this@PhoneCallAgent))
+            addDirectiveHandler(BlockingIncomingCallDirectiveHandler(this@PhoneCallAgent))
         }
     }
 
@@ -112,6 +108,12 @@ class PhoneCallAgent(
     override fun acceptCall(payload: AcceptCallPayload) {
         executor.submit {
             client.acceptCall(payload)
+        }
+    }
+
+    override fun blockingIncomingCall(payload: BlockingIncomingCallPayload) {
+        executor.submit {
+            client.blockingIncomingCall(payload)
         }
     }
 }

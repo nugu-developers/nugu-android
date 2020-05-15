@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.phonecall
+package com.skt.nugu.sdk.agent.ext.phonecall.payload
 
-import com.skt.nugu.sdk.agent.ext.phonecall.handler.*
+import com.google.gson.annotations.SerializedName
 
-interface PhoneCallClient
-    : SendCandidatesDirectiveHandler.Controller
-    , MakeCallDirectiveHandler.Controller
-    , EndCallDirectiveHandler.Controller
-    , AcceptCallDirectiveHandler.Controller
-    , BlockingIncomingCallDirectiveHandler.Controller
-{
-    fun getContext(): Context
-}
+data class BlockingIncomingCallPayload(
+    @SerializedName("playServiceId")
+    val playServiceId: String
+)
