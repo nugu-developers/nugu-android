@@ -18,22 +18,22 @@ package com.skt.nugu.sdk.agent.ext.phonecall.handler
 
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.PhoneCallAgent
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.AcceptCallPayload
+import com.skt.nugu.sdk.agent.ext.phonecall.payload.BlockingIncomingCallPayload
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 
-class AcceptCallDirectiveHandler (
+class BlockingIncomingCallDirectiveHandler (
     private val controller: Controller
 ) : AbstractDirectiveHandler() {
     companion object {
-        private const val NAME_ACCEPT_CALL = "AcceptCall"
+        private const val NAME_BLOCKING_INCOMING_CALL = "BlockingIncomingCall"
 
-        private val ACCEPT_CALL = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_ACCEPT_CALL)
+        private val BLOCKING_INCOMING_CALL = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_BLOCKING_INCOMING_CALL)
     }
 
     interface Controller {
-        fun acceptCall(payload: AcceptCallPayload)
+        fun blockingIncomingCall(payload: BlockingIncomingCallPayload)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -43,12 +43,12 @@ class AcceptCallDirectiveHandler (
         removeDirective(info.directive.getMessageId())
 
         val payload =
-            MessageFactory.create(info.directive.payload, AcceptCallPayload::class.java)
+            MessageFactory.create(info.directive.payload, BlockingIncomingCallPayload::class.java)
         if (payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.acceptCall(payload)
+            controller.blockingIncomingCall(payload)
         }
     }
 
@@ -59,7 +59,7 @@ class AcceptCallDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[ACCEPT_CALL] = BlockingPolicy()
+        configurations[BLOCKING_INCOMING_CALL] = BlockingPolicy()
 
         return configurations
     }
