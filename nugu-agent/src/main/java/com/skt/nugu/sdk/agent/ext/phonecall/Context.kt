@@ -17,7 +17,6 @@
 package com.skt.nugu.sdk.agent.ext.phonecall
 
 data class Context(
-    val state: State,
     val intent: Intent?,
     val callType: CallType?,
     val candidates: Array<Person>?
@@ -44,7 +43,6 @@ data class Context(
 
         other as Context
 
-        if (state != other.state) return false
         if (intent != other.intent) return false
         if (callType != other.callType) return false
         if (candidates != null) {
@@ -56,8 +54,7 @@ data class Context(
     }
 
     override fun hashCode(): Int {
-        var result = state.hashCode()
-        result = 31 * result + (intent?.hashCode() ?: 0)
+        var result = intent?.hashCode() ?: 0
         result = 31 * result + (callType?.hashCode() ?: 0)
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         return result

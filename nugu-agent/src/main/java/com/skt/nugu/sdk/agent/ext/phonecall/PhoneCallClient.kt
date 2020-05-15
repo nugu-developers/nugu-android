@@ -26,4 +26,14 @@ interface PhoneCallClient
     , BlockingIncomingCallDirectiveHandler.Controller
 {
     fun getContext(): Context
+
+    interface OnStateChangeListener {
+        fun onIdle(playServiceId: String)
+        fun onOutgoing()
+        fun onEstablished(playServiceId: String)
+        fun onIncoming(playServiceId: String, callerName: String, missedInCallHistory: String)
+    }
+
+    fun addOnStateChangeListener(listener: OnStateChangeListener)
+    fun removeOnStateChangeListener(listener: OnStateChangeListener)
 }
