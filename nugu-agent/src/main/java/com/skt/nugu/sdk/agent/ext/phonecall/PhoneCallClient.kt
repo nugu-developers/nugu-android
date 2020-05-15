@@ -16,6 +16,9 @@
 
 package com.skt.nugu.sdk.agent.ext.phonecall
 
-interface PhoneCallClient {
+import com.skt.nugu.sdk.agent.ext.phonecall.handler.SendCandidatesDirectiveHandler
+
+interface PhoneCallClient : SendCandidatesDirectiveHandler.Controller
+{
     fun getContext(): Context
 }

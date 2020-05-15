@@ -2,20 +2,26 @@ package com.skt.nugu.sdk.agent.ext.phonecall
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.phonecall.handler.SendCandidatesDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class PhoneCallAgent(
     private val client: PhoneCallClient,
-    contextStateProviderRegistry: ContextStateProviderRegistry
+    contextStateProviderRegistry: ContextStateProviderRegistry,
+    contextGetter: ContextGetterInterface,
+    messageSender: MessageSender,
+    directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
+    , SendCandidatesDirectiveHandler.Controller
 {
     companion object {
         const val NAMESPACE = "PhoneCall"
@@ -29,6 +35,10 @@ class PhoneCallAgent(
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+
+        directiveSequencer.apply {
+            addDirectiveHandler(SendCandidatesDirectiveHandler(this@PhoneCallAgent, messageSender, contextGetter))
+        }
     }
 
     private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -67,5 +77,11 @@ class PhoneCallAgent(
                 contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
             }
         }
+    }
+
+    override fun getCandidateList(payload: SendCandidatesPayload): List<Person>? {
+        return executor.submit(Callable {
+            client.getCandidateList(payload)
+        }).get()
     }
 }
