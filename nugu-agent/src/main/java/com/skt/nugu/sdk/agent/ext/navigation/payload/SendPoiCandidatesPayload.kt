@@ -16,10 +16,13 @@
 
 package com.skt.nugu.sdk.agent.ext.navigation.payload
 
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.navigation.Poi
 
 data class SendPoiCandidatesPayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
+    @SerializedName("poiCandidates")
     val poiCandidates: Array<Poi>?
 ) {
     override fun equals(other: Any?): Boolean {

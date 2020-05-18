@@ -16,6 +16,9 @@
 
 package com.skt.nugu.sdk.agent.ext.navigation.payload
 
+import com.google.gson.annotations.SerializedName
+
 data class AskInfoPayload(
+    @SerializedName("playServiceId")
     val playServiceId: String
 )

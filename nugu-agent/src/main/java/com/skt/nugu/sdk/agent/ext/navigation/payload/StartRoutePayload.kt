@@ -16,9 +16,12 @@
 
 package com.skt.nugu.sdk.agent.ext.navigation.payload
 
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.navigation.Poi
 
 data class StartRoutePayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
+    @SerializedName("destination")
     val destination: Poi
 )
