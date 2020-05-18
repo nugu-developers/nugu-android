@@ -16,9 +16,12 @@
 
 package com.skt.nugu.sdk.agent.ext.message.payload
 
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.message.Contact
 
 data class GetMessagePayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
+    @SerializedName("recipient")
     val recipient: Contact?
 )
