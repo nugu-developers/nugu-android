@@ -235,6 +235,11 @@ class DefaultAudioPlayerAgent(
             executor.submit {
                 when {
                     currentItem == this -> {
+                        if(playDirectiveController.executeOnCancel(directive)) {
+                            Logger.d(TAG, "[requestReleaseSync] execute cancel on PlayDirectiveController")
+                            return@submit
+                        }
+
                         if(playDirectiveController.willBeHandle()) {
                             Logger.d(TAG, "[requestReleaseSync] try cancel current item but skip (handle it by play directive)")
                             return@submit
@@ -378,7 +383,7 @@ class DefaultAudioPlayerAgent(
                     // finish preExecute
                     waitFinishPreExecuteInfo = null
                 }
-        }
+            }
             return true
         }
 
@@ -463,15 +468,32 @@ class DefaultAudioPlayerAgent(
         override fun onCancel(directive: Directive) {
             Logger.d(TAG, "[onCancel::$INNER_TAG] ${directive.getMessageId()}")
             executor.submit {
-                if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
-                    waitFinishPreExecuteInfo?.let {
-                        if (directive.getMessageId() == it.directive.getMessageId()) {
+                executeOnCancel(directive)
+            }
+        }
+
+        fun executeOnCancel(directive: Directive): Boolean {
+            if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
+                waitFinishPreExecuteInfo?.let {
+                    if (directive.getMessageId() == it.directive.getMessageId()) {
+                        notifyOnReleaseAudioInfo(it, true)
+                        waitFinishPreExecuteInfo = null
+                        return true
+                    }
+                }
+
+                waitPlayExecuteInfo?.let {
+                    if (directive.getMessageId() == it.directive.getMessageId()) {
+                        if(!executeStop()) {
                             notifyOnReleaseAudioInfo(it, true)
-                            waitFinishPreExecuteInfo = null
                         }
+                        waitPlayExecuteInfo = null
+                        return true
                     }
                 }
             }
+
+            return false
         }
 
         private fun executeHandlePlayDirective(info: Directive) {
