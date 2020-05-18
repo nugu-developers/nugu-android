@@ -26,11 +26,15 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -63,7 +67,8 @@ class DefaultTTSAgent(
     , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
     , FocusHolderManager.OnStateChangeListener
-    , PlayStackManagerInterface.PlayContextProvider {
+    , PlayStackManagerInterface.PlayContextProvider
+    , StopDirectiveHandler.Controller {
 
     internal data class SpeakPayload(
         @SerializedName("playServiceId")
@@ -84,16 +89,12 @@ class DefaultTTSAgent(
         private val VERSION = Version(1, 1)
 
         private const val NAME_SPEAK = "Speak"
-        private const val NAME_STOP = "Stop"
 
         val SPEAK = NamespaceAndName(
             NAMESPACE,
             NAME_SPEAK
         )
-        val STOP = NamespaceAndName(
-            NAMESPACE,
-            NAME_STOP
-        )
+
 
         private const val EVENT_SPEECH_STARTED = "SpeechStarted"
         private const val EVENT_SPEECH_FINISHED = "SpeechFinished"
@@ -211,19 +212,17 @@ class DefaultTTSAgent(
 
     override fun preHandleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[preHandleDirective] info: $info")
-        if (info.directive.getNamespaceAndName() == SPEAK) {
-            val speakInfo = createValidateSpeakInfo(info)
+        val speakInfo = createValidateSpeakInfo(info)
 
-            if (speakInfo == null) {
-                setHandlingInvalidSpeakDirectiveReceived(info)
-                return
-            }
+        if (speakInfo == null) {
+            setHandlingInvalidSpeakDirectiveReceived(info)
+            return
+        }
 
-            playSynchronizer.prepareSync(speakInfo)
-            focusHolderManager.request(speakInfo)
-            executor.submit {
-                executePreHandleSpeakDirective(speakInfo)
-            }
+        playSynchronizer.prepareSync(speakInfo)
+        focusHolderManager.request(speakInfo)
+        executor.submit {
+            executePreHandleSpeakDirective(speakInfo)
         }
     }
 
@@ -256,13 +255,7 @@ class DefaultTTSAgent(
 
     private fun executeHandle(info: DirectiveInfo) {
         Logger.d(TAG, "[executeHandle] info: $info")
-
-        when (info.directive.getNamespaceAndName()) {
-            SPEAK -> {
-                executeHandleSpeakDirective(info)
-            }
-            STOP -> executeHandleStopDirective(info)
-        }
+        executeHandleSpeakDirective(info)
     }
 
     private fun executeHandleSpeakDirective(info: DirectiveInfo) {
@@ -283,13 +276,23 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun executeHandleStopDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[executeHandleStopDirective] info: $info")
+    override fun stop(payload: StopDirectiveHandler.Payload) {
+        executor.submit {
+            val current = currentInfo
+            Logger.d(TAG, "[stop] at executor, payload: $payload, current: $current")
+            if (current == null) {
+                Logger.d(TAG, "[stop] current is null, so skip")
+                return@submit
+            }
 
-        if (currentInfo != null) {
-            executeCancelCurrentSpeakInfo()
-        } else {
-            Logger.d(TAG, "[executeHandleStopDirective] ignore : currentInfo is null")
+            if (current.payload.token == payload.token) {
+                executeCancelCurrentSpeakInfo()
+            } else {
+                Logger.d(
+                    TAG,
+                    "[stop] not matched token (${current.payload.token}/${payload.token})"
+                )
+            }
         }
     }
 
@@ -382,7 +385,7 @@ class DefaultTTSAgent(
         with(info) {
             cancelByStop = cancelAssociation
             if (isPlaybackInitiated) {
-                if(state != TTSAgentInterface.State.FINISHED && state != TTSAgentInterface.State.STOPPED) {
+                if (state != TTSAgentInterface.State.FINISHED && state != TTSAgentInterface.State.STOPPED) {
                     desireState = TTSAgentInterface.State.STOPPED
                     stopPlaying(info)
                 }
@@ -530,7 +533,6 @@ class DefaultTTSAgent(
             BlockingPolicy.MEDIUM_AUDIO,
             true
         )
-        configuration[STOP] = BlockingPolicy()
 
         return configuration
     }
@@ -555,7 +557,7 @@ class DefaultTTSAgent(
                 // context always updated if requested.
                 if (info == null) {
                     Logger.e(TAG, "[provideState] failed: currentInfo is null")
-                } else if(info.sourceId.isError()) {
+                } else if (info.sourceId.isError()) {
                     Logger.e(TAG, "[provideState] failed: sourceId is error")
                 }
             }
@@ -627,7 +629,7 @@ class DefaultTTSAgent(
     override fun onPlaybackStarted(id: SourceId) {
         Logger.d(TAG, "[onPlaybackStarted] id: $id")
         currentInfo?.let {
-            if(id.id == it.sourceId.id) {
+            if (id.id == it.sourceId.id) {
                 it.state = TTSAgentInterface.State.PLAYING
             }
         }
@@ -648,7 +650,7 @@ class DefaultTTSAgent(
     override fun onPlaybackStopped(id: SourceId) {
         Logger.d(TAG, "[onPlaybackStopped] id: $id")
         currentInfo?.let {
-            if(id.id == it.sourceId.id) {
+            if (id.id == it.sourceId.id) {
                 it.state = TTSAgentInterface.State.STOPPED
             }
         }
@@ -661,7 +663,7 @@ class DefaultTTSAgent(
     override fun onPlaybackFinished(id: SourceId) {
         Logger.d(TAG, "[onPlaybackFinished] id: $id")
         currentInfo?.let {
-            if(id.id == it.sourceId.id) {
+            if (id.id == it.sourceId.id) {
                 it.state = TTSAgentInterface.State.FINISHED
             }
         }
@@ -674,7 +676,7 @@ class DefaultTTSAgent(
     override fun onPlaybackError(id: SourceId, type: ErrorType, error: String) {
         Logger.e(TAG, "[onPlaybackError] id: $id, type: $type, error: $error")
         currentInfo?.let {
-            if(id.id == it.sourceId.id) {
+            if (id.id == it.sourceId.id) {
                 it.state = TTSAgentInterface.State.STOPPED
             }
         }

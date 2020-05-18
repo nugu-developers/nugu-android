@@ -75,6 +75,7 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.sound.SoundProvider
+import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
@@ -418,7 +419,12 @@ class NuguAndroidClient private constructor(
                     ).apply {
                         getAudioPlayStackManager().addPlayContextProvider(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
+
                         dialogChannelFocusHolderManager.addOnStateChangeListener(this)
+
+                        StopDirectiveHandler(this).apply {
+                            getDirectiveSequencer().addDirectiveHandler(this)
+                        }
                     }
                 }
             })
