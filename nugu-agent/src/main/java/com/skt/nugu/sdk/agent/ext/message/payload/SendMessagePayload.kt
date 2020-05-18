@@ -16,7 +16,11 @@
 
 package com.skt.nugu.sdk.agent.ext.message.payload
 
+import com.google.gson.annotations.SerializedName
+
 data class SendMessagePayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
+    @SerializedName("recipientName")
     val recipientName: String
 )
