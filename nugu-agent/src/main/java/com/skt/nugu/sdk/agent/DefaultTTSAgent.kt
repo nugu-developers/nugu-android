@@ -174,6 +174,7 @@ class DefaultTTSAgent(
 
     private var preparedSpeakInfo: SpeakDirectiveInfo? = null
     private var currentInfo: SpeakDirectiveInfo? = null
+    private var lastImplicitStoppednfo: SpeakDirectiveInfo? = null
 
     //    @GuardedBy("stateLock")
     private var currentState = TTSAgentInterface.State.IDLE
@@ -280,18 +281,75 @@ class DefaultTTSAgent(
         executor.submit {
             val current = currentInfo
             Logger.d(TAG, "[stop] at executor, payload: $payload, current: $current")
-            if (current == null) {
-                Logger.d(TAG, "[stop] current is null, so skip")
-                return@submit
-            }
-
-            if (current.payload.token == payload.token) {
+            if (current != null) {
+                Logger.d(TAG, "[stop] stop current")
                 executeCancelCurrentSpeakInfo()
+/*
+                if (current.payload.token == payload.token) {
+                    Logger.d(TAG, "[stop] stop current")
+                    executeCancelCurrentSpeakInfo()
+                } else {
+                    Logger.d(
+                        TAG,
+                        "[stop] not matched with current token (${current.payload.token}/${payload.token})"
+                    )
+                }
+                Logger.d(TAG, "[stop] current is null, so skip")
+ */
             } else {
-                Logger.d(
-                    TAG,
-                    "[stop] not matched token (${current.payload.token}/${payload.token})"
-                )
+                val lastStopped = lastImplicitStoppednfo
+                if(lastStopped != null) {
+                    Logger.d(TAG, "[stop] stop lastStopped")
+                    lastImplicitStoppednfo = null
+                    object : PlaySynchronizerInterface.SynchronizeObject {
+                        override fun getDialogRequestId(): String = lastStopped.getDialogRequestId()
+
+                        override fun requestReleaseSync(immediate: Boolean) {
+                            // ignore.
+                        }
+                    }.apply {
+                        playSynchronizer.prepareSync(this)
+                        playSynchronizer.releaseSyncImmediately(this, object: PlaySynchronizerInterface.OnRequestSyncListener{
+                            override fun onGranted() {
+                                // ignore
+                            }
+
+                            override fun onDenied() {
+                                // ignore
+                            }
+                        })
+                    }
+                    /*
+                    if (lastStopped.payload.token == payload.token) {
+                        Logger.d(TAG, "[stop] stop lastStopped")
+                        object : PlaySynchronizerInterface.SynchronizeObject {
+                            override fun getDialogRequestId(): String = lastStopped.getDialogRequestId()
+
+                            override fun requestReleaseSync(immediate: Boolean) {
+                                // ignore.
+                            }
+                        }.apply {
+                            playSynchronizer.prepareSync(this)
+                            playSynchronizer.releaseSyncImmediately(this, object: PlaySynchronizerInterface.OnRequestSyncListener{
+                                override fun onGranted() {
+                                    // ignore
+                                }
+
+                                override fun onDenied() {
+                                    // ignore
+                                }
+                            })
+                        }
+                    } else {
+                        Logger.d(
+                            TAG,
+                            "[stop] not matched with lastStopped token (${lastStopped.payload.token}/${payload.token})"
+                        )
+                    }
+                     */
+                } else {
+                    Logger.d(TAG, "[stop] lastImplicitStoppednfo is null, so skip")
+                }
             }
         }
     }
@@ -323,6 +381,7 @@ class DefaultTTSAgent(
         currentState = state
         currentInfo?.directive?.getDialogRequestId()?.let {
             when (state) {
+
                 TTSAgentInterface.State.IDLE -> {
                     // no-op
                 }
@@ -348,6 +407,7 @@ class DefaultTTSAgent(
     }
 
     private fun executePrepareSpeakInfo(speakInfo: SpeakDirectiveInfo) {
+        lastImplicitStoppednfo = null
         executeCancelPreparedSpeakInfo()
         executeCancelCurrentSpeakInfo(false)
 
@@ -744,9 +804,11 @@ class DefaultTTSAgent(
 
         with(info) {
             if (cancelByStop) {
+                lastImplicitStoppednfo = null
                 result.setFailed("playback stopped", true)
                 releaseSyncImmediately(this)
             } else {
+                lastImplicitStoppednfo = info
                 result.setFailed("playback stopped", false)
                 releaseSync(this)
             }
