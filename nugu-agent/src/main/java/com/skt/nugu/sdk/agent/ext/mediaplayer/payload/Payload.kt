@@ -16,10 +16,14 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
+import com.google.gson.annotations.SerializedName
+
 data class Payload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
     /**
      * the unique string to identify
      */
+    @SerializedName("token")
     val token: String
 )

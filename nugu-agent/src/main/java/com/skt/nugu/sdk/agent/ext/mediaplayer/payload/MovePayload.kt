@@ -32,13 +32,19 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
+import com.google.gson.annotations.SerializedName
+
 data class MovePayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
     /**
      * the unique string to identify
      */
+    @SerializedName("token")
     val token: String,
+    @SerializedName("directive")
     val directive: Direction,
+    @SerializedName("sec")
     val sec: Long
 ) {
     enum class Direction {

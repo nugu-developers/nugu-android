@@ -48,22 +48,29 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
+import com.google.gson.annotations.SerializedName
+
 data class TogglePayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
     /**
      * the unique string to identify
      */
+    @SerializedName("token")
     val token: String,
     /**
      * repeat, null if not supported
      */
+    @SerializedName("repeat")
     val repeat: String?,
     /**
      * like, null if not supported
      */
+    @SerializedName("like")
     val like: Boolean?,
     /**
      * shuffle, null if not supported
      */
+    @SerializedName("shuffle")
     val shuffle: Boolean?
 )

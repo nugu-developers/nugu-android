@@ -32,18 +32,29 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
+import com.google.gson.annotations.SerializedName
+
 data class PlayPayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
     /**
      * the unique string to identify
      */
+    @SerializedName("token")
     val token: String,
+    @SerializedName("category")
     val category: Category,
+    @SerializedName("theme")
     val theme: String?,
+    @SerializedName("genre")
     val genre: String?,
+    @SerializedName("artist")
     val artist: String?,
+    @SerializedName("album")
     val album: String?,
+    @SerializedName("title")
     val title: String?,
+    @SerializedName("etc")
     val etc: Array<String>?
 ) {
     enum class Category {
