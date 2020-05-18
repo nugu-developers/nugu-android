@@ -180,7 +180,7 @@ class MediaPlayerAgent(
         }
     }
 
-    override fun search(payload: PlayPayload, callback: EventCallback) {
+    override fun search(payload: SearchPayload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.search(payload, callback)
         }
@@ -192,7 +192,7 @@ class MediaPlayerAgent(
         }
     }
 
-    override fun next(payload: PreviousPayload, callback: EventCallback) {
+    override fun next(payload: NextPayload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.next(payload, callback)
         }

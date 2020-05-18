@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.PlayPayload
+import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.SearchPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -43,7 +44,7 @@ class SearchDirectiveHandler (
     }
 
     interface Controller {
-        fun search(payload: PlayPayload, callback: EventCallback)
+        fun search(payload: SearchPayload, callback: EventCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -53,7 +54,7 @@ class SearchDirectiveHandler (
     override fun handleDirective(info: DirectiveInfo) {
         removeDirective(info.directive.getMessageId())
 
-        val payload = MessageFactory.create(info.directive.payload, PlayPayload::class.java)
+        val payload = MessageFactory.create(info.directive.payload, SearchPayload::class.java)
         if(payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
