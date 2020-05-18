@@ -16,11 +16,15 @@
 
 package com.skt.nugu.sdk.agent.ext.message.payload
 
+import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.message.Contact
 
 data class SendCandidatesPayload(
+    @SerializedName("playServiceId")
     val playServiceId: String,
+    @SerializedName("recipientName")
     val recipientName: String,
+    @SerializedName("candidates")
     val candidates: Array<Contact>?
 ) {
     override fun equals(other: Any?): Boolean {
