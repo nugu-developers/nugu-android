@@ -28,17 +28,21 @@ data class SendCandidatesPayload(
     @SerializedName("intent")
     val intent: Context.Intent,
     @SerializedName("recipient")
-    val recipient: String?,
-    @SerializedName("name")
-    val name: String?,
-    @SerializedName("label")
-    val label: String?,
+    val recipient: Recipient?,
     @SerializedName("callType")
     val callType: Context.CallType?,
     @SerializedName("candidates")
     val candidates: Array<Person>?
 ) {
+    data class Recipient(
+        @SerializedName("name")
+        val name: String?,
+        @SerializedName("label")
+        val label: String?
+    )
+
     fun toJson(): JsonElement = Gson().toJsonTree(this)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -48,8 +52,6 @@ data class SendCandidatesPayload(
         if (playServiceId != other.playServiceId) return false
         if (intent != other.intent) return false
         if (recipient != other.recipient) return false
-        if (name != other.name) return false
-        if (label != other.label) return false
         if (callType != other.callType) return false
         if (candidates != null) {
             if (other.candidates == null) return false
@@ -63,8 +65,6 @@ data class SendCandidatesPayload(
         var result = playServiceId.hashCode()
         result = 31 * result + intent.hashCode()
         result = 31 * result + (recipient?.hashCode() ?: 0)
-        result = 31 * result + (name?.hashCode() ?: 0)
-        result = 31 * result + (label?.hashCode() ?: 0)
         result = 31 * result + (callType?.hashCode() ?: 0)
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         return result
