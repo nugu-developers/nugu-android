@@ -25,7 +25,8 @@ interface SystemAgentInterface {
         UNAUTHORIZED_REQUEST_EXCEPTION
     }
     enum class RevokeReason {
-        REVOKED_DEVICE
+        REVOKED_DEVICE,
+        WITHDRAWN_USER
     }
 
     /**

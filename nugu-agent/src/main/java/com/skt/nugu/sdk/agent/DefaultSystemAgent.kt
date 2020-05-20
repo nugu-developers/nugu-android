@@ -17,20 +17,23 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.system.*
+import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.system.handler.RevokeDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
+import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -40,13 +43,13 @@ import kotlin.collections.HashMap
 class DefaultSystemAgent(
     messageSender: MessageSender,
     connectionManager: ConnectionManagerInterface,
-    contextManager: ContextManagerInterface
+    contextManager: ContextManagerInterface,
+    directiveSequencer: DirectiveSequencerInterface
 ) : AbstractSystemAgent(
     messageSender,
     connectionManager,
     contextManager
-) {
-
+), RevokeDirectiveHandler.Controller {
     internal data class ExceptionPayload(
         @SerializedName("code")
         val code: String,
@@ -63,17 +66,18 @@ class DefaultSystemAgent(
         /** exceptions */
         /// The server encountered a runtime error.
         const val CODE_INTERNAL_SERVICE_EXCEPTION = "INTERNAL_SERVICE_EXCEPTION"
+
         /// The client is not authorized to use authorization codes.
         const val CODE_UNAUTHORIZED_REQUEST_EXCEPTION = "UNAUTHORIZED_REQUEST_EXCEPTION"
+
         /// The server encountered a runtime error during ASR processing.
         const val CODE_ASR_RECOGNIZING_EXCEPTION = "ASR_RECOGNIZING_EXCEPTION"
+
         /// The server encountered a runtime error during ROUTER processing.
         const val CODE_PLAY_ROUTER_PROCESSING_EXCEPTION = "PLAY_ROUTER_PROCESSING_EXCEPTION"
+
         /// The server encountered a runtime error during TTS processing.
         const val CODE_TTS_SPEAKING_EXCEPTION = "TTS_SPEAKING_EXCEPTION"
-
-        /** reason of revoke **/
-        const val REASON_REVOKED_DEVICE = "REVOKED_DEVICE"
 
         /** directives */
         const val NAME_RESET_USER_INACTIVITY = "ResetUserInactivity"
@@ -83,7 +87,6 @@ class DefaultSystemAgent(
         const val NAME_EXCEPTION = "Exception"
         const val NAME_ECHO = "Echo"
         const val NAME_NO_DIRECTIVES = "NoDirectives"
-        const val NAME_REVOKE = "Revoke"
 
         /** events */
         const val EVENT_NAME_SYNCHRONIZE_STATE = "SynchronizeState"
@@ -119,10 +122,6 @@ class DefaultSystemAgent(
             NAMESPACE,
             NAME_NO_DIRECTIVES
         )
-        val REVOKE = NamespaceAndName(
-            NAMESPACE,
-            NAME_REVOKE
-        )
 
         private const val KEY_INACTIVITY_EVENT_PAYLOAD = "inactiveTimeInSeconds"
         const val SECONDS = 1000L
@@ -130,6 +129,7 @@ class DefaultSystemAgent(
 
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
     private var inActiveFuture: ScheduledFuture<*>? = null
+
     //private var eventTimer = Timer()
     private var lastTimeActive = 0L
 
@@ -140,6 +140,7 @@ class DefaultSystemAgent(
         /**
          * Performs initialization.
          */
+        directiveSequencer.addDirectiveHandler(RevokeDirectiveHandler(this))
         contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         onUserActive()
         connectionManager.addConnectionStatusListener(this)
@@ -165,7 +166,6 @@ class DefaultSystemAgent(
         configuration[EXCEPTION] = nonBlockingPolicy
         configuration[ECHO] = nonBlockingPolicy
         configuration[NO_DIRECTIVES] = nonBlockingPolicy
-        configuration[REVOKE] = nonBlockingPolicy
 
         return configuration
     }
@@ -214,7 +214,6 @@ class DefaultSystemAgent(
             NAME_UPDATE_STATE -> handleUpdateState(info)
             NAME_EXCEPTION -> handleException(info)
             NAME_ECHO -> handleEcho(info)
-            NAME_REVOKE -> handleRevoke(info)
             NAME_NO_DIRECTIVES -> {
             }
         }
@@ -252,11 +251,6 @@ class DefaultSystemAgent(
         val connectionTimeout: Int,
         @SerializedName("charge")
         val charge: String
-    )
-
-    internal data class RevokePayload(
-        @SerializedName("reason")
-        val reason: String
     )
 
     /**
@@ -316,36 +310,6 @@ class DefaultSystemAgent(
                     } else {
                         referrerDialogRequestId
                     }
-                )
-            }
-        }
-    }
-
-    /**
-     * Request all status information of device as Context
-     * @param info The directive currently being handled.
-     */
-    private fun handleRevoke(info: DirectiveInfo) {
-        Logger.d(TAG, "[handleRevoke] $info")
-
-        val payload =
-            MessageFactory.create(info.directive.payload, RevokePayload::class.java)
-        if (payload == null) {
-            Logger.d(
-                TAG,
-                "[handleRevoke] invalid payload: ${info.directive.payload}"
-            )
-            return
-        }
-
-        executor.submit {
-            if (payload.reason == REASON_REVOKED_DEVICE) {
-                observers.forEach { it.onRevoke(SystemAgentInterface.RevokeReason.REVOKED_DEVICE) }
-            }
-            else {
-                Logger.d(
-                    TAG,
-                    "[handleRevoke] unknown reason: ${payload.reason}"
                 )
             }
         }
@@ -420,15 +384,16 @@ class DefaultSystemAgent(
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 messageSender.sendMessage(
-                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString()).also {
-                        if (payload != null) {
-                            it.payload(payload)
-                        }
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
+                        .also {
+                            if (payload != null) {
+                                it.payload(payload)
+                            }
 
-                        if(referrerDialogRequestId != null) {
-                            it.referrerDialogRequestId(referrerDialogRequestId)
-                        }
-                    }.build()
+                            if (referrerDialogRequestId != null) {
+                                it.referrerDialogRequestId(referrerDialogRequestId)
+                            }
+                        }.build()
                 )
             }
         }, tempNamespaceAndName)
@@ -531,6 +496,12 @@ class DefaultSystemAgent(
         Logger.d(TAG, "[removeListener] observer: $listener")
         executor.submit {
             observers.remove(listener)
+        }
+    }
+
+    override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
+        executor.submit {
+            observers.forEach { it.onRevoke(reason) }
         }
     }
 }
