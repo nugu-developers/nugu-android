@@ -220,10 +220,10 @@ class DefaultTTSAgent(
             }
 
             playSynchronizer.prepareSync(speakInfo)
-            focusHolderManager.request(speakInfo)
             executor.submit {
                 executePreHandleSpeakDirective(speakInfo)
             }
+            focusHolderManager.request(speakInfo)
         }
     }
 
@@ -401,7 +401,7 @@ class DefaultTTSAgent(
         }
 
         if (currentFocus == FocusState.FOREGROUND) {
-            executeOnFocusChanged(currentFocus)
+            executeOnFocusChanged(currentFocus, true)
         } else {
             if (!focusManager.acquireChannel(
                     channelName,
@@ -423,13 +423,19 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun executeOnFocusChanged(newFocus: FocusState) {
-        Logger.d(TAG, "[executeOnFocusChanged] newFocus: $newFocus")
+    private fun executeOnFocusChanged(newFocus: FocusState, ignoreFocusChanges: Boolean = false) {
+        Logger.d(TAG, "[executeOnFocusChanged] currentFocus: $currentFocus, newFocus: $newFocus, ignoreFocusChanges: $ignoreFocusChanges")
+        if(!ignoreFocusChanges && currentFocus == newFocus) {
+            return
+        }
+
         currentFocus = newFocus
         desireState = when (newFocus) {
             FocusState.FOREGROUND -> TTSAgentInterface.State.PLAYING
             else -> TTSAgentInterface.State.STOPPED
         }
+
+        Logger.d(TAG, "[executeOnFocusChanged] currentState: $currentState, desireState: $desireState")
         if (currentState == desireState) {
             return
         }
@@ -867,12 +873,12 @@ class DefaultTTSAgent(
 
     override fun onStateChanged(state: FocusHolderManager.State) {
         executor.submit {
-            Logger.d(TAG, "[onStateChanged-FocusHolder] $state , $currentFocus, $currentInfo")
-            if (state != FocusHolderManager.State.UNHOLD) {
+            Logger.d(TAG, "[onStateChanged-FocusHolder] $state , $currentFocus, $preparedSpeakInfo, $currentInfo")
+            if (state == FocusHolderManager.State.HOLD) {
                 return@submit
             }
 
-            if (currentFocus != FocusState.NONE && currentInfo == null) {
+            if (currentFocus != FocusState.NONE && preparedSpeakInfo ==null && currentInfo == null) {
                 focusManager.releaseChannel(channelName, this)
                 currentFocus = FocusState.NONE
             }
