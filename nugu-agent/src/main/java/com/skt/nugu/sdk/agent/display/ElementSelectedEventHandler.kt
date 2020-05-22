@@ -38,9 +38,9 @@ class ElementSelectedEventHandler(
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
     }
-    private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
+    private val eventCallbacks = HashMap<String, ElementSelectedHandler.OnElementSelectedCallback>()
 
-    fun setElementSelected(playServiceId: String, token: String, callback: DisplayInterface.OnElementSelectedCallback?): String {
+    fun setElementSelected(playServiceId: String, token: String, callback: ElementSelectedHandler.OnElementSelectedCallback?): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
         contextGetter.getContext(object : IgnoreErrorContextRequestor() {
@@ -64,7 +64,7 @@ class ElementSelectedEventHandler(
                     }
                     onSendEventFinished(dialogRequestId)
                 } else {
-                    callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
+                    callback?.onError(dialogRequestId, ElementSelectedHandler.ErrorType.REQUEST_FAIL)
                 }
             }
         })
@@ -86,6 +86,6 @@ class ElementSelectedEventHandler(
 
     override fun onResponseTimeout(dialogRequestId: String) {
         eventCallbacks.remove(dialogRequestId)
-            ?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
+            ?.onError(dialogRequestId, ElementSelectedHandler.ErrorType.RESPONSE_TIMEOUT)
     }
 }

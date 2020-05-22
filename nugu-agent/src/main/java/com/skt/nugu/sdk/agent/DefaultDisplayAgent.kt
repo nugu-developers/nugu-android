@@ -356,7 +356,7 @@ class DefaultDisplayAgent(
     override fun setElementSelected(
         templateId: String,
         token: String,
-        callback: DisplayInterface.OnElementSelectedCallback?
+        callback: ElementSelectedHandler.OnElementSelectedCallback?
     ): String {
         val directiveInfo = templateDirectiveInfoMap[templateId]
             ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")

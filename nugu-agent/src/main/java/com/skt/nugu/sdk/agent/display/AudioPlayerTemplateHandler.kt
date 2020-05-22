@@ -298,14 +298,6 @@ class AudioPlayerTemplateHandler(
         return false
     }
 
-    override fun setElementSelected(
-        templateId: String,
-        token: String,
-        callback: DisplayInterface.OnElementSelectedCallback?
-    ): String {
-        throw UnsupportedOperationException("setElementSelected not supported")
-    }
-
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
         info.result.setFailed(description)
         removeDirective(info.directive.getMessageId())

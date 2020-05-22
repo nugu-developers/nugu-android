@@ -20,8 +20,9 @@ import com.skt.nugu.sdk.agent.common.Direction
 /**
  * The public interface for DisplayAgent
  */
-interface DisplayAgentInterface:
-    DisplayInterface<DisplayAgentInterface.Renderer, DisplayAgentInterface.Controller> {
+interface DisplayAgentInterface
+    : DisplayInterface<DisplayAgentInterface.Renderer, DisplayAgentInterface.Controller>
+    , ElementSelectedHandler {
     enum class ContextLayer(val priority: Int) {
         CALL(400),
         ALERT(300),

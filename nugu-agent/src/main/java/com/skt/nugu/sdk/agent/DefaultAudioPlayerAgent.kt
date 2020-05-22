@@ -1443,13 +1443,6 @@ class DefaultAudioPlayerAgent(
 
     private var displayDelegate: AudioPlayerDisplayInterface? = null
 
-    override fun setElementSelected(
-        templateId: String,
-        token: String,
-        callback: DisplayInterface.OnElementSelectedCallback?
-    ): String = displayDelegate?.setElementSelected(templateId, token, callback)
-        ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
-
     override fun notifyUserInteractionOnDisplay(templateId: String) {
         lifeCycleScheduler?.refreshSchedule()
     }

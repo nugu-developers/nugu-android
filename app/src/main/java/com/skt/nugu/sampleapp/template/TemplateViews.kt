@@ -27,7 +27,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.target.ImageViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
@@ -40,7 +39,8 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayText
 import com.skt.nugu.sampleapp.template.view.BaseView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
-import com.skt.nugu.sdk.agent.display.DisplayInterface
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
+import com.skt.nugu.sdk.agent.display.ElementSelectedHandler
 
 class TemplateViews {
     companion object {
@@ -228,7 +228,7 @@ class TemplateViews {
                                                     displayId,
                                                     item.token,
                                                     object :
-                                                        DisplayInterface.OnElementSelectedCallback {
+                                                        ElementSelectedHandler.OnElementSelectedCallback {
                                                         override fun onSuccess(dialogRequestId: String) {
                                                             Log.d(
                                                                 TAG,
@@ -238,7 +238,7 @@ class TemplateViews {
 
                                                         override fun onError(
                                                             dialogRequestId: String,
-                                                            errorType: DisplayInterface.ErrorType
+                                                            errorType: ElementSelectedHandler.ErrorType
                                                         ) {
                                                             Log.d(
                                                                 TAG,

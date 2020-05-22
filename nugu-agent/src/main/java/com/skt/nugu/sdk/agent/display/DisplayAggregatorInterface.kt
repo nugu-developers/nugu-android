@@ -22,8 +22,9 @@ package com.skt.nugu.sdk.agent.display
  *
  * @see [com.skt.nugu.sdk.agent.display.DisplayAgentInterface]
  */
-interface DisplayAggregatorInterface:
-    DisplayInterface<DisplayAggregatorInterface.Renderer, DisplayAggregatorInterface.Controller> {
+interface DisplayAggregatorInterface
+    : DisplayInterface<DisplayAggregatorInterface.Renderer, DisplayAggregatorInterface.Controller>
+    , ElementSelectedHandler {
     /**
      * Enum class for display types
      */

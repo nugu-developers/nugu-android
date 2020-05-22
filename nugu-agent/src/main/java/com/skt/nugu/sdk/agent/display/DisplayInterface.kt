@@ -1,38 +1,9 @@
 package com.skt.nugu.sdk.agent.display
 
-import com.skt.nugu.sdk.core.interfaces.common.EventCallback
-
 /**
  * The basic interface for display
  */
 interface DisplayInterface<Renderer, Controller> {
-    /**
-     * enum class for ErrorType
-     */
-    enum class ErrorType {
-        REQUEST_FAIL,
-        RESPONSE_TIMEOUT
-    }
-
-    /**
-     * callback interface for [setElementSelected]
-     */
-    interface OnElementSelectedCallback : EventCallback<ErrorType>
-
-    /**
-     * Each element has it's own token.
-     *
-     * This should be called when element selected(clicked) by the renderer.
-     *
-     * @param templateId the unique identifier for the template card
-     * @param token the unique identifier for the element
-     * @param callback the result callback for element selected event
-     * @throws IllegalStateException when received invalid call.
-     * for example, when display for given [templateId] is invalid (maybe cleared or not rendered)
-     * @return the dialogRequestId for request
-     */
-    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback? = null): String
-
     /**
      * Notifies the display that has been rendered.
      *
