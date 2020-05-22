@@ -19,7 +19,9 @@ package com.skt.nugu.sdk.agent.display
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -40,7 +42,7 @@ class ElementSelectedEventHandler(
     }
     private val eventCallbacks = HashMap<String, ElementSelectedHandler.OnElementSelectedCallback>()
 
-    fun setElementSelected(playServiceId: String, token: String, callback: ElementSelectedHandler.OnElementSelectedCallback?): String {
+    fun setElementSelected(namespaceAndName: NamespaceAndName, playServiceId: String, token: String, context: String, callback: ElementSelectedHandler.OnElementSelectedCallback?): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
         contextGetter.getContext(object : IgnoreErrorContextRequestor() {
@@ -67,7 +69,7 @@ class ElementSelectedEventHandler(
                     callback?.onError(dialogRequestId, ElementSelectedHandler.ErrorType.REQUEST_FAIL)
                 }
             }
-        })
+        }, null, ContextGetterInterface.WithContext(namespaceAndName, context))
 
         return dialogRequestId
     }

@@ -156,6 +156,8 @@ class DisplayAggregator(
     override fun setElementSelected(
         templateId: String,
         token: String,
+        focusedItemToken: String?,
+        visibleTokenList: List<String>?,
         callback: ElementSelectedHandler.OnElementSelectedCallback?
     ): String = lock.withLock {
         val agent = requestAgentMap[templateId] ?: return@withLock null
@@ -164,7 +166,7 @@ class DisplayAggregator(
         } else {
             throw IllegalStateException("invalid templateId: $templateId (agent is not DisplayAgentInterface)")
         }
-    }?.setElementSelected(templateId, token, callback)
+    }?.setElementSelected(templateId, token, focusedItemToken, visibleTokenList, callback)
         ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
     override fun displayCardRendered(templateId: String, controller: DisplayAggregatorInterface.Controller?) {

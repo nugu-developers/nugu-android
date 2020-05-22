@@ -39,10 +39,12 @@ interface ElementSelectedHandler {
      *
      * @param templateId the unique identifier for the template card
      * @param token the unique identifier for the element
+     * @param focusedItemToken the token which has focus currently.
+     * @param visibleTokenList visible token list.
      * @param callback the result callback for element selected event
      * @throws IllegalStateException when received invalid call.
      * for example, when display for given [templateId] is invalid (maybe cleared or not rendered)
      * @return the dialogRequestId for request
      */
-    fun setElementSelected(templateId: String, token: String, callback: OnElementSelectedCallback? = null): String
+    fun setElementSelected(templateId: String, token: String, focusedItemToken: String?, visibleTokenList: List<String>?, callback: OnElementSelectedCallback? = null): String
 }

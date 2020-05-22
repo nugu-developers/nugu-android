@@ -107,8 +107,8 @@ class DefaultDisplayAgent(
     data class DisplayContext(
         val playServiceId: String?,
         val token: String?,
-        val focusedItemToken: String?,
-        val visibleTokenList: List<String>?
+        var focusedItemToken: String?,
+        var visibleTokenList: List<String>?
     ) {
         companion object {
             val EMPTY_CONTEXT = DisplayContext(null, null, null, null)
@@ -356,6 +356,8 @@ class DefaultDisplayAgent(
     override fun setElementSelected(
         templateId: String,
         token: String,
+        focusedItemToken: String?,
+        visibleTokenList: List<String>?,
         callback: ElementSelectedHandler.OnElementSelectedCallback?
     ): String {
         val directiveInfo = templateDirectiveInfoMap[templateId]
@@ -365,7 +367,12 @@ class DefaultDisplayAgent(
             throw IllegalStateException("empty playServiceId: $templateId")
         }
 
-        return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, callback)
+        val context = buildContext(createDisplayContext(directiveInfo).also {
+            it.focusedItemToken = focusedItemToken
+            it.visibleTokenList = visibleTokenList
+        })
+
+        return elementSelectedEventHandler.setElementSelected(namespaceAndName, directiveInfo.payload.playServiceId ,token, context, callback)
     }
 
     override fun notifyUserInteraction(templateId: String) {

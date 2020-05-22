@@ -18,7 +18,11 @@ package com.skt.nugu.sdk.core.interfaces.context
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 
 interface ContextGetterInterface {
-    fun getContext(contextRequester: ContextRequester, namespaceAndName: NamespaceAndName? = null)
+    data class WithContext(
+        val namespaceAndName: NamespaceAndName,
+        val fullState: String
+    )
+    fun getContext(contextRequester: ContextRequester, namespaceAndName: NamespaceAndName? = null, given: WithContext? = null)
     fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String
 }
 

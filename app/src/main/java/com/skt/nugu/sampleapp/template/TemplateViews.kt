@@ -39,7 +39,6 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayText
 import com.skt.nugu.sampleapp.template.view.BaseView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.display.ElementSelectedHandler
 
 class TemplateViews {
@@ -227,6 +226,8 @@ class TemplateViews {
                                                 ?.setElementSelected(
                                                     displayId,
                                                     item.token,
+                                                    null,
+                                                    null,
                                                     object :
                                                         ElementSelectedHandler.OnElementSelectedCallback {
                                                         override fun onSuccess(dialogRequestId: String) {
@@ -245,7 +246,8 @@ class TemplateViews {
                                                                 "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType"
                                                             )
                                                         }
-                                                    })
+                                                    }
+                                                )
                                         } catch (e: IllegalStateException) {
                                             Log.w(TAG, "[setElementSelected]", e)
                                         }

@@ -40,7 +40,7 @@ class ContextManager : ContextManagerInterface {
     private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
     private val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
 
-    private val contextRequesterQueue: Queue<Pair<ContextRequester, NamespaceAndName?>> =
+    private val contextRequesterQueue: Queue<Triple<ContextRequester, NamespaceAndName?, ContextGetterInterface.WithContext?>> =
         LinkedList()
     private val pendingOnStateProviders = HashSet<NamespaceAndName>()
     private val stateProviderLock = ReentrantLock()
@@ -119,7 +119,7 @@ class ContextManager : ContextManagerInterface {
                     it.second == null
                 }) {
                 stateProviderLock.withLock {
-                    buildContext(null)
+                    buildContext(null, null)
                 }
             } else {
                 null
@@ -127,12 +127,13 @@ class ContextManager : ContextManagerInterface {
 
             while (contextRequesterQueue.isNotEmpty()) {
                 with(contextRequesterQueue.poll()) {
-                    val namespaceAndName = second
-                    val strContext: String = if(namespaceAndName == null) {
+                    val target = second
+                    val given = third
+                    val strContext: String = if(target == null && given == null) {
                         fullContext!!
                     } else {
                         stateProviderLock.withLock {
-                            buildContext(namespaceAndName)
+                            buildContext(target, given)
                         }
                     }
                     if(error == null) {
@@ -145,7 +146,7 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    private fun buildContext(namespaceAndName: NamespaceAndName?): String = stringBuilderForContext.apply {
+    private fun buildContext(containOnly: NamespaceAndName?, given: ContextGetterInterface.WithContext?): String = stringBuilderForContext.apply {
         // clear
         setLength(0)
         // write
@@ -169,10 +170,17 @@ class ContextManager : ContextManagerInterface {
                         append(',')
                     }
                     valueIndex++
-
                     append("\"${it.key}\":")
-                    if (namespaceAndName == null || (namespaceAndName.namespace == namespaceEntry.key && namespaceAndName.name == it.key) || it.value.compactState == null) {
-                        append(it.value.fullState)
+                    if (containOnly == null || (containOnly.namespace == namespaceEntry.key && containOnly.name == it.key) || it.value.compactState == null) {
+                        if(given == null) {
+                            append(it.value.fullState)
+                        } else {
+                            if(given.namespaceAndName.namespace == namespaceEntry.key && given.namespaceAndName.name == it.key) {
+                                append(given.fullState)
+                            } else {
+                                append(it.value.fullState)
+                            }
+                        }
                     } else {
                         append(it.value.compactState)
                     }
@@ -284,10 +292,11 @@ class ContextManager : ContextManagerInterface {
 
     override fun getContext(
         contextRequester: ContextRequester,
-        namespaceAndName: NamespaceAndName?
+        namespaceAndName: NamespaceAndName?,
+        given: ContextGetterInterface.WithContext?
     ) {
         synchronized(contextRequesterQueue) {
-            contextRequesterQueue.offer(Pair(contextRequester, namespaceAndName))
+            contextRequesterQueue.offer(Triple(contextRequester, namespaceAndName, given))
 
             if (contextRequesterQueue.isNotEmpty()) {
                 updateStatesThread.wakeOne()
@@ -296,6 +305,6 @@ class ContextManager : ContextManagerInterface {
     }
 
     override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String = stateProviderLock.withLock {
-        buildContext(namespaceAndName)
+        buildContext(namespaceAndName, null)
     }
 }
