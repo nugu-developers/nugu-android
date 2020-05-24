@@ -28,14 +28,14 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
     abstract val viewResId: Int
 
     init {
-        setContentView(R.layout.view_display_image_text_2)
+        setContentView(viewResId)
     }
 
-    val image by lazy { findViewById<ImageView>(R.id.iv_content_image) }
+    val image by lazy { findViewById<ImageView>(R.id.iv_image) }
 
-    val header by lazy { findViewById<TextView>(R.id.tv_content_header) }
+    val header by lazy { findViewById<TextView>(R.id.tv_header) }
 
-    val footer by lazy { findViewById<TextView>(R.id.tv_content_footer) }
+    val footer by lazy { findViewById<TextView>(R.id.tv_footer) }
 
-    val body by lazy { findViewById<TextView>(R.id.tv_content_body) }
+    val body by lazy { findViewById<TextView>(R.id.tv_body) }
 }

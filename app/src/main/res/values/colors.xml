@@ -13,7 +13,7 @@
     <!-- activity_listening.xml -->
     <color name="activity_listening_background">#f1f2f3</color>
 
-    <color name="snackbar_backround">#323232</color>
+    <color name="snackbar_background">#323232</color>
     <color name="snackbar_border_color">#33000000</color>
 
     <color name="white">#ffffff</color>

@@ -93,8 +93,12 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val speechRecognizerAggregator: SpeechRecognizerAggregator by lazy {
         ClientManager.speechRecognizerAggregator
     }
+    private val containerIds = mutableMapOf(
+        "Display" to R.id.container,
+        "AudioPlayer" to R.id.sliding_container
+    )
 
-    private val templateRenderer = FragmentTemplateRenderer(supportFragmentManager, R.id.container)
+    private val templateRenderer = FragmentTemplateRenderer(supportFragmentManager,containerIds)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

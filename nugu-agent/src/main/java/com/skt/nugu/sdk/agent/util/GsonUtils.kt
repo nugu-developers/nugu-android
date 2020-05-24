@@ -28,7 +28,14 @@ fun JsonObject.deepMerge(source: JsonObject) {
                 if (value.isJsonObject) { //source value is json object, start deep merge
                     get(key).asJsonObject.deepMerge(value.asJsonObject)
                 } else {
-                    add(key, value)
+                    if (value.isJsonArray) {
+                        val origin = get(key).asJsonArray
+                        value.asJsonArray.forEachIndexed { index, jsonElement ->
+                            origin[index].asJsonObject.deepMerge(jsonElement.asJsonObject)
+                        }
+                    } else {
+                        add(key, value)
+                    }
                 }
             } else {
                 remove(key)

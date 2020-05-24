@@ -51,9 +51,10 @@
         <item name="android:textColorHint">#404858</item>
     </style>
 
-    <style name="AosTemplateFullText2ContentFooter">
-        <item name="android:textSize">17sp</item>
-        <item name="android:textColor">#555555</item>
-    </style>
-
+    <declare-styleable name="LyricsView">
+        <attr name="sizes" format="enum">
+            <enum name="small" value="0" />
+            <enum name="standard" value="1" />
+        </attr>
+    </declare-styleable>
 </resources>

@@ -143,18 +143,21 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
         Log.d(TAG, "[onDestroy]")
     }
 
-    private fun getNotification(remoteViews: RemoteViews): Notification {
+    private fun getNotification(remoteViews: RemoteViews): Notification? {
         Log.d(TAG, "[getNotification]")
 
+        if(isDestroying) {
+            Log.d(TAG, "[getNotification] $isDestroying")
+            return null
+        }
         val builder: NotificationCompat.Builder = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             NotificationCompat.Builder(this)
         } else {
             NotificationCompat.Builder(this, SampleApplication.NOTIFICATION_CHANNEL_MUSIC_PLAYER)
         }.apply {
-            setSmallIcon(R.drawable.logo_noti)
+            setSmallIcon(R.drawable.nugu_logo_72)
             setContent(remoteViews)
         }
-
         return builder.build()
     }
 
@@ -209,11 +212,11 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                     handler.postDelayed(stopServiceRunnable, 10000L)
                 }
                 AudioPlayerAgentInterface.State.PAUSED -> {
-                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.ic_btn_noti_play)
+                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.btn_play_32)
                 }
 
                 AudioPlayerAgentInterface.State.PLAYING -> {
-                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.ic_btn_pause)
+                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.btn_pause_32)
                 }
             }
 
@@ -221,11 +224,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                 try {
                     with(JSONObject(it)) {
                         optJSONObject("title")?.let { title ->
-                            setTextViewText(R.id.tv_title, title.optString("text", ""))
-                            title.optString("iconUrl")?.let {
-                                val notificationTarget = NotificationTarget(applicationContext, R.id.iv_logo, this@apply, getNotification(this@apply), SERVICE_ID)
-                                Glide.with(applicationContext).asBitmap().load(it).into(notificationTarget)
-                            }
+                            setTextViewText(R.id.tv_subtitle, title.optString("text", ""))
                         }
 
                         optJSONObject("content")?.let {content ->
@@ -245,7 +244,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                             }
 
                             content.optString("imageUrl")?.let {
-                                val notificationTarget = NotificationTarget(applicationContext, R.id.iv_content_image, this@apply, getNotification(this@apply), SERVICE_ID)
+                                val notificationTarget = NotificationTarget(applicationContext, R.id.iv_image, this@apply, getNotification(this@apply), SERVICE_ID)
                                 Glide.with(applicationContext).asBitmap().load(it).into(notificationTarget)
                             }
                         }

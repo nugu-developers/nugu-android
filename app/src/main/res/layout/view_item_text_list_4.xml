@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/list_item_2_background"
+    android:orientation="horizontal"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tv_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:maxLines="1"
+        android:textStyle="bold|italic"
+        android:visibility="gone"
+        tool:text="1"
+        tool:visibility="visible" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/noto_sans_kr_bold_hestia"
+            android:textColor="#222222"
+            android:lineSpacingExtra="7sp"
+            android:textSize="15sp"
+            android:visibility="gone"
+            tool:text="1" />
+
+        <TextView
+            android:id="@+id/tv_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/noto_sans_kr_regular_hestia"
+            android:gravity="start|center_vertical"
+            android:maxLines="4"
+            android:textColor="#444444"
+            android:textSize="16sp"
+            tool:text="body\n1\n2\n4" />
+
+        <TextView
+            android:id="@+id/tv_button"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/template_text_button_selector"
+            android:fontFamily="@font/noto_sans_kr_medium_hestia"
+            android:gravity="center"
+            android:lineSpacingExtra="2sp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="#009dff"
+            android:textSize="15sp"
+            android:visibility="gone"
+            tool:text="음악 들려줘"
+            tool:visibility="visible" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_image"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="12dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+</LinearLayout>

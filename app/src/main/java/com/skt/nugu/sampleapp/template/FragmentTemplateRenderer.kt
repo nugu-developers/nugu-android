@@ -21,19 +21,28 @@ import android.support.annotation.IdRes
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.deepMerge
+import java.lang.NullPointerException
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private val containerId: Int) :
+class FragmentTemplateRenderer(
+    fragmentManager: FragmentManager,
+    val containerIds: MutableMap<String, Int>
+) :
     DisplayAggregatorInterface.Renderer {
     companion object {
         private const val TAG = "TemplateRenderer"
+
+        fun buildFragmentTag(displayType: String, namespace: String) = "$displayType:$namespace"
+
     }
 
     private val fragmentManagerRef = WeakReference(fragmentManager)
@@ -53,33 +62,53 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
 
         val countDownLatch = CountDownLatch(1)
         val rendered = AtomicBoolean(false)
+        val namespace = templateType.split(".").first()
 
         handler.post {
             fragmentManagerRef.get()?.let { fragmentManager ->
-                val fragment = fragmentManager.findFragmentByTag(displayType.name)
+                val fragment =
+                    fragmentManager.findFragmentByTag(displayType.name)
                 if (fragment == null || fragment.isRemoving) {
                     Log.d(TAG, "[render] new fragment")
                     addFragment(
                         fragmentManager,
-                        TemplateFragment.newInstance(templateType, templateId, templateContent),
+                        TemplateFragment.newInstance(
+                            templateType,
+                            templateId,
+                            templateContent,
+                            displayType.name
+                        ),
+                        namespace,
                         displayType.name
                     )
                 } else {
-                    if (fragment is TemplateFragment) {
+                    if (fragment is TemplateFragment && namespace == fragment.getNamespace()) {
                         Log.d(TAG, "[render] update fragment")
                         val prevTemplateId = fragment.getTemplateId()
                         if (prevTemplateId != templateId) {
-                            fragment.updateView(templateType, templateId, templateContent)
+                            fragment.updateView(
+                                templateType,
+                                templateId,
+                                templateContent,
+                                displayType.name
+                            )
                             ClientManager.getClient().getDisplay()
                                 ?.displayCardCleared(prevTemplateId)
-                            ClientManager.getClient().getDisplay()?.displayCardRendered(templateId, fragment.controller)
+                            ClientManager.getClient().getDisplay()
+                                ?.displayCardRendered(templateId, fragment.controller)
                         }
                     } else {
                         Log.d(TAG, "[render] not match fragment, remove and add newFragment")
                         removeFragment(fragmentManager, fragment)
                         addFragment(
                             fragmentManager,
-                            TemplateFragment.newInstance(templateType, templateId, templateContent),
+                            TemplateFragment.newInstance(
+                                templateType,
+                                templateId,
+                                templateContent,
+                                displayType.name
+                            ),
+                            namespace,
                             displayType.name
                         )
                     }
@@ -110,9 +139,17 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
                             com.google.gson.JsonParser.parseString(templateContent)
                                 .asJsonObject
 
-                        jsonContent.deepMerge(changeJsonContent)
+                        jsonContent.deepMerge(
+                            if (changeJsonContent.has("template")) changeJsonContent.get("template").asJsonObject
+                            else changeJsonContent
+                        )
 
-                        fragment.updateView(fragment.getName(), templateId, jsonContent.toString())
+                        fragment.updateView(
+                            fragment.getName(),
+                            templateId,
+                            jsonContent.toString(),
+                            fragment.getDisplayType()
+                        )
                     }
                 }
             }
@@ -133,16 +170,23 @@ class FragmentTemplateRenderer(fragmentManager: FragmentManager, @IdRes private 
         }
     }
 
-    private fun addFragment(fragmentManager: FragmentManager, fragment: Fragment, tag: String?) {
+    private fun addFragment(
+        fragmentManager: FragmentManager,
+        fragment: Fragment,
+        namespace: String,
+        tag: String?
+    ) {
         Log.d(TAG, "[addFragment]")
         fragmentManager.fragments.lastOrNull()?.let {
             it.setMenuVisibility(false)
             it.userVisibleHint = false
         }
+        val resId = containerIds[namespace]
+            ?: throw NullPointerException("containerIds is null($namespace)")
 
         fragmentManager.beginTransaction()
             .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-            .add(containerId, fragment, tag)
+            .add(resId, fragment, tag)
             .commitNowAllowingStateLoss()
 
         fragment.setMenuVisibility(true)
