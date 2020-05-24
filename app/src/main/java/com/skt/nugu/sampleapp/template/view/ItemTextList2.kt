@@ -19,6 +19,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.ToggleButton
 import com.skt.nugu.sampleapp.R
 
 class ItemTextList2
@@ -26,7 +27,7 @@ class ItemTextList2
 constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
     BaseView(context, attrs, defStyleAttr) {
 
-    val badge by lazy { findViewById<TextView>(R.id.badge) }
+    val badge by lazy { findViewById<TextView>(R.id.tv_badge) }
 
     val image by lazy { findViewById<ImageView>(R.id.iv_image) }
 
@@ -35,6 +36,8 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
     val header by lazy { findViewById<TextView>(R.id.tv_header) }
 
     val footer by lazy { findViewById<TextView>(R.id.tv_footer) }
+
+    val button by lazy { findViewById<ToggleButton>(R.id.tv_button) }
 
     init {
         setContentView(R.layout.view_item_text_list_2)

@@ -1,59 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge xmlns:android="http://schemas.android.com/apk/res/android">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <LinearLayout
-            android:id="@+id/title_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#f8f8f8"
+        android:orientation="vertical">
 
-        <ImageView
-                android:id="@+id/icon"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                android:scaleType="centerInside"/>
+        <include layout="@layout/title_view"/>
 
-        <TextView
-                android:id="@+id/title"
-                android:layout_width="wrap_content"
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="18dp"
-                android:textSize="22sp"
-                android:textColor="#ffffffff"
-                android:maxLines="1"/>
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
+                <TextView
+                    android:id="@+id/tv_header"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:fontFamily="@font/noto_sans_kr_bold_hestia"
+                    android:lineSpacingExtra="8sp"
+                    android:textColor="#222222"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/tv_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:fontFamily="@font/noto_sans_kr_regular_hestia"
+                    android:lineSpacingExtra="11sp"
+                    android:textColor="#444444"
+                    android:textSize="17sp" />
+
+                <TextView
+                    android:id="@+id/tv_footer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="6sp"
+                    android:fontFamily="@font/noto_sans_kr_regular_hestia"
+                    android:layout_marginBottom="60dp"
+                    android:textColor="#777777"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
-
-    <TextView
-            android:id="@+id/header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:layout_below="@id/title_group"
-            android:textStyle="bold"
-            android:textSize="28sp"
-            android:textColor="#ffffffff"
-            android:maxLines="1"/>
-
-    <TextView
-            android:id="@+id/body"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:layout_below="@id/header"
-            android:textSize="18sp"
-            android:textColor="#ffffffff"
-            android:maxLines="1"/>
-
-    <TextView
-            android:id="@+id/footer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:layout_below="@id/body"
-            android:textSize="18sp"
-            android:textColor="#ffffffff"
-            android:maxLines="1"/>
-
 </merge>

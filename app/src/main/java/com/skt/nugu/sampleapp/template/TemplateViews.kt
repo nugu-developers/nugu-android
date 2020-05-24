@@ -16,31 +16,24 @@
 package com.skt.nugu.sampleapp.template
 
 import android.content.Context
-import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
-import android.support.v4.content.ContextCompat
+import android.support.v7.widget.DividerItemDecoration
+import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.target.ImageViewTarget
-import com.bumptech.glide.request.transition.Transition
+import android.widget.*
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.agent.playback.PlaybackButton
-import com.skt.nugu.sampleapp.template.view.ItemTextList2
-import com.skt.nugu.sampleapp.template.view.viewholder.TemplateViewHolder
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
-import com.skt.nugu.sampleapp.template.view.AbstractDisplayText
-import com.skt.nugu.sampleapp.template.view.BaseView
-import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
+import com.skt.nugu.sampleapp.template.view.*
+import com.skt.nugu.sampleapp.template.view.viewholder.TemplateViewHolder
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayInterface
+import com.skt.nugu.sdk.agent.playback.PlaybackButton
 
 class TemplateViews {
     companion object {
@@ -51,6 +44,7 @@ class TemplateViews {
         private const val DISPLAY_DEFAULT = "Display.Default"
         private const val DISPLAY_FULL_TEXT_1 = "Display.FullText1"
         private const val DISPLAY_FULL_TEXT_2 = "Display.FullText2"
+        private const val DISPLAY_FULL_TEXT_3 = "Display.FullText3"
         private const val DISPLAY_IMAGE_TEXT_1 = "Display.ImageText1"
         private const val DISPLAY_IMAGE_TEXT_2 = "Display.ImageText2"
         private const val DISPLAY_IMAGE_TEXT_3 = "Display.ImageText3"
@@ -58,196 +52,327 @@ class TemplateViews {
         private const val DISPLAY_TEXT_LIST_1 = "Display.TextList1"
         private const val DISPLAY_TEXT_LIST_2 = "Display.TextList2"
         private const val DISPLAY_TEXT_LIST_3 = "Display.TextList3"
+        private const val DISPLAY_TEXT_LIST_4 = "Display.TextList4"
         private const val DISPLAY_IMAGE_LIST_1 = "Display.ImageList1"
         private const val DISPLAY_IMAGE_LIST_2 = "Display.ImageList2"
+        private const val DISPLAY_IMAGE_LIST_3 = "Display.ImageList3"
+        private const val DISPLAY_FULL_IMAGE = "Display.FullImage"
+        private const val DISPLAY_WEATHER_1 = "Display.Weather1"
+        private const val DISPLAY_WEATHER_2 = "Display.Weather2"
+        private const val DISPLAY_WEATHER_3 = "Display.Weather3"
+        private const val DISPLAY_WEATHER_4 = "Display.Weather4"
+        private const val DISPLAY_WEATHER_5 = "Display.Weather5"
 
         private val gson = Gson()
 
-        fun createView(context: Context, name: String, displayId: String, template: String): BaseView {
+        private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
+            return try {
+                gson.fromJson(json, classOfT)
+            } catch (e: Throwable) {
+                null
+            }
+        }
+
+        fun createView(
+            context: Context,
+            name: String,
+            displayId: String,
+            template: String
+        ): BaseView {
             Log.d(TAG, "[createView] name: $name, template: $template")
 
             return when (name) {
                 AUDIO_PLAYER_TEMPLATE_1,
                 AUDIO_PLAYER_TEMPLATE_2 -> DisplayAudioPlayer(context).apply {
-                    if(name == AUDIO_PLAYER_TEMPLATE_2) {
-                        body.visibility = View.GONE
-                        footer.visibility = View.GONE
+                    when (name) {
+                        AUDIO_PLAYER_TEMPLATE_1 -> header.enableMarquee()
+                        AUDIO_PLAYER_TEMPLATE_2 -> header.maxLines = 4
                     }
-
-                    fromJsonOrNull(template, AudioPlayer::class.java)?.let { item ->
-                        item.title.text?.let {
-                            title.text = it
-                        }
-
-                        val iconUrl = item.title.iconUrl
-                        if(iconUrl == null) {
-                            logo.visibility = View.GONE
-                        } else {
-                            logo.visibility = View.VISIBLE
-                            Glide.with(logo).load(iconUrl).into(logo)
-                        }
-
-                        item.content.imageUrl?.let {
-                            Glide.with(image).load(it).into(image)
-                        }
-
-                        item.content.title?.let {
-                            header.text = it
-                        }
-
-                        item.content.subtitle1?.let {
-                            body.text = it
-                        }
-
-                        item.content.subtitle2?.let {
-                            footer.text = it
-                        }
-
-                        val duration = try {
-                            item.content.durationSec?.toInt()
-                        } catch (e: Exception) {
-                            null
-                        }
-
-                        if (duration == null) {
-                            progress.isEnabled = false
-                        } else {
-                            progress.isEnabled = true
-                            progress.max = duration
-                        }
-
-                        item.content.backgroundColor?.let {
-                            background.setBackgroundColor(parseColor(it, ContextCompat.getColor(context, R.color.white)))
-                        }
-                        item.content.backgroundImageUrl?.let {
-                            Glide.with(this).load(it).into(background)
-                        }
-
-                        prev.setOnClickListener {
-                            ClientManager.getClient().getPlaybackRouter().buttonPressed(
-                                PlaybackButton.PREVIOUS)
-                        }
-
-                        play.setOnClickListener {
-                            if(ClientManager.playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
-                                ClientManager.getClient().getPlaybackRouter().buttonPressed(
-                                    PlaybackButton.PAUSE)
-                            } else {
-                                ClientManager.getClient().getPlaybackRouter().buttonPressed(
-                                    PlaybackButton.PLAY)
-                            }
-                        }
-
-                        next.setOnClickListener {
-                            ClientManager.getClient().getPlaybackRouter().buttonPressed(
-                                PlaybackButton.NEXT)
-                        }
-                    }
+                    this.applyDisplayAudioPlayer(template)
                 }
                 DISPLAY_DEFAULT,
-                DISPLAY_IMAGE_TEXT_1,
-                DISPLAY_IMAGE_TEXT_4,
-                DISPLAY_FULL_TEXT_2 -> object : com.skt.nugu.sampleapp.template.view.AbstractDisplayText(context){
-                    override val viewResId: Int
-                        get() = R.layout.view_display_image_text_1
-                }.apply {
-                    applyDisplayTextData(template, this)
-                }
-                DISPLAY_FULL_TEXT_1,
-                DISPLAY_IMAGE_TEXT_2,
-                DISPLAY_IMAGE_TEXT_3 -> object : com.skt.nugu.sampleapp.template.view.AbstractDisplayText(context){
-                    override val viewResId: Int
-                        get() = R.layout.view_display_image_text_2
-                }.apply {
-                    applyDisplayTextData(template, this)
-                }
-                DISPLAY_TEXT_LIST_1,
-                DISPLAY_TEXT_LIST_2,
-                DISPLAY_IMAGE_LIST_1 -> com.skt.nugu.sampleapp.template.view.DisplayTextList2(context).apply {
-                    fromJsonOrNull(template, TextList2::class.java)?.let { textList1 ->
-                        setTitle(this.logo, this.title, textList1.title)
+                DISPLAY_FULL_IMAGE,
+                DISPLAY_FULL_TEXT_1, DISPLAY_FULL_TEXT_2, DISPLAY_FULL_TEXT_3,
+                DISPLAY_IMAGE_TEXT_1, DISPLAY_IMAGE_TEXT_2, DISPLAY_IMAGE_TEXT_3, DISPLAY_IMAGE_TEXT_4 ->
+                    object : AbstractDisplayText(context) {
+                        override val viewResId: Int
+                            get() = when (name) {
+                                DISPLAY_FULL_TEXT_1 -> R.layout.view_display_full_text_1
+                                DISPLAY_FULL_TEXT_2 -> R.layout.view_display_full_text_2
+                                DISPLAY_FULL_TEXT_3 -> R.layout.view_display_full_text_3
+                                DISPLAY_IMAGE_TEXT_1 -> R.layout.view_display_image_text_1
+                                DISPLAY_IMAGE_TEXT_2 -> R.layout.view_display_image_text_2
+                                DISPLAY_IMAGE_TEXT_3 -> R.layout.view_display_image_text_3
+                                DISPLAY_IMAGE_TEXT_4 -> R.layout.view_display_image_text_4
+                                DISPLAY_FULL_IMAGE -> R.layout.view_display_full_image
+                                else -> R.layout.view_display_full_text_2
+                            }
+                    }.apply {
+                        if (name == DISPLAY_FULL_TEXT_1) {
+                            (subLayout.layoutParams as FrameLayout.LayoutParams).gravity =
+                                Gravity.LEFT
+                        }
+                        applyDisplayTextData(template, this)
+                    }
+                DISPLAY_TEXT_LIST_4,
+                DISPLAY_TEXT_LIST_3 -> DisplayTextList4(context).apply {
+                    fromJsonOrNull(template, TextList3::class.java)?.let { textList ->
+                        val badgeNumber = textList.badgeNumber ?: false
+                        textList.title.setTitle(this)
 
-                        this.adapter = object : RecyclerView.Adapter<TemplateViewHolder<ItemTextList2>>() {
+                        this.adapter =
+                            object : RecyclerView.Adapter<TemplateViewHolder<ItemTextList4>>() {
 
-                            override fun onCreateViewHolder(
-                                parent: ViewGroup,
-                                viewType: Int
-                            ): TemplateViewHolder<ItemTextList2> {
-                                return TemplateViewHolder(
-                                    ItemTextList2(
-                                        parent.context
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): TemplateViewHolder<ItemTextList4> {
+                                    return TemplateViewHolder(
+                                        ItemTextList4(parent.context)
                                     )
-                                ).apply {
-                                    view.setOnClickListener {
-                                        // no-op
+                                }
+
+                                override fun getItemCount() = textList.listItems.size
+                                override fun onBindViewHolder(
+                                    holder: TemplateViewHolder<ItemTextList4>,
+                                    position: Int
+                                ) {
+                                    textList.listItems[position].let { item ->
+                                        badgeNumber.setBadge(position, holder.view.badge)
+                                        item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                        item.header?.setText(holder.view.header)
+                                        item.body?.setText(holder.view.body)
+                                        item.footer?.setText(holder.view.footer)
+                                        item.button?.setButton(displayId, holder.view.button)
+
+                                        holder.view.setOnClickListener {
+                                            handleElementSelected(displayId, item.token)
+                                        }
                                     }
                                 }
                             }
+                    }
+                }
+                DISPLAY_IMAGE_LIST_2 -> DisplayImageList2(context).apply {
+                    fromJsonOrNull(template, ImageList2::class.java)?.let { imageList ->
+                        imageList.title.setTitle(this)
+                        val badgeNumber = imageList.badgeNumber ?: false
 
-                            override fun getItemCount(): Int {
-                                return textList1.listItems.size
+                        this.adapter =
+                            object : RecyclerView.Adapter<TemplateViewHolder<ItemImageList2>>() {
+
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): TemplateViewHolder<ItemImageList2> {
+                                    return TemplateViewHolder(
+                                        ItemImageList2(parent.context)
+                                    )
+                                }
+
+                                override fun getItemCount(): Int {
+                                    return imageList.listItems.size
+                                }
+
+                                override fun onBindViewHolder(
+                                    holder: TemplateViewHolder<ItemImageList2>,
+                                    position: Int
+                                ) {
+
+                                    imageList.listItems[position].let { item ->
+                                        badgeNumber.setBadge(position, holder.view.badge)
+                                        item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                        item.header?.setText(holder.view.header)
+                                        item.footer?.setText(holder.view.footer)
+                                        item.icon?.setImage(Size.MEDIUM, holder.view.icon)
+
+                                        holder.view.setOnClickListener {
+                                            handleElementSelected(displayId, item.token)
+                                        }
+                                    }
+                                }
                             }
+                    }
+                }
+                DISPLAY_IMAGE_LIST_3 -> DisplayImageList3(context).apply {
+                    fromJsonOrNull(template, ImageList3::class.java)?.let { imageList ->
+                        imageList.title.setTitle(this)
 
-                            override fun onBindViewHolder(holder: TemplateViewHolder<ItemTextList2>, position: Int) {
-                                textList1.listItems[position].let { item ->
-                                    if (textList1.badgeNumber == true) {
-                                        holder.view.badge.text = (position + 1).toString()
-                                        holder.view.badge.visibility = View.VISIBLE
-                                    } else {
-                                        holder.view.badge.visibility = View.GONE
+                        this.adapter =
+                            object : RecyclerView.Adapter<TemplateViewHolder<ItemImageList3>>() {
+
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): TemplateViewHolder<ItemImageList3> {
+                                    return TemplateViewHolder(
+                                        ItemImageList3(parent.context)
+                                    )
+                                }
+
+                                override fun getItemCount(): Int {
+                                    return imageList.listItems.size
+                                }
+
+                                override fun onBindViewHolder(
+                                    holder: TemplateViewHolder<ItemImageList3>,
+                                    position: Int
+                                ) {
+                                    imageList.listItems[position].let { item ->
+                                        item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                        item.header?.setText(holder.view.header)
+                                        item.icon?.setImage(Size.MEDIUM, holder.view.icon)
+
+                                        holder.view.setOnClickListener {
+                                            handleElementSelected(displayId, item.token)
+                                        }
+                                    }
+                                }
+                            }
+                    }
+                }
+                DISPLAY_IMAGE_LIST_1 -> DisplayImageList1(context).apply {
+                    fromJsonOrNull(template, ImageList1::class.java)?.let { imageList ->
+                        imageList.title.setTitle(this)
+                        val badgeNumber = imageList.badgeNumber ?: false
+                        this.recyclerView.layoutManager = GridLayoutManager(context, 2)
+
+                        this.adapter =
+                            object : RecyclerView.Adapter<TemplateViewHolder<ItemImageList1>>() {
+
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): TemplateViewHolder<ItemImageList1> {
+                                    return TemplateViewHolder(ItemImageList1(parent.context))
+                                }
+
+                                override fun getItemCount(): Int {
+                                    return imageList.listItems.size
+                                }
+
+                                override fun onBindViewHolder(
+                                    holder: TemplateViewHolder<ItemImageList1>,
+                                    position: Int
+                                ) {
+                                    imageList.listItems[position].let { item ->
+                                        badgeNumber.setBadge(position, holder.view.badge)
+                                        item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                        item.header?.setText(holder.view.header)
+                                        item.footer?.setText(holder.view.footer)
+
+                                        holder.view.setOnClickListener {
+                                            handleElementSelected(displayId, item.token)
+                                        }
+                                    }
+                                }
+                            }
+                    }
+                }
+                DISPLAY_TEXT_LIST_2,
+                DISPLAY_TEXT_LIST_1 -> DisplayTextList2(context).apply {
+                    fromJsonOrNull(template, TextList2::class.java)?.let { textList ->
+                        textList.title.setTitle(this)
+                        val badgeNumber = textList.badgeNumber ?: false
+
+                        this.adapter =
+                            object : RecyclerView.Adapter<TemplateViewHolder<ItemTextList2>>() {
+
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): TemplateViewHolder<ItemTextList2> {
+                                    return TemplateViewHolder(
+                                        ItemTextList2(parent.context)
+                                    )
+                                }
+
+                                override fun getItemCount(): Int {
+                                    return textList.listItems.size
+                                }
+
+                                override fun onBindViewHolder(
+                                    holder: TemplateViewHolder<ItemTextList2>,
+                                    position: Int
+                                ) {
+                                    textList.listItems[position].let { item ->
+                                        badgeNumber.setBadge(position, holder.view.badge)
+                                        item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                        item.header?.setText(holder.view.header)
+                                        item.body?.setText(holder.view.body)
+                                        item.footer?.setText(holder.view.footer)
+                                        item.toggle?.setToggle(
+                                            context,
+                                            textList.toggleStyle,
+                                            holder.view.button
+                                        )
+                                        holder.view.button?.setOnClickListener {
+                                            handleElementSelected(displayId, item.toggle?.token)
+                                        }
+                                        holder.view.setOnClickListener {
+                                            handleElementSelected(displayId, item.token)
+                                        }
+                                    }
+                                }
+                            }
+                    }
+                }
+                DISPLAY_WEATHER_1,
+                DISPLAY_WEATHER_2 -> {
+                    DisplayWeather1(
+                        context = context, viewResId = when (name) {
+                            DISPLAY_WEATHER_1 -> R.layout.view_display_weather_1
+                            DISPLAY_WEATHER_2 -> R.layout.view_display_weather_2
+                            else -> R.layout.view_display_weather_1
+                        }
+                    ).apply {
+                        applyDisplayWeatherData(template, this)
+                    }
+                }
+                DISPLAY_WEATHER_3 -> {
+                    DisplayWeather3(
+                        context = context,
+                        viewResId = R.layout.view_display_weather_3
+                    ).apply {
+                        this.recyclerView.layoutManager = GridLayoutManager(context, 2)
+                        this.recyclerView.addItemDecoration(
+                            DividerItemDecoration(
+                                context,
+                                DividerItemDecoration.HORIZONTAL
+                            )
+                        )
+
+                        fromJsonOrNull(template, Weather1::class.java)?.let { item ->
+                            with(this) {
+                                item.background?.setBackground(context, this)
+                                item.title.setTitle(this)
+                                item.content.setContent(this)
+
+                                this.adapter = object :
+                                    RecyclerView.Adapter<TemplateViewHolder<ItemWeather3>>() {
+                                    override fun onCreateViewHolder(
+                                        parent: ViewGroup,
+                                        viewType: Int
+                                    ): TemplateViewHolder<ItemWeather3> {
+                                        return TemplateViewHolder(
+                                            ItemWeather3(parent.context)
+                                        )
                                     }
 
-                                    val source = item.image?.sources?.find(Size.MEDIUM)
-                                    if (source != null) {
-                                        holder.view.image.visibility = View.VISIBLE
-                                        Glide.with(holder.view.image).load(source.url).into(holder.view.image)
-                                    } else {
-                                        holder.view.image.visibility = View.GONE
+                                    override fun getItemCount(): Int {
+                                        return item.content.listItems.size
                                     }
 
-                                    val header = item.header
-                                    if(header != null) {
-                                        holder.view.header.visibility = View.VISIBLE
-                                        setText(holder.view.header, header)
-                                    } else {
-                                        holder.view.header.visibility = View.GONE
-                                    }
-
-                                    item.body?.let {
-                                        setText(holder.view.body, it)
-                                    }
-
-                                    item.footer?.let {
-                                        setText(holder.view.footer, it)
-                                    }
-
-                                    holder.view.setOnClickListener {
-                                        try {
-                                            ClientManager.getClient().getDisplay()
-                                                ?.setElementSelected(
-                                                    displayId,
-                                                    item.token,
-                                                    object :
-                                                        DisplayInterface.OnElementSelectedCallback {
-                                                        override fun onSuccess(dialogRequestId: String) {
-                                                            Log.d(
-                                                                TAG,
-                                                                "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId"
-                                                            )
-                                                        }
-
-                                                        override fun onError(
-                                                            dialogRequestId: String,
-                                                            errorType: DisplayInterface.ErrorType
-                                                        ) {
-                                                            Log.d(
-                                                                TAG,
-                                                                "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType"
-                                                            )
-                                                        }
-                                                    })
-                                        } catch (e: IllegalStateException) {
-                                            Log.w(TAG, "[setElementSelected]", e)
+                                    override fun onBindViewHolder(
+                                        holder: TemplateViewHolder<ItemWeather3>,
+                                        position: Int
+                                    ) {
+                                        item.content.listItems[position].let { item ->
+                                            item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                            item.header?.setText(holder.view.header)
+                                            item.body?.setText(holder.view.body)
+                                            item.footer?.setText(holder.view.footer)
+                                            item.setTemperature(holder.view)
                                         }
                                     }
                                 }
@@ -255,269 +380,307 @@ class TemplateViews {
                         }
                     }
                 }
+                DISPLAY_WEATHER_4 -> {
+                    DisplayWeather4(
+                        context = context,
+                        viewResId = R.layout.view_display_weather_3
+                    ).apply {
+                        recyclerView.addItemDecoration(object : RecyclerView.ItemDecoration() {
+                            override fun getItemOffsets(
+                                outRect: Rect,
+                                itemPosition: Int,
+                                parent: RecyclerView
+                            ) {
+                                outRect.bottom = TemplateUtils.dpToPixel(context, 4f).toInt()
+                            }
+                        })
 
+                        fromJsonOrNull(template, Weather1::class.java)?.let { item ->
+                            with(this) {
+                                item.background?.setBackground(context, this)
+                                item.title.setTitle(this)
+                                item.content.image?.setImage(Size.MEDIUM, image)
+                                item.content.header?.setText(header)
+                                item.content.body?.setText(body)
 
+                                this.adapter = object :
+                                    RecyclerView.Adapter<TemplateViewHolder<ItemWeather4>>() {
+                                    override fun onCreateViewHolder(
+                                        parent: ViewGroup,
+                                        viewType: Int
+                                    ): TemplateViewHolder<ItemWeather4> {
+                                        return TemplateViewHolder(
+                                            ItemWeather4(parent.context)
+                                        )
+                                    }
+
+                                    override fun getItemCount(): Int {
+                                        return item.content.listItems.size
+                                    }
+
+                                    override fun onBindViewHolder(
+                                        holder: TemplateViewHolder<ItemWeather4>,
+                                        position: Int
+                                    ) {
+                                        item.content.listItems[position].let { item ->
+                                            item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                            item.header?.setText(holder.view.header)
+                                            item.body?.setText(holder.view.body)
+                                            item.footer?.setText(holder.view.footer)
+                                            item.temperature?.min?.setText(holder.view.min)
+                                            item.temperature?.max?.setText(holder.view.max)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                DISPLAY_WEATHER_5 -> {
+                    DisplayWeather5(
+                        context = context,
+                        viewResId = R.layout.view_display_weather_5
+                    ).apply {
+
+                        fromJsonOrNull(template, Weather5::class.java)?.let { item ->
+                            with(this) {
+                                item.title.setTitle(this)
+                                item.content.header?.setText(header)
+                                item.content.footer?.setText(footer)
+                                item.content.body?.setText(body)
+                                item.content.image?.drawableRequest(
+                                    context,
+                                    Size.MEDIUM,
+                                    object : RequestListener {
+                                        override fun onResourceReady(resource: Drawable) {
+                                            progress.setDrawable(resource)
+                                        }
+                                    })
+                                item.content.min?.setText(min)
+                                item.content.max?.setText(max)
+
+                                item.content.max?.text?.toFloat()?.let {
+                                    progress?.setMax(it)
+                                }
+                                item.content.progress?.let {
+                                    progress?.setProgress(it)
+                                }
+                                item.content.progressColor?.let {
+                                    progress?.setProgressColor(it)
+                                }
+                            }
+                        }
+                    }
+                }
                 else -> object : BaseView(context) {}
+            }
+        }
+
+        private fun applyDisplayWeatherData(
+            template: String,
+            displayWeather: DisplayWeather1
+        ) {
+            fromJsonOrNull(template, Weather1::class.java)?.let { item ->
+                with(displayWeather) {
+                    item.background?.setBackground(context, this)
+                    item.title.setTitle(this)
+                    item.content.image?.setImage(Size.MEDIUM, image)
+                    item.content.header?.setText(header)
+                    item.content.body?.setText(body)
+                    item.content.temperature?.current?.setText(current)
+                    item.content.temperature?.min?.setText(min)
+                    item.content.temperature?.max?.setText(max)
+
+                    this.recyclerView.layoutManager =
+                        GridLayoutManager(context, item.content.listItems.size)
+
+                    this.adapter =
+                        object : RecyclerView.Adapter<TemplateViewHolder<ItemWeather1>>() {
+                            override fun onCreateViewHolder(
+                                parent: ViewGroup,
+                                viewType: Int
+                            ): TemplateViewHolder<ItemWeather1> {
+                                return TemplateViewHolder(
+                                    ItemWeather1(parent.context)
+                                )
+                            }
+
+                            override fun getItemCount(): Int {
+                                return item.content.listItems.size
+                            }
+
+                            override fun onBindViewHolder(
+                                holder: TemplateViewHolder<ItemWeather1>,
+                                position: Int
+                            ) {
+                                item.content.listItems[position].let { item ->
+                                    item.image?.setImage(Size.MEDIUM, holder.view.image)
+                                    item.header?.setText(holder.view.header)
+                                    item.body?.setText(holder.view.body)
+                                    item.footer?.setText(holder.view.footer)
+                                }
+                            }
+                        }
+                }
+            }
+        }
+
+        private fun DisplayAudioPlayer.applyDisplayAudioPlayer(template: String) {
+            fromJsonOrNull(template, AudioPlayer::class.java)?.let { item ->
+                item.title.setTitle(this)
+                item.content.setContent(this)
+                item.content.setBarContent(this)
+
+                collapsed.visibility = View.VISIBLE
+
+                prev.setOnClickListener {
+                    ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                        PlaybackButton.PREVIOUS
+                    )
+                }
+                bar_prev.setOnClickListener {
+                    prev.callOnClick()
+                }
+                play.setOnClickListener {
+                    if (ClientManager.playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
+                        ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                            PlaybackButton.PAUSE
+                        )
+                    } else {
+                        ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                            PlaybackButton.PLAY
+                        )
+                    }
+                }
+                bar_play.setOnClickListener {
+                    play.callOnClick()
+                }
+
+                next.setOnClickListener {
+                    ClientManager.getClient().getPlaybackRouter().buttonPressed(
+                        PlaybackButton.NEXT
+                    )
+                }
+                bar_next.setOnClickListener {
+                    next.callOnClick()
+                }
+                bar_close.setOnClickListener {
+                    close.callOnClick()
+                }
+                item.content.settings?.let {
+                    it.favorite?.let {
+                        favorite.setImageResource(
+                            if (it) R.drawable.btn_like_inactive_2
+                            else R.drawable.btn_like_inactive
+                        )
+                        favorite.visibility = View.VISIBLE
+                        favorite.setOnClickListener { _ ->
+                            ClientManager.getClient().audioPlayerAgent?.setFavorite(it)
+                        }
+                    }
+                    it.repeat?.let {
+                        when (it) {
+                            Repeat.ALL -> repeat.setImageResource(R.drawable.btn_repeat)
+                            Repeat.ONE -> repeat.setImageResource(R.drawable.btn_repeat_1)
+                            Repeat.NONE -> repeat.setImageResource(R.drawable.btn_repeat_inactive)
+                        }
+                        repeat.visibility = View.VISIBLE
+                        repeat.setOnClickListener { _ ->
+                            ClientManager.getClient().audioPlayerAgent?.setRepeatMode(
+                                when (it) {
+                                    Repeat.ALL -> AudioPlayerAgentInterface.RepeatMode.ONE
+                                    Repeat.ONE -> AudioPlayerAgentInterface.RepeatMode.NONE
+                                    Repeat.NONE -> AudioPlayerAgentInterface.RepeatMode.ALL
+                                }
+                            )
+                        }
+                    }
+                    it.shuffle?.let {
+                        shuffle.setImageResource(
+                            if (it) R.drawable.btn_random
+                            else R.drawable.btn_random_inactive
+                        )
+                        shuffle.visibility = View.VISIBLE
+                        shuffle.setOnClickListener { _ ->
+                            ClientManager.getClient().audioPlayerAgent?.setShuffle(it)
+                        }
+                    }
+                }
+                progress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        if (fromUser) {
+                            ClientManager.getClient().audioPlayerAgent?.seek(progress * 1000L)
+                        }
+                        bar_progress.progress = progress
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                        // nothing to do
+                    }
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                        // nothing to do
+                    }
+                })
             }
         }
 
         private fun applyDisplayTextData(template: String, displayTextView: AbstractDisplayText) {
             fromJsonOrNull(template, ImageText2::class.java)?.let { item ->
                 with(displayTextView) {
-                    item.background?.let {
-                        setBackground(this, it, ContextCompat.getColor(context, R.color.ice_blue))
-                    }
-
-                    setTitle(this.logo, this.title, item.title)
-
-                    val source = item.content.image?.sources?.find(Size.MEDIUM)
-                    if (source != null) {
-                        image.visibility = View.VISIBLE
-                        Glide.with(image).load(source.url).into(image)
-                    } else {
-                        image.visibility = View.GONE
-                    }
-
+                    item.background?.setBackground(context, this)
+                    item.title.setTitle(this)
+                    item.content.image?.setImage(Size.MEDIUM, image)
                     item.content.imageAlign?.let {
-                        // TODO : XXX
+                        val params = image.layoutParams as LinearLayout.LayoutParams
+                        when (it) {
+                            "LEFT" -> params.gravity = Gravity.LEFT
+                            "RIGHT" -> params.gravity = Gravity.RIGHT
+                        }
                     }
-
-                    item.content.header?.let {
-                        setText(header, it, ContextCompat.getColor(context, R.color.battleship_grey))
-                    }
-                    item.content.body?.let {
-                        setText(body, it, ContextCompat.getColor(context, R.color.battleship_grey))
-                    }
-                    item.content.footer?.let {
-                        setText(footer, it, ContextCompat.getColor(context, R.color.battleship_grey))
-                    }
+                    item.content.header?.setText(header)
+                    item.content.body?.setText(body)
+                    item.content.footer?.setText(footer)
                 }
             }
         }
 
-        private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
-            return try {
-                TemplateViews.gson.fromJson(json, classOfT)
-            } catch (e: Throwable) {
-                null
+        fun handleElementSelected(templateId: String, token: String?) {
+            if (token == null) {
+                return
+            }
+            ClientManager.getClient().getDisplay()?.apply {
+                try {
+                    setElementSelected(
+                        templateId,
+                        token,
+                        object :
+                            DisplayInterface.OnElementSelectedCallback {
+                            override fun onSuccess(dialogRequestId: String) {
+                                Log.d(
+                                    TAG,
+                                    "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId"
+                                )
+                            }
+
+                            override fun onError(
+                                dialogRequestId: String,
+                                errorType: DisplayInterface.ErrorType
+                            ) {
+                                Log.d(
+                                    TAG,
+                                    "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType"
+                                )
+                            }
+                        })
+                } catch (e: IllegalStateException) {
+                    Log.w(TAG, "[setElementSelected]", e)
+                }
             }
         }
-    }
-}
-
-enum class Size {
-    @SerializedName("X_SMALL")
-    X_SMALL,
-    @SerializedName("SMALL")
-    SMALL,
-    @SerializedName("MEDIUM")
-    MEDIUM,
-    @SerializedName("LARGE")
-    LARGE,
-    @SerializedName("X_LARGE")
-    X_LARGE,
-}
-
-class Title(
-    @SerializedName("logo") val logo: Image,
-    @SerializedName("text") val text: Text,
-    @SerializedName("subtext") val subtext: Text?
-)
-
-class Text(
-    @SerializedName("text") val text: String,
-    @SerializedName("color") val color: String?
-)
-
-class Image(
-    @SerializedName("contentDescription") val contentDescription: String?,
-    @SerializedName("sources") val sources: List<Source>
-)
-
-class Source(
-    @SerializedName("url") val url: String,
-    @SerializedName("size") val size: Size?,
-    @SerializedName("widthPixels") val widthPixels: Long?,
-    @SerializedName("heightPixels") val heightPixels: Long?
-)
-
-class Background(
-    @SerializedName("color") val color: String?,
-    @SerializedName("image") val image: Image?
-)
-
-class AudioPlayer(
-    @SerializedName("title") val title: AudioPlayerTitle,
-    @SerializedName("content") val content: AudioPlayerContent
-)
-
-data class AudioPlayerTitle(
-    @SerializedName("iconUrl") val iconUrl: String?,
-    @SerializedName("text") val text: String?
-)
-
-data class AudioPlayerContent(
-    @SerializedName("title") val title: String?,
-    @SerializedName("subtitle1") val subtitle1: String?,
-    @SerializedName("subtitle2") val subtitle2: String?,
-    @SerializedName("imageUrl") val imageUrl: String?,
-    @SerializedName("durationSec") val durationSec: String?,
-    @SerializedName("backgroundImageUrl") val backgroundImageUrl: String?,
-    @SerializedName("backgroundColor") val backgroundColor: String?
-)
-
-class FullText1(
-    @SerializedName("title") val title: Title,
-    @SerializedName("background") val background: Background?,
-    @SerializedName("content") val content: FullText1Content
-)
-
-class FullText1Content(
-    @SerializedName("header") val header: Text?,
-    @SerializedName("body") val body: Text,
-    @SerializedName("footer") val footer: Text?
-)
-
-class FullText2(
-    @SerializedName("title") val title: Title,
-    @SerializedName("background") val background: Background?,
-    @SerializedName("content") val content: FullText2Content
-)
-
-class FullText2Content(
-    @SerializedName("body") val body: Text,
-    @SerializedName("footer") val footer: Text?
-)
-
-class ImageText2(
-    @SerializedName("title") val title: Title,
-    @SerializedName("background") val background: Background?,
-    @SerializedName("content") val content: ImageText2Content
-)
-
-class ImageText2Content(
-    @SerializedName("image") val image: Image?,
-    @SerializedName("imageAlign") val imageAlign: String?,
-    @SerializedName("header") val header: Text?,
-    @SerializedName("body") val body: Text?,
-    @SerializedName("footer") val footer: Text?
-)
-
-class TextList1(
-    @SerializedName("title") val title: Title,
-    @SerializedName("background") val background: Background?,
-    @SerializedName("badgeNumber") val badgeNumber: Boolean?,
-    @SerializedName("listItems") val listItems: List<TextList1Item>
-)
-
-class TextList1Item(
-    @SerializedName("token") val token: String,
-    @SerializedName("header") val header: Text,
-    @SerializedName("body") val body: Text,
-    @SerializedName("footer") val footer: Text?
-)
-
-class TextList2(
-    @SerializedName("title") val title: Title,
-    @SerializedName("background") val background: Background?,
-    @SerializedName("badgeNumber") val badgeNumber: Boolean?,
-    @SerializedName("listItems") val listItems: List<TextList2Item>
-)
-
-class TextList2Item(
-    @SerializedName("token") val token: String,
-    @SerializedName("image") val image: Image?,
-    @SerializedName("header") val header: Text?,
-    @SerializedName("body") val body: Text?,
-    @SerializedName("footer") val footer: Text?
-)
-
-private fun setBackground(view: View, background: Background, defaultBackgroundColor: Int = 0xffffffff.toInt()) {
-    view.setBackgroundColor(parseColor(background.color, defaultBackgroundColor))
-
-    background.image?.let { image ->
-        val found = image.sources.find(Size.X_LARGE)
-        if (found != null) {
-            Glide.with(view)
-                .load(found.url)
-                .into(object : CustomViewTarget<View, Drawable>(view) {
-                    override fun onLoadFailed(errorDrawable: Drawable?) {
-
-                    }
-
-                    override fun onResourceCleared(placeholder: Drawable?) {
-
-                    }
-
-                    override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                        view.background = resource
-                    }
-
-                })
-        }
-    }
-}
-
-private fun setTitle(imageView: ImageView, textView: TextView, title: Title) {
-    title.logo.sources.find(Size.MEDIUM)?.let { source ->
-        Glide.with(imageView).load(source.url).into(imageView)
-    }
-
-    textView.text = title.text.text
-}
-
-private fun setText(textView: TextView, text: Text, defaultTextColor: Int = 0xff000000.toInt()) {
-    textView.setTextColor(parseColor(text.color, defaultTextColor))
-    textView.text = text.text
-}
-
-private fun List<Source>.find(preferred: Size): Source? {
-    if (this.isEmpty()) {
-        return null
-    }
-
-    val enumsOfSize = Size.values()
-    val sources = Array<Source?>(enumsOfSize.size) { null }
-    this.forEach { source ->
-        source.size?.let {
-            sources[it.ordinal] = source
-        }
-    }
-
-    val start = preferred.ordinal
-    sources[start]?.let {
-        return it
-    }
-
-    var little = start - 1
-    var big = start + 1
-    while (true) {
-        if (big < enumsOfSize.size) {
-            sources[big]?.let {
-                return it
-            } ?: big++
-        }
-
-        if (little >= 0) {
-            sources[little]?.let {
-                return it
-            } ?: little--
-        }
-
-        if (little < 0 && big >= enumsOfSize.size) {
-            return null
-        }
-    }
-}
-
-private fun parseColor(color: String?, default: Int): Int {
-    if (color == null) {
-        return default
-    }
-
-    return try {
-        Color.parseColor(color)
-    } catch (e: Throwable) {
-        default
     }
 }

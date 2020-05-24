@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#f8f8f8"
+        android:orientation="vertical">
+
+        <include layout="@layout/title_view" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginRight="20dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:fontFamily="@font/noto_sans_kr_bold_hestia"
+                    android:gravity="center"
+                    android:lineSpacingExtra="11sp"
+                    android:textColor="#222222"
+                    android:textSize="24sp"
+                    android:visibility="gone"
+                    tool:text="123"
+                    tool:visibility="visible" />
+
+                <ImageView
+                    android:id="@+id/iv_image"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    android:fontFamily="@font/noto_sans_kr_bold_hestia"
+                    android:gravity="center"
+                    android:lineSpacingExtra="7sp"
+                    android:maxLines="2"
+                    android:textColor="#222222"
+                    android:textSize="17sp"
+                    android:visibility="gone"
+                    tool:text="body"
+                    tool:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/tv_footer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/noto_sans_kr_regular_hestia"
+                    android:gravity="center"
+                    android:lineSpacingExtra="7sp"
+                    android:maxLines="2"
+                    android:textColor="#444444"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tool:text="footer"
+                    tool:visibility="visible" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:layoutManager="android.support.v7.widget.GridLayoutManager"
+                    app:spanCount="4"
+                    tool:listitem="@layout/view_item_weather_1" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</merge>

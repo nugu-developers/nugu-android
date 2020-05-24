@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#f8f8f8"
+    android:duplicateParentState="true"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_header"
+        android:layout_width="match_parent"
+        android:layout_height="29dp"
+        android:layout_marginBottom="7dp"
+        android:fontFamily="@font/noto_sans_kr_medium_hestia"
+        android:gravity="center_horizontal"
+        android:textColor="#222222"
+        android:visibility="gone"
+        android:textSize="16sp" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_lyrics"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/tv_header"
+        tools:listitem="@layout/view_item_lyrics" />
+
+    <TextView
+        android:id="@+id/tv_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center"
+        android:text="가사 서비스를 지원하지 않은 음원입니다."
+        android:lineSpacingExtra="15sp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:textColor="#444444"
+        android:textColorHint="#888888"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+</RelativeLayout>

@@ -18,6 +18,7 @@ package com.skt.nugu.sampleapp.template.view
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.skt.nugu.sampleapp.R
 
@@ -29,4 +30,12 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
     val title by lazy { findViewById<TextView>(R.id.tv_title) }
 
     val close by lazy { findViewById<ImageView>(R.id.btn_close) }
+
+    val subicon by lazy { findViewById<ImageView>(R.id.iv_subicon) }
+
+    val subtext by lazy { findViewById<TextView>(R.id.iv_subtext) }
+
+    val subLayout by lazy { findViewById<LinearLayout>(R.id.sub_layout) }
+
+    val collapsed by lazy { findViewById<ImageView>(R.id.btn_collapsed) }
 }

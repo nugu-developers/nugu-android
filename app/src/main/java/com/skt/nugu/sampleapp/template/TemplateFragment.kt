@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sampleapp.template
 
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -23,13 +22,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import android.widget.LinearLayout
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.template.view.AbstractDisplayView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
+import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
+import java.util.*
 
 internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener {
     companion object {
@@ -37,22 +42,42 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
         private const val ARG_NAME = "name"
         private const val ARG_TEMPLATE_ID = "template_id"
         private const val ARG_TEMPLATE = "template"
+        private const val ARG_DISPLAY_TYPE = "display_type"
+        private const val AUDIOPLAYER_NAMESPACE = "AudioPlayer"
 
-        fun newInstance(name: String, templateId: String, template: String): TemplateFragment {
+        fun newInstance(
+            name: String,
+            templateId: String,
+            template: String,
+            displayType: String
+        ): TemplateFragment {
             return TemplateFragment().apply {
-                arguments = createBundle(name, templateId, template)
+                arguments = createBundle(name, templateId, template, displayType)
             }
         }
 
-        fun createBundle(name: String, templateId: String, template: String): Bundle = Bundle().apply {
-            putString(ARG_NAME, name)
-            putString(ARG_TEMPLATE_ID, templateId)
-            putString(ARG_TEMPLATE, template)
-        }
+        fun createBundle(
+            name: String,
+            templateId: String,
+            template: String,
+            displayType: String
+        ): Bundle =
+            Bundle().apply {
+                putString(ARG_NAME, name)
+                putString(ARG_TEMPLATE_ID, templateId)
+                putString(ARG_TEMPLATE, template)
+                putString(ARG_DISPLAY_TYPE, displayType)
+            }
     }
 
     private lateinit var containerLayout: FrameLayout
     private lateinit var templateView: View
+    private var progressTimer: Timer? = null
+
+    private val slidingLayout: SlidingUpPanelLayout? by lazy {
+        activity?.findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
+    }
+
     var controller = object : DisplayAggregatorInterface.Controller {
         override fun controlFocus(direction: Direction): Boolean {
             // TODO : XXX
@@ -82,42 +107,132 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "[onCreate] ${getTemplateId()}")
+
         ClientManager.getClient().getDisplay()?.displayCardRendered(getTemplateId(), controller)
         ClientManager.getClient().addAudioPlayerListener(this)
+        ClientManager.getClient().audioPlayerAgent?.setLyricsPresenter(object : LyricsPresenter {
+            override fun getVisibility(): Boolean {
+                val view = templateView
+                if (view is DisplayAudioPlayer) {
+                    return view.lyricsView.visibility == View.VISIBLE
+                }
+                return false
+            }
+
+            override fun show(): Boolean {
+                val view = templateView
+                if (view is DisplayAudioPlayer) {
+                    view.lyricsView.visibility = View.VISIBLE
+                    return true
+                }
+                return false
+            }
+
+            override fun hide(): Boolean {
+                val view = templateView
+                if (view is DisplayAudioPlayer) {
+                    view.lyricsView.visibility = View.GONE
+                    return true
+                }
+                return false
+            }
+
+            override fun controlPage(direction: Direction): Boolean {
+                return false
+            }
+        })
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         return FrameLayout(context!!).apply {
             containerLayout = this
-            updateView(getName(), getTemplateId(), getTemplate())
+            updateView(getName(), getTemplateId(), getTemplate(), getDisplayType())
+            slidingLayout?.addPanelSlideListener(object : PanelSlideListener {
+                override fun onPanelSlide(panel: View?, slideOffset: Float) {
+                    val dragView = panel?.findViewById<LinearLayout>(R.id.audio_bar_layout)
+                    dragView?.alpha = 1 - (Math.min(100f, (slideOffset * 100f * 3f))) / 100f
+                }
+
+                override fun onPanelStateChanged(
+                    panel: View?,
+                    previousState: PanelState?,
+                    newState: PanelState?
+                ) {
+                    Log.i(TAG, "onPanelStateChanged " + newState)
+                }
+            })
         }
     }
 
-    fun updateView(name: String, templateId: String, template: String) {
-        updateArguments(name, templateId, template)
+    fun updateView(name: String, templateId: String, template: String, displayType: String) {
+        updateArguments(name, templateId, template, displayType)
+        updateSlidingLayout()
         containerLayout.apply {
             removeAllViews()
-            addView(TemplateViews.createView(context!!, name, templateId, template).also {
-                templateView = it
+            addView(TemplateViews.createView(context!!, name, templateId, template).also { view ->
+                templateView = view
                 updatePlayButton(ClientManager.playerActivity)
-                if(it is AbstractDisplayView) {
-                    it.close.setOnClickListener {
-                        val fm = activity?.supportFragmentManager
-                        fm?.let {
+                if (view is AbstractDisplayView) {
+                    view.close.setOnClickListener {
+                        if (view is DisplayAudioPlayer) {
+                            if (view.lyricsView.visibility == View.VISIBLE) {
+                                view.lyricsView.visibility = View.GONE
+                                return@setOnClickListener
+                            }
+                        }
+                        activity?.supportFragmentManager?.let {
                             it.beginTransaction().remove(this@TemplateFragment).commit()
                         }
                     }
+                    view.collapsed.setOnClickListener {
+                        slidingLayout?.panelState = PanelState.COLLAPSED
+                    }
                 }
 
-                it.setOnClickListener {
+                view.setOnClickListener {
                     ClientManager.getClient().localStopTTS()
                 }
             })
         }
     }
 
-    private fun updateArguments(name: String, templateId: String, template: String) {
-        arguments = createBundle(name, templateId, template)
+    private fun updateSlidingLayout() {
+        slidingLayout?.post {
+            var slidingHeight = 0
+
+            if (getNamespace() == AUDIOPLAYER_NAMESPACE) {
+                slidingLayout?.panelState =
+                    if (slidingLayout?.panelState == PanelState.COLLAPSED)
+                        PanelState.COLLAPSED else PanelState.EXPANDED
+            } else {
+                val hasAudioPlayer =
+                    slidingLayout?.panelState == PanelState.COLLAPSED || slidingLayout?.panelState == PanelState.EXPANDED
+                slidingLayout?.panelState =
+                    if (hasAudioPlayer) PanelState.COLLAPSED else PanelState.HIDDEN
+                slidingHeight = slidingLayout?.panelHeight ?: 0
+            }
+            containerLayout.setPadding(0, slidingHeight, 0, 0)
+        }
+    }
+
+    override fun onDestroyView() {
+        if (getNamespace() == AUDIOPLAYER_NAMESPACE) {
+            slidingLayout?.panelState = PanelState.HIDDEN
+        }
+        super.onDestroyView()
+    }
+
+    private fun updateArguments(
+        name: String,
+        templateId: String,
+        template: String,
+        displayType: String
+    ) {
+        arguments = createBundle(name, templateId, template, displayType)
     }
 
     override fun onDestroy() {
@@ -127,6 +242,7 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
         super.onDestroy()
     }
 
+    fun getNamespace() = getName().split(".").first()
     fun getName(): String {
         return arguments?.getString(ARG_NAME, "") ?: ""
     }
@@ -139,32 +255,59 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
         return arguments?.getString(ARG_TEMPLATE, "") ?: ""
     }
 
-    fun getBackgroundColor(): Int {
-        return templateView.background?.let {
-            return if (it is ColorDrawable) {
-                it.color
-            } else {
-                0
-            }
-        } ?: 0
+    fun getDisplayType(): String {
+        return arguments?.getString(ARG_DISPLAY_TYPE, "") ?: ""
     }
 
-    override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
+    override fun onStateChanged(
+        activity: AudioPlayerAgentInterface.State,
+        context: AudioPlayerAgentInterface.Context
+    ) {
         Log.d(TAG, "[onStateChanged] activity: $activity")
         updatePlayButton(activity)
+        updatePlayOffset(activity)
+    }
+
+    private fun updatePlayOffset(activity: AudioPlayerAgentInterface.State) {
+        val view = templateView
+
+        progressTimer?.cancel()
+        progressTimer = Timer()
+        progressTimer?.schedule(object : TimerTask() {
+            override fun run() {
+                if (activity == AudioPlayerAgentInterface.State.PLAYING) {
+                    if (view is DisplayAudioPlayer) {
+                        val offset =
+                            ClientManager.getClient().audioPlayerAgent?.getOffset()?.toInt() ?: 0
+                        view.post {
+                            view.progress.progress = offset
+                            view.playtime.text = TemplateUtils.convertToTime(offset)
+                            view.lyricsView.setCurrentTime(offset)
+                            view.smallLyricsView.setCurrentTime(offset)
+                        }
+                    }
+                } else {
+                    progressTimer?.cancel()
+                    progressTimer = null
+                }
+            }
+        }, 500L, 1000L)
     }
 
     private fun updatePlayButton(activity: AudioPlayerAgentInterface.State) {
         val view = templateView
 
-        if(view is DisplayAudioPlayer) {
+        if (view is DisplayAudioPlayer) {
             view.post {
-                if(activity == AudioPlayerAgentInterface.State.PLAYING) {
-                    view.play.setImageResource(R.drawable.ic_btn_pause)
+                if (activity == AudioPlayerAgentInterface.State.PLAYING) {
+                    view.play.setImageResource(R.drawable.btn_pause_48)
+                    view.bar_play.setImageResource(R.drawable.btn_pause_32)
                 } else {
-                    view.play.setImageResource(R.drawable.ic_btn_play)
+                    view.play.setImageResource(R.drawable.btn_play_48)
+                    view.bar_play.setImageResource(R.drawable.btn_play_32)
                 }
             }
         }
     }
+
 }

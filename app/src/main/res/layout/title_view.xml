@@ -1,23 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_height="28dp"
-              android:layout_width="wrap_content"
-              android:orientation="horizontal"
-              android:paddingLeft="16dp"
-              android:paddingRight="16dp"
-              android:background="@drawable/title_view_background"
-              android:gravity="center_vertical"
-              android:minWidth="108dp">
-    <ImageView
-            android:id="@+id/iv_logo"
-            android:layout_width="18dp" android:layout_height="18dp" android:layout_marginRight="6dp"/>
-    <TextView
-            android:id="@+id/tv_title"
-            android:layout_height="wrap_content"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:gravity="center_horizontal"
+        android:paddingTop="20dp">
+
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:textSize="14dp"
-            android:textColor="#222222"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp">
+
+            <ImageView
+                android:id="@+id/iv_logo"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:fontFamily="@font/noto_sans_kr_medium_hestia"
+                android:gravity="center"
+                android:maxLines="1"
+                android:textColor="#222222"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/btn_collapsed"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|start"
+        android:visibility="gone"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/btn_down" />
+
+    <ImageView
+        android:id="@+id/btn_close"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/btn_close_2" />
+
+    <LinearLayout
+        android:id="@+id/sub_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="76dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp">
+
+        <ImageView
+            android:id="@+id/iv_subicon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="5dp"
+            android:visibility="gone"
+            tool:visibility="visible" />
+
+        <TextView
+            android:id="@+id/iv_subtext"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@font/noto_sans_kr_regular_hestia"
             android:gravity="center"
             android:maxLines="1"
-    />
-</LinearLayout>
+            android:textColor="#444444"
+            android:textSize="15sp"
+            android:visibility="gone"
+            tool:visibility="visible" />
+    </LinearLayout>
+</FrameLayout>

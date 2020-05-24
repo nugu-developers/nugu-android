@@ -6,10 +6,4 @@
 
     <color name="snackbar_background">#323232</color>
     <color name="snackbar_border_color">#33000000</color>
-
-    <color name="ice_blue">#fff1f2f3</color>
-    <color name="blue">#ff009dff</color>
-    <color name="battleship_grey">#ff70767d</color>
-    <color name="brown_grey">#ff797979</color>
-    <color name="black">#ff222222</color>
 </resources>
