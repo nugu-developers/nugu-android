@@ -144,7 +144,6 @@ class DefaultSystemAgent(
         directiveSequencer.addDirectiveHandler(RevokeDirectiveHandler(this))
         contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         onUserActive()
-        connectionManager.addConnectionStatusListener(this)
     }
 
     /**
@@ -465,18 +464,6 @@ class DefaultSystemAgent(
      */
     private fun executeSynchronizeStateEvent(referrerDialogRequestId: String? = null) {
         sendEvent(EVENT_NAME_SYNCHRONIZE_STATE, referrerDialogRequestId)
-    }
-
-    /**
-     * Receives the connection status changes.
-     */
-    override fun onConnectionStatusChanged(
-        status: ConnectionStatusListener.Status,
-        reason: ConnectionStatusListener.ChangedReason
-    ) {
-        if (status == ConnectionStatusListener.Status.CONNECTED) {
-            executeSynchronizeStateEvent()
-        }
     }
 
     /** Add a listener to be called when a state changed.
