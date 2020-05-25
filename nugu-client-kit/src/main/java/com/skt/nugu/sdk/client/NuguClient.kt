@@ -39,12 +39,14 @@ import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
+import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
@@ -139,6 +141,8 @@ class NuguClient private constructor(
 
             val playSynchronizer = PlaySynchronizer()
 
+            val dialogAttributeStorage = DialogAttributeStorage()
+
             sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
                     inputProcessorManager
@@ -167,6 +171,8 @@ class NuguClient private constructor(
 
                 override fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface =
                     directiveGroupProcessor
+
+                override fun getDialogAttributeStorage(): DialogAttributeStorageInterface = dialogAttributeStorage
             }
 
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)

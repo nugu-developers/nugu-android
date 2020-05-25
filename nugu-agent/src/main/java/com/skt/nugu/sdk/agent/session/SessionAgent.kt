@@ -22,10 +22,7 @@ import com.skt.nugu.sdk.agent.session.handler.SetDirectiveHandler
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import java.util.concurrent.Executors
 
@@ -43,13 +40,37 @@ class SessionAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
-    private var currentSessions: List<SessionManagerInterface.Session>? = null
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
     }
 
     override fun getInterfaceName(): String = NAMESPACE
+
+    internal data class StateContext(
+        val sessions: List<SessionManagerInterface.Session>
+    ): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            add("list", JsonArray().apply {
+                sessions.forEach {
+                    add(JsonObject().apply {
+                        addProperty("sessionId", it.sessionId)
+                        addProperty("playServiceId", it. playServiceId)
+                    })
+                }
+            })
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
@@ -57,39 +78,13 @@ class SessionAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            val sessions = sessionManager.getActiveSessions()
-            if (sessions == currentSessions) {
-                contextSetter.setState(
-                    namespaceAndName,
-                    null,
-                    StateRefreshPolicy.ALWAYS,
-                    stateRequestToken
-                )
-            } else {
-                contextSetter.setState(
-                    namespaceAndName,
-                    buildContext(),
-                    StateRefreshPolicy.ALWAYS,
-                    stateRequestToken
-                )
-            }
-            currentSessions = sessions
+            contextSetter.setState(
+                namespaceAndName,
+                StateContext(sessionManager.getActiveSessions()),
+                StateRefreshPolicy.ALWAYS,
+                stateRequestToken
+            )
         }
-    }
-
-    private fun buildContext() = buildCompactContext().apply {
-        add("list", JsonArray().apply {
-            sessionManager.getActiveSessions().forEach {
-                add(JsonObject().apply {
-                    addProperty("sessionId", it.sessionId)
-                    addProperty("playServiceId", it. playServiceId)
-                })
-            }
-        })
-    }.toString()
-
-    private fun buildCompactContext(): JsonObject = JsonObject().apply {
-        addProperty("version", VERSION.toString())
     }
 
     override fun set(directive: SetDirectiveHandler.SetDirective) {
