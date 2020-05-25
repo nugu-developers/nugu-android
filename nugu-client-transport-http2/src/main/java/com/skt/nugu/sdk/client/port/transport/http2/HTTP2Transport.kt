@@ -340,8 +340,9 @@ internal class HTTP2Transport(
                     getDetailedState() == DetailedState.CONNECTING_DEVICEGATEWAY || getDetailedState() == DetailedState.RECONNECTING
             }
             DetailedState.DISCONNECTING -> {
-                allowed =
-                    getDetailedState() == DetailedState.CONNECTING || getDetailedState() == DetailedState.CONNECTED
+                allowed = getDetailedState() != DetailedState.DISCONNECTED &&
+                        getDetailedState() != DetailedState.FAILED &&
+                        getDetailedState() != DetailedState.IDLE
             }
             DetailedState.DISCONNECTED -> {
                 allowed =
@@ -361,6 +362,9 @@ internal class HTTP2Transport(
         }
         Logger.d(TAG, "[setState] ${getDetailedState()} -> $newDetailedState")
 
+        // Update state
+        state.setDetailedState(newDetailedState, reason)
+
         // Perform status processing for Observer delivery
         when (TransportState.fromDetailedState(newDetailedState)) {
             ConnectionStatusListener.Status.CONNECTING -> {
@@ -373,9 +377,6 @@ internal class HTTP2Transport(
                 transportObserver?.onDisconnected(this, reason)
             }
         }
-
-        // Update state
-        state.setDetailedState(newDetailedState, reason)
         return true
     }
 }
