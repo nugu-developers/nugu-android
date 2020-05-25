@@ -327,7 +327,9 @@ internal class GrpcTransport private constructor(
                 allowed = getDetailedState() == DetailedState.CONNECTING_DEVICEGATEWAY || getDetailedState() == DetailedState.RECONNECTING
             }
             DetailedState.DISCONNECTING -> {
-                allowed = getDetailedState() == DetailedState.CONNECTING || getDetailedState() == DetailedState.CONNECTED
+                allowed = getDetailedState() != DetailedState.DISCONNECTED &&
+                        getDetailedState() != DetailedState.FAILED &&
+                        getDetailedState() != DetailedState.IDLE
             }
             DetailedState.DISCONNECTED -> {
                 allowed = getDetailedState() == DetailedState.CONNECTED || getDetailedState() == DetailedState.DISCONNECTING
@@ -345,6 +347,9 @@ internal class GrpcTransport private constructor(
         }
         Logger.d(TAG, "[setState] ${getDetailedState()} -> $newDetailedState")
 
+        // Update state
+        state.setDetailedState(newDetailedState, reason)
+
         // Perform status processing for Observer delivery
         when (TransportState.fromDetailedState(newDetailedState)) {
             ConnectionStatusListener.Status.CONNECTING -> {
@@ -358,8 +363,6 @@ internal class GrpcTransport private constructor(
             }
         }
 
-        // Update state
-        state.setDetailedState(newDetailedState, reason)
         return true
     }
 }
