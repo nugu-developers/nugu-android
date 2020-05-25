@@ -122,7 +122,6 @@ class DefaultClientSpeechRecognizer(
         ).payload(
             AsrRecognizeEventPayload(
                 codec = AsrRecognizeEventPayload.CODEC_SPEEX,
-                sessionId = payload?.sessionId,
                 playServiceId = payload?.playServiceId,
                 domainTypes = payload?.domainTypes,
                 asrContext = payload?.asrContext,

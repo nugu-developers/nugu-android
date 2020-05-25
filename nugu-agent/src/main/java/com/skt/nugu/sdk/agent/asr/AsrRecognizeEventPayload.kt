@@ -20,7 +20,6 @@ import com.google.gson.JsonObject
 
 data class AsrRecognizeEventPayload(
     private val codec: String,
-    private val sessionId: String? = null,
     private val playServiceId: String? = null,
     private val domainTypes: Array<String>? = null,
     private val asrContext: ExpectSpeechPayload.AsrContext? = null,
@@ -54,9 +53,6 @@ data class AsrRecognizeEventPayload(
 
     fun toJsonString(): String = JsonObject().apply {
         addProperty("codec", codec)
-        sessionId?.let {
-            addProperty("sessionId", sessionId)
-        }
         playServiceId?.let {
             addProperty("playServiceId", playServiceId)
         }

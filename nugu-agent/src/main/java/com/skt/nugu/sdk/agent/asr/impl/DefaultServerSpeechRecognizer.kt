@@ -115,7 +115,6 @@ class DefaultServerSpeechRecognizer(
         ).payload(
             AsrRecognizeEventPayload(
                 codec = AsrRecognizeEventPayload.CODEC_SPEEX,
-                sessionId = payload?.sessionId,
                 playServiceId = payload?.playServiceId,
                 domainTypes = payload?.domainTypes,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
