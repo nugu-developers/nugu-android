@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -27,7 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -43,11 +44,11 @@ class DefaultTextAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
+    private val dialogAttributeStorage: DialogAttributeStorageInterface,
     private val textSourceHandler: TextAgentInterface.TextSourceHandler?
 ) : AbstractCapabilityAgent(NAMESPACE)
     , InputProcessor
-    , TextAgentInterface
-    , DialogSessionManagerInterface.OnSessionStateChangeListener {
+    , TextAgentInterface{
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
@@ -202,29 +203,28 @@ class DefaultTextAgent(
                     addProperty("token", it)
                 }
 
-                dialogSessionInfo?.let { info ->
-                    addProperty("sessionId", info.sessionId)
-                    info.playServiceId?.let {
+                dialogAttributeStorage.getAttributes()?.let { attrs ->
+                    (attrs["playServiceId"] as String?)?.let {
                         addProperty("playServiceId", it)
                     }
 
-                    info.domainTypes?.let { domainTypes ->
+                    (attrs["domainTypes"] as Array<String>?)?.let {
                         add("domainTypes", JsonArray().apply {
-                            domainTypes.forEach {
+                            it.forEach {
                                 add(it)
                             }
                         })
                     }
 
-                    info.context?.let {asrContext ->
+                    (attrs["asrContext"] as ExpectSpeechPayload.AsrContext?)?.let { asrContext ->
                         add("asrContext", JsonObject().apply {
                             asrContext.task?.let {
-                                addProperty("task",it)
+                                addProperty("task", it)
                             }
                             asrContext.sceneId?.let {
-                                addProperty("sceneId",it)
+                                addProperty("sceneId", it)
                             }
-                            asrContext.sceneText?.let {sceneText ->
+                            asrContext.sceneText?.let { sceneText ->
                                 add("sceneText", JsonArray().apply {
                                     sceneText.forEach {
                                         add(it)
@@ -286,26 +286,5 @@ class DefaultTextAgent(
             requestListeners.remove(dialogRequestId)
                 ?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
         }
-    }
-
-    private var dialogSessionInfo: DialogSessionManagerInterface.DialogSessionInfo? = null
-
-    override fun onSessionOpened(
-        sessionId: String,
-        domainTypes: Array<String>?,
-        playServiceId: String?,
-        context: DialogSessionManagerInterface.Context?
-    ) {
-        dialogSessionInfo =
-            DialogSessionManagerInterface.DialogSessionInfo(
-                sessionId,
-                domainTypes,
-                playServiceId,
-                context
-            )
-    }
-
-    override fun onSessionClosed(sessionId: String) {
-        dialogSessionInfo = null
     }
 }

@@ -506,10 +506,10 @@ class NuguAndroidClient private constructor(
                         getMessageSender(),
                         getContextManager(),
                         getInputManagerProcessor(),
+                        getDialogAttributeStorage(),
                         builder.textSourceHandler
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
-                        getDialogSessionManager().addListener(this)
                     }
                 }
             })
