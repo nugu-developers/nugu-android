@@ -174,7 +174,7 @@ class DefaultTTSAgent(
 
     private var preparedSpeakInfo: SpeakDirectiveInfo? = null
     private var currentInfo: SpeakDirectiveInfo? = null
-    private var lastImplicitStoppednfo: SpeakDirectiveInfo? = null
+    private var lastImplicitStoppedInfo: SpeakDirectiveInfo? = null
 
     //    @GuardedBy("stateLock")
     private var currentState = TTSAgentInterface.State.IDLE
@@ -297,10 +297,10 @@ class DefaultTTSAgent(
                 Logger.d(TAG, "[stop] current is null, so skip")
  */
             } else {
-                val lastStopped = lastImplicitStoppednfo
+                val lastStopped = lastImplicitStoppedInfo
                 if(lastStopped != null) {
                     Logger.d(TAG, "[stop] stop lastStopped")
-                    lastImplicitStoppednfo = null
+                    lastImplicitStoppedInfo = null
                     object : PlaySynchronizerInterface.SynchronizeObject {
                         override fun getDialogRequestId(): String = lastStopped.getDialogRequestId()
 
@@ -407,7 +407,7 @@ class DefaultTTSAgent(
     }
 
     private fun executePrepareSpeakInfo(speakInfo: SpeakDirectiveInfo) {
-        lastImplicitStoppednfo = null
+        lastImplicitStoppedInfo = null
         executeCancelPreparedSpeakInfo()
         executeCancelCurrentSpeakInfo(false)
 
@@ -804,11 +804,11 @@ class DefaultTTSAgent(
 
         with(info) {
             if (cancelByStop) {
-                lastImplicitStoppednfo = null
+                lastImplicitStoppedInfo = null
                 result.setFailed("playback stopped", true)
                 releaseSyncImmediately(this)
             } else {
-                lastImplicitStoppednfo = info
+                lastImplicitStoppedInfo = info
                 result.setFailed("playback stopped", false)
                 releaseSync(this)
             }
