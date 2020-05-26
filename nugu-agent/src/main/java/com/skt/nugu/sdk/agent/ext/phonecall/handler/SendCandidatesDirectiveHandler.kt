@@ -71,6 +71,19 @@ class SendCandidatesDirectiveHandler (
                             ).payload(JsonObject().apply {
                                 addProperty("playServiceId", payload.playServiceId)
                                 addProperty("intent", payload.intent.name)
+                                payload.callType?.let {
+                                    addProperty("callType", it.name)
+                                }
+                                payload.recipient?.let {
+                                    add("recipient", JsonObject().apply {
+                                        it.name?.let {
+                                            addProperty("name", it)
+                                        }
+                                        it.label?.let {
+                                            addProperty("label", it)
+                                        }
+                                    })
+                                }
                                 add("candidates", JsonArray().apply {
                                     candidates.forEach {
                                         add(it.toJson())
