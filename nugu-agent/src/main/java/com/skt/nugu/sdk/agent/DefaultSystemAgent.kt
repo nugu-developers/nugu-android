@@ -140,6 +140,7 @@ class DefaultSystemAgent(
         /**
          * Performs initialization.
          */
+        directiveSequencer.addDirectiveHandler(this)
         directiveSequencer.addDirectiveHandler(RevokeDirectiveHandler(this))
         contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
         onUserActive()

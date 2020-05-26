@@ -29,10 +29,9 @@ object DefaultAgentFactory {
             DefaultSystemAgent(
                 getMessageSender(),
                 getConnectionManager(),
-                getContextManager()
-            ).apply {
-                getDirectiveSequencer().addDirectiveHandler(this)
-            }
+                getContextManager(),
+                getDirectiveSequencer()
+            )
         }
     }
 }
