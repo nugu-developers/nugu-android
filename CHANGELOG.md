@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.8.20 *(2020-05-26)*
+-----------------------------
+* Fix: Cancel a item fetched but not playing yet (#721)
+* Fix: Tts not playing
+    * TTS stop when unintended case.
+* Fix: TTS.Stop not working correctly.
+    * when TTS implicit stopped, TTS.Stop directive should stop the play sync.
+
 Version 0.8.19 *(2020-05-13)*
 -----------------------------
 * Fix: return value for read API of Attachment's Reader
