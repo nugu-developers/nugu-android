@@ -102,11 +102,14 @@ internal class DeviceGatewayClient(policy: Policy,
             currentChannel = ChannelBuilderUtils.createChannelBuilderWith(this, authorization).build()
             currentChannel?.apply {
                 eventsService = EventsService(this,  this@DeviceGatewayClient)
+                crashReportService = CrashReportService(this)
                 if(keepConnection) {
                     directivesService = DirectivesService(this, this@DeviceGatewayClient)
+                    pingService = PingService(this, healthCheckPolicy, this@DeviceGatewayClient)
                 }
-                pingService = PingService(this, healthCheckPolicy, keepConnection, this@DeviceGatewayClient)
-                crashReportService = CrashReportService(this)
+                else {
+                    handleConnectedIfNeeded()
+                }
             } ?: run {
                 Logger.w(TAG, "[connect] Can't create a new channel")
                 transportObserver?.onError(
