@@ -22,7 +22,6 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -38,7 +37,6 @@ interface SdkContainer {
     fun getMessageSender(): MessageSender
     fun getConnectionManager(): ConnectionManagerInterface
     fun getContextManager(): ContextManagerInterface
-    fun getDialogSessionManager(): DialogSessionManagerInterface
     fun getPlaySynchronizer(): PlaySynchronizerInterface
     fun getDirectiveSequencer(): DirectiveSequencerInterface
     fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface

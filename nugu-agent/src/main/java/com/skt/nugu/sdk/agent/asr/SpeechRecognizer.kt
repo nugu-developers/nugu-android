@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.asr
 
+import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -42,7 +43,7 @@ interface SpeechRecognizer {
 
     interface Request {
         val eventMessage: EventMessageRequest
-        val sessionId: String?
+        val attributeKey: String?
     }
 
     fun start(
@@ -50,8 +51,7 @@ interface SpeechRecognizer {
         audioFormat: AudioFormat,
         context: String,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?,
-        referrerDialogRequestId: String?,
+        expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ): Request?

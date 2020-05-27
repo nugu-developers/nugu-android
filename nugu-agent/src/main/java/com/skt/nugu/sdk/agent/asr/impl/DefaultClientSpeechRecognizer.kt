@@ -49,10 +49,10 @@ class DefaultClientSpeechRecognizer(
         val sendPositionAndWakeupBoundary: Pair<Long?, WakeupBoundary?>,
         var senderThread: SpeechRecognizeAttachmentSenderThread?,
         override val eventMessage: EventMessageRequest,
-        val expectSpeechPayload: ExpectSpeechPayload?,
+        val expectSpeechParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         val resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request {
-        override val sessionId: String? = expectSpeechPayload?.sessionId
+        override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
 
         var stopByCancel: Boolean? = null
@@ -89,8 +89,7 @@ class DefaultClientSpeechRecognizer(
         audioFormat: AudioFormat,
         context: String,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?,
-        referrerDialogRequestId: String?,
+        expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
@@ -113,6 +112,8 @@ class DefaultClientSpeechRecognizer(
 
         // Do not deliver wakeup info when client epd mode.
         val sendPositionAndWakeupBoundary = Pair(null, null)
+        val payload = expectSpeechDirectiveParam?.directive?.payload
+        val referrerDialogRequestId = expectSpeechDirectiveParam?.directive?.header?.dialogRequestId
 
         val eventMessage = EventMessageRequest.Builder(
             context,
@@ -140,7 +141,7 @@ class DefaultClientSpeechRecognizer(
                 sendPositionAndWakeupBoundary,
                 null,
                 eventMessage,
-                payload,
+                expectSpeechDirectiveParam,
                 resultListener
             )
 

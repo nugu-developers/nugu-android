@@ -34,7 +34,6 @@ import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.context.PlayStackContextManager
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
-import com.skt.nugu.sdk.core.dialog.DialogSessionManager
 import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -47,7 +46,6 @@ import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -139,8 +137,6 @@ class NuguClient private constructor(
             val contextManager = ContextManager()
             contextStateProviderRegistry = contextManager
 
-            val dialogSessionManager = DialogSessionManager()
-
             val playSynchronizer = PlaySynchronizer()
 
             val dialogAttributeStorage = DialogAttributeStorage()
@@ -164,9 +160,6 @@ class NuguClient private constructor(
                 override fun getConnectionManager(): ConnectionManagerInterface = networkManager
 
                 override fun getContextManager(): ContextManagerInterface = contextManager
-
-                override fun getDialogSessionManager(): DialogSessionManagerInterface =
-                    dialogSessionManager
 
                 override fun getPlaySynchronizer(): PlaySynchronizerInterface = playSynchronizer
                 override fun getDirectiveSequencer(): DirectiveSequencerInterface =

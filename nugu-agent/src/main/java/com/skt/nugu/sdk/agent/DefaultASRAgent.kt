@@ -34,7 +34,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -46,10 +46,8 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
-import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class DefaultASRAgent(
@@ -57,8 +55,8 @@ class DefaultASRAgent(
     private val focusManager: FocusManagerInterface,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
-    private val dialogSessionManager: DialogSessionManagerInterface,
     private val sessionManager: SessionManagerInterface,
+    dialogAttributeStorage: DialogAttributeStorageInterface,
     private val audioProvider: AudioProvider,
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
@@ -67,7 +65,6 @@ class DefaultASRAgent(
     private val focusHolderManager: FocusHolderManager
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
-    , DialogSessionManagerInterface.OnSessionStateChangeListener
     , SpeechRecognizer.OnStateChangeListener
     , ChannelObserver
     , FocusHolderManager.OnStateChangeListener
@@ -125,6 +122,7 @@ class DefaultASRAgent(
     private var audioInputStream: SharedDataStream? = null
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
+    private var currentDialogAttributeId: String? = null
     private var expectSpeechDirectiveParam: ExpectSpeechDirectiveParam? = null
     private var endPointDetectorParam: EndPointDetectorParam? = null
     private var startRecognitionCallback: ASRAgentInterface.StartRecognitionCallback? = null
@@ -138,6 +136,8 @@ class DefaultASRAgent(
     private var nextStartSpeechRecognizer: SpeechRecognizer
     private val serverEpdSpeechRecognizer: SpeechRecognizer
     private val clientEpdSpeechRecognizer: SpeechRecognizer?
+
+    private val attributeStorageManager = AttributeStorageManager(dialogAttributeStorage)
 
     private val speechToTextConverterEventObserver =
         object : ASRAgentInterface.OnResultListener {
@@ -235,23 +235,20 @@ class DefaultASRAgent(
         }
 
         expectSpeechDirectiveParam = param
-        val payload = param.directive.payload
-        val asrContext = payload.asrContext
         sessionManager.activate(param.directive.header.dialogRequestId, param)
-        dialogSessionManager.openSession(
-            payload.sessionId,
-            payload.domainTypes,
-            payload.playServiceId,
-            if(asrContext != null) {
-                DialogSessionManagerInterface.Context(
-                    asrContext.task,
-                    asrContext.sceneId,
-                    asrContext.sceneText
-                )
-            } else {
-                null
+        attributeStorageManager.setAttributes(param.directive.header.messageId, HashMap<String, Any>().apply {
+            param.directive.payload.also { payload ->
+                payload.playServiceId?.let {
+                    put("playServiceId", it)
+                }
+                payload.domainTypes?.let {
+                    put("domainTypes", it)
+                }
+                payload.asrContext?.let {
+                    put("asrContext", it)
+                }
             }
-        )
+        })
     }
 
     override fun handleDirective(info: DirectiveInfo) {
@@ -295,8 +292,9 @@ class DefaultASRAgent(
             return
         }
 
-        if(payload.sessionId != expectSpeechDirectiveParam?.directive?.payload?.sessionId) {
-            setHandlingFailed(info, "[executeHandleExpectSpeechDirective] not match with current session (${payload.sessionId} / ${expectSpeechDirectiveParam?.directive?.payload?.sessionId})")
+        val param = expectSpeechDirectiveParam
+        if(info.directive.getMessageId() != param?.directive?.header?.messageId) {
+            setHandlingFailed(info, "[executeHandleExpectSpeechDirective] not match with current expectSpeechDirective (${info.directive.getMessageId()} / ${param?.directive?.header?.messageId})")
             return
         }
 
@@ -306,7 +304,7 @@ class DefaultASRAgent(
                 "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
             )
             setHandlingExpectSpeechFailed(
-                payload,
+                param,
                 info,
                 "[executeHandleExpectSpeechDirective] ExpectSpeech only allowed in IDLE or BUSY state."
             )
@@ -320,7 +318,7 @@ class DefaultASRAgent(
 
         if (audioInputStream == null) {
             setHandlingExpectSpeechFailed(
-                payload,
+                param,
                 info,
                 "[executeHandleExpectSpeechDirective] audioInputStream is null"
             )
@@ -328,7 +326,7 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechDirectiveParam, null, object: ASRAgentInterface.StartRecognitionCallback {
+        executeStartRecognition(audioInputStream, audioFormat, null, param, null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
                 setHandlingCompleted(info)
             }
@@ -340,7 +338,7 @@ class DefaultASRAgent(
                 if(state == ASRAgentInterface.State.EXPECTING_SPEECH && !isRequested) {
                     // back to idle state only when failed to request
                     setState(ASRAgentInterface.State.IDLE)
-                    setHandlingExpectSpeechFailed(payload, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
+                    setHandlingExpectSpeechFailed(param, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
                 } else {
                     setHandlingCompleted(info)
                 }
@@ -403,18 +401,18 @@ class DefaultASRAgent(
         removeDirective(info)
     }
 
-    private fun setHandlingExpectSpeechFailed(payload: ExpectSpeechPayload?, info: DirectiveInfo, msg: String) {
+    private fun setHandlingExpectSpeechFailed(param: ExpectSpeechDirectiveParam?, info: DirectiveInfo, msg: String) {
         setHandlingFailed(info, msg)
-        closeCurrentSessionIfMatchWith(payload)
-        payload?.let {
+        clearCurrentAttributeKeyIfMatchWith(param)
+        param?.directive?.payload?.let {
             sendListenFailed(it, info.directive.getDialogRequestId())
         }
     }
 
-    private fun closeCurrentSessionIfMatchWith(payload: ExpectSpeechPayload?) {
-        currentSessionId?.let {
-            if(it == payload?.sessionId) {
-                dialogSessionManager.closeSession()
+    private fun clearCurrentAttributeKeyIfMatchWith(param: ExpectSpeechDirectiveParam?) {
+        currentAttributeKey?.let {
+            param?.directive?.header?.messageId?.let { key->
+                attributeStorageManager.clearAttributes(key)
             }
         }
     }
@@ -426,19 +424,16 @@ class DefaultASRAgent(
     override fun cancelDirective(info: DirectiveInfo) {
         executor.submit {
             if (info.directive.getName() == NAME_EXPECT_SPEECH) {
-                val payload = parseExpectSpeechPayload(info.directive)
-                if(payload != null) {
-                    val request = currentRequest
-                    if (request == null) {
-                        expectSpeechDirectiveParam?.let {
-                            if(it.directive.payload.sessionId == payload.sessionId) {
-                                clearPreHandledExpectSpeech()
-                                closeCurrentSessionIfMatchWith(it.directive.payload)
-                            }
+                val request = currentRequest
+                if (request == null) {
+                    expectSpeechDirectiveParam?.let {
+                        if(it.directive.header.messageId == info.directive.getMessageId()) {
+                            clearPreHandledExpectSpeech()
+                            clearCurrentAttributeKeyIfMatchWith(it)
                         }
-                    } else {
-                        executeStopRecognitionBySessionClosed(payload.sessionId)
                     }
+                } else {
+                    executeStopRecognitionOnAttributeUnset(info.directive.getMessageId())
                 }
             }
             removeDirective(info)
@@ -596,8 +591,7 @@ class DefaultASRAgent(
             audioFormat,
             jsonContext,
             wakeupInfo,
-            expectSpeechDirectiveParam?.directive?.payload,
-            expectSpeechDirectiveParam?.directive?.header?.dialogRequestId,
+            expectSpeechDirectiveParam,
             param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(dialogRequestId: String) {
@@ -810,10 +804,10 @@ class DefaultASRAgent(
 
         Logger.d(TAG, "[setState] $state")
         if (state == ASRAgentInterface.State.IDLE) {
-            Logger.d(TAG, "[setState] currentSessionId: $currentSessionId, $expectSpeechDirectiveParam")
+            Logger.d(TAG, "[setState] currentAttributeKey: $currentAttributeKey, $expectSpeechDirectiveParam")
             if(expectSpeechDirectiveParam == null) {
-                currentSessionId?.let {
-                    dialogSessionManager.closeSession()
+                currentAttributeKey?.let {
+                    attributeStorageManager.clearAttributes(it)
                 }
             }
 
@@ -876,10 +870,10 @@ class DefaultASRAgent(
         currentSpeechRecognizer.stop(cancel, cause)
     }
 
-    private fun executeStopRecognitionBySessionClosed(sessionId: String) {
+    private fun executeStopRecognitionOnAttributeUnset(key: String) {
         currentRequest?.let {
-            if(it.sessionId == sessionId) {
-                Logger.d(TAG, "[executeStopRecognitionBySessionClosed] sessionId: $sessionId")
+            if(it.attributeKey == key) {
+                Logger.d(TAG, "[executeStopRecognitionOnAttributeUnset] key: $key")
                 currentSpeechRecognizer.stop(true, ASRAgentInterface.CancelCause.SESSION_CLOSED)
             }
         }
@@ -933,16 +927,13 @@ class DefaultASRAgent(
         )
     }
 
-    private var currentSessionId: String? = null
+    private var currentAttributeKey: String? = null
 
-    override fun onSessionOpened(
-        sessionId: String,
-        domainTypes: Array<String>?,
-        playServiceId: String?,
-        context: DialogSessionManagerInterface.Context?
+    fun onSetAttribute(
+        key: String
     ) {
-        Logger.d(TAG, "[onSessionOpened] $sessionId")
-        currentSessionId = sessionId
+        Logger.d(TAG, "[onSetAttribute] $key")
+        currentAttributeKey = key
         executor.submit {
             onMultiturnListeners.forEach {
                 it.onMultiturnStateChanged(true)
@@ -950,17 +941,39 @@ class DefaultASRAgent(
         }
     }
 
-    override fun onSessionClosed(sessionId: String) {
-        Logger.d(TAG, "[onSessionClosed] $sessionId")
-        if (currentSessionId != sessionId) {
-            Logger.e(TAG, "[onSessionClosed] current: $currentSessionId, closed: $sessionId")
+    fun onUnsetAttribute(key: String) {
+        Logger.d(TAG, "[onUnsetAttribute] $key")
+        if (currentAttributeKey != key) {
+            Logger.e(TAG, "[onUnsetAttribute] current: $currentAttributeKey, unset: $key")
         }
-        currentSessionId = null
+        currentAttributeKey = null
         executor.submit {
             onMultiturnListeners.forEach {
                 it.onMultiturnStateChanged(false)
             }
         }
-        executeStopRecognitionBySessionClosed(sessionId)
+        executeStopRecognitionOnAttributeUnset(key)
+    }
+
+    private inner class AttributeStorageManager(private val storage: DialogAttributeStorageInterface) {
+        private var currentSetKey: String? = null
+        fun setAttributes(key: String, attr: Map<String, Any>) {
+            val current = currentSetKey
+            if(current != null && current != key) {
+                clearAttributes(current)
+            }
+
+            currentSetKey = key
+            storage.setAttributes(attr)
+            onSetAttribute(key)
+        }
+
+        fun clearAttributes(key: String) {
+            if(currentSetKey == key) {
+                storage.clearAttributes()
+                currentSetKey = null
+                onUnsetAttribute(key)
+            }
+        }
     }
 }
