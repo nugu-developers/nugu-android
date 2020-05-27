@@ -693,8 +693,8 @@ class NuguAndroidClient private constructor(
 
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
-        client.getSdkContainer().getDialogSessionManager().addListener(dialogUXStateAggregator)
-        client.getSdkContainer().getDialogSessionManager().addListener(dialogChannelFocusHolderManager)
+        asrAgent?.addOnMultiturnListener(dialogUXStateAggregator)
+        asrAgent?.addOnMultiturnListener(dialogChannelFocusHolderManager)
 
         val osContextProvider = object : OsContextProvider() {
             override fun getType(): Type = Type.ANDROID

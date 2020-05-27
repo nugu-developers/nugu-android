@@ -16,22 +16,18 @@
 
 package com.skt.nugu.sdk.agent.dialog
 
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 
 class DialogFocusHolderManager(focusHolderManager: FocusHolderManager)
     : FocusHolderManager by focusHolderManager
-    , DialogSessionManagerInterface.OnSessionStateChangeListener
+    , ASRAgentInterface.OnMultiturnListener
     , FocusHolderManager.FocusHolder {
-    override fun onSessionOpened(
-        sessionId: String,
-        domainTypes: Array<String>?,
-        playServiceId: String?,
-        context: DialogSessionManagerInterface.Context?
-    ) {
-        request(this)
-    }
 
-    override fun onSessionClosed(sessionId: String) {
-        abandon(this)
+    override fun onMultiturnStateChanged(enabled: Boolean) {
+        if(enabled) {
+            request(this)
+        } else {
+            abandon(this)
+        }
     }
 }

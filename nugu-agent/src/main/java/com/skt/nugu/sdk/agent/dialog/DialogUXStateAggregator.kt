@@ -33,7 +33,7 @@ class DialogUXStateAggregator(
     , ASRAgentInterface.OnStateChangeListener
     , TTSAgentInterface.Listener
     , ConnectionStatusListener
-    , DialogSessionManagerInterface.OnSessionStateChangeListener{
+    , ASRAgentInterface.OnMultiturnListener {
     companion object {
         private const val TAG = "DialogUXStateAggregator"
     }
@@ -129,21 +129,12 @@ class DialogUXStateAggregator(
         }
     }
 
-    override fun onSessionOpened(
-        sessionId: String,
-        domainTypes: Array<String>?,
-        playServiceId: String?,
-        context: DialogSessionManagerInterface.Context?
-    ) {
+    override fun onMultiturnStateChanged(enabled: Boolean) {
         executor.submit {
-            dialogModeEnabled = true
-        }
-    }
-
-    override fun onSessionClosed(sessionId: String) {
-        executor.submit {
-            dialogModeEnabled = false
-            tryEnterIdleState()
+            dialogModeEnabled = enabled
+            if(!enabled) {
+                tryEnterIdleState()
+            }
         }
     }
 
