@@ -72,6 +72,7 @@ import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
+import com.skt.nugu.sdk.agent.session.SessionAgent
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
@@ -307,6 +308,15 @@ class NuguAndroidClient private constructor(
             builder.agentFactoryMap.forEach {
                 addAgentFactory(it.key, it.value)
             }
+
+            addAgentFactory(SessionAgent.NAMESPACE, object: AgentFactory<SessionAgent> {
+                override fun create(container: SdkContainer): SessionAgent = SessionAgent(
+                    container.getContextManager(),
+                    container.getDirectiveSequencer(),
+                    container.getSessionManager()
+                )
+            })
+
             addAgentFactory(DefaultASRAgent.NAMESPACE, object : AgentFactory<DefaultASRAgent> {
                 override fun create(container: SdkContainer): DefaultASRAgent {
                     return with(container) {
