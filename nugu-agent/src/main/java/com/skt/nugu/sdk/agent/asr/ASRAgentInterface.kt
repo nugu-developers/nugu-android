@@ -111,6 +111,7 @@ interface ASRAgentInterface {
         /**
          * Caused by session closed
          */
+        // TODO : Deprecate
         SESSION_CLOSED
     }
 
@@ -158,7 +159,6 @@ interface ASRAgentInterface {
 
     /**
      * Interface of a listener to be called when there has been an change of multi-turn state
-     * @see [com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface]
      */
     interface OnMultiturnListener {
         /**

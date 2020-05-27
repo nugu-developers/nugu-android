@@ -44,10 +44,10 @@ class DefaultServerSpeechRecognizer(
     private data class RecognizeRequest(
         val senderThread: SpeechRecognizeAttachmentSenderThread,
         override val eventMessage: EventMessageRequest,
-        val expectSpeechPayload: ExpectSpeechPayload?,
+        val expectSpeechParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         val resultListener: ASRAgentInterface.OnResultListener?
     ) : SpeechRecognizer.Request {
-        override val sessionId: String? = expectSpeechPayload?.sessionId
+        override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
         var cancelCause: ASRAgentInterface.CancelCause? = null
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
@@ -74,8 +74,7 @@ class DefaultServerSpeechRecognizer(
         audioFormat: AudioFormat,
         context: String,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?,
-        referrerDialogRequestId: String?,
+        expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
@@ -106,6 +105,9 @@ class DefaultServerSpeechRecognizer(
             sendPosition = null
             payloadWakeupInfo = null
         }
+
+        val payload = expectSpeechDirectiveParam?.directive?.payload
+        val referrerDialogRequestId = expectSpeechDirectiveParam?.directive?.header?.dialogRequestId
 
         val eventMessage = EventMessageRequest.Builder(
             context,
@@ -139,7 +141,7 @@ class DefaultServerSpeechRecognizer(
             )
             val request =
                 RecognizeRequest(
-                    thread, eventMessage, payload, resultListener
+                    thread, eventMessage, expectSpeechDirectiveParam, resultListener
                 )
             currentRequest = request
             thread.start()

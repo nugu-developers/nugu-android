@@ -17,17 +17,24 @@
 package com.skt.nugu.sdk.core.dialog
 
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
+import com.skt.nugu.sdk.core.utils.Logger
 
 class DialogAttributeStorage: DialogAttributeStorageInterface {
+    companion object {
+        private const val TAG = "DialogAttributeStorage"
+    }
+
     private var attrs: Map<String, Any>? = null
 
     override fun setAttributes(attr: Map<String, Any>) {
+        Logger.d(TAG, "[setAttribute]")
         this.attrs = attr
     }
 
     override fun getAttributes(): Map<String, Any>? = attrs
 
     override fun clearAttributes() {
+        Logger.d(TAG, "[clearAttributes]")
         attrs = null
     }
 }

@@ -19,6 +19,7 @@ import com.google.gson.annotations.SerializedName
 
 data class ExpectSpeechPayload private constructor(
     @SerializedName("sessionId")
+    @Deprecated("removed soon")
     val sessionId: String,
     @SerializedName("playServiceId")
     val playServiceId: String?,

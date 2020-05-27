@@ -325,8 +325,8 @@ class NuguAndroidClient private constructor(
                             getAudioFocusManager(),
                             getMessageSender(),
                             getContextManager(),
-                            getDialogSessionManager(),
                             getSessionManager(),
+                            getDialogAttributeStorage(),
                             builder.defaultAudioProvider,
                             SpeexEncoder(),
                             builder.endPointDetector,
@@ -335,7 +335,6 @@ class NuguAndroidClient private constructor(
                             dialogChannelFocusHolderManager
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
-                            getDialogSessionManager().addListener(this)
                             dialogChannelFocusHolderManager.addOnStateChangeListener(this)
 
                             CancelRecognizeDirectiveHandler(this).apply {

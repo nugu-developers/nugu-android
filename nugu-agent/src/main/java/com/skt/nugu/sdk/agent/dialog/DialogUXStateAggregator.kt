@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent.dialog
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import java.util.*
