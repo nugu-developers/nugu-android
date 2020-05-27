@@ -23,14 +23,17 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.HashMap
 
 class SetDirectiveHandler(
     private val controller: Controller
 ): AbstractDirectiveHandler() {
     companion object {
-        private const val NAME_SET = "Set"
-        private val SET = NamespaceAndName(SessionAgent.NAMESPACE, NAME_SET)
+        private const val TAG = "SetDirectiveHandler"
+
+        const val NAME_SET = "Set"
+        val SET = NamespaceAndName(SessionAgent.NAMESPACE, NAME_SET)
     }
 
     data class SetDirective(
@@ -50,6 +53,7 @@ class SetDirectiveHandler(
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[preHandleDirective] $info")
         val payload = MessageFactory.create(info.directive.payload, SetDirective.Payload::class.java)
         if(payload == null) {
             info.result.setFailed("invalid payload")
