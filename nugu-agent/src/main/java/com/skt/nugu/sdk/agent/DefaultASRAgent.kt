@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
+import com.skt.nugu.sdk.agent.asr.payload.ExpectSpeechDirective
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -118,8 +119,7 @@ class DefaultASRAgent(
     private var audioInputStream: SharedDataStream? = null
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
-    private var expectSpeechPayload: ExpectSpeechPayload? = null
-    private var referrerDialogRequestId: String? = null
+    private var expectSpeechDirective: ExpectSpeechDirective? = null
     private var endPointDetectorParam: EndPointDetectorParam? = null
     private var startRecognitionCallback: ASRAgentInterface.StartRecognitionCallback? = null
 
@@ -217,14 +217,15 @@ class DefaultASRAgent(
                     "[executePreHandleExpectSpeechDirective] invalid payload"
                 )
             } else {
-                executePreHandleExpectSpeechInternal(payload)
+                executePreHandleExpectSpeechInternal(ExpectSpeechDirective(info.directive.header, payload))
             }
         }
     }
 
-    private fun executePreHandleExpectSpeechInternal(payload: ExpectSpeechPayload) {
-        Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, payload: $payload")
-        expectSpeechPayload = payload
+    private fun executePreHandleExpectSpeechInternal(directive: ExpectSpeechDirective) {
+        Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, directive: $directive")
+        expectSpeechDirective = directive
+        val payload = directive.payload
         val asrContext = payload.asrContext
         dialogSessionManager.openSession(
             payload.sessionId,
@@ -283,8 +284,8 @@ class DefaultASRAgent(
             return
         }
 
-        if(payload.sessionId != expectSpeechPayload?.sessionId) {
-            setHandlingFailed(info, "[executeHandleExpectSpeechDirective] not match with current session (${payload.sessionId} / ${expectSpeechPayload?.sessionId})")
+        if(payload.sessionId != expectSpeechDirective?.payload?.sessionId) {
+            setHandlingFailed(info, "[executeHandleExpectSpeechDirective] not match with current session (${payload.sessionId} / ${expectSpeechDirective?.payload?.sessionId})")
             return
         }
 
@@ -316,7 +317,7 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, payload, info.directive.getDialogRequestId(),null, object: ASRAgentInterface.StartRecognitionCallback {
+        executeStartRecognition(audioInputStream, audioFormat, null, expectSpeechDirective, null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
                 setHandlingCompleted(info)
             }
@@ -418,10 +419,10 @@ class DefaultASRAgent(
                 if(payload != null) {
                     val request = currentRequest
                     if (request == null) {
-                        expectSpeechPayload?.let {
-                            if(it.sessionId == payload.sessionId) {
+                        expectSpeechDirective?.let {
+                            if(it.payload.sessionId == payload.sessionId) {
                                 clearPreHandledExpectSpeech()
-                                closeCurrentSessionIfMatchWith(it)
+                                closeCurrentSessionIfMatchWith(it.payload)
                             }
                         }
                     } else {
@@ -467,8 +468,7 @@ class DefaultASRAgent(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?,
-        referrerDialogRequestId: String?,
+        expectSpeechDirective: ExpectSpeechDirective?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String) {
@@ -512,8 +512,7 @@ class DefaultASRAgent(
                 audioInputStream,
                 audioFormat,
                 wakeupInfo,
-                payload,
-                referrerDialogRequestId,
+                expectSpeechDirective,
                 param,
                 callback,
                 jsonContext
@@ -522,8 +521,7 @@ class DefaultASRAgent(
             this.audioInputStream = audioInputStream
             this.audioFormat = audioFormat
             this.wakeupInfo = wakeupInfo
-            this.expectSpeechPayload = payload
-            this.referrerDialogRequestId = referrerDialogRequestId
+            this.expectSpeechDirective = expectSpeechDirective
             this.endPointDetectorParam = param
             this.startRecognitionCallback = callback
             this.contextForRecognitionOnForegroundFocus = jsonContext
@@ -540,8 +538,7 @@ class DefaultASRAgent(
                 val inputStream = this.audioInputStream
                 val audioFormat = this.audioFormat
                 val wakeupInfo = this.wakeupInfo
-                val payload = this.expectSpeechPayload
-                val referrerDialogRequestId = this.referrerDialogRequestId
+                val payload = this.expectSpeechDirective
                 val epdParam = this.endPointDetectorParam
                 val callback = this.startRecognitionCallback
                 val context = contextForRecognitionOnForegroundFocus
@@ -549,8 +546,7 @@ class DefaultASRAgent(
                 this.audioInputStream = null
                 this.audioFormat = null
                 this.wakeupInfo =  null
-                this.expectSpeechPayload = null
-                this.referrerDialogRequestId = null
+                this.expectSpeechDirective = null
                 this.endPointDetectorParam = null
                 this.startRecognitionCallback = null
                 this.contextForRecognitionOnForegroundFocus = null
@@ -562,7 +558,7 @@ class DefaultASRAgent(
                 }
 
                 if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
-                    executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, payload, referrerDialogRequestId, epdParam, callback, context)
+                    executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, payload, epdParam, callback, context)
                 }
             }
             FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
@@ -574,8 +570,7 @@ class DefaultASRAgent(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?,
-        referrerDialogRequestId: String?,
+        expectSpeechDirective: ExpectSpeechDirective?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String
@@ -587,8 +582,8 @@ class DefaultASRAgent(
             audioFormat,
             jsonContext,
             wakeupInfo,
-            payload,
-            referrerDialogRequestId,
+            expectSpeechDirective?.payload,
+            expectSpeechDirective?.header?.dialogRequestId,
             param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(dialogRequestId: String) {
@@ -605,9 +600,9 @@ class DefaultASRAgent(
 
                 override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendResponseTimeout(payload, dialogRequestId)
+                        sendResponseTimeout(expectSpeechDirective?.payload, dialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(payload, dialogRequestId)
+                        sendListenTimeout(expectSpeechDirective?.payload, dialogRequestId)
                     }
                     speechToTextConverterEventObserver.onError(type, dialogRequestId)
                 }
@@ -746,8 +741,7 @@ class DefaultASRAgent(
                     audioInputStream,
                     audioFormat,
                     wakeupInfo,
-                    expectSpeechPayload,
-                    referrerDialogRequestId,
+                    expectSpeechDirective,
                     param,
                     callback
                 )
@@ -770,8 +764,7 @@ class DefaultASRAgent(
                     newAudioInputStream,
                     newAudioFormat,
                     null,
-                    expectSpeechPayload,
-                    referrerDialogRequestId,
+                    expectSpeechDirective,
                     param,
                     callback
                 )
@@ -803,8 +796,8 @@ class DefaultASRAgent(
 
         Logger.d(TAG, "[setState] $state")
         if (state == ASRAgentInterface.State.IDLE) {
-            Logger.d(TAG, "[setState] currentSessionId: $currentSessionId, $expectSpeechPayload")
-            if(expectSpeechPayload == null) {
+            Logger.d(TAG, "[setState] currentSessionId: $currentSessionId, $expectSpeechDirective")
+            if(expectSpeechDirective == null) {
                 currentSessionId?.let {
                     dialogSessionManager.closeSession()
                 }
@@ -827,15 +820,14 @@ class DefaultASRAgent(
 
     private fun clearPreHandledExpectSpeech() {
         Logger.d(TAG, "[clearPreHandledExpectSpeech]")
-        expectSpeechPayload = null
+        expectSpeechDirective = null
     }
 
     private fun executeStartRecognition(
         audioInputStream: SharedDataStream,
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
-        payload: ExpectSpeechPayload?,
-        referrerDialogRequestId: String?,
+        expectSpeechDirective: ExpectSpeechDirective?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?
     ) {
@@ -857,8 +849,7 @@ class DefaultASRAgent(
                         audioInputStream,
                         audioFormat,
                         wakeupInfo,
-                        payload,
-                        referrerDialogRequestId,
+                        expectSpeechDirective,
                         param,
                         callback,
                         jsonContext)
