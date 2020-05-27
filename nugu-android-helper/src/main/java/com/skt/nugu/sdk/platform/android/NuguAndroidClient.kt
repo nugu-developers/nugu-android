@@ -326,6 +326,7 @@ class NuguAndroidClient private constructor(
                             getMessageSender(),
                             getContextManager(),
                             getDialogSessionManager(),
+                            getSessionManager(),
                             builder.defaultAudioProvider,
                             SpeexEncoder(),
                             builder.endPointDetector,
