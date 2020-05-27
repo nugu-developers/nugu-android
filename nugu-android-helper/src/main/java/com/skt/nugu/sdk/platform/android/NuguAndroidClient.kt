@@ -396,7 +396,8 @@ class NuguAndroidClient private constructor(
 
                         if(builder.enableDisplay) {
                             AudioPlayerTemplateHandler(
-                                getPlaySynchronizer()
+                                getPlaySynchronizer(),
+                                getSessionManager()
                             ).apply {
                                 getDisplayPlayStackManager().addPlayContextProvider(this)
                                 setDisplay(this)

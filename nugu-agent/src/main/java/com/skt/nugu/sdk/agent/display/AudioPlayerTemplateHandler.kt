@@ -26,10 +26,12 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import java.util.concurrent.*
 
 class AudioPlayerTemplateHandler(
-    private val playSynchronizer: PlaySynchronizerInterface
+    private val playSynchronizer: PlaySynchronizerInterface,
+    private val sessionManager: SessionManagerInterface
 ) : AbstractDirectiveHandler()
     , AudioPlayerDisplayInterface
     , AudioPlayerMetadataDirectiveHandler.Listener
@@ -79,6 +81,7 @@ class AudioPlayerTemplateHandler(
         info: DirectiveInfo,
         val payload: TemplatePayload
     ) : PlaySynchronizerInterface.SynchronizeObject
+        , SessionManagerInterface.Requester
         , DirectiveInfo by info {
         var sourceTemplateId = info.directive.getMessageId()
 
@@ -164,6 +167,7 @@ class AudioPlayerTemplateHandler(
 
         setHandlingFailed(info, "Canceled by the other display info")
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
+        sessionManager.deactivate(info.directive.getDialogRequestId(), info)
         releaseSyncForce(info)
     }
 
@@ -244,6 +248,7 @@ class AudioPlayerTemplateHandler(
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
                 }
+                sessionManager.activate(it.getDialogRequestId(), it)
                 it.playContext = it.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
@@ -273,6 +278,7 @@ class AudioPlayerTemplateHandler(
         setHandlingCompleted(info)
         templateDirectiveInfoMap.remove(templateId)
         templateControllerMap.remove(templateId)
+        sessionManager.deactivate(info.getDialogRequestId(), info)
         releaseSyncForce(info)
 
         if (clearInfoIfCurrent(info)) {
