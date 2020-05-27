@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class PingService(
     private val channel: ManagedChannel,
     private val healthCheckPolicy: HealthCheckPolicy,
-    private val repeat: Boolean,
     private val observer: DeviceGatewayTransport
 ) {
     private val timeout: Long = healthCheckPolicy.healthCheckTimeout.toLong()
@@ -53,7 +52,7 @@ internal class PingService(
         }
 
     init {
-        nextInterval(if(repeat) newDelayMillis() else 0)
+        nextInterval(0)
     }
 
     private fun executePingRequest() : Boolean{
@@ -97,8 +96,7 @@ internal class PingService(
         }
         intervalFuture = executorService.schedule({
             if(executePingRequest()) {
-                if(repeat) nextInterval(newDelayMillis())
-                else shutdown()
+                nextInterval(newDelayMillis())
             }
         }, delay, TimeUnit.MILLISECONDS)
     }

@@ -21,10 +21,13 @@ import com.skt.nugu.sdk.client.port.transport.grpc.utils.MessageRequestConverter
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
-import devicegateway.grpc.*
+import devicegateway.grpc.Downstream
+import devicegateway.grpc.Upstream
+import devicegateway.grpc.VoiceServiceGrpc
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
@@ -40,39 +43,64 @@ internal class EventsService(
 ) {
     companion object {
         private const val TAG = "EventsService"
-        private const val defaultTimeout: Long = 1000 * 14L
+        private const val defaultTimeout: Long = 1000 * 10L
     }
 
     private val isShutdown = AtomicBoolean(false)
-    private var activeUpstream: StreamObserver<Upstream>? = null
     private val streamLock = ReentrantLock()
-    private var lastSentEventMessage : EventMessageRequest? = null
+    //private var lastSentEventMessage : EventMessageRequest? = null
 
-    private fun obtainUpstream(): StreamObserver<Upstream>? {
+    private val requestStreamMap = ConcurrentHashMap<String, ClientChannel?>()
+
+    internal data class ClientChannel (
+        val clientCall : StreamObserver<Upstream>,
+        val responseObserver : ClientCallStreamObserver
+    )
+
+    private fun obtainChannel(streamId: String): ClientChannel? {
         if (isShutdown.get()) {
             return null
         }
 
         return run {
-            if (activeUpstream != null) {
-                return activeUpstream
+            if (requestStreamMap[streamId] == null) {
+                val responseObserver = ClientCallStreamObserver(streamId)
+                VoiceServiceGrpc.newStub(channel)
+                    .withDeadlineAfter(defaultTimeout, TimeUnit.MILLISECONDS)
+                    .withWaitForReady()?.events(responseObserver)?.apply {
+                        requestStreamMap[streamId] = ClientChannel(this, responseObserver)
+                    }
             }
-            VoiceServiceGrpc.newStub(channel)
-                .withDeadlineAfter(defaultTimeout, TimeUnit.MILLISECONDS)
-                .withWaitForReady()?.events(responseObserver).apply {
-                    activeUpstream = this
-                }
+            return requestStreamMap[streamId]
         }
     }
 
-    private val responseObserver = object : StreamObserver<Downstream> {
+    inner class ClientCallStreamObserver(val streamId: String) : StreamObserver<Downstream> {
+        private var startAttachmentTimeMillis = 0L
+        private var isReceivedDownstream = false
+        var isSendingAttachmentMessage = false
+        var isAsrRecognize = false
+
         override fun onNext(downstream: Downstream) {
-            Logger.d(TAG, "[EventsService] onNext : ${downstream.messageCase}")
+            isReceivedDownstream = true
+
             when (downstream.messageCase) {
                 Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                     downstream.directiveMessage?.let {
                         if (it.directivesCount > 0) {
-                            observer.onReceiveDirectives(downstream.directiveMessage)
+                            val log = StringBuilder()
+                            val beginTimeStamp = System.currentTimeMillis()
+                            observer.onReceiveDirectives(it)
+                            log.append("[EventsService] directive, messageId=")
+                            val elapsed = System.currentTimeMillis() - beginTimeStamp
+                            it.directivesList.forEach {
+                                log.append(it.header.messageId)
+                                log.append(", ")
+                            }
+                            if(elapsed  > 100) {
+                                log.append("elapsed=$elapsed")
+                            }
+                            Logger.d(TAG, log.toString())
                         }
                         if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
                             observer.onError(Status.UNAUTHENTICATED)
@@ -82,12 +110,26 @@ internal class EventsService(
                 Downstream.MessageCase.ATTACHMENT_MESSAGE -> {
                     downstream.attachmentMessage?.let {
                         if (it.hasAttachment()) {
-                            observer.onReceiveAttachment(downstream.attachmentMessage)
+                            val currentTimeMillis =  System.currentTimeMillis()
+                            if (it.attachment.seq == 0) {
+                                startAttachmentTimeMillis = currentTimeMillis
+                                Logger.d(TAG, "[EventsService] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}")
+                            }
+                            if (it.attachment.isEnd) {
+                                val elapsed = currentTimeMillis - startAttachmentTimeMillis
+                                Logger.d(TAG, "[EventsService] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, elapsed=${elapsed}ms")
+                            }
+                            observer.onReceiveAttachment(it)
+
+                            val dispatchTimestamp = currentTimeMillis - System.currentTimeMillis()
+                            if(dispatchTimestamp  > 100) {
+                                Logger.w(TAG, "[EventsService] attachment, operation has been delayed (${dispatchTimestamp}ms), messageId=${it.attachment.header.messageId} ")
+                            }
                         }
                     }
                 }
                 else -> {
-                    // nothing
+                    Logger.e(TAG, "[EventsService] unknown messageCase : ${downstream.messageCase}")
                 }
             }
         }
@@ -95,36 +137,44 @@ internal class EventsService(
         override fun onError(t: Throwable) {
             if (!isShutdown.get()) {
                 val status = Status.fromThrowable(t)
+
+                val log = StringBuilder()
+                log.append("[onError] ${status.code}, ${status.description}, $streamId")
                 if(status.code == Status.Code.DEADLINE_EXCEEDED) {
                     // TODO :: When sending Asr.Recognize and not sending Attachment
-                    if(lastSentEventMessage?.checkIfEventMessageIsAsrRecognize() == true) {
-                        Logger.d(TAG, "[onError] Perhaps Asr.Recognize was canceled(no error)")
-                        halfClose()
+                    if(isAsrRecognize && !isSendingAttachmentMessage) {
+                        halfClose(streamId)
+                        log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
+                        Logger.w(TAG, log.toString())
+                        return
+                    }
+                    if(isReceivedDownstream) {
+                        Logger.e(TAG, log.toString())
                         return
                     }
                 }
+                Logger.e(TAG, log.toString())
+                halfClose(streamId)
 
-                Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
-                halfClose()
+                if(status.code == Status.Code.CANCELLED) {
+                    return
+                }
                 observer.onError(status)
             }
         }
 
         override fun onCompleted() {
-            Logger.d(TAG, "[onCompleted] Stream is completed")
-            halfClose()
-            lastSentEventMessage = null
+            Logger.d(TAG, "[onCompleted] messageId=$streamId")
+            halfClose(streamId)
         }
     }
 
-    private fun halfClose() {
+    private fun halfClose(streamId : String) {
         streamLock.withLock {
             try {
-                activeUpstream?.onCompleted()
+                requestStreamMap.remove(streamId)?.clientCall?.onCompleted()
             } catch (e: IllegalStateException) {
                 Logger.w(TAG, "[close] Exception : ${e.cause} ${e.message}")
-            } finally {
-                activeUpstream = null
             }
         }
     }
@@ -134,11 +184,12 @@ internal class EventsService(
             Logger.w(TAG, "[sendAttachmentMessage] already shutdown")
             return false
         }
-        lastSentEventMessage = null
+
         try {
             streamLock.withLock {
-                obtainUpstream()?.apply {
-                    onNext(
+                obtainChannel(attachment.parentMessageId)?.apply {
+                    this.responseObserver.isSendingAttachmentMessage = true
+                    this.clientCall.onNext(
                         Upstream.newBuilder()
                             .setAttachmentMessage(attachment.toProtobufMessage())
                             .build()
@@ -158,11 +209,12 @@ internal class EventsService(
             Logger.w(TAG, "[sendEventMessage] already shutdown")
             return false
         }
-        lastSentEventMessage = event
+
         try {
             streamLock.withLock {
-                obtainUpstream()?.apply {
-                    onNext(
+                obtainChannel(event.messageId)?.apply {
+                    this.responseObserver.isAsrRecognize = event.checkIfEventMessageIsAsrRecognize()
+                    this.clientCall.onNext(
                         Upstream.newBuilder()
                             .setEventMessage(event.toProtobufMessage())
                             .build()
@@ -179,7 +231,10 @@ internal class EventsService(
 
     fun shutdown() {
         if (isShutdown.compareAndSet(false, true)) {
-            halfClose()
+            requestStreamMap.forEach {
+                halfClose(it.key)
+            }
+            requestStreamMap.clear()
         } else {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
