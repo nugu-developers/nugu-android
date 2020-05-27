@@ -23,11 +23,18 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
 class SessionAgent(
     contextStateProviderRegistry: ContextStateProviderRegistry,
+    directiveSequencer: DirectiveSequencerInterface,
     private val sessionManager: SessionManagerInterface
 )
     : CapabilityAgent
@@ -35,14 +42,16 @@ class SessionAgent(
     , SetDirectiveHandler.Controller {
 
     companion object {
+        private const val TAG = "SessionAgent"
         const val NAMESPACE = "Session"
-        private val VERSION = Version(1,0)
+        val VERSION = Version(1,0)
     }
 
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
+        directiveSequencer.addDirectiveHandler(SetDirectiveHandler(this))
     }
 
     override fun getInterfaceName(): String = NAMESPACE
@@ -89,6 +98,7 @@ class SessionAgent(
 
     override fun set(directive: SetDirectiveHandler.SetDirective) {
         executor.submit {
+            Logger.d(TAG, "[set] $directive")
             sessionManager.set(directive.header.dialogRequestId,
                 SessionManagerInterface.Session(
                     directive.payload.sessionId,
