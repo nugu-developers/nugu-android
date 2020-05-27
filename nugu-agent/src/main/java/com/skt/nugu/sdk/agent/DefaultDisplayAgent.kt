@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.*
@@ -34,6 +35,7 @@ import kotlin.collections.HashMap
 class DefaultDisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
+    private val sessionManager: SessionManagerInterface,
     contextStateProviderRegistry: ContextStateProviderRegistry,
     enableDisplayLifeCycleManagement: Boolean
 ) : CapabilityAgent, DisplayAgentInterface
@@ -70,6 +72,7 @@ class DefaultDisplayAgent(
         info: AbstractDirectiveHandler.DirectiveInfo,
         val payload: TemplatePayload
     ) : PlaySynchronizerInterface.SynchronizeObject
+        , SessionManagerInterface.Requester
         , AbstractDirectiveHandler.DirectiveInfo by info {
         var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
@@ -191,6 +194,7 @@ class DefaultDisplayAgent(
         info.renderResultListener?.onFailure("Canceled by the other display info")
         info.renderResultListener = null
         templateDirectiveInfoMap.remove(info.directive.getMessageId())
+        sessionManager.deactivate(info.directive.getDialogRequestId(), info)
         releaseSyncImmediately(info)
     }
 
@@ -293,6 +297,7 @@ class DefaultDisplayAgent(
 
                 it.renderResultListener?.onSuccess()
                 it.renderResultListener = null
+                sessionManager.activate(it.getDialogRequestId(), it)
                 it.playContext =  it.payload.playStackControl?.getPushPlayServiceId()?.let { pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
@@ -324,6 +329,7 @@ class DefaultDisplayAgent(
         contextLayerTimer?.get(info.payload.getContextLayerInternal())?.stop(templateId)
         templateDirectiveInfoMap.remove(templateId)
         templateControllerMap.remove(templateId)
+        sessionManager.deactivate(info.getDialogRequestId(), info)
         releaseSyncImmediately(info)
 
         onDisplayCardCleared(info)
