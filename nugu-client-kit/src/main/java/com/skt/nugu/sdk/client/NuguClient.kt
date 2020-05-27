@@ -54,7 +54,9 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
+import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
+import com.skt.nugu.sdk.core.session.SessionManager
 
 class NuguClient private constructor(
     builder: Builder
@@ -142,6 +144,7 @@ class NuguClient private constructor(
             val playSynchronizer = PlaySynchronizer()
 
             val dialogAttributeStorage = DialogAttributeStorage()
+            val sessionManger = SessionManager()
 
             sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
@@ -173,6 +176,8 @@ class NuguClient private constructor(
                     directiveGroupProcessor
 
                 override fun getDialogAttributeStorage(): DialogAttributeStorageInterface = dialogAttributeStorage
+
+                override fun getSessionManager(): SessionManagerInterface = sessionManger
             }
 
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
