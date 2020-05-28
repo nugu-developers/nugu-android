@@ -86,7 +86,7 @@ class DefaultTTSAgent(
         private const val TAG = "DefaultTTSAgent"
 
         const val NAMESPACE = "TTS"
-        private val VERSION = Version(1, 1)
+        private val VERSION = Version(1, 2)
 
         private const val NAME_SPEAK = "Speak"
 
