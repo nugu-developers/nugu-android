@@ -62,7 +62,9 @@ data class Person(
         @SerializedName("time")
         val time: String?,
         @SerializedName("type")
-        val type: Type?
+        val type: Type?,
+        @SerializedName("callType")
+        val callType: CallType?
     ) {
         enum class Type {
             OUT,
@@ -72,6 +74,13 @@ data class Person(
             MISSED,
             VOICE_MESSAGE,
             BLOCKED,
+        }
+
+        enum class CallType {
+            CALL,
+            VIDEO,
+            CALLAR,
+            GROUP
         }
     }
 
