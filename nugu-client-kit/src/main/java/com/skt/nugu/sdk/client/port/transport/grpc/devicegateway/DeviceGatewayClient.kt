@@ -15,8 +15,6 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
-import com.google.protobuf.ByteString
-import com.google.protobuf.UnsafeByteOperations
 import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
@@ -38,7 +36,6 @@ import io.grpc.Status
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
