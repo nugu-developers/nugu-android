@@ -57,8 +57,8 @@ class StopDirectiveHandler(
             return
         }
 
-        info.result.setCompleted()
         controller.stop(payload)
+        info.result.setCompleted()
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
