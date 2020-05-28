@@ -167,6 +167,11 @@ class DefaultTTSAgent(
         }
     }
 
+    data class Context(
+        val state: TTSAgentInterface.State,
+        val token: String?
+    )
+
     private val executor = Executors.newSingleThreadExecutor()
     private val listeners = HashSet<TTSAgentInterface.Listener>()
     private val requestListenerMap =
@@ -178,11 +183,12 @@ class DefaultTTSAgent(
 
     //    @GuardedBy("stateLock")
     private var currentState = TTSAgentInterface.State.IDLE
+    private var currentToken: String? = null
 
     //    @GuardedBy("stateLock")
     private var desireState = TTSAgentInterface.State.IDLE
 
-    private var lastStateForContext: TTSAgentInterface.State? = null
+    private var currentContext: Context? = null
 
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
@@ -376,12 +382,12 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun setCurrentState(state: TTSAgentInterface.State) {
+    private fun setCurrentStateAndToken(state: TTSAgentInterface.State, token: String) {
         Logger.d(TAG, "[setCurrentState] state: $state")
         currentState = state
+        currentToken = token
         currentInfo?.directive?.getDialogRequestId()?.let {
             when (state) {
-
                 TTSAgentInterface.State.IDLE -> {
                     // no-op
                 }
@@ -628,11 +634,13 @@ class DefaultTTSAgent(
                 }
             }
 
-            val context = if (currentState == lastStateForContext) {
+            val context = if(currentContext?.state == currentState && currentContext?.token == currentToken) {
                 null
             } else {
-                lastStateForContext = currentState
-                buildContext().toString()
+                with(Context(currentState, currentToken)) {
+                    currentContext = this
+                    buildContext(this).toString()
+                }
             }
 
             contextSetter.setState(
@@ -648,14 +656,11 @@ class DefaultTTSAgent(
         addProperty("version", VERSION.toString())
     }
 
-    private fun buildContext(): JsonObject = buildCompactContext().apply {
-        addProperty(
-            "ttsActivity", when (currentState) {
-                TTSAgentInterface.State.PLAYING -> TTSAgentInterface.State.PLAYING.name
-                TTSAgentInterface.State.STOPPED -> TTSAgentInterface.State.STOPPED.name
-                else -> TTSAgentInterface.State.FINISHED.name
-            }
-        )
+    private fun buildContext(context: Context): JsonObject = buildCompactContext().apply {
+        addProperty("ttsActivity", context.state.name)
+        context.token?.let {
+            addProperty("token", it)
+        }
     }
 
     private fun executeTransitState() {
@@ -770,7 +775,7 @@ class DefaultTTSAgent(
     private fun executePlaybackStarted() {
         Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
         val info = currentInfo ?: return
-        setCurrentState(TTSAgentInterface.State.PLAYING)
+        setCurrentStateAndToken(TTSAgentInterface.State.PLAYING, info.payload.token)
         info.state = TTSAgentInterface.State.PLAYING
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
     }
@@ -797,7 +802,7 @@ class DefaultTTSAgent(
         }
         Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
         val info = currentInfo ?: return
-        setCurrentState(TTSAgentInterface.State.STOPPED)
+        setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
 
         sendPlaybackEvent(EVENT_SPEECH_STOPPED, info)
@@ -823,7 +828,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executePlaybackFinished] $currentInfo")
 
         val info = currentInfo ?: return
-        setCurrentState(TTSAgentInterface.State.FINISHED)
+        setCurrentStateAndToken(TTSAgentInterface.State.FINISHED, info.payload.token)
         info.state = TTSAgentInterface.State.FINISHED
 
         sendPlaybackEvent(EVENT_SPEECH_FINISHED, info)
@@ -843,7 +848,7 @@ class DefaultTTSAgent(
             return
         }
 
-        setCurrentState(TTSAgentInterface.State.STOPPED)
+        setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
         with(info) {
             result.setFailed("Playback Error (type: $type, error: $error)")
