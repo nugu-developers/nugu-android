@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+Version 0.9.0 *(2020-05-28)*
+-----------------------------
+* New: Support mediaplayer interface v1.0 (#695)
+* New: Support message interface v1.0 (#696)
+* New: Support phonecall interface v1.0 (#698)
+* New: Support AudioPlayer v1.3 (#709)
+* Fix: Apply timeout for attachment (#714)
+* Fix: Add WITHDRAWN_USER reason at System.Revoke directive(#723)
+* Fix: Fix incorrect state processing (#731)
+    * Disconnect method not working When backoff is running
+* Fix: Remove SynchronizeState event from CONNECTED state (#734)
+* Improve: Add Events and Directives methods to GrpcTransport (#607)
+* Improve: Update keensense v0.2.1
+
 Version 0.8.20 *(2020-05-26)*
 -----------------------------
 * Fix: Cancel a item fetched but not playing yet (#721)
