@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnLoginListener as OnLoginListener
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnDeviceAuthorizationListener as OnDeviceAuthorizationListener
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnLogoutListener as OnLogoutListener
 
 /**
  * NuguOAuth provides an implementation of the NuguOAuthInterface
@@ -142,7 +143,7 @@ class NuguOAuth private constructor(
      * Gets an authorization from cache
      */
     override fun getAuthorization(): String? {
-        return client.getCredentials().tokenType + " " + client.getCredentials().accessToken
+        return client.buildAuthorization()
     }
 
     /**
@@ -163,10 +164,23 @@ class NuguOAuth private constructor(
     /**
      * Executes logout(Disconnect) the device in a thread.
      */
-    override fun logout() {
+    override fun logout(listener: OnLogoutListener) {
         Logger.d(TAG, "[logout]")
         executor.submit {
-            clearAuthorization()
+
+            checkClientId()
+            checkClientSecret()
+
+            executor.submit {
+                runCatching {
+                    client.handleRevoke()
+                }.onSuccess {
+                    clearAuthorization()
+                    listener.onSuccess()
+                }.onFailure {
+                    listener.onError(NuguOAuthError(it))
+                }
+            }
         }
     }
 
@@ -205,11 +219,15 @@ class NuguOAuth private constructor(
      * Sets a auth token and update to the devicegateway
      * @param token The auth token
      */
-    fun setAuthorization(token: String) {
+    fun setAuthorization(tokenType : String, accessToken: String) {
         Logger.d(TAG, "[setAuthorization]")
-        client.getCredentials().accessToken = token
+        client.getCredentials().accessToken = accessToken
+        client.getCredentials().tokenType = tokenType
         setAuthState(AuthStateListener.State.REFRESHED)
     }
+
+    fun setCredentials(credential : String) = setCredentials(Credentials.parse(credential))
+    fun setCredentials(credential : Credentials) = client.setCredentials(credential)
 
     /**
      * Check whether a user is authenticated or not
@@ -432,6 +450,31 @@ class NuguOAuth private constructor(
     }
 
     override fun startDeviceAuthorization(data: String, listener: OnDeviceAuthorizationListener) {
+        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
+
+        checkClientId()
+        checkClientSecret()
+
+        executor.submit {
+            runCatching {
+                client.handleStartDeviceAuthorization(data)
+            }.onSuccess {
+                listener.onSuccess(it)
+            }.onFailure {
+                listener.onError(NuguOAuthError(it))
+            }
+        }
+    }
+
+    /**
+     * {
+    "anonymous": true,
+    "deviceId": "string",
+    "tid": "string",
+    "userId": "string"
+    }
+     */
+    fun getMe(data: String, listener: OnDeviceAuthorizationListener) {
         this.options.grantType = NuguOAuthOptions.DEVICE_CODE
 
         checkClientId()
