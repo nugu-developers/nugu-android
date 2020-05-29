@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
-import com.skt.nugu.sdk.agent.mediaplayer.SourceId
+import com.skt.nugu.sdk.agent.util.TimeUnit
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
@@ -130,9 +130,10 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
 
     /**
      * Gets the current playback offset
+     * @param unit the unit of offset which return (default=TimeUnit.SECONDS)
      * @return the current offset in seconds
      */
-    fun getOffset(): Long
+    fun getOffset(unit: TimeUnit = TimeUnit.SECONDS): Long
 
     /**
      * Set the favorite property if supported.
