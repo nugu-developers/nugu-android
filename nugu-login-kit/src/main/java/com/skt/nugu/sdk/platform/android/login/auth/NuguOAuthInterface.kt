@@ -34,9 +34,9 @@ interface NuguOAuthInterface {
     fun setOptions(options: Any)
 
     /**
-     * Immediately logout the authorization.
+     * Immediately revoke the authorization.
      */
-    fun logout(listener: OnLogoutListener)
+    fun revoke(listener: OnRevokeListener)
 
     /**
      * Helper function to extract out AuthCode from the getIntent for login.
@@ -50,6 +50,11 @@ interface NuguOAuthInterface {
      */
     fun getLoginIntent(): Any
 
+    /**
+     * Gets an Intent to start the member change for startActivity
+     * @return The Intent used for start the member change.
+     */
+    fun getAccountInfoIntent(loginId:String): Any
     /**
      * Start a login with browser. Only Type1
      * @param activity The activity making the call.
@@ -79,6 +84,12 @@ interface NuguOAuthInterface {
      * @param listener Listener to receive result.
      */
     fun loginWithAuthenticationCode(code: String, listener: OnLoginListener)
+
+    /**
+     * request me api
+     * @param listener Listener to receive result.
+     */
+    fun requestMe(listener: OnMeResponseListener)
 
     /**
      * On login actions listener
@@ -114,7 +125,7 @@ interface NuguOAuthInterface {
     /**
      * On Revoke actions listener
      */
-    interface OnLogoutListener {
+    interface OnRevokeListener {
         /**
          * Listener called when a deviceAuthorization completes successfully.
          */
@@ -122,6 +133,22 @@ interface NuguOAuthInterface {
 
         /**
          * Listener called when a deviceAuthorization fails
+         * @param error the NuguOAuthError
+         */
+        fun onError(error: NuguOAuthError)
+    }
+
+    /**
+     * On [requestMe] actions listener
+     */
+    interface OnMeResponseListener {
+        /**
+         * Listener called when a request completes successfully.
+         */
+        fun onSuccess(response: MeResponse)
+
+        /**
+         * Listener called when a request fails
          * @param error the NuguOAuthError
          */
         fun onError(error: NuguOAuthError)

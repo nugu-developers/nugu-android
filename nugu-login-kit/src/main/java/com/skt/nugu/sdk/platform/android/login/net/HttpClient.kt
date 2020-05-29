@@ -27,34 +27,28 @@ class HttpClient(private val baseUrl: String) {
     /**
      * Returns a [HttpsURLConnection] instance
      */
-    private fun getConnection(uri: String, headers: Headers?) : HttpsURLConnection{
+    private fun getConnection(uri: String, method: String, headers: Headers? = null) : HttpsURLConnection{
         val connection = URL(uri).openConnection() as HttpsURLConnection
         connection.hostnameVerifier = HostnameVerifier { _, session ->
             HttpsURLConnection.getDefaultHostnameVerifier().run {
                 verify(Uri.parse(baseUrl).host, session)
             }
         }
-        connection.requestMethod = "POST"
+        connection.requestMethod = method
         connection.instanceFollowRedirects = false
+        connection.useCaches = false
+        connection.readTimeout = 10 * 1000
+        connection.connectTimeout = 10 * 1000
         connection.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded")
         connection.setRequestProperty( "charset", "utf-8")
         connection.setRequestProperty("Accept", "application/json")
         headers?.let {
             for (i in 0 until it.size()) {
                 connection.setRequestProperty( headers.name(i),  headers.value(i))
+
             }
         }
-        connection.useCaches = false
-        connection.readTimeout = 10 * 1000
-        connection.connectTimeout = 10 * 1000
-        connection.doOutput = true
-        connection.doInput = true
         return connection
-    }
-
-    fun newCall(uri: String, headers: Headers, form: FormEncodingBuilder): Response {
-        val connection = getConnection(uri, headers)
-        return newCall(connection, form)
     }
 
     /**
@@ -65,18 +59,20 @@ class HttpClient(private val baseUrl: String) {
      *     fail during an exchange, it is possible that the remote server
      *     accepted the request before the failure.
      */
-    fun newCall(uri: String, form: FormEncodingBuilder): Response {
-        val connection = getConnection(uri, null)
-        return newCall(connection, form)
+    fun newCall(request: Request): Response {
+        val connection = getConnection(request.uri, request.method, request.headers)
+        return newCall(connection, request.form)
     }
+
 
     private fun newCall(connection: HttpsURLConnection, form: FormEncodingBuilder): Response {
         try {
-            connection.connect()
-            DataOutputStream(connection.outputStream).apply {
-                writeBytes(form.toString())
-                flush()
-                close()
+            if(connection.requestMethod == "POST") {
+                DataOutputStream(connection.outputStream).apply {
+                    writeBytes(form.toString())
+                    flush()
+                    close()
+                }
             }
 
             return when(connection.responseCode) {

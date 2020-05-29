@@ -30,7 +30,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnLoginListener as OnLoginListener
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnDeviceAuthorizationListener as OnDeviceAuthorizationListener
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnLogoutListener as OnLogoutListener
 
 /**
  * NuguOAuth provides an implementation of the NuguOAuthInterface
@@ -109,7 +108,7 @@ class NuguOAuth private constructor(
 
     private var onceLoginListener: OnceLoginListener? = null
 
-    private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize" + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s"
+    private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize"
 
     inner class OnceLoginListener(val realListener : OnLoginListener) : OnLoginListener {
         private var called = false
@@ -162,24 +161,35 @@ class NuguOAuth private constructor(
 
 
     /**
-     * Executes logout(Disconnect) the device in a thread.
+     * Executes revoke the device in a thread.
      */
-    override fun logout(listener: OnLogoutListener) {
-        Logger.d(TAG, "[logout]")
+    override fun revoke(listener: NuguOAuthInterface.OnRevokeListener) {
+        Logger.d(TAG, "[revoke]")
+
+        checkClientId()
+        checkClientSecret()
+
         executor.submit {
+            runCatching {
+                client.handleRevoke()
+            }.onSuccess {
+                clearAuthorization()
+                listener.onSuccess()
+            }.onFailure {
+                listener.onError(NuguOAuthError(it))
+            }
+        }
+    }
 
-            checkClientId()
-            checkClientSecret()
-
-            executor.submit {
-                runCatching {
-                    client.handleRevoke()
-                }.onSuccess {
-                    clearAuthorization()
-                    listener.onSuccess()
-                }.onFailure {
-                    listener.onError(NuguOAuthError(it))
-                }
+    override fun requestMe(listener: NuguOAuthInterface.OnMeResponseListener) {
+        Logger.d(TAG, "[requestMe]")
+        executor.submit {
+            runCatching {
+                client.handleMe()
+            }.onSuccess {
+                listener.onSuccess(it)
+            }.onFailure {
+                listener.onError(NuguOAuthError(it))
             }
         }
     }
@@ -225,7 +235,9 @@ class NuguOAuth private constructor(
         client.getCredentials().tokenType = tokenType
         setAuthState(AuthStateListener.State.REFRESHED)
     }
-
+    /**
+     * Set a [Credentials]
+     */
     fun setCredentials(credential : String) = setCredentials(Credentials.parse(credential))
     fun setCredentials(credential : Credentials) = client.setCredentials(credential)
 
@@ -298,11 +310,22 @@ class NuguOAuth private constructor(
      */
     override fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
         val uriString = String.format(
-            authorizeUrl,
+            authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
             options.clientId,
             options.redirectUri,
             URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
         )
+        data = Uri.parse(uriString)
+    }
+
+    /**
+     * Creating a login intent
+     */
+    override fun getAccountInfoIntent(loginId: String) = Intent(Intent.ACTION_VIEW).apply {
+        val uriString = String.format(
+            authorizeUrl + "?login_id=%s&service_type=%d",
+            loginId,
+            21)
         data = Uri.parse(uriString)
     }
 

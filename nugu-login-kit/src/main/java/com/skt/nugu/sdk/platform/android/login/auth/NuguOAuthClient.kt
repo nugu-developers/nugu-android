@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.platform.android.login.net.HttpClient
 import org.json.JSONObject
 import com.skt.nugu.sdk.platform.android.login.net.FormEncodingBuilder
 import com.skt.nugu.sdk.platform.android.login.net.Headers
+import com.skt.nugu.sdk.platform.android.login.net.Request
 import java.io.IOException
 import kotlin.math.min
 
@@ -110,7 +111,11 @@ internal class NuguOAuthClient(private val baseUrl: String) {
         }
 
         try {
-            val response = client.newCall("$baseUrl/v1/auth/oauth/token", form)
+            val request = Request.Builder(
+                uri = "$baseUrl/v1/auth/oauth/token",
+                form = form
+            ).build()
+            val response = client.newCall(request)
             when (response.code) {
                 HttpURLConnection.HTTP_OK -> {
                     credential = Credentials.parse(response.body)
@@ -201,8 +206,9 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("data", data)
-
-        val response = client.newCall("$baseUrl/v1/auth/oauth/device_authorization", form)
+        val request = Request.Builder(uri = "$baseUrl/v1/auth/oauth/device_authorization",
+            form = form).build()
+        val response = client.newCall(request)
         when (response.code) {
             HttpURLConnection.HTTP_OK -> {
                 DeviceAuthorizationResult.parse(response.body)?.let {
@@ -275,14 +281,19 @@ internal class NuguOAuthClient(private val baseUrl: String) {
         return false
     }
 
-    fun handleMe() : AccountInfo {
+    fun handleMe() : MeResponse {
         val header = Headers()
             .add("authorization", buildAuthorization())
 
-        val response = client.newCall("$baseUrl/v1/auth/oauth/me", header, FormEncodingBuilder())
+        val request = Request.Builder(
+            uri = "$baseUrl/v1/auth/oauth/me",
+            headers = header,
+            method = "GET"
+        ).build()
+        val response = client.newCall(request)
         when (response.code) {
             HttpURLConnection.HTTP_OK -> {
-                return AccountInfo.parse(response.body)
+                return MeResponse.parse(response.body)
             }
             HttpURLConnection.HTTP_UNAUTHORIZED,
             HttpURLConnection.HTTP_BAD_REQUEST -> {
@@ -307,7 +318,11 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("client_secret", options.clientSecret)
             .add("token", getCredentials().accessToken)
 
-        val response = client.newCall("$baseUrl/v1/auth/oauth/revoke", form)
+        val request = Request.Builder(
+            uri = "$baseUrl/v1/auth/oauth/revoke",
+            form = form
+        ).build()
+        val response = client.newCall(request)
         when (response.code) {
             HttpURLConnection.HTTP_OK -> {
                 return

@@ -17,20 +17,24 @@ package com.skt.nugu.sampleapp.activity
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.*
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
+import com.skt.nugu.sdk.platform.android.login.auth.MeResponse
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
-
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
 class SettingsActivity : AppCompatActivity() {
     companion object {
+        private const val TAG = "SettingsActivity"
         fun invokeActivity(context: Context) {
             context.startActivity(Intent(context, SettingsActivity::class.java))
         }
@@ -56,12 +60,20 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<Switch>(R.id.switch_enable_recognition_beep)
     }
 
-    private val buttonLogout : Button by lazy {
-        findViewById<Button>(R.id.btn_logout)
+    private val buttonRevoke : Button by lazy {
+        findViewById<Button>(R.id.btn_revoke)
     }
 
     private val spinnerAuthType: Spinner by lazy {
         findViewById<Spinner>(R.id.spinner_auth_type)
+    }
+
+    private val textLoginId: TextView by lazy {
+        findViewById<TextView>(R.id.text_login_id)
+    }
+
+    private val buttonPrivacy: TextView by lazy {
+        findViewById<TextView>(R.id.text_privacy)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,6 +97,18 @@ class SettingsActivity : AppCompatActivity() {
             spinnerWakeupWord.setSelection(1)
         }
         initBtnListeners()
+
+        NuguOAuth.getClient().requestMe(object : NuguOAuthInterface.OnMeResponseListener{
+            override fun onSuccess(response: MeResponse) {
+                runOnUiThread {
+                    textLoginId.text = response.tid
+                }
+            }
+
+            override fun onError(error: NuguOAuthError) {
+                Log.d(TAG, error.toString())
+            }
+        })
     }
 
     fun initBtnListeners() {
@@ -117,18 +141,33 @@ class SettingsActivity : AppCompatActivity() {
             PreferenceHelper.enableRecognitionBeep(this, isChecked)
         }
 
-        buttonLogout.setOnClickListener {
-            NuguOAuth.getClient().logout(object : NuguOAuthInterface.OnLogoutListener{
+        buttonRevoke.setOnClickListener {
+            NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener{
                 override fun onSuccess() {
                     ClientManager.getClient().shutdown()
                     PreferenceHelper.credentials(this@SettingsActivity,"")
                     finishAffinity()
                 }
-
+                
                 override fun onError(error: NuguOAuthError) {
+                    NuguToast.with(this@SettingsActivity)
+                        .message(R.string.revoke_failed)
+                        .duration(NuguToast.LENGTH_SHORT)
+                        .show()
                 }
             })
+        }
 
+        textLoginId.setOnClickListener {
+            val intent  =  NuguOAuth.getClient().getAccountInfoIntent(textLoginId.text.toString())
+            startActivity(intent)
+        }
+
+        buttonPrivacy.setOnClickListener {
+            val intent  = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse("https://privacy.sktelecom.com/view.do?ctg=policy&name=policy")
+            }
+            startActivity(intent)
         }
     }
 }

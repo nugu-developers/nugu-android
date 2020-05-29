@@ -18,18 +18,8 @@ package com.skt.nugu.sdk.platform.android.login.auth
 import org.json.JSONException
 import org.json.JSONObject
 
-/**
- * The data class to result of [NuguOAuthInterface.startDeviceAuthorization]
- * @param device_code The short-lived code that is used by the device when polling for a session token.
- * @param user_code A one-time user verification code. This is needed to authorize an in-use device.
- * @param verification_uri The URI of the verification page that takes the <code>userCode</code> to authorize the device.
- * @param verification_uri_complete An alternate URL that the client can use to automatically launch a browser. This process skips the manual step in
- * which the user visits the verification page and enters their code.
- * @param expires_in Indicates the number of seconds in which the verification code will become invalid.
- * @param interval Indicates the number of seconds the client must wait between attempts when polling for a session.
- */
 
-data class AccountInfo(
+data class MeResponse(
     val anonymous: Boolean,
     val deviceId: String,
     val tid: String,
@@ -37,15 +27,15 @@ data class AccountInfo(
 ) {
     companion object {
         /**
-         * Parse to a DeviceAuthorizationResult
+         * Parse to a AccountInfo
          * @param string is json format
-         * @return a DeviceAuthorizationResult
+         * @return a AccountInfo
          * @throws JSONException if the parse fails or doesn't yield a JSONObject
          */
         @Throws(JSONException::class)
-        fun parse(string: String): AccountInfo {
+        fun parse(string: String): MeResponse {
             JSONObject(string).apply {
-                return AccountInfo(
+                return MeResponse(
                     anonymous = getBoolean("anonymous"),
                     deviceId = getString("deviceId"),
                     tid = getString("tid"),
