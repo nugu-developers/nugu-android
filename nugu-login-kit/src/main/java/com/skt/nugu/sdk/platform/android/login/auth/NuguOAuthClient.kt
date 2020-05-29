@@ -21,6 +21,7 @@ import java.net.HttpURLConnection
 import com.skt.nugu.sdk.platform.android.login.net.HttpClient
 import org.json.JSONObject
 import com.skt.nugu.sdk.platform.android.login.net.FormEncodingBuilder
+import com.skt.nugu.sdk.platform.android.login.net.Headers
 import java.io.IOException
 import kotlin.math.min
 
@@ -33,12 +34,16 @@ import kotlin.math.min
 internal class NuguOAuthClient(private val baseUrl: String) {
     // The http client
     private val client = HttpClient(baseUrl)
+
     // The current Credentials for the app
     private var credential: Credentials
+
     // The current OAuthOptions
     private var options: NuguOAuthOptions
+
     // Retry attempts
     private var retriesAttempted = 0
+
     /**
      * Enum class of AuthFlowState
      */
@@ -58,8 +63,10 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     companion object {
         private const val TAG = "NuguOAuthClient"
         private const val maxDelayForRetry: Long = 15L * 1000L /*second in ms*/
+
         /** Max number of times a request is retried before failing.  */
         private const val maxRetries = 5
+
         /** The default timeout in milliseconds*/
         private const val initialTimeoutMs = 300L
     }
@@ -94,7 +101,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                     .add("code", code.toString())
                     .add("redirect_uri", options.redirectUri.toString())
             }
-            GrantType.REFRESH_TOKEN-> {
+            GrantType.REFRESH_TOKEN -> {
                 form.add("refresh_token", refreshToken.toString())
             }
             GrantType.DEVICE_CODE -> {
@@ -120,7 +127,11 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                     )
                 }
                 else -> {
-                    if (shouldRetry(retriesAttempted = ++retriesAttempted, statusCode = response.code)) {
+                    if (shouldRetry(
+                            retriesAttempted = ++retriesAttempted,
+                            statusCode = response.code
+                        )
+                    ) {
                         return AuthFlowState.REQUEST_ISSUE_TOKEN
                     }
                     credential.clear()
@@ -132,7 +143,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 }
             }
         } catch (e: Throwable) {
-            if (shouldRetry(retriesAttempted = ++retriesAttempted , throwable = e)) {
+            if (shouldRetry(retriesAttempted = ++retriesAttempted, throwable = e)) {
                 return AuthFlowState.REQUEST_ISSUE_TOKEN
             }
             throw e
@@ -154,7 +165,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
      * @throws Throwable if the token is empty
      */
     private fun handleStopping(): AuthFlowState {
-        if(credential.accessToken.isBlank()) {
+        if (credential.accessToken.isBlank()) {
             throw Throwable("accessToken is empty")
         }
         return AuthFlowState.STOPPING
@@ -185,7 +196,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
         }
     }
 
-    fun handleStartDeviceAuthorization(data: String) : DeviceAuthorizationResult {
+    fun handleStartDeviceAuthorization(data: String): DeviceAuthorizationResult {
         val form = FormEncodingBuilder()
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
@@ -227,6 +238,14 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     }
 
     /**
+     * Set the credential information.
+     * @param credential The credential information to set to
+     */
+    fun setCredentials(credential: Credentials) {
+        this.credential = credential
+    }
+
+    /**
      * Sets the Credentials.
      */
     fun setOptions(opts: NuguOAuthOptions) {
@@ -236,17 +255,82 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     /**
      * Simple retry condition that allows retries up to a certain max number of retries.
      */
-    private fun shouldRetry(retriesAttempted: Int, statusCode: Int? = null, throwable : Throwable? = null): Boolean {
+    private fun shouldRetry(
+        retriesAttempted: Int,
+        statusCode: Int? = null,
+        throwable: Throwable? = null
+    ): Boolean {
         if (retriesAttempted >= maxRetries) {
             return false
         }
         if (statusCode in 400..499 || throwable is IOException) {
             // Exponential back-off.
-            val sleepMillis= min(Math.pow(retriesAttempted.toDouble() + 1 , 2.0).toLong() * initialTimeoutMs, maxDelayForRetry)
+            val sleepMillis = min(
+                Math.pow(retriesAttempted.toDouble() + 1, 2.0).toLong() * initialTimeoutMs,
+                maxDelayForRetry
+            )
             Thread.sleep(sleepMillis)
             return true
         }
         return false
+    }
+
+    fun handleMe() : AccountInfo {
+        val header = Headers()
+            .add("authorization", buildAuthorization())
+
+        val response = client.newCall("$baseUrl/v1/auth/oauth/me", header, FormEncodingBuilder())
+        when (response.code) {
+            HttpURLConnection.HTTP_OK -> {
+                return AccountInfo.parse(response.body)
+            }
+            HttpURLConnection.HTTP_UNAUTHORIZED,
+            HttpURLConnection.HTTP_BAD_REQUEST -> {
+                val body = JSONObject(response.body)
+                throw BaseException.UnAuthenticatedException(
+                    error = body.get("error").toString(),
+                    message = body.get("error_description").toString()
+                )
+            }
+            else -> {
+                throw BaseException.HttpErrorException(
+                    response.code,
+                    response.body
+                )
+            }
+        }
+    }
+
+    fun handleRevoke() {
+        val form = FormEncodingBuilder()
+            .add("client_id", options.clientId)
+            .add("client_secret", options.clientSecret)
+            .add("token", getCredentials().accessToken)
+
+        val response = client.newCall("$baseUrl/v1/auth/oauth/revoke", form)
+        when (response.code) {
+            HttpURLConnection.HTTP_OK -> {
+                return
+            }
+            HttpURLConnection.HTTP_UNAUTHORIZED,
+            HttpURLConnection.HTTP_BAD_REQUEST -> {
+                val body = JSONObject(response.body)
+                throw BaseException.UnAuthenticatedException(
+                    error = body.get("error").toString(),
+                    message = body.get("error_description").toString()
+                )
+            }
+            else -> {
+                throw BaseException.HttpErrorException(
+                    response.code,
+                    response.body
+                )
+            }
+        }
+    }
+
+    fun buildAuthorization(): String {
+        return getCredentials().tokenType + " " + getCredentials().accessToken
     }
 }
 

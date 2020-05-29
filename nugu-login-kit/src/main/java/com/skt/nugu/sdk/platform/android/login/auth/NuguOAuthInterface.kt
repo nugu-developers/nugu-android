@@ -36,7 +36,7 @@ interface NuguOAuthInterface {
     /**
      * Immediately logout the authorization.
      */
-    fun logout()
+    fun logout(listener: OnLogoutListener)
 
     /**
      * Helper function to extract out AuthCode from the getIntent for login.
@@ -111,7 +111,21 @@ interface NuguOAuthInterface {
          */
         fun onError(error: NuguOAuthError)
     }
+    /**
+     * On Revoke actions listener
+     */
+    interface OnLogoutListener {
+        /**
+         * Listener called when a deviceAuthorization completes successfully.
+         */
+        fun onSuccess()
 
+        /**
+         * Listener called when a deviceAuthorization fails
+         * @param error the NuguOAuthError
+         */
+        fun onError(error: NuguOAuthError)
+    }
     /**
      * Login with device_code to issue tokens
      * @param code The short-lived code that is used by the device when polling for a session token.

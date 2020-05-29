@@ -18,10 +18,7 @@ package com.skt.nugu.sdk.platform.android.login.net
 import android.net.Uri
 import java.io.*
 import java.net.URL
-import java.net.UnknownHostException
 import javax.net.ssl.*
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 
 /**
  * Provide a base class for http client
@@ -30,7 +27,7 @@ class HttpClient(private val baseUrl: String) {
     /**
      * Returns a [HttpsURLConnection] instance
      */
-    private fun getConnection(uri: String) : HttpsURLConnection{
+    private fun getConnection(uri: String, headers: Headers?) : HttpsURLConnection{
         val connection = URL(uri).openConnection() as HttpsURLConnection
         connection.hostnameVerifier = HostnameVerifier { _, session ->
             HttpsURLConnection.getDefaultHostnameVerifier().run {
@@ -42,12 +39,22 @@ class HttpClient(private val baseUrl: String) {
         connection.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded")
         connection.setRequestProperty( "charset", "utf-8")
         connection.setRequestProperty("Accept", "application/json")
+        headers?.let {
+            for (i in 0 until it.size()) {
+                connection.setRequestProperty( headers.name(i),  headers.value(i))
+            }
+        }
         connection.useCaches = false
         connection.readTimeout = 10 * 1000
         connection.connectTimeout = 10 * 1000
         connection.doOutput = true
         connection.doInput = true
         return connection
+    }
+
+    fun newCall(uri: String, headers: Headers, form: FormEncodingBuilder): Response {
+        val connection = getConnection(uri, headers)
+        return newCall(connection, form)
     }
 
     /**
@@ -59,10 +66,13 @@ class HttpClient(private val baseUrl: String) {
      *     accepted the request before the failure.
      */
     fun newCall(uri: String, form: FormEncodingBuilder): Response {
-        val connection = getConnection(uri)
+        val connection = getConnection(uri, null)
+        return newCall(connection, form)
+    }
+
+    private fun newCall(connection: HttpsURLConnection, form: FormEncodingBuilder): Response {
         try {
             connection.connect()
-
             DataOutputStream(connection.outputStream).apply {
                 writeBytes(form.toString())
                 flush()

@@ -25,6 +25,8 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
 
 
 class SettingsActivity : AppCompatActivity() {
@@ -116,10 +118,17 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         buttonLogout.setOnClickListener {
-            NuguOAuth.getClient().logout()
-            ClientManager.getClient().shutdown()
-            PreferenceHelper.credentials(this@SettingsActivity,"")
-            finishAffinity()
+            NuguOAuth.getClient().logout(object : NuguOAuthInterface.OnLogoutListener{
+                override fun onSuccess() {
+                    ClientManager.getClient().shutdown()
+                    PreferenceHelper.credentials(this@SettingsActivity,"")
+                    finishAffinity()
+                }
+
+                override fun onError(error: NuguOAuthError) {
+                }
+            })
+
         }
     }
 }
