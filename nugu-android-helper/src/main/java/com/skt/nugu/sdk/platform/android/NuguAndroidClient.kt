@@ -57,7 +57,6 @@ import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
 import com.skt.nugu.sdk.platform.android.battery.AndroidBatteryStatusProvider
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
@@ -76,6 +75,7 @@ import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -682,6 +682,12 @@ class NuguAndroidClient private constructor(
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
         client.getSdkContainer().getDialogSessionManager().addListener(dialogUXStateAggregator)
         client.getSdkContainer().getDialogSessionManager().addListener(dialogChannelFocusHolderManager)
+
+        val osContextProvider = object : OsContextProvider() {
+            override fun getType(): Type = Type.ANDROID
+        }
+
+        client.setStateProvider(osContextProvider.namespaceAndName, osContextProvider)
     }
 
     override fun connect() {
