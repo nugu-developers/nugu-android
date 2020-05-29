@@ -1,10 +1,9 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
-import android.content.res.Resources
+import android.content.Context
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import com.skt.nugu.sdk.platform.android.ux.R
@@ -14,7 +13,7 @@ import com.skt.nugu.sdk.platform.android.ux.R
  * Wrapper class to customise android.widget.Toast
  * @param view is parent view
  */
-class NuguToast(val parentView: ViewGroup) {
+class NuguToast(val context: Context) {
     /**
      * Companion objects
      */
@@ -31,8 +30,8 @@ class NuguToast(val parentView: ViewGroup) {
         /**
          * Returns a new [NuguToast] on this builder.
          * */
-        fun with(view: ViewGroup): NuguToast {
-            return NuguToast(view)
+        fun with(context: Context): NuguToast {
+            return NuguToast(context)
         }
     }
 
@@ -51,7 +50,7 @@ class NuguToast(val parentView: ViewGroup) {
      * Set the message to be displayed
      */
     fun message(resId: Int): NuguToast {
-        this.message = parentView.resources.getString(resId)
+        this.message = context.resources.getString(resId)
         return this
     }
     /**
@@ -81,7 +80,7 @@ class NuguToast(val parentView: ViewGroup) {
      * Show the toast.
      */
     fun show() {
-        val toast = Toast(parentView.context.applicationContext)
+        val toast = Toast(context.applicationContext)
         toast.setGravity(Gravity.BOTTOM or Gravity.FILL_HORIZONTAL, 0, yOffset)
         toast.duration = duration
         toast.view = makeContentView()
@@ -91,7 +90,7 @@ class NuguToast(val parentView: ViewGroup) {
      * Set the toast content to an explicit view
      */
     private fun makeContentView() : View {
-        val contentView = LayoutInflater.from(parentView.context).inflate(R.layout.nugu_toast_view, parentView, false)
+        val contentView = LayoutInflater.from(context).inflate(R.layout.nugu_toast_view, null)
         contentView.findViewById<TextView>(R.id.message).text = message
         return contentView
     }

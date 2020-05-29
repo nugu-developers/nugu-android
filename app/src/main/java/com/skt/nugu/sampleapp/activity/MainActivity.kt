@@ -273,10 +273,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH -> {
                     if (VolumeUtils.isMute(this)) {
                         runOnUiThread {
-                            NuguToast.with(findViewById(R.id.drawer_layout))
+                            NuguToast.with(this)
                                 .message(R.string.volume_mute)
                                 .yOffset(findViewById<FrameLayout>(R.id.fl_bottom_sheet).height)
-                                .duration(NuguSnackbar.LENGTH_SHORT)
+                                .duration(NuguToast.LENGTH_SHORT)
                                 .show()
                         }
                     }
