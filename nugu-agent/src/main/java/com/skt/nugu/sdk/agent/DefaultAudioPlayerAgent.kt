@@ -786,7 +786,16 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    override fun getOffset(): Long = getOffsetInMilliseconds() / 1000L
+    override fun getOffset(timeUnit: com.skt.nugu.sdk.agent.util.TimeUnit): Long {
+        return when(timeUnit) {
+            com.skt.nugu.sdk.agent.util.TimeUnit.MILLISECONDS -> {
+                getOffsetInMilliseconds()
+            }
+            com.skt.nugu.sdk.agent.util.TimeUnit.SECONDS -> {
+                getOffsetInMilliseconds() / 1000L
+            }
+        }
+    }
 
     private fun getOffsetInMilliseconds(): Long {
         if (!sourceId.isError()) {
