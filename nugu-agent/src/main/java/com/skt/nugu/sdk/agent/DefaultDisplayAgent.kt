@@ -130,10 +130,8 @@ class DefaultDisplayAgent(
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private var renderer: DisplayAgentInterface.Renderer? = null
 
-    private var lastUpdatedContext: DisplayContext? = null
-
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         contextLayerTimer?.apply {
             EnumSet.allOf(DisplayAgentInterface.ContextLayer::class.java).forEach {
                 put(it, DisplayTimer(TAG))
@@ -387,32 +385,48 @@ class DefaultDisplayAgent(
         pendingCloseSucceededEvents[closeTargetTemplateDirective] = listener
     }
 
+    internal data class StateContext(private val displayContext: DisplayContext): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            displayContext.playServiceId?.let {
+                addProperty("playServiceId", it)
+            }
+            displayContext.token?.let {
+                addProperty("token", it)
+            }
+            displayContext.focusedItemToken?.let {
+                addProperty("focusedItemToken", it)
+            }
+            displayContext.visibleTokenList?.let {
+                add("visibleTokenList", JsonArray().apply {
+                    it.forEach { token ->
+                        add(token)
+                    }
+                })
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
         executor.submit {
-            val info = findHighestLayerFrom(currentInfo)
-            val prevContext = lastUpdatedContext
-            val currentContext = if(prevContext == null) {
-                DisplayContext.EMPTY_CONTEXT
-            } else {
-                createDisplayContext(info)
-            }
-            lastUpdatedContext = currentContext
-
-            val strContext = if(prevContext == currentContext) {
-                Logger.d(TAG, "[provideState] skip update")
-                null
-            } else {
-                Logger.d(TAG, "[provideState] do update")
-                buildContext(currentContext)
-            }
+            val displayContext = createDisplayContext(findHighestLayerFrom(currentInfo))
 
             contextSetter.setState(
                 namespaceAndName,
-                strContext,
+                StateContext(displayContext),
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
@@ -428,32 +442,6 @@ class DefaultDisplayAgent(
             }
         }
     }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty(
-            "version",
-            VERSION.toString()
-        )
-    }
-
-    private fun buildContext(info: DisplayContext): String = buildCompactContext().apply {
-        info.playServiceId?.let {
-            addProperty("playServiceId", it)
-        }
-        info.token?.let {
-            addProperty("token", it)
-        }
-        info.focusedItemToken?.let {
-            addProperty("focusedItemToken", it)
-        }
-        info.visibleTokenList?.let {
-            add("visibleTokenList", JsonArray().apply {
-                it.forEach { token ->
-                    add(token)
-                }
-            })
-        }
-    }.toString()
 
     override fun controlFocus(playServiceId: String, direction: Direction): Boolean {
         val future: Future<Boolean> = executor.submit(Callable {

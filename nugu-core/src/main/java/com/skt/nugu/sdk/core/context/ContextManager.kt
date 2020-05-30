@@ -32,10 +32,14 @@ class ContextManager : ContextManagerInterface {
 
     private data class StateInfo(
         var stateProvider: ContextStateProvider?,
-        var compactState: String? = null,
-        var fullState: String = "",
-        var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS
+        var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS,
+        var stateContext: CachedStateContext? = null
     )
+
+    private data class CachedStateContext(val delegate: ContextState) : ContextState by delegate {
+        val fullStateJsonString = toFullJsonString()
+        val compactStateJsonString = toCompactJsonString()
+    }
 
     private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
     private val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
@@ -162,7 +166,9 @@ class ContextManager : ContextManagerInterface {
             append('{')
             var valueIndex = 0
             namespaceEntry.value.forEach {
-                if (it.value.fullState.isEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
+                val fullState = it.value.stateContext?.fullStateJsonString
+                val compactState = it.value.stateContext?.compactStateJsonString
+                if (fullState.isNullOrEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
                     // pass
                 } else {
                     if (valueIndex > 0) {
@@ -171,10 +177,10 @@ class ContextManager : ContextManagerInterface {
                     valueIndex++
 
                     append("\"${it.key}\":")
-                    if (namespaceAndName == null || (namespaceAndName.namespace == namespaceEntry.key && namespaceAndName.name == it.key) || it.value.compactState == null) {
-                        append(it.value.fullState)
+                    if (namespaceAndName == null || (namespaceAndName.namespace == namespaceEntry.key && namespaceAndName.name == it.key) || compactState == null) {
+                        append(fullState)
                     } else {
-                        append(it.value.compactState)
+                        append(compactState)
                     }
                 }
             }
@@ -185,8 +191,7 @@ class ContextManager : ContextManagerInterface {
 
     override fun setStateProvider(
         namespaceAndName: NamespaceAndName,
-        stateProvider: ContextStateProvider?,
-        compactState: String?
+        stateProvider: ContextStateProvider?
     ) {
         stateProviderLock.withLock {
             if (stateProvider == null) {
@@ -195,10 +200,9 @@ class ContextManager : ContextManagerInterface {
             } else {
                 val stateInfo = namespaceNameToStateInfo[namespaceAndName]
                 if (stateInfo == null) {
-                    createNewStateInfo(namespaceAndName, StateInfo(stateProvider, compactState))
+                    createNewStateInfo(namespaceAndName, StateInfo(stateProvider))
                 } else {
                     stateInfo.stateProvider = stateProvider
-                    stateInfo.compactState = compactState
                 }
             }
         }
@@ -216,31 +220,25 @@ class ContextManager : ContextManagerInterface {
 
     override fun setState(
         namespaceAndName: NamespaceAndName,
-        jsonState: String?,
+        state: ContextState,
         refreshPolicy: StateRefreshPolicy,
         stateRequestToken: Int
     ): ContextSetterInterface.SetStateResult {
         stateProviderLock.withLock {
-            if(jsonState == null) {
-                Logger.d(
-                    TAG,
-                    "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, currentState: ${namespaceNameToStateInfo[namespaceAndName]?.fullState}, policy: $refreshPolicy, $stateRequestToken"
-                )
-            } else {
-                Logger.d(
-                    TAG,
-                    "[setState] namespaceAndName: $namespaceAndName, state: $jsonState, policy: $refreshPolicy, $stateRequestToken"
-                )
-            }
+            Logger.d(
+                TAG,
+                "[setState] namespaceAndName: $namespaceAndName, state: $state, policy: $refreshPolicy, $stateRequestToken"
+            )
+
             if (0 == stateRequestToken) {
-                return updateStateLocked(namespaceAndName, jsonState, refreshPolicy)
+                return updateStateLocked(namespaceAndName, state, refreshPolicy)
             }
 
             if (stateRequestToken != this.stateRequestToken) {
                 return ContextSetterInterface.SetStateResult.STATE_TOKEN_OUTDATED
             }
 
-            val status = updateStateLocked(namespaceAndName, jsonState, refreshPolicy)
+            val status = updateStateLocked(namespaceAndName, state, refreshPolicy)
             if (ContextSetterInterface.SetStateResult.SUCCESS == status) {
                 pendingOnStateProviders.remove(namespaceAndName)
 
@@ -255,9 +253,10 @@ class ContextManager : ContextManagerInterface {
 
     private fun updateStateLocked(
         namespaceAndName: NamespaceAndName,
-        jsonState: String?,
+        state: ContextState,
         refreshPolicy: StateRefreshPolicy
     ): ContextSetterInterface.SetStateResult {
+        Logger.d(TAG, "[updateStateLocked] $namespaceAndName, $state, $refreshPolicy")
         val stateInfo = namespaceNameToStateInfo[namespaceAndName]
 
         return if (stateInfo == null) {
@@ -266,16 +265,16 @@ class ContextManager : ContextManagerInterface {
                     ContextSetterInterface.SetStateResult.STATE_PROVIDER_NOT_REGISTERED
                 }
                 StateRefreshPolicy.NEVER -> {
-                    jsonState?.let {
-                        createNewStateInfo(namespaceAndName, StateInfo(null, null, jsonState, refreshPolicy))
-                    }
+                    createNewStateInfo(namespaceAndName, StateInfo(null, refreshPolicy, CachedStateContext(state)))
                     ContextSetterInterface.SetStateResult.SUCCESS
                 }
             }
         } else {
-            jsonState?.let {
-                // only update when not null
-                stateInfo.fullState = jsonState
+            if(stateInfo.stateContext?.delegate != state) {
+                Logger.d(TAG, "[updateStateLocked] update current: ${stateInfo.stateContext?.delegate}, state: $state")
+                stateInfo.stateContext = CachedStateContext(state)
+            } else {
+                Logger.d(TAG, "[updateStateLocked] skip update(equal stateContext) current: ${stateInfo.stateContext}, state: $state")
             }
             stateInfo.refreshPolicy = refreshPolicy
             ContextSetterInterface.SetStateResult.SUCCESS

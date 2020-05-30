@@ -36,6 +36,7 @@ import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPower
 import com.skt.nugu.sdk.core.interfaces.context.ClientContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
@@ -205,13 +206,17 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 stateRequestToken: Int
             ) {
                 val wakeupWord = if (PreferenceHelper.triggerId(context) == 0) {
-                    "\"아리아\""
+                    "아리아"
                 } else {
-                    "\"팅커벨\""
+                    "팅커벨"
                 }
+
                 contextSetter.setState(
                     namespaceAndName,
-                    wakeupWord,
+                    object: ContextState {
+                        override fun toFullJsonString(): String = "\"$wakeupWord\""
+                        override fun toCompactJsonString(): String = toFullJsonString()
+                    },
                     StateRefreshPolicy.ALWAYS,
                     stateRequestToken
                 )

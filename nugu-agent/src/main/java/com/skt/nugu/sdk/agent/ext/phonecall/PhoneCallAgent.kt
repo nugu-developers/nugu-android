@@ -38,13 +38,41 @@ class PhoneCallAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
     private var state = State.IDLE
-    private var currentContext: Context? = null
+
+    data class StateContext(val context: Context, val state: State) : ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            addProperty("state", state.name)
+            context.intent?.let {
+                addProperty("intent", it.name)
+            }
+            context.callType?.let {
+                addProperty("callType", it.name)
+            }
+            context.candidates?.let {
+                add("candidates", JsonArray().apply {
+                    it.forEach {
+                        add(it.toJson())
+                    }
+                })
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
+
 
     init {
         contextStateProviderRegistry.setStateProvider(
             namespaceAndName,
-            this,
-            buildCompactContext().toString()
+            this
         )
 
         directiveSequencer.apply {
@@ -70,46 +98,13 @@ class PhoneCallAgent(
         client.addOnStateChangeListener(this)
     }
 
-    private fun buildCompactContext(): JsonObject = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
         executor.submit {
-            val context = client.getContext()
-            if (currentContext != context) {
-                val result = contextSetter.setState(namespaceAndName, buildCompactContext().apply {
-                    addProperty("state", state.name)
-                    context.intent?.let {
-                        addProperty("intent", it.name)
-                    }
-                    context.callType?.let {
-                        addProperty("callType", it.name)
-                    }
-                    context.candidates?.let {
-                        add("candidates", JsonArray().apply {
-                            it.forEach {
-                                add(it.toJson())
-                            }
-                        })
-                    }
-                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
-
-                if (result == ContextSetterInterface.SetStateResult.SUCCESS) {
-                    currentContext = context
-                }
-            } else {
-                contextSetter.setState(
-                    namespaceAndName,
-                    null,
-                    StateRefreshPolicy.ALWAYS,
-                    stateRequestToken
-                )
-            }
+            contextSetter.setState(namespaceAndName, StateContext(client.getContext(), state), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
     }
 

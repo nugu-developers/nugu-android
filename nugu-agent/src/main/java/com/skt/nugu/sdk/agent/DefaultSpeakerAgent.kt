@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -61,6 +62,10 @@ class DefaultSpeakerAgent(
         )
 
         const val KEY_PLAY_SERVICE_ID = "playServiceId"
+
+        private fun buildCompactState() = JsonObject().apply {
+            addProperty("version", VERSION.toString())
+        }
     }
 
     internal data class SetVolumePayload(
@@ -88,13 +93,43 @@ class DefaultSpeakerAgent(
         val mute: Boolean?
     )
 
+    internal data class StateContext(private val volumes: Map<Speaker.Type, SpeakerContext>): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactState().apply {
+            add("volumes", JsonArray().apply {
+                volumes.forEach {
+                    add(JsonObject().apply {
+                        addProperty("name", it.key.name)
+                        addProperty("minVolume", it.value.minVolume)
+                        addProperty("maxVolume", it.value.maxVolume)
+                        addProperty("defaultVolumeStep", it.value.defaultVolumeStep)
+
+                        it.value.settings?.apply {
+                            addProperty("volume", volume)
+                            addProperty("muted", mute)
+                        }
+                    })
+                }
+            })
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
+
     private val settingObservers: MutableSet<SpeakerManagerObserver> = HashSet()
     private val speakerMap: MutableMap<Speaker.Type, Speaker> = HashMap()
 
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactState().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     private fun executeSetVolume(
@@ -291,9 +326,6 @@ class DefaultSpeakerAgent(
         var settings: Speaker.SpeakerSettings?
     )
 
-    private val lastUpdatedSpeaker = HashMap<Speaker.Type, SpeakerContext>()
-    private var isFirstContextUpdate = true
-
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -301,72 +333,19 @@ class DefaultSpeakerAgent(
     ) {
         executor.submit {
             Logger.d(TAG, "[provideState]")
-            val changed: Boolean = if(isFirstContextUpdate) {
-                isFirstContextUpdate = false
-
+            val volumes = HashMap<Speaker.Type, SpeakerContext>().apply {
                 speakerMap.forEach {
-                    lastUpdatedSpeaker[it.key] = SpeakerContext(
+                    put(it.key, SpeakerContext(
                         it.value.getMinVolume(),
                         it.value.getMaxVolume(),
                         it.value.getDefaultVolumeStep(),
                         it.value.getSpeakerSettings()
-                    )
-                }
-                true
-            } else {
-                if (speakerMap.keys == lastUpdatedSpeaker.keys) {
-                    var changed = false
-                    speakerMap.forEach { speaker ->
-                        speaker.value.getSpeakerSettings().let { settings ->
-                            lastUpdatedSpeaker[speaker.key].let { updatedSpeaker ->
-                                if (settings != updatedSpeaker?.settings) {
-                                    changed = true
-                                    updatedSpeaker?.settings = settings
-                                }
-                            }
-                        }
-                    }
-                    changed
-                } else {
-                    lastUpdatedSpeaker.clear()
-                    speakerMap.forEach {
-                        lastUpdatedSpeaker[it.key] = SpeakerContext(
-                            it.value.getMinVolume(),
-                            it.value.getMaxVolume(),
-                            it.value.getDefaultVolumeStep(),
-                            it.value.getSpeakerSettings()
-                        )
-                    }
-                    true
+                    ))
                 }
             }
 
-            if(changed) {
-                contextSetter.setState(namespaceAndName, buildCompactState().apply {
-                    add("volumes", JsonArray().apply {
-                        lastUpdatedSpeaker.forEach {
-                            add(JsonObject().apply {
-                                addProperty("name", it.key.name)
-                                addProperty("minVolume", it.value.minVolume)
-                                addProperty("maxVolume", it.value.maxVolume)
-                                addProperty("defaultVolumeStep", it.value.defaultVolumeStep)
-
-                                it.value.settings?.apply {
-                                    addProperty("volume", volume)
-                                    addProperty("muted", mute)
-                                }
-                            })
-                        }
-                    })
-                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
-            } else {
-                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
-            }
+            contextSetter.setState(namespaceAndName, StateContext(volumes), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
-    }
-
-    private fun buildCompactState() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
     }
 
     private fun sendSpeakerEvent(eventName: String, playServiceId: String, referrerDialogRequestId: String) {

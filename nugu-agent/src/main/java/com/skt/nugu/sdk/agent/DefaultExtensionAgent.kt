@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -80,26 +81,34 @@ class DefaultExtensionAgent(
 
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun setClient(client: ExtensionAgentInterface.Client) {
         this.client = client
     }
 
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
-    private fun buildContext(): String = buildCompactContext().apply {
-        client?.getData()?.let {
-            try {
-                add("data", JsonParser.parseString(it).asJsonObject)
-            } catch (th: Throwable) {
-                Logger.e(TAG, "[buildContext] error to create data json object.", th)
+    internal data class StateContext(val data: String?): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
             }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
         }
-    }.toString()
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            data?.let {
+                try {
+                    add("data", JsonParser.parseString(it).asJsonObject)
+                } catch (th: Throwable) {
+                    Logger.e(TAG, "[buildContext] error to create data json object.", th)
+                }
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
@@ -108,7 +117,7 @@ class DefaultExtensionAgent(
     ) {
         contextSetter.setState(
             namespaceAndName,
-            buildContext(),
+            StateContext(client?.getData()),
             StateRefreshPolicy.ALWAYS,
             stateRequestToken
         )

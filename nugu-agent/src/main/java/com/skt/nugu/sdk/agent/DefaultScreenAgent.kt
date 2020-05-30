@@ -24,6 +24,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -77,7 +78,7 @@ class DefaultScreenAgent(
     private var lastUpdatedSettings: Screen.Settings? = null
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -180,28 +181,30 @@ class DefaultScreenAgent(
         return configuration
     }
 
+    internal data class StateContext(val settings: Screen.Settings): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            with(settings) {
+                addProperty("state", if(isOn) "ON" else "OFF")
+                addProperty("brightness", brightness)
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        val settings = screen.getSettings()
-        val context = if(settings == lastUpdatedSettings) {
-            null
-        } else {
-            lastUpdatedSettings = settings
-            buildCompactContext().apply {
-                with(settings) {
-                    addProperty("state", if(isOn) "ON" else "OFF")
-                    addProperty("brightness", brightness)
-                }
-            }.toString()
-        }
-
-        contextSetter.setState(namespaceAndName, context, StateRefreshPolicy.ALWAYS, stateRequestToken)
-    }
-
-    private fun buildCompactContext() =  JsonObject().apply {
-        addProperty("version", VERSION.toString())
+        contextSetter.setState(namespaceAndName, StateContext(screen.getSettings()), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 }

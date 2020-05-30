@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogSessionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -77,7 +78,7 @@ class DefaultTextAgent(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactState().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun addInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {
@@ -171,11 +172,14 @@ class DefaultTextAgent(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        contextSetter.setState(namespaceAndName, buildCompactState().toString(), StateRefreshPolicy.NEVER, stateRequestToken)
-    }
+        contextSetter.setState(namespaceAndName, object: ContextState{
+            val state = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }.toString()
 
-    private fun buildCompactState() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
+            override fun toFullJsonString(): String = state
+            override fun toCompactJsonString(): String = state
+        }, StateRefreshPolicy.NEVER, stateRequestToken)
     }
 
     override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?): String {

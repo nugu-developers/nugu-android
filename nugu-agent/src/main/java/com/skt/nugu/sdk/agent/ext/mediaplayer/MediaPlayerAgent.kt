@@ -55,7 +55,7 @@ class MediaPlayerAgent(
     }
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         directiveSequencer.apply {
             addDirectiveHandler(
                 PlayDirectiveHandler(
@@ -133,12 +133,36 @@ class MediaPlayerAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
 
-    private var currentContext: Context? = null
-
     override fun getInterfaceName(): String = NAMESPACE
 
-    private fun buildCompactContext(): JsonObject = JsonObject().apply {
-        addProperty("version", VERSION.toString())
+    internal data class StateContext(val context: Context): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            with(context) {
+                addProperty("playerActivity", playerActivity.name)
+                toggle?.let {
+                    it.repeat?.let { repeat ->
+                        addProperty("repeat", repeat)
+                    }
+                    it.like?.let { like ->
+                        addProperty("like", like)
+
+                    }
+                    it.shuffle?.let { shuffle ->
+                        addProperty("shuffle", shuffle)
+                    }
+                }
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -147,30 +171,7 @@ class MediaPlayerAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            val context = mediaPlayer.getContext()
-
-            if (currentContext != context) {
-                currentContext = context
-                contextSetter.setState(namespaceAndName, buildCompactContext().apply {
-                    with(context) {
-                        addProperty("playerActivity", playerActivity.name)
-                        toggle?.let {
-                            it.repeat?.let { repeat ->
-                                addProperty("repeat", repeat)
-                            }
-                            it.like?.let { like ->
-                                addProperty("like", like)
-
-                            }
-                            it.shuffle?.let { shuffle ->
-                                addProperty("shuffle", shuffle)
-                            }
-                        }
-                    }
-                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
-            } else {
-                contextSetter.setState(namespaceAndName, null, StateRefreshPolicy.ALWAYS, stateRequestToken)
-            }
+            contextSetter.setState(namespaceAndName, StateContext(mediaPlayer.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
     }
 

@@ -25,10 +25,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -142,7 +139,7 @@ class DefaultSystemAgent(
          */
         directiveSequencer.addDirectiveHandler(this)
         directiveSequencer.addDirectiveHandler(RevokeDirectiveHandler(this))
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
         onUserActive()
     }
 
@@ -189,14 +186,17 @@ class DefaultSystemAgent(
     ) {
         contextSetter.setState(
             namespaceAndName,
-            buildCompactContext().toString(),
+            object: ContextState {
+                val state = JsonObject().apply {
+                    addProperty("version", VERSION.toString())
+                }.toString()
+
+                override fun toFullJsonString(): String = state
+                override fun toCompactJsonString(): String = state
+            },
             StateRefreshPolicy.NEVER,
             stateRequestToken
         )
-    }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
     }
 
     /**
