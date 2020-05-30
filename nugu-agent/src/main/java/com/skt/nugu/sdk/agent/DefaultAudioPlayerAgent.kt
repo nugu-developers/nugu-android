@@ -597,7 +597,7 @@ class DefaultAudioPlayerAgent(
                 }
             }
         })
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
 
         // pause directive handler
         PlaybackDirectiveHandler(
@@ -1286,8 +1286,42 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
+    internal data class StateContext(
+        val playerActivity: AudioPlayerAgentInterface.State,
+        val token: String,
+        val offsetInMilliseconds: Long,
+        val durationInMilliseconds: Long?,
+        val lyricsVisible: Boolean?
+    ) : ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            addProperty("playerActivity", playerActivity.name)
+
+            if(playerActivity != AudioPlayerAgentInterface.State.IDLE) {
+                if(token.isNotBlank()) {
+                    addProperty("token", token)
+                }
+
+                addProperty("offsetInMilliseconds", offsetInMilliseconds)
+
+                if (durationInMilliseconds != null && durationInMilliseconds != MEDIA_PLAYER_INVALID_OFFSET) {
+                    addProperty("durationInMilliseconds", durationInMilliseconds)
+                }
+            }
+
+            lyricsVisible?.let {
+                addProperty("lyricsVisible", it)
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     private fun executeProvideState(
@@ -1302,25 +1336,13 @@ class DefaultAudioPlayerAgent(
                 currentActivity
             }
 
-        contextSetter.setState(namespaceAndName, buildCompactContext().apply {
-            addProperty("playerActivity", playerActivity.name)
-
-            if(playerActivity != AudioPlayerAgentInterface.State.IDLE) {
-                if(token.isNotBlank()) {
-                    addProperty("token", token)
-                }
-
-                addProperty("offsetInMilliseconds", getOffsetInMilliseconds())
-
-                if (duration != null && duration != MEDIA_PLAYER_INVALID_OFFSET) {
-                    addProperty("durationInMilliseconds", duration)
-                }
-            }
-
-            lyricsPresenter?.getVisibility()?.let {
-                addProperty("lyricsVisible", it)
-            }
-        }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
+        contextSetter.setState(namespaceAndName, StateContext(
+            playerActivity,
+            token,
+            getOffsetInMilliseconds(),
+            duration,
+            lyricsPresenter?.getVisibility()
+        ), StateRefreshPolicy.ALWAYS, stateRequestToken)
     }
 
     private fun sendPlaybackStartedEvent() {

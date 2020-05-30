@@ -54,13 +54,11 @@ class MessageAgent(
     override fun getInterfaceName(): String = NAMESPACE
 
     private val executor = Executors.newSingleThreadExecutor()
-    private var currentContext: Context? = null
 
     init {
         contextStateProviderRegistry.setStateProvider(
             namespaceAndName,
-            this,
-            buildCompactContext().toString()
+            this
         )
 
         directiveSequencer.apply {
@@ -88,8 +86,26 @@ class MessageAgent(
         }
     }
 
-    private fun buildCompactContext(): JsonObject = JsonObject().apply {
-        addProperty("version", VERSION.toString())
+    internal data class StateContext(private val context: Context): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            context.candidates?.let {
+                add("candidates", JsonArray().apply {
+                    it.forEach {
+                        add(it.toJsonObject())
+                    }
+                })
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -98,26 +114,7 @@ class MessageAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            val context = client.getContext()
-            if (currentContext != context) {
-                currentContext = context
-                contextSetter.setState(namespaceAndName, buildCompactContext().apply {
-                    context.candidates?.let {
-                        add("candidates", JsonArray().apply {
-                            it.forEach {
-                                add(it.toJsonObject())
-                            }
-                        })
-                    }
-                }.toString(), StateRefreshPolicy.ALWAYS, stateRequestToken)
-            } else {
-                contextSetter.setState(
-                    namespaceAndName,
-                    null,
-                    StateRefreshPolicy.ALWAYS,
-                    stateRequestToken
-                )
-            }
+            contextSetter.setState(namespaceAndName, StateContext(client.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
     }
 

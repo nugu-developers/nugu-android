@@ -21,19 +21,22 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
-import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
-import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
+import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
+import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
-import java.util.HashMap
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
@@ -74,11 +77,11 @@ class DefaultDelegationAgent(
         ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
         // update delegate initial state
         contextManager.setState(
             namespaceAndName,
-            "",
+            StateContext(null),
             StateRefreshPolicy.SOMETIMES,
             0
         )
@@ -141,6 +144,35 @@ class DefaultDelegationAgent(
         return configuration
     }
 
+    internal data class StateContext(private val appContext: DelegationClient.Context?): ContextState {
+        companion object {
+            private fun buildCompactContext() = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE = buildCompactContext().toString()
+        }
+        override fun toFullJsonString(): String {
+            if (appContext == null) {
+                return ""
+            }
+
+            val jsonData = try {
+                JsonParser().parse(appContext.data).asJsonObject
+            } catch (e: Exception) {
+                Logger.e(TAG, "[buildContext] invalid : ${appContext.data}", e)
+                null
+            } ?: return ""
+
+            return buildCompactContext().apply {
+                addProperty("playServiceId", appContext.playServiceId)
+                add("data", jsonData)
+            }.toString()
+        }
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -148,31 +180,11 @@ class DefaultDelegationAgent(
     ) {
         executor.submit {
             contextSetter.setState(
-                namespaceAndName, buildContext(defaultClient.getAppContext())?.toString() ?: "",
-                StateRefreshPolicy.SOMETIMES, stateRequestToken
+                namespaceAndName,
+                StateContext(defaultClient.getAppContext()),
+                StateRefreshPolicy.SOMETIMES,
+                stateRequestToken
             )
-        }
-    }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
-    private fun buildContext(appContext: DelegationClient.Context?): JsonObject? {
-        if (appContext == null) {
-            return null
-        }
-
-        val jsonData = try {
-            JsonParser().parse(appContext.data).asJsonObject
-        } catch (e: Exception) {
-            Logger.e(TAG, "[buildContext] invalid : ${appContext.data}", e)
-            null
-        } ?: return null
-
-        return buildCompactContext().apply {
-            addProperty("playServiceId", appContext.playServiceId)
-            add("data", jsonData)
         }
     }
 

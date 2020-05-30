@@ -19,13 +19,10 @@ import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.location.Location
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -43,12 +40,10 @@ class DefaultLocationAgent(
 
     private var locationProvider: LocationProvider? = null
 
-    private var isFirstContextUpdate = true
-    private var lastUpdatedLocation: Location? = null
     private var contextUpdateLock = ReentrantLock()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun getInterfaceName(): String = NAMESPACE
@@ -57,49 +52,39 @@ class DefaultLocationAgent(
         locationProvider = provider
     }
 
+    internal data class StateContext(private val location: Location?): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            location?.let {
+                add("current", JsonObject().apply {
+                    addProperty("latitude", it.latitude)
+                    addProperty("longitude", it.longitude)
+                })
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
         contextUpdateLock.withLock {
-            val location = locationProvider?.getLocation()
-
-            val context = if (isFirstContextUpdate || location != lastUpdatedLocation) {
-                isFirstContextUpdate = false
-                lastUpdatedLocation = location
-                buildContext(location)
-            } else {
-                null
-            }
-
             contextSetter.setState(
                 namespaceAndName,
-                context,
+                StateContext(locationProvider?.getLocation()),
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
         }
     }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty(
-            "version",
-            VERSION.toString()
-        )
-    }
-
-    private fun buildContext(location: Location?): String = JsonObject().apply {
-        addProperty(
-            "version",
-            VERSION.toString()
-        )
-
-        location?.let {
-            add("current", JsonObject().apply {
-                addProperty("latitude", it.latitude)
-                addProperty("longitude", it.longitude)
-            })
-        }
-    }.toString()
 }

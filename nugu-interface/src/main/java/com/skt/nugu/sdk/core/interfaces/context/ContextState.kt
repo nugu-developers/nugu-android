@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.skt.nugu.sdk.core.interfaces.context
 
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-
-interface ContextSetterInterface {
-    enum class SetStateResult {
-        SUCCESS,
-        STATE_PROVIDER_NOT_REGISTERED,
-        STATE_TOKEN_OUTDATED
-    }
-
-    fun setState(
-        namespaceAndName: NamespaceAndName,
-        state: ContextState,
-        refreshPolicy: StateRefreshPolicy,
-        stateRequestToken: Int = 0
-    ): SetStateResult
+/**
+ * the context state
+ * Recommend to implement equals()/hashCode() for optimal performance.
+ */
+interface ContextState {
+    fun toFullJsonString(): String
+    fun toCompactJsonString(): String
 }

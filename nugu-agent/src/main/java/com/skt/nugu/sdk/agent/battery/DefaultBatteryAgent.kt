@@ -19,10 +19,7 @@ import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
+import com.skt.nugu.sdk.core.interfaces.context.*
 
 class DefaultBatteryAgent(
     private val batteryStatusProvider: BatteryStatusProvider,
@@ -36,14 +33,30 @@ class DefaultBatteryAgent(
     }
 
     init {
-        contextStateProviderRegistry.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
     }
 
-    private var hasBeenContextUpdated = false
-    private var lastUpdatedBatteryLevel: Int? = null
-    private var lastUpdatedCharging: Boolean? = null
-
     override fun getInterfaceName(): String = NAMESPACE
+
+    internal data class StateContext(
+        val level: Int,
+        val charging: Boolean
+    ) : ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            addProperty("level", level)
+            addProperty("charging", charging)
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
@@ -53,28 +66,11 @@ class DefaultBatteryAgent(
         val level = batteryStatusProvider.getBatteryLevel().coerceIn(0, 100)
         val charging = batteryStatusProvider.isCharging() ?: false
 
-        val context = if(lastUpdatedBatteryLevel != level || lastUpdatedCharging != charging || !hasBeenContextUpdated) {
-            hasBeenContextUpdated = true
-            lastUpdatedBatteryLevel = level
-            lastUpdatedCharging = charging
-            buildContext(level, charging)
-        } else {
-            null
-        }
         contextSetter.setState(
             namespaceAndName,
-            context,
+            StateContext(level, charging),
             StateRefreshPolicy.ALWAYS,
             stateRequestToken
         )
     }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
-    private fun buildContext(level: Int, charging: Boolean): String = buildCompactContext().apply {
-        addProperty("level", level)
-        addProperty("charging", charging)
-    }.toString()
 }

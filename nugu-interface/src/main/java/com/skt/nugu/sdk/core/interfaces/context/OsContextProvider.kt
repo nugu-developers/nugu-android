@@ -34,7 +34,10 @@ abstract class OsContextProvider: ClientContextProvider {
     ) {
         contextSetter.setState(
             namespaceAndName,
-            "\"${getType().value}\"",
+            object: ContextState {
+                override fun toFullJsonString(): String = "\"${getType().value}\""
+                override fun toCompactJsonString(): String = toFullJsonString()
+            },
             StateRefreshPolicy.NEVER,
             stateRequestToken
         )

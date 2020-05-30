@@ -32,13 +32,12 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.Listener
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.AVRCPCommand
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
-
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
-
 
 class DefaultBluetoothAgent(
     private val messageSender: MessageSender,
@@ -122,25 +121,50 @@ class DefaultBluetoothAgent(
             NAMESPACE,
             NAME_PREVIOUS
         )
+
+        private fun buildCompactContext() = JsonObject().apply {
+            addProperty("version", VERSION.toString())
+        }
     }
 
-    data class BluetoothContext(
+    data class StateContext(
         val hostController: BluetoothHost?,
         val activeDevice: BluetoothDevice?
-    )
+    ): ContextState {
+        companion object {
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            hostController?.let { hostController ->
+                add("device", JsonObject().apply {
+                    addProperty("name", hostController.name)
+                    addProperty("status", hostController.state.value)
+                })
+            }
+
+            activeDevice?.let { bluetoothDevice ->
+                add("activeDevice", JsonObject().apply {
+                    addProperty("id", bluetoothDevice.address)
+                    addProperty("name", bluetoothDevice.name)
+                    addProperty("streaming", bluetoothDevice.streaming.value)
+                })
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
 
     private val executor = Executors.newSingleThreadExecutor()
 
     private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()
 
-    private var lastUpdatedBluetoothContext: BluetoothContext? = null
-
     init {
         /**
          * Performs initialization.
          */
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     internal data class StartDiscoverableModePayload(
@@ -166,10 +190,6 @@ class DefaultBluetoothAgent(
         return configuration
     }
 
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -178,44 +198,21 @@ class DefaultBluetoothAgent(
         executor.submit {
             if(bluetoothProvider == null) {
                 contextSetter.setState(
-                    namespaceAndName, buildCompactContext().toString(),
+                    namespaceAndName, object: ContextState{
+                        val state = buildCompactContext().toString()
+                        override fun toFullJsonString(): String = state
+                        override fun toCompactJsonString(): String = state
+                    },
                     StateRefreshPolicy.NEVER,
                     stateRequestToken
                 )
             } else {
-                val prevBluetoothContext = lastUpdatedBluetoothContext
-                val currentBluetoothContext = BluetoothContext(
-                    bluetoothProvider.device(),
-                    bluetoothProvider.activeDevice()
-                )
-                lastUpdatedBluetoothContext = currentBluetoothContext
-
-                val context = if(prevBluetoothContext == currentBluetoothContext) {
-                    Logger.d(TAG, "[provideState] skip update")
-                    null
-                } else {
-                    Logger.d(TAG, "[provideState] do update")
-                    buildCompactContext().apply {
-                        currentBluetoothContext.hostController?.let { hostController ->
-                            add("device", JsonObject().apply {
-                                addProperty("name", hostController.name)
-                                addProperty("status", hostController.state.value)
-                            })
-                        }
-
-                        currentBluetoothContext.activeDevice?.let { bluetoothDevice ->
-                            add("activeDevice", JsonObject().apply {
-                                addProperty("id", bluetoothDevice.address)
-                                addProperty("name", bluetoothDevice.name)
-                                addProperty("streaming", bluetoothDevice.streaming.value)
-                            })
-                        }
-                    }.toString()
-                }
-
                 contextSetter.setState(
                     namespaceAndName,
-                    context,
+                    StateContext(
+                        bluetoothProvider.device(),
+                        bluetoothProvider.activeDevice()
+                    ),
                     StateRefreshPolicy.ALWAYS,
                     stateRequestToken
                 )

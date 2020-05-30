@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -62,13 +63,26 @@ class DefaultMicrophoneAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
-    private var lastUpdatedMicSettings: Microphone.Settings? = null
 
+    internal data class StateContext(private val settings: Microphone.Settings?): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            addProperty("micStatus", if(settings?.onOff == true) "ON" else "OFF")
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
 
     init {
         defaultMicrophone?.addListener(this)
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
-        contextManager.setState(namespaceAndName, buildContext(defaultMicrophone?.getSettings()), StateRefreshPolicy.ALWAYS, 0)
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun onSettingsChanged(settings: Microphone.Settings) {
@@ -188,25 +202,9 @@ class DefaultMicrophoneAgent(
     ) {
         executor.submit {
             Logger.d(TAG, "[provideState]")
-            val micSettings = defaultMicrophone?.getSettings()
-
-            val context = if(lastUpdatedMicSettings == micSettings || micSettings == null) {
-                null
-            } else {
-                buildContext(micSettings)
-            }
-
-            contextSetter.setState(namespaceAndName, context, StateRefreshPolicy.ALWAYS, stateRequestToken)
+            contextSetter.setState(namespaceAndName, StateContext(defaultMicrophone?.getSettings()), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
     }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
-    private fun buildContext(micSettings: Microphone.Settings?) = buildCompactContext().apply {
-        addProperty("micStatus", if(micSettings?.onOff == true) "ON" else "OFF")
-    }.toString()
 
     private fun removeDirective(info: DirectiveInfo) {
         removeDirective(info.directive.getMessageId())

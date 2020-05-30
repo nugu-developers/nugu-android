@@ -31,10 +31,7 @@ import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -167,11 +164,6 @@ class DefaultTTSAgent(
         }
     }
 
-    data class Context(
-        val state: TTSAgentInterface.State,
-        val token: String?
-    )
-
     private val executor = Executors.newSingleThreadExecutor()
     private val listeners = HashSet<TTSAgentInterface.Listener>()
     private val requestListenerMap =
@@ -188,8 +180,6 @@ class DefaultTTSAgent(
     //    @GuardedBy("stateLock")
     private var desireState = TTSAgentInterface.State.IDLE
 
-    private var currentContext: Context? = null
-
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
 
@@ -198,7 +188,7 @@ class DefaultTTSAgent(
     init {
         Logger.d(TAG, "[init]")
         speechPlayer.setPlaybackEventListener(this)
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactContext().toString())
+        contextManager.setStateProvider(namespaceAndName, this)
 
         addListener(playContextManager)
     }
@@ -616,6 +606,34 @@ class DefaultTTSAgent(
     private fun releaseSyncImmediately(info: SpeakDirectiveInfo) {
         playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
     }
+    
+    internal data class StateContext(
+        private val state: TTSAgentInterface.State,
+        private val token: String?
+    ): ContextState {
+        companion object {
+            private fun buildCompactContext(): JsonObject = JsonObject().apply {
+                addProperty("version", VERSION.toString())
+            }
+
+            private val COMPACT_STATE: String = buildCompactContext().toString()
+        }
+
+        override fun toFullJsonString(): String = buildCompactContext().apply {
+            addProperty(
+                "ttsActivity", when (state) {
+                    TTSAgentInterface.State.PLAYING -> TTSAgentInterface.State.PLAYING.name
+                    TTSAgentInterface.State.STOPPED -> TTSAgentInterface.State.STOPPED.name
+                    else -> TTSAgentInterface.State.FINISHED.name
+                }
+            )
+            token?.let {
+                addProperty("token", it)
+            }
+        }.toString()
+
+        override fun toCompactJsonString(): String = COMPACT_STATE
+    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
@@ -634,32 +652,12 @@ class DefaultTTSAgent(
                 }
             }
 
-            val context = if(currentContext?.state == currentState && currentContext?.token == currentToken) {
-                null
-            } else {
-                with(Context(currentState, currentToken)) {
-                    currentContext = this
-                    buildContext(this).toString()
-                }
-            }
-
             contextSetter.setState(
                 namespaceAndName,
-                context,
+                StateContext(currentState, currentToken),
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
-        }
-    }
-
-    private fun buildCompactContext() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
-    }
-
-    private fun buildContext(context: Context): JsonObject = buildCompactContext().apply {
-        addProperty("ttsActivity", context.state.name)
-        context.token?.let {
-            addProperty("token", it)
         }
     }
 

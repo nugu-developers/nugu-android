@@ -43,11 +43,18 @@ class PlayStackContextManager(
     override fun getName(): String = PROVIDER_NAME
 
     private val executor = Executors.newSingleThreadExecutor()
-    private var lastUpdatedPlayStack: List<String>? = null
 
+    internal data class StateContext(private val playStack: List<String>): ContextState {
+        override fun toFullJsonString(): String = JsonArray().apply {
+            playStack.forEach {
+                add(it)
+            }
+        }.toString()
+        override fun toCompactJsonString(): String = toFullJsonString()
+    }
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, null)
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun provideState(
@@ -55,34 +62,14 @@ class PlayStackContextManager(
         namespaceAndName: NamespaceAndName,
         stateRequestToken: Int
     ) {
-        val prevPlayStack = lastUpdatedPlayStack
-        val currentPlayStack = buildPlayStack()
-        lastUpdatedPlayStack = currentPlayStack
-
-        val context = if(currentPlayStack == prevPlayStack) {
-            Logger.d(TAG, "[provideState] skip update")
-            null
-        } else {
-            Logger.d(TAG, "[provideState] do update")
-            buildContext(currentPlayStack)
-        }
-
         executor.submit {
             contextSetter.setState(
                 namespaceAndName,
-                context,
+                StateContext(buildPlayStack()),
                 StateRefreshPolicy.ALWAYS,
                 stateRequestToken
             )
         }
-    }
-
-    private fun buildContext(playStack: List<String>): String {
-        return JsonArray().apply {
-            playStack.forEach {
-                add(it)
-            }
-        }.toString()
     }
 
     /**

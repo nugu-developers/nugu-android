@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -66,11 +67,7 @@ class DefaultSoundAgent(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        contextManager.setStateProvider(namespaceAndName, this, buildCompactState().toString())
-    }
-
-    private fun buildCompactState() = JsonObject().apply {
-        addProperty("version", VERSION.toString())
+        contextManager.setStateProvider(namespaceAndName, this)
     }
 
     override fun provideState(
@@ -82,7 +79,14 @@ class DefaultSoundAgent(
             soundProvider.let {
                 contextSetter.setState(
                     namespaceAndName,
-                    buildCompactState().toString(),
+                    object: ContextState {
+                        val state = JsonObject().apply {
+                            addProperty("version", VERSION.toString())
+                        }.toString()
+
+                        override fun toFullJsonString(): String = state
+                        override fun toCompactJsonString(): String = state
+                    },
                     StateRefreshPolicy.NEVER,
                     stateRequestToken
                 )
