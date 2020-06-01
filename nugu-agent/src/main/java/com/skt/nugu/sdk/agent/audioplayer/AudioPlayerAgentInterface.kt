@@ -124,9 +124,9 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     /**
      * Seeks to specified time position
      *
-     * @param msec the offset in milliseconds from the start to seek to
+     * @param offsetInMilliseconds the offset in milliseconds from the start to seek to
      */
-    fun seek(msec: Long)
+    fun seek(offsetInMilliseconds: Long)
 
     /**
      * Gets the current playback offset

@@ -129,7 +129,7 @@ class ProgressTimer {
                         }
                     }
 
-                    var intervalReport = 0L
+                    var intervalReport: Long
                     if (interval != NO_INTERVAL && !isCancelling) {
                         intervalReport = interval * (prevReportedProgress / interval + 1)
                         if(intervalReport in (prevReportedProgress + 1)..lastReportedProgress) {

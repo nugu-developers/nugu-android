@@ -462,7 +462,7 @@ class DefaultAudioPlayerAgent(
                         if(it.directive.getMessageId() == directive.getMessageId()) {
                             waitPlayExecuteInfo = null
                             // preExecute finished (source fetched)
-                            executeHandlePlayDirective(directive)
+                            executeHandlePlayDirective()
                         } else {
                             Logger.d(TAG, "[onExecute::$INNER_TAG] miss matched: ${directive.getMessageId()} : ${it.directive.getMessageId()}")
                         }
@@ -502,7 +502,7 @@ class DefaultAudioPlayerAgent(
             return false
         }
 
-        private fun executeHandlePlayDirective(info: Directive) {
+        private fun executeHandlePlayDirective() {
             Logger.d(
                 TAG,
                 "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $focus"
@@ -550,7 +550,7 @@ class DefaultAudioPlayerAgent(
                 }
                 waitPlayExecuteInfo?.let {
                     waitPlayExecuteInfo = null
-                    executeHandlePlayDirective(it.directive)
+                    executeHandlePlayDirective()
                 }
             }
         }
@@ -778,16 +778,16 @@ class DefaultAudioPlayerAgent(
         onButtonPressed(PlaybackButton.PAUSE)
     }
 
-    override fun seek(millis: Long) {
+    override fun seek(offsetInMilliseconds: Long) {
         executor.submit {
             if (!sourceId.isError()) {
-                mediaPlayer.seekTo(sourceId, millis)
+                mediaPlayer.seekTo(sourceId, offsetInMilliseconds)
             }
         }
     }
 
-    override fun getOffset(timeUnit: com.skt.nugu.sdk.agent.util.TimeUnit): Long {
-        return when(timeUnit) {
+    override fun getOffset(unit: com.skt.nugu.sdk.agent.util.TimeUnit): Long {
+        return when(unit) {
             com.skt.nugu.sdk.agent.util.TimeUnit.MILLISECONDS -> {
                 getOffsetInMilliseconds()
             }

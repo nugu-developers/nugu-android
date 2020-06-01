@@ -69,7 +69,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
 
         // load new frame
         var headerReadTotal = 0
-        var headerReadCount = 0
+        var headerReadCount: Int
         while (run { headerReadCount = attachmentReader.read(buffer, headerReadTotal, HEADER_BUFFER_SIZE - headerReadTotal)
                 headerReadTotal += headerReadCount
                 headerReadTotal } < HEADER_BUFFER_SIZE) {
@@ -88,7 +88,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
         }
 
         var totalCount = 0
-        var readCount = 0
+        var readCount: Int
         while ( run { readCount = attachmentReader.read(buffer, buffer.position(), inputSize - totalCount)
                 totalCount += readCount
                 totalCount }  < inputSize) {

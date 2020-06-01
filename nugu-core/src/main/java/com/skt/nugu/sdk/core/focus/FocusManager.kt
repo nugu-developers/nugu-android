@@ -86,8 +86,7 @@ class FocusManager(
         return executor.submit(Callable<Boolean> {
             releaseChannelHelper(
                 channelToRelease,
-                channelObserver,
-                channelName
+                channelObserver
             )
         })
     }
@@ -132,8 +131,7 @@ class FocusManager(
 
     private fun releaseChannelHelper(
         channelToRelease: Channel,
-        channelObserver: ChannelObserver,
-        channelName: String
+        channelObserver: ChannelObserver
     ): Boolean {
         Logger.d(TAG, "[releaseChannelHelper] ${channelToRelease.name}, ${channelToRelease.state.interfaceName}")
         if (!channelToRelease.doesObserverOwnChannel(channelObserver)) {

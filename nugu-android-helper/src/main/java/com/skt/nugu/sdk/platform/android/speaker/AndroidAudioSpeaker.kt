@@ -54,6 +54,7 @@ abstract class AndroidAudioSpeaker(
             val direction = if (mute) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE
             audioManager.adjustStreamVolume(streamType, direction, getVolumeFlag())
         } else {
+            @Suppress("DEPRECATION")
             audioManager.setStreamMute(streamType, mute)
         }
 

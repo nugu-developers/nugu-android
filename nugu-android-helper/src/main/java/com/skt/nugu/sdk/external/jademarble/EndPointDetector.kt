@@ -98,18 +98,18 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
     }
 
     override fun startDetector(
-        audioInputStreamReader: SharedDataStream.Reader,
+        reader: SharedDataStream.Reader,
         audioFormat: AudioFormat,
         timeoutInSeconds: Int,
         maxDurationInSeconds: Int,
         pauseLengthInMilliseconds: Int
     ): Boolean {
-        Log.d(TAG, "[startDetector] $audioInputStreamReader")
+        Log.d(TAG, "[startDetector] $reader")
         speechStartPosition = null
         speechEndPosition = null
-        this.audioInputStreamReader = audioInputStreamReader
+        this.audioInputStreamReader = reader
         this.audioFormat = audioFormat
-        return audioInputStreamReader.let {
+        return reader.let {
             endPointDetector.start(
                 object : AudioInput {
                     override fun getPosition(): Long = it.position()

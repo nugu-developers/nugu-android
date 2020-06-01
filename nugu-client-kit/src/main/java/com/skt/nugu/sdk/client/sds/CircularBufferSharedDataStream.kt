@@ -179,12 +179,12 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
             }
         }
 
-        override fun read(dstBytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int {
+        override fun read(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int {
             return readInternal(
                 offsetInBytes,
                 sizeInBytes
             ) { readOffset, dstOffsetInBytes, readSize ->
-                System.arraycopy(buffer, readOffset, dstBytes, dstOffsetInBytes, readSize)
+                System.arraycopy(buffer, readOffset, bytes, dstOffsetInBytes, readSize)
             }
         }
 

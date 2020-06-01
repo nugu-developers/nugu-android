@@ -84,6 +84,9 @@ class DialogUXStateAggregator(
 
         executor.submit {
             when (state) {
+                TTSAgentInterface.State.IDLE -> {
+                    // never called.
+                }
                 TTSAgentInterface.State.PLAYING -> {
                     setState(DialogUXStateAggregatorInterface.DialogUXState.SPEAKING)
                 }
@@ -123,6 +126,9 @@ class DialogUXStateAggregator(
                 }
                 ASRAgentInterface.State.BUSY -> {
                     setState(DialogUXStateAggregatorInterface.DialogUXState.THINKING)
+                }
+                ASRAgentInterface.State.EXPECTING_SPEECH -> {
+                    // ignore
                 }
             }
         }
