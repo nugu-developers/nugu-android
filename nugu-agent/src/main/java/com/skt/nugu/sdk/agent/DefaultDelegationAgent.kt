@@ -158,7 +158,7 @@ class DefaultDelegationAgent(
             }
 
             val jsonData = try {
-                JsonParser().parse(appContext.data).asJsonObject
+                JsonParser.parseString(appContext.data).asJsonObject
             } catch (e: Exception) {
                 Logger.e(TAG, "[buildContext] invalid : ${appContext.data}", e)
                 null

@@ -135,6 +135,7 @@ object AndroidAudioFocusInteractor {
                     ).build()
                 )
             } else {
+                @Suppress("DEPRECATION")
                 audioManager.requestAudioFocus(
                     listener,
                     AudioManager.STREAM_MUSIC,
@@ -158,6 +159,7 @@ object AndroidAudioFocusInteractor {
                     ).build()
                 )
             } else {
+                @Suppress("DEPRECATION")
                 audioManager.abandonAudioFocus(listener)
             }
 

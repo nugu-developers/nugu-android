@@ -156,10 +156,10 @@ class DefaultASRAgent(
                 }
             }
 
-            override fun onError(errorType: ASRAgentInterface.ErrorType, dialogRequestId: String) {
-                Logger.w(TAG, "[onError] $errorType, $dialogRequestId")
+            override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
+                Logger.w(TAG, "[onError] $type, $dialogRequestId")
                 onResultListeners.forEach {
-                    it.onError(errorType, dialogRequestId)
+                    it.onError(type, dialogRequestId)
                 }
             }
 

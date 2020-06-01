@@ -54,13 +54,7 @@ class AudioPlayerDirectivePreProcessor :
             return processedDirectives
         }
 
-        val audioItem = playPayload.audioItem
-        if (audioItem == null) {
-            Logger.d(TAG, "[preprocess] no audio item.")
-            return processedDirectives
-        }
-
-        val metaData = audioItem.metaData
+        val metaData = playPayload.audioItem.metaData
         if (metaData == null) {
             Logger.d(TAG, "[preprocess] no metaData.")
             return processedDirectives

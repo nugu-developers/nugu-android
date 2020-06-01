@@ -30,7 +30,7 @@ class ChromeWindowBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
     override fun onInterceptTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent): Boolean {
-        if (event.action === MotionEvent.ACTION_DOWN && state == STATE_EXPANDED) {
+        if (event.action == MotionEvent.ACTION_DOWN && state == STATE_EXPANDED) {
             val outRect = Rect()
             child.getGlobalVisibleRect(outRect)
             if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {

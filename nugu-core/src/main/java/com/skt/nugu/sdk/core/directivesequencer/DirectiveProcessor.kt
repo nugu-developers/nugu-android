@@ -96,11 +96,6 @@ class DirectiveProcessor(
         Logger.d(TAG, "[onDirective] $directive")
         directiveLock.withLock {
             lock.withLock {
-                if (shouldDropDirective(directive)) {
-                    Logger.d(TAG, "[onDirective] drop directive : $directive")
-                    return true
-                }
-
                 directiveBeingPreHandled = directive
             }
 
@@ -124,9 +119,6 @@ class DirectiveProcessor(
             }
         }
     }
-
-    private fun shouldDropDirective(directive: Directive): Boolean = false // for test set to false
-    //directive.getDialogRequestId().isNotEmpty() && directive.getDialogRequestId() != dialogRequestId
 
     private fun scrubDialogRequestIdLocked(dialogRequestId: String) {
         if (dialogRequestId.isEmpty()) {

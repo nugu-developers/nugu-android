@@ -42,7 +42,7 @@ class AndroidMediaPlayer(
     private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
 
     init {
-        player.setOnErrorListener { mp, what, extra ->
+        player.setOnErrorListener { _, what, extra ->
             playerActivity = AudioPlayerAgentInterface.State.STOPPED
             playbackEventListener?.onPlaybackError(
                 currentSourceId,
@@ -51,7 +51,7 @@ class AndroidMediaPlayer(
             )
             true
         }
-        player.setOnBufferingUpdateListener { mp, percent ->
+        player.setOnBufferingUpdateListener { _, _ ->
             bufferEventListener?.onBufferRefilled(currentSourceId)
         }
 
