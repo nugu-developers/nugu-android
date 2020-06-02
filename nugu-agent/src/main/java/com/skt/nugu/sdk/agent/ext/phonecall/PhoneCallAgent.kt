@@ -39,7 +39,7 @@ class PhoneCallAgent(
     private val executor = Executors.newSingleThreadExecutor()
     private var state = State.IDLE
 
-    data class StateContext(val context: Context, val state: State) : ContextState {
+    data class StateContext(val context: Context) : ContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
@@ -49,7 +49,7 @@ class PhoneCallAgent(
         }
 
         override fun toFullJsonString(): String = buildCompactContext().apply {
-            addProperty("state", state.name)
+            addProperty("state", context.state.name)
             context.intent?.let {
                 addProperty("intent", it.name)
             }
@@ -104,7 +104,7 @@ class PhoneCallAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            contextSetter.setState(namespaceAndName, StateContext(client.getContext(), state), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            contextSetter.setState(namespaceAndName, StateContext(client.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
     }
 
