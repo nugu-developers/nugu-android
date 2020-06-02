@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.phonecall.payload
+package com.skt.nugu.sdk.agent.ext.phonecall
 
-import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.ext.phonecall.CallType
-import com.skt.nugu.sdk.agent.ext.phonecall.Person
-
-data class MakeCallPayload(
-    @SerializedName("playServiceId")
-    val playServiceId: String,
-    @SerializedName("recipient")
-    val recipient: Person,
-    @SerializedName("callType")
-    val callType: CallType
-)
+enum class CallType {
+    NORMAL,
+    SPEAKER,
+    VIDEO,
+    CALLAR
+}
