@@ -30,7 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
-class SendCandidatesDirectiveHandler (
+class SendCandidatesDirectiveHandler(
     private val controller: Controller,
     private val messageSender: MessageSender,
     private val contextGetter: ContextGetterInterface
@@ -39,7 +39,8 @@ class SendCandidatesDirectiveHandler (
         private const val NAME_SEND_CANDIDATES = "SendCandidates"
         private const val NAME_CANDIDATES_LISTED = "CandidatesListed"
 
-        private val SEND_CANDIDATES = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_SEND_CANDIDATES)
+        private val SEND_CANDIDATES =
+            NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_SEND_CANDIDATES)
     }
 
     interface Controller {
@@ -59,43 +60,43 @@ class SendCandidatesDirectiveHandler (
         } else {
             info.result.setCompleted()
             val candidates = controller.getCandidateList(payload)
-            if (candidates != null) {
-                contextGetter.getContext(object : IgnoreErrorContextRequestor() {
-                    override fun onContext(jsonContext: String) {
-                        messageSender.sendMessage(
-                            EventMessageRequest.Builder(
-                                jsonContext,
-                                PhoneCallAgent.NAMESPACE,
-                                NAME_CANDIDATES_LISTED,
-                                PhoneCallAgent.VERSION.toString()
-                            ).payload(JsonObject().apply {
-                                addProperty("playServiceId", payload.playServiceId)
-                                addProperty("intent", payload.intent.name)
-                                payload.callType?.let {
-                                    addProperty("callType", it.name)
-                                }
-                                payload.recipient?.let {
-                                    add("recipient", JsonObject().apply {
-                                        it.name?.let {
-                                            addProperty("name", it)
-                                        }
-                                        it.label?.let {
-                                            addProperty("label", it)
-                                        }
-                                    })
-                                }
-                                add("candidates", JsonArray().apply {
-                                    candidates.forEach {
-                                        add(it.toJson())
+            contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
+                    messageSender.sendMessage(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            PhoneCallAgent.NAMESPACE,
+                            NAME_CANDIDATES_LISTED,
+                            PhoneCallAgent.VERSION.toString()
+                        ).payload(JsonObject().apply {
+                            addProperty("playServiceId", payload.playServiceId)
+                            addProperty("intent", payload.intent.name)
+                            payload.callType?.let {
+                                addProperty("callType", it.name)
+                            }
+                            payload.recipient?.let {
+                                add("recipient", JsonObject().apply {
+                                    it.name?.let {
+                                        addProperty("name", it)
+                                    }
+                                    it.label?.let {
+                                        addProperty("label", it)
                                     }
                                 })
-                            }.toString())
-                                .referrerDialogRequestId(info.directive.getDialogRequestId())
-                                .build()
-                        )
-                    }
-                })
-            }
+                            }
+                            candidates?.let {
+                                add("candidates", JsonArray().apply {
+                                    it.forEach { person ->
+                                        add(person.toJson())
+                                    }
+                                })
+                            }
+                        }.toString())
+                            .referrerDialogRequestId(info.directive.getDialogRequestId())
+                            .build()
+                    )
+                }
+            })
         }
     }
 
