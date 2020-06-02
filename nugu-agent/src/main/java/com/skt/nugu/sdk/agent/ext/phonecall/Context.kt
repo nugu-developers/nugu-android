@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.ext.phonecall
 
 data class Context(
+    val state: State,
     val intent: Intent?,
     val callType: CallType?,
     val candidates: Array<Person>?
