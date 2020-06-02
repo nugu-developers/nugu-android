@@ -68,7 +68,6 @@ class PhoneCallAgent(
         override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
-
     init {
         contextStateProviderRegistry.setStateProvider(
             namespaceAndName,
@@ -80,14 +79,16 @@ class PhoneCallAgent(
                 SendCandidatesDirectiveHandler(
                     this@PhoneCallAgent,
                     messageSender,
-                    contextGetter
+                    contextGetter,
+                    namespaceAndName
                 )
             )
             addDirectiveHandler(
                 MakeCallDirectiveHandler(
                     this@PhoneCallAgent,
                     messageSender,
-                    contextGetter
+                    contextGetter,
+                    namespaceAndName
                 )
             )
             addDirectiveHandler(EndCallDirectiveHandler(this@PhoneCallAgent))
@@ -207,7 +208,7 @@ class PhoneCallAgent(
                         .build()
                 )
             }
-        })
+        }, namespaceAndName)
     }
 
     private fun sendCallEndedEvent(
@@ -223,7 +224,7 @@ class PhoneCallAgent(
                         .build()
                 )
             }
-        })
+        }, namespaceAndName)
     }
 
     private fun sendCallEstablishedEvent(
@@ -239,6 +240,6 @@ class PhoneCallAgent(
                         .build()
                 )
             }
-        })
+        }, namespaceAndName)
     }
 }

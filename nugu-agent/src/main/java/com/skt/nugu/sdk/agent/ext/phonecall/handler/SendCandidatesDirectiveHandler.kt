@@ -33,7 +33,8 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 class SendCandidatesDirectiveHandler(
     private val controller: Controller,
     private val messageSender: MessageSender,
-    private val contextGetter: ContextGetterInterface
+    private val contextGetter: ContextGetterInterface,
+    private val namespaceAndName: NamespaceAndName
 ) : AbstractDirectiveHandler() {
     companion object {
         private const val NAME_SEND_CANDIDATES = "SendCandidates"
@@ -96,7 +97,7 @@ class SendCandidatesDirectiveHandler(
                             .build()
                     )
                 }
-            })
+            }, namespaceAndName)
         }
     }
 

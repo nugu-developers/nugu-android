@@ -31,7 +31,8 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 class MakeCallDirectiveHandler(
     private val controller: Controller,
     private val messageSender: MessageSender,
-    private val contextGetter: ContextGetterInterface
+    private val contextGetter: ContextGetterInterface,
+    private val namespaceAndName: NamespaceAndName
 ) : AbstractDirectiveHandler() {
     companion object {
         private const val NAME_MAKE_CALL = "MakeCall"
@@ -90,7 +91,7 @@ class MakeCallDirectiveHandler(
                                     .build()
                             )
                         }
-                    })
+                    }, namespaceAndName)
                 }
             })
         }
