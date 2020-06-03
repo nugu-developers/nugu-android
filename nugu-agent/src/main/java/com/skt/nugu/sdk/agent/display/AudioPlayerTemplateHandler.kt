@@ -83,7 +83,7 @@ class AudioPlayerTemplateHandler(
     ) : PlaySynchronizerInterface.SynchronizeObject
         , SessionManagerInterface.Requester
         , DirectiveInfo by info {
-        var sourceTemplateId = info.directive.getMessageId()
+        var sourceTemplateId: String = payload.playServiceId + ";" + payload.token
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
@@ -101,8 +101,6 @@ class AudioPlayerTemplateHandler(
                 executeCancelUnknownInfo(this, immediate)
             }
         }
-
-        fun getTemplateId(): String = directive.getMessageId()
 
         var playContext: PlayStackManagerInterface.PlayContext? = null
     }
@@ -124,7 +122,7 @@ class AudioPlayerTemplateHandler(
 
     private fun executePreparePendingInfo(info: DirectiveInfo, payload: TemplatePayload) {
         TemplateDirectiveInfo(info, payload).apply {
-            templateDirectiveInfoMap[getTemplateId()] = this
+            templateDirectiveInfoMap[sourceTemplateId] = this
             pendingInfo = this
             playSynchronizer.prepareSync(this)
         }
@@ -133,14 +131,14 @@ class AudioPlayerTemplateHandler(
     private fun executeCancelUnknownInfo(info: DirectiveInfo, force: Boolean) {
         Logger.d(TAG, "[executeCancelUnknownInfo] force: $force")
         val current = currentInfo
-        if (info.directive.getMessageId() == current?.getTemplateId()) {
+        if (info.directive.getMessageId() == current?.directive?.getMessageId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
             renderer?.clear(current.sourceTemplateId, force)
-        } else if (info.directive.getMessageId() == pendingInfo?.getTemplateId()) {
+        } else if (info.directive.getMessageId() == pendingInfo?.directive?.getMessageId()) {
             executeCancelPendingInfo()
         } else {
             templateDirectiveInfoMap[info.directive.getMessageId()]?.let {
-                if(it.getTemplateId() == info.directive.getMessageId()) {
+                if(it.directive.getMessageId() == info.directive.getMessageId()) {
                     Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated")
                     executeCancelInfoInternal(it)
                 } else {
@@ -174,7 +172,7 @@ class AudioPlayerTemplateHandler(
     override fun handleDirective(info: DirectiveInfo) {
         executor.submit {
             val templateInfo = pendingInfo
-            if (templateInfo == null || (info.directive.getMessageId() != templateInfo.getTemplateId())) {
+            if (templateInfo == null || (info.directive.getMessageId() != templateInfo.directive.getMessageId())) {
                 Logger.d(TAG, "[handleDirective] skip, maybe canceled display info")
                 return@submit
             }
@@ -207,7 +205,7 @@ class AudioPlayerTemplateHandler(
     private fun executeRender(info: TemplateDirectiveInfo) {
         val template = info.directive
         val willBeRender = renderer?.render(
-            template.getMessageId(),
+            info.sourceTemplateId,
             "$NAMESPACE.${template.getName()}",
             template.payload,
             info.getDialogRequestId()
@@ -215,7 +213,7 @@ class AudioPlayerTemplateHandler(
         if (!willBeRender) {
             // the renderer denied to render
             setHandlingCompleted(info)
-            templateDirectiveInfoMap.remove(info.directive.getMessageId())
+            templateDirectiveInfoMap.remove(info.sourceTemplateId)
             playSynchronizer.releaseWithoutSync(info)
             clearInfoIfCurrent(info)
         }
@@ -234,7 +232,7 @@ class AudioPlayerTemplateHandler(
     ) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
-                Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
+                Logger.d(TAG, "[onRendered] $templateId")
                 playSynchronizer.startSync(
                     it,
                     object : PlaySynchronizerInterface.OnRequestSyncListener {
@@ -259,7 +257,7 @@ class AudioPlayerTemplateHandler(
     override fun displayCardRenderFailed(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
-                Logger.d(TAG, "[onRenderFailed] ${it.getTemplateId()}")
+                Logger.d(TAG, "[onRenderFailed] $templateId")
                 cleanupInfo(templateId, it)
             }
         }
@@ -268,7 +266,7 @@ class AudioPlayerTemplateHandler(
     override fun displayCardCleared(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
-                Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
+                Logger.d(TAG, "[onCleared] $templateId")
                 cleanupInfo(templateId, it)
             }
         }
@@ -296,7 +294,7 @@ class AudioPlayerTemplateHandler(
 
     private fun clearInfoIfCurrent(info: DirectiveInfo): Boolean {
         Logger.d(TAG, "[clearInfoIfCurrent]")
-        if (currentInfo?.getTemplateId() == info.directive.getMessageId()) {
+        if (currentInfo?.directive?.getMessageId() == info.directive.getMessageId()) {
             currentInfo = null
             return true
         }

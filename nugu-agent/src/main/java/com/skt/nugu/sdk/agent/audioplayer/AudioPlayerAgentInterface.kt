@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
 interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     data class Context(
         val audioItemId: String,
+        val templateId: String,
         val audioItemTemplate: String?,
         val offset: Long,
         val dialogRequestId: String

@@ -44,6 +44,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
         private const val SERVICE_ID = 1
 
         private const val EXTRA_AUDIO_ITEM_ID = "extra_audio_item_id"
+        private const val EXTRA_AUDIO_ITEM_TEMPLATE_ID = "extra_audio_item_template_id"
         private const val EXTRA_AUDIO_ITEM_TEMPLATE = "extra_audio_item_template"
         private const val EXTRA_AUDIO_ITEM_OFFSET = "extra_audio_item_offset"
         private const val EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID = "extra_audio_item_dialog_request_id"
@@ -58,6 +59,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
             val intent = Intent(context.applicationContext, MusicPlayerService::class.java).apply {
                 action = ACTION_START_SERVICE
                 putExtra(EXTRA_AUDIO_ITEM_ID, audioItemContext.audioItemId)
+                putExtra(EXTRA_AUDIO_ITEM_TEMPLATE_ID, audioItemContext.templateId)
                 putExtra(EXTRA_AUDIO_ITEM_TEMPLATE, audioItemContext.audioItemTemplate)
                 putExtra(EXTRA_AUDIO_ITEM_OFFSET, audioItemContext.offset)
                 putExtra(EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID, audioItemContext.dialogRequestId)
@@ -107,6 +109,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
         audioItemContext = with(intent) {
             AudioPlayerAgentInterface.Context(
                 getStringExtra(EXTRA_AUDIO_ITEM_ID),
+                getStringExtra(EXTRA_AUDIO_ITEM_TEMPLATE_ID),
                 getStringExtra(EXTRA_AUDIO_ITEM_TEMPLATE),
                 getLongExtra(EXTRA_AUDIO_ITEM_OFFSET, -1L),
                 getStringExtra(EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID)
