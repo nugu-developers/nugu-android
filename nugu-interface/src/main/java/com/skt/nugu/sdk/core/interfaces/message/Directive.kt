@@ -31,14 +31,6 @@ data class Directive (
     val header: Header,
     val payload: String
 ) {
-    //    private val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-//    private val jsonParser = JsonParser()
-    private val sb = StringBuilder()
-
-    companion object {
-        private const val TAG = "Directive"
-    }
-
     private var attachmentReader: Attachment.Reader? = null
 
     fun getMessageId(): String = header.messageId
@@ -66,19 +58,5 @@ data class Directive (
 //        Logger.d(TAG, "[destroy]")
         attachmentReader?.close()
         attachmentManager?.removeAttachmentIfConsumed(header.messageId)
-    }
-
-    override fun toString(): String {
-        sb.clear()
-        sb.append("{\n")
-        sb.append("\"header\":")
-        sb.append(header)
-//        sb.append(gson.toJson(header))
-        sb.append("\n")
-        sb.append("\"payload\":")
-        sb.append(payload)
-//        sb.append(gson.toJson(jsonParser.parse(payload.toString()).asJsonObject))
-        sb.append("\n}")
-        return sb.toString()
     }
 }
