@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent.ext.phonecall.payload
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.ext.phonecall.CallType
 import com.skt.nugu.sdk.agent.ext.phonecall.Context
 import com.skt.nugu.sdk.agent.ext.phonecall.Person
 
@@ -30,7 +31,7 @@ data class SendCandidatesPayload(
     @SerializedName("recipient")
     val recipient: Recipient?,
     @SerializedName("callType")
-    val callType: Context.CallType?,
+    val callType: CallType?,
     @SerializedName("candidates")
     val candidates: Array<Person>?
 ) {
