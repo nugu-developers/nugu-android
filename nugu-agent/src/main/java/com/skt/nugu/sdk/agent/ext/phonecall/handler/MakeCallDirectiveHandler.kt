@@ -85,7 +85,7 @@ class MakeCallDirectiveHandler(
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("errorCode", errorCode.name)
-                                    addProperty("callType", payload.callType)
+                                    addProperty("callType", payload.callType.name)
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
