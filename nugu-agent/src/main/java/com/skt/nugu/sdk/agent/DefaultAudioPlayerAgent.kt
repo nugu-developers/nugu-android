@@ -898,7 +898,8 @@ class DefaultAudioPlayerAgent(
     private fun createAudioInfoContext(): AudioPlayerAgentInterface.Context? {
         currentItem?.let {
             return AudioPlayerAgentInterface.Context(
-                it.payload.audioItem.stream.token,
+                it.payload.playServiceId+";"+it.payload.audioItem.stream.token,
+                it.payload.playServiceId+";"+it.payload.audioItem.stream.token,
                 it.payload.audioItem.metaData?.template?.toString(),
                 getOffsetInMilliseconds(),
                 it.getDialogRequestId()
