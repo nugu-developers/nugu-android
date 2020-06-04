@@ -79,23 +79,47 @@ class PlayStackContextManager(
      */
     private fun buildPlayStack(): List<String> {
         // use treemap to order (ascending)
-        val playStackMap = TreeMap<Long, String>()
+        val foregroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>()
+        val backgroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>()
 
-        visualPlayStackProvider?.getPlayStack()?.apply {
-            forEach {
-                playStackMap[it.timestamp] = it.playServiceId
+        visualPlayStackProvider?.getPlayStack()?.let { list ->
+            var foundBackgroundPlayStack = false
+
+            list.forEach {
+                if (it.isBackground && !foundBackgroundPlayStack) {
+                    foundBackgroundPlayStack = true
+                }
+
+                if (foundBackgroundPlayStack) {
+                    backgroundPlayStackMap[it] = it.playServiceId
+                } else {
+                    foregroundPlayStackMap[it] = it.playServiceId
+                }
             }
         }
 
-        audioPlayStackProvider.getPlayStack().apply {
-            forEach {
-                playStackMap[it.timestamp] = it.playServiceId
+        audioPlayStackProvider.getPlayStack().let { list ->
+            var foundBackgroundPlayStack = false
+
+            list.forEach {
+                if (it.isBackground && !foundBackgroundPlayStack) {
+                    foundBackgroundPlayStack = true
+                }
+
+                if (foundBackgroundPlayStack) {
+                    backgroundPlayStackMap[it] = it.playServiceId
+                } else {
+                    foregroundPlayStackMap[it] = it.playServiceId
+                }
             }
         }
 
         // remove duplicated value
         val playStackSet = LinkedHashSet<String>().apply {
-            playStackMap.descendingMap().forEach {
+            foregroundPlayStackMap.descendingMap().forEach {
+                add(it.value)
+            }
+            backgroundPlayStackMap.descendingMap().forEach {
                 add(it.value)
             }
         }
@@ -107,7 +131,7 @@ class PlayStackContextManager(
             }
         }
 
-        Logger.d(TAG, "[buildPlayStack] playStack: $playStackList, map: $playStackMap")
+        Logger.d(TAG, "[buildPlayStack] playStack: $playStackList, map: $foregroundPlayStackMap")
 
         return playStackList
     }

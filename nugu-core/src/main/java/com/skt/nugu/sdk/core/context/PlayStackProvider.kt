@@ -21,7 +21,8 @@ package com.skt.nugu.sdk.core.context
 interface PlayStackProvider {
     data class PlayStackContext(
         val playServiceId: String,
-        val timestamp: Long
+        val timestamp: Long,
+        val isBackground: Boolean
     ): Comparable<PlayStackContext> {
         override fun compareTo(other: PlayStackContext): Int {
             val diff = other.timestamp - timestamp

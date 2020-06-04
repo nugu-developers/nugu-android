@@ -57,7 +57,7 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
         val playStackContext = ArrayList<PlayStackProvider.PlayStackContext>()
 
         playStack.forEach {
-            playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.timestamp))
+            playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.timestamp, it.isBackground))
         }
 
         Logger.d(TAG, "[getPlayStack] $playStackContext")

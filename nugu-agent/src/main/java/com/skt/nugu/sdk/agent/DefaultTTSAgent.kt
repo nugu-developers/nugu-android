@@ -971,7 +971,10 @@ class DefaultTTSAgent(
             } else if (state == TTSAgentInterface.State.FINISHED) {
                 currentPlayContext?.let {
                     currentPlayContext =
-                        PlayStackManagerInterface.PlayContext(it.playServiceId, it.timestamp, false)
+                        PlayStackManagerInterface.PlayContext(it.playServiceId, it.timestamp,
+                            isBackground = false,
+                            persistent = true
+                        )
                     playContextValidTimestamp =
                         System.currentTimeMillis() + CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED
                 }
