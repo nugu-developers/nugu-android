@@ -227,6 +227,9 @@ class DefaultTextAgent(
                                     }
                                 })
                             }
+                            asrContext.playServiceId?.let {
+                                addProperty("playServiceId", it)
+                            }
                         })
                     }
                 }

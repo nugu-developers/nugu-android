@@ -24,7 +24,8 @@ interface DialogSessionManagerInterface {
     data class Context(
         val task: String?,
         val sceneId: String?,
-        val sceneText: Array<String>?
+        val sceneText: Array<String>?,
+        val playServiceId: String?
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -38,6 +39,7 @@ interface DialogSessionManagerInterface {
                 if (other.sceneText == null) return false
                 if (!sceneText.contentEquals(other.sceneText)) return false
             } else if (other.sceneText != null) return false
+            if (playServiceId != other.playServiceId) return false
 
             return true
         }
@@ -46,6 +48,7 @@ interface DialogSessionManagerInterface {
             var result = task?.hashCode() ?: 0
             result = 31 * result + (sceneId?.hashCode() ?: 0)
             result = 31 * result + (sceneText?.contentHashCode() ?: 0)
+            result = 31 * result + (playServiceId?.hashCode() ?: 0)
             return result
         }
     }
