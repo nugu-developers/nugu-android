@@ -108,7 +108,7 @@ internal class DeviceGatewayClient(
         }
 
         policy.apply {
-            client = createChannelBuilderWith(authDelegate)
+            client = createChannelBuilderWith(this,authDelegate)
             if(keepConnection) {
                 directivesService =
                     DirectivesService.create(

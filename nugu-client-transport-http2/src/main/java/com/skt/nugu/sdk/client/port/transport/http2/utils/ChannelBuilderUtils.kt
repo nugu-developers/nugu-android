@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2.utils
 
+import com.skt.nugu.sdk.client.port.transport.http2.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.http2.interceptors.ForwardInterceptor
 import com.skt.nugu.sdk.client.port.transport.http2.interceptors.SecurityInterceptor
 import com.skt.nugu.sdk.client.port.transport.http2.interceptors.UserAgentInterceptor
@@ -34,12 +35,15 @@ import java.util.concurrent.TimeUnit
 class ChannelBuilderUtils {
     companion object {
         private const val TAG = "ChannelBuilderUtils"
-
+        private const val defaultTimeout: Long = 1000 * 10L
         /** configures the gRPC channel. */
         fun createChannelBuilderWith(
+            policy: ServerPolicy,
             authDelegate: AuthDelegate
         ): OkHttpClient {
+            val timeout = if(policy.connectionTimeout > 1000) policy.connectionTimeout.toLong() else defaultTimeout
             return OkHttpClient().newBuilder().protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .connectTimeout(timeout, TimeUnit.MILLISECONDS)
                 .writeTimeout(0L, TimeUnit.MINUTES)
                 .readTimeout(0L, TimeUnit.MINUTES)
                 .addInterceptor(
