@@ -15,9 +15,6 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2
 
-import com.skt.nugu.sdk.client.port.transport.http2.NuguServerInfo.Companion.DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST
-import com.skt.nugu.sdk.client.port.transport.http2.NuguServerInfo.Companion.DEFAULT_DEVICE_GATEWAY_SERVER_HOST
-import com.skt.nugu.sdk.client.port.transport.http2.NuguServerInfo.Companion.HTTPS_PORT
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -29,6 +26,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.http2.TransportState.*
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayTransport
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.concurrent.Executors
 
 /**
@@ -36,6 +34,7 @@ import java.util.concurrent.Executors
  */
 internal class HTTP2Transport(
     private val serverInfo: NuguServerInfo,
+    private val dnsLookup: DnsLookup?,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
@@ -48,12 +47,14 @@ internal class HTTP2Transport(
 
         fun create(
             serverInfo: NuguServerInfo,
+            dnsLookup: DnsLookup?,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
         ): Transport {
             return HTTP2Transport(
                 serverInfo,
+                dnsLookup,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -64,7 +65,7 @@ internal class HTTP2Transport(
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayTransport? = null
     private var isHandOff = false
-    private var registryClient = RegistryClient(serverInfo)
+    private var registryClient = RegistryClient(serverInfo, dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
 
     /** @return the detail state **/

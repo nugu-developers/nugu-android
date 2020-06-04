@@ -20,12 +20,16 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 
 /**
  * HTTP2TransportFactory to create [HTTP2Transport].
  * @param option the options for Transport
  */
-class HTTP2TransportFactory(private val serverInfo: NuguServerInfo = NuguServerInfo.Default()) : TransportFactory {
+class HTTP2TransportFactory(
+    private val serverInfo: NuguServerInfo = NuguServerInfo.Default(),
+    private val dnsLookup: DnsLookup? = null
+) : TransportFactory {
 
     override fun createTransport(
         authDelegate: AuthDelegate,
@@ -34,6 +38,7 @@ class HTTP2TransportFactory(private val serverInfo: NuguServerInfo = NuguServerI
     ): Transport {
         return HTTP2Transport.create(
             serverInfo,
+            dnsLookup,
             authDelegate,
             messageConsumer,
             transportObserver

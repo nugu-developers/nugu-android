@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc
 
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
@@ -24,9 +25,13 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 /**
  * TransportFactory to create [GrpcTransport].
  * @param option the options for GrpcTransport
+ * @param dns the DNS service used to lookup IP addresses for hostnames.
  */
 
-class GrpcTransportFactory(private val address: String =  DEFAULT_ADDRESS) : TransportFactory {
+class GrpcTransportFactory(
+    private val address: String = DEFAULT_ADDRESS,
+    private val dnsLookup: DnsLookup? = null
+) : TransportFactory {
     companion object {
         const val DEFAULT_ADDRESS = "reg-http.sktnugu.com"
     }
@@ -40,6 +45,7 @@ class GrpcTransportFactory(private val address: String =  DEFAULT_ADDRESS) : Tra
     ): Transport {
         return GrpcTransport.create(
             address,
+            dnsLookup,
             authDelegate,
             messageConsumer,
             transportObserver
