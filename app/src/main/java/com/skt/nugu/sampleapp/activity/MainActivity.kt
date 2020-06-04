@@ -29,6 +29,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import com.google.gson.Gson
 import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -43,6 +44,7 @@ import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
+import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast

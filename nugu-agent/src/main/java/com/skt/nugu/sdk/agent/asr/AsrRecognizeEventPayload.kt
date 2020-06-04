@@ -82,6 +82,9 @@ data class AsrRecognizeEventPayload(
                         }
                     })
                 }
+                asrContext.playServiceId?.let {
+                    addProperty("playServiceId", it)
+                }
             })
         }
 

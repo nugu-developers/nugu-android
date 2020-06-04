@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.asr
 
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 
 data class ExpectSpeechPayload private constructor(
@@ -33,7 +34,9 @@ data class ExpectSpeechPayload private constructor(
         @SerializedName("sceneId")
         val sceneId: String?,
         @SerializedName("sceneText")
-        val sceneText: Array<String>?
+        val sceneText: Array<String>?,
+        @SerializedName("playServiceId")
+        val playServiceId: String?
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -47,6 +50,7 @@ data class ExpectSpeechPayload private constructor(
                 if (other.sceneText == null) return false
                 if (!sceneText.contentEquals(other.sceneText)) return false
             } else if (other.sceneText != null) return false
+            if (playServiceId != other.playServiceId) return false
 
             return true
         }
@@ -55,9 +59,9 @@ data class ExpectSpeechPayload private constructor(
             var result = task?.hashCode() ?: 0
             result = 31 * result + (sceneId?.hashCode() ?: 0)
             result = 31 * result + (sceneText?.contentHashCode() ?: 0)
+            result = 31 * result + (playServiceId?.hashCode() ?: 0)
             return result
         }
-
     }
 
     override fun equals(other: Any?): Boolean {

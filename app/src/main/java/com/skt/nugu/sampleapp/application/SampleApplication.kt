@@ -22,6 +22,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
 
 class SampleApplication : Application() {
     companion object {
@@ -32,6 +33,7 @@ class SampleApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
         initializeClientManager()
         createNotificationChannel()
     }
