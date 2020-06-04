@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.asr
 
+import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
@@ -64,21 +65,7 @@ data class AsrRecognizeEventPayload(
             })
         }
         asrContext?.let { asrContext ->
-            add("asrContext", JsonObject().apply {
-                asrContext.task?.let {
-                    addProperty("task", it)
-                }
-                asrContext.sceneId?.let {
-                    addProperty("sceneId", it)
-                }
-                asrContext.sceneText?.let { sceneText ->
-                    add("sceneText", JsonArray().apply {
-                        sceneText.forEach {
-                            add(it)
-                        }
-                    })
-                }
-            })
+            add("asrContext", Gson().toJsonTree(asrContext))
         }
 
         language?.let {

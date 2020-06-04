@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent
 
+import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
@@ -204,34 +205,8 @@ class DefaultTextAgent(
                 }
 
                 dialogAttributeStorage.getAttributes()?.let { attrs ->
-                    (attrs["playServiceId"] as String?)?.let {
-                        addProperty("playServiceId", it)
-                    }
-
-                    (attrs["domainTypes"] as Array<String>?)?.let {
-                        add("domainTypes", JsonArray().apply {
-                            it.forEach {
-                                add(it)
-                            }
-                        })
-                    }
-
-                    (attrs["asrContext"] as ExpectSpeechPayload.AsrContext?)?.let { asrContext ->
-                        add("asrContext", JsonObject().apply {
-                            asrContext.task?.let {
-                                addProperty("task", it)
-                            }
-                            asrContext.sceneId?.let {
-                                addProperty("sceneId", it)
-                            }
-                            asrContext.sceneText?.let { sceneText ->
-                                add("sceneText", JsonArray().apply {
-                                    sceneText.forEach {
-                                        add(it)
-                                    }
-                                })
-                            }
-                        })
+                    attrs.forEach {attr ->
+                        add(attr.key, Gson().toJsonTree(attr.value))
                     }
                 }
             }.toString()
