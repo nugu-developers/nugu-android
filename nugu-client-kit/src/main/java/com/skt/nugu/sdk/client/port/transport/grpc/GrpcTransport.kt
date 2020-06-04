@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.concurrent.Executors
 
 /**
@@ -32,6 +33,7 @@ import java.util.concurrent.Executors
  */
 internal class GrpcTransport private constructor(
     address: String,
+    dnsLookup: DnsLookup?,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
@@ -44,12 +46,14 @@ internal class GrpcTransport private constructor(
 
         fun create(
             address: String,
+            dnsLookup: DnsLookup?,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
         ): Transport {
             return GrpcTransport(
                 address,
+                dnsLookup,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -59,7 +63,7 @@ internal class GrpcTransport private constructor(
 
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayClient? = null
-    private var registryClient: RegistryClient = RegistryClient(address = address)
+    private var registryClient: RegistryClient = RegistryClient(address = address, dnsLookup = dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
 
     /** @return the bearer token **/

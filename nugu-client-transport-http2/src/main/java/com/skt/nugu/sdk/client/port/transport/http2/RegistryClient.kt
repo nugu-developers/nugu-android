@@ -27,16 +27,19 @@ import com.skt.nugu.sdk.core.utils.UserAgent
 import okhttp3.*
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 
 /**
  *  Implementation of registry
  **/
 class RegistryClient(
-    private val serverInfo: NuguServerInfo
+    private val serverInfo: NuguServerInfo,
+    private val dnsLookup: DnsLookup?
     ) : Transport {
     companion object {
         private const val TAG = "RegistryClient"
@@ -83,10 +86,17 @@ class RegistryClient(
             return
         }
 
-        val client = OkHttpClient().newBuilder()
+        var client = OkHttpClient().newBuilder()
             .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
-            .protocols(listOf(Protocol.HTTP_1_1))
-            .build()
+            .protocols(listOf(Protocol.HTTP_1_1)).build()
+
+        dnsLookup?.let { customDns ->
+            client = client.newBuilder().dns(object : Dns {
+                override fun lookup(hostname: String): List<InetAddress> {
+                    return customDns.lookup(hostname)
+                }
+            }).build()
+        }
 
         val httpUrl = HttpUrl.Builder()
             .scheme(HTTPS_SCHEME)

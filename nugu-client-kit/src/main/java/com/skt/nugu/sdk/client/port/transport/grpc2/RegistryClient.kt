@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc2
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
@@ -25,13 +26,17 @@ import com.squareup.okhttp.*
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
 import java.io.IOException
+import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 /**
  *  Implementation of registry
  **/
-internal class RegistryClient(private var serverInfo: NuguServerInfo) : Transport {
+internal class RegistryClient(
+    private var serverInfo: NuguServerInfo,
+    private val dnsLookup: DnsLookup?
+) : Transport {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: Policy? = null
@@ -81,7 +86,9 @@ internal class RegistryClient(private var serverInfo: NuguServerInfo) : Transpor
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
             connectionPool = ConnectionPool(0, 1)
         }
-
+        dnsLookup?.let { customDns ->
+            client.setDns { hostname -> customDns.lookup(hostname.toString()).toMutableList() }
+        }
         val httpUrl = HttpUrl.Builder()
             .scheme(HTTPS_SCHEME)
             .host(serverInfo.registry.host)
