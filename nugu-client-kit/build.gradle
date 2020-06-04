@@ -14,7 +14,7 @@ tasks.withType(JavaCompile) {
 sourceSets {
     generated {
         java {
-            srcDirs "${buildDir}/generated/source/proto/main/javalite", "${buildDir}/generated/source/proto/main/grpc"
+            srcDirs "${buildDir}/generated/source/proto/main/grpc"
         }
     }
 }
@@ -37,26 +37,23 @@ dependencies {
     implementation "io.grpc:grpc-protobuf-lite:${protobuf_version}"
     implementation "io.grpc:grpc-stub:${grpc_version}"
     implementation "io.grpc:grpc-okhttp:${grpc_version}"
+    //compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
 }
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:$protoc_version" }
     plugins {
-        javalite { artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0" }
-        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpc_version}" }
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:$grpc_version" // CURRENT_GRPC_VERSION
+        }
     }
-
     generateProtoTasks {
         all().each { task ->
-            task.plugins {
-                javalite {}
-                grpc {
-                    // Options added to --grpc_out
-                    option 'lite'
-                }
-            }
             task.builtins {
-                remove java
+                java { option 'lite' }
+            }
+            task.plugins {
+                grpc { // Options added to --grpc_out
+                    option 'lite' }
             }
         }
     }
