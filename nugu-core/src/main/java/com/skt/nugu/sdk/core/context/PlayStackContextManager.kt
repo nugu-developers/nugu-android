@@ -131,7 +131,7 @@ class PlayStackContextManager(
             }
         }
 
-        Logger.d(TAG, "[buildPlayStack] playStack: $playStackList, map: $foregroundPlayStackMap")
+        Logger.d(TAG, "[buildPlayStack] playStack: $playStackList, foregroundPlayStackMap: $foregroundPlayStackMap, backgroundPlayStackMap: $backgroundPlayStackMap")
 
         return playStackList
     }
