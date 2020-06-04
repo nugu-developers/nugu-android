@@ -19,6 +19,7 @@ interface PlayStackManagerInterface {
     data class PlayContext(
         val playServiceId: String,
         val timestamp: Long,
+        val isBackground: Boolean = false,
         val persistent: Boolean = true
     ): Comparable<PlayContext> {
         override fun compareTo(other: PlayContext): Int {
