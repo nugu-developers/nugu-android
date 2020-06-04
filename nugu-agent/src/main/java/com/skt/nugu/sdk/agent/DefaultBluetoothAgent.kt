@@ -36,6 +36,7 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
 
@@ -256,17 +257,27 @@ class DefaultBluetoothAgent(
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
-                val request = EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
-                    .referrerDialogRequestId(referrerDialogRequestId)
-                    .payload(JsonObject().apply {
-                        addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                        hasPairedDevices?.let {
-                            addProperty(KEY_HAS_PAIRED_DEVICES, it)
-                        }
-                    }.toString()).build()
+                val request =
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .payload(JsonObject().apply {
+                            addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                            hasPairedDevices?.let {
+                                addProperty(KEY_HAS_PAIRED_DEVICES, it)
+                            }
+                        }.toString()).build()
 
-                result = messageSender.sendMessage(request)
-                waitResult?.countDown()
+                messageSender.sendMessage(request, object : MessageSender.OnRequestCallback {
+                    override fun onSuccess() {
+                        result = true
+                        waitResult?.countDown()
+                    }
+
+                    override fun onFailure(status: Status) {
+                        result = false
+                        waitResult?.countDown()
+                    }
+                })
             }
         }, namespaceAndName)
 

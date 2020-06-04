@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
+import com.skt.nugu.sdk.client.port.transport.grpc.CanceledCall
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.*
@@ -31,7 +33,7 @@ internal class CrashReportService(val channel: ManagedChannel) {
     }
     var blockingStub : VoiceServiceGrpc.VoiceServiceBlockingStub? = null
 
-    fun sendCrashReport(crashReportMessageRequest : CrashReportMessageRequest) : Boolean {
+    fun sendCrashReport(crashReportMessageRequest : CrashReportMessageRequest) : MessageSender.Call {
         val builder =
             CrashReportRequest.CrashReport.newBuilder()
                 .setDetail(crashReportMessageRequest.message)
@@ -53,9 +55,9 @@ internal class CrashReportService(val channel: ManagedChannel) {
             val status = Status.fromThrowable(th)
             Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
             blockingStub = null
-            return false
+            return CanceledCall(crashReportMessageRequest)
         }
-        return true
+        return CanceledCall(crashReportMessageRequest)
     }
 
     fun shutdown() {

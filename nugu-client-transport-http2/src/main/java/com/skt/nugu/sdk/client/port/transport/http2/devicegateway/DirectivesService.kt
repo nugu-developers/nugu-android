@@ -16,8 +16,8 @@
 package com.skt.nugu.sdk.client.port.transport.http2.devicegateway
 
 import com.skt.nugu.sdk.client.port.transport.http2.ServerPolicy
-import com.skt.nugu.sdk.client.port.transport.http2.Status
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.ResponseHandler.Companion.handleResponse
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.*
 import java.io.IOException
@@ -86,7 +86,7 @@ class DirectivesService(
         }
     }
 
-    private fun notifyOnError(throwable : Throwable?) {
+    private fun notifyOnError(throwable: Throwable?) {
         if (!isShutdown.get()) {
             val status = Status.fromThrowable(throwable)
             Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $throwable")

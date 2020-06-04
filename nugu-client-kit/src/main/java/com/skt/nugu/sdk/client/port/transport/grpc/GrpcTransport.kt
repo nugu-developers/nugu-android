@@ -26,6 +26,9 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
 import com.skt.nugu.sdk.client.port.transport.grpc.devicegateway.DeviceGatewayTransport
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
 import java.util.concurrent.Executors
 
 /**
@@ -174,6 +177,7 @@ internal class GrpcTransport private constructor(
         deviceGatewayClient?.shutdown()
 
         DeviceGatewayClient(
+            executor,
             policy,
             serverInfo.keepConnection,
             messageConsumer,
@@ -229,12 +233,17 @@ internal class GrpcTransport private constructor(
         return state.isConnectedOrConnecting()
     }
 
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(request: MessageRequest, callback: MessageSender.OnRequestCallback?) : MessageSender.Call {
         if (!state.isConnected()) {
             Logger.d(TAG, "[send], Status : ($state), request : $request")
-            return false
+            callback?.onFailure(Status.FAILED_PRECONDITION.withDescription("not connected"))
+            return CanceledCall(request)
         }
-        return deviceGatewayClient?.send(request) ?: false
+        return deviceGatewayClient?.send(request, callback) ?: run {
+            Logger.d(TAG, "[sendMessage] failed, $this" )
+            callback?.onFailure(Status.FAILED_PRECONDITION.withDescription("DeviceGateway has not been initialized"))
+            CanceledCall(request)
+        }
     }
 
     /**

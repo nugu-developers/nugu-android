@@ -19,14 +19,18 @@ import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLIC
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.ATTACHMENT
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.EVENT
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.MESSAGE_ID
+import com.skt.nugu.sdk.client.port.transport.http2.CanceledCall
 import com.skt.nugu.sdk.client.port.transport.http2.ServerPolicy
-import com.skt.nugu.sdk.client.port.transport.http2.Status
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.ResponseHandler.Companion.handleResponse
 import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartRequestBody
 import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartRequestBody.Companion.toMultipartRequestBody
 import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartStreamingCalls
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toFilename
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toJson
+import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -44,9 +48,9 @@ class EventsService(
 ) {
     private val isShutdown = AtomicBoolean(false)
     private val streamingCall = MultipartStreamingCalls(object :
-        MultipartStreamingCalls.PendingRequestListener<EventMessageRequest> {
-        override fun execute(request: EventMessageRequest) {
-            sendEventMessage(request)
+        MultipartStreamingCalls.PendingRequestListener<ClientCall> {
+        override fun execute(call: ClientCall) {
+            sendEventMessage(call.messageRequest, call.callback)
         }
     })
 
@@ -68,15 +72,20 @@ class EventsService(
 
         fun Call.closeQuietly() = this.getRequestBody().cancel()
         fun Call.getRequestBody() = this.request().body as MultipartRequestBody
+
     }
 
-    private fun handleRequestStreamingCall(messageRequest: EventMessageRequest) : Boolean {
-        val hasASR = messageRequest.namespace == "ASR"
-        val hasRecognize = messageRequest.name == "Recognize"
+    data class ClientCall(
+        val messageRequest: EventMessageRequest,
+        var callback: MessageSender.OnRequestCallback?
+    )
+    private fun handleRequestStreamingCall(call: ClientCall) : Boolean {
+        val hasASR = call.messageRequest.namespace == "ASR"
+        val hasRecognize = call.messageRequest.name == "Recognize"
         val isStart = hasASR && hasRecognize
 
         if(streamingCall.isExecuted()) {
-            streamingCall.executePendingRequest(messageRequest)
+            streamingCall.executePendingRequest(call)
             if(hasASR) streamingCall.stop()
             return false
         }
@@ -86,7 +95,7 @@ class EventsService(
         return true
     }
 
-    fun sendAttachmentMessage(messageRequest: AttachmentMessageRequest): Boolean {
+    fun sendAttachmentMessage(messageRequest: AttachmentMessageRequest): MessageSender.Call {
         streamingCall.get()?.let { call ->
             val content = messageRequest.byteArray ?: ByteArray(0)
             call.getRequestBody().newBuilder().addFormDataPart(
@@ -95,45 +104,79 @@ class EventsService(
                 headers = Headers.Builder().add(MESSAGE_ID, messageRequest.messageId).build(),
                 body = content.toRequestBody(APPLICATION_SPEEX.toMediaType())
             ).close(messageRequest.isEnd).build()
-        } ?: return false
+        } ?: return CanceledCall(messageRequest)
 
         if(messageRequest.isEnd) {
             streamingCall.stop()
         }
-        return true
+        return object : MessageSender.Call {
+            override fun request(): MessageRequest {
+                return messageRequest
+            }
+
+            override fun cancel() {
+                streamingCall.cancel()
+            }
+
+            override fun isCanceled(): Boolean {
+                return streamingCall.isCanceled()
+            }
+        }
     }
 
-    fun sendEventMessage(messageRequest: EventMessageRequest): Boolean {
-        if(!handleRequestStreamingCall(messageRequest)) {
-            return true
-        }
-        val message = messageRequest.toJson()
-        val httpUrl = HttpUrl.Builder()
-            .scheme(HTTPS_SCHEME)
-            .port(policy.port)
-            .host(policy.hostname)
-            .addPathSegment("v2")
-            .addPathSegment("events")
-            .build()
+    fun sendEventMessage(request: EventMessageRequest, callback: MessageSender.OnRequestCallback?): MessageSender.Call {
+        val returnCall = object : MessageSender.Call {
+            var call : Call? = null
 
-        if(!streamingCall.isExecuted()) {
-            client.newCall(Request.Builder().url(httpUrl)
-                .post(message.toMultipartRequestBody(EVENT, true))
-                .build()).enqueue(responseCallback)
-        } else {
-            val request = Request.Builder().url(httpUrl)
-                .post(message.toMultipartRequestBody(EVENT, false))
-                .tag(responseCallback)
-                .build()
-            streamingCall.set(client.newCall(request)).enqueue(responseCallback)
+            override fun request(): MessageRequest {
+                return request
+            }
+
+            override fun cancel() {
+                if(streamingCall.isExecuted()) {
+                    streamingCall.cancel()
+                }
+                call?.cancel()
+            }
+
+            override fun isCanceled(): Boolean {
+                if(streamingCall.isExecuted()) {
+                    return streamingCall.isCanceled()
+                }
+                return call?.isCanceled() ?: false
+            }
         }
-        return true
+
+        if (handleRequestStreamingCall(ClientCall(request, callback))) {
+            val message = request.toJson()
+            val httpUrl = HttpUrl.Builder()
+                .scheme(HTTPS_SCHEME)
+                .port(policy.port)
+                .host(policy.hostname)
+                .addPathSegment("v2")
+                .addPathSegment("events")
+                .build()
+
+            if(!streamingCall.isExecuted()) {
+                returnCall.call = client.newCall(Request.Builder().url(httpUrl)
+                    .post(message.toMultipartRequestBody(EVENT, true, ClientCall(request, callback)))
+                    .build())
+                returnCall.call?.enqueue(responseCallback)
+            } else {
+                val requestBuilder = Request.Builder().url(httpUrl)
+                    .post(message.toMultipartRequestBody(EVENT, false, ClientCall(request, callback)))
+                    .tag(responseCallback)
+                    .build()
+                streamingCall.set(client.newCall(requestBuilder)).enqueue(responseCallback)
+            }
+        }
+        return returnCall
     }
 
     private val responseCallback = object : Callback {
         override fun onFailure(call: Call, e: IOException) {
             if(e.cause !is  IllegalStateException) {
-                notifyOnError(e)
+                notifyOnError(call, e)
             }
         }
 
@@ -141,37 +184,60 @@ class EventsService(
             when (response.code) {
                 HttpURLConnection.HTTP_OK -> {
                     try {
-                        response.handleResponse(observer)
+                        response.handleResponse(observer, object :ResponseHandler.OnDirectiveMessage{
+                            override fun onResult(directives: List<DirectiveMessage>) {
+                                call.request().body?.let { requestBody ->
+                                    requestBody.dispatchCallback(directives)
+                                }
+                            }
+                        })
                         response.close()
                     } catch (e: Throwable) {
                         Logger.d(TAG, "[responseCallback] : " + e.message.toString())
                     }
                 }
-                HttpURLConnection.HTTP_BAD_REQUEST -> observer.onError(Status.INTERNAL)
+                HttpURLConnection.HTTP_BAD_REQUEST -> notifyOnError(call, Status.INTERNAL)
                 HttpURLConnection.HTTP_UNAUTHORIZED,
-                HttpURLConnection.HTTP_FORBIDDEN -> observer.onError(Status.UNAUTHENTICATED)
+                HttpURLConnection.HTTP_FORBIDDEN -> notifyOnError(call, Status.UNAUTHENTICATED)
                 HttpURLConnection.HTTP_BAD_GATEWAY,
                 HttpURLConnection.HTTP_UNAVAILABLE,
-                HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> observer.onError(Status.UNAVAILABLE)
-                HttpURLConnection.HTTP_UNSUPPORTED_TYPE -> observer.onError(Status.UNIMPLEMENTED)
+                HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> notifyOnError(call, Status.UNAVAILABLE)
+                HttpURLConnection.HTTP_UNSUPPORTED_TYPE -> notifyOnError(call, Status.UNIMPLEMENTED)
                 else -> {
-                    observer.onError(Status.UNKNOWN)
+                    notifyOnError(call, Status.UNKNOWN)
                 }
             }
         }
     }
 
-    private fun notifyOnError(throwable: Throwable?) {
+    private fun notifyOnError(call: Call, status: Status) {
+        observer.onError(status)
+        call.getRequestBody().dispatchCallback()?.onFailure(status)
+    }
+    private fun notifyOnError(call: Call, throwable: Throwable?) {
         if (!isShutdown.get()) {
             val status = Status.fromThrowable(throwable)
             Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $throwable")
             observer.onError(status)
+
+            call.getRequestBody().dispatchCallback()?.onFailure(status)
         }
     }
 
     fun shutdown() {
         if (isShutdown.compareAndSet(false, true)) {
             streamingCall.cancel()
+        }
+    }
+}
+
+private fun RequestBody.dispatchCallback(directives: List<DirectiveMessage>) {
+    val request = this as MultipartRequestBody
+    directives.forEach {
+        request.getClientCall()?.let { clientCall ->
+            if (it.header.dialogRequestId == clientCall.messageRequest.dialogRequestId) {
+                request.dispatchCallback()?.onSuccess()
+            }
         }
     }
 }

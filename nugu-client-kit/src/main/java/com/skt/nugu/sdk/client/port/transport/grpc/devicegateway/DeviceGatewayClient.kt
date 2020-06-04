@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
+import com.skt.nugu.sdk.client.port.transport.grpc.CanceledCall
 import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
@@ -25,6 +26,8 @@ import com.skt.nugu.sdk.client.port.transport.grpc.utils.MessageRequestConverter
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -37,12 +40,14 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  *  Implementation of DeviceGateway
  **/
-internal class DeviceGatewayClient(policy: Policy,
+internal class DeviceGatewayClient(private val executor: ExecutorService,
+                                   private val policy: Policy,
                                    private val keepConnection : Boolean,
                                    private var messageConsumer: MessageConsumer?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
@@ -152,16 +157,19 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(request: MessageRequest, callback: MessageSender.OnRequestCallback?) : MessageSender.Call {
         val event = eventsService
         val crash = crashReportService
 
         val result = when(request) {
             is AttachmentMessageRequest -> event?.sendAttachmentMessage(request)
-            is EventMessageRequest -> event?.sendEventMessage(request)
+            is EventMessageRequest -> event?.sendEventMessage(request, callback)
             is CrashReportMessageRequest -> crash?.sendCrashReport(request)
-            else -> false
-        } ?: false
+            else  -> {
+                callback?.onFailure(com.skt.nugu.sdk.core.interfaces.message.Status.FAILED_PRECONDITION.withDescription("Unknown message type: ${request}"))
+                CanceledCall(request)
+            }
+        } ?: CanceledCall(request)
 
         Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
         return result
@@ -296,7 +304,9 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param attachmentMessage
      */
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
-        messageConsumer?.consumeAttachment(attachmentMessage.toAttachmentMessage())
+        executor.submit {
+            messageConsumer?.consumeAttachment(attachmentMessage.toAttachmentMessage())
+        }
     }
 
     /**
@@ -305,6 +315,8 @@ internal class DeviceGatewayClient(policy: Policy,
      */
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
         handleConnectedIfNeeded()
-        messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
+        executor.submit {
+            messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
+        }
     }
 }

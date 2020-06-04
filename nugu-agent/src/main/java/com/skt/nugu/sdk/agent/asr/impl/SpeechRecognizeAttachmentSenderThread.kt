@@ -131,7 +131,8 @@ class SpeechRecognizeAttachmentSenderThread(
             )
 
         currentAttachmentSequenceNumber++
-        return messageSender.sendMessage(attachmentMessage)
+        messageSender.sendMessage(attachmentMessage)
+        return true
     }
 
     fun requestStop() {

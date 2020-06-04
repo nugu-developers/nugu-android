@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
@@ -81,6 +82,7 @@ internal class RegistryClient(private var serverInfo: NuguServerInfo) : Transpor
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
             connectionPool = ConnectionPool(0, 1)
         }
+
         val httpUrl = HttpUrl.Builder()
             .scheme(HTTPS_SCHEME)
             .host(serverInfo.registry.host)
@@ -178,7 +180,7 @@ internal class RegistryClient(private var serverInfo: NuguServerInfo) : Transpor
         throw NotImplementedError()
     }
 
-    override fun send(request: MessageRequest): Boolean {
+    override fun send(request: MessageRequest, callback: MessageSender.OnRequestCallback?): MessageSender.Call {
         throw NotImplementedError()
     }
 

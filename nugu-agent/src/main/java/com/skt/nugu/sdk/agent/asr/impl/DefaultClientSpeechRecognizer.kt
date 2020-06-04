@@ -22,11 +22,13 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -247,10 +249,22 @@ class DefaultClientSpeechRecognizer(
 
         val speechProcessorState = when (state) {
             AudioEndPointDetector.State.EXPECTING_SPEECH -> {
-                if(!messageSender.sendMessage(request.eventMessage)) {
-                    request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
-                    endPointDetector.stopDetector()
-                }
+                messageSender.sendMessage(
+                    request.eventMessage,
+                    object : MessageSender.OnRequestCallback {
+                        override fun onSuccess() {
+                            //..
+                        }
+
+                        override fun onFailure(status: Status) {
+                            request.errorTypeForCausingEpdStop = when (status.error) {
+                                    Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                                    Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                                    else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                                }
+                            endPointDetector.stopDetector()
+                        }
+                    })
                 SpeechRecognizer.State.EXPECTING_SPEECH
             }
             AudioEndPointDetector.State.SPEECH_START -> {
@@ -379,7 +393,7 @@ class DefaultClientSpeechRecognizer(
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        return request.let {
+        request.let {
             messageSender.sendMessage(
                 EventMessageRequest.Builder(
                     it.context,
@@ -387,8 +401,20 @@ class DefaultClientSpeechRecognizer(
                     DefaultASRAgent.EVENT_STOP_RECOGNIZE,
                     DefaultASRAgent.VERSION.toString()
                 ).referrerDialogRequestId(it.dialogRequestId).build()
-            )
+                , object : MessageSender.OnRequestCallback {
+                    override fun onSuccess() {
+                    }
+
+                    override fun onFailure(status: Status) {
+                        handleError(when(status.error) {
+                            Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                            Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                            else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                        })
+                    }
+                })
         }
+        return true
     }
 
     private fun setState(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {

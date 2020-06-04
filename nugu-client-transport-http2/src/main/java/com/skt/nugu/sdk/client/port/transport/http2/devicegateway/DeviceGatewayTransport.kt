@@ -15,10 +15,10 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2.devicegateway
 
-import com.skt.nugu.sdk.client.port.transport.http2.Status
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
 import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 
 interface DeviceGatewayTransport : Transport {

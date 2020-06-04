@@ -422,7 +422,6 @@ class NuguAndroidClient private constructor(
                         getAudioFocusManager(),
                         getContextManager(),
                         getPlaySynchronizer(),
-                        getInputManagerProcessor(),
                         DefaultFocusChannel.DIALOG_CHANNEL_NAME,
                         dialogChannelFocusHolderManager
                     ).apply {
@@ -483,7 +482,6 @@ class NuguAndroidClient private constructor(
                             DefaultDelegationAgent(
                                 getContextManager(),
                                 getMessageSender(),
-                                getInputManagerProcessor(),
                                 it
                             ).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
@@ -497,8 +495,7 @@ class NuguAndroidClient private constructor(
                         with(container) {
                             DefaultExtensionAgent(
                                 getContextManager(),
-                                getMessageSender(),
-                                getInputManagerProcessor()
+                                getMessageSender()
                             ).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
                                 setClient(it)
@@ -516,7 +513,6 @@ class NuguAndroidClient private constructor(
                     DefaultTextAgent(
                         getMessageSender(),
                         getContextManager(),
-                        getInputManagerProcessor(),
                         getDialogAttributeStorage(),
                         builder.textSourceHandler
                     ).apply {
@@ -535,8 +531,7 @@ class NuguAndroidClient private constructor(
                                     getPlaySynchronizer(),
                                     ElementSelectedEventHandler(
                                         getContextManager(),
-                                        getMessageSender(),
-                                        getInputManagerProcessor()
+                                        getMessageSender()
                                     ),
                                     getSessionManager(),
                                     getContextManager(),

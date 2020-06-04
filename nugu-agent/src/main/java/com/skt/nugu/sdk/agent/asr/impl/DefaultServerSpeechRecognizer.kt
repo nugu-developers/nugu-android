@@ -21,15 +21,16 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashSet
 import kotlin.math.max
 
 class DefaultServerSpeechRecognizer(
@@ -132,31 +133,45 @@ class DefaultServerSpeechRecognizer(
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .build()
 
-        if (messageSender.sendMessage(eventMessage)) {
-            val thread = createSenderThread(
-                audioInputStream,
-                audioFormat,
-                sendPosition,
-                eventMessage
-            )
-            val request =
-                RecognizeRequest(
-                    thread, eventMessage, expectSpeechDirectiveParam, resultListener
-                )
-            currentRequest = request
-            thread.start()
+        var request: RecognizeRequest? = null
+        val resultLatch = CountDownLatch(1)
+        messageSender.sendMessage(eventMessage, object : MessageSender.OnRequestCallback {
+                override fun onSuccess() {
+                    val thread = createSenderThread(
+                        audioInputStream,
+                        audioFormat,
+                        sendPosition,
+                        eventMessage
+                    )
 
-            setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
-            timeoutFuture?.cancel(true)
-            timeoutFuture = timeoutScheduler.schedule({
-                handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
-            }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+                    request =
+                        RecognizeRequest(
+                            thread, eventMessage, expectSpeechDirectiveParam, resultListener)
+                    currentRequest = request
+                    thread.start()
 
-            return request
-        } else {
-            Logger.w(TAG, "[startProcessor] failed to send recognize event")
-            return null
-        }
+                    setState(SpeechRecognizer.State.EXPECTING_SPEECH, request!!)
+                    timeoutFuture?.cancel(true)
+                    timeoutFuture = timeoutScheduler.schedule({
+                        handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
+                    }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+
+                    resultLatch.countDown()
+                }
+
+                override fun onFailure(status: Status) {
+                    Logger.w(TAG, "[startProcessor] failed to send recognize event")
+
+                    handleError( when (status.error) {
+                        Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                        Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                        else ->ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                    })
+                    resultLatch.countDown()
+                }
+            })
+        resultLatch.await()
+        return request
     }
 
     private fun createSenderThread(
@@ -278,7 +293,7 @@ class DefaultServerSpeechRecognizer(
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        return request.let {
+        request.let {
             messageSender.sendMessage(
                 EventMessageRequest.Builder(
                     it.context,
@@ -288,6 +303,7 @@ class DefaultServerSpeechRecognizer(
                 ).referrerDialogRequestId(it.dialogRequestId).build()
             )
         }
+        return true
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {

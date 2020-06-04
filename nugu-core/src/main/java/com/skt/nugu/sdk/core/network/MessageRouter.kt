@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.network
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
@@ -114,20 +115,35 @@ class MessageRouter(
      * @param messageRequest the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    override fun sendMessage(messageRequest: MessageRequest) : Boolean {
-        val result = activeTransport?.send(messageRequest) ?: run {
+
+    override fun sendMessage(request: MessageRequest, callback: MessageSender.OnRequestCallback?) : MessageSender.Call {
+        val onRequestCallback = object : MessageSender.OnRequestCallback {
+            override fun onSuccess() {
+                callback?.onSuccess()
+                notifyOnPostSendMessage(request, Status.OK)
+            }
+
+            override fun onFailure(status: Status) {
+                callback?.onFailure(status)
+                notifyOnPostSendMessage(request, status)
+            }
+        }
+        return activeTransport?.send(request, onRequestCallback) ?: run {
             Logger.d(TAG, "[sendMessage] failed, $this" )
-            false
+            onRequestCallback.onFailure(Status.FAILED_PRECONDITION.withDescription("Transport is not initialized"))
+            return object : MessageSender.Call {
+                override fun request() = request
+                override fun isCanceled() = false
+                override fun cancel() {}
+            }
         }
-
-        messageSenderListeners.forEach {
-            it.onPostSendMessage(messageRequest, result)
-        }
-
-        return result
-
     }
 
+    private fun notifyOnPostSendMessage(request: MessageRequest, status: Status) {
+        messageSenderListeners.forEach {
+            it.onPostSendMessage(request, status)
+        }
+    }
     override fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
         messageSenderListeners.add(listener)
     }

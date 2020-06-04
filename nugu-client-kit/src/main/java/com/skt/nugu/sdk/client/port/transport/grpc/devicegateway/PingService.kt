@@ -70,7 +70,7 @@ internal class PingService(
         } catch (e: Throwable) {
             if (!isShutdown.get()) {
                 val status = Status.fromThrowable(e)
-                Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
+                Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $e")
                 observer.onError(status)
             }
         }

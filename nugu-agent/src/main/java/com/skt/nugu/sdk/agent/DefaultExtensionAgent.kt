@@ -30,9 +30,8 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.HashMap
@@ -41,11 +40,9 @@ import java.util.concurrent.Executors
 
 class DefaultExtensionAgent(
     private val contextManager: ContextManagerInterface,
-    private val messageSender: MessageSender,
-    private val inputProcessorManager: InputProcessorManagerInterface
+    private val messageSender: MessageSender
 ) : AbstractCapabilityAgent(NAMESPACE)
-    , ExtensionAgentInterface
-    , InputProcessor {
+    , ExtensionAgentInterface {
 
     internal data class ExtensionPayload(
         @SerializedName("playServiceId")
@@ -233,33 +230,24 @@ class DefaultExtensionAgent(
                         add(PAYLOAD_DATA, jsonData)
                     }.toString()).build()
 
-                if(!messageSender.sendMessage(request)) {
-                    callback?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.REQUEST_FAIL)
-                } else {
-                    callback?.let {
-                        issueCommandCallbackMap[dialogRequestId] = it
+                messageSender.sendMessage(request, object : MessageSender.OnRequestCallback {
+                    override fun onSuccess() {
+                        callback?.onSuccess(dialogRequestId)
                     }
-                    onSendEventFinished(dialogRequestId)
-                }
+
+                    override fun onFailure(status: Status) {
+                            callback?.onError(
+                                dialogRequestId,
+                                when (status.error) {
+                                    Status.StatusError.TIMEOUT -> ExtensionAgentInterface.ErrorType.RESPONSE_TIMEOUT
+                                    else -> ExtensionAgentInterface.ErrorType.REQUEST_FAIL
+                                }
+                            )
+                        }
+                    })
             }
         }, namespaceAndName)
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        issueCommandCallbackMap.remove(dialogRequestId)?.onSuccess(dialogRequestId)
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        issueCommandCallbackMap.remove(dialogRequestId)?.onError(dialogRequestId, ExtensionAgentInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 }

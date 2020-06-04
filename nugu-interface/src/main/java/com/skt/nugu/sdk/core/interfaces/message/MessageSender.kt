@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.message
 
+
 /**
  * An interface which send [MessageRequest]
  */
@@ -27,15 +28,29 @@ interface MessageSender {
          * Called when post send message
          * @param messageRequest the messageRequest to be sent
          * @param result the success or failure to send the [messageRequest]
+         * @param status The current status of the connection.
          */
-        fun onPostSendMessage(messageRequest: MessageRequest, result: Boolean)
+        fun onPostSendMessage(request: MessageRequest, status: Status)
     }
 
+    interface OnRequestCallback {
+        fun onSuccess()
+        fun onFailure(status: Status)
+    }
+    interface Call {
+        fun request(): MessageRequest
+        fun isCanceled(): Boolean
+        fun cancel()
+        // TODO
+        //fun execute()
+        //fun enqueue()
+    }
     /**
      * Send message
-     * @param messageRequest the messageRequest to be sent
+     * @param request the request to be sent
+     * @param callback The callback for the result.
      */
-    fun sendMessage(messageRequest: MessageRequest): Boolean
+    fun sendMessage(request: MessageRequest, callback: OnRequestCallback? = null): Call
 
 
     /**

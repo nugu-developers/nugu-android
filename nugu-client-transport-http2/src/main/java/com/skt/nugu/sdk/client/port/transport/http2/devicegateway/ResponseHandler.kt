@@ -32,10 +32,13 @@ import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.PARENT
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.REFERRER_DIALOG_REQUEST_ID
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.VERSION
 import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartParser
+import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartRequestBody
 import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
 import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
 import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.utils.Logger
+import okhttp3.Call
 import okhttp3.Response
 import okio.Buffer
 import java.nio.ByteBuffer
@@ -44,13 +47,15 @@ import java.nio.charset.Charset
 
 class ResponseHandler {
     data class ExtractFilename(val seq: Int, val isEnd: Boolean)
-
+    interface  OnDirectiveMessage {
+        fun onResult(directives : List<DirectiveMessage>)
+    }
     companion object {
         private val gson = Gson()
 
         private const val TAG = "ResponseHandler"
 
-        fun Response.handleResponse(observer: DeviceGatewayTransport): Boolean {
+        fun Response.handleResponse(observer: DeviceGatewayTransport, callback: OnDirectiveMessage? = null): Boolean {
             val headers = this.headers
             val responseBody = this.body!!
 
@@ -85,6 +90,7 @@ class ResponseHandler {
                                     body
                                 )
                                 observer.onReceiveDirectives(directives)
+                                callback?.onResult(directives)
                             }
                             else -> {
                                 throw Exception("unknown content type (${headers[CONTENT_TYPE]})")

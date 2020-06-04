@@ -30,10 +30,9 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -43,11 +42,9 @@ import java.util.concurrent.Executors
 class DefaultTextAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
-    private val inputProcessorManager: InputProcessorManagerInterface,
     private val dialogAttributeStorage: DialogAttributeStorageInterface,
     private val textSourceHandler: TextAgentInterface.TextSourceHandler?
 ) : AbstractCapabilityAgent(NAMESPACE)
-    , InputProcessor
     , TextAgentInterface{
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
@@ -250,41 +247,27 @@ class DefaultTextAgent(
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
                     createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
-                        if(messageSender.sendMessage(it)) {
-                            if (listener != null) {
-                                requestListeners[it.dialogRequestId] = listener
+                        messageSender.sendMessage(it, object : MessageSender.OnRequestCallback {
+                            override fun onSuccess() {
+                                listener?.onReceiveResponse(dialogRequestId)
                             }
-                            onSendEventFinished(it.dialogRequestId)
-                        } else {
-                            listener?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_NETWORK)
-                        }
+
+                            override fun onFailure(status: Status) {
+                                listener?.onError(
+                                    dialogRequestId,
+                                    when (status.error) {
+                                        Status.StatusError.TIMEOUT -> TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                                        Status.StatusError.NETWORK -> TextAgentInterface.ErrorType.ERROR_NETWORK
+                                        else -> TextAgentInterface.ErrorType.ERROR_UNKNOWN
+                                    }
+                                )
+                            }
+                        })
                     }
                 }
             }
         })
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        executor.submit {
-            requestListeners.remove(dialogRequestId)?.onReceiveResponse(dialogRequestId)
-        }
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        Logger.d(TAG, "[onResponseTimeout] $dialogRequestId")
-        executor.submit {
-            requestListeners.remove(dialogRequestId)
-                ?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
-        }
     }
 }

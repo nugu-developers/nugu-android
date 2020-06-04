@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2.utils
 
-import com.skt.nugu.sdk.client.port.transport.http2.Status
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor

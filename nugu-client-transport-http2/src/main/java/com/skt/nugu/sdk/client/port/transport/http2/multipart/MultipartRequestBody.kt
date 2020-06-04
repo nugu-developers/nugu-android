@@ -16,6 +16,8 @@
 package com.skt.nugu.sdk.client.port.transport.http2.multipart
 
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLICATION_JSON
+import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.EventsService
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.Headers
 import okhttp3.MediaType
@@ -33,30 +35,40 @@ class MultipartRequestBody(
     private val boundary: ByteString,
     private val parts: Queue<Part>,
     private val pipe: Pipe,
-    private val close : Boolean
+    private val close: Boolean,
+    private val call: EventsService.ClientCall?
 ) : RequestBody() {
-    override fun contentType(): MediaType = "multipart/form-data; boundary=${boundary.utf8()}".toMediaType()
+    override fun contentType(): MediaType =
+        "multipart/form-data; boundary=${boundary.utf8()}".toMediaType()
+
     override fun isDuplex() = true
     private fun takeSink() = pipe.sink.buffer()
-    private var cancel : Boolean = false
+    private var cancel: Boolean = false
 
     init {
-       write(close)
+        write(close)
     }
 
     override fun writeTo(sink: BufferedSink) = pipe.fold(sink)
-    fun isCanceled() : Boolean = cancel
+    fun isCanceled(): Boolean = cancel
     fun cancel() {
         cancel = true
         takeSink().apply {
-            if(isOpen) {
+            if (isOpen) {
                 closeQuietly()
             }
         }
     }
 
-    private fun write(close : Boolean): MultipartRequestBody {
-        takeSink().let{ sink ->
+    fun dispatchCallback(): MessageSender.OnRequestCallback? {
+        val callback = call?.callback
+        call?.callback = null
+        return callback
+    }
+
+    fun getClientCall() = call
+    private fun write(close: Boolean): MultipartRequestBody {
+        takeSink().let { sink ->
             synchronized(parts) {
                 var part: Part?
                 while (parts.poll().also { part = it } != null) {
@@ -105,14 +117,14 @@ class MultipartRequestBody(
                     }
                     try {
                         sink.flush()
-                    } catch (e :Throwable) {
+                    } catch (e: Throwable) {
                         Logger.d(TAG, e.message.toString())
                     }
 
                 }
             }
 
-            if(close) {
+            if (close) {
                 sink.buffer.apply {
                     write(DASHDASH)
                     write(boundary)
@@ -121,7 +133,7 @@ class MultipartRequestBody(
                 }
                 try {
                     sink.close()
-                } catch (e :Throwable) {
+                } catch (e: Throwable) {
                     Logger.d(TAG, e.message.toString())
                 }
             }
@@ -144,6 +156,7 @@ class MultipartRequestBody(
                     null,
                     body
                 )
+
             fun create(headers: Headers?, body: RequestBody): Part {
                 require(headers?.get("Content-Type") == null) { "Unexpected header: Content-Type" }
                 require(headers?.get("Content-Length") == null) { "Unexpected header: Content-Length" }
@@ -153,7 +166,12 @@ class MultipartRequestBody(
                 )
             }
 
-            fun createFormData(name: String, filename: String?, headers: Headers?, body: RequestBody): Part {
+            fun createFormData(
+                name: String,
+                filename: String?,
+                headers: Headers?,
+                body: RequestBody
+            ): Part {
                 val disposition = buildString {
                     append("form-data; name=")
                     appendQuotedString(name)
@@ -178,6 +196,7 @@ class MultipartRequestBody(
         companion object {
             val MAX_BUFFER_SIZE = 1024L * 8L
         }
+
         constructor()
         internal constructor(response: MultipartRequestBody) {
             this.boundary = response.boundary
@@ -187,10 +206,16 @@ class MultipartRequestBody(
         private var boundary: ByteString = UUID.randomUUID().toString().encodeUtf8()
         private val parts: Queue<Part> = ArrayDeque()
         private var pipe: Pipe = Pipe(MAX_BUFFER_SIZE)
-        private var close : Boolean = true
+        private var close: Boolean = true
+        private var call: EventsService.ClientCall? = null
 
         /** Add a form data part to the body. */
-        fun addFormDataPart(name: String, filename: String? = null, headers: Headers? = null,  body: RequestBody) = apply {
+        fun addFormDataPart(
+            name: String,
+            filename: String? = null,
+            headers: Headers? = null,
+            body: RequestBody
+        ) = apply {
             parts += Part.createFormData(
                 name,
                 filename,
@@ -210,8 +235,13 @@ class MultipartRequestBody(
                 boundary,
                 parts,
                 pipe,
-                close
+                close,
+                call
             )
+        }
+
+        fun call(call: EventsService.ClientCall?) = apply {
+            this.call = call
         }
     }
 
@@ -222,12 +252,21 @@ class MultipartRequestBody(
         private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())
         private val DASHDASH = byteArrayOf('-'.toByte(), '-'.toByte())
 
-        fun String.toMultipartRequestBody(name : String, close : Boolean) : MultipartRequestBody {
+        fun String.toMultipartRequestBody(
+            name: String,
+            close: Boolean,
+            call: EventsService.ClientCall?
+        ): MultipartRequestBody {
             return Builder()
-                .addFormDataPart(name = name, body = this.toRequestBody(APPLICATION_JSON.toMediaType()))
+                .addFormDataPart(
+                    name = name,
+                    body = this.toRequestBody(APPLICATION_JSON.toMediaType())
+                )
                 .close(close)
+                .call(call)
                 .build()
         }
+
         /**
          * Appends a quoted-string to a StringBuilder.
          *

@@ -29,10 +29,9 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -43,9 +42,8 @@ import java.util.concurrent.Executors
 class DefaultDelegationAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
-    private val inputProcessorManager: InputProcessorManagerInterface,
     private val defaultClient: DelegationClient
-) : AbstractCapabilityAgent(NAMESPACE), DelegationAgentInterface, InputProcessor {
+) : AbstractCapabilityAgent(NAMESPACE), DelegationAgentInterface {
 
     internal data class DelegatePayload(
         @SerializedName("appId")
@@ -72,9 +70,6 @@ class DefaultDelegationAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
-
-    private val requestListenerMap =
-        ConcurrentHashMap<String, DelegationAgentInterface.OnRequestListener>()
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
@@ -205,10 +200,6 @@ class DefaultDelegationAgent(
             throw IllegalArgumentException("data is not jsonObject", th)
         }
 
-        listener?.let {
-            requestListenerMap[dialogRequestId] = it
-        }
-
         executor.submit {
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
@@ -221,29 +212,26 @@ class DefaultDelegationAgent(
                         ).payload(JsonObject().apply {
                             addProperty("playServiceId", playServiceId)
                             add("data", jsonData)
-                        }.toString()).dialogRequestId(dialogRequestId).build()
+                        }.toString()).dialogRequestId(dialogRequestId).build(),
+                        object : MessageSender.OnRequestCallback {
+                            override fun onSuccess() {
+                                listener?.onSuccess()
+                            }
+
+                            override fun onFailure(status: Status) {
+                                listener?.onError(
+                                    when (status.error) {
+                                        Status.StatusError.TIMEOUT -> DelegationAgentInterface.Error.TIMEOUT
+                                        else -> DelegationAgentInterface.Error.UNKNOWN
+                                    }
+                                )
+                            }
+                        }
                     )
-                    onSendEventFinished(dialogRequestId)
                 }
             })
         }
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        requestListenerMap.remove(dialogRequestId)?.onSuccess()
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        requestListenerMap.remove(dialogRequestId)?.onError(DelegationAgentInterface.Error.TIMEOUT)
     }
 }

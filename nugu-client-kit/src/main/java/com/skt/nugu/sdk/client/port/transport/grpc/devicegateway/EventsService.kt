@@ -15,9 +15,11 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
+import com.skt.nugu.sdk.client.port.transport.grpc.CanceledCall
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.MessageRequestConverter.toProtobufMessage
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -32,7 +34,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-
+import com.skt.nugu.sdk.core.interfaces.message.Status as MessageStatus
 
 /**
  * This class is designed to manage upstream of DeviceGateway
@@ -48,13 +50,12 @@ internal class EventsService(
 
     private val isShutdown = AtomicBoolean(false)
     private val streamLock = ReentrantLock()
-    //private var lastSentEventMessage : EventMessageRequest? = null
 
     private val requestStreamMap = ConcurrentHashMap<String, ClientChannel?>()
 
-    internal data class ClientChannel (
-        val clientCall : StreamObserver<Upstream>,
-        val responseObserver : ClientCallStreamObserver
+    internal data class ClientChannel(
+        val clientCall: StreamObserver<Upstream>,
+        val responseObserver: ClientCallStreamObserver
     )
 
     private fun obtainChannel(streamId: String): ClientChannel? {
@@ -77,30 +78,47 @@ internal class EventsService(
 
     inner class ClientCallStreamObserver(val streamId: String) : StreamObserver<Downstream> {
         private var startAttachmentTimeMillis = 0L
-        private var isReceivedDownstream = false
+        private var hasDownstream = false
+        private var hasDirective = false
+
+        var request: EventMessageRequest? = null
         var isSendingAttachmentMessage = false
         var isAsrRecognize = false
+        var callback: MessageSender.OnRequestCallback? = null
+
+        private fun EventMessageRequest.dispatchCallback(status: MessageStatus) {
+            if(status.isOk()) callback?.onSuccess()
+            else callback?.onFailure(status)
+            callback = null
+        }
 
         override fun onNext(downstream: Downstream) {
-            isReceivedDownstream = true
-
             when (downstream.messageCase) {
                 Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                     downstream.directiveMessage?.let {
                         if (it.directivesCount > 0) {
-                            val log = StringBuilder()
                             val beginTimeStamp = System.currentTimeMillis()
                             observer.onReceiveDirectives(it)
-                            log.append("[EventsService] directive, messageId=")
                             val elapsed = System.currentTimeMillis() - beginTimeStamp
+
+                            val log =
+                                StringBuilder().append("[EventsService] directive, messageId=")
                             it.directivesList.forEach {
                                 log.append(it.header.messageId)
                                 log.append(", ")
                             }
-                            if(elapsed  > 100) {
+                            if (elapsed > 100) {
                                 log.append("elapsed=$elapsed")
+                                Logger.w(TAG, log.toString())
+                            } else {
+                                Logger.d(TAG, log.toString())
                             }
-                            Logger.d(TAG, log.toString())
+
+                            it.directivesList.forEach {
+                                if (it.header.dialogRequestId == request?.dialogRequestId) {
+                                    hasDirective = true
+                                }
+                            }
                         }
                         if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
                             observer.onError(Status.UNAUTHENTICATED)
@@ -109,21 +127,34 @@ internal class EventsService(
                 }
                 Downstream.MessageCase.ATTACHMENT_MESSAGE -> {
                     downstream.attachmentMessage?.let {
+                        hasDownstream = true
+
                         if (it.hasAttachment()) {
-                            val currentTimeMillis =  System.currentTimeMillis()
+                            val currentTimeMillis = System.currentTimeMillis()
                             if (it.attachment.seq == 0) {
                                 startAttachmentTimeMillis = currentTimeMillis
-                                Logger.d(TAG, "[EventsService] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}")
+                                Logger.d(
+                                    TAG,
+                                    "[EventsService] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}"
+                                )
                             }
                             if (it.attachment.isEnd) {
                                 val elapsed = currentTimeMillis - startAttachmentTimeMillis
-                                Logger.d(TAG, "[EventsService] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, elapsed=${elapsed}ms")
+                                Logger.d(
+                                    TAG,
+                                    "[EventsService] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, elapsed=${elapsed}ms"
+                                )
                             }
+                            Logger.d(TAG, "[EventsService] begin $${it.attachment.parentMessageId}")
                             observer.onReceiveAttachment(it)
+                            Logger.d(TAG, "[EventsService] end $${it.attachment.parentMessageId}")
 
                             val dispatchTimestamp = currentTimeMillis - System.currentTimeMillis()
-                            if(dispatchTimestamp  > 100) {
-                                Logger.w(TAG, "[EventsService] attachment, operation has been delayed (${dispatchTimestamp}ms), messageId=${it.attachment.header.messageId} ")
+                            if (dispatchTimestamp > 100) {
+                                Logger.w(
+                                    TAG,
+                                    "[EventsService] attachment, operation has been delayed (${dispatchTimestamp}ms), messageId=${it.attachment.header.messageId} "
+                                )
                             }
                         }
                     }
@@ -139,16 +170,17 @@ internal class EventsService(
                 val status = Status.fromThrowable(t)
 
                 val log = StringBuilder()
-                log.append("[onError] ${status.code}, ${status.description}, $streamId")
-                if(status.code == Status.Code.DEADLINE_EXCEEDED) {
+                log.append("[onError] ${status.code}, ${status.description}, messageId=$streamId")
+                if (status.code == Status.Code.DEADLINE_EXCEEDED) {
                     // TODO :: When sending Asr.Recognize and not sending Attachment
-                    if(isAsrRecognize && !isSendingAttachmentMessage) {
+                    if (isAsrRecognize && !isSendingAttachmentMessage) {
                         halfClose(streamId)
                         log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
                         Logger.w(TAG, log.toString())
                         return
                     }
-                    if(isReceivedDownstream) {
+                    if (hasDownstream || hasDirective) {
+                        log.append(", skip halfClose")
                         Logger.e(TAG, log.toString())
                         return
                     }
@@ -156,20 +188,43 @@ internal class EventsService(
                 Logger.e(TAG, log.toString())
                 halfClose(streamId)
 
-                if(status.code == Status.Code.CANCELLED) {
+                request?.dispatchCallback(MessageStatus.fromCode(status.code.value()))
+
+                if (status.code == Status.Code.CANCELLED) {
                     return
                 }
-                observer.onError(status)
+               // observer.onError(status)
             }
         }
 
         override fun onCompleted() {
             Logger.d(TAG, "[onCompleted] messageId=$streamId")
             halfClose(streamId)
+
+            if(hasDirective) {
+                request?.dispatchCallback(
+                    MessageStatus.fromCode(
+                        Status.OK.code.value()
+                    )
+                )
+            }
         }
     }
 
-    private fun halfClose(streamId : String) {
+    private fun cancel(dialogRequestId: String) {
+        val removeStreamId = ArrayList<String>()
+        requestStreamMap.forEach {
+            val request = it.value?.responseObserver?.request
+            if(dialogRequestId == request?.dialogRequestId) {
+                removeStreamId.add(request.messageId)
+            }
+        }
+        removeStreamId.forEach {
+            halfClose(it)
+        }
+    }
+
+    private fun halfClose(streamId: String) {
         streamLock.withLock {
             try {
                 requestStreamMap.remove(streamId)?.clientCall?.onCompleted()
@@ -179,54 +234,92 @@ internal class EventsService(
         }
     }
 
-    fun sendAttachmentMessage(attachment: AttachmentMessageRequest): Boolean {
+    fun sendAttachmentMessage(request: AttachmentMessageRequest): MessageSender.Call {
         if (isShutdown.get()) {
             Logger.w(TAG, "[sendAttachmentMessage] already shutdown")
-            return false
+            return CanceledCall(request)
         }
-
-        try {
-            streamLock.withLock {
-                obtainChannel(attachment.parentMessageId)?.apply {
-                    this.responseObserver.isSendingAttachmentMessage = true
+        streamLock.withLock {
+            obtainChannel(request.parentMessageId)?.apply {
+                this.responseObserver.isSendingAttachmentMessage = true
+                try {
                     this.clientCall.onNext(
                         Upstream.newBuilder()
-                            .setAttachmentMessage(attachment.toProtobufMessage())
+                            .setAttachmentMessage(request.toProtobufMessage())
                             .build()
                     )
+                } catch (e: IllegalStateException) {
+                    halfClose(request.messageId)
+                    // Perhaps, Stream is already completed, no further calls are allowed
+                    Logger.w(TAG, "[sendAttachmentMessage] Exception : ${e.cause} ${e.message}")
+                    this.responseObserver.callback?.onFailure(
+                        MessageStatus.fromCode(Status.UNKNOWN.code.value())
+                    )
+                    return CanceledCall(request)
                 }
             }
-        } catch (e: IllegalStateException) {
-            // Perhaps, Stream is already completed, no further calls are allowed
-            Logger.w(TAG, "[sendAttachmentMessage] Exception : ${e.cause} ${e.message}")
-            return false
+            if(request.isEnd) {
+                halfClose(request.parentMessageId)
+            }
         }
-        return true
+        return object : MessageSender.Call {
+            var canceled = false
+            override fun request() = request
+            override fun isCanceled() = canceled
+            override fun cancel() {
+                if(canceled) return
+                canceled = true
+                cancel(request.dialogRequestId)
+            }
+        }
     }
 
-    fun sendEventMessage(event: EventMessageRequest): Boolean {
+    fun sendEventMessage(
+        request: EventMessageRequest,
+        callback: MessageSender.OnRequestCallback?
+    ): MessageSender.Call {
         if (isShutdown.get()) {
             Logger.w(TAG, "[sendEventMessage] already shutdown")
-            return false
+            return CanceledCall(request)
         }
-
-        try {
-            streamLock.withLock {
-                obtainChannel(event.messageId)?.apply {
-                    this.responseObserver.isAsrRecognize = event.checkIfEventMessageIsAsrRecognize()
+        val isAsrRecognize = request.checkIfEventMessageIsAsrRecognize()
+        streamLock.withLock {
+            obtainChannel(request.messageId)?.apply {
+                this.responseObserver.apply {
+                    this.isAsrRecognize = isAsrRecognize
+                    this.callback = callback
+                    this.request = request
+                }
+                try {
                     this.clientCall.onNext(
                         Upstream.newBuilder()
-                            .setEventMessage(event.toProtobufMessage())
+                            .setEventMessage(request.toProtobufMessage())
                             .build()
                     )
+                } catch (e: IllegalStateException) {
+                    halfClose(request.messageId)
+                    // Perhaps, Stream is already completed, no further calls are allowed
+                    Logger.w(TAG, "[sendEventMessage] Exception : ${e.cause} ${e.message}")
+                    this.responseObserver.callback?.onFailure(
+                        MessageStatus.fromCode(Status.UNKNOWN.code.value())
+                    )
+                    return CanceledCall(request)
                 }
             }
-        } catch (e: IllegalStateException) {
-            // Perhaps, Stream is already completed, no further calls are allowed
-            Logger.w(TAG, "[sendEventMessage] Exception : ${e.cause} ${e.message}")
-            return false
+            if(!isAsrRecognize) {
+                halfClose(request.messageId)
+            }
         }
-        return true
+        return object : MessageSender.Call {
+            var canceled = false
+            override fun request() = request
+            override fun isCanceled() = canceled
+            override fun cancel() {
+                if(canceled) return
+                canceled = true
+                cancel(request.dialogRequestId)
+            }
+        }
     }
 
     fun shutdown() {

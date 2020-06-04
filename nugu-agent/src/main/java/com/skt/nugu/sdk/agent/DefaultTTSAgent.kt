@@ -36,10 +36,9 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -55,13 +54,11 @@ class DefaultTTSAgent(
     private val focusManager: FocusManagerInterface,
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val inputProcessorManager: InputProcessorManagerInterface,
     private val channelName: String,
     private val focusHolderManager: FocusHolderManager
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ChannelObserver
     , TTSAgentInterface
-    , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
     , FocusHolderManager.OnStateChangeListener
     , PlayStackManagerInterface.PlayContextProvider
@@ -911,31 +908,24 @@ class DefaultTTSAgent(
                         }.toString())
                         .build()
 
-                if (messageSender.sendMessage(messageRequest)) {
-                    listener?.let {
-                        requestListenerMap[dialogRequestId] = it
-                    }
-                    onSendEventFinished(messageRequest.dialogRequestId)
-                } else {
-                    listener?.onError(dialogRequestId)
-                }
+                messageSender.sendMessage(
+                    messageRequest,
+                    object : MessageSender.OnRequestCallback {
+                        override fun onSuccess() {
+                            listener?.let {
+                                requestListenerMap[dialogRequestId] = it
+                            }
+                        }
+
+                        override fun onFailure(status: Status) {
+                            listener?.onError(dialogRequestId)
+                        }
+                    })
+
             }
         }, namespaceAndName)
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean = true
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
     }
 
     override fun onStateChanged(state: FocusHolderManager.State) {

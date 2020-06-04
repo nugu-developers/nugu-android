@@ -15,9 +15,6 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2
 
-import com.skt.nugu.sdk.client.port.transport.http2.NuguServerInfo.Companion.DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST
-import com.skt.nugu.sdk.client.port.transport.http2.NuguServerInfo.Companion.DEFAULT_DEVICE_GATEWAY_SERVER_HOST
-import com.skt.nugu.sdk.client.port.transport.http2.NuguServerInfo.Companion.HTTPS_PORT
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -29,6 +26,9 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.http2.TransportState.*
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayTransport
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
 import java.util.concurrent.Executors
 
 /**
@@ -100,8 +100,8 @@ internal class HTTP2Transport(
         }
         setState(DetailedState.CONNECTING_REGISTRY)
 
-        if(!serverInfo.keepConnection) {
-            Logger.d(TAG,"[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
+        if (!serverInfo.keepConnection) {
+            Logger.d(TAG, "[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
             return tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(serverInfo))
         }
 
@@ -182,6 +182,7 @@ internal class HTTP2Transport(
         }
 
         DeviceGatewayClient.create(
+            executor,
             policy,
             serverInfo.keepConnection,
             messageConsumer,
@@ -236,12 +237,20 @@ internal class HTTP2Transport(
         return state.isConnectedOrConnecting()
     }
 
-    override fun send(request: MessageRequest): Boolean {
+    override fun send(
+        request: MessageRequest,
+        callback: MessageSender.OnRequestCallback?
+    ): MessageSender.Call {
         if (!state.isConnected()) {
             Logger.d(TAG, "[send], Status : ($state), request : $request")
-            return false
+            callback?.onFailure(Status.FAILED_PRECONDITION.withDescription("not connected"))
+            return CanceledCall(request)
         }
-        return deviceGatewayClient?.send(request) ?: false
+        return deviceGatewayClient?.send(request, callback) ?: run {
+            Logger.d(TAG, "[sendMessage] failed, $this")
+            callback?.onFailure(Status.FAILED_PRECONDITION.withDescription("DeviceGateway has not been initialized"))
+            return CanceledCall(request)
+        }
     }
 
     /**

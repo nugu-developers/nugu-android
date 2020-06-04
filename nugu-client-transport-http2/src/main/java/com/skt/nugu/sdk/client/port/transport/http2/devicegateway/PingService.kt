@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.client.port.transport.http2.devicegateway
 
 import com.skt.nugu.sdk.client.port.transport.http2.HealthCheckPolicy
 import com.skt.nugu.sdk.client.port.transport.http2.ServerPolicy
-import com.skt.nugu.sdk.client.port.transport.http2.Status
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.*
 import java.io.IOException

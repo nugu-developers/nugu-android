@@ -22,10 +22,8 @@ import com.skt.nugu.sdk.client.port.transport.http2.utils.ChannelBuilderUtils.Co
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toStringMessage
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
-import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
-import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
-import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -35,13 +33,14 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  *  Implementation of DeviceGateway with http2
  **/
 internal class DeviceGatewayClient(
+    private val executor: ExecutorService,
     private val policy: Policy,
     private val keepConnection: Boolean,
     private var messageConsumer: MessageConsumer?,
@@ -52,6 +51,7 @@ internal class DeviceGatewayClient(
         private const val TAG = "HTTP2DeviceGatewayClient"
 
         fun create(
+            executor: ExecutorService,
             policy: Policy,
             keepConnection: Boolean,
             messageConsumer: MessageConsumer?,
@@ -59,12 +59,11 @@ internal class DeviceGatewayClient(
             authDelegate: AuthDelegate
         ) =
             DeviceGatewayClient(
-                policy, keepConnection,
+                executor, policy, keepConnection,
                 messageConsumer, transportObserver, authDelegate
             )
     }
 
-    private val executor = Executors.newSingleThreadExecutor()
     private val policies = ConcurrentLinkedQueue(policy.serverPolicy)
     private var backoff : BackOff = BackOff.DEFAULT()
 
@@ -109,23 +108,6 @@ internal class DeviceGatewayClient(
 
         policy.apply {
             client = createChannelBuilderWith(authDelegate)
-            if(keepConnection) {
-                directivesService =
-                    DirectivesService.create(
-                        this,
-                        client,
-                        this@DeviceGatewayClient
-                    )
-            }
-
-            pingService =
-                PingService.create(
-                    this,
-                    client,
-                    healthCheckPolicy,
-                    keepConnection,
-                    this@DeviceGatewayClient
-                )
             eventsService =
                 EventsService.create(
                     this,
@@ -133,6 +115,25 @@ internal class DeviceGatewayClient(
                     this@DeviceGatewayClient
                 )
 
+            if(keepConnection) {
+                directivesService =
+                    DirectivesService.create(
+                        this,
+                        client,
+                        this@DeviceGatewayClient
+                    )
+
+                pingService =
+                    PingService.create(
+                        this,
+                        client,
+                        healthCheckPolicy,
+                        keepConnection,
+                        this@DeviceGatewayClient
+                    )
+            } else {
+                handleConnectedIfNeeded()
+            }
         }
         return true
     }
@@ -167,14 +168,23 @@ internal class DeviceGatewayClient(
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    override fun send(request: MessageRequest) : Boolean {
-        val event = eventsService ?: return false
+    override fun send(
+        request: MessageRequest,
+        callback: MessageSender.OnRequestCallback?
+    ): MessageSender.Call {
+        val event = eventsService ?: run {
+            callback?.onFailure(Status.FAILED_PRECONDITION.withDescription("EventsService has not been initialized"))
+            return CanceledCall(request)
+        }
 
         val result = when(request) {
             is AttachmentMessageRequest -> event.sendAttachmentMessage(request)
-            is EventMessageRequest -> event.sendEventMessage(request)
-            is CrashReportMessageRequest ->  true /* Deprecated */
-            else -> false
+            is EventMessageRequest -> event.sendEventMessage(request, callback)
+            is CrashReportMessageRequest ->   CanceledCall(request) /* Deprecated */
+            else -> {
+                callback?.onFailure(Status.FAILED_PRECONDITION.withDescription("Unknown message type: ${request}"))
+                CanceledCall(request)
+            }
         }
         Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
         return result
@@ -305,7 +315,9 @@ internal class DeviceGatewayClient(
      */
     override fun onReceiveDirectives(directiveMessage: List<DirectiveMessage>) {
         handleConnectedIfNeeded()
-        messageConsumer?.consumeDirectives(directiveMessage)
+        executor.submit {
+            messageConsumer?.consumeDirectives(directiveMessage)
+        }
     }
 
     /**
@@ -313,6 +325,8 @@ internal class DeviceGatewayClient(
      * @param attachmentMessage
      */
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
-        messageConsumer?.consumeAttachment(attachmentMessage)
+        executor.submit {
+            messageConsumer?.consumeAttachment(attachmentMessage)
+        }
     }
 }

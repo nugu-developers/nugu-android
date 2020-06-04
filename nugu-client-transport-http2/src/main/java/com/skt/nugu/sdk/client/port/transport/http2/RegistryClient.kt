@@ -21,12 +21,14 @@ import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLIC
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import okhttp3.*
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -168,7 +170,10 @@ class RegistryClient(
         throw NotImplementedError()
     }
 
-    override fun send(request: MessageRequest): Boolean {
+    override fun send(
+        request: MessageRequest,
+        callback: MessageSender.OnRequestCallback?
+    ): MessageSender.Call {
         throw NotImplementedError()
     }
 
