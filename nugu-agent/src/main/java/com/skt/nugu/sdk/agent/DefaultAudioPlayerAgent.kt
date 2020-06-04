@@ -399,7 +399,7 @@ class DefaultAudioPlayerAgent(
             currentItem = item
             token = item.payload.audioItem.stream.token
             item.playContext = item.payload.playStackControl?.getPushPlayServiceId()?.let {
-                PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis())
+                PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis(), true)
             }
 
             progressTimer.init(
