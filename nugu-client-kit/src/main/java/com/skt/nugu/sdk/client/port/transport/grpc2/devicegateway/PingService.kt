@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
+package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
-import com.skt.nugu.sdk.client.port.transport.grpc.HealthCheckPolicy
+import com.skt.nugu.sdk.client.port.transport.grpc2.HealthCheckPolicy
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.PingRequest
 import devicegateway.grpc.VoiceServiceGrpc
+import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.util.*
 import java.util.concurrent.ScheduledFuture
@@ -30,13 +31,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This class is designed to manage healthcheck of DeviceGateway
  */
 internal class PingService(
-    blockingStub: VoiceServiceGrpc.VoiceServiceBlockingStub,
+    private val channel: ManagedChannel,
     private val healthCheckPolicy: HealthCheckPolicy,
-    observer: Observer
+    private val observer: DeviceGatewayTransport
 ) {
     private val timeout: Long = healthCheckPolicy.healthCheckTimeout.toLong()
     private var intervalFuture: ScheduledFuture<*>? = null
     private val isShutdown = AtomicBoolean(false)
+    private var blockingStub: VoiceServiceGrpc.VoiceServiceBlockingStub? = null
 
     companion object {
         private const val TAG = "PingService"
@@ -49,20 +51,22 @@ internal class PingService(
             removeOnCancelPolicy = true
         }
 
-
-    interface Observer {
-        fun onPingRequestAcknowledged()
-        fun onError(status: Status)
+    init {
+        nextInterval(0)
     }
 
-    private val pingTask = Runnable {
+    private fun executePingRequest() : Boolean{
         try {
-            val response = blockingStub.withDeadlineAfter(
+            if(blockingStub == null) {
+                blockingStub = VoiceServiceGrpc.newBlockingStub(channel)
+            }
+            val response = blockingStub!!.withDeadlineAfter(
                 if (timeout > 0) timeout else defaultTimeout,
                 TimeUnit.MILLISECONDS
-            ).ping(PingRequest.newBuilder().build())
+            ).ping(PingRequest.newBuilder().setVersion(2).build())
+
             observer.onPingRequestAcknowledged()
-            nextInterval()
+            return true
         } catch (e: Throwable) {
             if (!isShutdown.get()) {
                 val status = Status.fromThrowable(e)
@@ -70,32 +74,36 @@ internal class PingService(
                 observer.onError(status)
             }
         }
+        return false
     }
 
-    init {
-        intervalFuture = executorService.schedule(pingTask, 0, TimeUnit.MILLISECONDS)
-    }
-
-    private fun nextInterval() {
-        if (isShutdown.get()) {
-            return
-        }
-
+    private fun newDelayMillis() : Long {
         val retryDelay: Long = if (healthCheckPolicy.retryDelay == 0) {
             defaultInterval
         } else healthCheckPolicy.retryDelay.toLong()
 
         val ttlMax: Long = healthCheckPolicy.ttlMax.toLong()
         val beta = healthCheckPolicy.beta
-        val internal = Math.max(
+        return Math.max(
             ttlMax + (beta * Math.log(Random().nextDouble())).toLong(),
             retryDelay
         )
-        intervalFuture = executorService.schedule(pingTask, internal, TimeUnit.MILLISECONDS)
     }
 
+    private fun nextInterval(delay : Long) {
+        if (isShutdown.get()) {
+            return
+        }
+        intervalFuture = executorService.schedule({
+            if(executePingRequest()) {
+                nextInterval(newDelayMillis())
+            }
+        }, delay, TimeUnit.MILLISECONDS)
+    }
+
+    fun isStop() = isShutdown.get()
     fun shutdown() {
-        if(isShutdown.compareAndSet(false, true)) {
+        if (isShutdown.compareAndSet(false, true)) {
             intervalFuture?.cancel(true)
             executorService.shutdown()
         } else {

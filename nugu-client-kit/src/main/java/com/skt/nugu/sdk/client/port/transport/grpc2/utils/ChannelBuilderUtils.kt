@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.utils
+package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
-import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
-import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
+import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
+import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import io.grpc.*
@@ -39,7 +39,7 @@ class ChannelBuilderUtils {
                 .userAgent(userAgent())
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
-                    authorization ?: ""
+                    authorization.toString()
                 )
             )
         }

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
+package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.MessageRequestConverter.toProtobufMessage
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toProtobufMessage
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -68,7 +68,11 @@ internal class EventsService(
                 VoiceServiceGrpc.newStub(channel)
                     .withDeadlineAfter(defaultTimeout, TimeUnit.MILLISECONDS)
                     .withWaitForReady()?.events(responseObserver)?.apply {
-                        requestStreamMap[streamId] = ClientChannel(this, responseObserver)
+                        requestStreamMap[streamId] =
+                            ClientChannel(
+                                this,
+                                responseObserver
+                            )
                     }
             }
             return requestStreamMap[streamId]

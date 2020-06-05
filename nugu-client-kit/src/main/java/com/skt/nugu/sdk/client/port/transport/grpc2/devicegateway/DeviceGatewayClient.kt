@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
+package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
-import com.google.protobuf.ByteString
-import com.google.protobuf.UnsafeByteOperations
-import com.skt.nugu.sdk.client.port.transport.grpc.Policy
-import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
+import com.skt.nugu.sdk.client.port.transport.grpc2.Policy
+import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.BackOff
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.ChannelBuilderUtils
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toAttachmentMessage
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toDirectives
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toStringMessage
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
-import devicegateway.grpc.*
+import devicegateway.grpc.AttachmentMessage
+import devicegateway.grpc.DirectiveMessage
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.net.ConnectException
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -42,13 +43,13 @@ import java.util.concurrent.atomic.AtomicBoolean
  *  Implementation of DeviceGateway
  **/
 internal class DeviceGatewayClient(policy: Policy,
+                                   private val keepConnection : Boolean,
                                    private var messageConsumer: MessageConsumer?,
-                                   private var transportObserver: Observer?,
+                                   private var transportObserver: DeviceGatewayTransport.TransportObserver?,
                                    private val authorization: String?,
                                    var isHandOff: Boolean)
-    : Transport
-    , PingService.Observer
-    , EventStreamService.Observer {
+    :
+    DeviceGatewayTransport {
     companion object {
         private const val TAG = "DeviceGatewayClient"
     }
@@ -59,18 +60,14 @@ internal class DeviceGatewayClient(policy: Policy,
     private var currentChannel: ManagedChannel? = null
 
     private var pingService: PingService? = null
-    private var eventStreamService: EventStreamService? = null
+    private var eventsService: EventsService? = null
     private var crashReportService: CrashReportService? = null
+    private var directivesService: DirectivesService? = null
+
     private var currentPolicy : ServerPolicy? = nextPolicy()
     private var healthCheckPolicy = policy.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
-
-    interface Observer {
-        fun onConnected()
-        fun onReconnecting(reason: ChangedReason = ChangedReason.NONE)
-        fun onError(reason: ChangedReason)
-    }
 
     /**
      * Set a policy.
@@ -90,7 +87,7 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return true is success, otherwise false
      */
     override fun connect(): Boolean {
-        if (isConnected.get()) {
+        if (isConnected()) {
             return false
         }
 
@@ -104,15 +101,38 @@ internal class DeviceGatewayClient(policy: Policy,
 
         policy.apply {
             currentChannel = ChannelBuilderUtils.createChannelBuilderWith(this, authorization).build()
-            currentChannel.also {
-                pingService = PingService(VoiceServiceGrpc.newBlockingStub(it),
-                    healthCheckPolicy,
-                    observer = this@DeviceGatewayClient
+            currentChannel?.apply {
+                eventsService =
+                    EventsService(
+                        this,
+                        this@DeviceGatewayClient
+                    )
+                crashReportService =
+                    CrashReportService(
+                        this
+                    )
+                if(keepConnection) {
+                    directivesService =
+                        DirectivesService(
+                            this,
+                            this@DeviceGatewayClient
+                        )
+                    pingService =
+                        PingService(
+                            this,
+                            healthCheckPolicy,
+                            this@DeviceGatewayClient
+                        )
+                }
+                else {
+                    handleConnectedIfNeeded()
+                }
+            } ?: run {
+                Logger.w(TAG, "[connect] Can't create a new channel")
+                transportObserver?.onError(
+                    ChangedReason.UNRECOVERABLE_ERROR
                 )
-                eventStreamService = EventStreamService(VoiceServiceGrpc.newStub(it),
-                    observer = this@DeviceGatewayClient
-                )
-                crashReportService = CrashReportService(VoiceServiceGrpc.newBlockingStub(it))
+                return false
             }
         }
         return true
@@ -124,8 +144,10 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun disconnect() {
         pingService?.shutdown()
         pingService = null
-        eventStreamService?.shutdown()
-        eventStreamService = null
+        eventsService?.shutdown()
+        eventsService = null
+        directivesService?.shutdown()
+        directivesService = null
         crashReportService?.shutdown()
         crashReportService = null
         ChannelBuilderUtils.shutdown(currentChannel)
@@ -143,22 +165,22 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     /**
-     * Sends an message request.
+     * Sends a message request.
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
     override fun send(request: MessageRequest) : Boolean {
-        val event = eventStreamService
+        val event = eventsService
         val crash = crashReportService
 
         val result = when(request) {
-            is AttachmentMessageRequest -> event?.sendAttachmentMessage(toProtobufMessage(request))
-            is EventMessageRequest -> event?.sendEventMessage(toProtobufMessage(request))
+            is AttachmentMessageRequest -> event?.sendAttachmentMessage(request)
+            is EventMessageRequest -> event?.sendEventMessage(request)
             is CrashReportMessageRequest -> crash?.sendCrashReport(request)
             else -> false
         } ?: false
 
-        Logger.d(TAG, "sendMessage : ${toStringMessage(request)}, result : $result")
+        Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
         return result
     }
 
@@ -180,14 +202,15 @@ internal class DeviceGatewayClient(policy: Policy,
                     Status.Code.UNAVAILABLE -> {
                         var cause = status.cause
                         var reason =
-                            if (isConnected.get()) ChangedReason.SERVER_SIDE_DISCONNECT
-                            else ChangedReason.CONNECTION_TIMEDOUT
+                            if (isConnected()) ChangedReason.SERVER_SIDE_DISCONNECT
+                            else ChangedReason.CONNECTION_ERROR
                         while (cause != null) {
                             if (cause is UnknownHostException) {
                                 reason = ChangedReason.DNS_TIMEDOUT
-                            } else if( cause is ConnectException) {
+                            }  else if(cause is SocketTimeoutException) {
                                 reason = ChangedReason.CONNECTION_TIMEDOUT
-                                //ECONNREFUSED, ENETUNREACH
+                            } else if( cause is ConnectException) {
+                                reason = ChangedReason.CONNECTION_ERROR
                             }
                             cause = cause.cause
                         }
@@ -195,7 +218,13 @@ internal class DeviceGatewayClient(policy: Policy,
                     }
                     Status.Code.UNKNOWN -> ChangedReason.SERVER_SIDE_DISCONNECT
                     Status.Code.DEADLINE_EXCEEDED -> {
-                        if (isConnected.get()) ChangedReason.PING_TIMEDOUT
+                        if (isConnected()) {
+                            if(pingService?.isStop() == false) {
+                                ChangedReason.PING_TIMEDOUT
+                            } else {
+                                ChangedReason.REQUEST_TIMEDOUT
+                            }
+                        }
                         else ChangedReason.CONNECTION_TIMEDOUT
                     }
                     Status.Code.UNIMPLEMENTED -> ChangedReason.FAILURE_PROTOCOL_ERROR
@@ -236,7 +265,7 @@ internal class DeviceGatewayClient(policy: Policy,
             }
 
             override fun onRetry(retriesAttempted: Int) {
-                if (isConnected.get()) {
+                if (isConnected()) {
                     Logger.w(TAG, "[awaitRetry] connected")
                 } else {
                     disconnect()
@@ -256,134 +285,43 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     /**
-     * Notification that sending a ping to DeviceGateway has been acknowledged by DeviceGateway.
+     * Connected event received
+     * @return boolean value, true if the connection has changed, false otherwise.
      */
-    override fun onPingRequestAcknowledged() {
+    private fun handleConnectedIfNeeded()  {
         if(isConnected.compareAndSet(false, true)) {
+            if(isHandOff) {
+                isHandOff = false
+                Logger.d(TAG,"[handleConnectedIfNeeded] Handoff complete")
+            }
             backoff.reset()
             transportObserver?.onConnected()
         }
-        Logger.d(TAG, "onPingRequestAcknowledged")
     }
 
-    override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
-        messageConsumer?.consumeDirectives(convertToDirectives(directiveMessage))
+    /**
+     * Notification that sending a ping to DeviceGateway has been acknowledged by DeviceGateway.
+     */
+    override fun onPingRequestAcknowledged() {
+        Logger.d(TAG, "onPingRequestAcknowledged, isConnected:${isConnected()}")
+        handleConnectedIfNeeded()
     }
 
-    private fun convertToDirectives(directiveMessage: DirectiveMessage): List<com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage> {
-        val directives = ArrayList<com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage>()
+    /**
 
-        directiveMessage.directivesList.forEach {
-            directives.add(com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage(convertHeader(it.header), it.payload))
-        }
-
-        return directives
-    }
-
+     * attachment received
+     * @param attachmentMessage
+     */
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
-        messageConsumer?.consumeAttachment(convertToAttachmentMessage(attachmentMessage))
+        messageConsumer?.consumeAttachment(attachmentMessage.toAttachmentMessage())
     }
 
-    private fun convertToAttachmentMessage(attachmentMessage: AttachmentMessage): com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage {
-        return with(attachmentMessage.attachment) {
-            com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage(
-                content.asReadOnlyByteBuffer(),
-                convertHeader(header),
-                isEnd,
-                parentMessageId,
-                seq,
-                mediaType
-            )
-        }
-    }
-
-    private fun convertHeader(header: Header): com.skt.nugu.sdk.core.interfaces.message.Header = with(header) {
-        com.skt.nugu.sdk.core.interfaces.message.Header(
-            dialogRequestId,
-            messageId,
-            name,
-            namespace,
-            version,
-            referrerDialogRequestId
-        )
-    }
-
-    private fun toProtobufMessage(request: AttachmentMessageRequest): AttachmentMessage {
-        with(request) {
-            val attachment = Attachment.newBuilder()
-                .setHeader(
-                    Header.newBuilder()
-                        .setNamespace(namespace)
-                        .setName(name)
-                        .setMessageId(messageId)
-                        .setDialogRequestId(dialogRequestId)
-                        .setVersion(version)
-                        .setReferrerDialogRequestId(referrerDialogRequestId)
-                        .build()
-                )
-                .setParentMessageId(parentMessageId)
-                .setSeq(seq)
-                .setIsEnd(isEnd)
-                .setMediaType(mediaType)
-                .setContent(
-                    if (byteArray != null) {
-                        UnsafeByteOperations.unsafeWrap(ByteBuffer.wrap(byteArray))
-                    } else {
-                        ByteString.EMPTY
-                    }
-                )
-                .build()
-
-            return AttachmentMessage.newBuilder()
-                .setAttachment(attachment).build()
-        }
-    }
-
-    private fun toProtobufMessage(request: EventMessageRequest): EventMessage {
-        with(request) {
-            val event = Event.newBuilder()
-                .setHeader(
-                    Header.newBuilder()
-                        .setNamespace(namespace)
-                        .setName(name)
-                        .setMessageId(messageId)
-                        .setDialogRequestId(dialogRequestId)
-                        .setVersion(version)
-                        .setReferrerDialogRequestId(referrerDialogRequestId)
-                        .build()
-                )
-                .setPayload(payload)
-                .build()
-
-            return EventMessage.newBuilder()
-                .setContext(context)
-                .setEvent(event)
-                .build()
-        }
-    }
-
-    private fun toStringMessage(request: MessageRequest) : String {
-        return when(request) {
-            is AttachmentMessageRequest -> {
-                StringBuilder().apply {
-                    append(request.javaClass.simpleName)
-                    append("(")
-                        append("messageId=${request.messageId}")
-                        append(",dialogRequestId=${request.dialogRequestId}")
-                        append("context=${request.context}")
-                        append(",namespace=${request.namespace}")
-                        append(",name=${request.name}")
-                        append(",version=${request.version}")
-                        append(",referrerDialogRequestId=${request.referrerDialogRequestId}")
-                        append(",seq=${request.seq}")
-                        append(",isEnd=${request.isEnd}")
-                        append(",parentMessageId=${request.parentMessageId}")
-                        append(",mediaType=${request.mediaType}")
-                        append(",content size=${request.byteArray?.size}")
-                    append(")")
-                }.toString()
-            }
-            else -> request.toString()
-        }
+    /**
+     * directive received
+     * @param directiveMessage
+     */
+    override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
+        handleConnectedIfNeeded()
+        messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
     }
 }

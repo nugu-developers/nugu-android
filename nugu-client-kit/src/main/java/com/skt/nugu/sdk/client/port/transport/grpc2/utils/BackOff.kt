@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.utils
+package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
 import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.Status
@@ -41,12 +41,14 @@ class BackOff private constructor(builder: Builder) {
         /**
          * Default constructor of Credentials
          **/
-        fun DEFAULT() = BackOff(Builder(
-                maxAttempts = 3,
-                baseDelay = DEFAULT_BASE_DELAY,
-                maxBackoffTime = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
+        fun DEFAULT() =
+            BackOff(
+                Builder(
+                    maxAttempts = 3,
+                    baseDelay = DEFAULT_BASE_DELAY,
+                    maxBackoffTime = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
+                )
             )
-        )
     }
 
     enum class BackoffError {
@@ -182,6 +184,7 @@ class BackOff private constructor(builder: Builder) {
         internal val baseDelay: Long = DEFAULT_BASE_DELAY,
         internal val maxBackoffTime: Long = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
     ) {
-        fun build() = BackOff(this)
+        fun build() =
+            BackOff(this)
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc
+package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.Status
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
@@ -26,7 +26,8 @@ import java.util.*
 internal class TransportState {
     companion object {
         private const val TAG = "TransportState"
-        private val stateMap = EnumMap<DetailedState, Status>(DetailedState::class.java)
+        private val stateMap = EnumMap<DetailedState, Status>(
+            DetailedState::class.java)
 
         fun fromDetailedState(detailedState: DetailedState) : Status{
             return stateMap[detailedState] ?: Status.DISCONNECTED
@@ -60,7 +61,8 @@ internal class TransportState {
     }
 
     private var state: Status =  Status.DISCONNECTED
-    private var detailedState: DetailedState = DetailedState.IDLE
+    private var detailedState: DetailedState =
+        DetailedState.IDLE
     private var reason: ChangedReason? = null
     /**
      * This is the map described in the Javadoc comment above. The positions

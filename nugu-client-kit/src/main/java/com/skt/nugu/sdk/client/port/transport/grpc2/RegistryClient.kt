@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc
+package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
@@ -31,12 +31,37 @@ import java.net.UnknownHostException
 /**
  *  Implementation of registry
  **/
-internal class RegistryClient(private var address: String) : Transport {
+internal class RegistryClient(private var serverInfo: NuguServerInfo) : Transport {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: Policy? = null
         const val GRPC_PROTOCOL = "H2_GRPC"
         const val HTTPS_SCHEME = "https"
+
+        fun DefaultPolicy(serverInfo: NuguServerInfo) : Policy {
+            return Policy(
+                healthCheckPolicy = HealthCheckPolicy(
+                    ttl = 0,
+                    ttlMax = 0,
+                    beta = 0F,
+                    retryCountLimit = 0,
+                    retryDelay = 0,
+                    healthCheckTimeout = 0,
+                    accumulationTime = 0
+                ),
+                serverPolicy = listOf(
+                    ServerPolicy(
+                        protocol = GRPC_PROTOCOL,
+                        hostname = serverInfo.deviceGW.host,
+                        port = serverInfo.deviceGW.port,
+                        retryCountLimit = 2,
+                        connectionTimeout = 10,
+                        charge = ""
+                    )
+                )
+            )
+        }
+
     }
 
     private val isShutdown = AtomicBoolean(false)
@@ -56,18 +81,22 @@ internal class RegistryClient(private var address: String) : Transport {
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
             connectionPool = ConnectionPool(0, 1)
         }
+
         val httpUrl = HttpUrl.Builder()
             .scheme(HTTPS_SCHEME)
-            .host(address)
+            .host(serverInfo.registry.host)
+            .port(serverInfo.registry.port)
             .addPathSegment("v1")
             .addPathSegment("policies")
-            .addQueryParameter("protocol", GRPC_PROTOCOL)
+            .addQueryParameter("protocol",
+                GRPC_PROTOCOL
+            )
             .build()
 
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
             .header("Authorization", token.toString())
-            .header("User-Agent",UserAgent.toString())
+            .header("User-Agent", UserAgent.toString())
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(request: Request?, e: IOException?) {
@@ -112,6 +141,30 @@ internal class RegistryClient(private var address: String) : Transport {
                 }
             }
         })
+    }
+
+    fun buildDefaultPolicy(hostname: String) : Policy {
+        return Policy(
+            healthCheckPolicy = HealthCheckPolicy(
+                ttl = 0,
+                ttlMax = 0,
+                beta = 0F,
+                retryCountLimit = 0,
+                retryDelay = 0,
+                healthCheckTimeout = 0,
+                accumulationTime = 0
+            ),
+            serverPolicy = listOf(
+                ServerPolicy(
+                    protocol = GRPC_PROTOCOL,
+                    hostname = hostname,
+                    port = 443,
+                    retryCountLimit = 2,
+                    connectionTimeout = 10,
+                    charge = ""
+                )
+            )
+        )
     }
 
     private fun notifyPolicy(policy: Policy?, observer: Observer) {

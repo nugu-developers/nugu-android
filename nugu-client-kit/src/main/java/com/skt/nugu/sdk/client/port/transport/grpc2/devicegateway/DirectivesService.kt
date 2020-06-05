@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
+package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.DirectivesRequest
 import devicegateway.grpc.Downstream
