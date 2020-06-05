@@ -584,6 +584,8 @@ class NuguAndroidClient private constructor(
                             DefaultBluetoothAgent(
                                 getMessageSender(),
                                 getContextManager(),
+                                getAudioFocusManager(),
+                                DefaultFocusChannel.CONTENT_CHANNEL_NAME,
                                 it
                             ).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)

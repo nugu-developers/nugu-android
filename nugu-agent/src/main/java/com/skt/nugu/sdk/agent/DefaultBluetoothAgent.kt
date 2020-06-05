@@ -36,12 +36,17 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
+import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
+import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
 
 class DefaultBluetoothAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
+    focusManager: FocusManagerInterface,
+    focusChannelName: String,
     private val bluetoothProvider : BluetoothProvider?
 ) : AbstractCapabilityAgent(NAMESPACE),
     BluetoothAgentInterface {
@@ -160,11 +165,84 @@ class DefaultBluetoothAgent(
     private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()
 
+    inner class StreamingChangeHandler(
+        private val focusManager: FocusManagerInterface,
+        private val focusChannelName: String
+    ) : BluetoothProvider.OnStreamStateChangeListener
+        ,ChannelObserver {
+        private var focusState = FocusState.NONE
+        private var streamingState: BluetoothAgentInterface.StreamingState =
+            BluetoothAgentInterface.StreamingState.INACTIVE
+
+        override fun onStreamStateChanged(state: BluetoothAgentInterface.StreamingState) {
+            executor.submit {
+                Logger.d(TAG, "[onStreamStateChanged] $streamingState , $state")
+                if (streamingState == state) {
+                    return@submit
+                }
+
+                when (state) {
+                    BluetoothAgentInterface.StreamingState.ACTIVE -> {
+                        if (streamingState == BluetoothAgentInterface.StreamingState.INACTIVE || streamingState == BluetoothAgentInterface.StreamingState.UNUSABLE) {
+                            // request focus
+                            focusManager.acquireChannel(focusChannelName, this, NAMESPACE)
+                        } else if (streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                            // ignore
+                        }
+                    }
+                    BluetoothAgentInterface.StreamingState.UNUSABLE,
+                    BluetoothAgentInterface.StreamingState.INACTIVE -> {
+                        if (streamingState == BluetoothAgentInterface.StreamingState.ACTIVE || streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                            // release focus
+                            focusManager.releaseChannel(focusChannelName, this)
+                        } else if (streamingState == BluetoothAgentInterface.StreamingState.UNUSABLE) {
+                            // ignore
+                        }
+                    }
+                    BluetoothAgentInterface.StreamingState.PAUSED -> {
+                        // no-op
+                    }
+                }
+            }
+        }
+
+        override fun onFocusChanged(newFocus: FocusState) {
+            executor.submit {
+                Logger.d(TAG, "[onFocusChanged] $focusState , $newFocus")
+                if(focusState == newFocus) {
+                    return@submit
+                }
+
+                when(newFocus) {
+                    FocusState.FOREGROUND -> {
+                        if(streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                            // resume
+                            executePlay()
+                        }
+                    }
+                    FocusState.BACKGROUND -> {
+                        if(streamingState == BluetoothAgentInterface.StreamingState.ACTIVE) {
+                            // pause
+                            executePause()
+                        }
+                    }
+                    FocusState.NONE -> {
+                        if(streamingState == BluetoothAgentInterface.StreamingState.ACTIVE || streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                            // stop
+                            executeStop()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     init {
         /**
          * Performs initialization.
          */
         contextManager.setStateProvider(namespaceAndName, this)
+        bluetoothProvider?.setOnStreamStateChangeListener(StreamingChangeHandler(focusManager, focusChannelName))
     }
 
     internal data class StartDiscoverableModePayload(
