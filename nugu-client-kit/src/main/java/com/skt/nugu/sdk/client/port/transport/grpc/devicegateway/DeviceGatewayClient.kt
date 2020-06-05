@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
 import com.google.protobuf.ByteString
-import com.google.protobuf.UnsafeByteOperations
 import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
@@ -327,7 +326,7 @@ internal class DeviceGatewayClient(policy: Policy,
                 .setMediaType(mediaType)
                 .setContent(
                     if (byteArray != null) {
-                        UnsafeByteOperations.unsafeWrap(ByteBuffer.wrap(byteArray))
+                        ByteString.copyFrom(ByteBuffer.wrap(byteArray))
                     } else {
                         ByteString.EMPTY
                     }
