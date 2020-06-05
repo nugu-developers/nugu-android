@@ -141,6 +141,11 @@ class SpeechRecognizerAggregator(
                 return@submit
             }
 
+            if(isActive()) {
+                Log.w(TAG, "[startListeningWithTrigger] failed - active state($state)")
+                return@submit
+            }
+
             val inputStream = audioProvider.acquireAudioInputStream(keywordDetector)
             if (inputStream == null) {
                 Log.w(TAG, "[startListeningWithTrigger] failed - null input stream")
