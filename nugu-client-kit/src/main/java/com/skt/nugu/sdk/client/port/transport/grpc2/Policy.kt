@@ -1,4 +1,4 @@
-package com.skt.nugu.sdk.client.port.transport.grpc
+package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.google.gson.annotations.SerializedName
 

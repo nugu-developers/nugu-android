@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.utils
+package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.UnsafeByteOperations
@@ -107,7 +107,10 @@ object MessageRequestConverter {
         val directives = ArrayList<com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage>()
 
         this.directivesList.forEach {
-            directives.add(com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage(convertHeader(it.header), it.payload))
+            directives.add(com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage(
+                convertHeader(
+                    it.header
+                ), it.payload))
         }
 
         return directives
@@ -117,7 +120,9 @@ object MessageRequestConverter {
         return with(this.attachment) {
             com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage(
                 content.asReadOnlyByteBuffer(),
-                convertHeader(header),
+                convertHeader(
+                    header
+                ),
                 isEnd,
                 parentMessageId,
                 seq,

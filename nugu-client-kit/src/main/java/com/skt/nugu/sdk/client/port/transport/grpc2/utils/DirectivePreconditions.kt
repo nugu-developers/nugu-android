@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc.utils
+package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import devicegateway.grpc.DirectiveMessage

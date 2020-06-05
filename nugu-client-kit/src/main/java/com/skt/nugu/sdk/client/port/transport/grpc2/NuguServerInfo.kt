@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.client.port.transport.grpc
+package com.skt.nugu.sdk.client.port.transport.grpc2
 
-import com.skt.nugu.sdk.client.port.transport.grpc.utils.Address
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.Address
 import com.skt.nugu.sdk.core.utils.Logger
 
 data class NuguServerInfo(
@@ -32,15 +32,27 @@ data class NuguServerInfo(
         fun Default(): NuguServerInfo {
             return NuguServerInfo(
                 keepConnection = false,
-                registry = Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT),
-                deviceGW = Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)
+                registry = Address(
+                    DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST,
+                    HTTPS_PORT
+                ),
+                deviceGW = Address(
+                    DEFAULT_DEVICE_GATEWAY_SERVER_HOST,
+                    HTTPS_PORT
+                )
             )
         }
     }
 
     override fun toString(): String {
-        val changed = !(registry == Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT) &&
-                deviceGW == Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT))
+        val changed = !(registry == Address(
+            DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST,
+            HTTPS_PORT
+        ) &&
+                deviceGW == Address(
+            DEFAULT_DEVICE_GATEWAY_SERVER_HOST,
+            HTTPS_PORT
+        ))
 
         val builder = StringBuilder("NuguServerInfo { protocol: GRPC")
             .append(", keepConnection: ").append(keepConnection)
@@ -63,7 +75,11 @@ data class NuguServerInfo(
         Logger.d(TAG, toString())
 
         if (keepConnection) {
-            if (deviceGW != Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)) {
+            if (deviceGW != Address(
+                    DEFAULT_DEVICE_GATEWAY_SERVER_HOST,
+                    HTTPS_PORT
+                )
+            ) {
                 throw IllegalStateException(
                     "DeviceGW host and port cannot be changed " +
                             "when keepConnection is set to true. " +
@@ -71,7 +87,11 @@ data class NuguServerInfo(
                 )
             }
         } else {
-            if (registry != Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)) {
+            if (registry != Address(
+                    DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST,
+                    HTTPS_PORT
+                )
+            ) {
                 throw IllegalStateException(
                     "Registry host and port cannot be changed " +
                             "when keepConnection is set to false. " +
@@ -82,17 +102,33 @@ data class NuguServerInfo(
     }
 
     class Builder {
-        private var registry: Address = Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)
-        private var deviceGW: Address = Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)
+        private var registry: Address =
+            Address(
+                DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST,
+                HTTPS_PORT
+            )
+        private var deviceGW: Address =
+            Address(
+                DEFAULT_DEVICE_GATEWAY_SERVER_HOST,
+                HTTPS_PORT
+            )
         private var keepConnection = false
 
         fun registry(host: String, port: Int = HTTPS_PORT): Builder {
-            registry = Address(host, port)
+            registry =
+                Address(
+                    host,
+                    port
+                )
             return this
         }
 
         fun deviceGW(host: String, port: Int = HTTPS_PORT): Builder {
-            deviceGW = Address(host, port)
+            deviceGW =
+                Address(
+                    host,
+                    port
+                )
             return this
         }
 
@@ -101,10 +137,11 @@ data class NuguServerInfo(
             return this
         }
 
-        fun build() = NuguServerInfo(
-            keepConnection,
-            registry,
-            deviceGW
-        )
+        fun build() =
+            NuguServerInfo(
+                keepConnection,
+                registry,
+                deviceGW
+            )
     }
 }
