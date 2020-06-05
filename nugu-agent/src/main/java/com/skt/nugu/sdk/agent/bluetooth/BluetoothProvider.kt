@@ -21,4 +21,17 @@ package com.skt.nugu.sdk.agent.bluetooth
 interface BluetoothProvider {
     fun device() : BluetoothHost?
     fun activeDevice() : BluetoothDevice?
+
+    fun setOnStreamStateChangeListener(listener: OnStreamStateChangeListener?)
+
+    /**
+     * The interface for stream changes
+     */
+    interface OnStreamStateChangeListener {
+        /**
+         * Implementer notify when stream state changed
+         * @param state the current streaming state
+         */
+        fun onStreamStateChanged(state: BluetoothAgentInterface.StreamingState)
+    }
 }
