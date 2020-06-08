@@ -96,12 +96,8 @@ class MessageAgent(
         }
 
         override fun toFullJsonString(): String = buildCompactContext().apply {
-            context.candidates?.let {
-                add("candidates", JsonArray().apply {
-                    it.forEach {
-                        add(it.toJsonObject())
-                    }
-                })
+            context.template?.let {template->
+                add("template", template.toJson())
             }
         }.toString()
 

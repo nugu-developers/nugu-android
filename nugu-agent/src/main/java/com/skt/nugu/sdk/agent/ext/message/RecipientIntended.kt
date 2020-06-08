@@ -16,19 +16,11 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
-import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 
-data class Context(
-    val template: Template?
-) {
-    data class Template(
-        @SerializedName("recipientIntended")
-        val recipientIntended: RecipientIntended?,
-        @SerializedName("candidates")
-        val candidates: List<Contact>?
-    ) {
-        fun toJson(): JsonElement = Gson().toJsonTree(this)
-    }
-}
+data class RecipientIntended(
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("label")
+    val label: String?
+)

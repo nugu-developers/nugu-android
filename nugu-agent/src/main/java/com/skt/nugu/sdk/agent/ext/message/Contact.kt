@@ -16,41 +16,38 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
-import com.google.gson.JsonObject
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
 
 data class Contact(
+    @SerializedName("name")
     val name: String,
+    @SerializedName("type")
     val type: Type,
+    @SerializedName("number")
     val number: String?,
+    @SerializedName("profileImgUrl")
     val profileImgUrl: String?,
+    @SerializedName("message")
     val message: String?,
+    @SerializedName("time")
     val time: String?,
+    @SerializedName("token")
+    val token: String?,
+    @SerializedName("score")
     val score: String?
 ) {
     enum class Type {
+        @SerializedName("CONTACT")
         CONTACT,
+        @SerializedName("EXCHANGE")
         EXCHANGE,
+        @SerializedName("T114")
         T114,
+        @SerializedName("NONE")
         NONE
     }
 
-    fun toJsonObject() = JsonObject().apply {
-        addProperty("name", name)
-        addProperty("type", type.name)
-        number?.let {
-            addProperty("number", it)
-        }
-        profileImgUrl?.let {
-            addProperty("profileImgUrl", it)
-        }
-        message?.let {
-            addProperty("message", it)
-        }
-        time?.let {
-            addProperty("time", it)
-        }
-        score?.let {
-            addProperty("score", it)
-        }
-    }
+    fun toJson(): JsonElement = Gson().toJsonTree(this)
 }

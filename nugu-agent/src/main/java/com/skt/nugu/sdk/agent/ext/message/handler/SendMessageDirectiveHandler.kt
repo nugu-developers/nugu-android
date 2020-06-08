@@ -69,7 +69,7 @@ class SendMessageDirectiveHandler(
                                     MessageAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
-                                    addProperty("recipient", payload.recipientName)
+                                    add("recipient", payload.recipient.toJson())
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
@@ -89,7 +89,7 @@ class SendMessageDirectiveHandler(
                                     MessageAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
-                                    addProperty("recipient", payload.recipientName)
+                                    add("recipient", payload.recipient.toJson())
                                     addProperty("errorCode", errorCode)
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())

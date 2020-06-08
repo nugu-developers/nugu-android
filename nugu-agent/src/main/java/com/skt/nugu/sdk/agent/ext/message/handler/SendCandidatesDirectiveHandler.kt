@@ -70,11 +70,6 @@ class SendCandidatesDirectiveHandler(
                                 MessageAgent.VERSION.toString()
                             ).payload(JsonObject().apply {
                                 addProperty("playServiceId", payload.playServiceId)
-                                add("candidates", JsonArray().apply {
-                                    candidates.forEach {
-                                        add(it.toJsonObject())
-                                    }
-                                })
                             }.toString())
                                 .referrerDialogRequestId(info.directive.getDialogRequestId())
                                 .build()
