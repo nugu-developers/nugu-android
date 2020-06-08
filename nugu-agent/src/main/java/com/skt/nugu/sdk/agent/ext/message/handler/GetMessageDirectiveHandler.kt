@@ -78,7 +78,7 @@ class GetMessageDirectiveHandler (
                                     messages?.let {
                                         add("candidates", JsonArray().apply {
                                             it.forEach {
-                                                add(it.toJsonObject())
+                                                add(it.toJson())
                                             }
                                         })
                                     }

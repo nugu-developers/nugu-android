@@ -18,12 +18,13 @@ package com.skt.nugu.sdk.agent.ext.message.payload
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.message.Contact
+import com.skt.nugu.sdk.agent.ext.message.RecipientIntended
 
 data class SendCandidatesPayload(
     @SerializedName("playServiceId")
     val playServiceId: String,
-    @SerializedName("recipientName")
-    val recipientName: String,
+    @SerializedName("recipientIntended")
+    val recipientIntended: RecipientIntended,
     @SerializedName("candidates")
     val candidates: Array<Contact>?
 ) {
@@ -34,7 +35,7 @@ data class SendCandidatesPayload(
         other as SendCandidatesPayload
 
         if (playServiceId != other.playServiceId) return false
-        if (recipientName != other.recipientName) return false
+        if (recipientIntended != other.recipientIntended) return false
         if (candidates != null) {
             if (other.candidates == null) return false
             if (!candidates.contentEquals(other.candidates)) return false
@@ -45,8 +46,9 @@ data class SendCandidatesPayload(
 
     override fun hashCode(): Int {
         var result = playServiceId.hashCode()
-        result = 31 * result + recipientName.hashCode()
+        result = 31 * result + recipientIntended.hashCode()
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         return result
     }
+
 }
