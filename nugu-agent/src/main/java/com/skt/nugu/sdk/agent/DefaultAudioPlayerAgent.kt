@@ -546,12 +546,27 @@ class DefaultAudioPlayerAgent(
             }
         }
 
-        private fun executeShouldResumeNextItem(current: AudioInfo?, next: AudioInfo): Boolean {
-            return if(current == null || !currentActivity.isActive() || sourceId.isError()) {
-                false
+        private fun executeShouldResumeNextItem(prev: AudioInfo?, next: AudioInfo): Boolean {
+            if(prev == null || !currentActivity.isActive() || sourceId.isError()) {
+                return false
             } else {
-                (current.payload.audioItem.stream.token == next.payload.audioItem.stream.token) &&
-                        (current.getPlayServiceId() == next.getPlayServiceId())
+                if(prev.getPlayServiceId() != next.getPlayServiceId()) {
+                    return false
+                }
+
+                if(prev.payload.sourceType != next.payload.sourceType) {
+                    return false
+                }
+
+                if(next.payload.sourceType == SourceType.URL) {
+                    return prev.payload.audioItem.stream.url == next.payload.audioItem.stream.url
+                }
+
+                if(next.payload.sourceType == SourceType.ATTACHMENT) {
+                    return prev.payload.audioItem.stream.token == next.payload.audioItem.stream.token
+                }
+
+                return false
             }
         }
 
