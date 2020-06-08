@@ -528,7 +528,7 @@ class DefaultAudioPlayerAgent(
             return if(current == null || !currentActivity.isActive() || sourceId.isError()) {
                 false
             } else {
-                (current.payload.audioItem.stream.token == next.payload.audioItem.stream.token) &&
+                (current.payload.audioItem.stream.url == next.payload.audioItem.stream.url) &&
                         (current.playServiceId == next.playServiceId)
             }
         }

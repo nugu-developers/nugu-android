@@ -109,6 +109,7 @@ class AudioPlayerDirectivePreProcessor :
             // add token to identify audio item
             // this is not a good idea but to prevent side effect, add this field.
             template.addProperty("token", playPayload.audioItem.stream.token)
+            template.addProperty("url", playPayload.audioItem.stream.url)
    
             MessageFactory.createDirective(
                 null, Header(
