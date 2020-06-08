@@ -69,6 +69,8 @@ class AudioPlayerTemplateHandler(
         val playServiceId: String?,
         @SerializedName("token")
         val token: String,
+        @SerializedName("url")
+        val url: String,
         @SerializedName("duration")
         val duration: String?,
         @SerializedName("playStackControl")
@@ -178,7 +180,7 @@ class AudioPlayerTemplateHandler(
 
             val current = currentInfo
             currentInfo = templateInfo
-            if(current != null && current.payload.token == templateInfo.payload.token && current.payload.playServiceId == templateInfo.payload.playServiceId) {
+            if(current != null && current.payload.url == templateInfo.payload.url && current.payload.playServiceId == templateInfo.payload.playServiceId) {
                 // just update
                 Logger.d(TAG, "[handleDirective] update directive")
                 templateInfo.sourceTemplateId = current.sourceTemplateId
