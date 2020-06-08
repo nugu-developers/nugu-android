@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
 import com.google.protobuf.ByteString
+import com.google.protobuf.UnsafeByteOperations
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -42,7 +43,7 @@ object MessageRequestConverter {
                 .setMediaType(mediaType)
                 .setContent(
                     if (byteArray != null) {
-                        ByteString.copyFrom(ByteBuffer.wrap(byteArray))
+                        UnsafeByteOperations.unsafeWrap(byteArray)
                     } else {
                         ByteString.EMPTY
                     }
