@@ -1,6 +1,32 @@
 Change Log
 ==========
 
+Version 0.9.1 *(2020-06-09)*
+-----------------------------
+* New: Session Interface v1.0 (#728)
+* New: ASR interface v1.2 (#769)
+* Improve: Return getOffset in milliseconds (#750)
+* Improve: Add Client OS Context (#747)
+* Improve: Improve logic for context update (#752)
+* Improve: Update AudioPlayer v1.3
+* Improve: Update SystemAgent v1.2
+* Improve: Update tts v1.2 (#742)
+    * Append currentToken at context
+* Improve: Adds templateId to sync player & template (#762)
+* Improve: Apply New PlayStack(Layer) Policy (#758)
+* Improve: Manage audio focus for bluetooth streaming (#781)
+* Improve: Add new APIs to OAuth (#744)
+* Improve: Update Message Interface v1.0 (#789)
+* Improve: Update gRPC v1.29.0
+* Improve: Add history.callType at PersonObject (#745)
+* Fix: PhoneCall Agent (#760)
+    * Update PhoneCall Interface v1.0
+    * Use enum CallType at MakeCallPayload
+    * Only contain it's self context
+    * Add state at Context
+    * Send CandidatesListed when null candidates
+* Fix: Missing connectionTimeout of Policy (#776)
+
 Version 0.9.0 *(2020-05-28)*
 -----------------------------
 * New: Support mediaplayer interface v1.0 (#695)
