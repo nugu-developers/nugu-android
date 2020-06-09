@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.9.2 *(2020-06-09)*
+-----------------------------
+* Fix: Missing protobuffer-javalite libs
+
 Version 0.9.1 *(2020-06-09)*
 -----------------------------
 * New: Session Interface v1.0 (#728)
