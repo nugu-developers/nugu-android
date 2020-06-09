@@ -149,6 +149,18 @@ class NuguAndroidClient private constructor(
 
             override fun createCallSpeaker(): Speaker? = null
             override fun createExternalSpeaker(): Speaker? = null
+
+            override fun createSpeaker(type: Speaker.Type): Speaker? {
+                return when(type) {
+                    Speaker.Type.NUGU -> object : AndroidAudioSpeaker(context, AudioManager.STREAM_MUSIC) {
+                        override fun getSpeakerType() = type
+                    }
+                    Speaker.Type.ALARM -> object : AndroidAudioSpeaker(context, AudioManager.STREAM_ALARM) {
+                        override fun getSpeakerType() = type
+                    }
+                    else -> null
+                }
+            }
         }
         internal var defaultEpdTimeoutMillis: Long = 10000L
         internal var transportFactory: TransportFactory = DefaultTransportFactory()
@@ -353,18 +365,12 @@ class NuguAndroidClient private constructor(
                             getMessageSender()
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
+
                             builder.speakerFactory.let {
-                                it.createNuguSpeaker()?.let { speaker ->
-                                    addSpeaker(speaker)
-                                }
-                                it.createAlarmSpeaker()?.let { speaker ->
-                                    addSpeaker(speaker)
-                                }
-                                it.createCallSpeaker()?.let { speaker ->
-                                    addSpeaker(speaker)
-                                }
-                                it.createExternalSpeaker()?.let { speaker ->
-                                    addSpeaker(speaker)
+                                Speaker.Type.values().forEach {type ->
+                                    it.createSpeaker(type)?.let { speaker->
+                                        addSpeaker(speaker)
+                                    }
                                 }
                             }
                         }

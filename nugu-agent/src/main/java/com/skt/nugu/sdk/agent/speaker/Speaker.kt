@@ -23,9 +23,14 @@ package com.skt.nugu.sdk.agent.speaker
 interface Speaker {
     enum class Type {
         NUGU,
-        CALL,
+        MUSIC,
         ALARM,
-        EXTERNAL
+        RINGTONE,
+        CALL,
+        NOTIFICATION,
+        VOICE_COMMAND,
+        NAVIGATION,
+        SYSTEM_SOUND
     }
 
     enum class Rate {
