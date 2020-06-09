@@ -16,41 +16,64 @@
 
 package com.skt.nugu.sdk.agent.ext.phonecall
 
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
+
 data class Context(
     val state: State,
-    val intent: Intent?,
-    val callType: CallType?,
-    val candidates: Array<Person>?
+    val template: Template?
 ) {
     enum class Intent {
+        @SerializedName("CALL")
         CALL,
+        @SerializedName("SEARCH")
         SEARCH,
+        @SerializedName("HISTORY")
         HISTORY,
+        @SerializedName("REDIAL")
         REDIAL,
+        @SerializedName("MISSED")
         MISSED,
+        @SerializedName("NONE")
         NONE
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    data class Template(
+        @SerializedName("intent")
+        val intent: Intent?,
+        @SerializedName("callType")
+        val callType: CallType?,
+        @SerializedName("recipientIntended")
+        val recipientIntended: RecipientIntended?,
+        @SerializedName("candidates")
+        val candidates: Array<Person>?
+    ) {
+        fun toJson(): JsonElement = Gson().toJsonTree(this)
 
-        other as Context
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
 
-        if (intent != other.intent) return false
-        if (callType != other.callType) return false
-        if (candidates != null) {
-            if (other.candidates == null) return false
-            if (!candidates.contentEquals(other.candidates)) return false
-        } else if (other.candidates != null) return false
+            other as Template
 
-        return true
-    }
+            if (intent != other.intent) return false
+            if (callType != other.callType) return false
+            if (recipientIntended != other.recipientIntended) return false
+            if (candidates != null) {
+                if (other.candidates == null) return false
+                if (!candidates.contentEquals(other.candidates)) return false
+            } else if (other.candidates != null) return false
 
-    override fun hashCode(): Int {
-        var result = intent?.hashCode() ?: 0
-        result = 31 * result + (callType?.hashCode() ?: 0)
-        result = 31 * result + (candidates?.contentHashCode() ?: 0)
-        return result
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = intent?.hashCode() ?: 0
+            result = 31 * result + (callType?.hashCode() ?: 0)
+            result = 31 * result + (recipientIntended?.hashCode() ?: 0)
+            result = 31 * result + (candidates?.contentHashCode() ?: 0)
+            return result
+        }
     }
 }

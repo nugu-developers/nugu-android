@@ -60,7 +60,6 @@ class SendCandidatesDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            val candidates = controller.getCandidateList(payload)
             contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     messageSender.sendMessage(
@@ -71,27 +70,6 @@ class SendCandidatesDirectiveHandler(
                             PhoneCallAgent.VERSION.toString()
                         ).payload(JsonObject().apply {
                             addProperty("playServiceId", payload.playServiceId)
-                            addProperty("intent", payload.intent.name)
-                            payload.callType?.let {
-                                addProperty("callType", it.name)
-                            }
-                            payload.recipient?.let {
-                                add("recipient", JsonObject().apply {
-                                    it.name?.let {
-                                        addProperty("name", it)
-                                    }
-                                    it.label?.let {
-                                        addProperty("label", it)
-                                    }
-                                })
-                            }
-                            candidates?.let {
-                                add("candidates", JsonArray().apply {
-                                    it.forEach { person ->
-                                        add(person.toJson())
-                                    }
-                                })
-                            }
                         }.toString())
                             .referrerDialogRequestId(info.directive.getDialogRequestId())
                             .build()
