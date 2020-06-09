@@ -122,7 +122,9 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
             override fun show(): Boolean {
                 val view = templateView
                 if (view is DisplayAudioPlayer) {
-                    view.lyricsView.visibility = View.VISIBLE
+                    view.lyricsView.post {
+                        view.lyricsView.visibility = View.VISIBLE
+                    }
                     return true
                 }
                 return false
@@ -131,7 +133,9 @@ internal class TemplateFragment : Fragment(), AudioPlayerAgentInterface.Listener
             override fun hide(): Boolean {
                 val view = templateView
                 if (view is DisplayAudioPlayer) {
-                    view.lyricsView.visibility = View.GONE
+                    view.lyricsView.post {
+                        view.lyricsView.visibility = View.GONE
+                    }
                     return true
                 }
                 return false
