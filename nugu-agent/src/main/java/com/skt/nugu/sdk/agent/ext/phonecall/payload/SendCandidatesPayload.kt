@@ -22,26 +22,20 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.phonecall.CallType
 import com.skt.nugu.sdk.agent.ext.phonecall.Context
 import com.skt.nugu.sdk.agent.ext.phonecall.Person
+import com.skt.nugu.sdk.agent.ext.phonecall.RecipientIntended
 
 data class SendCandidatesPayload(
     @SerializedName("playServiceId")
     val playServiceId: String,
     @SerializedName("intent")
     val intent: Context.Intent,
-    @SerializedName("recipient")
-    val recipient: Recipient?,
+    @SerializedName("recipientIntended")
+    val recipientIntended: RecipientIntended?,
     @SerializedName("callType")
     val callType: CallType?,
     @SerializedName("candidates")
     val candidates: Array<Person>?
 ) {
-    data class Recipient(
-        @SerializedName("name")
-        val name: String?,
-        @SerializedName("label")
-        val label: String?
-    )
-
     fun toJson(): JsonElement = Gson().toJsonTree(this)
 
     override fun equals(other: Any?): Boolean {
@@ -52,7 +46,7 @@ data class SendCandidatesPayload(
 
         if (playServiceId != other.playServiceId) return false
         if (intent != other.intent) return false
-        if (recipient != other.recipient) return false
+        if (recipientIntended != other.recipientIntended) return false
         if (callType != other.callType) return false
         if (candidates != null) {
             if (other.candidates == null) return false
@@ -65,7 +59,7 @@ data class SendCandidatesPayload(
     override fun hashCode(): Int {
         var result = playServiceId.hashCode()
         result = 31 * result + intent.hashCode()
-        result = 31 * result + (recipient?.hashCode() ?: 0)
+        result = 31 * result + (recipientIntended?.hashCode() ?: 0)
         result = 31 * result + (callType?.hashCode() ?: 0)
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         return result
