@@ -22,17 +22,23 @@ interface SpeakerFactory {
     /**
      * Create a speaker for playing nugu such as tts and media.
      */
+    @Deprecated("deprecated")
     fun createNuguSpeaker(): Speaker?
     /**
      * Create a speaker for playing alerts
      */
+    @Deprecated("deprecated")
     fun createAlarmSpeaker(): Speaker?
     /**
      * Create a speaker for call
      */
+    @Deprecated("deprecated")
     fun createCallSpeaker(): Speaker?
     /**
      * Create a speaker for external device
      */
+    @Deprecated("deprecated")
     fun createExternalSpeaker(): Speaker?
+
+    fun createSpeaker(type: Speaker.Type): Speaker?
 }
