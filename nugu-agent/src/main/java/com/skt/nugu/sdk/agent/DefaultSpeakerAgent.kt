@@ -43,7 +43,7 @@ class DefaultSpeakerAgent(
         private const val TAG = "SpeakerManager"
 
         const val NAMESPACE = "Speaker"
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1,1)
 
         private const val NAME_SET_VOLUME = "SetVolume"
         private const val NAME_SET_MUTE = "SetMute"
