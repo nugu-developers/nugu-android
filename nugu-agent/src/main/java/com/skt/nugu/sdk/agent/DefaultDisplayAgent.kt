@@ -373,8 +373,10 @@ class DefaultDisplayAgent(
     }
 
     override fun notifyUserInteraction(templateId: String) {
-        val matchedInfo = findInfoMatchWithTemplateId(currentInfo, templateId) ?: return
-        contextLayerTimer?.get(matchedInfo.payload.getContextLayerInternal())?.reset(templateId)
+        executor.submit {
+            val matchedInfo = findInfoMatchWithTemplateId(currentInfo, templateId) ?: return@submit
+            contextLayerTimer?.get(matchedInfo.payload.getContextLayerInternal())?.reset(templateId)
+        }
     }
 
     override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
@@ -576,9 +578,10 @@ class DefaultDisplayAgent(
         }
     }
 
-    override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {
-        val playContext = findHighestLayerFrom(currentInfo)?.playContext
-        Logger.d(TAG, "[getPlayContext] $playContext")
-        return playContext
-    }
+    override fun getPlayContext(): PlayStackManagerInterface.PlayContext? =
+        executor.submit(Callable {
+            val playContext = findHighestLayerFrom(currentInfo)?.playContext
+            Logger.d(TAG, "[getPlayContext] $playContext")
+            playContext
+        }).get()
 }
