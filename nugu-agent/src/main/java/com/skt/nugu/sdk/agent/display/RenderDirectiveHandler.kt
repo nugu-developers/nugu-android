@@ -73,6 +73,9 @@ class RenderDirectiveHandler(
 
         private const val NAME_TIMER = "Timer"
 
+        // supported for v1.4
+        private const val NAME_DUMMY = "Dummy"
+
         private val FULLTEXT1 = NamespaceAndName(
             DefaultDisplayAgent.NAMESPACE,
             NAME_FULLTEXT1
@@ -227,6 +230,11 @@ class RenderDirectiveHandler(
             DefaultDisplayAgent.NAMESPACE,
             NAME_TIMER
         )
+
+        private val DUMMY = NamespaceAndName(
+            DefaultDisplayAgent.NAMESPACE,
+            NAME_DUMMY
+        )
     }
 
     interface Controller {
@@ -322,6 +330,8 @@ class RenderDirectiveHandler(
         configuration[CALL_3] = blockingPolicy
 
         configuration[TIMER] = blockingPolicy
+
+        configuration[DUMMY] = blockingPolicy
 
         return configuration
     }
