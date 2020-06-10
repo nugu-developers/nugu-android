@@ -67,6 +67,8 @@ class AudioPlayerTemplateHandler(
     private data class TemplatePayload(
         @SerializedName("playServiceId")
         val playServiceId: String?,
+        @SerializedName("sourceType")
+        val sourceType: DefaultAudioPlayerAgent.SourceType?,
         @SerializedName("token")
         val token: String,
         @SerializedName("url")
@@ -180,7 +182,7 @@ class AudioPlayerTemplateHandler(
 
             val current = currentInfo
             currentInfo = templateInfo
-            if(current != null && current.payload.url == templateInfo.payload.url && current.payload.playServiceId == templateInfo.payload.playServiceId) {
+            if(current != null && shouldUpdate(current, templateInfo)) {
                 // just update
                 Logger.d(TAG, "[handleDirective] update directive")
                 templateInfo.sourceTemplateId = current.sourceTemplateId
@@ -196,6 +198,29 @@ class AudioPlayerTemplateHandler(
                 executeRender(templateInfo)
             }
         }
+    }
+
+    private fun shouldUpdate(
+        prev: TemplateDirectiveInfo,
+        next: TemplateDirectiveInfo
+    ): Boolean {
+        if(prev.payload.playServiceId != next.payload.playServiceId) {
+            return false
+        }
+
+        if(prev.payload.sourceType != next.payload.sourceType) {
+            return false
+        }
+
+        if(next.payload.sourceType == DefaultAudioPlayerAgent.SourceType.URL) {
+            return prev.payload.url == next.payload.url
+        }
+
+        if(next.payload.sourceType == DefaultAudioPlayerAgent.SourceType.ATTACHMENT) {
+            return prev.payload.token == next.payload.token
+        }
+
+        return false
     }
 
     private fun releaseSyncForce(info: TemplateDirectiveInfo) {
