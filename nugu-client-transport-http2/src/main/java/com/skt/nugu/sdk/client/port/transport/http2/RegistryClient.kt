@@ -86,17 +86,18 @@ class RegistryClient(
             return
         }
 
-        var client = OkHttpClient().newBuilder()
+        val client = OkHttpClient().newBuilder()
             .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
-            .protocols(listOf(Protocol.HTTP_1_1)).build()
-
-        dnsLookup?.let { customDns ->
-            client = client.newBuilder().dns(object : Dns {
-                override fun lookup(hostname: String): List<InetAddress> {
-                    return customDns.lookup(hostname)
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .apply {
+                dnsLookup?.let { customDns ->
+                    dns(object : Dns {
+                        override fun lookup(hostname: String): List<InetAddress> {
+                            return customDns.lookup(hostname)
+                        }
+                    })
                 }
-            }).build()
-        }
+            }.build()
 
         val httpUrl = HttpUrl.Builder()
             .scheme(HTTPS_SCHEME)
