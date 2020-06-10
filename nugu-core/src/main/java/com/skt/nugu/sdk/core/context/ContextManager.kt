@@ -149,7 +149,7 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    private fun buildContext(namespaceAndName: NamespaceAndName?): String = stringBuilderForContext.apply {
+    private fun buildContext(namespaceAndName: NamespaceAndName?, givenFullState: String? = null): String = stringBuilderForContext.apply {
         // clear
         setLength(0)
         // write
@@ -178,7 +178,11 @@ class ContextManager : ContextManagerInterface {
 
                     append("\"${it.key}\":")
                     if (namespaceAndName == null || (namespaceAndName.namespace == namespaceEntry.key && namespaceAndName.name == it.key) || compactState == null) {
-                        append(fullState)
+                        if(givenFullState == null) {
+                            append(fullState)
+                        } else {
+                            append(givenFullState)
+                        }
                     } else {
                         append(compactState)
                     }
@@ -293,8 +297,12 @@ class ContextManager : ContextManagerInterface {
             }
         }
     }
-
+    
     override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String = stateProviderLock.withLock {
         buildContext(namespaceAndName)
+    }
+
+    override fun getCompactContextWith(namespaceAndName: NamespaceAndName, fullState: String): String = stateProviderLock.withLock {
+        buildContext(namespaceAndName, fullState)
     }
 }
