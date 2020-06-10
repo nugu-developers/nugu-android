@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.bluetooth.*
@@ -57,7 +58,7 @@ class DefaultBluetoothAgent(
         private const val TAG = "DefaultBluetoothAgent"
 
         const val NAMESPACE = "Bluetooth"
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1,1)
 
         /** directives */
         const val NAME_START_DISCOVERABLE_MODE = "StartDiscoverableMode"
@@ -145,6 +146,17 @@ class DefaultBluetoothAgent(
                 add("device", JsonObject().apply {
                     addProperty("name", hostController.name)
                     addProperty("status", hostController.state.value)
+
+                    hostController.profiles?.let { profiles->
+                        add("profiles", JsonArray().apply {
+                            profiles.forEach {
+                                this.add(JsonObject().apply {
+                                    addProperty("name", it.name)
+                                    addProperty("enabled", it.enabled)
+                                })
+                            }
+                        })
+                    }
                 })
             }
 

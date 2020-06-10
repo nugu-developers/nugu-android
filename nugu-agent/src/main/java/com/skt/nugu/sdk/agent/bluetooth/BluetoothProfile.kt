@@ -15,11 +15,4 @@
  */
 package com.skt.nugu.sdk.agent.bluetooth
 
-/**
- * Represents a local bluetooth Device.
- */
-data class BluetoothHost(
-    val name: String,
-    val state: BluetoothAgentInterface.State,
-    val profiles: List<BluetoothProfile>? = null
-)
+data class BluetoothProfile(val name: String, val enabled: String)
