@@ -27,17 +27,32 @@ data class Contact(
     val type: Type,
     @SerializedName("number")
     val number: String?,
+    @SerializedName("label")
+    val label: Label?,
     @SerializedName("profileImgUrl")
     val profileImgUrl: String?,
     @SerializedName("message")
     val message: String?,
     @SerializedName("time")
     val time: String?,
+    @SerializedName("numInMessageHistory")
+    val numInMessageHistory: String?,
     @SerializedName("token")
     val token: String?,
     @SerializedName("score")
     val score: String?
 ) {
+    enum class Label {
+        @SerializedName("MOBILE")
+        MOBILE,
+        @SerializedName("COMPANY")
+        COMPANY,
+        @SerializedName("HOME")
+        HOME,
+        @SerializedName("USER_DEFINED")
+        USER_DEFINED
+    }
+
     enum class Type {
         @SerializedName("CONTACT")
         CONTACT,
