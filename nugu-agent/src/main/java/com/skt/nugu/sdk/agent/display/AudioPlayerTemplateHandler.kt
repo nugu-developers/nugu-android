@@ -305,6 +305,7 @@ class AudioPlayerTemplateHandler(
     override fun setElementSelected(
         templateId: String,
         token: String,
+        postback: String?,
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
         throw UnsupportedOperationException("setElementSelected not supported")

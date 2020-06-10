@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.display
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
@@ -40,7 +41,7 @@ class ElementSelectedEventHandler(
     }
     private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
 
-    fun setElementSelected(playServiceId: String, token: String, callback: DisplayInterface.OnElementSelectedCallback?): String {
+    fun setElementSelected(playServiceId: String, token: String, postback: String?, callback: DisplayInterface.OnElementSelectedCallback?): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
         contextGetter.getContext(object : IgnoreErrorContextRequestor() {
@@ -55,6 +56,9 @@ class ElementSelectedEventHandler(
                             JsonObject().apply {
                                 addProperty(KEY_TOKEN, token)
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                                postback?.let {
+                                    add("postback", JsonParser.parseString(it))
+                                }
                             }.toString()
                         ).build()
                     )

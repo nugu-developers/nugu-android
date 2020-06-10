@@ -649,7 +649,7 @@ class TemplateViews {
             }
         }
 
-        fun handleElementSelected(templateId: String, token: String?) {
+        fun handleElementSelected(templateId: String, token: String?, postback: String? = null) {
             if (token == null) {
                 return
             }
@@ -658,6 +658,7 @@ class TemplateViews {
                     setElementSelected(
                         templateId,
                         token,
+                        postback,
                         object :
                             DisplayInterface.OnElementSelectedCallback {
                             override fun onSuccess(dialogRequestId: String) {

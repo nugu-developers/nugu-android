@@ -156,10 +156,11 @@ class DisplayAggregator(
     override fun setElementSelected(
         templateId: String,
         token: String,
+        postback: String?,
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String = lock.withLock {
         requestAgentMap[templateId]
-    }?.setElementSelected(templateId, token, callback)
+    }?.setElementSelected(templateId, token, postback, callback)
         ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
     override fun displayCardRendered(templateId: String, controller: DisplayAggregatorInterface.Controller?) {
