@@ -114,7 +114,8 @@ class Button(
     @SerializedName("style") val style: String?,
     @SerializedName("status") val status: String?,
     @SerializedName("text") val text: String?,
-    @SerializedName("token") val token: String
+    @SerializedName("token") val token: String,
+    @SerializedName("postback") val postback: String?
 )
 
 class ToggleButton(

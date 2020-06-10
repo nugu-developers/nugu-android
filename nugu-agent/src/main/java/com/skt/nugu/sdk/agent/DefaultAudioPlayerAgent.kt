@@ -1533,8 +1533,9 @@ class DefaultAudioPlayerAgent(
     override fun setElementSelected(
         templateId: String,
         token: String,
+        postback: String?,
         callback: DisplayInterface.OnElementSelectedCallback?
-    ): String = displayDelegate?.setElementSelected(templateId, token, callback)
+    ): String = displayDelegate?.setElementSelected(templateId, token, postback, callback)
         ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
 
     override fun notifyUserInteractionOnDisplay(templateId: String) {

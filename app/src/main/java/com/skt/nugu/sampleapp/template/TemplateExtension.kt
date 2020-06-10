@@ -215,7 +215,7 @@ fun Button.setButton(templateId: String, widget: TextView) {
     widget.visibility = View.VISIBLE
     widget.text = this.text
     widget.setOnClickListener {
-        TemplateViews.handleElementSelected(templateId, this.token)
+        TemplateViews.handleElementSelected(templateId, this.token, this.postback)
     }
 }
 

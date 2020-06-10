@@ -360,6 +360,7 @@ class DefaultDisplayAgent(
     override fun setElementSelected(
         templateId: String,
         token: String,
+        postback: String?,
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
         val directiveInfo = templateDirectiveInfoMap[templateId]
@@ -369,7 +370,7 @@ class DefaultDisplayAgent(
             throw IllegalStateException("empty playServiceId: $templateId")
         }
 
-        return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, callback)
+        return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, postback, callback)
     }
 
     override fun notifyUserInteraction(templateId: String) {
