@@ -114,10 +114,13 @@ class PhoneCallAgent(
         }
     }
 
-    override fun getCandidateList(payload: SendCandidatesPayload): List<Person>? {
-        return executor.submit(Callable {
-            client.getCandidateList(payload)
-        }).get()
+    override fun sendCandidates(
+        payload: SendCandidatesPayload,
+        callback: SendCandidatesDirectiveHandler.Callback
+    ) {
+        executor.submit(Callable {
+            client.sendCandidates(payload, callback)
+        })
     }
 
     override fun makeCall(payload: MakeCallPayload, callback: MakeCallDirectiveHandler.Callback) {

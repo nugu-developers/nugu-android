@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.phonecall.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.phonecall.Context
 import com.skt.nugu.sdk.agent.ext.phonecall.Person
 import com.skt.nugu.sdk.agent.ext.phonecall.PhoneCallAgent
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
@@ -43,8 +44,13 @@ class SendCandidatesDirectiveHandler(
             NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_SEND_CANDIDATES)
     }
 
+    interface Callback {
+        fun onSuccess(context: Context)
+        fun onFailure()
+    }
+
     interface Controller {
-        fun getCandidateList(payload: SendCandidatesPayload): List<Person>?
+        fun sendCandidates(payload: SendCandidatesPayload, callback: Callback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -59,8 +65,9 @@ class SendCandidatesDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            contextGetter.getContext(object : IgnoreErrorContextRequestor() {
-                override fun onContext(jsonContext: String) {
+            controller.sendCandidates(payload, object: Callback {
+                override fun onSuccess(context: Context) {
+                    val jsonContext = contextGetter.getCompactContextWith(namespaceAndName, PhoneCallAgent.StateContext(context).toFullJsonString())
                     messageSender.sendMessage(
                         EventMessageRequest.Builder(
                             jsonContext,
@@ -74,7 +81,11 @@ class SendCandidatesDirectiveHandler(
                             .build()
                     )
                 }
-            }, namespaceAndName)
+
+                override fun onFailure() {
+                    // can't send without context
+                }
+            })
         }
     }
 
