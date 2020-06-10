@@ -16,7 +16,6 @@
 
 package com.skt.nugu.sdk.agent.ext.phonecall.handler
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.Person
