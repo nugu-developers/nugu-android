@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.8.22 *(2020-06-10)*
+-----------------------------
+* Fix: Change player resume logic (compare URL & token based on SourceType)
+
+Version 0.8.21 *(2020-06-08)*
+-----------------------------
+* Fix: Change player resume logic (compare URL)
+
 Version 0.8.20 *(2020-05-26)*
 -----------------------------
 * Fix: Cancel a item fetched but not playing yet (#721)
