@@ -20,13 +20,13 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError.Companion.NET
 /**
  * The BaseException class is used as the Base across all login exception classes
  */
-sealed class BaseException(val error: String, message: String) : Throwable(message) {
+sealed class BaseException(val error: String, val description: String, val code: String? = null) : Throwable(description) {
     /**
      * HttpErrorException denotes errors that occur in HTTP call
      */
-    class HttpErrorException(val code: Int, message: String) : BaseException(NETWORK_ERROR, message)
+    class HttpErrorException(code: Int, description: String) : BaseException(NETWORK_ERROR, description)
     /**
      * Thrown when authentication fails.
      */
-    class UnAuthenticatedException(error: String, message: String) : BaseException(error, message)
+    class UnAuthenticatedException(error: String, description: String, code: String?) : BaseException(error, description, code)
 }
