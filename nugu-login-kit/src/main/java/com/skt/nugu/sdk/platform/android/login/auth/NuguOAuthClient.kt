@@ -128,7 +128,8 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                     val body = JSONObject(response.body)
                     throw BaseException.UnAuthenticatedException(
                         error = body.get("error").toString(),
-                        message = body.get("error_description").toString()
+                        description = body.get("error_description").toString(),
+                        code = body.get("code").toString()
                     )
                 }
                 else -> {
@@ -220,7 +221,8 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    message = body.get("error_description").toString()
+                    description = body.get("error_description").toString(),
+                    code = body.get("code").toString()
                 )
             }
             else -> {
@@ -300,7 +302,8 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    message = body.get("error_description").toString()
+                    description = body.get("error_description").toString(),
+                    code = body.get("code").toString()
                 )
             }
             else -> {
@@ -332,7 +335,8 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    message = body.get("error_description").toString()
+                    description = body.get("error_description").toString(),
+                    code = body.get("code").toString()
                 )
             }
             else -> {

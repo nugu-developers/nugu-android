@@ -16,15 +16,28 @@
 package com.skt.nugu.sdk.platform.android.login.auth
 
 import com.skt.nugu.sdk.platform.android.login.exception.BaseException
+import java.net.SocketException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 /**
  * All errors that might occur.
  * The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
  */
 class NuguOAuthError(val throwable: Throwable) {
-    var error: String = if (throwable is BaseException) throwable.error else UNKNOWN_ERROR
-    var message: String = throwable.message ?: "unspecified"
+    var error: String =
+        if (throwable is BaseException) throwable.error
+        else if (throwable is UnknownHostException) NETWORK_ERROR
+        else if (throwable is SocketTimeoutException) NETWORK_ERROR
+        else if (throwable is SocketException) NETWORK_ERROR
+        else UNKNOWN_ERROR
+    var description: String = throwable.message ?: "unspecified"
+    var code: String? =  (throwable as? BaseException.UnAuthenticatedException)?.code
 
+
+    /**
+     *
+     */
     companion object {
         /** oauth errors **/
         val INVALID_REQUEST = "invalid_request"
@@ -39,11 +52,17 @@ class NuguOAuthError(val throwable: Throwable) {
         val INVALID_CLIENT = "invalid_client"
         val ACCESS_DENIED = "access_denied"
 
+        /** oauth code **/
+        val USER_ACCOUNT_CLOSED = "user_account_closed"
+        val USER_ACCOUNT_PAUSED =  "user_account_paused"
+        val USER_DEVICE_DISCONNECTED =  "user_device_disconnected"
+        val USER_DEVICE_UNEXPECTED = "user_device_unexpected"
+
         /** network errors **/
         val NETWORK_ERROR = "network_error"
 
         /** unknown errors **/
-        val UNKNOWN_ERROR = "error"
+        val UNKNOWN_ERROR = "unknown_error"
 
         /** poc status **/
         val FINISHED = "FINISHED"
@@ -53,7 +72,7 @@ class NuguOAuthError(val throwable: Throwable) {
     override fun toString(): String {
         val builder = StringBuilder("NuguOAuthError : ")
             .append("error: ").append(error)
-            .append(", message: ").append(message)
+            .append(", message: ").append(description)
             .append(", throwable: ").append(throwable.toString())
         return builder.toString()
     }
