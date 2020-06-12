@@ -1,6 +1,25 @@
 Change Log
 ==========
 
+Version 0.9.3 *(2020-06-12)*
+-----------------------------
+* Fix: Fix java.util.ConcurrentModificationException
+* Fix: Fix UI thread exception when handling visibility of lyrics
+* New: Develop Message Interface v1.0
+    * Add numInMessageHistory, label field at Contact
+    * Support TTS Scenaio (ReadMessage Directive/Event/Context)
+* New: Develop PhoneCall Interface v1.0
+    * Change API: The Controller of SendCandidatesDirectiveHandler
+* New: Support Display Interface v1.4
+    * Support postback field
+    * Support Dummy directive
+* New: Support Speaker Interface v1.1
+* New: Support Bluetooth Interface v1.1
+    * Add profiles to context
+* Improve: Improve AbstractDirectiveHandler's map mangement
+* Improve: Add code to NuguOAuthError
+* Improve: DNS lookup cache
+
 Version 0.9.2 *(2020-06-09)*
 -----------------------------
 * Fix: Missing protobuffer-javalite libs
