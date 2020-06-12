@@ -50,6 +50,7 @@ import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveH
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
+import com.skt.nugu.sdk.agent.common.tts.TTSScenarioPlayer
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.dialog.DialogFocusHolderManager
 import com.skt.nugu.sdk.agent.display.*
@@ -72,6 +73,7 @@ import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
+import com.skt.nugu.sdk.agent.ext.message.*
 import com.skt.nugu.sdk.agent.session.SessionAgent
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
@@ -151,11 +153,13 @@ class NuguAndroidClient private constructor(
             override fun createExternalSpeaker(): Speaker? = null
 
             override fun createSpeaker(type: Speaker.Type): Speaker? {
-                return when(type) {
-                    Speaker.Type.NUGU -> object : AndroidAudioSpeaker(context, AudioManager.STREAM_MUSIC) {
+                return when (type) {
+                    Speaker.Type.NUGU -> object :
+                        AndroidAudioSpeaker(context, AudioManager.STREAM_MUSIC) {
                         override fun getSpeakerType() = type
                     }
-                    Speaker.Type.ALARM -> object : AndroidAudioSpeaker(context, AudioManager.STREAM_ALARM) {
+                    Speaker.Type.ALARM -> object :
+                        AndroidAudioSpeaker(context, AudioManager.STREAM_ALARM) {
                         override fun getSpeakerType() = type
                     }
                     else -> null
@@ -184,7 +188,9 @@ class NuguAndroidClient private constructor(
 
         internal var enableDisplay: Boolean = true
 
-        internal var soundProvider : SoundProvider? = null
+        internal var soundProvider: SoundProvider? = null
+
+        internal var messageClient: MessageClient? = null
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -266,23 +272,27 @@ class NuguAndroidClient private constructor(
         /**
          * @param bluetoothProvider the bluetooth to be controlled by NUGU
          */
-        fun bluetoothProvider(bluetoothProvider: BluetoothProvider?) = apply { this.bluetoothProvider = bluetoothProvider }
+        fun bluetoothProvider(bluetoothProvider: BluetoothProvider?) =
+            apply { this.bluetoothProvider = bluetoothProvider }
 
         /**
          * @param delay (milliseconds) the transition delay for idle state of DialogUXState
          */
-        fun dialogUXStateTransitionDelay(delay: Long) = apply { this.dialogUXStateTransitionDelay = delay }
+        fun dialogUXStateTransitionDelay(delay: Long) =
+            apply { this.dialogUXStateTransitionDelay = delay }
 
         /**
          * @param enable the flag to enable or disable managing lifecycle for display.
          * If want to manage the display's lifecycle yourself, disable (set to false).
          */
-        fun enableDisplayLifeCycleManagement(enable: Boolean) = apply {this.enableDisplayLifeCycleManagement = enable}
+        fun enableDisplayLifeCycleManagement(enable: Boolean) =
+            apply { this.enableDisplayLifeCycleManagement = enable }
 
         /**
          * @param handler the handler for text source directive. If not provided, default behavior at TextAgent.
          */
-        fun textSourceHandler(handler: TextAgentInterface.TextSourceHandler?) = apply { this.textSourceHandler = handler }
+        fun textSourceHandler(handler: TextAgentInterface.TextSourceHandler?) =
+            apply { this.textSourceHandler = handler }
 
         /**
          * @param enable the flag to enable or disable display.
@@ -293,6 +303,11 @@ class NuguAndroidClient private constructor(
          * @param provider the provider for content URIs for sounds.
          */
         fun soundProvider(provider: SoundProvider?) = apply { this.soundProvider = provider }
+
+        /**
+         * @param client the provider for MessageAgent
+         */
+        fun messageClient(client: MessageClient?) = apply { this.messageClient = client }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -307,9 +322,11 @@ class NuguAndroidClient private constructor(
     private val dialogUXStateAggregator =
         DialogUXStateAggregator(builder.dialogUXStateTransitionDelay)
 
-    private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
+    private val playbackRouter: PlaybackRouter =
+        com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
 
-    private val dialogChannelFocusHolderManager = DialogFocusHolderManager(FocusHolderManagerImpl(builder.dialogUXStateTransitionDelay))
+    private val dialogChannelFocusHolderManager =
+        DialogFocusHolderManager(FocusHolderManagerImpl(builder.dialogUXStateTransitionDelay))
 
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate
@@ -321,7 +338,7 @@ class NuguAndroidClient private constructor(
                 addAgentFactory(it.key, it.value)
             }
 
-            addAgentFactory(SessionAgent.NAMESPACE, object: AgentFactory<SessionAgent> {
+            addAgentFactory(SessionAgent.NAMESPACE, object : AgentFactory<SessionAgent> {
                 override fun create(container: SdkContainer): SessionAgent = SessionAgent(
                     container.getContextManager(),
                     container.getDirectiveSequencer(),
@@ -357,68 +374,79 @@ class NuguAndroidClient private constructor(
                 }
             })
 
-            addAgentFactory(DefaultSpeakerAgent.NAMESPACE, object : AgentFactory<DefaultSpeakerAgent> {
-                override fun create(container: SdkContainer): DefaultSpeakerAgent =
-                    with(container) {
-                        DefaultSpeakerAgent(
-                            getContextManager(),
-                            getMessageSender()
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
+            addAgentFactory(
+                DefaultSpeakerAgent.NAMESPACE,
+                object : AgentFactory<DefaultSpeakerAgent> {
+                    override fun create(container: SdkContainer): DefaultSpeakerAgent =
+                        with(container) {
+                            DefaultSpeakerAgent(
+                                getContextManager(),
+                                getMessageSender()
+                            ).apply {
+                                getDirectiveSequencer().addDirectiveHandler(this)
 
-                            builder.speakerFactory.let {
-                                Speaker.Type.values().forEach {type ->
-                                    it.createSpeaker(type)?.let { speaker->
-                                        addSpeaker(speaker)
+                                builder.speakerFactory.let {
+                                    Speaker.Type.values().forEach { type ->
+                                        it.createSpeaker(type)?.let { speaker ->
+                                            addSpeaker(speaker)
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-            })
+                })
 
-            addAgentFactory(DefaultAudioPlayerAgent.NAMESPACE, object: AgentFactory<DefaultAudioPlayerAgent> {
-                override fun create(container: SdkContainer): DefaultAudioPlayerAgent = with(container) {
-                    DefaultAudioPlayerAgent(
-                        builder.playerFactory.createAudioPlayer(),
-                        getMessageSender(),
-                        getAudioFocusManager(),
-                        getContextManager(),
-                        playbackRouter,
-                        getPlaySynchronizer(),
-                        getDirectiveSequencer(),
-                        getDirectiveGroupProcessor(),
-                        DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                        builder.enableDisplayLifeCycleManagement
-                    ).apply {
-                        val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler()
-                            .apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
-                            }
-
-                        AudioPlayerLyricsDirectiveHandler(getContextManager(), getMessageSender(), this, this).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                        }
-
-                        if(builder.enableDisplay) {
-                            AudioPlayerTemplateHandler(
+            addAgentFactory(
+                DefaultAudioPlayerAgent.NAMESPACE,
+                object : AgentFactory<DefaultAudioPlayerAgent> {
+                    override fun create(container: SdkContainer): DefaultAudioPlayerAgent =
+                        with(container) {
+                            DefaultAudioPlayerAgent(
+                                builder.playerFactory.createAudioPlayer(),
+                                getMessageSender(),
+                                getAudioFocusManager(),
+                                getContextManager(),
+                                playbackRouter,
                                 getPlaySynchronizer(),
-                                getSessionManager()
+                                getDirectiveSequencer(),
+                                getDirectiveGroupProcessor(),
+                                DefaultFocusChannel.CONTENT_CHANNEL_NAME,
+                                builder.enableDisplayLifeCycleManagement
                             ).apply {
-                                getDisplayPlayStackManager().addPlayContextProvider(this)
-                                setDisplay(this)
-                                getDirectiveSequencer().addDirectiveHandler(this)
-                                getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
-                                    AudioPlayerDirectivePreProcessor()
-                                )
-                                audioPlayerMetadataDirectiveHandler.addListener(this)
+                                val audioPlayerMetadataDirectiveHandler =
+                                    AudioPlayerMetadataDirectiveHandler()
+                                        .apply {
+                                            getDirectiveSequencer().addDirectiveHandler(this)
+                                        }
+
+                                AudioPlayerLyricsDirectiveHandler(
+                                    getContextManager(),
+                                    getMessageSender(),
+                                    this,
+                                    this
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                }
+
+                                if (builder.enableDisplay) {
+                                    AudioPlayerTemplateHandler(
+                                        getPlaySynchronizer(),
+                                        getSessionManager()
+                                    ).apply {
+                                        getDisplayPlayStackManager().addPlayContextProvider(this)
+                                        setDisplay(this)
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                        getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
+                                            AudioPlayerDirectivePreProcessor()
+                                        )
+                                        audioPlayerMetadataDirectiveHandler.addListener(this)
+                                    }
+                                }
+
+                                getAudioPlayStackManager().addPlayContextProvider(this)
                             }
                         }
-
-                        getAudioPlayStackManager().addPlayContextProvider(this)
-                    }
-                }
-            })
+                })
 
             addAgentFactory(DefaultTTSAgent.NAMESPACE, object : AgentFactory<DefaultTTSAgent> {
                 override fun create(container: SdkContainer): DefaultTTSAgent = with(container) {
@@ -469,55 +497,64 @@ class NuguAndroidClient private constructor(
                     })
             }
             builder.screen?.let {
-                addAgentFactory(DefaultScreenAgent.NAMESPACE, object : AgentFactory<DefaultScreenAgent> {
-                    override fun create(container: SdkContainer): DefaultScreenAgent =
-                        with(container) {
-                            DefaultScreenAgent(
-                                getContextManager(),
-                                getMessageSender(),
-                                it
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(
+                    DefaultScreenAgent.NAMESPACE,
+                    object : AgentFactory<DefaultScreenAgent> {
+                        override fun create(container: SdkContainer): DefaultScreenAgent =
+                            with(container) {
+                                DefaultScreenAgent(
+                                    getContextManager(),
+                                    getMessageSender(),
+                                    it
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                }
                             }
-                        }
-                })
+                    })
             }
             builder.delegationClient?.let {
-                addAgentFactory(DefaultDelegationAgent.NAMESPACE, object : AgentFactory<DefaultDelegationAgent> {
-                    override fun create(container: SdkContainer): DefaultDelegationAgent =
-                        with(container) {
-                            DefaultDelegationAgent(
-                                getContextManager(),
-                                getMessageSender(),
-                                getInputManagerProcessor(),
-                                it
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(
+                    DefaultDelegationAgent.NAMESPACE,
+                    object : AgentFactory<DefaultDelegationAgent> {
+                        override fun create(container: SdkContainer): DefaultDelegationAgent =
+                            with(container) {
+                                DefaultDelegationAgent(
+                                    getContextManager(),
+                                    getMessageSender(),
+                                    getInputManagerProcessor(),
+                                    it
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                }
                             }
-                        }
-                })
+                    })
             }
             builder.extensionClient?.let {
-                addAgentFactory(DefaultExtensionAgent.NAMESPACE, object : AgentFactory<DefaultExtensionAgent> {
-                    override fun create(container: SdkContainer): DefaultExtensionAgent =
-                        with(container) {
-                            DefaultExtensionAgent(
-                                getContextManager(),
-                                getMessageSender(),
-                                getInputManagerProcessor()
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
-                                setClient(it)
+                addAgentFactory(
+                    DefaultExtensionAgent.NAMESPACE,
+                    object : AgentFactory<DefaultExtensionAgent> {
+                        override fun create(container: SdkContainer): DefaultExtensionAgent =
+                            with(container) {
+                                DefaultExtensionAgent(
+                                    getContextManager(),
+                                    getMessageSender(),
+                                    getInputManagerProcessor()
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                    setClient(it)
+                                }
                             }
+                    })
+            }
+            addAgentFactory(
+                DefaultLocationAgent.NAMESPACE,
+                object : AgentFactory<DefaultLocationAgent> {
+                    override fun create(container: SdkContainer): DefaultLocationAgent =
+                        with(container) {
+                            DefaultLocationAgent(getContextManager())
                         }
                 })
-            }
-            addAgentFactory(DefaultLocationAgent.NAMESPACE, object: AgentFactory<DefaultLocationAgent> {
-                override fun create(container: SdkContainer): DefaultLocationAgent = with(container) {
-                    DefaultLocationAgent(getContextManager())
-                }
-            })
-            addAgentFactory(DefaultTextAgent.NAMESPACE, object: AgentFactory<DefaultTextAgent> {
+            addAgentFactory(DefaultTextAgent.NAMESPACE, object : AgentFactory<DefaultTextAgent> {
                 override fun create(container: SdkContainer): DefaultTextAgent = with(container) {
                     DefaultTextAgent(
                         getMessageSender(),
@@ -531,7 +568,7 @@ class NuguAndroidClient private constructor(
                 }
             })
 
-            if(builder.enableDisplay) {
+            if (builder.enableDisplay) {
                 addAgentFactory(
                     DefaultDisplayAgent.NAMESPACE,
                     object : AgentFactory<DefaultDisplayAgent> {
@@ -571,7 +608,11 @@ class NuguAndroidClient private constructor(
                                         getDirectiveSequencer().addDirectiveHandler(this)
                                     }
 
-                                    CloseDirectiveHandler(this, getContextManager(), getMessageSender()).apply {
+                                    CloseDirectiveHandler(
+                                        this,
+                                        getContextManager(),
+                                        getMessageSender()
+                                    ).apply {
                                         getDirectiveSequencer().addDirectiveHandler(this)
                                     }
 
@@ -584,35 +625,59 @@ class NuguAndroidClient private constructor(
             }
 
             builder.bluetoothProvider?.let {
-                addAgentFactory(DefaultBluetoothAgent.NAMESPACE, object : AgentFactory<DefaultBluetoothAgent> {
-                    override fun create(container: SdkContainer): DefaultBluetoothAgent =
-                        with(container) {
-                            DefaultBluetoothAgent(
-                                getMessageSender(),
-                                getContextManager(),
-                                getAudioFocusManager(),
-                                DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                                it
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(
+                    DefaultBluetoothAgent.NAMESPACE,
+                    object : AgentFactory<DefaultBluetoothAgent> {
+                        override fun create(container: SdkContainer): DefaultBluetoothAgent =
+                            with(container) {
+                                DefaultBluetoothAgent(
+                                    getMessageSender(),
+                                    getContextManager(),
+                                    getAudioFocusManager(),
+                                    DefaultFocusChannel.CONTENT_CHANNEL_NAME,
+                                    it
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                }
                             }
-                        }
-                })
+                    })
             }
 
             builder.soundProvider?.let {
-                addAgentFactory(DefaultSoundAgent.NAMESPACE, object : AgentFactory<DefaultSoundAgent> {
-                    override fun create(container: SdkContainer): DefaultSoundAgent =
-                        with(container) {
-                            DefaultSoundAgent(
-                                builder.playerFactory.createBeepPlayer(),
-                                getMessageSender(),
-                                getContextManager(),
-                                it
-                            ).apply {
-                                getDirectiveSequencer().addDirectiveHandler(this)
+                addAgentFactory(
+                    DefaultSoundAgent.NAMESPACE,
+                    object : AgentFactory<DefaultSoundAgent> {
+                        override fun create(container: SdkContainer): DefaultSoundAgent =
+                            with(container) {
+                                DefaultSoundAgent(
+                                    builder.playerFactory.createBeepPlayer(),
+                                    getMessageSender(),
+                                    getContextManager(),
+                                    it
+                                ).apply {
+                                    getDirectiveSequencer().addDirectiveHandler(this)
+                                }
                             }
-                        }
+                    })
+            }
+
+            builder.messageClient?.let {
+                addAgentFactory(MessageAgent.NAMESPACE, object : AgentFactory<MessageAgent> {
+                    override fun create(container: SdkContainer): MessageAgent = MessageAgent(
+                        it,
+                        TTSScenarioPlayer(
+                            container.getPlaySynchronizer(),
+                            container.getAudioFocusManager(),
+                            DefaultFocusChannel.DIALOG_CHANNEL_NAME,
+                            dialogChannelFocusHolderManager,
+                            builder.playerFactory.createSpeakPlayer(),
+                            container.getAudioPlayStackManager()
+                        ),
+                        container.getContextManager(),
+                        container.getContextManager(),
+                        container.getMessageSender(),
+                        container.getDirectiveSequencer()
+                    )
                 })
             }
 
