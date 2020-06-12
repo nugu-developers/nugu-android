@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent
 //import javax.annotation.concurrent.ThreadSafe
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.common.tts.TTSPlayContextProvider
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
@@ -183,14 +184,12 @@ class DefaultTTSAgent(
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
 
-    private val playContextManager = PlayContextManager()
+    private val playContextManager = TTSPlayContextProvider()
 
     init {
         Logger.d(TAG, "[init]")
         speechPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
-
-        addListener(playContextManager)
     }
 
     override fun addListener(listener: TTSAgentInterface.Listener) {
@@ -773,6 +772,9 @@ class DefaultTTSAgent(
     private fun executePlaybackStarted() {
         Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
         val info = currentInfo ?: return
+        info.payload.playStackControl?.getPushPlayServiceId()?.let {
+            playContextManager.onPlaybackStarted(it)
+        }
         setCurrentStateAndToken(TTSAgentInterface.State.PLAYING, info.payload.token)
         info.state = TTSAgentInterface.State.PLAYING
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
@@ -800,6 +802,7 @@ class DefaultTTSAgent(
         }
         Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
         val info = currentInfo ?: return
+        playContextManager.onPlaybackStopped()
         setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
 
@@ -826,6 +829,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executePlaybackFinished] $currentInfo")
 
         val info = currentInfo ?: return
+        playContextManager.onPlaybackFinished()
         setCurrentStateAndToken(TTSAgentInterface.State.FINISHED, info.payload.token)
         info.state = TTSAgentInterface.State.FINISHED
 
@@ -846,6 +850,7 @@ class DefaultTTSAgent(
             return
         }
 
+        playContextManager.onPlaybackStopped()
         setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
         with(info) {
@@ -949,52 +954,6 @@ class DefaultTTSAgent(
                 focusManager.releaseChannel(channelName, this)
                 currentFocus = FocusState.NONE
             }
-        }
-    }
-
-    private inner class PlayContextManager : TTSAgentInterface.Listener {
-        private val CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED = 7000L
-        private var playContextValidTimestamp: Long = Long.MAX_VALUE
-        private var currentPlayContext: PlayStackManagerInterface.PlayContext? = null
-
-        fun getPlayContext(): PlayStackManagerInterface.PlayContext? =
-            if (playContextValidTimestamp > System.currentTimeMillis()) {
-                currentPlayContext
-            } else {
-                null
-            }
-
-        override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
-            if (state == TTSAgentInterface.State.STOPPED) {
-                currentPlayContext = null
-                playContextValidTimestamp = Long.MAX_VALUE
-            } else if (state == TTSAgentInterface.State.FINISHED) {
-                currentPlayContext?.let {
-                    currentPlayContext =
-                        PlayStackManagerInterface.PlayContext(it.playServiceId, it.timestamp,
-                            isBackground = false,
-                            persistent = true
-                        )
-                    playContextValidTimestamp =
-                        System.currentTimeMillis() + CONTEXT_PERSERVATION_DURATION_AFTER_TTS_FINISHED
-                }
-            }
-        }
-
-        override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
-            currentInfo?.payload?.playStackControl?.getPushPlayServiceId()
-                ?.let { pushPlayServiceId ->
-                    currentPlayContext =
-                        PlayStackManagerInterface.PlayContext(
-                            pushPlayServiceId,
-                            System.currentTimeMillis()
-                        )
-                    playContextValidTimestamp = Long.MAX_VALUE
-                }
-        }
-
-        override fun onError(dialogRequestId: String) {
-            // no-op
         }
     }
 
