@@ -16,15 +16,20 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.common.tts.TTSScenarioPlayer
 import com.skt.nugu.sdk.agent.ext.message.handler.GetMessageDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.message.handler.ReadMessageDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.handler.SendMessageDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.payload.GetMessagePayload
+import com.skt.nugu.sdk.agent.ext.message.payload.ReadMessageDirective
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.ext.message.payload.SendMessagePayload
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
@@ -35,6 +40,7 @@ import java.util.concurrent.Executors
 
 class MessageAgent(
     private val client: MessageClient,
+    private val ttsScenarioPlayer: TTSScenarioPlayer,
     contextStateProviderRegistry: ContextStateProviderRegistry,
     contextGetter: ContextGetterInterface,
     messageSender: MessageSender,
@@ -54,6 +60,121 @@ class MessageAgent(
     override fun getInterfaceName(): String = NAMESPACE
 
     private val executor = Executors.newSingleThreadExecutor()
+
+    private val readMessageController = object : ReadMessageDirectiveHandler.Controller, TTSScenarioPlayer.Listener {
+            private val directives = HashMap<String, ReadMessageSource>()
+
+            var state: TTSAgentInterface.State = TTSAgentInterface.State.IDLE
+            var token: String? = null
+
+            init {
+                ttsScenarioPlayer.addListener(this)
+            }
+
+            private inner class ReadMessageSource(
+                val directive: ReadMessageDirective,
+                private val attachmentReader: Attachment.Reader,
+                val callback: ReadMessageDirectiveHandler.Callback
+            ) : TTSScenarioPlayer.Source() {
+                override fun getReader(): Attachment.Reader? = attachmentReader
+
+                override fun onCanceled() {
+                    callback.onError("Canceled")
+                }
+
+                override fun getPushPlayServiceId(): String? =
+                    directive.payload.playStackControl?.getPushPlayServiceId()
+
+                override fun getDialogRequestId(): String = directive.header.dialogRequestId
+
+                override fun requestReleaseSync(immediate: Boolean) {
+                    cancel(directive.header.messageId)
+                }
+            }
+
+            override fun prepare(
+                directive: ReadMessageDirective,
+                reader: Attachment.Reader,
+                callback: ReadMessageDirectiveHandler.Callback
+            ) {
+                ReadMessageSource(directive, reader, callback).apply {
+                    directives[directive.header.messageId] = this
+                    ttsScenarioPlayer.prepare(this)
+                }
+            }
+
+            override fun start(messageId: String) {
+                directives[messageId]?.let { it ->
+                    ttsScenarioPlayer.start(it)
+                }
+            }
+
+            override fun cancel(messageId: String) {
+                directives[messageId]?.let { it ->
+                    ttsScenarioPlayer.cancel(it)
+                }
+            }
+
+            override fun onPlaybackStarted(source: TTSScenarioPlayer.Source) {
+                // no-op
+                state = TTSAgentInterface.State.PLAYING
+                directives.forEach {
+                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
+                        token = it.value.directive.payload.token
+                        return@forEach
+                    }
+                }
+            }
+
+            override fun onPlaybackFinished(source: TTSScenarioPlayer.Source) {
+                state = TTSAgentInterface.State.FINISHED
+                var remove: String? = null
+                directives.forEach {
+                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
+                        it.value.callback.onFinish()
+                        remove = it.key
+                        return@forEach
+                    }
+                }
+                remove?.let {
+                    directives.remove(it)
+                }
+            }
+
+            override fun onPlaybackStopped(source: TTSScenarioPlayer.Source) {
+                state = TTSAgentInterface.State.STOPPED
+                var remove: String? = null
+                directives.forEach {
+                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
+                        it.value.callback.onStop(true)
+                        remove = it.key
+                        return@forEach
+                    }
+                }
+                remove?.let {
+                    directives.remove(it)
+                }
+            }
+
+            override fun onPlaybackError(
+                source: TTSScenarioPlayer.Source,
+                type: ErrorType,
+                error: String
+            ) {
+                state = TTSAgentInterface.State.STOPPED
+                var remove: String? = null
+                directives.forEach {
+                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
+                        it.value.callback.onError("type: $type, error: $error")
+                        remove = it.key
+                        return@forEach
+                    }
+                }
+                remove?.let {
+                    directives.remove(it)
+                }
+            }
+        }
 
     init {
         contextStateProviderRegistry.setStateProvider(
@@ -83,10 +204,23 @@ class MessageAgent(
                     contextGetter
                 )
             )
+
+            addDirectiveHandler(
+                ReadMessageDirectiveHandler(
+                    readMessageController,
+                    messageSender,
+                    contextGetter,
+                    namespaceAndName
+                )
+            )
         }
     }
 
-    internal data class StateContext(private val context: Context): ContextState {
+    internal data class StateContext(
+        private val context: Context,
+        private val readActivity: TTSAgentInterface.State,
+        private val token: String?
+    ) : ContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
@@ -96,7 +230,11 @@ class MessageAgent(
         }
 
         override fun toFullJsonString(): String = buildCompactContext().apply {
-            context.template?.let {template->
+            addProperty("readActivity", readActivity.name)
+            token?.let {
+                addProperty("token", token)
+            }
+            context.template?.let { template ->
                 add("template", template.toJson())
             }
         }.toString()
@@ -110,7 +248,16 @@ class MessageAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            contextSetter.setState(namespaceAndName, StateContext(client.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            contextSetter.setState(
+                namespaceAndName,
+                StateContext(
+                    client.getContext(),
+                    readMessageController.state,
+                    readMessageController.token
+                ),
+                StateRefreshPolicy.ALWAYS,
+                stateRequestToken
+            )
         }
     }
 
