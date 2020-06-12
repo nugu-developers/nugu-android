@@ -51,7 +51,19 @@ abstract class AbstractDirectiveHandler: DirectiveHandler {
             return
         }
 
-        val info = createDirectiveInfo(directive, result)
+        val info = createDirectiveInfo(directive,
+            // wrap result to remove directive from map.
+            object : DirectiveHandlerResult {
+                override fun setCompleted() {
+                    directiveInfoMap.remove(messageId)
+                    result.setCompleted()
+                }
+
+                override fun setFailed(description: String, cancelAll: Boolean) {
+                    directiveInfoMap.remove(messageId)
+                    result.setFailed(description, cancelAll)
+                }
+            })
         directiveInfoMap[directive.getMessageId()] = info
 
         preHandleDirective(info)
@@ -80,8 +92,7 @@ abstract class AbstractDirectiveHandler: DirectiveHandler {
     private fun createDirectiveInfo(
         directive: Directive,
         result: DirectiveHandlerResult
-    ) =
-        DirectiveInfoImpl(
+    ) = DirectiveInfoImpl(
             directive,
             result
         )
@@ -105,6 +116,7 @@ abstract class AbstractDirectiveHandler: DirectiveHandler {
      * Remove directive from map which managed.
      * @param messageId the messageId for directive.
      */
+    @Deprecated("removed soon")
     protected fun removeDirective(messageId: String) {
         directiveInfoMap.remove(messageId)
     }
