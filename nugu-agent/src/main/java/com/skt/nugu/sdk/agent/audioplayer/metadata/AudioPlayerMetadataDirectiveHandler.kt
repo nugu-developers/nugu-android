@@ -70,13 +70,10 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
             val updateMetadataPayload = MessageFactory.create(payload, UpdateMetadataPayload::class.java)
             if(updateMetadataPayload == null) {
                 info.result.setFailed("[handleDirective] invalid payload: $updateMetadataPayload")
-                removeDirective(info.directive.getMessageId())
                 return
             }
 
             info.result.setCompleted()
-            removeDirective(info.directive.getMessageId())
-
             if (getNamespaceAndName() == UPDATE_METADATA) {
                 listeners.forEach {listener ->
                     listener.onMetadataUpdate(updateMetadataPayload.playServiceId, updateMetadataPayload.metadata.toString())
@@ -86,7 +83,6 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = supportConfigurations

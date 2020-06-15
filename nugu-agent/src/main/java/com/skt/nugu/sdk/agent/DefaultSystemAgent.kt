@@ -172,11 +172,6 @@ class DefaultSystemAgent(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info)
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun provideState(
@@ -222,7 +217,6 @@ class DefaultSystemAgent(
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
-        removeDirective(info)
     }
 
     /**

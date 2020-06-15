@@ -60,7 +60,7 @@ class RevokeDirectiveHandler(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
+        // no-op
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

@@ -320,20 +320,13 @@ class DefaultBluetoothAgent(
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
-        removeDirective(info)
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
         info.result.setFailed(msg)
-        removeDirective(info)
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info)
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun setListener(listener: Listener) {
@@ -387,7 +380,6 @@ class DefaultBluetoothAgent(
 
     private fun handleUnknownDirective(info: DirectiveInfo) {
         Logger.w(TAG, "[handleUnknownDirective] info: $info")
-        removeDirective(info)
     }
 
     private fun handleStartDiscoverableMode(info: DirectiveInfo) {

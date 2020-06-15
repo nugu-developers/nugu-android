@@ -50,7 +50,6 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
 
     override fun handleDirective(info: DirectiveInfo) {
         info.result.setCompleted()
-        removeDirective(info.directive.getMessageId())
         contextGetter.getContext(object: IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 val header = info.directive.header
@@ -74,7 +73,6 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

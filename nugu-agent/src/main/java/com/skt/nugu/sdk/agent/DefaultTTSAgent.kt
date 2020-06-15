@@ -125,7 +125,6 @@ class DefaultTTSAgent(
             override fun onGranted() {
                 executor.submit {
                     focusHolderManager.abandon(this@SpeakDirectiveInfo)
-                    removeDirective(directive.getMessageId())
                     clear()
 
                     if (this@SpeakDirectiveInfo == currentInfo) {
@@ -423,7 +422,6 @@ class DefaultTTSAgent(
 
         with(info) {
             result.setFailed("Canceled by the other speak directive.")
-            removeDirective(directive.getMessageId())
             releaseSyncImmediately(this)
         }
     }
