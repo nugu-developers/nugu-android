@@ -49,8 +49,6 @@ class SendCandidatesDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
-
         val payload =
             MessageFactory.create(info.directive.payload, SendCandidatesPayload::class.java)
         if (payload == null) {
@@ -80,7 +78,6 @@ class SendCandidatesDirectiveHandler(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

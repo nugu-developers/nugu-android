@@ -35,19 +35,16 @@ class PlaybackDirectiveHandler(
 
     override fun preHandleDirective(info: DirectiveInfo) {
         if(!controller.onPreExecute(info.directive)) {
-            removeDirective(info.directive.getMessageId())
             info.result.setFailed("[preHandleDirective] failed")
         }
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
         info.result.setCompleted()
         controller.onExecute(info.directive)
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
         controller.onCancel(info.directive)
     }
 

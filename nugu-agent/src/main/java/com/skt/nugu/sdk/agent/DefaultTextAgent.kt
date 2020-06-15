@@ -142,17 +142,14 @@ class DefaultTextAgent(
     private fun executeSetHandlingCompleted(info: DirectiveInfo) {
         Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
         info.result.setCompleted()
-        removeDirective(info)
     }
 
     private fun executeSetHandlingFailed(info: DirectiveInfo, msg: String) {
         Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
         info.result.setFailed(msg)
-        removeDirective(info)
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info)
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
@@ -163,10 +160,6 @@ class DefaultTextAgent(
         configuration[TEXT_SOURCE] = nonBlockingPolicy
 
         return configuration
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun provideState(

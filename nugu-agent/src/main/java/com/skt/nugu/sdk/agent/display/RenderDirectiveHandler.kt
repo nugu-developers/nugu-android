@@ -338,11 +338,9 @@ class RenderDirectiveHandler(
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
         info.result.setFailed(description)
-        removeDirective(info.directive.getMessageId())
     }
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
-        removeDirective(info.directive.getMessageId())
     }
 }

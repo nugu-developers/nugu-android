@@ -392,13 +392,11 @@ class DefaultASRAgent(
     private fun setHandlingCompleted(info: DirectiveInfo) {
         Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
         info.result.setCompleted()
-        removeDirective(info)
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
         Logger.d(TAG, "[executeSetHandlingFailed] info: $info")
         info.result.setFailed(msg)
-        removeDirective(info)
     }
 
     private fun setHandlingExpectSpeechFailed(param: ExpectSpeechDirectiveParam?, info: DirectiveInfo, msg: String) {
@@ -436,7 +434,6 @@ class DefaultASRAgent(
                     executeStopRecognitionOnAttributeUnset(info.directive.getMessageId())
                 }
             }
-            removeDirective(info)
         }
     }
 
@@ -632,10 +629,6 @@ class DefaultASRAgent(
 
         clearPreHandledExpectSpeech()
         isRequested = false
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
