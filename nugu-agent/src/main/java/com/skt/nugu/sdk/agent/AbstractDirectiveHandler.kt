@@ -81,7 +81,8 @@ abstract class AbstractDirectiveHandler: DirectiveHandler {
     }
 
     override fun cancelDirective(messageId: String) {
-        val info = getDirectiveInfo(messageId) ?: return
+        // It is ok to remove here.
+        val info = directiveInfoMap.remove(messageId) ?: return
 
         info.isCancelled = true
         cancelDirective(info)
