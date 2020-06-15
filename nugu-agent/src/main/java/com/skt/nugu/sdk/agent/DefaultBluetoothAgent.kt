@@ -215,6 +215,8 @@ class DefaultBluetoothAgent(
                         // no-op
                     }
                 }
+
+                streamingState = state
             }
         }
 
@@ -245,6 +247,8 @@ class DefaultBluetoothAgent(
                         }
                     }
                 }
+
+                focusState = newFocus
             }
         }
     }
