@@ -20,73 +20,81 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.MediaPlayer
 import com.skt.nugu.sdk.agent.*
-import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
-import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
-import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
-import com.skt.nugu.sdk.client.ClientHelperInterface
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
-import com.skt.nugu.sdk.agent.microphone.Microphone
-import com.skt.nugu.sdk.agent.playback.PlaybackRouter
-import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
-import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
-import com.skt.nugu.sdk.platform.android.log.AndroidLogger
-import com.skt.nugu.sdk.platform.android.mediaplayer.AndroidMediaPlayer
-import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
-import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
-import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
-import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.CancelRecognizeDirectiveHandler
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
+import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
+import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
+import com.skt.nugu.sdk.agent.chips.ChipsAgent
+import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.common.tts.TTSScenarioPlayer
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
+import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.dialog.DialogFocusHolderManager
-import com.skt.nugu.sdk.agent.display.*
-import com.skt.nugu.sdk.client.NuguClientInterface
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
-import com.skt.nugu.sdk.platform.android.battery.AndroidBatteryStatusProvider
-import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.agent.text.TextAgentInterface
-import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
-import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
-import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.location.LocationAgentInterface
-import com.skt.nugu.sdk.agent.system.SystemAgentInterface
-import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
-import com.skt.nugu.sdk.agent.screen.Screen
-import com.skt.nugu.sdk.agent.speaker.*
-import com.skt.nugu.sdk.client.SdkContainer
-import com.skt.nugu.sdk.client.agent.factory.*
-import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
-import com.skt.nugu.sdk.agent.ext.message.*
+import com.skt.nugu.sdk.agent.display.*
+import com.skt.nugu.sdk.agent.ext.message.MessageAgent
+import com.skt.nugu.sdk.agent.ext.message.MessageClient
+import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
+import com.skt.nugu.sdk.agent.location.LocationAgentInterface
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
+import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
+import com.skt.nugu.sdk.agent.microphone.Microphone
+import com.skt.nugu.sdk.agent.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.screen.Screen
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.session.SessionAgent
 import com.skt.nugu.sdk.agent.sound.SoundProvider
+import com.skt.nugu.sdk.agent.speaker.Speaker
+import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
+import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
+import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.text.TextAgentInterface
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
+import com.skt.nugu.sdk.client.ClientHelperInterface
+import com.skt.nugu.sdk.client.NuguClient
+import com.skt.nugu.sdk.client.NuguClientInterface
+import com.skt.nugu.sdk.client.SdkContainer
+import com.skt.nugu.sdk.client.agent.factory.AgentFactory
+import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
-import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
+import com.skt.nugu.sdk.core.interfaces.context.OsContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
+import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
+import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient.Builder
+import com.skt.nugu.sdk.platform.android.battery.AndroidBatteryStatusProvider
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
+import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractorFactory
+import com.skt.nugu.sdk.platform.android.log.AndroidLogger
+import com.skt.nugu.sdk.platform.android.mediaplayer.AndroidMediaPlayer
+import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
+import com.skt.nugu.sdk.platform.android.speaker.AndroidAudioSpeaker
 
 /**
  * Implementation of [ClientHelperInterface] for Android
@@ -191,6 +199,8 @@ class NuguAndroidClient private constructor(
         internal var soundProvider: SoundProvider? = null
 
         internal var messageClient: MessageClient? = null
+
+        internal var enableChips: Boolean = true
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -308,6 +318,11 @@ class NuguAndroidClient private constructor(
          * @param client the provider for MessageAgent
          */
         fun messageClient(client: MessageClient?) = apply { this.messageClient = client }
+
+        /**
+         * @param enable the flag to enable or disable chips.
+         */
+        fun enableChips(enable: Boolean) = apply { this.enableChips = enable }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -681,6 +696,15 @@ class NuguAndroidClient private constructor(
                 })
             }
 
+            if(builder.enableChips) {
+                addAgentFactory(ChipsAgent.NAMESPACE, object: AgentFactory<ChipsAgent> {
+                    override fun create(container: SdkContainer): ChipsAgent = ChipsAgent(
+                        container.getDirectiveSequencer(),
+                        container.getContextManager()
+                    )
+                })
+            }
+
             builder.clientVersion?.let {
                 clientVersion(it)
             }
@@ -743,6 +767,13 @@ class NuguAndroidClient private constructor(
         } catch (th: Throwable) {
             null
         }
+
+    val chipsAgent: ChipsAgentInterface? = try {
+        client.getAgent(ChipsAgent.NAMESPACE) as ChipsAgentInterface
+    } catch (th: Throwable) {
+        null
+    }
+
     private val displayAggregator: DisplayAggregator?
 
     private val audioFocusInteractor: AudioFocusInteractor?
