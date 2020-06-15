@@ -288,17 +288,14 @@ class DefaultSpeakerAgent(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info)
     }
 
     private fun executeSetHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
-        removeDirective(info)
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, msg: String) {
         info.result.setFailed(msg)
-        removeDirective(info)
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
@@ -313,10 +310,6 @@ class DefaultSpeakerAgent(
         configuration[SET_MUTE] = nonBlockingPolicy
 
         return configuration
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     data class SpeakerContext(

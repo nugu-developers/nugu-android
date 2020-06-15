@@ -40,8 +40,6 @@ class BlockingIncomingCallDirectiveHandler (
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
-
         val payload =
             MessageFactory.create(info.directive.payload, BlockingIncomingCallPayload::class.java)
         if (payload == null) {
@@ -53,7 +51,6 @@ class BlockingIncomingCallDirectiveHandler (
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

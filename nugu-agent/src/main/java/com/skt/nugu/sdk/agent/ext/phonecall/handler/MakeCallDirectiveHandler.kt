@@ -60,8 +60,6 @@ class MakeCallDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
-
         val payload =
             MessageFactory.create(info.directive.payload, MakeCallPayload::class.java)
         if (payload == null) {
@@ -98,7 +96,7 @@ class MakeCallDirectiveHandler(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
+        // no-op
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

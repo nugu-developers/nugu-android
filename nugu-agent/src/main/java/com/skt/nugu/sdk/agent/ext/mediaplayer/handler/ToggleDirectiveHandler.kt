@@ -50,8 +50,6 @@ class ToggleDirectiveHandler (
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
-
         val payload = MessageFactory.create(info.directive.payload, TogglePayload::class.java)
         if(payload == null) {
             info.result.setFailed("Invalid Payload")
@@ -106,7 +104,6 @@ class ToggleDirectiveHandler (
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {

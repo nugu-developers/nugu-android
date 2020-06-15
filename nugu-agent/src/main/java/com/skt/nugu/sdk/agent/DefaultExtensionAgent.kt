@@ -168,16 +168,13 @@ class DefaultExtensionAgent(
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
-        removeDirective(info)
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
         info.result.setFailed(description)
-        removeDirective(info)
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info)
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
@@ -188,10 +185,6 @@ class DefaultExtensionAgent(
         configuration[ACTION] = nonBlockingPolicy
 
         return configuration
-    }
-
-    private fun removeDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
     }
 
     private fun sendActionEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {

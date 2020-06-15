@@ -62,7 +62,7 @@ class StopDirectiveHandler(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-        removeDirective(info.directive.getMessageId())
+
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
