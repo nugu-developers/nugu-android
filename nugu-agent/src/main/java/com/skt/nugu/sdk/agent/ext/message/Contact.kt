@@ -32,7 +32,7 @@ data class Contact(
     @SerializedName("profileImgUrl")
     val profileImgUrl: String?,
     @SerializedName("message")
-    val message: String?,
+    val message: Message?,
     @SerializedName("time")
     val time: String?,
     @SerializedName("numInMessageHistory")
@@ -42,6 +42,20 @@ data class Contact(
     @SerializedName("score")
     val score: String?
 ) {
+    data class Message(
+        @SerializedName("text")
+        val text: String,
+        @SerializedName("type")
+        val type: Type
+    ) {
+        enum class Type {
+            @SerializedName("SMS")
+            SMS,
+            @SerializedName("MMS")
+            MMS
+        }
+    }
+
     enum class Label {
         @SerializedName("MOBILE")
         MOBILE,
