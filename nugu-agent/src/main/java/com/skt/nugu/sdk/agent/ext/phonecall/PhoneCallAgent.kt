@@ -185,7 +185,7 @@ class PhoneCallAgent(
 
     override fun onIncoming(
         playServiceId: String,
-        caller: Caller?
+        caller: Caller
     ) {
         executor.submit {
             if (state == State.IDLE) {
@@ -200,7 +200,7 @@ class PhoneCallAgent(
 
     private fun sendCallArrivedEvent(
         playServiceId: String,
-        caller: Caller?
+        caller: Caller
     ) {
         contextGetter.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
@@ -208,9 +208,7 @@ class PhoneCallAgent(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, "CallArrived", VERSION.toString())
                         .payload(JsonObject().apply {
                             addProperty("playServiceId", playServiceId)
-                            caller?.let {
-                                add("caller", caller.toJson())
-                            }
+                            add("caller", caller.toJson())
                         }.toString())
                         .build()
                 )

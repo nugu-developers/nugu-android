@@ -31,7 +31,7 @@ interface PhoneCallClient
         fun onIdle(playServiceId: String)
         fun onOutgoing()
         fun onEstablished(playServiceId: String)
-        fun onIncoming(playServiceId: String, caller: Caller?)
+        fun onIncoming(playServiceId: String, caller: Caller)
     }
 
     fun addOnStateChangeListener(listener: OnStateChangeListener)
