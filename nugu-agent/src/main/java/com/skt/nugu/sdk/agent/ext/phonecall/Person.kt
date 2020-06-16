@@ -67,20 +67,31 @@ data class Person(
         val callType: CallType?
     ) {
         enum class Type {
+            @SerializedName("OUT")
             OUT,
+            @SerializedName("OUT_CANCELED")
             OUT_CANCELED,
+            @SerializedName("IN")
             IN,
+            @SerializedName("REJECTED")
             REJECTED,
+            @SerializedName("MISSED")
             MISSED,
-            VOICE_MESSAGE,
+            @SerializedName("BLOCKED")
             BLOCKED,
         }
 
         enum class CallType {
+            @SerializedName("CALL")
             CALL,
+            @SerializedName("VIDEO")
             VIDEO,
+            @SerializedName("CALLAR")
             CALLAR,
-            GROUP
+            @SerializedName("GROUP")
+            GROUP,
+            @SerializedName("VOICE_MESSAGE")
+            VOICE_MESSAGE,
         }
     }
 
