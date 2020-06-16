@@ -25,6 +25,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.platform.android.login.auth.*
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguSnackbar
 import java.math.BigInteger
 import java.security.SecureRandom
 
