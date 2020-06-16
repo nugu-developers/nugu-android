@@ -21,30 +21,27 @@ import com.google.gson.JsonObject
 
 data class Caller(
     val name: String?,
-    val isMobile: Boolean?,
-    val isRecentMissed: Boolean?
+    val isMobile: Boolean,
+    val isRecentMissed: Boolean
 ) {
     fun toJson(): JsonElement = JsonObject().apply {
         name?.let {
             addProperty("name", it)
         }
-        isMobile?.let {
-            addProperty(
-                "isMobile", if (it) {
-                    "TRUE"
-                } else {
-                    "FALSE"
-                }
-            )
-        }
-        isRecentMissed?.let {
-            addProperty(
-                "isRecentMissed", if (it) {
-                    "TRUE"
-                } else {
-                    "FALSE"
-                }
-            )
-        }
+        addProperty(
+            "isMobile", if (isMobile) {
+                "TRUE"
+            } else {
+                "FALSE"
+            }
+        )
+
+        addProperty(
+            "isRecentMissed", if (isRecentMissed) {
+                "TRUE"
+            } else {
+                "FALSE"
+            }
+        )
     }
 }
