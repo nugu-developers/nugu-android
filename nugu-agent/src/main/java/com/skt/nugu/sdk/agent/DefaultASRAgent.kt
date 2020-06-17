@@ -426,6 +426,7 @@ class DefaultASRAgent(
                 if (request == null) {
                     expectSpeechDirectiveParam?.let {
                         if(it.directive.header.messageId == info.directive.getMessageId()) {
+                            sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                             clearPreHandledExpectSpeech()
                             clearCurrentAttributeKeyIfMatchWith(it)
                         }
