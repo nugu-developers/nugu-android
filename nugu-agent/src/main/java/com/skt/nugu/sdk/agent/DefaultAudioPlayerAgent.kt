@@ -214,6 +214,8 @@ class DefaultAudioPlayerAgent(
         var referrerDialogRequestId: String = getDialogRequestId()
         var sourceAudioInfo:AudioInfo? = this
         var isFetched = false
+        var isCanceled = false
+
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
@@ -669,6 +671,8 @@ class DefaultAudioPlayerAgent(
             TAG,
             "[executeStop] currentActivity: $currentActivity, playCalled: $playCalled, currentItem: $currentItem, reason: $reason"
         )
+        currentItem?.isCanceled = true
+
         when (currentActivity) {
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
@@ -919,7 +923,11 @@ class DefaultAudioPlayerAgent(
     override fun onPlaybackFinished(id: SourceId) {
         Logger.d(TAG, "[onPlaybackFinished] id : $id")
         executor.submit {
-            executeOnPlaybackFinished(id)
+            if(currentItem?.isCanceled == true) {
+                executeOnPlaybackStopped(id, false)
+            } else {
+                executeOnPlaybackFinished(id)
+            }
         }
     }
 
