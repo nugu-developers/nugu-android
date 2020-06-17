@@ -26,7 +26,8 @@ private const val sessionKey1= "session_key_1"
 private val session1 = SessionManagerInterface.Session("session_1","playServiceId_1")
 
 class SessionManagerTest {
-    private val sessionManager = SessionManager()
+    private val inactiveTimeoutForTest = 100L
+    private val sessionManager = SessionManager(inactiveTimeoutForTest)
 
     @Test
     fun testSet() {
@@ -59,5 +60,16 @@ class SessionManagerTest {
         sessionManager.activate(sessionKey1, requester)
         sessionManager.deactivate(sessionKey1, requester)
         Assert.assertTrue(sessionManager.getActiveSessions().isEmpty())
+    }
+
+    @Test
+    fun testActivateAndSet() {
+        val requester: SessionManagerInterface.Requester = mock()
+
+        sessionManager.activate(sessionKey1, requester)
+        sessionManager.set(sessionKey1, session1)
+
+        Thread.sleep(inactiveTimeoutForTest + 100L)
+        Assert.assertTrue(sessionManager.getActiveSessions().isNotEmpty())
     }
 }
