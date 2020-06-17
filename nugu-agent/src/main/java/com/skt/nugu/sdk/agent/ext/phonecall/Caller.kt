@@ -21,6 +21,7 @@ import com.google.gson.JsonObject
 
 data class Caller(
     val name: String?,
+    val token: String,
     val isMobile: Boolean,
     val isRecentMissed: Boolean
 ) {
@@ -28,6 +29,7 @@ data class Caller(
         name?.let {
             addProperty("name", it)
         }
+        addProperty("token", token)
         addProperty(
             "isMobile", if (isMobile) {
                 "TRUE"
