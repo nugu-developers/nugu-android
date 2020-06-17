@@ -43,7 +43,11 @@ class SessionManager : SessionManagerInterface {
         lock.withLock {
             Logger.d(TAG, "[set] key: $key, session: $session")
             allSessions[key] = session
-            scheduleTimeout(key)
+
+            // if activate called before set, do not schedule.
+            if(!activeSessionsMap.containsKey(key)) {
+                scheduleTimeout(key)
+            }
         }
     }
 
