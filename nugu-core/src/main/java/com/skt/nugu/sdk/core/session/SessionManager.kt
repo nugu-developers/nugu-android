@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class SessionManager : SessionManagerInterface {
+class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIVE_TIMEOUT) : SessionManagerInterface {
     companion object {
         private const val TAG = "SessionManager"
-        private const val INACTIVE_TIMEOUT = 60L // sec
+        private const val DEFAULT_INACTIVE_TIMEOUT = 60 * 1000L // millis
     }
 
     private val lock = ReentrantLock()
@@ -60,7 +60,7 @@ class SessionManager : SessionManagerInterface {
                 allSessions.remove(key)
                 timeoutFutureMap.remove(key)
             }
-        }, INACTIVE_TIMEOUT, TimeUnit.SECONDS)
+        }, inactiveTimeoutInMillis, TimeUnit.MILLISECONDS)
     }
 
     override fun activate(key: String, requester: SessionManagerInterface.Requester) {
