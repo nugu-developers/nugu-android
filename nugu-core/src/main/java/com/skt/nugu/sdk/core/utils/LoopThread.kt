@@ -17,13 +17,18 @@ package com.skt.nugu.sdk.core.utils
 
 abstract class LoopThread : Thread() {
     private val wakeLoop = Object()
+    private var isNotified = false
 
     override fun run() {
         super.run()
 
         while (true) {
             synchronized(wakeLoop) {
-                wakeLoop.wait()
+                if(isNotified) {
+                    isNotified = false
+                } else {
+                    wakeLoop.wait()
+                }
             }
 
             onLoop()
@@ -34,12 +39,14 @@ abstract class LoopThread : Thread() {
 
     fun wakeOne() {
         synchronized(wakeLoop) {
+            isNotified = true
             wakeLoop.notify()
         }
     }
 
     fun wakeAll() {
         synchronized(wakeLoop) {
+            isNotified = true
             wakeLoop.notifyAll()
         }
     }
