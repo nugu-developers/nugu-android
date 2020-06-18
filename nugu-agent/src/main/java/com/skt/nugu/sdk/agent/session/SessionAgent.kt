@@ -23,10 +23,6 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
-import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -57,7 +53,7 @@ class SessionAgent(
     override fun getInterfaceName(): String = NAMESPACE
 
     internal data class StateContext(
-        val sessions: List<SessionManagerInterface.Session>
+        val sessions: Map<String, SessionManagerInterface.Session>
     ): ContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -70,10 +66,12 @@ class SessionAgent(
         override fun toFullJsonString(): String = buildCompactContext().apply {
             add("list", JsonArray().apply {
                 sessions.forEach {
-                    add(JsonObject().apply {
-                        addProperty("sessionId", it.sessionId)
-                        addProperty("playServiceId", it. playServiceId)
-                    })
+                    it.value.let { session ->
+                        add(JsonObject().apply {
+                            addProperty("sessionId", session.sessionId)
+                            addProperty("playServiceId", session.playServiceId)
+                        })
+                    }
                 }
             })
         }.toString()
