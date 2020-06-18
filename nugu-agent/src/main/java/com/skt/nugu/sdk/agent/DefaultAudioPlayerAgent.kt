@@ -103,7 +103,7 @@ class DefaultAudioPlayerAgent(
         private const val TAG = "AudioPlayerAgent"
 
         const val NAMESPACE = "AudioPlayer"
-        val VERSION = Version(1,3)
+        val VERSION = Version(1,4)
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
@@ -167,6 +167,7 @@ class DefaultAudioPlayerAgent(
     private var currentItem: AudioInfo? = null
 
     private var token: String = ""
+    private var playServiceId: String? = null
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
     private var duration: Long? = null
@@ -397,6 +398,7 @@ class DefaultAudioPlayerAgent(
             Logger.d(TAG, "[executeFetchItem] item: $item")
             progressTimer.stop()
             currentItem = item
+            playServiceId = item.playServiceId
             token = item.payload.audioItem.stream.token
             item.playContext = item.payload.playStackControl?.getPushPlayServiceId()?.let {
                 PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis(), true)
@@ -1289,6 +1291,7 @@ class DefaultAudioPlayerAgent(
 
     internal data class StateContext(
         val playerActivity: AudioPlayerAgentInterface.State,
+        val playServiceId: String?,
         val token: String,
         val offsetInMilliseconds: Long,
         val durationInMilliseconds: Long?,
@@ -1308,6 +1311,10 @@ class DefaultAudioPlayerAgent(
             if(playerActivity != AudioPlayerAgentInterface.State.IDLE) {
                 if(token.isNotBlank()) {
                     addProperty("token", token)
+                }
+
+                playServiceId?.let {
+                    addProperty("playServiceId", it)
                 }
 
                 addProperty("offsetInMilliseconds", offsetInMilliseconds)
@@ -1339,6 +1346,7 @@ class DefaultAudioPlayerAgent(
 
         contextSetter.setState(namespaceAndName, StateContext(
             playerActivity,
+            playServiceId,
             token,
             getOffsetInMilliseconds(),
             duration,
