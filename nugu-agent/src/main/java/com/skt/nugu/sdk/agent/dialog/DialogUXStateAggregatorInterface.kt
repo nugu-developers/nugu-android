@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.dialog
 
+import com.skt.nugu.sdk.agent.chips.RenderDirective
+
 interface DialogUXStateAggregatorInterface {
     fun addListener(listener: Listener)
     fun removeListener(listener: Listener)
@@ -57,6 +59,6 @@ interface DialogUXStateAggregatorInterface {
          * @param newState : changed state.
          * @param dialogMode : true if dialog mode, false otherwise.
          */
-        fun onDialogUXStateChanged(newState: DialogUXState, dialogMode: Boolean)
+        fun onDialogUXStateChanged(newState: DialogUXState, dialogMode: Boolean, chips: RenderDirective.Payload?)
     }
 }

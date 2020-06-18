@@ -334,8 +334,7 @@ class NuguAndroidClient private constructor(
         }
     }
 
-    private val dialogUXStateAggregator =
-        DialogUXStateAggregator(builder.dialogUXStateTransitionDelay)
+    private val dialogUXStateAggregator: DialogUXStateAggregator
 
     private val playbackRouter: PlaybackRouter =
         com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
@@ -794,10 +793,13 @@ class NuguAndroidClient private constructor(
             null
         }
 
+        dialogUXStateAggregator = DialogUXStateAggregator(builder.dialogUXStateTransitionDelay, client.getSdkContainer().getSessionManager())
+
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
         asrAgent?.addOnMultiturnListener(dialogUXStateAggregator)
         asrAgent?.addOnMultiturnListener(dialogChannelFocusHolderManager)
+        chipsAgent?.addListener(dialogUXStateAggregator)
 
         val osContextProvider = object : OsContextProvider() {
             override fun getType(): Type = Type.ANDROID
