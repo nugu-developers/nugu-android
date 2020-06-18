@@ -96,12 +96,12 @@ class SessionManager : SessionManagerInterface {
         }
     }
 
-    override fun getActiveSessions(): List<SessionManagerInterface.Session> {
+    override fun getActiveSessions(): Map<String, SessionManagerInterface.Session> {
         return lock.withLock {
-            ArrayList<SessionManagerInterface.Session>().apply {
+            LinkedHashMap<String, SessionManagerInterface.Session>().apply {
                 activeSessionsMap.forEach {
                     allSessions[it.key]?.let { session ->
-                        add(session)
+                        put(it.key, session)
                     }
                 }
             }

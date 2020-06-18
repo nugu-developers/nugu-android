@@ -65,5 +65,5 @@ interface SessionManagerInterface {
      * Get active sessions.
      * @return active sessions
      */
-    fun getActiveSessions(): List<Session>
+    fun getActiveSessions(): Map<String, Session>
 }
