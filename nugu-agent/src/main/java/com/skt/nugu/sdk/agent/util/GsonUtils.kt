@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.util
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 @Throws(Exception::class)
@@ -27,19 +28,39 @@ fun JsonObject.deepMerge(source: JsonObject) {
             if (!value.isJsonNull) {
                 if (value.isJsonObject) { //source value is json object, start deep merge
                     get(key).asJsonObject.deepMerge(value.asJsonObject)
+                } else if(value.isJsonArray) {
+                    get(key).asJsonArray.deepMerge(value.asJsonArray)
                 } else {
-                    if (value.isJsonArray) {
-                        val origin = get(key).asJsonArray
-                        value.asJsonArray.forEachIndexed { index, jsonElement ->
-                            origin[index].asJsonObject.deepMerge(jsonElement.asJsonObject)
-                        }
-                    } else {
-                        add(key, value)
-                    }
+                    add(key, value)
                 }
             } else {
                 remove(key)
             }
+        }
+    }
+}
+
+@Throws(Exception::class)
+fun JsonArray.deepMerge(source: JsonArray) {
+    if(size() != source.size()) {
+        removeAll { true }
+        addAll(source)
+        return
+    }
+
+    source.forEachIndexed { index, jsonElement ->
+        if(jsonElement.isJsonObject) {
+            val item = JsonObject().apply {
+                deepMerge(jsonElement.asJsonObject)
+            }
+            set(index, item)
+        } else if(jsonElement.isJsonArray) {
+            val item = JsonArray().apply {
+                deepMerge(jsonElement.asJsonArray)
+            }
+            set(index, item)
+        } else {
+            set(index, jsonElement)
         }
     }
 }
