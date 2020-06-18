@@ -32,8 +32,8 @@ class SetDirectiveHandler(
     companion object {
         private const val TAG = "SetDirectiveHandler"
 
-        const val NAME_SET = "Set"
-        val SET = NamespaceAndName(SessionAgent.NAMESPACE, NAME_SET)
+        private const val NAME_SET = "Set"
+        private val SET = NamespaceAndName(SessionAgent.NAMESPACE, NAME_SET)
     }
 
     data class SetDirective(
@@ -53,6 +53,9 @@ class SetDirectiveHandler(
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
+    }
+
+    override fun handleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[preHandleDirective] $info")
         val payload = MessageFactory.create(info.directive.payload, SetDirective.Payload::class.java)
         if(payload == null) {
@@ -62,9 +65,6 @@ class SetDirectiveHandler(
 
         controller.set(SetDirective(info.directive.header, payload))
         info.result.setCompleted()
-    }
-
-    override fun handleDirective(info: DirectiveInfo) {
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
