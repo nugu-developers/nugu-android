@@ -129,7 +129,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                     throw BaseException.UnAuthenticatedException(
                         error = body.get("error").toString(),
                         description = body.get("error_description").toString(),
-                        code = body.get("code").toString()
+                        code = body.optString("code")
                     )
                 }
                 else -> {
@@ -222,7 +222,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
                     description = body.get("error_description").toString(),
-                    code = body.get("code").toString()
+                    code = body.optString("code")
                 )
             }
             else -> {
@@ -303,7 +303,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
                     description = body.get("error_description").toString(),
-                    code = body.get("code").toString()
+                    code = body.optString("code")
                 )
             }
             else -> {
@@ -336,7 +336,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
                     description = body.get("error_description").toString(),
-                    code = body.get("code").toString()
+                    code = body.optString("code")
                 )
             }
             else -> {
