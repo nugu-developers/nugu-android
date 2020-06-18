@@ -19,6 +19,9 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
+import com.skt.nugu.sdk.agent.chips.RenderDirective
+import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -26,13 +29,16 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 class DialogUXStateAggregator(
-    private val transitionDelayForIdleState: Long
+    private val transitionDelayForIdleState: Long,
+    private val sessionManager: SessionManagerInterface
 ) :
     DialogUXStateAggregatorInterface
     , ASRAgentInterface.OnStateChangeListener
     , TTSAgentInterface.Listener
     , ConnectionStatusListener
-    , ASRAgentInterface.OnMultiturnListener {
+    , ASRAgentInterface.OnMultiturnListener
+    , ChipsAgentInterface.Listener
+{
     companion object {
         private const val TAG = "DialogUXStateAggregator"
     }
@@ -50,6 +56,7 @@ class DialogUXStateAggregator(
     private val multiturnSpeakingToListeningScheduler = ScheduledThreadPoolExecutor(1)
 
     private var tryEnterIdleStateRunnableFuture: ScheduledFuture<*>? = null
+    private var lastReceivedChips: RenderDirective? = null
 
     private val tryEnterIdleStateRunnable: Runnable = Runnable {
         executor.submit {
@@ -67,7 +74,7 @@ class DialogUXStateAggregator(
     override fun addListener(listener: DialogUXStateAggregatorInterface.Listener) {
         executor.submit {
             listeners.add(listener)
-            listener.onDialogUXStateChanged(currentState, dialogModeEnabled)
+            listener.onDialogUXStateChanged(currentState, dialogModeEnabled, getCurrentChips())
         }
     }
 
@@ -156,9 +163,20 @@ class DialogUXStateAggregator(
     }
 
     private fun notifyObserversOfState() {
+        val chips: RenderDirective.Payload? = getCurrentChips()
         listeners.forEach {
-            it.onDialogUXStateChanged(currentState, dialogModeEnabled)
+            it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips)
         }
+    }
+
+    private fun getCurrentChips(): RenderDirective.Payload? {
+        sessionManager.getActiveSessions().forEach {
+            if(it.key == lastReceivedChips?.header?.dialogRequestId) {
+                return lastReceivedChips?.payload
+            }
+        }
+
+        return null
     }
 
     override fun onConnectionStatusChanged(status: ConnectionStatusListener.Status, reason: ConnectionStatusListener.ChangedReason) {
@@ -169,6 +187,11 @@ class DialogUXStateAggregator(
         }
     }
 
+    override fun onReceiveChips(directive: RenderDirective) {
+        executor.submit {
+            lastReceivedChips = directive
+        }
+    }
 
     /**
      * Dialog관련 임의의 Activity가 끝났을 시, Idle 상태로 가기위해 시도

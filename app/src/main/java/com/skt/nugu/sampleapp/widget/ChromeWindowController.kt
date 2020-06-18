@@ -26,6 +26,7 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sampleapp.utils.SoundPoolCompat
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
@@ -133,12 +134,16 @@ class ChromeWindowController(
         }
     }
 
-    override fun onDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState, dialogMode: Boolean) {
+    override fun onDialogUXStateChanged(
+        newState: DialogUXStateAggregatorInterface.DialogUXState,
+        dialogMode: Boolean,
+        chips: RenderDirective.Payload?
+    ) {
         bottomSheet.post {
             Log.d(TAG, "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode")
 
             this.isDialogMode = dialogMode
-            voiceChromeController.onDialogUXStateChanged(newState, dialogMode)
+            voiceChromeController.onDialogUXStateChanged(newState, dialogMode, chips)
 
             when(newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
@@ -255,7 +260,11 @@ class ChromeWindowController(
             }
         }
 
-        override fun onDialogUXStateChanged(newState: DialogUXStateAggregatorInterface.DialogUXState, dialogMode: Boolean) {
+        override fun onDialogUXStateChanged(
+            newState: DialogUXStateAggregatorInterface.DialogUXState,
+            dialogMode: Boolean,
+            chips: RenderDirective.Payload?
+        ) {
             when (newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
                     voiceChrome.startAnimation(NuguVoiceChromeView.Animation.WAITING)
