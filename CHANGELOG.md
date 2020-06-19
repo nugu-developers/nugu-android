@@ -1,5 +1,32 @@
 Change Log
 ==========
+Version 0.9.4 *(2020-06-19)*
+-----------------------------
+* Fix: Update Streaming & Focus state for BT (#825)
+* Fix: Fix synchronization issue for LoopThread (#833)
+* Fix: Fix the session not deactivated (#835)
+    * Deactivate a session on cancelling ASR.EXPECT_SPEECH.
+* Fix: Fix invalid session timeout (#838)
+    * If the session activated before set, do not schedule timeout.
+* Fix: Fix GsonUtils.deepMerge crash (#847)
+* Fix: Fix JSONObject.get() to optString() in NuguLoginKit (#848)
+* New: Develop NuguServiceKit (#824)
+* Improve: Support Chips Interface v1.0 (#812)
+    * Prototype Chips Interface v1.0
+	* Provide helper API to enable/disable chipsAgent
+	* Provide helper API to mapping chips with it's DM
+* Improve: Remove reference on cancelDirective.(#822)
+    * AbstractDirectiveHandler: remove reference on cancelDirective.
+	* remove all usage of cancelDirective method.
+* Improve: Develop Message Interface v1.0 (#827)
+    * Add messageType at Contact Object
+* Improve: Develop PhoneCall Interface v1.0 (#828)
+    * Update PersonObject changes
+	* Update CallArrived event changes
+	* Add token at CallerObject
+* Improve: Improve audioPlayer's stop (#832)
+    * Handle as stop if stop called even if player finished.
+* Improve: Update SilverTray v4.2.0 (#842)
 
 Version 0.9.3 *(2020-06-12)*
 -----------------------------
