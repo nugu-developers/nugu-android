@@ -1,48 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:Android="http://schemas.android.com/tools"
     android:id="@+id/fl_bottom_sheet"
+    style="@style/Nugu.Widget.Chrome.Window"
     android:layout_width="match_parent"
     android:layout_height="68dp"
-    style="@style/Nugu.Widget.Chrome.Window"
-    android:clipChildren="false"
-    android:clipToPadding="false"
     android:elevation="10dp"
     app:behavior_hideable="true"
+    android:clipToPadding="false"
     app:layout_behavior="com.skt.nugu.sampleapp.widget.ChromeWindowBottomSheetBehavior">
 
     <com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
         android:id="@+id/voice_chrome"
         android:layout_width="40dp"
-        android:layout_marginStart="12dp"
         android:layout_height="40dp"
-        android:layout_gravity="center_vertical" />
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="12dp" />
 
-    <LinearLayout
+    <HorizontalScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
         android:layout_marginStart="60dp"
-        android:orientation="horizontal">
+        android:scrollbars="none">
 
-        <TextView
-            android:id="@+id/tv_stt"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="@style/Nugu.Widget.Guide.Text"
-            android:ellipsize="start"
-            android:gravity="start"
-            android:hint="@string/guide_text"
-            android:singleLine="true"
-            android:textAlignment="textStart"
-            android:textSize="17sp"
-            app:fontFamily="@font/noto_sans_kr_medium_hestia" />
-
-        <com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
-            android:id="@+id/chipsView"
-            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginStart="14dp"
-            android:orientation="horizontal" />
-    </LinearLayout>
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_stt"
+                style="@style/Nugu.Widget.Guide.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:ellipsize="start"
+                android:gravity="start|center_vertical"
+                android:hint="@string/guide_text"
+                android:singleLine="true"
+                android:textAlignment="textStart"
+                android:textSize="17sp"
+                app:fontFamily="@font/noto_sans_kr_medium_hestia" />
+
+
+            <com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
+                    android:id="@+id/chipsView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="14dp"
+                    android:orientation="horizontal" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
 </FrameLayout>

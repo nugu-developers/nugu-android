@@ -20,12 +20,14 @@ import android.support.design.widget.BottomSheetBehavior
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.TextView
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sampleapp.utils.SoundPoolCompat
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -79,6 +81,10 @@ class ChromeWindowController(
         activity.findViewById<NuguChipsView>(R.id.chipsView)
     }
 
+    private val scrollView: HorizontalScrollView by lazy {
+        activity.findViewById<HorizontalScrollView>(R.id.scrollView)
+    }
+
     fun getHeight() : Int {
         return bottomSheet.height
     }
@@ -108,16 +114,21 @@ class ChromeWindowController(
                 }
             }
         })
-        chipsView.setOnChipsClickListener(object : NuguChipsView.OnItemClickListener {
-            override fun onItemClick(text: String, isAction: Boolean) {
-                ClientManager.getClient().requestTextInput(text)
+        chipsView.setOnChipsClickListener(object : NuguChipsView.OnChipsClickListener {
+            override fun onClick(item: NuguChipsView.Item) {
+                ClientManager.getClient().requestTextInput(item.text)
             }
         })
     }
-
-    private fun updateUtteranceGuide() {
+    
+    private fun updateChips(payload: RenderDirective.Payload?) {
+        // scroll position initial
+        scrollView.scrollX = 0
+        // add items
         val items = ArrayList<NuguChipsView.Item>()
-        //items.add(NuguChipsView.Item("안녕", true))
+        payload?.chips?.forEach {
+            items.add(NuguChipsView.Item(it.text, it.type == Chip.Type.ACTION))
+        }
         chipsView.addAll(items)
     }
 
@@ -147,7 +158,7 @@ class ChromeWindowController(
 
             when(newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
-                    handleExpecting()
+                    handleExpecting(chips)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
                     handleSpeaking()
@@ -162,9 +173,9 @@ class ChromeWindowController(
         }
     }
 
-    private fun handleExpecting() {
+    private fun handleExpecting(payload: RenderDirective.Payload?) {
         setResult("")
-        updateUtteranceGuide()
+        updateChips(payload)
         cancelFinishDelayed()
 
         if (PreferenceHelper.enableWakeupBeep(activity)) {
