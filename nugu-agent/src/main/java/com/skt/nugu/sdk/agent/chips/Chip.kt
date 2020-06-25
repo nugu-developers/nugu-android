@@ -19,29 +19,15 @@ package com.skt.nugu.sdk.agent.chips
 import com.google.gson.annotations.SerializedName
 
 data class Chip(
-    @SerializedName("textSource")
-    val textSource: String,
     @SerializedName("type")
     val type: Type,
-    @SerializedName("icon")
-    val icon: String?,
     @SerializedName("text")
-    val text: String?,
-    @SerializedName("image")
-    val image: String?
+    val text: String
 ) {
     enum class Type {
-        TEXT, IMAGE
+        ACTION, GENERAL
     }
-
     fun isValid(): Boolean {
-        return when(type) {
-            Type.TEXT -> {
-                text != null
-            }
-            Type.IMAGE -> {
-                image != null
-            }
-        }
+        return  text != null && type != null
     }
 }
