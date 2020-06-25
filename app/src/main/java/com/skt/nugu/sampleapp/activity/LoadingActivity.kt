@@ -184,7 +184,12 @@ class LoadingActivity : AppCompatActivity(), ClientManager.Observer {
 
     /**
      * Generate random unique ID
-     * reference : https://developer.android.com/training/articles/user-data-ids
+     * Change the unique ID you can identify
+     *
+     * example :
+     * private fun getDeviceUniqueId(): String = "{deviceSerialNumber}"
+     * reference :
+     * https://developers-doc.nugu.co.kr/nugu-sdk/authentication
      */
     private fun getDeviceUniqueId(): String {
         // load deviceUniqueId
