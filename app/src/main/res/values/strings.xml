@@ -14,7 +14,6 @@
     <string name="service_finished">{sampleapp}의 누구 서비스가 종료되었습니다.</string>
     <string name="revoke_failed">Revoke failed.</string>
     <string name="connection_failed">Connection to server failed.</string>
-    <string name="reconnecting">Reconnecting</string>
     <string name="volume_mute">휴대폰 미디어 볼륨이 무음상태입니다.\n휴대폰의 볼륨을 조절해주세요.</string>
 
     <string name="user_account_closed">탈퇴한 사용자 입니다.</string>

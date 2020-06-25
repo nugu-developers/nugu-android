@@ -342,10 +342,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT,
                 ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
                     /** checking connection status for debugging. **/
-                    NuguSnackbar.with(findViewById(R.id.drawer_layout))
-                        .message(R.string.reconnecting)
-                        .duration(NuguSnackbar.LENGTH_SHORT)
-                        .show()
+                    Log.d(TAG, "reconnecting(reason=$reason)")
                 }
                 else -> { /* nothing to do */ }
             }
