@@ -25,6 +25,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.ux.R
 
@@ -40,22 +41,24 @@ import com.skt.nugu.sdk.platform.android.ux.R
  * chipsView.add(Item("text", false)
  */
 class NuguChipsView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    FrameLayout(context, attrs, defStyleAttr) {
-    class Item (val text : String, val isAction: Boolean)
+    RelativeLayout(context, attrs, defStyleAttr) {
+    class Item (val text : String, val action: Boolean)
 
     private val adapter = AdapterChips(context)
     /**
      * Listener used to dispatch click events.
      */
-    private var onItemClickListener: OnItemClickListener? = null
+    private var listener: OnChipsClickListener? = null
     private val containerView by lazy {
         RecyclerView(context)
     }
 
     init {
+        this.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-        layoutParams.gravity = Gravity.CENTER_VERTICAL
+        layoutParams.addRule(CENTER_VERTICAL);
         addView(containerView, layoutParams)
+        containerView.isNestedScrollingEnabled = false
         containerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         containerView.adapter = adapter
         containerView.addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -67,6 +70,7 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
                     }
                     state.itemCount - 1 /* end */-> {
                         outRect.left = resources.getDimension(R.dimen.chips_item_margin).toInt()
+                        outRect.right = resources.getDimension(R.dimen.chips_item_margin).toInt()
                     }
                     else -> {
                         outRect.left = view.context.resources.getDimension(R.dimen.chips_item_margin).toInt()
@@ -117,7 +121,7 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
          * Called when RecyclerView needs a new RecyclerView.ViewHolder of the given type to represent an item.
          */
         override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ChipsViewHolder {
-            val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(R.layout.item_chip, p0, false))
+            val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(R.layout.item_text, p0, false))
             defaultColor = viewHolder.titleView.textColors.defaultColor
             highlightColor = viewHolder.titleView.highlightColor
             return viewHolder
@@ -133,13 +137,13 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
             holder.titleView.text = items[position].text
-            if(items[position].isAction) {
+            if(items[position].action) {
                 holder.titleView.setTextColor(highlightColor)
             } else {
                 holder.titleView.setTextColor(defaultColor)
             }
             holder.titleView.setOnClickListener {
-                onItemClickListener?.onItemClick(items[position].text, items[position].isAction)
+                listener?.onClick(items[position])
             }
         }
 
@@ -157,12 +161,12 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
     /**
      * Interface definition for a callback to be invoked when a view is clicked.
      */
-    interface OnItemClickListener {
+    interface OnChipsClickListener {
         /**
          * Called when a view has been clicked.
-         * @param text The text that was clicked.
+         * @param item The item that was clicked.
          */
-        fun onItemClick(text: String, isAction: Boolean)
+        fun onClick(item: Item)
     }
 
     /**
@@ -171,7 +175,7 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
      *
      * @param task The callback that will run
      */
-    fun setOnChipsClickListener(listener: OnItemClickListener) {
-        onItemClickListener = listener
+    fun setOnChipsClickListener(listener: OnChipsClickListener) {
+        this.listener = listener
     }
 }
