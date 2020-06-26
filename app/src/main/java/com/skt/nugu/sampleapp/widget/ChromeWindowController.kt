@@ -42,7 +42,6 @@ class ChromeWindowController(
 ) : SpeechRecognizerAggregatorInterface.OnStateChangeListener
     , DialogUXStateAggregatorInterface.Listener
     , ASRAgentInterface.OnResultListener {
-
     companion object {
         private const val TAG = "ChromeWindowController"
 
@@ -81,10 +80,6 @@ class ChromeWindowController(
         activity.findViewById<NuguChipsView>(R.id.chipsView)
     }
 
-    private val scrollView: HorizontalScrollView by lazy {
-        activity.findViewById<HorizontalScrollView>(R.id.scrollView)
-    }
-
     fun getHeight() : Int {
         return bottomSheet.height
     }
@@ -114,17 +109,22 @@ class ChromeWindowController(
                 }
             }
         })
-        chipsView.setOnChipsClickListener(object : NuguChipsView.OnChipsClickListener {
+        chipsView.setOnChipsListener(object : NuguChipsView.OnChipsListener {
             override fun onClick(item: NuguChipsView.Item) {
                 ClientManager.getClient().requestTextInput(item.text)
+            }
+
+            override fun onScrolled(dx: Int, dy: Int) {
+                if(dx > 0) {
+                    if(sttTextView.visibility != View.GONE) {
+                        sttTextView.visibility = View.GONE
+                    }
+                }
             }
         })
     }
     
     private fun updateChips(payload: RenderDirective.Payload?) {
-        // scroll position initial
-        scrollView.scrollX = 0
-        // add items
         val items = ArrayList<NuguChipsView.Item>()
         payload?.chips?.forEach {
             items.add(NuguChipsView.Item(it.text, it.type == Chip.Type.ACTION))
