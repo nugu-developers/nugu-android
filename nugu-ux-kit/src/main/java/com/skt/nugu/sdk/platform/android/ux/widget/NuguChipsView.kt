@@ -20,11 +20,10 @@ import android.graphics.Rect
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
-import android.view.Gravity
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.ux.R
@@ -40,17 +39,26 @@ import com.skt.nugu.sdk.platform.android.ux.R
  * }
  * chipsView.add(Item("text", false)
  */
-class NuguChipsView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    RelativeLayout(context, attrs, defStyleAttr) {
-    class Item (val text : String, val action: Boolean)
+class NuguChipsView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : RelativeLayout(context, attrs, defStyleAttr) {
+    class Item(val text: String, val action: Boolean)
 
     private val adapter = AdapterChips(context)
+
     /**
      * Listener used to dispatch click events.
      */
-    private var listener: OnChipsClickListener? = null
+    private var listener: OnChipsListener? = null
     private val containerView by lazy {
         RecyclerView(context)
+    }
+    val onScrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            listener?.onScrolled(dx, dy)
+        }
     }
 
     init {
@@ -59,31 +67,45 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
         layoutParams.addRule(CENTER_VERTICAL);
         addView(containerView, layoutParams)
         containerView.isNestedScrollingEnabled = false
-        containerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        containerView.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         containerView.adapter = adapter
         containerView.addItemDecoration(object : RecyclerView.ItemDecoration() {
-            override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+            override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
                 val position = parent.getChildAdapterPosition(view)
                 when (position) {
                     0  /* first */ -> {
                         // skip
                     }
-                    state.itemCount - 1 /* end */-> {
+                    state.itemCount - 1 /* end */ -> {
                         outRect.left = resources.getDimension(R.dimen.chips_item_margin).toInt()
                         outRect.right = resources.getDimension(R.dimen.chips_item_margin).toInt()
                     }
                     else -> {
-                        outRect.left = view.context.resources.getDimension(R.dimen.chips_item_margin).toInt()
+                        outRect.left =
+                            view.context.resources.getDimension(R.dimen.chips_item_margin).toInt()
                     }
                 }
             }
         })
     }
 
-    /**
-     * Add items
-     * @param list items
-     */
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        containerView.addOnScrollListener(onScrollListener)
+    }
+
+    override fun onDetachedFromWindow() {
+        containerView.removeOnScrollListener(onScrollListener)
+        super.onDetachedFromWindow()
+    }
+
+
     fun addAll(list: ArrayList<Item>) {
         adapter.items.clear()
         containerView.removeAllViews()
@@ -91,9 +113,10 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
         adapter.notifyDataSetChanged()
     }
 
-    fun size() : Int{
+    fun size(): Int {
         return adapter.itemCount
     }
+
     /**
      * Add item
      * @param item item
@@ -108,20 +131,24 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
         adapter.notifyDataSetChanged()
         containerView.removeAllViews()
     }
+
     /**
      * Provides adapter for ChipTray
      * @param context is Context
      */
-    inner class AdapterChips(val context: Context) : RecyclerView.Adapter<AdapterChips.ChipsViewHolder>() {
+    inner class AdapterChips(val context: Context) :
+        RecyclerView.Adapter<AdapterChips.ChipsViewHolder>() {
         /** items **/
         val items: MutableList<Item> = ArrayList()
         var defaultColor: Int = 0
         var highlightColor: Int = 0
+
         /**
          * Called when RecyclerView needs a new RecyclerView.ViewHolder of the given type to represent an item.
          */
         override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ChipsViewHolder {
-            val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(R.layout.item_text, p0, false))
+            val viewHolder =
+                ChipsViewHolder(LayoutInflater.from(context).inflate(R.layout.item_text, p0, false))
             defaultColor = viewHolder.titleView.textColors.defaultColor
             highlightColor = viewHolder.titleView.highlightColor
             return viewHolder
@@ -137,7 +164,7 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
             holder.titleView.text = items[position].text
-            if(items[position].action) {
+            if (items[position].action) {
                 holder.titleView.setTextColor(highlightColor)
             } else {
                 holder.titleView.setTextColor(defaultColor)
@@ -161,12 +188,13 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
     /**
      * Interface definition for a callback to be invoked when a view is clicked.
      */
-    interface OnChipsClickListener {
+    interface OnChipsListener {
         /**
          * Called when a view has been clicked.
          * @param item The item that was clicked.
          */
         fun onClick(item: Item)
+        fun onScrolled(dx: Int, dy: Int)
     }
 
     /**
@@ -175,7 +203,7 @@ class NuguChipsView @JvmOverloads constructor(context: Context, attrs: Attribute
      *
      * @param task The callback that will run
      */
-    fun setOnChipsClickListener(listener: OnChipsClickListener) {
+    fun setOnChipsListener(listener: OnChipsListener) {
         this.listener = listener
     }
 }
