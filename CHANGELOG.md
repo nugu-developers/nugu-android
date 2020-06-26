@@ -1,5 +1,14 @@
 Change Log
 ==========
+Version 0.9.5 *(2020-06-26)*
+-----------------------------
+* Fix: Remove unnecessary code from sampleApp (#856)
+* Improve: Update SilverTray v4.2.1 (#853)
+* Improve: Update NuguChipsView (#855)
+* Improve: Update Chips Interface v1.0 (#857)
+* New: Support AudioPlayer Interface v1.4 (#845)
+    * add playServiceId at Context
+
 Version 0.9.4 *(2020-06-19)*
 -----------------------------
 * Fix: Update Streaming & Focus state for BT (#825)
