@@ -41,11 +41,11 @@ interface Speaker {
         /**
          * current volume which range in ([getMinVolume] .. [getMaxVolume])
          */
-        var volume: Int,
+        var volume: Int?,
         /**
          * current mute state, true: muted, false: unmuted
          */
-        var mute: Boolean
+        var mute: Boolean?
     )
 
     /** Get the type of the speaker.
@@ -85,25 +85,25 @@ interface Speaker {
      *
      * Must be static value.
      *
-     * @return the maximum volume
+     * @return the maximum volume, null if not supported
      */
-    fun getMaxVolume(): Int
+    fun getMaxVolume(): Int?
 
     /**
      * Get the minimum volume of the speaker.
      *
      * Must be static value.
      *
-     * @return the minimum volume
+     * @return the minimum volume, null if not supported
      */
-    fun getMinVolume(): Int
+    fun getMinVolume(): Int?
 
     /**
      * Get the default volume step of the speaker used when volumeUp/Down.
      *
      * Must be static value.
      *
-     * @return the volume step
+     * @return the volume step, null if not supported
      */
-    fun getDefaultVolumeStep(): Int
+    fun getDefaultVolumeStep(): Int?
 }
