@@ -104,17 +104,17 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
     override fun startSync(
         synchronizeObject: PlaySynchronizerInterface.SynchronizeObject,
-        listener: PlaySynchronizerInterface.OnRequestSyncListener
+        listener: PlaySynchronizerInterface.OnRequestSyncListener?
     ) {
         lock.withLock {
             val dialogRequestId = synchronizeObject.getDialogRequestId()
             Logger.d(TAG, "[startSync] dialogRequestId: $dialogRequestId, listener: $listener")
 
             if(syncContexts[dialogRequestId]?.start(synchronizeObject) == true) {
-                listener.onGranted()
+                listener?.onGranted()
                 Logger.d(TAG, "[startSync] granted.")
             } else {
-                listener.onDenied()
+                listener?.onDenied()
                 Logger.w(TAG, "[startSync] denied: prepareSync not called.")
             }
         }
@@ -122,14 +122,14 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
     override fun releaseSync(
         synchronizeObject: PlaySynchronizerInterface.SynchronizeObject,
-        listener: PlaySynchronizerInterface.OnRequestSyncListener
+        listener: PlaySynchronizerInterface.OnRequestSyncListener?
     ) {
         releaseSyncInternal(synchronizeObject, listener, false)
     }
 
     override fun releaseSyncImmediately(
         synchronizeObject: PlaySynchronizerInterface.SynchronizeObject,
-        listener: PlaySynchronizerInterface.OnRequestSyncListener
+        listener: PlaySynchronizerInterface.OnRequestSyncListener?
     ) {
         releaseSyncInternal(synchronizeObject, listener, true)
     }
@@ -155,7 +155,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
     private fun releaseSyncInternal(
         synchronizeObject: PlaySynchronizerInterface.SynchronizeObject,
-        listener: PlaySynchronizerInterface.OnRequestSyncListener,
+        listener: PlaySynchronizerInterface.OnRequestSyncListener?,
         immediate: Boolean
     ) {
         lock.withLock {
@@ -164,7 +164,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val contextInfo = syncContexts[dialogRequestId]
             if (contextInfo == null) {
                 Logger.w(TAG, "[releaseSyncInternal] no context info for $dialogRequestId")
-                listener.onDenied()
+                listener?.onDenied()
                 return
             }
 
@@ -184,9 +184,9 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             }
 
             if(released) {
-                listener.onGranted()
+                listener?.onGranted()
             } else {
-                listener.onDenied()
+                listener?.onDenied()
             }
 
             Logger.d(TAG, "[releaseSyncInternal] syncContexts: $syncContexts")
