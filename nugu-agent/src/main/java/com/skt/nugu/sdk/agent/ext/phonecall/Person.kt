@@ -82,8 +82,8 @@ data class Person(
         }
 
         enum class CallType {
-            @SerializedName("CALL")
-            CALL,
+            @SerializedName("NORMAL")
+            NORMAL,
             @SerializedName("VIDEO")
             VIDEO,
             @SerializedName("CALLAR")
