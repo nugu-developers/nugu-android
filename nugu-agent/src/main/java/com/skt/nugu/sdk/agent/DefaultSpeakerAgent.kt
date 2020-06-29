@@ -105,16 +105,8 @@ class DefaultSpeakerAgent(
         override fun toFullJsonString(): String = buildCompactState().apply {
             add("volumes", JsonArray().apply {
                 volumes.forEach {
-                    add(JsonObject().apply {
+                    add(it.value.toJson().apply {
                         addProperty("name", it.key.name)
-                        addProperty("minVolume", it.value.minVolume)
-                        addProperty("maxVolume", it.value.maxVolume)
-                        addProperty("defaultVolumeStep", it.value.defaultVolumeStep)
-
-                        it.value.settings?.apply {
-                            addProperty("volume", volume)
-                            addProperty("muted", mute)
-                        }
                     })
                 }
             })
@@ -313,11 +305,32 @@ class DefaultSpeakerAgent(
     }
 
     data class SpeakerContext(
-        val minVolume: Int,
-        val maxVolume: Int,
-        val defaultVolumeStep: Int,
+        val minVolume: Int?,
+        val maxVolume: Int?,
+        val defaultVolumeStep: Int?,
         var settings: Speaker.SpeakerSettings?
-    )
+    ) {
+        fun toJson() = JsonObject().apply {
+            minVolume?.let {
+                addProperty("minVolume", it)
+            }
+            maxVolume?.let {
+                addProperty("maxVolume", it)
+            }
+            defaultVolumeStep?.let {
+                addProperty("defaultVolumeStep", it)
+            }
+
+            settings?.apply {
+                volume?.let {
+                    addProperty("volume", it)
+                }
+                mute?.let {
+                    addProperty("muted", it)
+                }
+            }
+        }
+    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
