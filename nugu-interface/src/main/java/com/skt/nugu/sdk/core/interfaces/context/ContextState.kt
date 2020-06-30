@@ -24,3 +24,11 @@ interface ContextState {
     fun toFullJsonString(): String
     fun toCompactJsonString(): String
 }
+
+/**
+ * the helper for context state for client
+ * Recommend to implement equals()/hashCode() for optimal performance.
+ */
+interface ClientContextState: ContextState {
+    override fun toCompactJsonString(): String = toFullJsonString()
+}
