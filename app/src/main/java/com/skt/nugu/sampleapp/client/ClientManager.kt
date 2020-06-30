@@ -21,8 +21,6 @@ import android.os.Looper
 import android.util.Log
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceManager
 import com.skt.nugu.sdk.platform.android.audiosource.audiorecord.AudioRecordSourceFactory
@@ -31,12 +29,11 @@ import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggreg
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.external.jademarble.EndPointDetector
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
-import com.skt.nugu.sdk.core.interfaces.context.ClientContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
@@ -197,29 +194,11 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             Handler(Looper.getMainLooper())
         )
 
-        val wakeupWordStateProvider = object : ClientContextProvider {
-            override fun getName(): String = "wakeupWord"
-
-            override fun provideState(
-                contextSetter: ContextSetterInterface,
-                namespaceAndName: NamespaceAndName,
-                stateRequestToken: Int
-            ) {
-                val wakeupWord = if (PreferenceHelper.triggerId(context) == 0) {
-                    "아리아"
-                } else {
-                    "팅커벨"
-                }
-
-                contextSetter.setState(
-                    namespaceAndName,
-                    object: ContextState {
-                        override fun toFullJsonString(): String = "\"$wakeupWord\""
-                        override fun toCompactJsonString(): String = toFullJsonString()
-                    },
-                    StateRefreshPolicy.ALWAYS,
-                    stateRequestToken
-                )
+        val wakeupWordStateProvider = object : WakeupWordContextProvider() {
+            override fun getWakeupWord(): String = if (PreferenceHelper.triggerId(context) == 0) {
+                "아리아"
+            } else {
+                "팅커벨"
             }
         }
 
