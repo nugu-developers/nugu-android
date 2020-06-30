@@ -25,6 +25,12 @@ abstract class OsContextProvider: ClientContextProvider {
         LINUX("Linux")
     }
 
+    internal data class StateContext(
+        val type: Type
+    ) : ClientContextState {
+        override fun toFullJsonString(): String = "\"${type.value}\""
+    }
+
     final override fun getName(): String = "os"
 
     final override fun provideState(
@@ -34,10 +40,7 @@ abstract class OsContextProvider: ClientContextProvider {
     ) {
         contextSetter.setState(
             namespaceAndName,
-            object: ContextState {
-                override fun toFullJsonString(): String = "\"${getType().value}\""
-                override fun toCompactJsonString(): String = toFullJsonString()
-            },
+            StateContext(getType()),
             StateRefreshPolicy.NEVER,
             stateRequestToken
         )

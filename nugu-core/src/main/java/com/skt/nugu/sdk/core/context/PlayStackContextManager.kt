@@ -44,13 +44,12 @@ class PlayStackContextManager(
 
     private val executor = Executors.newSingleThreadExecutor()
 
-    internal data class StateContext(private val playStack: List<String>): ContextState {
+    internal data class StateContext(private val playStack: List<String>): ClientContextState {
         override fun toFullJsonString(): String = JsonArray().apply {
             playStack.forEach {
                 add(it)
             }
         }.toString()
-        override fun toCompactJsonString(): String = toFullJsonString()
     }
 
     init {
