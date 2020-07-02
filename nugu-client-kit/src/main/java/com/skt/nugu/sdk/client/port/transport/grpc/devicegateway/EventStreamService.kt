@@ -138,6 +138,10 @@ internal class EventStreamService(
         })
     }
 
+    init {
+        eventStream
+    }
+
     fun sendAttachmentMessage(attachment: AttachmentMessage) : Boolean {
         try {
             streamLock.withLock {
