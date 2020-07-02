@@ -30,7 +30,7 @@ data class Person(
     @SerializedName("category")
     val category: String?,
     @SerializedName("address")
-    val address: String?,
+    val address: Address?,
     @SerializedName("businessHours")
     val businessHours: BusinessHour?,
     @SerializedName("history")
@@ -51,11 +51,20 @@ data class Person(
         NONE
     }
 
+    data class Address(
+        @SerializedName("road")
+        val road: String?,
+        @SerializedName("jibun")
+        val jibun: String?
+    )
+
     data class BusinessHour(
         @SerializedName("open")
         val open: String?,
         @SerializedName("close")
-        val close: String?
+        val close: String?,
+        @SerializedName("info")
+        val info: String?
     )
 
     data class History(
