@@ -43,7 +43,7 @@ class DefaultSpeakerAgent(
         private const val TAG = "SpeakerManager"
 
         const val NAMESPACE = "Speaker"
-        private val VERSION = Version(1,1)
+        private val VERSION = Version(1,2)
 
         private const val NAME_SET_VOLUME = "SetVolume"
         private const val NAME_SET_MUTE = "SetMute"
@@ -305,12 +305,17 @@ class DefaultSpeakerAgent(
     }
 
     data class SpeakerContext(
+        val group: String?,
         val minVolume: Int?,
         val maxVolume: Int?,
         val defaultVolumeStep: Int?,
+        val defaultVolumeLevel: Int?,
         var settings: Speaker.SpeakerSettings?
     ) {
         fun toJson() = JsonObject().apply {
+            group?.let {
+                addProperty("group", it)
+            }
             minVolume?.let {
                 addProperty("minVolume", it)
             }
@@ -319,6 +324,9 @@ class DefaultSpeakerAgent(
             }
             defaultVolumeStep?.let {
                 addProperty("defaultVolumeStep", it)
+            }
+            defaultVolumeLevel?.let {
+                addProperty("defaultVolumeLevel", it)
             }
 
             settings?.apply {
@@ -342,9 +350,11 @@ class DefaultSpeakerAgent(
             val volumes = HashMap<Speaker.Type, SpeakerContext>().apply {
                 speakerMap.forEach {
                     put(it.key, SpeakerContext(
+                        it.value.getGroup(),
                         it.value.getMinVolume(),
                         it.value.getMaxVolume(),
                         it.value.getDefaultVolumeStep(),
+                        it.value.getDefaultVolumeLevel(),
                         it.value.getSpeakerSettings()
                     ))
                 }
