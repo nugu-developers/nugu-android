@@ -55,6 +55,11 @@ interface Speaker {
     fun getSpeakerType(): Type
 
     /**
+     * Get the group of the speaker
+     */
+    fun getGroup(): String? = null
+
+    /**
      * Set the volume of the speaker.
      *
      * @param volume amount of volume range in ([getMinVolume] .. [getMaxVolume])
@@ -106,4 +111,13 @@ interface Speaker {
      * @return the volume step, null if not supported
      */
     fun getDefaultVolumeStep(): Int?
+
+    /**
+     * Get the default volume level of the speaker
+     *
+     * Must be static value.
+     *
+     * @return the volume level, null if not supported
+     */
+    fun getDefaultVolumeLevel(): Int?
 }
