@@ -1,5 +1,22 @@
 Change Log
 ==========
+
+Version 0.9.6 *(2020-07-03)*
+-----------------------------
+* Fix: Wrong interaction when swiping on ChromeWindow (#861)
+* Fix: Grpc(v1) not initialized before sending message (#871)
+* Improve: Allow nullable(optional) field of volume context for Speaker (#863)
+    * get(Min/Max)Volume
+    * getDefaultVolumeStep
+    * SpeakerSettings's field(volume, mute)
+* Improve: Develop PhoneCall Interface v1.0 (#865)
+    * change callType: CALL -> NORMAL
+    * update address field of Person Object
+    * add businessHours.info field
+* Improve: Provide helper interface for Context (#867)
+    * add ClientContextState interface
+    * add WakeupWordContextProvider class
+
 Version 0.9.5 *(2020-06-26)*
 -----------------------------
 * Fix: Remove unnecessary code from sampleApp (#856)
