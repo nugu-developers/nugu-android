@@ -137,23 +137,26 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     fun getOffset(unit: TimeUnit = TimeUnit.SECONDS): Long
 
     /**
-     * Set the favorite property if supported.
+     * Request the favorite command if supported.
+     * @param current the current favorite
      */
-    fun setFavorite(favorite: Boolean)
+    fun requestFavoriteCommand(current: Boolean)
 
     enum class RepeatMode {
         ALL, ONE, NONE
     }
 
     /**
-     * Set the repeat mode if supported.
+     * Request the repeat command if supported.
+     * @param current the current repeat mode
      */
-    fun setRepeatMode(mode: RepeatMode)
+    fun requestRepeatCommand(current: RepeatMode)
 
     /**
-     * Set the shuffle if supported
+     * Request the shuffle command if supported
+     * @param current the current shuffle
      */
-    fun setShuffle(shuffle: Boolean)
+    fun requestShuffleCommand(current: Boolean)
 
     /**
      * This should be called when occur interaction(input event such as touch, drag, etc...) for display

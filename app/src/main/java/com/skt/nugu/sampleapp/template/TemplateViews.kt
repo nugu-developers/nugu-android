@@ -575,7 +575,7 @@ class TemplateViews {
                         )
                         favorite.visibility = View.VISIBLE
                         favorite.setOnClickListener { _ ->
-                            ClientManager.getClient().audioPlayerAgent?.setFavorite(it)
+                            ClientManager.getClient().audioPlayerAgent?.requestFavoriteCommand(it)
                         }
                     }
                     it.repeat?.let {
@@ -586,11 +586,11 @@ class TemplateViews {
                         }
                         repeat.visibility = View.VISIBLE
                         repeat.setOnClickListener { _ ->
-                            ClientManager.getClient().audioPlayerAgent?.setRepeatMode(
+                            ClientManager.getClient().audioPlayerAgent?.requestRepeatCommand(
                                 when (it) {
-                                    Repeat.ALL -> AudioPlayerAgentInterface.RepeatMode.ONE
-                                    Repeat.ONE -> AudioPlayerAgentInterface.RepeatMode.NONE
-                                    Repeat.NONE -> AudioPlayerAgentInterface.RepeatMode.ALL
+                                    Repeat.ALL -> AudioPlayerAgentInterface.RepeatMode.ALL
+                                    Repeat.ONE -> AudioPlayerAgentInterface.RepeatMode.ONE
+                                    Repeat.NONE -> AudioPlayerAgentInterface.RepeatMode.NONE
                                 }
                             )
                         }
@@ -602,7 +602,7 @@ class TemplateViews {
                         )
                         shuffle.visibility = View.VISIBLE
                         shuffle.setOnClickListener { _ ->
-                            ClientManager.getClient().audioPlayerAgent?.setShuffle(it)
+                            ClientManager.getClient().audioPlayerAgent?.requestShuffleCommand(it)
                         }
                     }
                 }

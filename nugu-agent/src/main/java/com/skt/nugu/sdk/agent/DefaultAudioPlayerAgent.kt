@@ -814,7 +814,7 @@ class DefaultAudioPlayerAgent(
         return offset
     }
 
-    override fun setFavorite(favorite: Boolean) {
+    override fun requestFavoriteCommand(current: Boolean) {
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 executor.submit {
@@ -827,7 +827,7 @@ class DefaultAudioPlayerAgent(
                         ).payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
-                                addProperty("favorite", favorite)
+                                addProperty("favorite", current)
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
@@ -838,7 +838,7 @@ class DefaultAudioPlayerAgent(
         }, namespaceAndName)
     }
 
-    override fun setRepeatMode(mode: AudioPlayerAgentInterface.RepeatMode) {
+    override fun requestRepeatCommand(current: AudioPlayerAgentInterface.RepeatMode) {
         contextManager.getContext(object: IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 executor.submit {
@@ -851,7 +851,7 @@ class DefaultAudioPlayerAgent(
                         ).payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
-                                addProperty("repeat", mode.name)
+                                addProperty("repeat", current.name)
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
@@ -862,7 +862,7 @@ class DefaultAudioPlayerAgent(
         }, namespaceAndName)
     }
 
-    override fun setShuffle(shuffle: Boolean) {
+    override fun requestShuffleCommand(current: Boolean) {
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 executor.submit {
@@ -875,7 +875,7 @@ class DefaultAudioPlayerAgent(
                         ).payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", playServiceId)
-                                addProperty("shuffle", shuffle)
+                                addProperty("shuffle", current)
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
