@@ -18,10 +18,9 @@ package com.skt.nugu.sdk.agent.ext.message.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.Contact
+import com.skt.nugu.sdk.agent.ext.message.Context
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
-import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
@@ -30,9 +29,10 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class SendCandidatesDirectiveHandler(
-    private val controller: Controller,
+    private val controller: AgentController,
     private val messageSender: MessageSender,
-    private val contextGetter: ContextGetterInterface
+    private val contextGetter: ContextGetterInterface,
+    private val namespaceAndName: NamespaceAndName
 ) : AbstractDirectiveHandler() {
     companion object {
         private const val NAME_SEND_CANDIDATES = "SendCandidates"
@@ -41,8 +41,22 @@ class SendCandidatesDirectiveHandler(
         private val SEND_CANDIDATES = NamespaceAndName(MessageAgent.NAMESPACE, NAME_SEND_CANDIDATES)
     }
 
+    interface Callback {
+        fun onSuccess(context: Context)
+        fun onFailure()
+    }
+
     interface Controller {
-        fun getCandidateList(payload: SendCandidatesPayload): List<Contact>?
+        fun sendCandidates(payload: SendCandidatesPayload, callback: Callback)
+    }
+
+    interface AgentCallback {
+        fun onSuccess(context: MessageAgent.StateContext)
+        fun onFailure()
+    }
+
+    interface AgentController {
+        fun sendCandidates(payload: SendCandidatesPayload, callback: AgentCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -55,25 +69,27 @@ class SendCandidatesDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            val candidates = controller.getCandidateList(payload)
-            if (candidates != null) {
-                contextGetter.getContext(object : IgnoreErrorContextRequestor() {
-                    override fun onContext(jsonContext: String) {
-                        messageSender.sendMessage(
-                            EventMessageRequest.Builder(
-                                jsonContext,
-                                MessageAgent.NAMESPACE,
-                                NAME_CANDIDATES_LISTED,
-                                MessageAgent.VERSION.toString()
-                            ).payload(JsonObject().apply {
-                                addProperty("playServiceId", payload.playServiceId)
-                            }.toString())
-                                .referrerDialogRequestId(info.directive.getDialogRequestId())
-                                .build()
-                        )
-                    }
-                })
-            }
+            controller.sendCandidates(payload, object : AgentCallback {
+                override fun onSuccess(context: MessageAgent.StateContext) {
+                    val jsonContext = contextGetter.getCompactContextWith(namespaceAndName, context.toFullJsonString())
+                    messageSender.sendMessage(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            MessageAgent.NAMESPACE,
+                            NAME_CANDIDATES_LISTED,
+                            MessageAgent.VERSION.toString()
+                        ).payload(JsonObject().apply {
+                            addProperty("playServiceId", payload.playServiceId)
+                        }.toString())
+                            .referrerDialogRequestId(info.directive.getDialogRequestId())
+                            .build()
+                    )
+                }
+
+                override fun onFailure() {
+                    // can't send without context
+                }
+            })
         }
     }
 

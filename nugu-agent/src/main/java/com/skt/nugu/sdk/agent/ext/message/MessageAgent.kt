@@ -35,7 +35,6 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class MessageAgent(
@@ -47,7 +46,7 @@ class MessageAgent(
     directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
-    , SendCandidatesDirectiveHandler.Controller
+    , SendCandidatesDirectiveHandler.AgentController
     , SendMessageDirectiveHandler.Controller
     , GetMessageDirectiveHandler.Controller {
     companion object {
@@ -187,7 +186,8 @@ class MessageAgent(
                 SendCandidatesDirectiveHandler(
                     this@MessageAgent,
                     messageSender,
-                    contextGetter
+                    contextGetter,
+                    namespaceAndName
                 )
             )
             addDirectiveHandler(
@@ -216,7 +216,7 @@ class MessageAgent(
         }
     }
 
-    internal data class StateContext(
+    data class StateContext(
         private val context: Context,
         private val readActivity: TTSAgentInterface.State,
         private val token: String?
@@ -261,10 +261,25 @@ class MessageAgent(
         }
     }
 
-    override fun getCandidateList(payload: SendCandidatesPayload): List<Contact>? {
-        return executor.submit(Callable {
-            client.getCandidateList(payload)
-        }).get()
+    override fun sendCandidates(
+        payload: SendCandidatesPayload,
+        callback: SendCandidatesDirectiveHandler.AgentCallback
+    ) {
+        executor.submit {
+            client.sendCandidates(payload, object: SendCandidatesDirectiveHandler.Callback {
+                override fun onSuccess(context: Context) {
+                    callback.onSuccess(StateContext(
+                        context,
+                        readMessageController.state,
+                        readMessageController.token
+                    ))
+                }
+
+                override fun onFailure() {
+                    callback.onFailure()
+                }
+            })
+        }
     }
 
     override fun sendMessage(payload: SendMessagePayload, callback: EventCallback) {
