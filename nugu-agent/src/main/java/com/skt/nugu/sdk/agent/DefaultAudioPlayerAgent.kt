@@ -1044,6 +1044,11 @@ class DefaultAudioPlayerAgent(
 
         if (pauseReason != null) {
             lifeCycleScheduler?.onPaused(id)
+        } else {
+            // if implicit pause status & foreground state, try resume.
+            if(focus == FocusState.FOREGROUND) {
+                mediaPlayer.resume(id)
+            }
         }
 
         progressTimer.pause()
