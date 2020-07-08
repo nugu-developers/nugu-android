@@ -16,27 +16,30 @@
 package com.skt.nugu.sdk.client.port.transport.http2.devicegateway
 
 import com.skt.nugu.sdk.client.port.transport.http2.*
+import com.skt.nugu.sdk.client.port.transport.http2.Status
 import com.skt.nugu.sdk.client.port.transport.http2.utils.BackOff
 import com.skt.nugu.sdk.client.port.transport.http2.utils.ChannelBuilderUtils
 import com.skt.nugu.sdk.client.port.transport.http2.utils.ChannelBuilderUtils.Companion.createChannelBuilderWith
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toStringMessage
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
-import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
-import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
-import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.*
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
 
 /**
  *  Implementation of DeviceGateway with http2
@@ -50,6 +53,7 @@ internal class DeviceGatewayClient(
 ) : DeviceGatewayTransport {
     companion object {
         private const val TAG = "HTTP2DeviceGatewayClient"
+        private const val maxAsyncCallsSize = 100
 
         fun create(
             policy: Policy,
@@ -167,12 +171,21 @@ internal class DeviceGatewayClient(
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(call: Call): Boolean {
         val event = eventsService ?: return false
 
+        val request = call.request()
         val result = when(request) {
-            is AttachmentMessageRequest -> event.sendAttachmentMessage(request)
-            is EventMessageRequest -> event.sendEventMessage(request)
+            is AttachmentMessageRequest -> {
+                val result = event.sendAttachmentMessage(request)
+                if(result) {
+                    call.result(SDKStatus.OK)
+                }
+                result
+            }
+            is EventMessageRequest -> {
+                event.sendEventMessage(call)
+            }
             is CrashReportMessageRequest ->  true /* Deprecated */
             else -> false
         }
@@ -314,5 +327,9 @@ internal class DeviceGatewayClient(
      */
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
         messageConsumer?.consumeAttachment(attachmentMessage)
+    }
+
+    override fun newCall(activeTransport: Transport?, request: MessageRequest,listener: MessageSender.OnSendMessageListener): Call {
+        TODO("Not yet implemented")
     }
 }

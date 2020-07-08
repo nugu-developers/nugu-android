@@ -26,7 +26,10 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc2.TransportState.*
 import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayTransport
+import com.skt.nugu.sdk.core.interfaces.message.Call
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
+import java.util.*
 import java.util.concurrent.Executors
 
 /**
@@ -239,12 +242,12 @@ internal class GrpcTransport private constructor(
         return state.isConnectedOrConnecting()
     }
 
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(call: Call): Boolean {
         if (!state.isConnected()) {
-            Logger.d(TAG, "[send], Status : ($state), request : $request")
+            Logger.d(TAG, "[send], Status : ($state), request : ${call.request()}")
             return false
         }
-        return deviceGatewayClient?.send(request) ?: false
+        return deviceGatewayClient?.send(call) ?: false
     }
 
     /**
@@ -374,5 +377,13 @@ internal class GrpcTransport private constructor(
         }
 
         return true
+    }
+
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        listener: MessageSender.OnSendMessageListener
+    ): Call {
+        return Grpc2Call(activeTransport,  request, listener)
     }
 }

@@ -17,7 +17,9 @@ package com.skt.nugu.sdk.client.port.transport.grpc
 
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
@@ -73,6 +75,7 @@ internal class RegistryClient(private var address: String, private val dnsLookup
             .header("Authorization", token.toString())
             .header("User-Agent",UserAgent.toString())
             .build()
+
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(request: Request?, e: IOException?) {
                 Logger.e(TAG, "A failure occurred during getPolicy", e)
@@ -132,7 +135,7 @@ internal class RegistryClient(private var address: String, private val dnsLookup
         throw NotImplementedError()
     }
 
-    override fun send(request: MessageRequest): Boolean {
+    override fun send(call: Call): Boolean {
         throw NotImplementedError()
     }
 
@@ -147,5 +150,12 @@ internal class RegistryClient(private var address: String, private val dnsLookup
         if (!isShutdown.compareAndSet(false, true)) {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
+    }
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        listener: MessageSender.OnSendMessageListener
+    ): Call {
+        throw NotImplementedError()
     }
 }

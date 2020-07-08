@@ -17,7 +17,9 @@ package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
@@ -188,7 +190,7 @@ internal class RegistryClient(
         throw NotImplementedError()
     }
 
-    override fun send(request: MessageRequest): Boolean {
+    override fun send(call: Call): Boolean {
         throw NotImplementedError()
     }
 
@@ -203,5 +205,13 @@ internal class RegistryClient(
         if (!isShutdown.compareAndSet(false, true)) {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
+    }
+
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        listener: MessageSender.OnSendMessageListener
+    ): Call {
+        throw NotImplementedError()
     }
 }

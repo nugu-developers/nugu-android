@@ -21,8 +21,10 @@ import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -34,8 +36,11 @@ import io.grpc.Status
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.ByteBuffer
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.collections.ArrayList
+import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
 
 /**
  *  Implementation of DeviceGateway
@@ -50,6 +55,7 @@ internal class DeviceGatewayClient(policy: Policy,
     , EventStreamService.Observer {
     companion object {
         private const val TAG = "DeviceGatewayClient"
+        private const val maxAsyncCallsSize = 100
     }
 
     private val policies = ConcurrentLinkedQueue(policy.serverPolicy)
@@ -64,6 +70,13 @@ internal class DeviceGatewayClient(policy: Policy,
     private var healthCheckPolicy = policy.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
+
+    var asyncCalls = Collections.synchronizedMap(object : LinkedHashMap<String, Call>() {
+        private val serialVersionUID = 301077066599181567L
+        override fun removeEldestEntry(p0: MutableMap.MutableEntry<String, Call>?): Boolean {
+            return size > maxAsyncCallsSize
+        }
+    })
 
     interface Observer {
         fun onConnected()
@@ -146,14 +159,30 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(call: Call): Boolean {
         val event = eventStreamService
         val crash = crashReportService
+        val request = call.request()
 
         val result = when(request) {
-            is AttachmentMessageRequest -> event?.sendAttachmentMessage(toProtobufMessage(request))
-            is EventMessageRequest -> event?.sendEventMessage(toProtobufMessage(request))
-            is CrashReportMessageRequest -> crash?.sendCrashReport(request)
+            is AttachmentMessageRequest -> {
+                val result = event?.sendAttachmentMessage(toProtobufMessage(request)) ?: false
+                if(result) {
+                    call.result(SDKStatus.OK)
+                }
+                result
+            }
+            is EventMessageRequest -> {
+                asyncCalls[request.dialogRequestId] = call
+                event?.sendEventMessage(toProtobufMessage(request))
+            }
+            is CrashReportMessageRequest -> {
+                val result = crash?.sendCrashReport(request) ?: false
+                if(result) {
+                    call.result(SDKStatus.OK)
+                }
+                result
+            }
             else -> false
         } ?: false
 
@@ -266,7 +295,12 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
-        messageConsumer?.consumeDirectives(convertToDirectives(directiveMessage))
+        val message = convertToDirectives(directiveMessage)
+        val dialogRequestId =  message.first().header.dialogRequestId
+        asyncCalls[dialogRequestId]?.result(SDKStatus.OK)
+        if(asyncCalls[dialogRequestId]?.isCanceled() == false) {
+            messageConsumer?.consumeDirectives(message)
+        }
     }
 
     private fun convertToDirectives(directiveMessage: DirectiveMessage): List<com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage> {
@@ -280,7 +314,12 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
-        messageConsumer?.consumeAttachment(convertToAttachmentMessage(attachmentMessage))
+        val message = convertToAttachmentMessage(attachmentMessage)
+        val dialogRequestId = message.header.dialogRequestId
+        asyncCalls[dialogRequestId]?.result(SDKStatus.OK)
+        if(asyncCalls[dialogRequestId]?.isCanceled() == false) {
+            messageConsumer?.consumeAttachment(message)
+        }
     }
 
     private fun convertToAttachmentMessage(attachmentMessage: AttachmentMessage): com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage {
@@ -384,5 +423,13 @@ internal class DeviceGatewayClient(policy: Policy,
             }
             else -> request.toString()
         }
+    }
+
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        listener: MessageSender.OnSendMessageListener
+    ): Call {
+        throw NotImplementedError()
     }
 }

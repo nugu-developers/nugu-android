@@ -70,7 +70,7 @@ class DirectivesService(
             when (response.code) {
                 HttpURLConnection.HTTP_OK -> {
                     try {
-                        response.handleResponse(observer)
+                        response.handleResponse(null, observer)
                     } catch (e: Throwable) {
                         notifyOnError(e)
                     }

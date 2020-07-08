@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import com.skt.nugu.sdk.core.interfaces.message.Call
 
 /**
  * This class which specifies the interface to manage an connection over DeviceGateway.
@@ -32,7 +33,7 @@ import kotlin.concurrent.withLock
 class MessageRouter(
     private val transportFactory: TransportFactory,
     private val authDelegate: AuthDelegate
-) : MessageRouterInterface, TransportListener, MessageConsumer{
+) : MessageRouterInterface, TransportListener, MessageConsumer, MessageSender.OnSendMessageListener {
     companion object {
         private const val TAG = "MessageRouter"
     }
@@ -110,22 +111,10 @@ class MessageRouter(
     }
 
     /**
-     * Expect to have the message sent to the transport.
-     * @param messageRequest the messageRequest to be sent
-     * @return true is success, otherwise false
+     * Prepares the [MessageRequest] to be executed at some point in the future.
      */
-    override fun sendMessage(messageRequest: MessageRequest) : Boolean {
-        val result = activeTransport?.send(messageRequest) ?: run {
-            Logger.d(TAG, "[sendMessage] failed, $this" )
-            false
-        }
-
-        messageSenderListeners.forEach {
-            it.onPostSendMessage(messageRequest, result)
-        }
-
-        return result
-
+    override fun newCall(request: MessageRequest): Call {
+        return activeTransport!!.newCall(activeTransport, request, this)
     }
 
     override fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
@@ -268,5 +257,11 @@ class MessageRouter(
             .append(", status: ").append(status)
             .append(", reason: ").append(reason)
         return builder.toString()
+    }
+
+    override fun onPostSendMessage(request: MessageRequest, status: Status) {
+        messageSenderListeners.forEach {
+            it.onPostSendMessage(request, status)
+        }
     }
 }

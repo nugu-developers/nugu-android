@@ -28,12 +28,14 @@ import okio.ByteString.Companion.encodeUtf8
 import okio.Pipe
 import okio.buffer
 import java.util.*
+import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
 class MultipartRequestBody(
     private val boundary: ByteString,
     private val parts: Queue<Part>,
     private val pipe: Pipe,
-    private val close : Boolean
+    private val close : Boolean,
+    public val call: MessageCall?
 ) : RequestBody() {
     override fun contentType(): MediaType = "multipart/form-data; boundary=${boundary.utf8()}".toMediaType()
     override fun isDuplex() = true
@@ -68,6 +70,7 @@ class MultipartRequestBody(
                         write(boundary)
                         write(CRLF)
                     }
+                    Logger.d("OkHttp", "\r\n--${boundary.toString()}\r\n")
 
                     if (headers != null) {
                         for (h in 0 until headers.size) {
@@ -77,6 +80,7 @@ class MultipartRequestBody(
                                 writeUtf8(headers.value(h))
                                 write(CRLF)
                             }
+                            Logger.d("OkHttp", "${headers.name(h)}: ${headers.value(h)}\r\n")
                         }
                     }
 
@@ -87,6 +91,7 @@ class MultipartRequestBody(
                             writeUtf8(contentType.toString())
                             write(CRLF)
                         }
+                        Logger.d("OkHttp", "Content-Type: ${contentType.toString()}\r\n")
                     }
 
                     val contentLength = body.contentLength()
@@ -96,6 +101,7 @@ class MultipartRequestBody(
                             writeDecimalLong(contentLength)
                             write(CRLF)
                         }
+                        Logger.d("OkHttp", "Content-Length: ${contentLength}\r\n")
                     }
 
                     sink.buffer.apply {
@@ -103,6 +109,7 @@ class MultipartRequestBody(
                         body.writeTo(this)
                         write(CRLF)
                     }
+                    Logger.d("OkHttp", "\r\n")
                     try {
                         sink.flush()
                     } catch (e :Throwable) {
@@ -119,6 +126,7 @@ class MultipartRequestBody(
                     write(DASHDASH)
                     write(CRLF)
                 }
+                Logger.d("OkHttp", "--${boundary.toString()}--\r\n")
                 try {
                     sink.close()
                 } catch (e :Throwable) {
@@ -188,6 +196,7 @@ class MultipartRequestBody(
         private val parts: Queue<Part> = ArrayDeque()
         private var pipe: Pipe = Pipe(MAX_BUFFER_SIZE)
         private var close : Boolean = true
+        private var call: MessageCall? = null
 
         /** Add a form data part to the body. */
         fun addFormDataPart(name: String, filename: String? = null, headers: Headers? = null,  body: RequestBody) = apply {
@@ -202,7 +211,9 @@ class MultipartRequestBody(
         fun close(close: Boolean) = apply {
             this.close = close
         }
-
+        fun call(call: MessageCall) = apply {
+            this.call = call
+        }
         /** Assemble the specified parts into a request body. */
         fun build(): MultipartRequestBody {
             check(parts.isNotEmpty()) { "Multipart body must have at least one part." }
@@ -210,7 +221,8 @@ class MultipartRequestBody(
                 boundary,
                 parts,
                 pipe,
-                close
+                close,
+                call
             )
         }
     }
@@ -222,10 +234,11 @@ class MultipartRequestBody(
         private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())
         private val DASHDASH = byteArrayOf('-'.toByte(), '-'.toByte())
 
-        fun String.toMultipartRequestBody(name : String, close : Boolean) : MultipartRequestBody {
+        fun String.toMultipartRequestBody(name : String, close : Boolean, call: MessageCall) : MultipartRequestBody {
             return Builder()
                 .addFormDataPart(name = name, body = this.toRequestBody(APPLICATION_JSON.toMediaType()))
                 .close(close)
+                .call(call)
                 .build()
         }
         /**

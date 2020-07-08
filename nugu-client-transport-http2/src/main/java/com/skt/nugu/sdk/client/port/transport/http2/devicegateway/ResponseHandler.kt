@@ -40,6 +40,7 @@ import okhttp3.Response
 import okio.Buffer
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
+import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
 
 class ResponseHandler {
@@ -50,7 +51,7 @@ class ResponseHandler {
 
         private const val TAG = "ResponseHandler"
 
-        fun Response.handleResponse(observer: DeviceGatewayTransport): Boolean {
+        fun Response.handleResponse(call: MessageCall?, observer: DeviceGatewayTransport): Boolean {
             val headers = this.headers
             val responseBody = this.body!!
 
@@ -77,14 +78,18 @@ class ResponseHandler {
                                         headers,
                                         body
                                     )
-                                observer.onReceiveAttachment(attachment)
+                                if(call?.isCanceled() == false) {
+                                    observer.onReceiveAttachment(attachment)
+                                }
                             }
                             APPLICATION_JSON_UTF8,
                             APPLICATION_JSON -> {
                                 val directives = handleDirectives(
                                     body
                                 )
-                                observer.onReceiveDirectives(directives)
+                                if(call?.isCanceled() == false) {
+                                    observer.onReceiveDirectives(directives)
+                                }
                             }
                             else -> {
                                 throw Exception("unknown content type (${headers[CONTENT_TYPE]})")

@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.core.interfaces.transport
 
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
 /**
  * This class defines the interface for transport
@@ -47,7 +49,7 @@ interface Transport {
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    fun send(request: MessageRequest) : Boolean
+    fun send(call: Call) : Boolean
 
     /**
      *  Explicitly clean up client resources.
@@ -64,4 +66,6 @@ interface Transport {
                           retryCountLimit: Int,
                           connectionTimeout: Int,
                           charge: String) {}
+
+    fun newCall(activeTransport: Transport?, request: MessageRequest, listener: MessageSender.OnSendMessageListener): Call
 }

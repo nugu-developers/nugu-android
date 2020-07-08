@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLIC
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
@@ -179,7 +180,7 @@ class RegistryClient(
         throw NotImplementedError()
     }
 
-    override fun send(request: MessageRequest): Boolean {
+    override fun send(call: com.skt.nugu.sdk.core.interfaces.message.Call): Boolean {
         throw NotImplementedError()
     }
 
@@ -194,5 +195,13 @@ class RegistryClient(
         if (!isShutdown.compareAndSet(false, true)) {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
+    }
+
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        listener: MessageSender.OnSendMessageListener
+    ): com.skt.nugu.sdk.core.interfaces.message.Call {
+        throw NotImplementedError()
     }
 }
