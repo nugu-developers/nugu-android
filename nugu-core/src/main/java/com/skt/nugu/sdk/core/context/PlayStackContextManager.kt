@@ -71,15 +71,30 @@ class PlayStackContextManager(
         }
     }
 
+    private val timeStampDescendingComparator =
+        Comparator<PlayStackProvider.PlayStackContext> { p0, p1 ->
+            val diff = p1.timestamp - p0.timestamp
+            when {
+                diff > 0 -> {
+                    1
+                }
+                diff < 0 -> {
+                    -1
+                }
+                else -> {
+                    0
+                }
+            }
+        }
     /**
      * build integrated playstack
      *
      * the visual is higher priority than audio.
      */
-    private fun buildPlayStack(): List<String> {
-        // use treemap to order (ascending)
-        val foregroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>()
-        val backgroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>()
+    internal fun buildPlayStack(): List<String> {
+        // use treemap to order (descending)
+        val foregroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>(timeStampDescendingComparator)
+        val backgroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>(timeStampDescendingComparator)
 
         visualPlayStackProvider?.getPlayStack()?.let { list ->
             var foundBackgroundPlayStack = false
@@ -115,10 +130,10 @@ class PlayStackContextManager(
 
         // remove duplicated value
         val playStackSet = LinkedHashSet<String>().apply {
-            foregroundPlayStackMap.descendingMap().forEach {
+            foregroundPlayStackMap.forEach {
                 add(it.value)
             }
-            backgroundPlayStackMap.descendingMap().forEach {
+            backgroundPlayStackMap.forEach {
                 add(it.value)
             }
         }
