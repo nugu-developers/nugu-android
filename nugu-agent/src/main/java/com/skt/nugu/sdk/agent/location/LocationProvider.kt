@@ -23,5 +23,5 @@ interface LocationProvider {
      * Get location
      * @return the location
      */
-    fun getLocation(): Location
+    fun getLocation(): Location?
 }
