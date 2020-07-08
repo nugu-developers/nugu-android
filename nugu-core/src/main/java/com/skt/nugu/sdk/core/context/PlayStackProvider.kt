@@ -23,16 +23,8 @@ interface PlayStackProvider {
         val playServiceId: String,
         val timestamp: Long,
         val isBackground: Boolean
-    ): Comparable<PlayStackContext> {
-        override fun compareTo(other: PlayStackContext): Int {
-            val diff = other.timestamp - timestamp
-            return when {
-                diff > 0 -> 1
-                diff < 0 -> -1
-                else -> 0
-            }
-        }
-    }
+    )
+    
     /**
      * Returns a playstack.
      * @return the playstack
