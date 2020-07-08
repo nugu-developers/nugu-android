@@ -41,7 +41,9 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -912,13 +914,20 @@ class DefaultASRAgent(
     }
 
     private fun sendEvent(name: String, payload: JsonObject, referrerDialogRequestId: String?) {
-        messageSender.sendMessage(
+        messageSender.newCall(
             EventMessageRequest.Builder(
                 contextManager.getContextWithoutUpdate(
                     namespaceAndName
                 ), NAMESPACE, name, VERSION.toString()
-            ).referrerDialogRequestId(referrerDialogRequestId ?: "").payload(payload.toString()).build()
-        )
+            ).referrerDialogRequestId(referrerDialogRequestId ?: "").payload(payload.toString())
+                .build()
+        ).enqueue(object : MessageSender.Callback{
+            override fun onFailure(request: MessageRequest, status: Status) {
+            }
+
+            override fun onSuccess(request: MessageRequest) {
+            }
+        })
     }
 
     private var currentAttributeKey: String? = null

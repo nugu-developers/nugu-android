@@ -22,9 +22,8 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
@@ -59,6 +58,7 @@ class DefaultClientSpeechRecognizer(
         var cancelCause: ASRAgentInterface.CancelCause? = null
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
+        var call: Call? = null
     }
 
 
@@ -174,6 +174,7 @@ class DefaultClientSpeechRecognizer(
         }
 
         // TODO : stop at SPEECH_END
+        currentRequest?.call?.cancel()
     }
 
     override fun isRecognizing(): Boolean = currentRequest != null
@@ -247,11 +248,31 @@ class DefaultClientSpeechRecognizer(
 
         val speechProcessorState = when (state) {
             AudioEndPointDetector.State.EXPECTING_SPEECH -> {
+                messageSender.newCall(
+                    request.eventMessage
+                ).apply {
+                    request.call = this
+                    this.enqueue(object : MessageSender.Callback {
+                            override fun onFailure(messageRequest: MessageRequest, status: Status) {
+                                request.errorTypeForCausingEpdStop = when (status.error) {
+                                    Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                                    Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                                    else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                                }
+                                endPointDetector.stopDetector()
+                            }
+                            override fun onSuccess(messageRequest: MessageRequest) {
+                                //..
+                            }
+                        })
+                }
+                SpeechRecognizer.State.EXPECTING_SPEECH
+                /*
                 if(!messageSender.sendMessage(request.eventMessage)) {
                     request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
                     endPointDetector.stopDetector()
                 }
-                SpeechRecognizer.State.EXPECTING_SPEECH
+                SpeechRecognizer.State.EXPECTING_SPEECH*/
             }
             AudioEndPointDetector.State.SPEECH_START -> {
                 startSpeechSenderThread(request, endPointDetector.getSpeechStartPosition())
@@ -379,8 +400,29 @@ class DefaultClientSpeechRecognizer(
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
+        messageSender.newCall(
+            EventMessageRequest.Builder(
+                request.context,
+                DefaultASRAgent.NAMESPACE,
+                DefaultASRAgent.EVENT_STOP_RECOGNIZE,
+                DefaultASRAgent.VERSION.toString()
+            ).referrerDialogRequestId(request.dialogRequestId).build()
+        ).enqueue(object : MessageSender.Callback {
+            override fun onFailure(request: MessageRequest, status: Status) {
+                handleError(when(status.error) {
+                    Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                    Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                    else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                })
+            }
+
+            override fun onSuccess(request: MessageRequest) {
+            }
+        })
+        return true
+        /*
         return request.let {
-            messageSender.sendMessage(
+            messageSender.newCall(
                 EventMessageRequest.Builder(
                     it.context,
                     DefaultASRAgent.NAMESPACE,
@@ -388,7 +430,7 @@ class DefaultClientSpeechRecognizer(
                     DefaultASRAgent.VERSION.toString()
                 ).referrerDialogRequestId(it.dialogRequestId).build()
             )
-        }
+        }*/
     }
 
     private fun setState(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {

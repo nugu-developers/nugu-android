@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
+import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -40,7 +41,9 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -56,7 +59,6 @@ class DefaultTTSAgent(
     private val focusManager: FocusManagerInterface,
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val inputProcessorManager: InputProcessorManagerInterface,
     private val channelName: String,
     private val focusHolderManager: FocusHolderManager
 ) : AbstractCapabilityAgent(NAMESPACE)
@@ -877,7 +879,14 @@ class DefaultTTSAgent(
                         )
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
-                messageSender.sendMessage(messageRequest)
+                messageSender.newCall(
+                    messageRequest
+                ).enqueue(object : MessageSender.Callback {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                    }
+                    override fun onSuccess(request: MessageRequest) {
+                    }
+                })
 
                 Logger.d(TAG, "[sendEventWithToken] $messageRequest")
             }
@@ -913,15 +922,20 @@ class DefaultTTSAgent(
                             addProperty("token", UUIDGeneration.timeUUID().toString())
                         }.toString())
                         .build()
-
-                if (messageSender.sendMessage(messageRequest)) {
-                    listener?.let {
-                        requestListenerMap[dialogRequestId] = it
-                    }
-                    onSendEventFinished(messageRequest.dialogRequestId)
-                } else {
-                    listener?.onError(dialogRequestId)
+                val call = messageSender.newCall(
+                    messageRequest
+                )
+                listener?.let {
+                    requestListenerMap[dialogRequestId] = it
                 }
+                call.enqueue(object : MessageSender.Callback {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                        requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
+                    }
+                    override fun onSuccess(request: MessageRequest) {
+
+                    }
+                })
             }
         }, namespaceAndName)
 
@@ -929,7 +943,6 @@ class DefaultTTSAgent(
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
     override fun onReceiveDirectives(
@@ -938,7 +951,6 @@ class DefaultTTSAgent(
     ): Boolean = true
 
     override fun onResponseTimeout(dialogRequestId: String) {
-        requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
     }
 
     override fun onStateChanged(state: FocusHolderManager.State) {

@@ -26,7 +26,9 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class RewindDirectiveHandler(
@@ -59,7 +61,7 @@ class RewindDirectiveHandler(
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
@@ -74,7 +76,13 @@ class RewindDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue( object : MessageSender.Callback {
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     })
                 }
@@ -82,7 +90,7 @@ class RewindDirectiveHandler(
                 override fun onFailure(reason: String) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
@@ -95,7 +103,13 @@ class RewindDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue( object : MessageSender.Callback {
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     })
                 }

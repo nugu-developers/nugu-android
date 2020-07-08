@@ -34,7 +34,9 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -44,7 +46,6 @@ import java.util.concurrent.Executors
 class DefaultTextAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
-    private val inputProcessorManager: InputProcessorManagerInterface,
     private val dialogAttributeStorage: DialogAttributeStorageInterface,
     private val textSourceHandler: TextAgentInterface.TextSourceHandler?
 ) : AbstractCapabilityAgent(NAMESPACE)
@@ -218,14 +219,24 @@ class DefaultTextAgent(
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
                     createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
-                        if(messageSender.sendMessage(it)) {
-                            if (listener != null) {
-                                requestListeners[it.dialogRequestId] = listener
+                        val call = messageSender.newCall(it)
+                        call.enqueue(object : MessageSender.Callback{
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                                if(status.isTimeout()) {
+                                    Logger.d(TAG, "[onResponseTimeout] $dialogRequestId")
+                                    listener?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+                                } else {
+                                    listener?.onError(
+                                        dialogRequestId,
+                                        TextAgentInterface.ErrorType.ERROR_NETWORK
+                                    )
+                                }
                             }
-                            onSendEventFinished(it.dialogRequestId)
-                        } else {
-                            listener?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_NETWORK)
-                        }
+
+                            override fun onSuccess(request: MessageRequest) {
+                                listener?.onReceiveResponse(dialogRequestId)
+                            }
+                        })
                     }
                 }
             }
@@ -235,24 +246,15 @@ class DefaultTextAgent(
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
     }
 
     override fun onReceiveDirectives(
         dialogRequestId: String,
         directives: List<Directive>
     ): Boolean {
-        executor.submit {
-            requestListeners.remove(dialogRequestId)?.onReceiveResponse(dialogRequestId)
-        }
         return true
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {
-        Logger.d(TAG, "[onResponseTimeout] $dialogRequestId")
-        executor.submit {
-            requestListeners.remove(dialogRequestId)
-                ?.onError(dialogRequestId, TextAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
-        }
     }
 }

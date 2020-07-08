@@ -16,17 +16,22 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.TogglePayload
+import com.skt.nugu.sdk.agent.ext.message.MessageAgent
+import com.skt.nugu.sdk.agent.ext.message.handler.GetMessageDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class ToggleDirectiveHandler (
@@ -59,7 +64,7 @@ class ToggleDirectiveHandler (
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
@@ -74,7 +79,13 @@ class ToggleDirectiveHandler (
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     })
                 }
@@ -82,7 +93,7 @@ class ToggleDirectiveHandler (
                 override fun onFailure(reason: String) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MediaPlayerAgent.NAMESPACE,
@@ -95,7 +106,13 @@ class ToggleDirectiveHandler (
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     })
                 }

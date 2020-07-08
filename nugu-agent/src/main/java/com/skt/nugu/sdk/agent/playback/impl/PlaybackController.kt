@@ -19,7 +19,9 @@ import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackHandler
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.Executors
@@ -46,7 +48,13 @@ class PlaybackController(
             }
 
             Logger.d(TAG, "[onContextAvailable] 1")
-            messageSender.sendMessage(buildPlaybackMessageRequest(commands.pop()))
+            messageSender.newCall(buildPlaybackMessageRequest(commands.pop())).enqueue(object : MessageSender.Callback{
+                override fun onFailure(request: MessageRequest, status: Status) {
+                }
+
+                override fun onSuccess(request: MessageRequest) {
+                }
+            })
 
             if (commands.isNotEmpty()) {
                 Logger.d(TAG, "[onContextAvailableExecutor] Queue is not empty, call getContext().")

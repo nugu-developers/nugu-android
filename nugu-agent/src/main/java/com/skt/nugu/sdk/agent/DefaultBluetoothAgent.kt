@@ -34,12 +34,16 @@ import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.AVRCPCommand
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
+import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
+import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.ToggleDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import java.util.concurrent.CountDownLatch
 import kotlin.collections.HashMap
 
@@ -351,8 +355,10 @@ class DefaultBluetoothAgent(
                             addProperty(KEY_HAS_PAIRED_DEVICES, it)
                         }
                     }.toString()).build()
-
-                result = messageSender.sendMessage(request)
+                val status = messageSender.newCall(
+                    request
+                ).execute()
+                result = status.isOk()
                 waitResult?.countDown()
             }
         }, namespaceAndName)

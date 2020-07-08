@@ -24,6 +24,8 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.ScheduledFuture
@@ -131,8 +133,36 @@ class DefaultServerSpeechRecognizer(
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .build()
+        val status = messageSender.newCall(
+            eventMessage
+        ).execute()
+        if(status.isOk()) {
+            val thread = createSenderThread(
+                audioInputStream,
+                audioFormat,
+                sendPosition,
+                eventMessage
+            )
+            val request =
+                RecognizeRequest(
+                    thread, eventMessage, expectSpeechDirectiveParam, resultListener
+                )
+            currentRequest = request
+            thread.start()
 
-        if (messageSender.sendMessage(eventMessage)) {
+            setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
+            timeoutFuture?.cancel(true)
+            timeoutFuture = timeoutScheduler.schedule({
+                handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
+            }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+
+            return request
+        }  else {
+            Logger.w(TAG, "[startProcessor] failed to send recognize event")
+            return null
+        }
+
+       /* if (messageSender.sendMessage(eventMessage)) {
             val thread = createSenderThread(
                 audioInputStream,
                 audioFormat,
@@ -156,7 +186,7 @@ class DefaultServerSpeechRecognizer(
         } else {
             Logger.w(TAG, "[startProcessor] failed to send recognize event")
             return null
-        }
+        }*/
     }
 
     private fun createSenderThread(
@@ -278,16 +308,21 @@ class DefaultServerSpeechRecognizer(
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        return request.let {
-            messageSender.sendMessage(
-                EventMessageRequest.Builder(
-                    it.context,
-                    DefaultASRAgent.NAMESPACE,
-                    DefaultASRAgent.EVENT_STOP_RECOGNIZE,
-                    DefaultASRAgent.VERSION.toString()
-                ).referrerDialogRequestId(it.dialogRequestId).build()
-            )
-        }
+        messageSender.newCall(
+            EventMessageRequest.Builder(
+                request.context,
+                DefaultASRAgent.NAMESPACE,
+                DefaultASRAgent.EVENT_STOP_RECOGNIZE,
+                DefaultASRAgent.VERSION.toString()
+            ).referrerDialogRequestId(request.dialogRequestId).build()
+        ).enqueue(object : MessageSender.Callback{
+            override fun onFailure(request: MessageRequest, status: Status) {
+            }
+
+            override fun onSuccess(request: MessageRequest) {
+            }
+        })
+        return true
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {

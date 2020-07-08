@@ -24,14 +24,15 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
 class ElementSelectedEventHandler(
     private val contextGetter: ContextGetterInterface,
-    private val messageSender: MessageSender,
-    private val inputProcessorManager: InputProcessorManagerInterface
+    private val messageSender: MessageSender
 ): InputProcessor {
     companion object {
         private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
@@ -39,37 +40,45 @@ class ElementSelectedEventHandler(
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
     }
-    private val eventCallbacks = HashMap<String, DisplayInterface.OnElementSelectedCallback>()
-
     fun setElementSelected(playServiceId: String, token: String, postback: String?, callback: DisplayInterface.OnElementSelectedCallback?): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
         contextGetter.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
-                if (messageSender.sendMessage(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            DefaultDisplayAgent.NAMESPACE,
-                            EVENT_NAME_ELEMENT_SELECTED,
-                            DefaultDisplayAgent.VERSION.toString()
-                        ).dialogRequestId(dialogRequestId).payload(
-                            JsonObject().apply {
-                                addProperty(KEY_TOKEN, token)
-                                addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
-                                postback?.let {
-                                    add("postback", JsonParser.parseString(it))
-                                }
-                            }.toString()
-                        ).build()
-                    )
-                ) {
-                    callback?.let {
-                        eventCallbacks.put(dialogRequestId, callback)
+                messageSender.newCall(
+                    EventMessageRequest.Builder(
+                        jsonContext,
+                        DefaultDisplayAgent.NAMESPACE,
+                        EVENT_NAME_ELEMENT_SELECTED,
+                        DefaultDisplayAgent.VERSION.toString()
+                    ).dialogRequestId(dialogRequestId).payload(
+                        JsonObject().apply {
+                            addProperty(KEY_TOKEN, token)
+                            addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                            postback?.let {
+                                add("postback", JsonParser.parseString(it))
+                            }
+                        }.toString()
+                    ).build()
+                ).enqueue( object : MessageSender.Callback {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                        if(status.isTimeout()) {
+                            callback?.onError(
+                                    dialogRequestId,
+                                    DisplayInterface.ErrorType.RESPONSE_TIMEOUT
+                                )
+                        } else {
+                            callback?.onError(
+                                dialogRequestId,
+                                DisplayInterface.ErrorType.REQUEST_FAIL
+                            )
+                        }
                     }
-                    onSendEventFinished(dialogRequestId)
-                } else {
-                    callback?.onError(dialogRequestId, DisplayInterface.ErrorType.REQUEST_FAIL)
-                }
+
+                    override fun onSuccess(request: MessageRequest) {
+                        callback?.onSuccess(dialogRequestId)
+                    }
+                })
             }
         })
 
@@ -77,19 +86,15 @@ class ElementSelectedEventHandler(
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
-        inputProcessorManager.onRequested(this, dialogRequestId)
+    }
+
+    override fun onResponseTimeout(dialogRequestId: String) {
     }
 
     override fun onReceiveDirectives(
         dialogRequestId: String,
         directives: List<Directive>
     ): Boolean {
-        eventCallbacks.remove(dialogRequestId)?.onSuccess(dialogRequestId)
         return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-        eventCallbacks.remove(dialogRequestId)
-            ?.onError(dialogRequestId, DisplayInterface.ErrorType.RESPONSE_TIMEOUT)
     }
 }

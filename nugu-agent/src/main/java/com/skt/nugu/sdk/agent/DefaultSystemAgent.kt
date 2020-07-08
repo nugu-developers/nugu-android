@@ -28,7 +28,9 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
@@ -377,7 +379,7 @@ class DefaultSystemAgent(
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
-                messageSender.sendMessage(
+                messageSender.newCall(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .also {
                             if (payload != null) {
@@ -388,7 +390,12 @@ class DefaultSystemAgent(
                                 it.referrerDialogRequestId(referrerDialogRequestId)
                             }
                         }.build()
-                )
+                ).enqueue(object : MessageSender.Callback {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                    }
+                    override fun onSuccess(request: MessageRequest) {
+                    }
+                })
             }
         }, tempNamespaceAndName)
     }

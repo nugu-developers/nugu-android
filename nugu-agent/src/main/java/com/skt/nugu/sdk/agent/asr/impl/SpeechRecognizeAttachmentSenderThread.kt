@@ -21,6 +21,8 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -131,7 +133,18 @@ class SpeechRecognizeAttachmentSenderThread(
             )
 
         currentAttachmentSequenceNumber++
-        return messageSender.sendMessage(attachmentMessage)
+
+        messageSender.newCall(
+            attachmentMessage
+        ).enqueue(object : MessageSender.Callback{
+            override fun onFailure(request: MessageRequest, status: Status) {
+            }
+
+            override fun onSuccess(request: MessageRequest) {
+            }
+        })
+        return true
+        /*return messageSender.sendMessage(attachmentMessage)*/
     }
 
     fun requestStop() {
