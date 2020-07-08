@@ -25,6 +25,9 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
+import com.skt.nugu.sdk.client.port.transport.grpc2.Grpc2Call
+import com.skt.nugu.sdk.core.interfaces.message.Call
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.concurrent.Executors
 
@@ -65,6 +68,7 @@ internal class GrpcTransport private constructor(
     private var deviceGatewayClient: DeviceGatewayClient? = null
     private var registryClient: RegistryClient = RegistryClient(address = address, dnsLookup = dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
+    private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     /** @return the bearer token **/
     private fun getAuthorization() = authDelegate.getAuthorization()?:""
@@ -227,14 +231,13 @@ internal class GrpcTransport private constructor(
         return state.isConnectedOrConnecting()
     }
 
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(call: Call): Boolean {
         if (!state.isConnected()) {
-            Logger.d(TAG, "[send], Status : ($state), request : $request")
+            Logger.d(TAG, "[send], Status : ($state), request : ${call.request()}")
             return false
         }
-        return deviceGatewayClient?.send(request) ?: false
+        return deviceGatewayClient?.send(call) ?: false
     }
-
     /**
      *  Explicitly clean up client resources.
      */
@@ -362,5 +365,9 @@ internal class GrpcTransport private constructor(
         }
 
         return true
+    }
+
+    override fun newCall(activeTransport: Transport?, request: MessageRequest, listener: MessageSender.OnSendMessageListener): Call {
+        return GrpcCall(scheduler, activeTransport, request, listener)
     }
 }

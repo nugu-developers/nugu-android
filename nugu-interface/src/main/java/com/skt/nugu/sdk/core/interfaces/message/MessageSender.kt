@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.core.interfaces.message
 
+import java.io.IOException
+
 /**
  * An interface which send [MessageRequest]
  */
@@ -28,15 +30,21 @@ interface MessageSender {
          * @param messageRequest the messageRequest to be sent
          * @param result the success or failure to send the [messageRequest]
          */
-        fun onPostSendMessage(messageRequest: MessageRequest, result: Boolean)
+        fun onPostSendMessage(request: MessageRequest, status: Status)
     }
 
     /**
-     * Send message
-     * @param messageRequest the messageRequest to be sent
+     * Prepares the request to be executed at some point in the future.
      */
-    fun sendMessage(messageRequest: MessageRequest): Boolean
+    fun newCall(request: MessageRequest): Call
 
+    /**
+     * The callback to the result of sending the message
+     */
+    interface Callback {
+        fun onFailure(request: MessageRequest, status: Status)
+        fun onSuccess(request: MessageRequest)
+    }
 
     /**
      * Add listener to notified when occur events

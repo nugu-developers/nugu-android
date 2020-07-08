@@ -25,9 +25,12 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverte
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.Call
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
 import devicegateway.grpc.DirectiveMessage
@@ -169,18 +172,19 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param request the messageRequest to be sent
      * @return true is success, otherwise false
      */
-    override fun send(request: MessageRequest) : Boolean {
+    override fun send(call: Call): Boolean {
         val event = eventsService
         val crash = crashReportService
 
+        val request = call.request()
         val result = when(request) {
-            is AttachmentMessageRequest -> event?.sendAttachmentMessage(request)
-            is EventMessageRequest -> event?.sendEventMessage(request)
+            is AttachmentMessageRequest -> event?.sendAttachmentMessage(call)
+            is EventMessageRequest -> event?.sendEventMessage(call)
             is CrashReportMessageRequest -> crash?.sendCrashReport(request)
             else -> false
         } ?: false
 
-        Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
+        Logger.d(TAG, "sendMessage : ${call.request().toStringMessage()}, result : $result")
         return result
     }
 
@@ -236,8 +240,11 @@ internal class DeviceGatewayClient(policy: Policy,
                     Status.Code.INTERNAL -> ChangedReason.SERVER_INTERNAL_ERROR
                     Status.Code.OUT_OF_RANGE,
                     Status.Code.DATA_LOSS,
-                    Status.Code.CANCELLED,
                     Status.Code.INVALID_ARGUMENT -> ChangedReason.INTERNAL_ERROR
+                    Status.Code.CANCELLED -> {
+                        Logger.w(TAG, "skip CANCELLED")
+                        return
+                    }
                     else -> {
                         throw NotImplementedError()
                     }
@@ -323,5 +330,13 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
         handleConnectedIfNeeded()
         messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
+    }
+
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        listener: MessageSender.OnSendMessageListener
+    ): Call {
+        throw NotImplementedError()
     }
 }

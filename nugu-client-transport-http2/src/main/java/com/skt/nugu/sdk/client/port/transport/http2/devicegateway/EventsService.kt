@@ -36,6 +36,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
+import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
+import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
 class EventsService(
     val policy: ServerPolicy,
@@ -44,9 +46,9 @@ class EventsService(
 ) {
     private val isShutdown = AtomicBoolean(false)
     private val streamingCall = MultipartStreamingCalls(object :
-        MultipartStreamingCalls.PendingRequestListener<EventMessageRequest> {
-        override fun execute(request: EventMessageRequest) {
-            sendEventMessage(request)
+        MultipartStreamingCalls.PendingRequestListener<com.skt.nugu.sdk.core.interfaces.message.Call> {
+        override fun execute(call: com.skt.nugu.sdk.core.interfaces.message.Call) {
+            sendEventMessage(call)
         }
     })
 
@@ -70,13 +72,15 @@ class EventsService(
         fun Call.getRequestBody() = this.request().body as MultipartRequestBody
     }
 
-    private fun handleRequestStreamingCall(messageRequest: EventMessageRequest) : Boolean {
+    private fun handleRequestStreamingCall(call: MessageCall) : Boolean {
+        val messageRequest = call.request() as EventMessageRequest
+
         val hasASR = messageRequest.namespace == "ASR"
         val hasRecognize = messageRequest.name == "Recognize"
         val isStart = hasASR && hasRecognize
 
         if(streamingCall.isExecuted()) {
-            streamingCall.executePendingRequest(messageRequest)
+            streamingCall.executePendingRequest(call)
             if(hasASR) streamingCall.stop()
             return false
         }
@@ -103,8 +107,10 @@ class EventsService(
         return true
     }
 
-    fun sendEventMessage(messageRequest: EventMessageRequest): Boolean {
-        if(!handleRequestStreamingCall(messageRequest)) {
+    fun sendEventMessage(call: MessageCall): Boolean {
+        val messageRequest = call.request() as EventMessageRequest
+
+        if(!handleRequestStreamingCall(call)) {
             return true
         }
         val message = messageRequest.toJson()
@@ -118,11 +124,11 @@ class EventsService(
 
         if(!streamingCall.isExecuted()) {
             client.newCall(Request.Builder().url(httpUrl)
-                .post(message.toMultipartRequestBody(EVENT, true))
+                .post(message.toMultipartRequestBody(EVENT, true, call))
                 .build()).enqueue(responseCallback)
         } else {
             val request = Request.Builder().url(httpUrl)
-                .post(message.toMultipartRequestBody(EVENT, false))
+                .post(message.toMultipartRequestBody(EVENT, false, call))
                 .tag(responseCallback)
                 .build()
             streamingCall.set(client.newCall(request)).enqueue(responseCallback)
@@ -133,7 +139,7 @@ class EventsService(
     private val responseCallback = object : Callback {
         override fun onFailure(call: Call, e: IOException) {
             if(e.cause !is  IllegalStateException) {
-                notifyOnError(e)
+                notifyOnError(call.getRequestBody().call, e)
             }
         }
 
@@ -141,31 +147,50 @@ class EventsService(
             when (response.code) {
                 HttpURLConnection.HTTP_OK -> {
                     try {
-                        response.handleResponse(observer)
+                        response.handleResponse(call.getRequestBody().call, observer)
                         response.close()
                     } catch (e: Throwable) {
                         Logger.d(TAG, "[responseCallback] : " + e.message.toString())
                     }
                 }
-                HttpURLConnection.HTTP_BAD_REQUEST -> observer.onError(Status.INTERNAL)
+                HttpURLConnection.HTTP_BAD_REQUEST -> {
+                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.INTERNAL)
+                    observer.onError(Status.INTERNAL)
+                }
                 HttpURLConnection.HTTP_UNAUTHORIZED,
-                HttpURLConnection.HTTP_FORBIDDEN -> observer.onError(Status.UNAUTHENTICATED)
+                HttpURLConnection.HTTP_FORBIDDEN -> {
+                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNAUTHENTICATED)
+                    observer.onError(Status.UNAUTHENTICATED)
+                }
                 HttpURLConnection.HTTP_BAD_GATEWAY,
                 HttpURLConnection.HTTP_UNAVAILABLE,
-                HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> observer.onError(Status.UNAVAILABLE)
-                HttpURLConnection.HTTP_UNSUPPORTED_TYPE -> observer.onError(Status.UNIMPLEMENTED)
+                HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> {
+                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNAVAILABLE)
+                    observer.onError(Status.UNAVAILABLE)
+                }
+                HttpURLConnection.HTTP_UNSUPPORTED_TYPE -> {
+                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNIMPLEMENTED)
+                    observer.onError(Status.UNIMPLEMENTED)
+                }
                 else -> {
+                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNKNOWN)
                     observer.onError(Status.UNKNOWN)
                 }
             }
         }
     }
 
-    private fun notifyOnError(throwable: Throwable?) {
+    private fun notifyOnError(call: com.skt.nugu.sdk.core.interfaces.message.Call?, throwable: Throwable?) {
         if (!isShutdown.get()) {
             val status = Status.fromThrowable(throwable)
             Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $throwable")
+
+            call?.result(SDKStatus.fromCode(status.code.value).apply {
+                description = status.description
+            })
+
             observer.onError(status)
+
         }
     }
 

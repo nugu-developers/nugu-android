@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import devicegateway.grpc.AttachmentMessage
 import devicegateway.grpc.DirectiveMessage
