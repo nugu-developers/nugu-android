@@ -137,13 +137,17 @@ class TTSScenarioPlayer(
                 return@submit
             }
 
-            executeStartPreparedSource()
+            executeStartPreparedSourceIfExist()
 
         }
     }
 
-    private fun executeStartPreparedSource() {
-        Logger.d(TAG, "[executeStartPreparedSource]")
+    private fun executeStartPreparedSourceIfExist() {
+        Logger.d(TAG, "[executeStartPreparedSource] preparedSource: $preparedSource")
+        if (preparedSource == null) {
+            return
+        }
+
         if (focusState == FocusState.FOREGROUND) {
             executeStartPreparedSourceOnForeground()
         } else {
@@ -278,7 +282,7 @@ class TTSScenarioPlayer(
                     playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
                     focusHolderManager.abandon(it)
                 }
-                executeStartPreparedSource()
+                executeStartPreparedSourceIfExist()
             }
         }
     }
@@ -301,7 +305,7 @@ class TTSScenarioPlayer(
                     playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
                     focusHolderManager.abandon(it)
                 }
-                executeStartPreparedSource()
+                executeStartPreparedSourceIfExist()
             }
         }
     }
@@ -337,7 +341,7 @@ class TTSScenarioPlayer(
                     focusHolderManager.abandon(it)
                 }
 
-                executeStartPreparedSource()
+                executeStartPreparedSourceIfExist()
             }
         }
     }
