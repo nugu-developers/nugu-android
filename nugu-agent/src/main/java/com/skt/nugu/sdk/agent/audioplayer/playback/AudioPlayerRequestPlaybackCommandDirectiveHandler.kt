@@ -9,7 +9,9 @@ import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class AudioPlayerRequestPlaybackCommandDirectiveHandler(
@@ -84,7 +86,13 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
-                    messageSender.sendMessage(message)
+                    messageSender.newCall(message).enqueue( object : MessageSender.Callback {
+                        override fun onFailure(request: MessageRequest, status: Status) {
+                        }
+
+                        override fun onSuccess(request: MessageRequest) {
+                        }
+                    })
 
                     return
                 }
@@ -107,7 +115,13 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
-                    messageSender.sendMessage(message)
+                    messageSender.newCall(message).enqueue( object : MessageSender.Callback {
+                        override fun onFailure(request: MessageRequest, status: Status) {
+                        }
+
+                        override fun onSuccess(request: MessageRequest) {
+                        }
+                    })
                 } else {
                     val message = EventMessageRequest.Builder(
                         jsonContext,
@@ -123,7 +137,13 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
-                    messageSender.sendMessage(message)
+                    messageSender.newCall(message).enqueue( object : MessageSender.Callback {
+                        override fun onFailure(request: MessageRequest, status: Status) {
+                        }
+
+                        override fun onSuccess(request: MessageRequest) {
+                        }
+                    })
                 }
             }
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))

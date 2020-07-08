@@ -47,7 +47,9 @@ import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -831,7 +833,13 @@ class DefaultAudioPlayerAgent(
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                        messageSender.sendMessage(messageRequest)
+                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                            }
+
+                            override fun onSuccess(request: MessageRequest) {
+                            }
+                        })
                     }
                 }
             }
@@ -855,7 +863,13 @@ class DefaultAudioPlayerAgent(
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                        messageSender.sendMessage(messageRequest)
+                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                            }
+
+                            override fun onSuccess(request: MessageRequest) {
+                            }
+                        })
                     }
                 }
             }
@@ -879,7 +893,13 @@ class DefaultAudioPlayerAgent(
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                        messageSender.sendMessage(messageRequest)
+                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                            }
+
+                            override fun onSuccess(request: MessageRequest) {
+                            }
+                        })
                     }
                 }
             }
@@ -1395,7 +1415,13 @@ class DefaultAudioPlayerAgent(
                         }.toString()
                     ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                    messageSender.sendMessage(messageRequest)
+                    messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                        override fun onFailure(request: MessageRequest, status: Status) {
+                        }
+
+                        override fun onSuccess(request: MessageRequest) {
+                        }
+                    })
                     Logger.d(TAG, "[sendEvent] $messageRequest")
                 }
             }, namespaceAndName)
@@ -1451,7 +1477,13 @@ class DefaultAudioPlayerAgent(
                             }
                         }.toString()).build()
 
-                    messageSender.sendMessage(messageRequest)
+                    messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                        override fun onFailure(request: MessageRequest, status: Status) {
+                        }
+
+                        override fun onSuccess(request: MessageRequest) {
+                        }
+                    })
                 }
             }
         }, namespaceAndName)
@@ -1514,7 +1546,13 @@ class DefaultAudioPlayerAgent(
                     ).referrerDialogRequestId(referrerDialogRequestId).build()
 
                     if (condition.invoke()) {
-                        messageSender.sendMessage(messageRequest)
+                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                            }
+
+                            override fun onSuccess(request: MessageRequest) {
+                            }
+                        })
                         Logger.d(TAG, "[sendEvent] $messageRequest")
                     } else {
                         Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")

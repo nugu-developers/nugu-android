@@ -21,12 +21,15 @@ import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.EventCallback
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.SendMessagePayload
+import com.skt.nugu.sdk.agent.ext.phonecall.PhoneCallAgent
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class SendMessageDirectiveHandler(
@@ -59,7 +62,7 @@ class SendMessageDirectiveHandler(
                 override fun onSuccess() {
                     contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MessageAgent.NAMESPACE,
@@ -71,7 +74,13 @@ class SendMessageDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     })
                 }
@@ -79,7 +88,7 @@ class SendMessageDirectiveHandler(
                 override fun onFailure(errorCode: String) {
                     contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MessageAgent.NAMESPACE,
@@ -92,7 +101,13 @@ class SendMessageDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     })
                 }
