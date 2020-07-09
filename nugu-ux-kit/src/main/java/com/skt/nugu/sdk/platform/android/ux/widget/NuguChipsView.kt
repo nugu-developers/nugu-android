@@ -20,12 +20,10 @@ import android.graphics.Rect
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
-import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.ux.R
 
 /**
@@ -163,7 +161,7 @@ class NuguChipsView @JvmOverloads constructor(
          * Called by RecyclerView to display the data at the specified position. This method should update the contents of the itemView to reflect the item at the given position.
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
-            holder.titleView.text = items[position].text
+            holder.titleView.setEllipsizeText(items[position].text)
             if (items[position].action) {
                 holder.titleView.setTextColor(highlightColor)
             } else {
@@ -181,7 +179,7 @@ class NuguChipsView @JvmOverloads constructor(
             /**
              * A textview representing the title
              * */
-            val titleView: TextView = itemView.findViewById(R.id.tv_chips) as TextView
+            val titleView: EllipsizeTextView = itemView.findViewById(R.id.tv_chips) as EllipsizeTextView
         }
     }
 
