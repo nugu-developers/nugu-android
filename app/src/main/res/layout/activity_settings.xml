@@ -15,6 +15,14 @@
             android:hint="로그인해주세요>" />
     </LinearLayout>
     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+    <LinearLayout style="@style/Nugu.Widget.Setting">
+        <TextView
+            android:id="@+id/text_service"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/setting_service" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
 
     <LinearLayout style="@style/Nugu.Widget.Setting" >
         <TextView android:text="@string/setting_enable_nugu" android:layout_width="0dp" android:layout_height="wrap_content"
@@ -64,6 +72,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content" android:id="@+id/spinner_auth_type" android:layout_weight="1"/>
     </LinearLayout>
+
+
+    <LinearLayout  style="@style/Nugu.Widget.Setting" >
+        <TextView android:id="@+id/text_agreement"
+            android:text="@string/setting_terms" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
 
 
     <LinearLayout  style="@style/Nugu.Widget.Setting" >

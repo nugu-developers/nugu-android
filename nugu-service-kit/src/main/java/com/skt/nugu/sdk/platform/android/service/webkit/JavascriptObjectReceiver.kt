@@ -25,6 +25,7 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
     interface Listener {
         fun openExternalApp(androidScheme: String?, androidAppId: String?)
         fun openInAppBrowser(url: String)
+        fun closeWindow()
     }
 
     @Keep
@@ -57,5 +58,10 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
                 listener.openInAppBrowser(info.url)
             }
         }
+    }
+
+    @JavascriptInterface
+    fun closeWindow() {
+        listener.closeWindow()
     }
 }

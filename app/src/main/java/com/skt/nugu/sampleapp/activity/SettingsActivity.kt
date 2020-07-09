@@ -27,14 +27,16 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
+import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.platform.android.login.auth.MeResponse
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
     companion object {
         private const val TAG = "SettingsActivity"
+        const val settingsAgreementActivityRequestCode = 102
         fun invokeActivity(context: Context) {
             context.startActivity(Intent(context, SettingsActivity::class.java))
         }
@@ -76,9 +78,20 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.text_privacy)
     }
 
+    private val buttonService: TextView by lazy {
+        findViewById<TextView>(R.id.text_service)
+    }
+
+    private val buttonAgreement: TextView by lazy {
+        findViewById<TextView>(R.id.text_agreement)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+
+        // add listener for system agent
+        ClientManager.getClient().addSystemAgentListener(this)
 
         switchEnableNugu.isChecked = PreferenceHelper.enableNugu(this)
         switchEnableTrigger.isChecked = PreferenceHelper.enableTrigger(this)
@@ -109,6 +122,11 @@ class SettingsActivity : AppCompatActivity() {
                 Log.d(TAG, error.toString())
             }
         })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ClientManager.getClient().removeSystemAgentListener(this)
     }
 
     fun initBtnListeners() {
@@ -169,5 +187,23 @@ class SettingsActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
+
+        buttonService.setOnClickListener {
+            SettingsServiceActivity.invokeActivity(this)
+        }
+        buttonAgreement.setOnClickListener {
+            startActivityForResult(Intent(this, SettingsAgreementActivity::class.java), settingsAgreementActivityRequestCode)
+        }
+    }
+
+    override fun onTurnOff() {
+    }
+
+    override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
+    }
+
+    override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
+        finishActivity(settingsAgreementActivityRequestCode)
+        finish()
     }
 }

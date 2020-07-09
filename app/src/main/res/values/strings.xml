@@ -3,6 +3,7 @@
 
     <string name="nugu_redirect_scheme">YOUR REDIRECT URI SCHEME</string>
     <string name="nugu_redirect_host">YOUR REDIRECT URI HOST</string>
+    <string name="nugu_poc_id">YOUR_POC_ID_HERE</string>
 
     <string name="guide_text">말씀해주세요</string>
 
@@ -23,6 +24,7 @@
 
     <string name="menu_setting">setting</string>
     <string name="setting_account_info">T아이디 회원정보</string>
+    <string name="setting_service">서비스 관리</string>
     <string name="setting_enable_nugu">인공지능 NUGU 사용하기</string>
     <string name="setting_enable_trigger">이름을 불러 대화 시작하기</string>
     <string name="setting_wakeup_word">부르는 이름</string>
@@ -30,6 +32,7 @@
     <string name="setting_enable_recognition_beep">인식 성공 효과음</string>
     <string name="setting_auth_type">계정선택</string>
     <string name="setting_privacy">개인정보 처리방침</string>
+    <string name="setting_terms">이용약관</string>
     <string name="setting_revoke">연결 해제</string>
 
 </resources>

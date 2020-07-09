@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.service.webkit
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -25,6 +26,7 @@ import android.support.annotation.Keep
 import android.support.customtabs.CustomTabsIntent
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
 import android.widget.FrameLayout
@@ -45,6 +47,7 @@ class NuguWebView @JvmOverloads constructor(
         fun onReceivedError(request: WebResourceRequest?, error: WebResourceError?)
         fun onProgressChanged(newProgress: Int)
     }
+
     @Keep
     enum class THEME { DARK, LIGHT }
 
@@ -60,7 +63,8 @@ class NuguWebView @JvmOverloads constructor(
         "Os-Type-Code" to "MBL_AND",
         "Os-Version" to Build.VERSION.RELEASE,
         "Sdk-Version" to BuildConfig.VERSION_NAME,
-        "Phone-Model-Name" to Build.MODEL
+        "Phone-Model-Name" to Build.MODEL,
+        "Oauth-Redirect-Uri" to redirectUri.toString()
     )
 
     var authorization: String? = null
@@ -68,6 +72,7 @@ class NuguWebView @JvmOverloads constructor(
     var appVersion: String? = null
     var theme: THEME = THEME.LIGHT
     var listener: Listener? = null
+    var redirectUri : String? = null
 
     init {
         addView(
@@ -110,6 +115,13 @@ class NuguWebView @JvmOverloads constructor(
         }
     }
 
+    override fun closeWindow() {
+        webView.post {
+            val activity = context as Activity
+            activity.finish()
+        }
+    }
+
     fun setWebViewClient(client: WebViewClient) {
         webView.webViewClient = client
     }
@@ -139,6 +151,7 @@ class NuguWebView @JvmOverloads constructor(
             cookies().forEach { (key, value) ->
                 val header = StringBuilder()
                 header.append(key).append("=").append(value)
+                Log.d("NuguWebView", "$key=$value")
                 CookieManager.getInstance().setCookie(url, header.toString())
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -157,6 +170,10 @@ class NuguWebView @JvmOverloads constructor(
 
     fun goBack() {
         webView.goBack()
+    }
+
+    fun onNewIntent(intent: Intent?) {
+        webView.reload()
     }
 
     inner class DefaultWebViewClient(private val context: Context) : WebViewClient() {
