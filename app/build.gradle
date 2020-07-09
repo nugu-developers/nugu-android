@@ -54,11 +54,13 @@ dependencies {
         implementation "com.skt.nugu.sdk:nugu-android-helper:$version"
         implementation "com.skt.nugu.sdk:nugu-ux-kit:$version"
         implementation "com.skt.nugu.sdk:nugu-login-kit:$version"
+        implementation "com.skt.nugu.sdk:nugu-service-kit:$version"
 //        implementation "com.skt.nugu.sdk:nugu-client-kit:$version"
     } else {
         implementation project(':nugu-android-helper')
         implementation project(':nugu-ux-kit')
         implementation project(':nugu-login-kit')
+        implementation project(':nugu-service-kit')
 //        implementation project(':nugu-client-kit')
     }
 

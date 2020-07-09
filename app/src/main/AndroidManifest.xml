@@ -38,6 +38,24 @@
                   android:configChanges="orientation|keyboardHidden"/>
 
         <activity android:name=".activity.IntroActivity" />
+        <activity
+            android:name=".activity.SettingsServiceActivity"
+            android:launchMode="singleTop"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="oauth_refresh"
+                    android:scheme="nugusdk" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".activity.SettingsAgreementActivity"/>
 
         <service android:name=".service.MusicPlayerService"/>
     </application>

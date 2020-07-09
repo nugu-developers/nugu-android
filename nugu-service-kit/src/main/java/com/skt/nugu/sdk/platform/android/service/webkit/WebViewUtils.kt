@@ -23,6 +23,7 @@ import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
+import java.io.File
 
 object WebViewUtils {
     fun buildGooglePlayIntent(context: Context, packageName: String): Intent {
@@ -52,9 +53,21 @@ object WebViewUtils {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
+
+            val cacheDir = File(webView.context.cacheDir, "webviewcache")
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs()
+            }
+            setAppCachePath(cacheDir.absolutePath)
+            allowFileAccess = true
+            setAppCacheEnabled(true)
         }
         webView.isScrollbarFadingEnabled = true
-
+        /*
+        // for debug
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }*/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().run {
                 setAcceptCookie(true)
