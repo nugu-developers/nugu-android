@@ -30,6 +30,12 @@ class ContextManager : ContextManagerInterface {
         private const val TAG = "ContextManager"
     }
 
+    private data class GetContextParam(
+        val contextRequester: ContextRequester,
+        val target: NamespaceAndName?,
+        val given: HashMap<NamespaceAndName, ContextState>?
+    )
+
     private data class StateInfo(
         var stateProvider: ContextStateProvider?,
         var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS,
@@ -44,7 +50,7 @@ class ContextManager : ContextManagerInterface {
     private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
     private val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
 
-    private val contextRequesterQueue: Queue<Pair<ContextRequester, NamespaceAndName?>> =
+    private val contextRequesterQueue: Queue<GetContextParam> =
         LinkedList()
     private val pendingOnStateProviders = HashSet<NamespaceAndName>()
     private val stateProviderLock = ReentrantLock()
@@ -119,37 +125,22 @@ class ContextManager : ContextManagerInterface {
         Logger.d(TAG, "[sendContextToRequesters]")
 
         synchronized(contextRequesterQueue) {
-            val fullContext = if(contextRequesterQueue.any {
-                    it.second == null
-                }) {
-                stateProviderLock.withLock {
-                    buildContext(null)
-                }
-            } else {
-                null
-            }
-
             while (contextRequesterQueue.isNotEmpty()) {
                 with(contextRequesterQueue.poll()) {
-                    val namespaceAndName = second
-                    val strContext: String = if(namespaceAndName == null) {
-                        fullContext!!
-                    } else {
-                        stateProviderLock.withLock {
-                            buildContext(namespaceAndName)
-                        }
+                    val strContext: String = stateProviderLock.withLock {
+                        buildContext(target, given)
                     }
                     if(error == null) {
-                        first.onContextAvailable(strContext)
+                        contextRequester.onContextAvailable(strContext)
                     } else {
-                        first.onContextFailure(error, strContext)
+                        contextRequester.onContextFailure(error, strContext)
                     }
                 }
             }
         }
     }
 
-    private fun buildContext(namespaceAndName: NamespaceAndName?, givenFullState: String? = null): String = stringBuilderForContext.apply {
+    private fun buildContext(target: NamespaceAndName?, given: Map<NamespaceAndName, ContextState>? = null): String = stringBuilderForContext.apply {
         // clear
         setLength(0)
         // write
@@ -177,14 +168,21 @@ class ContextManager : ContextManagerInterface {
                     valueIndex++
 
                     append("\"${it.key}\":")
-                    if (namespaceAndName == null || (namespaceAndName.namespace == namespaceEntry.key && namespaceAndName.name == it.key) || compactState == null) {
-                        if(givenFullState == null) {
+                    val givenContextState = given?.get(NamespaceAndName(namespaceEntry.key, it.key))
+                    if (target == null || (target.namespace == namespaceEntry.key && target.name == it.key) || compactState == null) {
+                        // need full
+                        // full case
+                        if(givenContextState == null) {
                             append(fullState)
                         } else {
-                            append(givenFullState)
+                            append(givenContextState.toFullJsonString())
                         }
                     } else {
-                        append(compactState)
+                        if(givenContextState == null) {
+                            append(compactState)
+                        } else {
+                            append(givenContextState.toCompactJsonString())
+                        }
                     }
                 }
             }
@@ -287,10 +285,11 @@ class ContextManager : ContextManagerInterface {
 
     override fun getContext(
         contextRequester: ContextRequester,
-        namespaceAndName: NamespaceAndName?
+        target: NamespaceAndName?,
+        given: HashMap<NamespaceAndName, ContextState>?
     ) {
         synchronized(contextRequesterQueue) {
-            contextRequesterQueue.offer(Pair(contextRequester, namespaceAndName))
+            contextRequesterQueue.offer(GetContextParam(contextRequester, target, given))
 
             if (contextRequesterQueue.isNotEmpty()) {
                 updateStatesThread.wakeOne()
@@ -300,9 +299,5 @@ class ContextManager : ContextManagerInterface {
     
     override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String = stateProviderLock.withLock {
         buildContext(namespaceAndName)
-    }
-
-    override fun getCompactContextWith(namespaceAndName: NamespaceAndName, fullState: String): String = stateProviderLock.withLock {
-        buildContext(namespaceAndName, fullState)
     }
 }

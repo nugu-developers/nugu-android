@@ -19,13 +19,14 @@ package com.skt.nugu.sdk.agent.ext.phonecall.handler
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.Context
-import com.skt.nugu.sdk.agent.ext.phonecall.Person
 import com.skt.nugu.sdk.agent.ext.phonecall.PhoneCallAgent
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -65,19 +66,24 @@ class SendCandidatesDirectiveHandler(
             info.result.setCompleted()
             controller.sendCandidates(payload, object: Callback {
                 override fun onSuccess(context: Context) {
-                    val jsonContext = contextGetter.getCompactContextWith(namespaceAndName, PhoneCallAgent.StateContext(context).toFullJsonString())
-                    messageSender.sendMessage(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            PhoneCallAgent.NAMESPACE,
-                            NAME_CANDIDATES_LISTED,
-                            PhoneCallAgent.VERSION.toString()
-                        ).payload(JsonObject().apply {
-                            addProperty("playServiceId", payload.playServiceId)
-                        }.toString())
-                            .referrerDialogRequestId(info.directive.getDialogRequestId())
-                            .build()
-                    )
+                    contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+                        override fun onContext(jsonContext: String) {
+                            messageSender.sendMessage(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    PhoneCallAgent.NAMESPACE,
+                                    NAME_CANDIDATES_LISTED,
+                                    PhoneCallAgent.VERSION.toString()
+                                ).payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
+                                    .build()
+                            )
+                        }
+                    }, null, HashMap<NamespaceAndName, ContextState>().apply {
+                        put(namespaceAndName, PhoneCallAgent.StateContext(context))
+                    })
                 }
 
                 override fun onFailure() {
