@@ -31,7 +31,6 @@
             style="@style/Nugu.Widget.Guide.Text"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:ellipsize="start"
             android:gravity="start|center_vertical"
             android:hint="@string/guide_text"
             android:singleLine="true"

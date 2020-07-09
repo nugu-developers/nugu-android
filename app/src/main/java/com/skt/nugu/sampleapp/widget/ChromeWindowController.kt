@@ -20,7 +20,6 @@ import android.support.design.widget.BottomSheetBehavior
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
 import android.widget.TextView
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
@@ -34,7 +33,6 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
-
 
 class ChromeWindowController(
     private val activity: Activity,
@@ -53,8 +51,6 @@ class ChromeWindowController(
         fun onExpandStarted()
         fun onHiddenFinished()
     }
-
-    private var isDialogMode: Boolean = false
 
     private val finishRunnable = Runnable {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -130,12 +126,9 @@ class ChromeWindowController(
             items.add(NuguChipsView.Item(it.text, it.type == Chip.Type.ACTION))
         }
         chipsView.addAll(items)
-    }
-
-    private fun setResult(text : String) {
-        sttTextView.text = text
-        sttTextView.visibility = View.VISIBLE
-        chipsView.visibility = if(text.isEmpty()) View.VISIBLE else View.GONE
+        if(chipsView.size() > 0) {
+            chipsView.visibility = View.VISIBLE
+        }
     }
 
     override fun onStateChanged(state: SpeechRecognizerAggregatorInterface.State) {
@@ -153,15 +146,17 @@ class ChromeWindowController(
         bottomSheet.post {
             Log.d(TAG, "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode")
 
-            this.isDialogMode = dialogMode
             voiceChromeController.onDialogUXStateChanged(newState, dialogMode, chips)
 
             when(newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
-                    handleExpecting(chips)
+                    handleExpecting(dialogMode, chips)
+                }
+                DialogUXStateAggregatorInterface.DialogUXState.LISTENING -> {
+                    handleListening()
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                    handleSpeaking()
+                    handleSpeaking(dialogMode)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
                     finishDelayed(DELAY_TIME_LONG)
@@ -173,8 +168,15 @@ class ChromeWindowController(
         }
     }
 
-    private fun handleExpecting(payload: RenderDirective.Payload?) {
-        setResult("")
+    private fun handleExpecting(dialogMode: Boolean, payload: RenderDirective.Payload?) {
+        if(!dialogMode) {
+            sttTextView.setHint(R.string.guide_text)
+        } else {
+            sttTextView.hint = ""
+        }
+        sttTextView.text = ""
+        sttTextView.visibility = View.VISIBLE
+
         updateChips(payload)
         cancelFinishDelayed()
 
@@ -185,14 +187,21 @@ class ChromeWindowController(
         callback.onExpandStarted()
     }
 
-    private fun handleSpeaking() {
-        if(!isDialogMode) {
+    private fun handleListening() {
+        sttTextView.text = ""
+        sttTextView.hint = ""
+        chipsView.visibility = View.GONE
+    }
+
+    private fun handleSpeaking(dialogMode: Boolean) {
+        sttTextView.visibility = View.GONE
+        chipsView.visibility = View.GONE
+
+        if(!dialogMode) {
             finishImmediately()
             return
         }
         cancelFinishDelayed()
-        sttTextView.visibility = if(chipsView.size() > 0) View.GONE else View.VISIBLE
-        chipsView.visibility = View.VISIBLE
     }
 
     override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
@@ -229,13 +238,13 @@ class ChromeWindowController(
 
     override fun onPartialResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
-            setResult(result)
+            sttTextView.text = result
         }
     }
 
     override fun onCompleteResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
-            setResult(result)
+            sttTextView.text = result
 
             if(PreferenceHelper.enableRecognitionBeep(activity)) {
                 SoundPoolCompat.play(SoundPoolCompat.LocalBeep.SUCCESS)
