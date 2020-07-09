@@ -21,9 +21,11 @@ import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.message.Context
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -71,19 +73,24 @@ class SendCandidatesDirectiveHandler(
             info.result.setCompleted()
             controller.sendCandidates(payload, object : AgentCallback {
                 override fun onSuccess(context: MessageAgent.StateContext) {
-                    val jsonContext = contextGetter.getCompactContextWith(namespaceAndName, context.toFullJsonString())
-                    messageSender.sendMessage(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            MessageAgent.NAMESPACE,
-                            NAME_CANDIDATES_LISTED,
-                            MessageAgent.VERSION.toString()
-                        ).payload(JsonObject().apply {
-                            addProperty("playServiceId", payload.playServiceId)
-                        }.toString())
-                            .referrerDialogRequestId(info.directive.getDialogRequestId())
-                            .build()
-                    )
+                    contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+                        override fun onContext(jsonContext: String) {
+                            messageSender.sendMessage(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    MessageAgent.NAMESPACE,
+                                    NAME_CANDIDATES_LISTED,
+                                    MessageAgent.VERSION.toString()
+                                ).payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
+                                    .build()
+                            )
+                        }
+                    }, namespaceAndName, HashMap<NamespaceAndName, ContextState>().apply {
+                        put(namespaceAndName, context)
+                    })
                 }
 
                 override fun onFailure() {
