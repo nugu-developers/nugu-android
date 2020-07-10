@@ -58,6 +58,7 @@ class SpeechRecognizerAggregator(
     private var epdParam: EndPointDetectorParam? = null
     private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
     private var keywordDetectorState = KeywordDetector.State.INACTIVE
+    private var speechProcessorState = AudioEndPointDetector.State.STOP
 
     init {
         keywordDetector?.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
@@ -93,6 +94,8 @@ class SpeechRecognizerAggregator(
                     "[AudioEndPointDetectorStateObserverInterface::onStateChange] state: $state"
                 )
                 executor.submit {
+                    speechProcessorState = state
+
                     val aggregatorState = when (state) {
                         AudioEndPointDetector.State.EXPECTING_SPEECH -> {
                             if (keywordDetector?.getDetectorState() == KeywordDetector.State.ACTIVE) {
@@ -316,16 +319,8 @@ class SpeechRecognizerAggregator(
     override fun stop() {
         Log.d(TAG, "[stop]")
         executor.submit {
-            Log.d(TAG, "[stop] on executor")
-            when (state) {
-                SpeechRecognizerAggregatorInterface.State.WAITING -> keywordDetector?.stopDetect()
-                SpeechRecognizerAggregatorInterface.State.WAKEUP,
-                SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
-                SpeechRecognizerAggregatorInterface.State.SPEECH_START,
-                SpeechRecognizerAggregatorInterface.State.SPEECH_END -> speechProcessor.stop()
-                else -> {
-                }
-            }
+            executeStopTrigger()
+            executeStopListening(true)
         }
     }
 
@@ -333,13 +328,13 @@ class SpeechRecognizerAggregator(
         Log.d(TAG, "[stopListening]")
         executor.submit {
             Log.d(TAG, "[stopListening] on executor")
-            when (state) {
-                SpeechRecognizerAggregatorInterface.State.WAKEUP,
-                SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
-                SpeechRecognizerAggregatorInterface.State.SPEECH_START -> speechProcessor.stop(cancel)
-                else -> {
-                }
-            }
+            executeStopListening(cancel)
+        }
+    }
+
+    private fun executeStopListening(cancel: Boolean) {
+        if(speechProcessorState.isActive()) {
+            speechProcessor.stop(cancel)
         }
     }
 
