@@ -1,6 +1,35 @@
 Change Log
 ==========
 
+Version 0.9.7 *(2020-07-10)*
+-----------------------------
+* Fix: Fix incorrect state processing (v1) (#876)
+* Fix: Fix reverse playStack ordering (#889)
+* Fix: Fix not resume audioPlayer on foreground (#893)
+* Fix: Fix wrong acquire channel for TTSScenarioPlayer (#897)
+* Fix: Update VoiceChromeView (#902)
+    * Fix stt according to DialogUXState
+    * Apply chips Texview to ellipsize
+* Fix: Fix not stop listening on working (#904)
+* Fix: Fix missing notify of dialogMode changes (#907)
+* Improve: Improve Request & Response management (#713)
+* Improve: Apply blocking policy at Chips.Render directive (#877)
+* Improve: Send PhoneCall.CandidatesListed event with full context. (#880)
+* Improve: Rename shuffle/favorite/repeat API (#881)
+* Improve: Update Keensense v0.2.2 (#883)
+* Improve: Change API of SendCandidatesDirectiveHandler.Controller (#885)
+    * getCandidateList -> sendCandidates (sync -> async)
+* Improve: Update NuguServiceKit (#888)
+    * Declaration SERVICE_SETTING_URL
+    * Add "Oauth-Redirect-Uri" Cookie
+    * Add closeWindow interface
+    * apply sampleApp
+* Improve: Allow nullable location (#891)
+* Improve: Apply blocking policy at PhoneCall.MakeCall directive (#895)
+* Improve: Open message observer (#909)
+* New: Support Speaker Interface v1.2 (#874)
+    * add defaultVolumeLevel, group field.
+
 Version 0.9.6 *(2020-07-03)*
 -----------------------------
 * Fix: Wrong interaction when swiping on ChromeWindow (#861)
