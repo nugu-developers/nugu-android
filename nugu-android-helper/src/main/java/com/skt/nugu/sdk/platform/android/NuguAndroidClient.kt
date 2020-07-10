@@ -75,8 +75,8 @@ import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.interfaces.context.OsContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
@@ -754,7 +754,7 @@ class NuguAndroidClient private constructor(
             null
         }
     override val systemAgent: SystemAgentInterface = client.systemAgent
-    override val networkManager: NetworkManagerInterface = client.networkManager
+    override val networkManager: ConnectionManagerInterface = client.networkManager
     override val bluetoothAgent: BluetoothAgentInterface?
         get() = try {
             client.getAgent(DefaultBluetoothAgent.NAMESPACE) as BluetoothAgentInterface
