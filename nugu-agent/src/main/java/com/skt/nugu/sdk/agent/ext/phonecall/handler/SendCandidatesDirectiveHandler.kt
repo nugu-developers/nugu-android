@@ -70,7 +70,7 @@ class SendCandidatesDirectiveHandler(
                 override fun onSuccess(context: Context) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     PhoneCallAgent.NAMESPACE,
@@ -81,7 +81,13 @@ class SendCandidatesDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     }, null, HashMap<NamespaceAndName, ContextState>().apply {
                         put(namespaceAndName, PhoneCallAgent.StateContext(context))

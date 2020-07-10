@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.message.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
+import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.ext.message.Context
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload
@@ -77,7 +78,7 @@ class SendCandidatesDirectiveHandler(
                 override fun onSuccess(context: MessageAgent.StateContext) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.sendMessage(
+                            messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MessageAgent.NAMESPACE,
@@ -88,7 +89,13 @@ class SendCandidatesDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            )
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+                            })
                         }
                     }, namespaceAndName, HashMap<NamespaceAndName, ContextState>().apply {
                         put(namespaceAndName, context)
