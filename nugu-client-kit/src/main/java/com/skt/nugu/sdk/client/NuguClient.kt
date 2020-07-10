@@ -42,7 +42,6 @@ import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
@@ -103,7 +102,7 @@ class NuguClient private constructor(
     )
     private val messageRouter: MessageRouter =
         MessageRouter(builder.transportFactory, builder.authDelegate)
-    val networkManager: NetworkManagerInterface
+    val networkManager: ConnectionManagerInterface
 
     var useServerSideEndPointDetector: Boolean = false
 
