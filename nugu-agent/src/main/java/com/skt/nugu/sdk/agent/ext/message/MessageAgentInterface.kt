@@ -16,14 +16,17 @@
 
 package com.skt.nugu.sdk.agent.ext.message
 
-import com.skt.nugu.sdk.agent.ext.message.handler.GetMessageDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.handler.SendCandidatesDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.message.handler.SendMessageDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.message.payload.ReadMessageDirective
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 
-interface MessageClient
-    : SendCandidatesDirectiveHandler.Controller
-    , SendMessageDirectiveHandler.Controller
-    , GetMessageDirectiveHandler.Controller
-{
-    fun getContext(): Context
+interface MessageAgentInterface {
+    interface OnPlaybackListener {
+        fun onPlaybackStarted(directive: ReadMessageDirective)
+        fun onPlaybackFinished(directive: ReadMessageDirective)
+        fun onPlaybackStopped(directive: ReadMessageDirective)
+        fun onPlaybackError(directive: ReadMessageDirective, type: ErrorType, error: String)
+    }
+
+    fun addOnPlaybackListener(listener: OnPlaybackListener)
+    fun removeOnPlaybackListener(lisetener: OnPlaybackListener)
 }
