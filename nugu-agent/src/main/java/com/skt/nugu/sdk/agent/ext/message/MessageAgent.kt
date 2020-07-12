@@ -45,6 +45,7 @@ class MessageAgent(
     messageSender: MessageSender,
     directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent
+    , MessageAgentInterface
     , SupportedInterfaceContextProvider
     , SendCandidatesDirectiveHandler.AgentController
     , SendMessageDirectiveHandler.Controller
@@ -58,6 +59,7 @@ class MessageAgent(
 
     override fun getInterfaceName(): String = NAMESPACE
 
+    private val listeners = LinkedHashSet<MessageAgentInterface.OnPlaybackListener>()
     private val executor = Executors.newSingleThreadExecutor()
 
     private val readMessageController = object : ReadMessageDirectiveHandler.Controller, TTSScenarioPlayer.Listener {
@@ -117,41 +119,48 @@ class MessageAgent(
             override fun onPlaybackStarted(source: TTSScenarioPlayer.Source) {
                 // no-op
                 state = TTSAgentInterface.State.PLAYING
-                directives.forEach {
-                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
-                        token = it.value.directive.payload.token
-                        return@forEach
+                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+
+                readSource?.let { source->
+                    token = source.directive.payload.token
+
+                    executor.submit {
+                        listeners.forEach {
+                            it.onPlaybackStarted(source.directive)
+                        }
                     }
                 }
             }
 
             override fun onPlaybackFinished(source: TTSScenarioPlayer.Source) {
                 state = TTSAgentInterface.State.FINISHED
-                var remove: String? = null
-                directives.forEach {
-                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
-                        it.value.callback.onFinish()
-                        remove = it.key
-                        return@forEach
+                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+
+                readSource?.let {source->
+                    source.callback.onFinish()
+                    directives.remove(source.directive.header.messageId)
+
+                    executor.submit {
+                        listeners.forEach {
+                            it.onPlaybackFinished(source.directive)
+                        }
                     }
-                }
-                remove?.let {
-                    directives.remove(it)
                 }
             }
 
             override fun onPlaybackStopped(source: TTSScenarioPlayer.Source) {
                 state = TTSAgentInterface.State.STOPPED
-                var remove: String? = null
-                directives.forEach {
-                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
-                        it.value.callback.onStop(true)
-                        remove = it.key
-                        return@forEach
+                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+
+                readSource?.let {source->
+                    source.callback.onStop(true)
+                    directives.remove(source.directive.header.messageId)
+
+                    executor.submit {
+                        listeners.forEach {
+                            it.onPlaybackStopped(source.directive)
+                        }
                     }
-                }
-                remove?.let {
-                    directives.remove(it)
                 }
             }
 
@@ -161,16 +170,17 @@ class MessageAgent(
                 error: String
             ) {
                 state = TTSAgentInterface.State.STOPPED
-                var remove: String? = null
-                directives.forEach {
-                    if (it.value.getDialogRequestId() == source.getDialogRequestId()) {
-                        it.value.callback.onError("type: $type, error: $error")
-                        remove = it.key
-                        return@forEach
+                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+
+                readSource?.let {source->
+                    source.callback.onError("type: $type, error: $error")
+                    directives.remove(source.directive.header.messageId)
+
+                    executor.submit {
+                        listeners.forEach {
+                            it.onPlaybackError(source.directive, type, error)
+                        }
                     }
-                }
-                remove?.let {
-                    directives.remove(it)
                 }
             }
         }
@@ -294,6 +304,18 @@ class MessageAgent(
     ) {
         executor.submit {
             client.getMessageList(payload, callback)
+        }
+    }
+
+    override fun addOnPlaybackListener(listener: MessageAgentInterface.OnPlaybackListener) {
+        executor.submit {
+            listeners.add(listener)
+        }
+    }
+
+    override fun removeOnPlaybackListener(lisetener: MessageAgentInterface.OnPlaybackListener) {
+        executor.submit {
+            listeners.remove(lisetener)
         }
     }
 }
