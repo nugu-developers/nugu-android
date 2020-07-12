@@ -89,11 +89,12 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
             }
 
             if(syncSet.remove(requester)) {
+                Logger.d(TAG, "[deactivate] key: $key, requester: $requester => deactivated")
                 if(syncSet.isEmpty()) {
                     activeSessionsMap.remove(key)
                     scheduleTimeout(key)
+                    Logger.d(TAG, "[deactivate] key: $key, session deactivated")
                 }
-                Logger.d(TAG, "[deactivate] key: $key, requester: $requester => deactivated")
             } else {
                 Logger.d(TAG, "[deactivate] key: $key, requester: $requester => already deactivated")
             }

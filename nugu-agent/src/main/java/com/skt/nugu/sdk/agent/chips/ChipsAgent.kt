@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
 
 class ChipsAgent(
@@ -33,6 +34,7 @@ class ChipsAgent(
     , SupportedInterfaceContextProvider
     , RenderDirectiveHandler.Renderer {
     companion object {
+        private const val TAG = "ChipsAgent"
         const val NAMESPACE = "Chips"
         private val VERSION = Version(1, 0)
 
@@ -72,6 +74,7 @@ class ChipsAgent(
     }
 
     override fun render(directive: RenderDirective) {
+        Logger.d(TAG, "[render] $directive")
         listeners.forEach {
             it.onReceiveChips(directive)
         }

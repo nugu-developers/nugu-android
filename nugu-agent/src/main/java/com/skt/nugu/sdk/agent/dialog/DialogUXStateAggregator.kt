@@ -15,13 +15,13 @@
  */
 package com.skt.nugu.sdk.agent.dialog
 
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -168,13 +168,16 @@ class DialogUXStateAggregator(
     }
 
     private fun notifyObserversOfState() {
-        val chips: RenderDirective.Payload? = getCurrentChips()
-        listeners.forEach {
-            it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips)
+        getCurrentChips().let { chips ->
+            listeners.forEach {
+                it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips)
+            }
         }
     }
 
     private fun getCurrentChips(): RenderDirective.Payload? {
+        val activeSessions = sessionManager.getActiveSessions()
+        Logger.d(TAG, "[getCurrentChips] activeSessions: $activeSessions, lastReceivedChips: $lastReceivedChips")
         sessionManager.getActiveSessions().forEach {
             if(it.key == lastReceivedChips?.header?.dialogRequestId) {
                 return lastReceivedChips?.payload
