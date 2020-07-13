@@ -86,6 +86,8 @@ class DefaultSystemAgent(
         const val NAME_EXCEPTION = "Exception"
         const val NAME_ECHO = "Echo"
         const val NAME_NO_DIRECTIVES = "NoDirectives"
+        const val NAME_NOOP = "Noop"
+        const val NAME_RESET_CONNECTION = "ResetConnection"
 
         /** events */
         const val EVENT_NAME_SYNCHRONIZE_STATE = "SynchronizeState"
@@ -121,6 +123,14 @@ class DefaultSystemAgent(
             NAMESPACE,
             NAME_NO_DIRECTIVES
         )
+        val NOOP = NamespaceAndName(
+            NAMESPACE,
+            NAME_NOOP
+        )
+        val RESET_CONNECTION = NamespaceAndName(
+            NAMESPACE,
+            NAME_RESET_CONNECTION
+        )
 
         private const val KEY_INACTIVITY_EVENT_PAYLOAD = "inactiveTimeInSeconds"
         const val SECONDS = 1000L
@@ -145,6 +155,28 @@ class DefaultSystemAgent(
         onUserActive()
     }
 
+    internal data class HandoffConnectionPayload(
+        @SerializedName("protocol")
+        val protocol: String,
+        @SerializedName("hostname")
+        val hostname: String,
+        @SerializedName("address")
+        val address: String,
+        @SerializedName("port")
+        val port: Int,
+        @SerializedName("retryCountLimit")
+        val retryCountLimit: Int,
+        @SerializedName("connectionTimeout")
+        val connectionTimeout: Int,
+        @SerializedName("charge")
+        val charge: String
+    )
+
+    internal data class ResetConnectionPayload(
+        @SerializedName("description")
+        val description: String
+    )
+
     /**
      * Shut down the Impl.
      */
@@ -165,7 +197,8 @@ class DefaultSystemAgent(
         configuration[EXCEPTION] = nonBlockingPolicy
         configuration[ECHO] = nonBlockingPolicy
         configuration[NO_DIRECTIVES] = nonBlockingPolicy
-
+        configuration[NOOP] = nonBlockingPolicy
+        configuration[RESET_CONNECTION] = nonBlockingPolicy
         return configuration
     }
 
@@ -211,7 +244,8 @@ class DefaultSystemAgent(
             NAME_UPDATE_STATE -> handleUpdateState(info)
             NAME_EXCEPTION -> handleException(info)
             NAME_ECHO -> handleEcho(info)
-            NAME_NO_DIRECTIVES -> {
+            NAME_RESET_CONNECTION -> handleResetConnection(info)
+            NAME_NO_DIRECTIVES, NAME_NOOP -> {
             }
         }
         setHandlingCompleted(info)
@@ -231,23 +265,6 @@ class DefaultSystemAgent(
             onUserActive()
         }
     }
-
-    internal data class HandoffConnectionPayload(
-        @SerializedName("protocol")
-        val protocol: String,
-        @SerializedName("hostname")
-        val hostname: String,
-        @SerializedName("address")
-        val address: String,
-        @SerializedName("port")
-        val port: Int,
-        @SerializedName("retryCountLimit")
-        val retryCountLimit: Int,
-        @SerializedName("connectionTimeout")
-        val connectionTimeout: Int,
-        @SerializedName("charge")
-        val charge: String
-    )
 
     /**
      * Registry Connection Handoff to [com.skt.nugu.core.network.transport.Transport.onHandoffConnection]
@@ -344,6 +361,28 @@ class DefaultSystemAgent(
                 }
                 Logger.e(TAG, "EXCEPTION : ${payload.code}, ${payload.description}")
             }
+        }
+    }
+
+    /**
+     * Resets the connection immediately.
+     * @param info The directive currently being handled.
+     */
+    private fun handleResetConnection(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleResetConnection] $info")
+        val payload =
+            MessageFactory.create(info.directive.payload, ResetConnectionPayload::class.java)
+        if (payload == null) {
+            Logger.d(
+                TAG,
+                "[handleResetConnection] invalid payload: ${info.directive.payload}"
+            )
+            return
+        }
+
+        executor.submit {
+            executeDisconnectEvent()
+            connectionManager.resetConnection(payload.description)
         }
     }
 

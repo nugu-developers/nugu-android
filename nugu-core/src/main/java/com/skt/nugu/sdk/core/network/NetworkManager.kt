@@ -153,4 +153,10 @@ class NetworkManager private constructor(
         messageRouter.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
     }
 
+    /**
+     * Resets the connection immediately.
+     */
+    override fun resetConnection(description: String?) {
+        messageRouter.resetConnection(description)
+    }
 }

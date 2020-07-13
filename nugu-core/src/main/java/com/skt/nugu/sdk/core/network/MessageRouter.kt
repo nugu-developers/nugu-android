@@ -245,6 +245,12 @@ class MessageRouter(
         }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
     }
 
+    override fun resetConnection(description: String?) {
+        Logger.d(TAG, "[resetConnection] description=$description")
+        disconnectAllTransport()
+        createActiveTransport()
+    }
+
     /**
      * Returns a string representation of the object.
      */

@@ -54,4 +54,9 @@ interface MessageRouterInterface : MessageSender {
         connectionTimeout: Int,
         charge: String
     )
+
+    /**
+     * Resets the connection immediately.
+     */
+    fun resetConnection(description: String?)
 }
