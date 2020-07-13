@@ -63,6 +63,12 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
         connectionTimeout: Int,
         charge: String
     )
+
+    /**
+     * Resets the connection immediately.
+     * @param description The description is just a log
+     */
+    fun resetConnection(description : String?)
     /**
      * Adds an observer to be notified when a message arrives from DeviceGateway.
      * @param observer The observer to add.
