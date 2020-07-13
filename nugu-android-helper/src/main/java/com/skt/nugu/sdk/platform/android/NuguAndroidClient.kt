@@ -192,6 +192,8 @@ class NuguAndroidClient private constructor(
 
         internal var enableDisplayLifeCycleManagement = true
 
+        internal var defaultDisplayDuration = 7000L
+
         internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
 
         internal var enableDisplay: Boolean = true
@@ -297,6 +299,12 @@ class NuguAndroidClient private constructor(
          */
         fun enableDisplayLifeCycleManagement(enable: Boolean) =
             apply { this.enableDisplayLifeCycleManagement = enable }
+
+        /**
+         * @param duration the default duration for display that is showing after a scenario finish.
+         */
+        fun defaultDisplayDuration(duration: Long) =
+            apply { this.defaultDisplayDuration = duration }
 
         /**
          * @param handler the handler for text source directive. If not provided, default behavior at TextAgent.
@@ -592,7 +600,8 @@ class NuguAndroidClient private constructor(
                                     ),
                                     getSessionManager(),
                                     getContextManager(),
-                                    builder.enableDisplayLifeCycleManagement
+                                    builder.enableDisplayLifeCycleManagement,
+                                    builder.defaultDisplayDuration
                                 ).apply {
                                     getDisplayPlayStackManager().addPlayContextProvider(this)
 
