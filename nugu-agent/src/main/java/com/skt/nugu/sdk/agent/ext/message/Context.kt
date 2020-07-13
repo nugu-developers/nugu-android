@@ -24,11 +24,20 @@ data class Context(
     val template: Template?
 ) {
     data class Template(
+        @SerializedName("info")
+        val info: Info?,
         @SerializedName("recipientIntended")
         val recipientIntended: RecipientIntended?,
         @SerializedName("candidates")
         val candidates: List<Contact>?
     ) {
         fun toJson(): JsonElement = Gson().toJsonTree(this)
+    }
+
+    enum class Info {
+        @SerializedName("PHONE_BOOK")
+        PHONE_BOOK,
+        @SerializedName("MESSAGE")
+        MESSAGE
     }
 }
