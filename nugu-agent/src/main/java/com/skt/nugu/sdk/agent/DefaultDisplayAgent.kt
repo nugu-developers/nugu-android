@@ -37,7 +37,8 @@ class DefaultDisplayAgent(
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
     private val sessionManager: SessionManagerInterface,
     contextStateProviderRegistry: ContextStateProviderRegistry,
-    enableDisplayLifeCycleManagement: Boolean
+    enableDisplayLifeCycleManagement: Boolean,
+    private val defaultDuration: Long
 ) : CapabilityAgent, DisplayAgentInterface
     , SupportedInterfaceContextProvider
     , ControlFocusDirectiveHandler.Controller
@@ -100,7 +101,8 @@ class DefaultDisplayAgent(
                 "MID" -> 15000L
                 "LONG" -> 30000L
                 "LONGEST" -> 60 * 1000 * 10L // 10min
-                else -> 7000L // "SHORT" or Default
+                "SHORT" -> 7000L
+                else -> defaultDuration
             }
         }
 
