@@ -20,6 +20,6 @@ interface Call {
     fun isCanceled(): Boolean
     fun cancel()
     fun execute(): Status
-    fun enqueue(callback: MessageSender.Callback)
+    fun enqueue(callback: MessageSender.Callback?)
     fun result(status: Status)
 }
