@@ -26,7 +26,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
+        <com.skt.nugu.sdk.platform.android.ux.widget.EllipsizedTextView
             android:id="@+id/tv_stt"
             style="@style/Nugu.Widget.Guide.Text"
             android:layout_width="wrap_content"
@@ -35,10 +35,10 @@
             android:hint="@string/guide_text"
             android:singleLine="true"
             android:textAlignment="textStart"
+            android:ellipsize="start"
             android:textSize="17sp"
             android:layout_marginEnd="14dp"
             app:fontFamily="@font/noto_sans_kr_medium_hestia" />
-
 
         <com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
             android:id="@+id/chipsView"
