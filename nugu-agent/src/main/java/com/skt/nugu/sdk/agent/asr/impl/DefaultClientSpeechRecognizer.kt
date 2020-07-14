@@ -174,7 +174,9 @@ class DefaultClientSpeechRecognizer(
         }
 
         // TODO : stop at SPEECH_END
-        currentRequest?.call?.cancel()
+        if(cancel) {
+            currentRequest?.call?.cancel()
+        }
     }
 
     override fun isRecognizing(): Boolean = currentRequest != null
