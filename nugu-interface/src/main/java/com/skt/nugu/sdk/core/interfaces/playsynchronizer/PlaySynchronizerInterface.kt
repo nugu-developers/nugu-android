@@ -31,6 +31,4 @@ interface PlaySynchronizerInterface {
     fun releaseSync(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener?)
     fun releaseSyncImmediately(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener?)
     fun releaseWithoutSync(synchronizeObject: SynchronizeObject)
-
-    fun existOtherSyncObject(synchronizeObject: SynchronizeObject): Boolean
 }
