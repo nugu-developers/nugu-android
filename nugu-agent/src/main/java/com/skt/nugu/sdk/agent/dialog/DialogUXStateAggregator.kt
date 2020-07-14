@@ -178,13 +178,18 @@ class DialogUXStateAggregator(
     private fun getCurrentChips(): RenderDirective.Payload? {
         val activeSessions = sessionManager.getActiveSessions()
         Logger.d(TAG, "[getCurrentChips] activeSessions: $activeSessions, lastReceivedChips: $lastReceivedChips")
-        sessionManager.getActiveSessions().forEach {
-            if(it.key == lastReceivedChips?.header?.dialogRequestId) {
-                return lastReceivedChips?.payload
-            }
+        var keyForRecentSession: String? = null
+
+        // TODO : implementation dependent - getActiveSessions ordered by set.
+        activeSessions.forEach {
+            keyForRecentSession = it.key
         }
 
-        return null
+        return if(keyForRecentSession == lastReceivedChips?.header?.dialogRequestId) {
+            lastReceivedChips?.payload
+        } else {
+            null
+        }
     }
 
     override fun onConnectionStatusChanged(status: ConnectionStatusListener.Status, reason: ConnectionStatusListener.ChangedReason) {
