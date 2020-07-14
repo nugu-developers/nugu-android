@@ -43,7 +43,7 @@ internal class HTTP2Call(
 
     override fun request() = request
 
-    override fun enqueue(callback: MessageSender.Callback) {
+    override fun enqueue(callback: MessageSender.Callback?) {
         this.callback = callback
 
         synchronized(this) {
