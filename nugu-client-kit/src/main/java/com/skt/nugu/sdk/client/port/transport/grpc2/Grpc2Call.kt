@@ -37,7 +37,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
 
     override fun request() = request
 
-    override fun enqueue(callback: MessageSender.Callback) {
+    override fun enqueue(callback: MessageSender.Callback?) {
         this.callback = callback
 
         synchronized(this) {

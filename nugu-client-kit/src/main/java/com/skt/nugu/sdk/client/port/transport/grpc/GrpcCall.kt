@@ -52,7 +52,7 @@ internal class GrpcCall(
         }
     }
 
-    override fun enqueue(callback: MessageSender.Callback) {
+    override fun enqueue(callback: MessageSender.Callback?) {
         this.callback = callback
 
         synchronized(this) {
