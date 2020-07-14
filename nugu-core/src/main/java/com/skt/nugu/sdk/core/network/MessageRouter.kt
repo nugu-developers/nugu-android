@@ -26,6 +26,8 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import com.skt.nugu.sdk.core.interfaces.message.Call
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
+import com.skt.nugu.sdk.core.interfaces.transport.FixedStateCall
 
 /**
  * This class which specifies the interface to manage an connection over DeviceGateway.
@@ -114,7 +116,9 @@ class MessageRouter(
      * Prepares the [MessageRequest] to be executed at some point in the future.
      */
     override fun newCall(request: MessageRequest): Call {
-        return activeTransport!!.newCall(activeTransport, request, this)
+        return activeTransport?.newCall(activeTransport, request, this) ?: FixedStateCall(Status(
+            Status.Code.FAILED_PRECONDITION
+        ).withDescription("Transport is not initialized"), request, this)
     }
 
     override fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
