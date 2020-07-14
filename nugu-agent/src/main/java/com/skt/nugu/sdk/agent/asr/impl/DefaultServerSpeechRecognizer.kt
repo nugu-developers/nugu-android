@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -53,6 +54,7 @@ class DefaultServerSpeechRecognizer(
         var cancelCause: ASRAgentInterface.CancelCause? = null
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
+        var call: Call? = null
     }
 
     override var enablePartialResult: Boolean = true
@@ -133,34 +135,48 @@ class DefaultServerSpeechRecognizer(
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .build()
-        val status = messageSender.newCall(
+
+        val call = messageSender.newCall(
             eventMessage
-        ).execute()
-        if(status.isOk()) {
-            val thread = createSenderThread(
-                audioInputStream,
-                audioFormat,
-                sendPosition,
-                eventMessage
+        )
+
+        val thread = createSenderThread(
+            audioInputStream,
+            audioFormat,
+            sendPosition,
+            eventMessage
+        )
+        val request =
+            RecognizeRequest(
+                thread, eventMessage, expectSpeechDirectiveParam, resultListener
             )
-            val request =
-                RecognizeRequest(
-                    thread, eventMessage, expectSpeechDirectiveParam, resultListener
-                )
-            currentRequest = request
-            thread.start()
+        request.call = call
+        currentRequest = request
 
-            setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
-            timeoutFuture?.cancel(true)
-            timeoutFuture = timeoutScheduler.schedule({
-                handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
-            }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+        call.enqueue(object : MessageSender.Callback {
+            override fun onFailure(request: MessageRequest, status: Status) {
+                Logger.w(TAG, "[startProcessor] failed to send recognize event")
+                val errorType = when (status.error) {
+                    Status.StatusError.OK,
+                    Status.StatusError.TIMEOUT -> return
+                    Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                    else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                }
+                handleError(errorType)
+            }
 
-            return request
-        }  else {
-            Logger.w(TAG, "[startProcessor] failed to send recognize event")
-            return null
-        }
+            override fun onSuccess(messageRequest: MessageRequest) {
+                thread.start()
+
+                setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
+                timeoutFuture?.cancel(true)
+                timeoutFuture = timeoutScheduler.schedule({
+                    handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
+                }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
+            }
+        })
+
+        return request
 
        /* if (messageSender.sendMessage(eventMessage)) {
             val thread = createSenderThread(
@@ -228,6 +244,7 @@ class DefaultServerSpeechRecognizer(
         if(cancel) {
             currentRequest?.cancelCause = cause
             currentRequest?.senderThread?.requestStop()
+            currentRequest?.call?.cancel()
         } else {
             currentRequest?.senderThread?.requestFinish()
         }
