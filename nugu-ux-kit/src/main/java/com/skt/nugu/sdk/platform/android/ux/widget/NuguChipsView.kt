@@ -24,6 +24,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.ux.R
 
 /**
@@ -179,7 +180,7 @@ class NuguChipsView @JvmOverloads constructor(
             /**
              * A textview representing the title
              * */
-            val titleView: EllipsizeTextView = itemView.findViewById(R.id.tv_chips) as EllipsizeTextView
+            val titleView: TextView = itemView.findViewById(R.id.tv_chips)
         }
     }
 
@@ -203,5 +204,14 @@ class NuguChipsView @JvmOverloads constructor(
      */
     fun setOnChipsListener(listener: OnChipsListener) {
         this.listener = listener
+    }
+
+
+    fun TextView.setEllipsizeText(text: CharSequence, maxTextSize : Int = 14) {
+        var newText = text
+        if (newText.length > maxTextSize) {
+            newText = newText.substring(0, maxTextSize - 1) + Typography.ellipsis
+        }
+        this.text = newText
     }
 }

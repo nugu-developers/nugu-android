@@ -170,12 +170,12 @@ class ChromeWindowController(
 
     private fun handleExpecting(dialogMode: Boolean, payload: RenderDirective.Payload?) {
         if(!dialogMode) {
+            sttTextView.text = ""
             sttTextView.setHint(R.string.guide_text)
+            sttTextView.visibility = View.VISIBLE
         } else {
-            sttTextView.hint = ""
+            sttTextView.visibility = View.GONE
         }
-        sttTextView.text = ""
-        sttTextView.visibility = View.VISIBLE
 
         updateChips(payload)
         cancelFinishDelayed()
@@ -188,8 +188,7 @@ class ChromeWindowController(
     }
 
     private fun handleListening() {
-        sttTextView.text = ""
-        sttTextView.hint = ""
+        sttTextView.visibility = View.GONE
         chipsView.visibility = View.GONE
     }
 
@@ -239,12 +238,20 @@ class ChromeWindowController(
     override fun onPartialResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
             sttTextView.text = result
+
+            if(sttTextView.visibility != View.VISIBLE) {
+                sttTextView.visibility = View.VISIBLE
+            }
         }
     }
 
     override fun onCompleteResult(result: String, dialogRequestId: String) {
         bottomSheet.post {
             sttTextView.text = result
+
+            if(sttTextView.visibility != View.VISIBLE) {
+                sttTextView.visibility = View.VISIBLE
+            }
 
             if(PreferenceHelper.enableRecognitionBeep(activity)) {
                 SoundPoolCompat.play(SoundPoolCompat.LocalBeep.SUCCESS)
