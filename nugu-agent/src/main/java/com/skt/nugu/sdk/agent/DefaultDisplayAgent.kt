@@ -76,6 +76,15 @@ class DefaultDisplayAgent(
         , SessionManagerInterface.Requester
         , AbstractDirectiveHandler.DirectiveInfo by info {
         var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
+        val dummyPlaySyncForTimer = object : PlaySynchronizerInterface.SynchronizeObject {
+            override fun getDialogRequestId(): String = directive.getDialogRequestId()
+
+            override fun requestReleaseSync(immediate: Boolean) {
+                // TemplateDirectiveInfo.requestReleaseSync also called.
+                // so we skip this.
+            }
+        }
+
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 Logger.d(TAG, "[onReleaseCallback] granted : $this")
@@ -149,7 +158,10 @@ class DefaultDisplayAgent(
         TemplateDirectiveInfo(info, payload).apply {
             templateDirectiveInfoMap[getTemplateId()] = this
             pendingInfo[payload.getContextLayerInternal()] = this
-            playSynchronizer.prepareSync(this)
+            playSynchronizer.let {
+                it.prepareSync(this)
+                it.prepareSync(this.dummyPlaySyncForTimer)
+            }
         }
     }
 
@@ -245,7 +257,10 @@ class DefaultDisplayAgent(
     }
 
     private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
-        playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
+        playSynchronizer.let {
+            it.releaseSyncImmediately(info, info.onReleaseCallback)
+            it.releaseSyncImmediately(info.dummyPlaySyncForTimer, info.onReleaseCallback)
+        }
     }
 
     private fun executeRender(info: TemplateDirectiveInfo) {
@@ -263,7 +278,10 @@ class DefaultDisplayAgent(
             info.renderResultListener?.onSuccess()
             info.renderResultListener = null
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
-            playSynchronizer.releaseWithoutSync(info)
+            playSynchronizer.let {
+                it.releaseWithoutSync(info)
+                it.releaseWithoutSync(info.dummyPlaySyncForTimer)
+            }
             clearInfoIfCurrent(info)
         }
     }
@@ -275,23 +293,19 @@ class DefaultDisplayAgent(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
-                playSynchronizer.startSync(
-                    it,
-                    object : PlaySynchronizerInterface.OnRequestSyncListener {
+                playSynchronizer.let {synchronizer ->
+                    contextLayerTimer?.get(it.payload.getContextLayerInternal())?.stop(templateId)
+                    synchronizer.startSync(it.dummyPlaySyncForTimer, object: PlaySynchronizerInterface.OnRequestSyncListener{
                         override fun onGranted() {
-                            val timer = contextLayerTimer?.get(it.payload.getContextLayerInternal())
-                            if (!playSynchronizer.existOtherSyncObject(it)) {
-                                timer?.start(templateId, it.getDuration()) {
-                                    renderer?.clear(templateId, true)
-                                }
-                            } else {
-                                timer?.stop(templateId)
-                            }
+                            playSynchronizer.releaseSync(it.dummyPlaySyncForTimer, it.onReleaseCallback)
                         }
 
                         override fun onDenied() {
                         }
                     })
+                    synchronizer.startSync(it, null)
+                }
+
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
                 }

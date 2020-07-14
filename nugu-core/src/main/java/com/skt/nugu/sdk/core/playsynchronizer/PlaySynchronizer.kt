@@ -34,8 +34,8 @@ class PlaySynchronizer : PlaySynchronizerInterface {
      * should release sync object : the sync object which is started
      */
     private data class ContextInfo(
-        val prepared: HashSet<PlaySynchronizerInterface.SynchronizeObject> = HashSet(),
-        val started: HashSet<PlaySynchronizerInterface.SynchronizeObject> = HashSet()
+        private val prepared: HashSet<PlaySynchronizerInterface.SynchronizeObject> = HashSet(),
+        private val started: HashSet<PlaySynchronizerInterface.SynchronizeObject> = HashSet()
     ) {
         fun prepare(obj: PlaySynchronizerInterface.SynchronizeObject) {
             prepared.add(obj)
@@ -191,23 +191,5 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
             Logger.d(TAG, "[releaseSyncInternal] syncContexts: $syncContexts")
         }
-    }
-
-    override fun existOtherSyncObject(synchronizeObject: PlaySynchronizerInterface.SynchronizeObject): Boolean {
-        val contextInfo = syncContexts[synchronizeObject.getDialogRequestId()] ?: return false
-
-        if(contextInfo.prepared.firstOrNull {
-            it != synchronizeObject
-        } != null) {
-            return true
-        }
-
-        if(contextInfo.started.firstOrNull {
-                it != synchronizeObject
-            } != null) {
-            return true
-        }
-
-        return false
     }
 }
