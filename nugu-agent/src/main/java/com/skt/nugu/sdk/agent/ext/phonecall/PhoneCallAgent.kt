@@ -44,7 +44,7 @@ class PhoneCallAgent(
     , MakeCallDirectiveHandler.Controller
     , EndCallDirectiveHandler.Controller
     , AcceptCallDirectiveHandler.Controller
-    , BlockingIncomingCallDirectiveHandler.Controller
+    , BlockIncomingCallDirectiveHandler.Controller
     , PhoneCallClient.OnStateChangeListener {
     companion object {
         const val NAMESPACE = "PhoneCall"
@@ -100,7 +100,7 @@ class PhoneCallAgent(
             )
             addDirectiveHandler(EndCallDirectiveHandler(this@PhoneCallAgent))
             addDirectiveHandler(AcceptCallDirectiveHandler(this@PhoneCallAgent))
-            addDirectiveHandler(BlockingIncomingCallDirectiveHandler(this@PhoneCallAgent))
+            addDirectiveHandler(BlockIncomingCallDirectiveHandler(this@PhoneCallAgent))
         }
 
         client.addOnStateChangeListener(this)
@@ -143,9 +143,9 @@ class PhoneCallAgent(
         }
     }
 
-    override fun blockingIncomingCall(payload: BlockingIncomingCallPayload) {
+    override fun blockIncomingCall(payload: BlockIncomingCallPayload) {
         executor.submit {
-            client.blockingIncomingCall(payload)
+            client.blockIncomingCall(payload)
         }
     }
 

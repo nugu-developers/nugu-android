@@ -23,7 +23,7 @@ interface PhoneCallClient
     , MakeCallDirectiveHandler.Controller
     , EndCallDirectiveHandler.Controller
     , AcceptCallDirectiveHandler.Controller
-    , BlockingIncomingCallDirectiveHandler.Controller
+    , BlockIncomingCallDirectiveHandler.Controller
 {
     fun getContext(): Context
 

@@ -18,22 +18,22 @@ package com.skt.nugu.sdk.agent.ext.phonecall.handler
 
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.phonecall.PhoneCallAgent
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.BlockingIncomingCallPayload
+import com.skt.nugu.sdk.agent.ext.phonecall.payload.BlockIncomingCallPayload
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 
-class BlockingIncomingCallDirectiveHandler (
+class BlockIncomingCallDirectiveHandler (
     private val controller: Controller
 ) : AbstractDirectiveHandler() {
     companion object {
-        private const val NAME_BLOCKING_INCOMING_CALL = "BlockingIncomingCall"
+        private const val NAME_BLOCK_INCOMING_CALL = "BlockIncomingCall"
 
-        private val BLOCKING_INCOMING_CALL = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_BLOCKING_INCOMING_CALL)
+        private val BLOCK_INCOMING_CALL = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_BLOCK_INCOMING_CALL)
     }
 
     interface Controller {
-        fun blockingIncomingCall(payload: BlockingIncomingCallPayload)
+        fun blockIncomingCall(payload: BlockIncomingCallPayload)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -41,12 +41,12 @@ class BlockingIncomingCallDirectiveHandler (
 
     override fun handleDirective(info: DirectiveInfo) {
         val payload =
-            MessageFactory.create(info.directive.payload, BlockingIncomingCallPayload::class.java)
+            MessageFactory.create(info.directive.payload, BlockIncomingCallPayload::class.java)
         if (payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.blockingIncomingCall(payload)
+            controller.blockIncomingCall(payload)
         }
     }
 
@@ -56,7 +56,7 @@ class BlockingIncomingCallDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[BLOCKING_INCOMING_CALL] = BlockingPolicy()
+        configurations[BLOCK_INCOMING_CALL] = BlockingPolicy()
 
         return configurations
     }
