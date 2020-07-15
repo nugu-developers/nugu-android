@@ -78,7 +78,7 @@ class ResponseHandler {
                                         headers,
                                         body
                                     )
-                                if(call?.isCanceled() == false) {
+                                if(call?.isCanceled() != true) {
                                     observer.onReceiveAttachment(attachment)
                                 }
                             }
@@ -87,7 +87,7 @@ class ResponseHandler {
                                 val directives = handleDirectives(
                                     body
                                 )
-                                if(call?.isCanceled() == false) {
+                                if(call?.isCanceled() != true) {
                                     observer.onReceiveDirectives(directives)
                                 }
                             }
