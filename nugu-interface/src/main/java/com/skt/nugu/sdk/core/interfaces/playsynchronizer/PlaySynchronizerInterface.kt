@@ -22,6 +22,7 @@ interface PlaySynchronizerInterface {
     }
 
     interface SynchronizeObject {
+        fun getPlayServiceId(): String?
         fun getDialogRequestId(): String
         fun requestReleaseSync(immediate: Boolean)
     }

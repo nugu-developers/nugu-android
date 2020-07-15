@@ -77,6 +77,8 @@ class DefaultDisplayAgent(
         , AbstractDirectiveHandler.DirectiveInfo by info {
         var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
         val dummyPlaySyncForTimer = object : PlaySynchronizerInterface.SynchronizeObject {
+            override fun getPlayServiceId(): String? = payload.playServiceId
+
             override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
             override fun requestReleaseSync(immediate: Boolean) {
@@ -93,6 +95,8 @@ class DefaultDisplayAgent(
             override fun onDenied() {
             }
         }
+
+        override fun getPlayServiceId(): String? = payload.playServiceId
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 

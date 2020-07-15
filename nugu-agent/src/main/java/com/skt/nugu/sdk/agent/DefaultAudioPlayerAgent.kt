@@ -206,13 +206,13 @@ class DefaultAudioPlayerAgent(
         override fun getOffsetInMilliseconds(): Long? =
             this@DefaultAudioPlayerAgent.getOffsetInMilliseconds()
 
-        override fun getPlayServiceId(): String? = currentItem?.playServiceId
+        override fun getPlayServiceId(): String? = currentItem?.getPlayServiceId()
     }
 
     inner class AudioInfo(
         val payload: PlayPayload,
         val directive: Directive,
-        val playServiceId: String
+        private val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
         var referrerDialogRequestId: String = getDialogRequestId()
         var sourceAudioInfo:AudioInfo? = this
@@ -239,6 +239,8 @@ class DefaultAudioPlayerAgent(
         }
 
         var playContext: PlayStackManagerInterface.PlayContext? = null
+
+        override fun getPlayServiceId(): String? = playServiceId
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
@@ -402,7 +404,7 @@ class DefaultAudioPlayerAgent(
             Logger.d(TAG, "[executeFetchItem] item: $item")
             progressTimer.stop()
             currentItem = item
-            playServiceId = item.playServiceId
+            playServiceId = item.getPlayServiceId()
             token = item.payload.audioItem.stream.token
             item.playContext = item.payload.playStackControl?.getPushPlayServiceId()?.let {
                 PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis(), true)
@@ -541,7 +543,7 @@ class DefaultAudioPlayerAgent(
                 false
             } else {
                 (current.payload.audioItem.stream.token == next.payload.audioItem.stream.token) &&
-                        (current.playServiceId == next.playServiceId)
+                        (current.getPlayServiceId() == next.getPlayServiceId())
             }
         }
 
@@ -1631,7 +1633,7 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun show(playServiceId: String): Boolean {
-        return if (currentItem?.playServiceId == playServiceId) {
+        return if (currentItem?.getPlayServiceId() == playServiceId) {
             lyricsPresenter?.show() ?: false
         } else {
             false
@@ -1639,7 +1641,7 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun hide(playServiceId: String): Boolean {
-        return if (currentItem?.playServiceId == playServiceId) {
+        return if (currentItem?.getPlayServiceId() == playServiceId) {
             lyricsPresenter?.hide() ?: false
         } else {
             false
@@ -1650,7 +1652,7 @@ class DefaultAudioPlayerAgent(
         playServiceId: String,
         direction: Direction
     ): Boolean {
-        return if (currentItem?.playServiceId == playServiceId) {
+        return if (currentItem?.getPlayServiceId() == playServiceId) {
             lyricsPresenter?.controlPage(direction) ?: false
         } else {
             false

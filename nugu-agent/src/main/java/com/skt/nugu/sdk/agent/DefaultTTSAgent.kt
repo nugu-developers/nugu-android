@@ -156,7 +156,7 @@ class DefaultTTSAgent(
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
-        fun getPlayServiceId(): String? = payload.playServiceId
+        override fun getPlayServiceId(): String? = payload.playServiceId
 
         override fun requestReleaseSync(immediate: Boolean) {
             Logger.d(TAG, "[requestReleaseSync] immediate: $immediate")
@@ -298,6 +298,8 @@ class DefaultTTSAgent(
                     Logger.d(TAG, "[stop] stop lastStopped")
                     lastImplicitStoppedInfo = null
                     object : PlaySynchronizerInterface.SynchronizeObject {
+                        override fun getPlayServiceId(): String?  = lastStopped.getPlayServiceId()
+
                         override fun getDialogRequestId(): String = lastStopped.getDialogRequestId()
 
                         override fun requestReleaseSync(immediate: Boolean) {

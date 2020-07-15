@@ -15,11 +15,9 @@
  */
 package com.skt.nugu.sdk.core.playsynchronizer
 
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
-import java.util.*
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class PlaySynchronizer : PlaySynchronizerInterface {
@@ -54,11 +52,15 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val preparedRemoved = prepared.remove(syncObj)
             val startedRemoved = started.remove(syncObj)
 
-            prepared.forEach {
+            prepared.filter {
+                it.getDialogRequestId() == syncObj.getDialogRequestId()
+            }.forEach {
                 it.requestReleaseSync(true)
             }
 
-            started.forEach {
+            started.filter {
+                it.getDialogRequestId() == syncObj.getDialogRequestId()
+            }.forEach {
                 it.requestReleaseSync(true)
             }
 
@@ -70,8 +72,26 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val startedRemoved = started.remove(syncObj)
 
             if(doSync) {
-                if(prepared.isEmpty()) {
-                    started.forEach {
+                val playServiceId = syncObj.getPlayServiceId()
+                val dialogRequestId = syncObj.getDialogRequestId()
+
+                val existPrepared = prepared.any() {
+                    if(playServiceId.isNullOrBlank()) {
+                        it.getDialogRequestId() == dialogRequestId
+                    } else {
+                        it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
+                    }
+                }
+
+                Logger.d(TAG, "[finish] existPrepared: $existPrepared")
+                if (!existPrepared) {
+                    started.filter {
+                        if(playServiceId.isNullOrBlank()) {
+                            it.getDialogRequestId() == dialogRequestId
+                        } else {
+                            it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
+                        }
+                    }.forEach {
                         it.requestReleaseSync(false)
                     }
                 }
@@ -79,11 +99,9 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
             return preparedRemoved || startedRemoved
         }
-
-        fun isEmpty(): Boolean = prepared.isEmpty() && started.isEmpty()
     }
 
-    private val syncContexts = HashMap<String, ContextInfo>()
+    private val syncContext = ContextInfo()
 
     override fun prepareSync(synchronizeObject: PlaySynchronizerInterface.SynchronizeObject) {
         lock.withLock {
@@ -91,14 +109,10 @@ class PlaySynchronizer : PlaySynchronizerInterface {
                 TAG,
                 "[prepareSync] dialogRequestId: ${synchronizeObject.getDialogRequestId()}, synchronizeObject: $synchronizeObject"
             )
-            var contextInfo = syncContexts[synchronizeObject.getDialogRequestId()]
-            if (contextInfo == null) {
-                contextInfo = ContextInfo()
-                syncContexts[synchronizeObject.getDialogRequestId()] = contextInfo
-            }
-            contextInfo.prepare(synchronizeObject)
 
-            Logger.d(TAG, "[prepareSync] syncContexts: ${syncContexts.size}")
+            syncContext.prepare(synchronizeObject)
+
+            Logger.d(TAG, "[prepareSync] syncContext: $syncContext")
         }
     }
 
@@ -110,7 +124,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val dialogRequestId = synchronizeObject.getDialogRequestId()
             Logger.d(TAG, "[startSync] dialogRequestId: $dialogRequestId, listener: $listener")
 
-            if(syncContexts[dialogRequestId]?.start(synchronizeObject) == true) {
+            if(syncContext.start(synchronizeObject)) {
                 listener?.onGranted()
                 Logger.d(TAG, "[startSync] granted.")
             } else {
@@ -136,20 +150,8 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
     override fun releaseWithoutSync(synchronizeObject: PlaySynchronizerInterface.SynchronizeObject) {
         lock.withLock {
-            val dialogRequestId = synchronizeObject.getDialogRequestId()
-
-            val contextInfo = syncContexts[dialogRequestId]
-            if (contextInfo == null) {
-                Logger.w(TAG, "[releaseWithoutSync] no context info for $dialogRequestId")
-                return
-            }
-
-            contextInfo.finish(synchronizeObject, false)
-            if(contextInfo.isEmpty()) {
-                syncContexts.remove(dialogRequestId)
-            }
-
-            Logger.d(TAG, "[releaseWithoutSync] synContexts: $syncContexts")
+            syncContext.finish(synchronizeObject, false)
+            Logger.d(TAG, "[releaseWithoutSync] syncContext: $syncContext")
         }
     }
 
@@ -159,28 +161,15 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         immediate: Boolean
     ) {
         lock.withLock {
-            val dialogRequestId = synchronizeObject.getDialogRequestId()
-
-            val contextInfo = syncContexts[dialogRequestId]
-            if (contextInfo == null) {
-                Logger.w(TAG, "[releaseSyncInternal] no context info for $dialogRequestId")
-                listener?.onDenied()
-                return
-            }
-
             Logger.d(
                 TAG,
-                "[releaseSyncInternal] dialogRequestId: $dialogRequestId ,object: $synchronizeObject, listener: $listener, immediate: $immediate"
+                "[releaseSyncInternal] dialogRequestId: ${synchronizeObject.getDialogRequestId()} ,object: $synchronizeObject, listener: $listener, immediate: $immediate"
             )
 
             val released = if(immediate) {
-                contextInfo.cancel(synchronizeObject)
+                syncContext.cancel(synchronizeObject)
             } else {
-                contextInfo.finish(synchronizeObject)
-            }
-
-            if(contextInfo.isEmpty()) {
-                syncContexts.remove(dialogRequestId)
+                syncContext.finish(synchronizeObject)
             }
 
             if(released) {
@@ -189,7 +178,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
                 listener?.onDenied()
             }
 
-            Logger.d(TAG, "[releaseSyncInternal] syncContexts: $syncContexts")
+            Logger.d(TAG, "[releaseSyncInternal] syncContext: $syncContext")
         }
     }
 }
