@@ -94,6 +94,8 @@ class AudioPlayerTemplateHandler(
             }
         }
 
+        override fun getPlayServiceId(): String? = payload.playServiceId
+
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
         override fun requestReleaseSync(immediate: Boolean) {

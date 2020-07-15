@@ -86,6 +86,8 @@ class MessageAgent(
                 override fun getPushPlayServiceId(): String? =
                     directive.payload.playStackControl?.getPushPlayServiceId()
 
+                override fun getPlayServiceId(): String? = directive.payload.playServiceId
+
                 override fun getDialogRequestId(): String = directive.header.dialogRequestId
 
                 override fun requestReleaseSync(immediate: Boolean) {
