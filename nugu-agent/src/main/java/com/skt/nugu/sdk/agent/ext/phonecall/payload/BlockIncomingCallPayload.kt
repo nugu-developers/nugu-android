@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.ext.phonecall.payload
 
 import com.google.gson.annotations.SerializedName
 
-data class BlockingIncomingCallPayload(
+data class BlockIncomingCallPayload(
     @SerializedName("playServiceId")
     val playServiceId: String
 )
