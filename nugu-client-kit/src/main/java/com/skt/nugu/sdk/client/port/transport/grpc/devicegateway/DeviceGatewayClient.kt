@@ -298,7 +298,7 @@ internal class DeviceGatewayClient(policy: Policy,
         val message = convertToDirectives(directiveMessage)
         val dialogRequestId =  message.first().header.dialogRequestId
         asyncCalls[dialogRequestId]?.result(SDKStatus.OK)
-        if(asyncCalls[dialogRequestId]?.isCanceled() == false) {
+        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
             messageConsumer?.consumeDirectives(message)
         }
     }
@@ -317,7 +317,7 @@ internal class DeviceGatewayClient(policy: Policy,
         val message = convertToAttachmentMessage(attachmentMessage)
         val dialogRequestId = message.header.dialogRequestId
         asyncCalls[dialogRequestId]?.result(SDKStatus.OK)
-        if(asyncCalls[dialogRequestId]?.isCanceled() == false) {
+        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
             messageConsumer?.consumeAttachment(message)
         }
     }
