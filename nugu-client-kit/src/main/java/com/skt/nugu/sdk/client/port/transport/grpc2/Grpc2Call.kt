@@ -45,6 +45,12 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
                 ).withDescription("Already Executed"))
                 return
             }
+            if (canceled) {
+                callback?.onFailure(request(), Status(
+                    Status.Code.CANCELLED
+                ).withDescription("Already canceled"))
+                return
+            }
             executed = true
         }
         this.callback = callback
@@ -64,6 +70,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             canceled = true
         }
         Logger.d(TAG, "cancel")
+        result(Status.CANCELLED)
     }
 
     override fun execute(): Status {
@@ -72,6 +79,11 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
                 return Status(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("Already Executed")
+            }
+            if (canceled) {
+                return Status(
+                    Status.Code.CANCELLED
+                ).withDescription("Already canceled")
             }
             executed = true
         }
@@ -104,17 +116,13 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     }
 
     override fun result(status: Status) {
-        var newStatus = status
-        if (isCanceled()) {
-            newStatus = Status.CANCELLED
-        }
         callback?.let {
-            if (newStatus.isOk()) {
+            if (status.isOk()) {
                 it.onSuccess(request())
             } else {
-                it.onFailure(request(), newStatus)
+                it.onFailure(request(), status)
             }
-            listener.onPostSendMessage(request(), newStatus)
+            listener.onPostSendMessage(request(), status)
         }
         callback = null
     }

@@ -51,6 +51,12 @@ internal class HTTP2Call(
                 ).withDescription("Already Executed"))
                 return
             }
+            if (canceled) {
+                callback?.onFailure(request(), Status(
+                    Status.Code.CANCELLED
+                ).withDescription("Already canceled"))
+                return
+            }
             executed = true
         }
         this.callback = callback
@@ -72,6 +78,7 @@ internal class HTTP2Call(
             canceled = true
         }
         Logger.d(TAG, "cancel")
+        result(Status.CANCELLED)
     }
 
     override fun execute(): Status {
@@ -80,6 +87,11 @@ internal class HTTP2Call(
                 return Status(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("Already Executed")
+            }
+            if (canceled) {
+                return Status(
+                    Status.Code.CANCELLED
+                ).withDescription("Already canceled")
             }
             executed = true
         }
@@ -116,17 +128,13 @@ internal class HTTP2Call(
     override fun result(status: Status) {
         cancelScheduledTimeout()
 
-        var newStatus = status
         callback?.let {
-            if (isCanceled()) {
-                newStatus = Status.CANCELLED
-            }
-            if (newStatus.isOk()) {
+            if (status.isOk()) {
                 it.onSuccess(request())
             } else {
-                it.onFailure(request(), newStatus)
+                it.onFailure(request(), status)
             }
-            listener.onPostSendMessage(request(), newStatus)
+            listener.onPostSendMessage(request(), status)
         }
         callback = null
     }
