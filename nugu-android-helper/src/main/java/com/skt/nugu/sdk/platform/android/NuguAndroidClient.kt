@@ -798,7 +798,7 @@ class NuguAndroidClient private constructor(
             null
         }
 
-        dialogUXStateAggregator = DialogUXStateAggregator(builder.dialogUXStateTransitionDelay, client.getSdkContainer().getSessionManager())
+        dialogUXStateAggregator = DialogUXStateAggregator(builder.dialogUXStateTransitionDelay, client.getSdkContainer().getSessionManager(), displayAgent)
 
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)

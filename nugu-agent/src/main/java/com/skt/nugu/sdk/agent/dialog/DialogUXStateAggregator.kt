@@ -18,19 +18,20 @@ package com.skt.nugu.sdk.agent.dialog
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.ScheduledThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
+import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashSet
 
 class DialogUXStateAggregator(
     private val transitionDelayForIdleState: Long,
-    private val sessionManager: SessionManagerInterface
+    private val sessionManager: SessionManagerInterface,
+    private val displayAgent: DisplayAgentInterface?
 ) :
     DialogUXStateAggregatorInterface
     , ASRAgentInterface.OnStateChangeListener
@@ -69,6 +70,21 @@ class DialogUXStateAggregator(
                 setState(DialogUXStateAggregatorInterface.DialogUXState.IDLE)
             }
         }
+    }
+
+    private var displaySustainFuture: ScheduledFuture<*>? = null
+    private val renderedDisplayTemplates = CopyOnWriteArraySet<String>()
+
+    init {
+        displayAgent?.addListener(object: DisplayAgentInterface.Listener {
+            override fun onRendered(templateId: String) {
+                renderedDisplayTemplates.add(templateId)
+            }
+
+            override fun onCleared(templateId: String) {
+                renderedDisplayTemplates.remove(templateId)
+            }
+        })
     }
 
     override fun addListener(listener: DialogUXStateAggregatorInterface.Listener) {
@@ -165,6 +181,24 @@ class DialogUXStateAggregator(
 
         currentState = newState
         notifyObserversOfState()
+
+        displayAgent?.let {
+            displaySustainFuture?.cancel(true)
+            displaySustainFuture = when(newState) {
+                DialogUXStateAggregatorInterface.DialogUXState.EXPECTING,
+                DialogUXStateAggregatorInterface.DialogUXState.LISTENING,
+                DialogUXStateAggregatorInterface.DialogUXState.THINKING -> {
+                    multiturnSpeakingToListeningScheduler.scheduleAtFixedRate({
+                        renderedDisplayTemplates.forEach {templateId->
+                            it.notifyUserInteraction(templateId)
+                        }
+                    },0,1,TimeUnit.SECONDS)
+                }
+                else -> {
+                    null
+                }
+            }
+        }
     }
 
     private fun notifyObserversOfState() {
