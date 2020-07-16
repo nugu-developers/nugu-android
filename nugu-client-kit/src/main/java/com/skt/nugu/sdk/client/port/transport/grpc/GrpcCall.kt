@@ -53,17 +53,16 @@ internal class GrpcCall(
     }
 
     override fun enqueue(callback: MessageSender.Callback?) {
-        this.callback = callback
-
         synchronized(this) {
             if (executed) {
-                result(Status(
+                callback?.onFailure(request(),Status(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("Already Executed"))
                 return
             }
             executed = true
         }
+        this.callback = callback
 
         scheduleTimeout()
 

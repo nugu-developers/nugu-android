@@ -38,17 +38,16 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     override fun request() = request
 
     override fun enqueue(callback: MessageSender.Callback?) {
-        this.callback = callback
-
         synchronized(this) {
             if (executed) {
-                result(Status(
+                callback?.onFailure(request(),Status(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("Already Executed"))
                 return
             }
             executed = true
         }
+        this.callback = callback
 
         if (transport?.send(this) != true) {
             result(Status.FAILED_PRECONDITION)
