@@ -26,7 +26,6 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -39,7 +38,6 @@ import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -869,10 +867,14 @@ class DefaultTTSAgent(
         token: String,
         referrerDialogRequestId: String
     ) {
+        val timeUUID = UUIDGeneration.timeUUID().toString()
+
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 val messageRequest =
                     EventMessageRequest.Builder(jsonContext, namespace, name, VERSION.toString())
+                        .dialogRequestId(timeUUID)
+                        .messageId(timeUUID)
                         .payload(
                             JsonObject().apply {
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
@@ -904,7 +906,7 @@ class DefaultTTSAgent(
         playServiceId: String?,
         listener: TTSAgentInterface.OnPlaybackListener?
     ): String {
-        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+        val timeUUID = UUIDGeneration.timeUUID().toString()
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
@@ -914,7 +916,9 @@ class DefaultTTSAgent(
                         NAMESPACE,
                         NAME_SPEECH_PLAY,
                         VERSION.toString()
-                    ).dialogRequestId(dialogRequestId)
+                    )
+                        .dialogRequestId(timeUUID)
+                        .messageId(timeUUID)
                         .payload(JsonObject().apply {
                             addProperty("format", Format.TEXT.name)
                             addProperty("text", text)
@@ -928,11 +932,11 @@ class DefaultTTSAgent(
                     messageRequest
                 )
                 listener?.let {
-                    requestListenerMap[dialogRequestId] = it
+                    requestListenerMap[timeUUID] = it
                 }
                 call.enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
-                        requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
+                        requestListenerMap.remove(timeUUID)?.onError(timeUUID)
                     }
                     override fun onSuccess(request: MessageRequest) {
 
@@ -941,7 +945,7 @@ class DefaultTTSAgent(
             }
         }, namespaceAndName)
 
-        return dialogRequestId
+        return timeUUID
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
