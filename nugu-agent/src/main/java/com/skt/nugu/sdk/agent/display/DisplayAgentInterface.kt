@@ -29,6 +29,14 @@ interface DisplayAgentInterface:
         MEDIA(100)
     }
 
+    interface Listener {
+        fun onRendered(templateId: String)
+        fun onCleared(templateId: String)
+    }
+
+    fun addListener(listener: Listener)
+    fun removeListener(listener: Listener)
+
     /**
      * This should be called when occur interaction(input event such as touch, drag, etc...) for display
      *

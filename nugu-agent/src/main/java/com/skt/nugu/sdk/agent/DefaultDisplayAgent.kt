@@ -31,6 +31,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.*
 import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashSet
 
 class DefaultDisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
@@ -146,6 +147,8 @@ class DefaultDisplayAgent(
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, DisplayAgentInterface.Controller>()
     private var renderer: DisplayAgentInterface.Renderer? = null
+
+    private val listeners = LinkedHashSet<DisplayAgentInterface.Listener>()
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
@@ -320,6 +323,10 @@ class DefaultDisplayAgent(
                 it.playContext =  it.payload.playStackControl?.getPushPlayServiceId()?.let { pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
+
+                listeners.forEach { listener ->
+                    listener.onRendered(templateId)
+                }
             }
         }
     }
@@ -340,6 +347,10 @@ class DefaultDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 cleanupInfo(templateId, it)
+
+                listeners.forEach { listener ->
+                    listener.onCleared(templateId)
+                }
             }
         }
     }
@@ -390,6 +401,18 @@ class DefaultDisplayAgent(
         }
 
         return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, postback, callback)
+    }
+
+    override fun addListener(listener: DisplayAgentInterface.Listener) {
+        executor.submit {
+            listeners.add(listener)
+        }
+    }
+
+    override fun removeListener(listener: DisplayAgentInterface.Listener) {
+        executor.submit {
+            listeners.remove(listener)
+        }
     }
 
     override fun notifyUserInteraction(templateId: String) {
