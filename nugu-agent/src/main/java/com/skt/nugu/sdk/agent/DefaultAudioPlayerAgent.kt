@@ -53,6 +53,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.net.URI
 import java.util.concurrent.*
 
@@ -1536,6 +1537,7 @@ class DefaultAudioPlayerAgent(
 
     private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
         currentItem?.apply {
+            val timeUUID = UUIDGeneration.timeUUID().toString()
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val token = payload.audioItem.stream.token
@@ -1544,13 +1546,18 @@ class DefaultAudioPlayerAgent(
                         NAMESPACE,
                         eventName,
                         VERSION.toString()
-                    ).payload(
-                        JsonObject().apply {
-                            addProperty("playServiceId", payload.playServiceId)
-                            addProperty("token", token)
-                            addProperty("offsetInMilliseconds", offset)
-                        }.toString()
-                    ).referrerDialogRequestId(referrerDialogRequestId).build()
+                    )
+                        .dialogRequestId(timeUUID)
+                        .messageId(timeUUID)
+                        .payload(
+                            JsonObject().apply {
+                                addProperty("playServiceId", payload.playServiceId)
+                                addProperty("token", token)
+                                addProperty("offsetInMilliseconds", offset)
+                            }.toString()
+                        )
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
 
                     if (condition.invoke()) {
                         messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
