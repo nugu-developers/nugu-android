@@ -74,6 +74,7 @@ import com.skt.nugu.sdk.client.agent.factory.AgentFactory
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -972,4 +973,6 @@ class NuguAndroidClient private constructor(
     override fun removeOnDirectiveHandlingListener(listener: DirectiveSequencerInterface.OnDirectiveHandlingListener) {
         client.getSdkContainer().getDirectiveSequencer().removeOnDirectiveHandlingListener(listener)
     }
+
+    override fun getAgent(namespace: String): CapabilityAgent? = client.getAgent(namespace)
 }
