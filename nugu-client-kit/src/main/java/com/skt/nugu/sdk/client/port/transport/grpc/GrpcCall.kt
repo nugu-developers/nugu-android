@@ -60,6 +60,12 @@ internal class GrpcCall(
                 ).withDescription("Already Executed"))
                 return
             }
+            if (canceled) {
+                callback?.onFailure(request(),Status(
+                    Status.Code.CANCELLED
+                ).withDescription("Already canceled"))
+                return
+            }
             executed = true
         }
         this.callback = callback
@@ -93,6 +99,7 @@ internal class GrpcCall(
             canceled = true
         }
         Logger.d(TAG, "cancel")
+        result(Status.CANCELLED)
     }
 
     override fun execute(): Status {
@@ -101,6 +108,11 @@ internal class GrpcCall(
                 return Status(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("Already Executed")
+            }
+            if (canceled) {
+                return Status(
+                    Status.Code.CANCELLED
+                ).withDescription("Already canceled")
             }
             executed = true
         }
@@ -136,17 +148,13 @@ internal class GrpcCall(
     override fun result(status: Status) {
         cancelScheduledTimeout()
 
-        var newStatus = status
-        if (isCanceled()) {
-            newStatus = Status.CANCELLED
-        }
         callback?.let {
-            if (newStatus.isOk()) {
+            if (status.isOk()) {
                 it.onSuccess(request())
             } else {
-                it.onFailure(request(), newStatus)
+                it.onFailure(request(), status)
             }
-            listener.onPostSendMessage(request(), newStatus)
+            listener.onPostSendMessage(request(), status)
         }
         callback = null
     }
