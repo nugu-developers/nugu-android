@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 
 /**
  * This is an utility interface which is exposed to application that interact with NUGU
@@ -42,4 +43,6 @@ interface NuguClientInterface {
     val systemAgent: SystemAgentInterface
     val networkManager: NetworkManagerInterface
     val bluetoothAgent: BluetoothAgentInterface?
+
+    fun getAgent(namespace: String): CapabilityAgent?
 }
