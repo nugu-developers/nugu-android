@@ -246,6 +246,10 @@ class DefaultAudioPlayerAgent(
 
         override fun requestReleaseSync(immediate: Boolean) {
             executor.submit {
+                if(!immediate) {
+                    return@submit
+                }
+
                 when {
                     currentItem == this -> {
                         if(playDirectiveController.executeOnCancel(directive)) {
