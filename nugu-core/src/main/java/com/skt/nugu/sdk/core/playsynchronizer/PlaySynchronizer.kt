@@ -85,14 +85,18 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
                 Logger.d(TAG, "[finish] existPrepared: $existPrepared")
                 if (!existPrepared) {
-                    started.filter {
+                    val filteredStarted = started.filter {
                         if(playServiceId.isNullOrBlank()) {
                             it.getDialogRequestId() == dialogRequestId
                         } else {
                             it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
                         }
-                    }.forEach {
-                        it.requestReleaseSync(false)
+                    }
+
+                    if(filteredStarted.size == 1) {
+                        filteredStarted.forEach {
+                            it.requestReleaseSync(false)
+                        }
                     }
                 }
             }
