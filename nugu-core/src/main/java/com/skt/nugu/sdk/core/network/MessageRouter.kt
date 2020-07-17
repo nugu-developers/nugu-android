@@ -274,4 +274,14 @@ class MessageRouter(
             it.onPostSendMessage(request, status)
         }
     }
+
+    override fun keepConnection(enabled: Boolean) {
+        if(!transportFactory.keepConnection(enabled)) {
+            Logger.w(TAG, "[keepConnection] enabled is not changed (enabled=$enabled)")
+            return
+        }
+        Logger.d(TAG, "[keepConnection] enabled=$enabled")
+        disconnectAllTransport()
+        createActiveTransport()
+    }
 }
