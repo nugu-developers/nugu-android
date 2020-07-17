@@ -1,6 +1,40 @@
 Change Log
 ==========
 
+Version 0.9.8 *(2020-07-17)*
+-----------------------------
+* Fix: Notify the chips for a recent session (#922)
+* Fix: Crash issue  (#925)
+* Fix: Fix incorrect cancel of SpeechRecognizer (#926)
+* Fix: MaxLength is wrong in Chips of VoiceWindow (#930)
+* Fix: Fix wrong directive name (#931)
+    *  BlockingIncomingCall -> BlockIncomingCall
+* Fix: Not receiving server-initiative directive (#933)
+* Fix: Improve Call Impl classes (#942)
+    * Callback immediately when cancel() is called
+    * Fix wrong update callback if already executed
+* Fix: Fix wrong release request (#948)
+* Fix: Send a valid playServiceId (#950)
+* Fix: Fix an invalid persistent of playContext when tts finished (#954)
+* Improve: Improve PlaySynchronizer (#841)
+    * Implementation: Async -> Sync
+    * Remove existOtherSyncObject() API
+    * Allow nullable listener
+* Improve: Update the policy for the synchronization of play (#914)
+    *  Finish the play sync based on: dialogRequestId -> dialogRequestId and playServiceId
+* Improve: Publish getAgent() through a NuguAndroidClient (#937)
+* Improve: Create UUID when a event occur immediately. (#940)
+* Improve: Apply new display context policy. (#941)
+    * Prevent the display from disappearing during ASR.
+* Improve: Update SilverTray 4.2.2 (#944)
+* New: Support System Interface v1.3 (#426)
+    * Add the System.ResetConnection directive
+    * Add the System.Noop directive for Http2
+* New: Add ReadMessage's callback (#915)
+* New: Add the default duration for display to set (#917)
+* New: Support Message Interface v1.1 (#920)
+    * add template.info at context
+
 Version 0.9.7 *(2020-07-10)*
 -----------------------------
 * Fix: Fix incorrect state processing (v1) (#876)
