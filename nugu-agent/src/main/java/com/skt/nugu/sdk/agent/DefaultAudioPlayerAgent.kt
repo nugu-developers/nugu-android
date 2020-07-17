@@ -830,7 +830,7 @@ class DefaultAudioPlayerAgent(
                             VERSION.toString()
                         ).payload(
                             JsonObject().apply {
-                                addProperty("playServiceId", playServiceId)
+                                addProperty("playServiceId", payload.playServiceId)
                                 addProperty("favorite", current)
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
@@ -860,7 +860,7 @@ class DefaultAudioPlayerAgent(
                             VERSION.toString()
                         ).payload(
                             JsonObject().apply {
-                                addProperty("playServiceId", playServiceId)
+                                addProperty("playServiceId", payload.playServiceId)
                                 addProperty("repeat", current.name)
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
@@ -890,7 +890,7 @@ class DefaultAudioPlayerAgent(
                             VERSION.toString()
                         ).payload(
                             JsonObject().apply {
-                                addProperty("playServiceId", playServiceId)
+                                addProperty("playServiceId", payload.playServiceId)
                                 addProperty("shuffle", current)
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
@@ -1399,6 +1399,7 @@ class DefaultAudioPlayerAgent(
 
     private fun sendPlaybackStoppedEvent(stopReason: StopReason) {
         val offset = getOffsetInMilliseconds()
+
         currentItem?.apply {
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
@@ -1410,7 +1411,7 @@ class DefaultAudioPlayerAgent(
                         VERSION.toString()
                     ).payload(
                         JsonObject().apply {
-                            addProperty("playServiceId", playServiceId)
+                            addProperty("playServiceId", payload.playServiceId)
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offset)
                             addProperty("reason", stopReason.name)
@@ -1459,7 +1460,7 @@ class DefaultAudioPlayerAgent(
                         VERSION.toString()
                     )
                         .payload(JsonObject().apply {
-                            addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                            addProperty(KEY_PLAY_SERVICE_ID, payload.playServiceId)
                             addProperty(KEY_TOKEN, token)
                             addProperty("offsetInMilliseconds", offset)
 
@@ -1541,7 +1542,7 @@ class DefaultAudioPlayerAgent(
                         VERSION.toString()
                     ).payload(
                         JsonObject().apply {
-                            addProperty("playServiceId", playServiceId)
+                            addProperty("playServiceId", payload.playServiceId)
                             addProperty("token", token)
                             addProperty("offsetInMilliseconds", offset)
                         }.toString()
