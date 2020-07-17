@@ -318,6 +318,15 @@ class NuguOAuth private constructor(
         data = Uri.parse(makeAuthorizeUri())
     }
 
+    fun getLoginUri() : Uri {
+        val uriString = String.format(
+            authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
+            options.clientId,
+            options.redirectUri,
+            URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
+        )
+        return Uri.parse(uriString)
+    }
     /**
      * Creating a accountinfo intent
      */
