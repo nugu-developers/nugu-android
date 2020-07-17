@@ -34,4 +34,11 @@ interface TransportFactory {
         messageConsumer: MessageConsumer,
         transportObserver: TransportListener
     ): Transport
+
+    /**
+     * Set the keepConnection
+     * @param enabled True to enable keepConnection, false otherwise.
+     * @return true when successful
+     */
+    fun keepConnection(enabled: Boolean): Boolean
 }

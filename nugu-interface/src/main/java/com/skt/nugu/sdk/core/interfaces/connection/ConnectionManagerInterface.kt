@@ -91,4 +91,10 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
      * @param listener the listener that will removed
      */
     override fun removeConnectionStatusListener(listener: ConnectionStatusListener)
+
+    /**
+     * Set the keepConnection
+     * @param enabled True to enable keepConnection, false otherwise.
+     */
+    fun keepConnection(enabled: Boolean)
 }

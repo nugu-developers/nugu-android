@@ -48,4 +48,12 @@ class GrpcTransportFactory(
             transportObserver
         )
     }
+
+    override fun keepConnection(enabled: Boolean) : Boolean{
+        if(serverInfo.keepConnection != enabled) {
+            serverInfo.keepConnection = enabled
+            return true
+        }
+        return false /* unchanged */
+    }
 }

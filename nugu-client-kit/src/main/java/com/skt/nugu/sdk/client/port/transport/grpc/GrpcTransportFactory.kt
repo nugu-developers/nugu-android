@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
+import com.skt.nugu.sdk.core.utils.Logger
 
 /**
  * TransportFactory to create [GrpcTransport].
@@ -33,6 +34,7 @@ class GrpcTransportFactory(
     private val dnsLookup: DnsLookup? = null
 ) : TransportFactory {
     companion object {
+        const val TAG = "GrpcTransportFactory"
         const val DEFAULT_ADDRESS = "reg-http.sktnugu.com"
     }
     /**
@@ -50,5 +52,9 @@ class GrpcTransportFactory(
             messageConsumer,
             transportObserver
         )
+    }
+    override fun keepConnection(enabled: Boolean) : Boolean {
+        Logger.w(TAG, "keepConnection not supported by this grpc version, try grpc v2 or h2")
+        return false
     }
 }

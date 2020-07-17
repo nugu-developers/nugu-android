@@ -159,4 +159,9 @@ class NetworkManager private constructor(
     override fun resetConnection(description: String?) {
         messageRouter.resetConnection(description)
     }
+
+    /**
+     * Set the keepConnection
+     */
+    override fun keepConnection(enabled: Boolean) = messageRouter.keepConnection(enabled)
 }

@@ -59,4 +59,9 @@ interface MessageRouterInterface : MessageSender {
      * Resets the connection immediately.
      */
     fun resetConnection(description: String?)
+
+    /**
+     * Set the keepConnection.
+     */
+    fun keepConnection(enabled: Boolean)
 }

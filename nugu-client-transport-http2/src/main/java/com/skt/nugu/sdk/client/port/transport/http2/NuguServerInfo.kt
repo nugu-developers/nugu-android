@@ -19,7 +19,7 @@ import com.skt.nugu.sdk.client.port.transport.http2.utils.Address
 import com.skt.nugu.sdk.core.utils.Logger
 
 data class NuguServerInfo(
-    val keepConnection: Boolean,
+    var keepConnection: Boolean,
     val registry: Address,
     val deviceGW: Address
 ) {
@@ -63,24 +63,16 @@ data class NuguServerInfo(
         Logger.d(TAG, toString())
 
         if (keepConnection) {
-            if (deviceGW != Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)) {
-                throw IllegalStateException(
-                    "DeviceGW host and port cannot be changed " +
-                            "when keepConnection is set to true. " +
-                            "$deviceGW"
-                )
+            if (registry != Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)) {
+                Logger.w(TAG, "Registry host or port has been changed. ($registry)")
             }
         } else {
-            if (registry != Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)) {
-                throw IllegalStateException(
-                    "Registry host and port cannot be changed " +
-                            "when keepConnection is set to false. " +
-                            "$registry"
-                )
+            if (deviceGW != Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)) {
+                Logger.w(TAG, "DeviceGW host or port has been changed. ($deviceGW)")
             }
         }
     }
-
+    
     class Builder {
         private var registry: Address = Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)
         private var deviceGW: Address = Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)
