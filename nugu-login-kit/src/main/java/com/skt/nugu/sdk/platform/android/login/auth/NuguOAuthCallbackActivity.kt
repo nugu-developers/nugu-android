@@ -18,6 +18,9 @@ package com.skt.nugu.sdk.platform.android.login.auth
 import android.app.Activity
 import android.os.Bundle
 import android.content.Intent
+import android.net.Uri
+import android.support.customtabs.CustomTabsIntent
+import java.net.CookieManager
 
 /**
  * Getting an authentication result as callback from an Activity
@@ -44,8 +47,9 @@ class NuguOAuthCallbackActivity : Activity() {
             return
         }
 
-        val signInIntent = auth.getLoginIntent()
-        startActivity(signInIntent)
+        val intent = CustomTabsIntent.Builder()
+            .enableUrlBarHiding().build()
+        intent.launchUrl(this, auth.getLoginUri() )
     }
 
     /**
