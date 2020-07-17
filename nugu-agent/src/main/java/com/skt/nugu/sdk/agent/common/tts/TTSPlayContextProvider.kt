@@ -16,7 +16,6 @@
 
 package com.skt.nugu.sdk.agent.common.tts
 
-import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 
 class TTSPlayContextProvider
@@ -53,7 +52,7 @@ class TTSPlayContextProvider
             currentPlayContext =
                 PlayStackManagerInterface.PlayContext(it.playServiceId, it.timestamp,
                     isBackground = false,
-                    persistent = true
+                    persistent = false
                 )
             playContextValidTimestamp =
                 System.currentTimeMillis() + CONTEXT_PRESERVATION_DURATION_AFTER_TTS_FINISHED
