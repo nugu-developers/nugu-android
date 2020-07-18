@@ -780,7 +780,7 @@ class DefaultTTSAgent(
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
     }
 
-    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo) {
+    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo, callback: MessageSender.Callback? = null) {
         val playServiceId = info.getPlayServiceId()
         if (playServiceId.isNullOrBlank()) {
             Logger.d(TAG, "[sendPlaybackEvent] skip : playServiceId: $playServiceId")
@@ -792,7 +792,8 @@ class DefaultTTSAgent(
             name,
             playServiceId,
             info.payload.token,
-            info.directive.header.dialogRequestId
+            info.directive.header.dialogRequestId,
+            callback
         )
     }
 
@@ -806,19 +807,31 @@ class DefaultTTSAgent(
         setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
 
-        sendPlaybackEvent(EVENT_SPEECH_STOPPED, info)
-
-        with(info) {
-            if (cancelByStop) {
-                lastImplicitStoppedInfo = null
-                result.setFailed("playback stopped", true)
-                releaseSyncImmediately(this)
-            } else {
-                lastImplicitStoppedInfo = info
-                result.setFailed("playback stopped", false)
-                releaseSync(this)
+        sendPlaybackEvent(EVENT_SPEECH_STOPPED, info, object: MessageSender.Callback {
+            override fun onFailure(request: MessageRequest, status: Status) {
+                onFinish()
             }
-        }
+
+            override fun onSuccess(request: MessageRequest) {
+                onFinish()
+            }
+
+            private fun onFinish() {
+                executor.submit {
+                    with(info) {
+                        if (cancelByStop) {
+                            lastImplicitStoppedInfo = null
+                            result.setFailed("playback stopped", true)
+                            releaseSyncImmediately(this)
+                        } else {
+                            lastImplicitStoppedInfo = info
+                            result.setFailed("playback stopped", false)
+                            releaseSync(this)
+                        }
+                    }
+                }
+            }
+        })
     }
 
     private fun executePlaybackFinished() {
@@ -833,10 +846,22 @@ class DefaultTTSAgent(
         setCurrentStateAndToken(TTSAgentInterface.State.FINISHED, info.payload.token)
         info.state = TTSAgentInterface.State.FINISHED
 
-        sendPlaybackEvent(EVENT_SPEECH_FINISHED, info)
+        sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
+            override fun onFailure(request: MessageRequest, status: Status) {
+                onFinished()
+            }
 
-        setHandlingCompleted()
-        releaseSync(info)
+            override fun onSuccess(request: MessageRequest) {
+                onFinished()
+            }
+
+            private fun onFinished() {
+                executor.submit {
+                    setHandlingCompleted()
+                    releaseSync(info)
+                }
+            }
+        })
     }
 
     private fun executePlaybackError(type: ErrorType, error: String) {
@@ -865,7 +890,8 @@ class DefaultTTSAgent(
         name: String,
         playServiceId: String,
         token: String,
-        referrerDialogRequestId: String
+        referrerDialogRequestId: String,
+        callback: MessageSender.Callback? = null
     ) {
         val timeUUID = UUIDGeneration.timeUUID().toString()
 
@@ -885,12 +911,7 @@ class DefaultTTSAgent(
                         .build()
                 messageSender.newCall(
                     messageRequest
-                ).enqueue(object : MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                    }
-                    override fun onSuccess(request: MessageRequest) {
-                    }
-                })
+                ).enqueue(callback)
 
                 Logger.d(TAG, "[sendEventWithToken] $messageRequest")
             }
