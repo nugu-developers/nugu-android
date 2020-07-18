@@ -19,32 +19,25 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.bluetooth.*
+import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.*
+import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
+import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.utils.Logger
-import java.util.concurrent.Executors
-import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.Listener
-import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.AVRCPCommand
-import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface.BluetoothEvent
-import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
-import com.skt.nugu.sdk.agent.bluetooth.BluetoothEventBus
-import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
-import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.ToggleDirectiveHandler
-import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
-import com.skt.nugu.sdk.agent.version.Version
-import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
+import java.util.*
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import kotlin.collections.HashMap
 
 class DefaultBluetoothAgent(
@@ -177,6 +170,7 @@ class DefaultBluetoothAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
+    private val playbackHandlingDirectiveQueue = LinkedList<DirectiveInfo>()
 
     private var listener : Listener? = null
     private val eventBus = BluetoothEventBus()
@@ -233,7 +227,9 @@ class DefaultBluetoothAgent(
 
                 when(newFocus) {
                     FocusState.FOREGROUND -> {
-                        if(streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                        val shouldResume = playbackHandlingDirectiveQueue.isEmpty()
+                                && streamingState == BluetoothAgentInterface.StreamingState.PAUSED
+                        if (shouldResume) {
                             // resume
                             executePlay()
                         }
@@ -320,6 +316,11 @@ class DefaultBluetoothAgent(
 
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
+        executor.submit {
+            if(isPlaybackDirective(info.directive.getName())) {
+                playbackHandlingDirectiveQueue.add(info)
+            }
+        }
     }
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
@@ -331,6 +332,9 @@ class DefaultBluetoothAgent(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
+        executor.submit {
+            playbackHandlingDirectiveQueue.remove(info)
+        }
     }
 
     override fun setListener(listener: Listener) {
@@ -444,6 +448,7 @@ class DefaultBluetoothAgent(
 
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
+                playbackHandlingDirectiveQueue.remove(info)
                 val events = arrayListOf(
                     EVENT_NAME_MEDIACONTROL_PLAY_SUCCEEDED,
                     EVENT_NAME_MEDIACONTROL_PLAY_FAILED)
@@ -463,6 +468,7 @@ class DefaultBluetoothAgent(
 
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
+                playbackHandlingDirectiveQueue.remove(info)
                 val events = arrayListOf(
                     EVENT_NAME_MEDIACONTROL_STOP_SUCCEEDED,
                     EVENT_NAME_MEDIACONTROL_STOP_FAILED)
@@ -482,6 +488,7 @@ class DefaultBluetoothAgent(
 
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
+                playbackHandlingDirectiveQueue.remove(info)
                 val events = arrayListOf(
                     EVENT_NAME_MEDIACONTROL_PAUSE_SUCCEEDED,
                     EVENT_NAME_MEDIACONTROL_PAUSE_FAILED)
@@ -501,6 +508,7 @@ class DefaultBluetoothAgent(
 
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
+                playbackHandlingDirectiveQueue.remove(info)
                 val events = arrayListOf(
                     EVENT_NAME_MEDIACONTROL_NEXT_SUCCEEDED,
                     EVENT_NAME_MEDIACONTROL_NEXT_FAILED)
@@ -521,6 +529,7 @@ class DefaultBluetoothAgent(
 
         getEmptyPayload(info)?.let { payload ->
             executor.submit {
+                playbackHandlingDirectiveQueue.remove(info)
                 val events = arrayListOf(
                     EVENT_NAME_MEDIACONTROL_PREVIOUS_SUCCEEDED,
                     EVENT_NAME_MEDIACONTROL_PREVIOUS_FAILED)
@@ -636,5 +645,14 @@ class DefaultBluetoothAgent(
                 }
             }
         }
+    }
+
+    private fun isPlaybackDirective(name: String): Boolean = when(name) {
+        NAME_PLAY,
+        NAME_PAUSE,
+        NAME_STOP,
+        NAME_NEXT,
+        NAME_PREVIOUS -> true
+        else -> false
     }
 }
