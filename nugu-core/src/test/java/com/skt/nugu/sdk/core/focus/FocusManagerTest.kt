@@ -240,6 +240,10 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(dialogClient, FocusState.FOREGROUND)
 
+        focusManager.releaseChannel(
+            DIALOG_CHANNEL_NAME,
+            dialogClient
+        )
         assertFocusChange(dialogClient, FocusState.NONE)
     }
 
@@ -272,12 +276,24 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(contentClient, FocusState.BACKGROUND)
 
+        focusManager.releaseChannel(
+            DIALOG_CHANNEL_NAME,
+            dialogClient
+        )
         assertFocusChange(dialogClient, FocusState.NONE)
         assertFocusChange(alertsClient, FocusState.FOREGROUND)
 
+        focusManager.releaseChannel(
+            ALERTS_CHANNEL_NAME,
+            alertsClient
+        )
         assertFocusChange(alertsClient, FocusState.NONE)
         assertFocusChange(contentClient, FocusState.FOREGROUND)
 
+        focusManager.releaseChannel(
+            CONTENT_CHANNEL_NAME,
+            contentClient
+        )
         assertFocusChange(contentClient, FocusState.NONE)
     }
 
@@ -292,6 +308,10 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(dialogClient, FocusState.FOREGROUND)
 
+        focusManager.releaseChannel(
+            DIALOG_CHANNEL_NAME,
+            dialogClient
+        )
         assertFocusChange(dialogClient, FocusState.NONE)
 
         Assert.assertTrue(
@@ -403,6 +423,10 @@ class FocusManagerTest : FocusChangeManager() {
             )
         }
 
+        focusManager.releaseChannel(
+            DIALOG_CHANNEL_NAME,
+            dialogClient
+        )
         assertFocusChange(dialogClient, FocusState.NONE) //  wait focus changed
         assertFocusChange(contentClient, FocusState.FOREGROUND) //  wait focus changed
         for (listener in listeners) {
