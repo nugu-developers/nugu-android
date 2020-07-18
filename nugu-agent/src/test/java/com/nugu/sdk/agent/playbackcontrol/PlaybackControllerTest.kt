@@ -25,6 +25,6 @@ class PlaybackControllerTest {
         whenever(mockContextManager.getContext(playbackController)).then { playbackController.onContextAvailable("{}") }
         playbackController.onButtonPressed(PlaybackButton.PLAY)
         verify(mockContextManager).getContext(playbackController)
-        verify(mockMessageSender).sendMessage(any())
+        verify(mockMessageSender).newCall(any())
     }
 }
