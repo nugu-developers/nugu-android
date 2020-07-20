@@ -305,28 +305,28 @@ class NuguOAuth private constructor(
         client.setOptions(this.options)
     }
 
-    /**
-     * Creating a login intent
-     */
-    override fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
-        val uriString = String.format(
+    private fun makeAuthorizeUri() = String.format(
             authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
             options.clientId,
             options.redirectUri,
             URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
-        )
-        data = Uri.parse(uriString)
-    }
-
+    )
     /**
      * Creating a login intent
      */
+    override fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
+        data = Uri.parse(makeAuthorizeUri())
+    }
+
+    /**
+     * Creating a accountinfo intent
+     */
     override fun getAccountInfoIntent(loginId: String) = Intent(Intent.ACTION_VIEW).apply {
-        val uriString = String.format(
-            authorizeUrl + "?login_id=%s&service_type=%d",
+        val appendUri = String.format(
+            "&login_id=%s&service_type=%d",
             loginId,
             21)
-        data = Uri.parse(uriString)
+        data = Uri.parse(makeAuthorizeUri() + appendUri)
     }
 
     /**
