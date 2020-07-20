@@ -425,7 +425,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
         Log.d(TAG, "[onRevoke] The device has been revoked ($reason)")
         ClientManager.getClient().disconnect()
+        NuguOAuth.getClient().clearAuthorization()
         PreferenceHelper.credentials(this@MainActivity, "")
+        LoginActivity.invokeActivity(this)
+        finish()
     }
 
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {

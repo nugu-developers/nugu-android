@@ -162,9 +162,11 @@ class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
         buttonRevoke.setOnClickListener {
             NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener{
                 override fun onSuccess() {
-                    ClientManager.getClient().shutdown()
+                    ClientManager.getClient().disconnect()
+                    NuguOAuth.getClient().clearAuthorization()
                     PreferenceHelper.credentials(this@SettingsActivity,"")
-                    finishAffinity()
+                    LoginActivity.invokeActivity(this@SettingsActivity)
+                    finish()
                 }
                 
                 override fun onError(error: NuguOAuthError) {
@@ -177,8 +179,8 @@ class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
         }
 
         textLoginId.setOnClickListener {
-            val intent  =  NuguOAuth.getClient().getAccountInfoIntent(textLoginId.text.toString())
-            startActivity(intent)
+            val loginId = textLoginId.text.toString()
+            NuguOAuth.getClient().accountByInAppBrowser(this, loginId)
         }
 
         buttonPrivacy.setOnClickListener {

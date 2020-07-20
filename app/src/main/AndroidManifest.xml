@@ -21,7 +21,7 @@
             android:name="com.skt.nugu.CLIENT_ID"
             android:value="YOUR_CLIENT_ID_HERE" />
 
-        <activity android:name=".activity.LoadingActivity" android:screenOrientation="portrait"
+        <activity android:name=".activity.LoginActivity" android:screenOrientation="portrait"
                   android:configChanges="orientation|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
