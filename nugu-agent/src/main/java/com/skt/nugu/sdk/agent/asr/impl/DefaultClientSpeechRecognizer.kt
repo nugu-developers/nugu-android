@@ -259,6 +259,10 @@ class DefaultClientSpeechRecognizer(
                     this.enqueue(object : MessageSender.Callback {
                             override fun onFailure(messageRequest: MessageRequest, status: Status) {
                                 Logger.d(TAG, "[ASR.Recognize::onFailure] statue: $status, stopByCancel: ${request.stopByCancel}")
+                                if(currentRequest != request) {
+                                    Logger.d(TAG, "[ASR.Recognize::onFailure] outdated request")
+                                    return
+                                }
                                 if(request.cancelCause == null) {
                                     request.errorTypeForCausingEpdStop = when (status.error) {
                                         Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
