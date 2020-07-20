@@ -91,7 +91,9 @@ class MessageAgent(
                 override fun getDialogRequestId(): String = directive.header.dialogRequestId
 
                 override fun requestReleaseSync(immediate: Boolean) {
-                    cancel(directive.header.messageId)
+                    if(immediate) {
+                        cancel(directive.header.messageId)
+                    }
                 }
             }
 
