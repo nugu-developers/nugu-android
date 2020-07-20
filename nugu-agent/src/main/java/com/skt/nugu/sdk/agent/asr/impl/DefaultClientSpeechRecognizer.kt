@@ -166,17 +166,18 @@ class DefaultClientSpeechRecognizer(
     }
 
     override fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
+        Logger.d(TAG, "[stop] epdState: ${epdState}, cancel: $cancel, cause: $cause")
+        val request = currentRequest ?: return
+
+        request.stopByCancel = cancel
+        request.cancelCause = cause
+
         if (epdState.isActive()) {
-            Logger.d(TAG, "[stop] cancel: $cancel, cause: $cause")
-            currentRequest?.stopByCancel = cancel
-            currentRequest?.cancelCause = cause
             endPointDetector.stopDetector()
         }
 
-        // TODO : stop at SPEECH_END
-        Logger.d(TAG, "[stop] $epdState, $cancel, $cause")
         if(cancel) {
-            currentRequest?.call?.cancel()
+            request.call?.cancel()
         }
     }
 
@@ -257,13 +258,15 @@ class DefaultClientSpeechRecognizer(
                     request.call = this
                     this.enqueue(object : MessageSender.Callback {
                             override fun onFailure(messageRequest: MessageRequest, status: Status) {
-                                Logger.d(TAG, "[ASR.Recognize::onFailure] statue: $status")
-                                request.errorTypeForCausingEpdStop = when (status.error) {
-                                    Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
-                                    Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
-                                    else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                                Logger.d(TAG, "[ASR.Recognize::onFailure] statue: $status, stopByCancel: ${request.stopByCancel}")
+                                if(request.cancelCause == null) {
+                                    request.errorTypeForCausingEpdStop = when (status.error) {
+                                        Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
+                                        Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                                        else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                                    }
+                                    endPointDetector.stopDetector()
                                 }
-                                endPointDetector.stopDetector()
                             }
                             override fun onSuccess(messageRequest: MessageRequest) {
                                 //..
