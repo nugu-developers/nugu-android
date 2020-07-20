@@ -7,6 +7,7 @@
 
     <string name="guide_text">말씀해주세요</string>
 
+    <string name="sdk_not_initialized">SDK not initialized, please try again</string>
     <string name="button_close_description">close button</string>
     <string name="button_fab_description">start listening</string>
 

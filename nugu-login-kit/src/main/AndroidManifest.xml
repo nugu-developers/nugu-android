@@ -10,10 +10,7 @@
             tools:replace="android:allowBackup">
         <activity
                 android:name="com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthCallbackActivity"
-                android:excludeFromRecents="true"
-                android:exported="true"
-                android:launchMode="singleTop"
-                android:noHistory="true"
+                android:launchMode="singleTask"
                 android:theme="@style/Nugu.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

@@ -19,10 +19,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
+import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -46,6 +46,7 @@ class NuguOAuth private constructor(
     companion object {
         private const val TAG = "NuguOAuth"
         private const val REQUEST_LOGIN = 2019
+        private const val REQUEST_ACCOUNT = 2020
 
         private const val BASE_AUTH_URL = "https://api.sktnugu.com"
 
@@ -53,6 +54,11 @@ class NuguOAuth private constructor(
         internal const val KEY_CLIENT_SECRET = "com.skt.nugu.CLIENT_SECRET"
         internal const val KEY_REDIRECT_SCHEME = "nugu_redirect_scheme"
         internal const val KEY_REDIRECT_HOST = "nugu_redirect_host"
+
+        val EXTRA_OAUTH_LOGIN_ID = "nugu.intent.extra.oauth.login.id"
+        val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
+        val ACTION_LOGIN = "nugu.intent.action.oauth.LOGIN"
+        val ACTION_ACCOUNT = "nugu.intent.action.oauth.ACCOUNT"
 
         private var instance: NuguOAuth? = null
 
@@ -109,6 +115,7 @@ class NuguOAuth private constructor(
     private var onceLoginListener: OnceLoginListener? = null
 
     private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize"
+
 
     inner class OnceLoginListener(val realListener : OnLoginListener) : OnLoginListener {
         private var called = false
@@ -249,7 +256,7 @@ class NuguOAuth private constructor(
         val result = client.getCredentials().accessToken != ""
         // Check if we need to refresh the access token to request the api
         if (result && client.isExpired()) {
-            Log.d(TAG, "Authentication failed because the accessToken was invalid, ${result}")
+            Logger.d(TAG, "Authentication failed because the accessToken was invalid, ${result}")
             setAuthState(AuthStateListener.State.EXPIRED)
         }
         return result
@@ -259,9 +266,7 @@ class NuguOAuth private constructor(
      * Gets an auth status
      * @returns the current state
      * */
-    fun getAuthState(): AuthStateListener.State {
-        return this.state
-    }
+    fun getAuthState() = this.state
 
     /**
      * Set the authorization state to be reported onAuthStateChanged to listeners.
@@ -314,35 +319,44 @@ class NuguOAuth private constructor(
     /**
      * Creating a login intent
      */
-    override fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
+    fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
         data = Uri.parse(makeAuthorizeUri())
     }
-
-    fun getLoginUri() : Uri {
-        val uriString = String.format(
-            authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
-            options.clientId,
-            options.redirectUri,
-            URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
-        )
-        return Uri.parse(uriString)
-    }
+    /**
+     * Creating a login uri
+     */
+    fun getLoginUri() = Uri.parse(makeAuthorizeUri())
     /**
      * Creating a accountinfo intent
      */
-    override fun getAccountInfoIntent(loginId: String) = Intent(Intent.ACTION_VIEW).apply {
+    fun getAccountInfoIntent(loginId: String) = Intent(Intent.ACTION_VIEW).apply {
+        data = getAccountInfoUri(loginId)
+    }
+    /**
+     * Creating a accountinfo uri
+     */
+    fun getAccountInfoUri(loginId: String) : Uri{
         val appendUri = String.format(
             "&login_id=%s&service_type=%d",
             loginId,
-            21)
-        data = Uri.parse(makeAuthorizeUri() + appendUri)
+            21
+        )
+        return Uri.parse(makeAuthorizeUri() + appendUri)
     }
 
+    override fun accountByInAppBrowser(activity: Activity, loginId: String) {
+        Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+            putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
+            putExtra(EXTRA_OAUTH_LOGIN_ID, loginId)
+            activity.startActivityForResult(this, REQUEST_ACCOUNT)
+        }
+    }
     /**
      * Helper function to extract out from the onNewIntent(Intent) for Sign In.
      * @param intent
-     */
-    override fun hasAuthCodeFromIntent(intent: Any): Boolean {
+     * @return true is successful extract of authCode, otherwise false
+    */
+    fun hasAuthCodeFromIntent(intent: Any): Boolean {
         this.code = when (intent) {
             is Intent -> intent.dataString?.let {
                 Uri.parse(URLDecoder.decode(it, "UTF-8")).let {
@@ -361,7 +375,7 @@ class NuguOAuth private constructor(
      * @param requestCode If >= 0, this code will be returned in
      *                    onActivityResult() when the activity exits
      */
-    override fun loginByWebbrowser(
+    override fun loginByInAppBrowser(
         activity: Activity,
         listener: OnLoginListener
     ) {
@@ -373,6 +387,7 @@ class NuguOAuth private constructor(
         checkRedirectUri()
 
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+            putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
             activity.startActivityForResult(this, REQUEST_LOGIN)
         }
     }

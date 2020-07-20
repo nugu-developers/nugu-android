@@ -39,28 +39,18 @@ interface NuguOAuthInterface {
     fun revoke(listener: OnRevokeListener)
 
     /**
-     * Helper function to extract out AuthCode from the getIntent for login.
-     * @return true is successful extract of authCode, otherwise false
-     */
-    fun hasAuthCodeFromIntent(intent: Any): Boolean
-
-    /**
-     * Gets an Intent to start the Nugu login flow for startActivity
-     * @return The Intent used for start the login flow.
-     */
-    fun getLoginIntent(): Any
-
-    /**
-     * Gets an Intent to start the member change for startActivity
-     * @return The Intent used for start the member change.
-     */
-    fun getAccountInfoIntent(loginId:String): Any
-    /**
      * Start a login with browser. Only Type1
      * @param activity The activity making the call.
      * @param listener Listener to receive result.
      */
-    fun loginByWebbrowser(activity: Activity, listener: OnLoginListener)
+    fun loginByInAppBrowser(activity: Activity, listener: OnLoginListener)
+
+    /**
+     * Start a account info with browser. Only Type1
+     * @param activity The activity making the call.
+     * @param loginId t-id
+     */
+    fun accountByInAppBrowser(activity: Activity, loginId: String)
 
     /**
      * Start a login with credentials. Only Type2
