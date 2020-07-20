@@ -95,7 +95,10 @@ internal class GrpcCall(
 
     override fun cancel() {
         synchronized(this) {
-            if (canceled) return // Already canceled.
+            if (canceled) {
+                Logger.d(TAG, "already cancel")
+                return
+            } // Already canceled.
             canceled = true
         }
         Logger.d(TAG, "cancel")
