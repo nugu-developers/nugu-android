@@ -174,6 +174,7 @@ class DefaultClientSpeechRecognizer(
         }
 
         // TODO : stop at SPEECH_END
+        Logger.d(TAG, "[stop] $epdState, $cancel, $cause")
         if(cancel) {
             currentRequest?.call?.cancel()
         }
@@ -256,6 +257,7 @@ class DefaultClientSpeechRecognizer(
                     request.call = this
                     this.enqueue(object : MessageSender.Callback {
                             override fun onFailure(messageRequest: MessageRequest, status: Status) {
+                                Logger.d(TAG, "[ASR.Recognize::onFailure] statue: $status")
                                 request.errorTypeForCausingEpdStop = when (status.error) {
                                     Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
                                     Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
