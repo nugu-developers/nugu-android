@@ -158,6 +158,9 @@ class DefaultTTSAgent(
 
         override fun requestReleaseSync(immediate: Boolean) {
             Logger.d(TAG, "[requestReleaseSync] immediate: $immediate")
+            if(!immediate) {
+                return
+            }
             executor.submit {
                 executeCancel(this)
             }
