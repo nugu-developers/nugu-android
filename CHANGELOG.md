@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.9.9 *(2020-07-20)*
+-----------------------------
+* Fix: Parameters missing in AccountInfoIntent (#961)
+* Fix: Fix invalid asr result (#965)
+* Fix: Fix invalid out-dated event handling (#968)
+* Improve: Improve a focus release timing at TTS stop or finish. (#936)
+
 Version 0.9.8 *(2020-07-17)*
 -----------------------------
 * Fix: Notify the chips for a recent session (#922)
