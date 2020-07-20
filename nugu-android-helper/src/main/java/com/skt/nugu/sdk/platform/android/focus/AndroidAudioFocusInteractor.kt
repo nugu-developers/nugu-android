@@ -22,9 +22,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
-import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 
 /**
  * This class manage an external audio player (such as music or video player apps) focus changes.
@@ -47,7 +47,7 @@ object AndroidAudioFocusInteractor {
      */
     internal class Impl(
         private val audioManager: AudioManager,
-        audioFocusManager: FocusManagerInterface
+        private val audioFocusManager: FocusManagerInterface
     ) : AudioFocusInteractor,
         FocusManagerInterface.OnFocusChangedListener, ChannelObserver {
 
@@ -108,10 +108,11 @@ object AndroidAudioFocusInteractor {
         private fun acquire(focusOwner: String) {
             Log.d(TAG, "[acquire] focusOwner: $focusOwner")
             handler.post {
-                if (focusOwnerReferences.isEmpty()) {
-                    requestAudioFocus(audioFocusChangeListener)
-                    Log.d(TAG, "[acquire] requestAudioFocus")
+                // whenever acquired, request audio focus
+                if(requestAudioFocus(audioFocusChangeListener)) {
+                    audioFocusManager.releaseChannel(channelName, this)
                 }
+                Log.d(TAG, "[acquire] requestAudioFocus")
                 focusOwnerReferences.add(focusOwner)
             }
         }
@@ -122,6 +123,9 @@ object AndroidAudioFocusInteractor {
                 focusOwnerReferences.remove(focusOwner)
                 if (focusOwnerReferences.isEmpty()) {
                     abandonAudioFocus(audioFocusChangeListener)
+
+                    // Since the change of the audio focus is no longer known and don't care about anymore, we need to release the focus here.
+                    audioFocusManager.releaseChannel(channelName, this)
                     Log.d(TAG, "[release] abandonAudioFocus")
                 }
             }, 500)
@@ -147,7 +151,6 @@ object AndroidAudioFocusInteractor {
             if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
                 return false
             }
-
             return true
         }
 
