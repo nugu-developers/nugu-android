@@ -583,9 +583,6 @@ class DefaultASRAgent(
     ) {
         Logger.d(TAG, "[executeInternalStartRecognition]")
         executeSelectSpeechProcessor()
-        expectSpeechDirectiveParam?.let {
-            sessionManager.deactivate(it.directive.header.dialogRequestId, it)
-        }
         currentRequest = currentSpeechRecognizer.start(
             audioInputStream,
             audioFormat,
@@ -595,6 +592,10 @@ class DefaultASRAgent(
             param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(dialogRequestId: String) {
+                    expectSpeechDirectiveParam?.let {
+                        sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                    }
+
                     speechToTextConverterEventObserver.onNoneResult(dialogRequestId)
                 }
 
@@ -603,10 +604,18 @@ class DefaultASRAgent(
                 }
 
                 override fun onCompleteResult(result: String, dialogRequestId: String) {
+                    expectSpeechDirectiveParam?.let {
+                        sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                    }
+
                     speechToTextConverterEventObserver.onCompleteResult(result, dialogRequestId)
                 }
 
                 override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
+                    expectSpeechDirectiveParam?.let {
+                        sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                    }
+
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
                         sendResponseTimeout(expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
@@ -619,11 +628,19 @@ class DefaultASRAgent(
                     cause: ASRAgentInterface.CancelCause,
                     dialogRequestId: String
                 ) {
+                    expectSpeechDirectiveParam?.let {
+                        sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                    }
+
                     speechToTextConverterEventObserver.onCancel(cause, dialogRequestId)
                 }
             }
         ).also {
             if(it == null) {
+                expectSpeechDirectiveParam?.let {
+                    sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                }
+
                 callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             } else {
                 callback?.onSuccess(it.eventMessage.dialogRequestId)
