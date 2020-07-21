@@ -48,7 +48,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSync(syncObj1, null)
 
-        verify(syncObj2, times(1)).requestReleaseSync(false)
+        verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
 
     @Test
@@ -68,7 +68,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSyncImmediately(syncObj1, null)
 
-        verify(syncObj2, times(1)).requestReleaseSync(true)
+        verify(syncObj2, times(1)).requestReleaseSync()
     }
 
     @Test
@@ -88,8 +88,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseWithoutSync(syncObj1)
 
-        verify(syncObj2, never()).requestReleaseSync(true)
-        verify(syncObj2, never()).requestReleaseSync(false)
+        verify(syncObj2, never()).requestReleaseSync()
     }
 
     @Test
@@ -110,7 +109,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSync(syncObj1, null)
 
-        verify(syncObj2, times(1)).requestReleaseSync(false)
+        verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
 
     @Test
@@ -131,7 +130,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSync(syncObj1, null)
 
-        verify(syncObj2, times(1)).requestReleaseSync(false)
+        verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
 
     @Test
@@ -152,7 +151,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSync(syncObj1, null)
 
-        verify(syncObj2, times(1)).requestReleaseSync(false)
+        verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
 
     @Test
@@ -172,8 +171,7 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSync(syncObj1, null)
 
-        verify(syncObj2, never()).requestReleaseSync(false)
-        verify(syncObj2, never()).requestReleaseSync(true)
+        verify(syncObj2, never()).requestReleaseSync()
     }
 
     @Test
@@ -194,6 +192,6 @@ class PlaySynchronizerTest {
         synchronizer.startSync(syncObj2, null)
         synchronizer.releaseSync(syncObj1, null)
 
-        verify(syncObj2, times(1)).requestReleaseSync(false)
+        verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
 }
