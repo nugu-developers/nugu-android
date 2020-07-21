@@ -81,8 +81,15 @@ class DefaultDisplayAgent(
             override fun getPlayServiceId(): String? = payload.playServiceId
 
             override fun getDialogRequestId(): String = directive.getDialogRequestId()
+            override fun requestReleaseSync() {
+                // TemplateDirectiveInfo.requestReleaseSync also called.
+                // so we skip this.
+            }
 
-            override fun requestReleaseSync(immediate: Boolean) {
+            override fun onSyncStateChanged(
+                prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+                started: List<PlaySynchronizerInterface.SynchronizeObject>
+            ) {
                 // TemplateDirectiveInfo.requestReleaseSync also called.
                 // so we skip this.
             }
@@ -101,9 +108,23 @@ class DefaultDisplayAgent(
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
-        override fun requestReleaseSync(immediate: Boolean) {
+        override fun requestReleaseSync() {
             executor.submit {
-                executeCancelUnknownInfo(getTemplateId(), immediate)
+                executeCancelUnknownInfo(getTemplateId(), true)
+            }
+        }
+
+        override fun onSyncStateChanged(
+            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+            started: List<PlaySynchronizerInterface.SynchronizeObject>
+        ) {
+            executor.submit {
+                if(prepared.isEmpty() && started.size == 1) {
+                    executeCancelUnknownInfo(getTemplateId(), false)
+                } else {
+                    Logger.d(TAG, "[onSyncStateChanged] something synced again, so stop timer.")
+                    contextLayerTimer?.get(payload.getContextLayerInternal())?.stop(getTemplateId())
+                }
             }
         }
 

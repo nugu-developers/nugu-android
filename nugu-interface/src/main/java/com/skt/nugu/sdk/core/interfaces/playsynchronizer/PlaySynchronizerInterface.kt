@@ -24,7 +24,12 @@ interface PlaySynchronizerInterface {
     interface SynchronizeObject {
         fun getPlayServiceId(): String?
         fun getDialogRequestId(): String
-        fun requestReleaseSync(immediate: Boolean)
+
+        fun requestReleaseSync()
+        fun onSyncStateChanged(
+            prepared: List<SynchronizeObject>,
+            started: List<SynchronizeObject>
+        )
     }
 
     fun prepareSync(synchronizeObject: SynchronizeObject)
