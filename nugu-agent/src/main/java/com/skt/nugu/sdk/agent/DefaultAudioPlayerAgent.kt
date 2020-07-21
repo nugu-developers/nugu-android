@@ -382,7 +382,7 @@ class DefaultAudioPlayerAgent(
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - will be resume: ${directive.getMessageId()}")
                     currentItem = nextAudioInfo
                     currentAudioInfo?.let {
-                        playSynchronizer.releaseWithoutSync(it)
+                        playSynchronizer.releaseSync(it, null)
                         nextAudioInfo.referrerDialogRequestId = it.referrerDialogRequestId
                         nextAudioInfo.sourceAudioInfo = it
                         nextAudioInfo.playContext = it.playContext
