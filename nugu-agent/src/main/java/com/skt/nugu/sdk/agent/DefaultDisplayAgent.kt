@@ -307,8 +307,8 @@ class DefaultDisplayAgent(
             info.renderResultListener = null
             templateDirectiveInfoMap.remove(info.directive.getMessageId())
             playSynchronizer.let {
-                it.releaseWithoutSync(info)
-                it.releaseWithoutSync(info.dummyPlaySyncForTimer)
+                it.releaseSync(info, null)
+                it.releaseSync(info.dummyPlaySyncForTimer, null)
             }
             clearInfoIfCurrent(info)
         }

@@ -227,7 +227,7 @@ class AudioPlayerTemplateHandler(
             // the renderer denied to render
             setHandlingCompleted(info)
             templateDirectiveInfoMap.remove(info.sourceTemplateId)
-            playSynchronizer.releaseWithoutSync(info)
+            playSynchronizer.releaseSync(info, null)
             clearInfoIfCurrent(info)
         }
     }
