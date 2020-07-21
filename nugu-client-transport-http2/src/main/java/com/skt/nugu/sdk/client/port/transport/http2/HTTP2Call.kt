@@ -43,19 +43,19 @@ internal class HTTP2Call(
 
     override fun request() = request
 
-    override fun enqueue(callback: MessageSender.Callback?) {
+    override fun enqueue(callback: MessageSender.Callback?): Boolean {
         synchronized(this) {
             if (executed) {
                 callback?.onFailure(request(),Status(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("Already Executed"))
-                return
+                return false
             }
             if (canceled) {
                 callback?.onFailure(request(), Status(
                     Status.Code.CANCELLED
                 ).withDescription("Already canceled"))
-                return
+                return false
             }
             executed = true
         }
@@ -65,7 +65,10 @@ internal class HTTP2Call(
 
         if (transport?.send(this) != true) {
             result(Status.FAILED_PRECONDITION)
+            return false
         }
+
+        return true
     }
 
     override fun isCanceled() = synchronized(this) {
