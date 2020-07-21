@@ -39,9 +39,10 @@ class FixedStateCall(
         return status
     }
 
-    override fun enqueue(callback: MessageSender.Callback?) {
+    override fun enqueue(callback: MessageSender.Callback?): Boolean {
         callback?.onFailure(request(), status)
         result(status)
+        return false
     }
 
     override fun result(status: Status) {
