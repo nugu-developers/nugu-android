@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.9.10 *(2020-07-21)*
+-----------------------------
+* Fix: Fix side effect for PlaySync based on playServiceId (#972)
+    * Prevent invalid release sync of play
+    * Stop display timer if play sync start again.
+* Fix: Deactivate session when expect speech finished (#977)
+* Improve: Improve focus managing with external focus. (#973)
+
 Version 0.9.9 *(2020-07-20)*
 -----------------------------
 * Fix: Parameters missing in AccountInfoIntent (#961)
