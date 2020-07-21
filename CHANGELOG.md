@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.9.11 *(2020-07-21)*
+-----------------------------
+* Improve: Apply url compare logic on resume (#980)
+
 Version 0.9.10 *(2020-07-21)*
 -----------------------------
 * Fix: Fix side effect for PlaySync based on playServiceId (#972)
