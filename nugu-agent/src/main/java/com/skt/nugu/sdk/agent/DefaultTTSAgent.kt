@@ -156,14 +156,18 @@ class DefaultTTSAgent(
 
         override fun getPlayServiceId(): String? = payload.playServiceId
 
-        override fun requestReleaseSync(immediate: Boolean) {
-            Logger.d(TAG, "[requestReleaseSync] immediate: $immediate")
-            if(!immediate) {
-                return
-            }
+        override fun requestReleaseSync() {
+            Logger.d(TAG, "[requestReleaseSync]")
             executor.submit {
                 executeCancel(this)
             }
+        }
+
+        override fun onSyncStateChanged(
+            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+            started: List<PlaySynchronizerInterface.SynchronizeObject>
+        ) {
+            // no-op
         }
     }
 
@@ -303,7 +307,14 @@ class DefaultTTSAgent(
 
                         override fun getDialogRequestId(): String = lastStopped.getDialogRequestId()
 
-                        override fun requestReleaseSync(immediate: Boolean) {
+                        override fun requestReleaseSync() {
+                            // ignore.
+                        }
+
+                        override fun onSyncStateChanged(
+                            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+                            started: List<PlaySynchronizerInterface.SynchronizeObject>
+                        ) {
                             // ignore.
                         }
                     }.apply {

@@ -35,6 +35,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import java.util.concurrent.Executors
 
 class MessageAgent(
@@ -90,10 +91,15 @@ class MessageAgent(
 
                 override fun getDialogRequestId(): String = directive.header.dialogRequestId
 
-                override fun requestReleaseSync(immediate: Boolean) {
-                    if(immediate) {
-                        cancel(directive.header.messageId)
-                    }
+                override fun requestReleaseSync() {
+                    cancel(directive.header.messageId)
+                }
+
+                override fun onSyncStateChanged(
+                    prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+                    started: List<PlaySynchronizerInterface.SynchronizeObject>
+                ) {
+                    // no-op
                 }
             }
 

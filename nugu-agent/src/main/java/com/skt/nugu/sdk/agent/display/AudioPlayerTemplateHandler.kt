@@ -98,9 +98,20 @@ class AudioPlayerTemplateHandler(
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
-        override fun requestReleaseSync(immediate: Boolean) {
+        override fun requestReleaseSync() {
             executor.submit {
-                executeCancelUnknownInfo(this, immediate)
+                executeCancelUnknownInfo(this, true)
+            }
+        }
+
+        override fun onSyncStateChanged(
+            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+            started: List<PlaySynchronizerInterface.SynchronizeObject>
+        ) {
+            executor.submit {
+                if(prepared.isEmpty() && started.size == 1) {
+                    executeCancelUnknownInfo(this, false)
+                }
             }
         }
 

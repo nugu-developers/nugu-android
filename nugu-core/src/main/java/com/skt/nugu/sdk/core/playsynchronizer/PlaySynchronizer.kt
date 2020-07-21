@@ -55,13 +55,13 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             prepared.filter {
                 it.getDialogRequestId() == syncObj.getDialogRequestId()
             }.forEach {
-                it.requestReleaseSync(true)
+                it.requestReleaseSync()
             }
 
             started.filter {
                 it.getDialogRequestId() == syncObj.getDialogRequestId()
             }.forEach {
-                it.requestReleaseSync(true)
+                it.requestReleaseSync()
             }
 
             return preparedRemoved || startedRemoved
@@ -75,7 +75,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
                 val playServiceId = syncObj.getPlayServiceId()
                 val dialogRequestId = syncObj.getDialogRequestId()
 
-                val existPrepared = prepared.any() {
+                val filteredPrepared = prepared.filter() {
                     if(playServiceId.isNullOrBlank()) {
                         it.getDialogRequestId() == dialogRequestId
                     } else {
@@ -83,21 +83,16 @@ class PlaySynchronizer : PlaySynchronizerInterface {
                     }
                 }
 
-                Logger.d(TAG, "[finish] existPrepared: $existPrepared")
-                if (!existPrepared) {
-                    val filteredStarted = started.filter {
-                        if(playServiceId.isNullOrBlank()) {
-                            it.getDialogRequestId() == dialogRequestId
-                        } else {
-                            it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
-                        }
+                val filteredStarted = started.filter {
+                    if(playServiceId.isNullOrBlank()) {
+                        it.getDialogRequestId() == dialogRequestId
+                    } else {
+                        it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
                     }
+                }
 
-                    if(filteredStarted.size == 1) {
-                        filteredStarted.forEach {
-                            it.requestReleaseSync(false)
-                        }
-                    }
+                filteredStarted.forEach {
+                    it.onSyncStateChanged(filteredPrepared, filteredStarted)
                 }
             }
 

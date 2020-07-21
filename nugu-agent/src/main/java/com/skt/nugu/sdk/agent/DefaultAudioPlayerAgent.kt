@@ -245,12 +245,8 @@ class DefaultAudioPlayerAgent(
 
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
-        override fun requestReleaseSync(immediate: Boolean) {
+        override fun requestReleaseSync() {
             executor.submit {
-                if(!immediate) {
-                    return@submit
-                }
-
                 when {
                     currentItem == this -> {
                         if(playDirectiveController.executeOnCancel(directive)) {
@@ -274,6 +270,13 @@ class DefaultAudioPlayerAgent(
                     }
                 }
             }
+        }
+
+        override fun onSyncStateChanged(
+            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+            started: List<PlaySynchronizerInterface.SynchronizeObject>
+        ) {
+            // no-op
         }
     }
 
