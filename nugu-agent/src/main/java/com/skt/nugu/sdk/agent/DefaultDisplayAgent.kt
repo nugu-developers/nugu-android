@@ -25,12 +25,14 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.*
 import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashSet
 
 class DefaultDisplayAgent(
@@ -77,6 +79,7 @@ class DefaultDisplayAgent(
         , SessionManagerInterface.Requester
         , AbstractDirectiveHandler.DirectiveInfo by info {
         var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
+        val associatePlaySyncSet = HashSet<PlaySynchronizerInterface.SynchronizeObject>()
         val dummyPlaySyncForTimer = object : PlaySynchronizerInterface.SynchronizeObject {
             override fun getPlayServiceId(): String? = payload.playServiceId
 
@@ -119,7 +122,12 @@ class DefaultDisplayAgent(
             started: List<PlaySynchronizerInterface.SynchronizeObject>
         ) {
             executor.submit {
-                if(prepared.isEmpty() && started.size == 1) {
+                val existOtherPlayStarted = started.filterNot {
+                    associatePlaySyncSet.contains(it) || it == this
+                }.any()
+
+                Logger.d(TAG, "[onSyncStateChanged] existOtherPlayStarted: $existOtherPlayStarted")
+                if(prepared.isEmpty() && !existOtherPlayStarted) {
                     executeCancelUnknownInfo(getTemplateId(), false)
                 } else {
                     Logger.d(TAG, "[onSyncStateChanged] something synced again, so stop timer.")
@@ -288,6 +296,9 @@ class DefaultDisplayAgent(
         playSynchronizer.let {
             it.releaseSyncImmediately(info, info.onReleaseCallback)
             it.releaseSyncImmediately(info.dummyPlaySyncForTimer, info.onReleaseCallback)
+            info.associatePlaySyncSet.forEach {syncObj->
+                it.releaseSyncImmediately(syncObj, null)
+            }
         }
     }
 
@@ -515,7 +526,34 @@ class DefaultDisplayAgent(
         }
     }
 
-    override fun controlFocus(playServiceId: String, direction: Direction): Boolean {
+    private inner class TemplateControlPlaySyncObject(
+        private val playServiceId: String?,
+        private val dialogRequestId: String,
+        private val templateId: String
+    ) : PlaySynchronizerInterface.SynchronizeObject {
+        override fun getPlayServiceId(): String? = playServiceId
+
+        override fun getDialogRequestId(): String = dialogRequestId
+
+        override fun requestReleaseSync() {
+            executor.submit {
+                executeCancelUnknownInfo(templateId, true)
+            }
+        }
+
+        override fun onSyncStateChanged(
+            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+            started: List<PlaySynchronizerInterface.SynchronizeObject>
+        ) {
+            // no-op
+        }
+    }
+
+    override fun controlFocus(
+        header: Header,
+        playServiceId: String,
+        direction: Direction
+    ): Boolean {
         val future: Future<Boolean> = executor.submit(Callable {
             val matchedCurrentRenderedInfo =
                 findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId)
@@ -528,6 +566,12 @@ class DefaultDisplayAgent(
                     ?: false
 
             if (result) {
+                TemplateControlPlaySyncObject(playServiceId, header.dialogRequestId, matchedCurrentRenderedInfo.getTemplateId()).let {
+                    matchedCurrentRenderedInfo.associatePlaySyncSet.add(it)
+                    playSynchronizer.prepareSync(it)
+                    playSynchronizer.startSync(it, null)
+                }
+
                 contextLayerTimer?.get(matchedCurrentRenderedInfo.payload.getContextLayerInternal())
                     ?.reset(matchedCurrentRenderedInfo.getTemplateId())
             }
@@ -538,7 +582,11 @@ class DefaultDisplayAgent(
         return future.get()
     }
 
-    override fun controlScroll(playServiceId: String, direction: Direction): Boolean {
+    override fun controlScroll(
+        header: Header,
+        playServiceId: String,
+        direction: Direction
+    ): Boolean {
         val future: Future<Boolean> = executor.submit(Callable {
             val matchedCurrentRenderedInfo =
                 findCurrentRenderedInfoMatchWithPlayServiceId(playServiceId)
@@ -551,6 +599,12 @@ class DefaultDisplayAgent(
                     ?: false
 
             if (result) {
+                TemplateControlPlaySyncObject(playServiceId, header.dialogRequestId, matchedCurrentRenderedInfo.getTemplateId()).let {
+                    matchedCurrentRenderedInfo.associatePlaySyncSet.add(it)
+                    playSynchronizer.prepareSync(it)
+                    playSynchronizer.startSync(it, null)
+                }
+
                 contextLayerTimer?.get(matchedCurrentRenderedInfo.payload.getContextLayerInternal())
                     ?.reset(matchedCurrentRenderedInfo.getTemplateId())
             }
@@ -582,6 +636,7 @@ class DefaultDisplayAgent(
     }
 
     override fun update(
+        header: Header,
         token: String,
         payload: String,
         listener: UpdateDirectiveHandler.Controller.OnUpdateListener
@@ -596,6 +651,12 @@ class DefaultDisplayAgent(
             val currentToken = currentDisplayInfo.payload.token
 
             if (currentToken == token) {
+                TemplateControlPlaySyncObject(currentDisplayInfo.getPlayServiceId(), header.dialogRequestId, currentDisplayInfo.getTemplateId()).let {
+                    currentDisplayInfo.associatePlaySyncSet.add(it)
+                    playSynchronizer.prepareSync(it)
+                    playSynchronizer.startSync(it, null)
+                }
+
                 renderer?.update(currentDisplayInfo.getTemplateId(), payload)
                 contextLayerTimer?.let {
                     it[currentDisplayInfo.payload.getContextLayerInternal()]?.reset(

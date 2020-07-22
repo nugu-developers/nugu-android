@@ -24,10 +24,12 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 
 class ControlScrollDirectiveHandler(
@@ -50,7 +52,7 @@ class ControlScrollDirectiveHandler(
     }
 
     interface Controller {
-        fun controlScroll(playServiceId: String, direction: Direction): Boolean
+        fun controlScroll(header: Header, playServiceId: String, direction: Direction): Boolean
     }
 
     private data class ControlScrollPayload(
@@ -72,9 +74,8 @@ class ControlScrollDirectiveHandler(
             setHandlingFailed(info, "[handleDirective] controlScroll - invalid payload")
             return
         }
-
         val referrerDialogRequestId = info.directive.header.dialogRequestId
-        if (controller.controlScroll(payload.playServiceId, payload.direction)) {
+        if (controller.controlScroll(info.directive.header, payload.playServiceId, payload.direction)) {
             sendControlScrollEvent(
                 info.directive.payload,
                 "${NAME_CONTROL_SCROLL}${NAME_SUCCEEDED}",

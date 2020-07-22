@@ -21,6 +21,8 @@ import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 
 class UpdateDirectiveHandler(
     private val controller: Controller
@@ -37,7 +39,7 @@ class UpdateDirectiveHandler(
     }
 
     interface Controller {
-        fun update(token: String, payload: String, listener: OnUpdateListener)
+        fun update(header: Header, token: String, payload: String, listener: OnUpdateListener)
 
         interface OnUpdateListener {
             fun onSuccess()
@@ -61,7 +63,7 @@ class UpdateDirectiveHandler(
             return
         }
 
-        controller.update(payload.token, info.directive.payload, object: Controller.OnUpdateListener {
+        controller.update(info.directive.header, payload.token, info.directive.payload, object: Controller.OnUpdateListener {
             override fun onSuccess() {
                 setHandlingCompleted(info)
             }

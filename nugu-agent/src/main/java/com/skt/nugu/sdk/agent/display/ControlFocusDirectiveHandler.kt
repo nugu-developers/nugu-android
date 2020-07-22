@@ -24,10 +24,12 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 
 class ControlFocusDirectiveHandler(
@@ -50,7 +52,7 @@ class ControlFocusDirectiveHandler(
     }
 
     interface Controller {
-        fun controlFocus(playServiceId: String, direction: Direction): Boolean
+        fun controlFocus(header: Header, playServiceId: String, direction: Direction): Boolean
     }
 
     private data class ControlFocusPayload(
@@ -73,7 +75,7 @@ class ControlFocusDirectiveHandler(
         }
 
         val referrerDialogRequestId = info.directive.header.dialogRequestId
-        if (controller.controlFocus(payload.playServiceId, payload.direction)) {
+        if (controller.controlFocus(info.directive.header, payload.playServiceId, payload.direction)) {
             sendControlFocusEvent(
                 info.directive.payload,
                 "$NAME_CONTROL_FOCUS$NAME_SUCCEEDED",
