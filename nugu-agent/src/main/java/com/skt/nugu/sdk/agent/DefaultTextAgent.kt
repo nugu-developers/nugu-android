@@ -119,7 +119,9 @@ class DefaultTextAgent(
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
                 override fun onRequestCreated(dialogRequestId: String) {
-                    // nothing
+                    internalTextSourceHandleListeners.forEach {
+                        it.onRequestCreated(dialogRequestId)
+                    }
                 }
 
                 override fun onReceiveResponse(dialogRequestId: String) {
