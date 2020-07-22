@@ -16,10 +16,8 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -32,7 +30,6 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -76,7 +73,6 @@ class DefaultTextAgent(
         const val NAME_TEXT_INPUT = "TextInput"
     }
 
-    private val requestListeners = HashMap<String, TextAgentInterface.RequestListener>()
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -122,6 +118,10 @@ class DefaultTextAgent(
             Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
+                override fun onRequestCreated(dialogRequestId: String) {
+                    // nothing
+                }
+
                 override fun onReceiveResponse(dialogRequestId: String) {
                     internalTextSourceHandleListeners.forEach {
                         it.onReceiveResponse(dialogRequestId)
@@ -219,6 +219,8 @@ class DefaultTextAgent(
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
                     createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
+                        listener?.onRequestCreated(dialogRequestId)
+
                         val call = messageSender.newCall(it)
                         call.enqueue(object : MessageSender.Callback{
                             override fun onFailure(request: MessageRequest, status: Status) {
