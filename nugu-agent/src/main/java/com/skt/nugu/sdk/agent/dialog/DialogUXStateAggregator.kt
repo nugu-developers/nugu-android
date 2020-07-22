@@ -23,10 +23,9 @@ import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.*
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.*
 import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashSet
 
 class DialogUXStateAggregator(
     private val transitionDelayForIdleState: Long,
@@ -49,6 +48,7 @@ class DialogUXStateAggregator(
     private var currentState: DialogUXStateAggregatorInterface.DialogUXState =
         DialogUXStateAggregatorInterface.DialogUXState.IDLE
     private var isTtsPreparing = false
+    private var isLastReceiveTtsDialogRequestId: String? = null
     private var ttsState = TTSAgentInterface.State.FINISHED
     private var asrState: ASRAgentInterface.State =
         ASRAgentInterface.State.IDLE
@@ -124,6 +124,7 @@ class DialogUXStateAggregator(
     override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
         Logger.d(TAG, "[onReceiveTTSText] text: $text, dialogRequestId: $dialogRequestId")
         isTtsPreparing = true
+        isLastReceiveTtsDialogRequestId = dialogRequestId
     }
 
     override fun onError(dialogRequestId: String) {
@@ -159,14 +160,9 @@ class DialogUXStateAggregator(
 
     override fun onMultiturnStateChanged(enabled: Boolean) {
         executor.submit {
-            val changed = dialogModeEnabled != enabled
             dialogModeEnabled = enabled
             if(!enabled) {
                 tryEnterIdleState()
-            }
-
-            if(changed) {
-                notifyObserversOfState()
             }
         }
     }
@@ -211,18 +207,37 @@ class DialogUXStateAggregator(
 
     private fun getCurrentChips(): RenderDirective.Payload? {
         val activeSessions = sessionManager.getActiveSessions()
-        Logger.d(TAG, "[getCurrentChips] activeSessions: $activeSessions, lastReceivedChips: $lastReceivedChips")
-        var keyForRecentSession: String? = null
+        val chips = lastReceivedChips
+        Logger.d(TAG, "[getCurrentChips] activeSessions: $activeSessions, lastReceivedChips: $chips")
 
-        // TODO : implementation dependent - getActiveSessions ordered by set.
-        activeSessions.forEach {
-            keyForRecentSession = it.key
+        if(chips == null) {
+            return null
         }
 
-        return if(keyForRecentSession == lastReceivedChips?.header?.dialogRequestId) {
-            lastReceivedChips?.payload
-        } else {
-            null
+        val chipsTime = UUIDGeneration.fromString(chips.header.dialogRequestId).getTime()
+        var recentSessionTime = Long.MIN_VALUE
+
+        // TODO : implementation dependent (dialogRequestId is time based value)
+        activeSessions.forEach {
+            UUIDGeneration.fromString(it.key).getTime().let {time->
+                if(time > recentSessionTime) {
+                    recentSessionTime = time
+                }
+            }
+        }
+
+        return when {
+            recentSessionTime == chipsTime -> {
+                chips.payload
+            }
+            recentSessionTime > chipsTime -> {
+                // not valid lastReceivedChips anymore.
+                lastReceivedChips = null
+                null
+            }
+            else -> {
+                null
+            }
         }
     }
 
