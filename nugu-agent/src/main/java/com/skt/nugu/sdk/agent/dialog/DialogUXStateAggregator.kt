@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent.dialog
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
@@ -43,6 +44,12 @@ class DialogUXStateAggregator(
         private const val TAG = "DialogUXStateAggregator"
     }
 
+    data class NotifyParams(
+        val state: DialogUXStateAggregatorInterface.DialogUXState,
+        val dialogMode: Boolean,
+        val chips: RenderDirective.Payload?
+    )
+
     private val executor = Executors.newSingleThreadExecutor()
     private val listeners: MutableSet<DialogUXStateAggregatorInterface.Listener> = HashSet()
     private var currentState: DialogUXStateAggregatorInterface.DialogUXState =
@@ -58,6 +65,7 @@ class DialogUXStateAggregator(
 
     private var tryEnterIdleStateRunnableFuture: ScheduledFuture<*>? = null
     private var lastReceivedChips: RenderDirective? = null
+    private var lastNotifyParams: NotifyParams? = null
 
     private val tryEnterIdleStateRunnable: Runnable = Runnable {
         executor.submit {
@@ -168,15 +176,11 @@ class DialogUXStateAggregator(
     }
 
     private fun setState(newState: DialogUXStateAggregatorInterface.DialogUXState) {
-        if (newState == currentState) {
-            return
-        }
-
         tryEnterIdleStateRunnableFuture?.cancel(true)
         tryEnterIdleStateRunnableFuture = null
 
         currentState = newState
-        notifyObserversOfState()
+        notifyOnStateChangeIfSomethingChanged()
 
         displayAgent?.let {
             displaySustainFuture?.cancel(true)
@@ -197,10 +201,15 @@ class DialogUXStateAggregator(
         }
     }
 
-    private fun notifyObserversOfState() {
+    private fun notifyOnStateChangeIfSomethingChanged() {
         getCurrentChips().let { chips ->
-            listeners.forEach {
-                it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips)
+            NotifyParams(currentState, dialogModeEnabled, chips).let {notifyParams ->
+                if(notifyParams != lastNotifyParams) {
+                    lastNotifyParams = notifyParams
+                    listeners.forEach {
+                        it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips)
+                    }
+                }
             }
         }
     }
