@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 0.9.12 *(2020-07-22)*
+-----------------------------
+* Fix: Fix invalid ASR.Recognize failure handling (#983)
+* Improve: Add callback to notify when text request is created. (#987)
+* New: Manage focus for PhoneCall (#989)
+
 Version 0.9.11 *(2020-07-21)*
 -----------------------------
 * Improve: Apply url compare logic on resume (#980)
