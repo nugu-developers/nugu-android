@@ -25,6 +25,7 @@ interface TextAgentInterface {
     }
 
     interface RequestListener {
+        fun onRequestCreated(dialogRequestId: String)
         fun onReceiveResponse(dialogRequestId: String)
         fun onError(dialogRequestId: String, type: ErrorType)
     }
