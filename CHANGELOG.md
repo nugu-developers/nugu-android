@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+Version 0.9.13 *(2020-07-23)*
+-----------------------------
+* Fix: Notify valid chips on dialog ux state change (#996)
+* Fix: Fix not release focus when tts finish/stop (#999)
+* Improve: Replace webbrowser with Inappbrowser in loginKit (#906)
+    * Replace webBrowser with InAppBrowser
+    * Replace LoadingActivity with LoginActivity
+    * Add accountByInAppBrowser to NuguOAuthInterface
+* Improve: Change server initiated setting during runtime (#952)
+* Improve: Simplify dialogUX notify logic (#994)
+    * Notify only at setState if something changed.
+
 Version 0.9.12 *(2020-07-22)*
 -----------------------------
 * Fix: Fix invalid ASR.Recognize failure handling (#983)
