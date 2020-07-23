@@ -794,11 +794,11 @@ class DefaultTTSAgent(
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
     }
 
-    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo, callback: MessageSender.Callback? = null) {
+    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo, callback: MessageSender.Callback? = null): Boolean {
         val playServiceId = info.getPlayServiceId()
         if (playServiceId.isNullOrBlank()) {
             Logger.d(TAG, "[sendPlaybackEvent] skip : playServiceId: $playServiceId")
-            return
+            return false
         }
 
         sendEventWithToken(
@@ -809,6 +809,8 @@ class DefaultTTSAgent(
             info.directive.header.dialogRequestId,
             callback
         )
+
+        return true
     }
 
     private fun executePlaybackStopped() {
@@ -821,7 +823,7 @@ class DefaultTTSAgent(
         setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
 
-        sendPlaybackEvent(EVENT_SPEECH_STOPPED, info, object: MessageSender.Callback {
+        if(!sendPlaybackEvent(EVENT_SPEECH_STOPPED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 onFinish()
             }
@@ -845,7 +847,19 @@ class DefaultTTSAgent(
                     }
                 }
             }
-        })
+        })) {
+            with(info) {
+                if (cancelByStop) {
+                    lastImplicitStoppedInfo = null
+                    result.setFailed("playback stopped", true)
+                    releaseSyncImmediately(this)
+                } else {
+                    lastImplicitStoppedInfo = info
+                    result.setFailed("playback stopped", false)
+                    releaseSync(this)
+                }
+            }
+        }
     }
 
     private fun executePlaybackFinished() {
@@ -860,7 +874,7 @@ class DefaultTTSAgent(
         setCurrentStateAndToken(TTSAgentInterface.State.FINISHED, info.payload.token)
         info.state = TTSAgentInterface.State.FINISHED
 
-        sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
+        if(!sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 onFinished()
             }
@@ -875,7 +889,10 @@ class DefaultTTSAgent(
                     releaseSync(info)
                 }
             }
-        })
+        })) {
+            setHandlingCompleted()
+            releaseSync(info)
+        }
     }
 
     private fun executePlaybackError(type: ErrorType, error: String) {
