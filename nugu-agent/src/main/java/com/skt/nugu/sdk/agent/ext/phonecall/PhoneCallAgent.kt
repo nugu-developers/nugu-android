@@ -253,7 +253,7 @@ class PhoneCallAgent(
                     }
                 })
             }
-        }, namespaceAndName)
+        })
     }
 
     private fun sendCallEndedEvent(
