@@ -325,21 +325,14 @@ class DefaultServerSpeechRecognizer(
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        messageSender.newCall(
+        return messageSender.newCall(
             EventMessageRequest.Builder(
                 request.context,
                 DefaultASRAgent.NAMESPACE,
                 DefaultASRAgent.EVENT_STOP_RECOGNIZE,
                 DefaultASRAgent.VERSION.toString()
             ).referrerDialogRequestId(request.dialogRequestId).build()
-        ).enqueue(object : MessageSender.Callback{
-            override fun onFailure(request: MessageRequest, status: Status) {
-            }
-
-            override fun onSuccess(request: MessageRequest) {
-            }
-        })
-        return true
+        ).enqueue(null)
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
