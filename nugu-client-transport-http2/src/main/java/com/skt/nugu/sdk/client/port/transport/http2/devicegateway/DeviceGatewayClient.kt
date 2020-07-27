@@ -254,8 +254,7 @@ internal class DeviceGatewayClient(
             }
         }
 
-        isConnected.compareAndSet(true, false)
-
+        disconnect()
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
                 Logger.w(TAG, "[awaitRetry] Error : $error")
