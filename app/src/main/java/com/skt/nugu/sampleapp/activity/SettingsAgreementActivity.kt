@@ -20,13 +20,16 @@ import android.support.v7.app.AppCompatActivity
 import android.content.Intent
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
+import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.platform.android.service.webkit.NuguWebView
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.service.webkit.Const
 
-class SettingsAgreementActivity : AppCompatActivity() {
+class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListener {
     companion object {
         private const val TAG = "SettingsAgreementActivity"
+        private val REASON_WITHDRAWN_USER = "WITHDRAWN_USER"
     }
     private val nuguPocId : String by lazy {
         getString(R.string.nugu_poc_id)
@@ -56,6 +59,7 @@ class SettingsAgreementActivity : AppCompatActivity() {
             pocId = nuguPocId
             appVersion = BuildConfig.VERSION_NAME
             theme = NuguWebView.THEME.LIGHT
+            windowListener = this@SettingsAgreementActivity
             loadUrl(Const.AGREEMENT_URL)
         }
     }
@@ -70,6 +74,18 @@ class SettingsAgreementActivity : AppCompatActivity() {
             webView.goBack()
         } else {
             super.onBackPressed()
+        }
+    }
+
+    override fun onCloseWindow(reason: String?) {
+        if(REASON_WITHDRAWN_USER == reason) {
+            ClientManager.getClient().disconnect()
+            NuguOAuth.getClient().clearAuthorization()
+            PreferenceHelper.credentials(this@SettingsAgreementActivity,"")
+            LoginActivity.invokeActivity(this@SettingsAgreementActivity)
+            finishAffinity()
+        } else {
+            finish()
         }
     }
 }
