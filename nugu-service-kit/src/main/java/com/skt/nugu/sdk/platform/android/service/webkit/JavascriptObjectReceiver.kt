@@ -25,7 +25,7 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
     interface Listener {
         fun openExternalApp(androidScheme: String?, androidAppId: String?)
         fun openInAppBrowser(url: String)
-        fun closeWindow()
+        fun closeWindow(reason: String?)
     }
 
     @Keep
@@ -39,6 +39,9 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
 
     @Keep
     data class OpenInAppBrowser(val url: String)
+
+    @Keep
+    data class CloseWindow(val reason: String)
 
     @JavascriptInterface
     fun openExternalApp(parameter: String) {
@@ -61,7 +64,12 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
     }
 
     @JavascriptInterface
-    fun closeWindow() {
-        listener.closeWindow()
+    fun closeWindow(parameter: String) {
+        gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
+            if (it.method == "closeWindow") {
+                val info = gson.fromJson(it.body, CloseWindow::class.java)
+                listener.closeWindow(info?.reason)
+            }
+        }
     }
 }

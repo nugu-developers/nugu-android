@@ -41,11 +41,18 @@ class NuguWebView @JvmOverloads constructor(
     JavascriptObjectReceiver.Listener {
     private val webView = WebView(context)
 
-    interface Listener {
+    interface WebViewClientListener {
         fun onPageStarted(url: String?, favicon: Bitmap?)
         fun onPageFinished(url: String)
         fun onReceivedError(request: WebResourceRequest?, error: WebResourceError?)
+    }
+
+    interface WebChromeClientListener {
         fun onProgressChanged(newProgress: Int)
+    }
+
+    interface WindowListener {
+        fun onCloseWindow(reason: String?)
     }
 
     @Keep
@@ -71,7 +78,9 @@ class NuguWebView @JvmOverloads constructor(
     var pocId: String? = null
     var appVersion: String? = null
     var theme: THEME = THEME.LIGHT
-    var listener: Listener? = null
+    var webViewClientListener: WebViewClientListener? = null
+    var webChromeClientListener: WebChromeClientListener? = null
+    var windowListener: WindowListener? = null
     var redirectUri : String? = null
 
     init {
@@ -115,10 +124,9 @@ class NuguWebView @JvmOverloads constructor(
         }
     }
 
-    override fun closeWindow() {
+    override fun closeWindow(reason: String?) {
         webView.post {
-            val activity = context as Activity
-            activity.finish()
+            windowListener?.onCloseWindow(reason)
         }
     }
 
@@ -138,6 +146,8 @@ class NuguWebView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         webView.removeJavascriptInterface(JS_INTERFACE_NAME)
+        webView.removeAllViews()
+        webView.destroy()
     }
 
     private fun updateCookies(url: String) {
@@ -179,7 +189,7 @@ class NuguWebView @JvmOverloads constructor(
     inner class DefaultWebViewClient(private val context: Context) : WebViewClient() {
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
-            listener?.onPageStarted(url, favicon)
+            webViewClientListener?.onPageStarted(url, favicon)
         }
 
         override fun onPageFinished(view: WebView, url: String) {
@@ -190,7 +200,7 @@ class NuguWebView @JvmOverloads constructor(
             } else {
                 CookieSyncManager.getInstance().sync()
             }
-            listener?.onPageFinished(url)
+            webViewClientListener?.onPageFinished(url)
         }
 
         override fun onReceivedError(
@@ -199,14 +209,14 @@ class NuguWebView @JvmOverloads constructor(
             error: WebResourceError?
         ) {
             super.onReceivedError(view, request, error)
-            listener?.onReceivedError(request, error)
+            webViewClientListener?.onReceivedError(request, error)
         }
     }
 
     inner class DefaultWebChromeClient(private val context: Context) : WebChromeClient() {
         override fun onProgressChanged(view: WebView?, newProgress: Int) {
             super.onProgressChanged(view, newProgress)
-            listener?.onProgressChanged(newProgress)
+            webChromeClientListener?.onProgressChanged(newProgress)
         }
     }
 }

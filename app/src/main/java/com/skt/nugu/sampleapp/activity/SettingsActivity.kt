@@ -33,7 +33,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
-class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
+class SettingsActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "SettingsActivity"
         const val settingsAgreementActivityRequestCode = 102
@@ -90,9 +90,6 @@ class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        // add listener for system agent
-        ClientManager.getClient().addSystemAgentListener(this)
-
         switchEnableNugu.isChecked = PreferenceHelper.enableNugu(this)
         switchEnableTrigger.isChecked = PreferenceHelper.enableTrigger(this)
         switchEnableWakeupBeep.isChecked = PreferenceHelper.enableWakeupBeep(this)
@@ -122,11 +119,6 @@ class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
                 Log.d(TAG, error.toString())
             }
         })
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        ClientManager.getClient().removeSystemAgentListener(this)
     }
 
     fun initBtnListeners() {
@@ -196,16 +188,5 @@ class SettingsActivity : AppCompatActivity(), SystemAgentInterface.Listener {
         buttonAgreement.setOnClickListener {
             startActivityForResult(Intent(this, SettingsAgreementActivity::class.java), settingsAgreementActivityRequestCode)
         }
-    }
-
-    override fun onTurnOff() {
-    }
-
-    override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
-    }
-
-    override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
-        finishActivity(settingsAgreementActivityRequestCode)
-        finish()
     }
 }

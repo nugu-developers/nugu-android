@@ -25,7 +25,7 @@ import com.skt.nugu.sdk.platform.android.service.webkit.NuguWebView
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.service.webkit.Const
 
-class SettingsServiceActivity : AppCompatActivity() {
+class SettingsServiceActivity : AppCompatActivity(), NuguWebView.WindowListener {
     companion object {
         private const val TAG = "SettingsServiceActivity"
 
@@ -71,6 +71,7 @@ class SettingsServiceActivity : AppCompatActivity() {
             redirectUri = OAUTH_REDIRECT_URI
             appVersion = BuildConfig.VERSION_NAME
             theme = NuguWebView.THEME.LIGHT
+            windowListener = this@SettingsServiceActivity
             loadUrl(Const.SERVICE_SETTING_URL)
         }
     }
@@ -86,5 +87,9 @@ class SettingsServiceActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
+    }
+
+    override fun onCloseWindow(reason: String?) {
+        finish()
     }
 }
