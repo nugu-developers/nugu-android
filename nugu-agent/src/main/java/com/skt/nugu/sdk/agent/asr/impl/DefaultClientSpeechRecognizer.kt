@@ -395,37 +395,14 @@ class DefaultClientSpeechRecognizer(
 
     private fun sendStopRecognizeEvent(request: EventMessageRequest): Boolean {
         Logger.d(TAG, "[sendStopRecognizeEvent] $this")
-        messageSender.newCall(
+        return messageSender.newCall(
             EventMessageRequest.Builder(
                 request.context,
                 DefaultASRAgent.NAMESPACE,
                 DefaultASRAgent.EVENT_STOP_RECOGNIZE,
                 DefaultASRAgent.VERSION.toString()
             ).referrerDialogRequestId(request.dialogRequestId).build()
-        ).enqueue(object : MessageSender.Callback {
-            override fun onFailure(request: MessageRequest, status: Status) {
-                handleError(when(status.error) {
-                    Status.StatusError.TIMEOUT -> ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT
-                    Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
-                    else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
-                })
-            }
-
-            override fun onSuccess(request: MessageRequest) {
-            }
-        })
-        return true
-        /*
-        return request.let {
-            messageSender.newCall(
-                EventMessageRequest.Builder(
-                    it.context,
-                    DefaultASRAgent.NAMESPACE,
-                    DefaultASRAgent.EVENT_STOP_RECOGNIZE,
-                    DefaultASRAgent.VERSION.toString()
-                ).referrerDialogRequestId(it.dialogRequestId).build()
-            )
-        }*/
+        ).enqueue(null)
     }
 
     private fun setState(state: SpeechRecognizer.State, request: SpeechRecognizer.Request) {
