@@ -33,16 +33,19 @@ class FocusManagerTest : FocusChangeManager() {
 
     private val dialogChannelConfiguration = FocusManagerInterface.ChannelConfiguration(
         DIALOG_CHANNEL_NAME,
+        DIALOG_CHANNEL_PRIORITY,
         DIALOG_CHANNEL_PRIORITY
     )
 
     private val alertsChannelConfiguration = FocusManagerInterface.ChannelConfiguration(
         ALERTS_CHANNEL_NAME,
+        ALERTS_CHANNEL_PRIORITY,
         ALERTS_CHANNEL_PRIORITY
     )
 
     private val contentChannelConfiguration = FocusManagerInterface.ChannelConfiguration(
         CONTENT_CHANNEL_NAME,
+        CONTENT_CHANNEL_PRIORITY,
         CONTENT_CHANNEL_PRIORITY
     )
 

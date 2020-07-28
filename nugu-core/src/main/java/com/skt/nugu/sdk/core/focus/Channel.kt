@@ -20,12 +20,16 @@ import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 
 data class Channel(
     val name: String,
-    val priority: Int,
-    val volatile: Boolean = false
-) : Comparator<Channel>, Comparable<Channel> {
+    val priority: Priority
+) {
     companion object {
         private const val TAG = "Channel"
     }
+
+    data class Priority(
+        val acquire: Int,
+        val release: Int
+    )
 
     data class State(
         val name: String,
@@ -65,7 +69,7 @@ data class Channel(
 
     fun doesObserverOwnChannel(observer: ChannelObserver): Boolean = this.observer == observer
 
-    override fun compare(o1: Channel, o2: Channel) = o2.priority - o1.priority
-
-    override fun compareTo(other: Channel) = other.priority - priority
+//    override fun compare(o1: Channel, o2: Channel) = o2.priority - o1.priority
+//
+//    override fun compareTo(other: Channel) = other.priority - priority
 }

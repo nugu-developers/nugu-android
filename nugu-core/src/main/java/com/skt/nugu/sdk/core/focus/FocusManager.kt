@@ -15,14 +15,16 @@
  */
 package com.skt.nugu.sdk.core.focus
 
-import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.DequeSingleThreadExecutor
+import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.utils.ImmediateBooleanFuture
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 class FocusManager(
     channelConfigurations: List<FocusManagerInterface.ChannelConfiguration>,
@@ -44,7 +46,7 @@ class FocusManager(
      * Do synchronize when use.
      */
     //@GuardedBy("activeChannels")
-    private val activeChannels = TreeSet<Channel>()
+    private val activeChannels = TreeSet<Channel>(Comparator<Channel> { p0, p1 -> p1.priority.acquire - p0.priority.acquire })
     private val executor = Executors.newSingleThreadExecutor()
 
     private val listeners = CopyOnWriteArraySet<FocusManagerInterface.OnFocusChangedListener>()
@@ -52,7 +54,7 @@ class FocusManager(
     init {
         for (channelConfiguration in channelConfigurations) {
             allChannels[channelConfiguration.name] =
-                Channel(channelConfiguration.name, channelConfiguration.priority, channelConfiguration.volatile)
+                Channel(channelConfiguration.name, Channel.Priority(channelConfiguration.acquirePriority, channelConfiguration.releasePriority))
             allChannelConfigurations[channelConfiguration.name] = channelConfiguration
         }
     }
@@ -119,7 +121,7 @@ class FocusManager(
         when {
             foregroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
             foregroundChannel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
-            channelToAcquire > foregroundChannel || channelToAcquire.volatile || foregroundChannel.volatile -> {
+            channelToAcquire.priority.acquire < foregroundChannel.priority.release -> {
                 setChannelFocus(foregroundChannel, FocusState.BACKGROUND)
                 setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
             }

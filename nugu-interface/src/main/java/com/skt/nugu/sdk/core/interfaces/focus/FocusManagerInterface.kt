@@ -20,8 +20,8 @@ import java.util.concurrent.Future
 interface FocusManagerInterface {
     data class ChannelConfiguration(
         val name: String,
-        val priority: Int,
-        val volatile: Boolean = false
+        val acquirePriority: Int,
+        val releasePriority: Int
     )
 
     interface OnFocusChangedListener {

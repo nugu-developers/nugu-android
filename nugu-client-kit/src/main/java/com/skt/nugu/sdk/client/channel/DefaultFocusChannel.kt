@@ -21,8 +21,9 @@ class DefaultFocusChannel {
     companion object {
         // If you add other channel, only allow to use positive number for priority
         // Also, each priority must be a multiple of 2.
-        const val INTRUSION_CHANNEL_NAME = "Intrusion"
-        const val INTRUSION_CHANNEL_PRIORITY = 50
+        const val INTERACTION_CHANNEL_NAME = "Interaction"
+        const val INTERACTION_CHANNEL_ACQUIRE_PRIORITY = 50
+        const val INTERACTION_CHANNEL_RELEASE_PRIORITY = 900
         const val DIALOG_CHANNEL_NAME = "Dialog"
         const val DIALOG_CHANNEL_PRIORITY = 100
         const val COMMUNICATIONS_CHANNEL_NAME = "Communications"
@@ -30,27 +31,40 @@ class DefaultFocusChannel {
         const val ALERTS_CHANNEL_NAME = "Alerts"
         const val ALERTS_CHANNEL_PRIORITY = 200
         const val CONTENT_CHANNEL_NAME = "Content"
-        const val CONTENT_CHANNEL_PRIORITY = 300
+        const val CONTENT_CHANNEL_PRIORITY = 400
+
+        const val INTERNAL_DIALOG_CHANNEL_NAME = "InternalDialog"
+        const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = 300
+        const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = 500
 
         fun getDefaultAudioChannels(): List<FocusManagerInterface.ChannelConfiguration> {
             return listOf(
                 FocusManagerInterface.ChannelConfiguration(
-                    INTRUSION_CHANNEL_NAME,
-                    INTRUSION_CHANNEL_PRIORITY, true),
+                    INTERACTION_CHANNEL_NAME,
+                    INTERACTION_CHANNEL_ACQUIRE_PRIORITY, INTERACTION_CHANNEL_RELEASE_PRIORITY
+                ),
+                FocusManagerInterface.ChannelConfiguration(
+                    INTERNAL_DIALOG_CHANNEL_NAME,
+                    INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY, INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY
+                ),
                 FocusManagerInterface.ChannelConfiguration(
                     DIALOG_CHANNEL_NAME,
+                    DIALOG_CHANNEL_PRIORITY,
                     DIALOG_CHANNEL_PRIORITY
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     COMMUNICATIONS_CHANNEL_NAME,
+                    COMMUNICATIONS_CHANNEL_PRIORITY,
                     COMMUNICATIONS_CHANNEL_PRIORITY
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     ALERTS_CHANNEL_NAME,
+                    ALERTS_CHANNEL_PRIORITY,
                     ALERTS_CHANNEL_PRIORITY
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     CONTENT_CHANNEL_NAME,
+                    CONTENT_CHANNEL_PRIORITY,
                     CONTENT_CHANNEL_PRIORITY
                 )
             )

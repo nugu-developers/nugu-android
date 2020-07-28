@@ -63,7 +63,8 @@ class DefaultASRAgent(
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
     private val defaultEpdTimeoutMillis: Long,
-    private val channelName: String,
+    private val userInteractionDialogChannelName: String,
+    private val internalDialogChannelName: String,
     private val focusHolderManager: FocusHolderManager
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
@@ -499,7 +500,11 @@ class DefaultASRAgent(
 
         if (focusState != FocusState.FOREGROUND) {
             if (!focusManager.acquireChannel(
-                    channelName, this,
+                    if (expectSpeechDirectiveParam == null) {
+                        userInteractionDialogChannelName
+                    } else {
+                        internalDialogChannelName
+                    }, this,
                     NAMESPACE
                 )
             ) {
@@ -567,7 +572,10 @@ class DefaultASRAgent(
                     executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, expectSpeechDirectiveParam, epdParam, callback, context)
                 }
             }
-            FocusState.BACKGROUND -> focusManager.releaseChannel(channelName, this)
+            FocusState.BACKGROUND -> {
+                focusManager.releaseChannel(userInteractionDialogChannelName, this)
+                focusManager.releaseChannel(internalDialogChannelName, this)
+            }
             FocusState.NONE -> executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
         }
     }
@@ -736,7 +744,8 @@ class DefaultASRAgent(
             }
 
             if(focusState != FocusState.NONE && !currentSpeechRecognizer.isRecognizing()) {
-                focusManager.releaseChannel(channelName, this)
+                focusManager.releaseChannel(userInteractionDialogChannelName, this)
+                focusManager.releaseChannel(internalDialogChannelName, this)
                 focusState = FocusState.NONE
             }
         }
