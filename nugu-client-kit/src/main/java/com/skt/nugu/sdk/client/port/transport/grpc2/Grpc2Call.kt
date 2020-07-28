@@ -25,12 +25,15 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
-internal class Grpc2Call(val transport: Transport?, val request: MessageRequest, val listener: MessageSender.OnSendMessageListener) :
+internal class Grpc2Call(val transport: Transport?, val request: MessageRequest, listener: MessageSender.OnSendMessageListener) :
     MessageCall {
     private var executed = false
     private var canceled = false
     private var callback: MessageSender.Callback? = null
-    private val callTimeoutMillis = 1000 * 10L
+    private var listener: MessageSender.OnSendMessageListener? = listener
+    private var callTimeoutMillis = 1000 * 10L
+    private var noAck = false
+
     companion object{
         private const val TAG = "GrpcCall"
     }
@@ -46,7 +49,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
                 return false
             }
             if (canceled) {
-                callback?.onFailure(request(), Status(
+                callback?.onFailure(request(),Status(
                     Status.Code.CANCELLED
                 ).withDescription("Already canceled"))
                 return false
@@ -56,8 +59,12 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         this.callback = callback
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION)
+            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
+        }
+
+        if(noAck) {
+            result(Status.OK)
         }
         return true
     }
@@ -72,7 +79,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             canceled = true
         }
         Logger.d(TAG, "cancel")
-        result(Status.CANCELLED)
+        result(Status.CANCELLED.withDescription("Client Closed Request"))
     }
 
     override fun execute(): Status {
@@ -106,9 +113,12 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         }
 
         if (transport?.send(this) != true) {
-            return Status.FAILED_PRECONDITION
+            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
 
+        if(noAck) {
+            result(Status.OK)
+        }
         try {
             latch.await(callTimeoutMillis, TimeUnit.MILLISECONDS)
         } catch (e: InterruptedException) {
@@ -118,15 +128,21 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     }
 
     override fun result(status: Status) {
-        callback?.let {
-            if (status.isOk()) {
-                it.onSuccess(request())
-            } else {
-                it.onFailure(request(), status)
-            }
-            listener.onPostSendMessage(request(), status)
+        // Notify Callback
+        if (status.isOk()) {
+            callback?.onSuccess(request())
+        } else {
+            callback?.onFailure(request(), status)
         }
         callback = null
+
+        // Notify Listener
+        listener?.onPostSendMessage(request(), status)
+        listener = null
     }
 
+    override fun noAck(): MessageCall {
+        noAck = true
+        return this
+    }
 }

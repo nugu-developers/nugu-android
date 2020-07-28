@@ -21,5 +21,6 @@ interface Call {
     fun cancel()
     fun execute(): Status
     fun enqueue(callback: MessageSender.Callback?): Boolean
+    fun noAck(): Call
     fun result(status: Status)
 }

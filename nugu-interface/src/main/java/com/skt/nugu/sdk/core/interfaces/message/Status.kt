@@ -100,6 +100,8 @@ class Status(val code: Code) {
             return StatusError.UNAUTHENTICATED
         } else if(Code.FAILED_PRECONDITION == code) {
             return StatusError.UNKNOWN
+        } else if(Code.CANCELLED == code) {
+            return StatusError.OK
         }
         return StatusError.NETWORK
     }

@@ -26,8 +26,9 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 class FixedStateCall(
     val status: Status,
     val request: MessageRequest,
-    val listener: MessageSender.OnSendMessageListener
+    listener: MessageSender.OnSendMessageListener
 ) : Call {
+    private var listener: MessageSender.OnSendMessageListener? = listener
     override fun request() = request
 
     override fun isCanceled() = false
@@ -45,7 +46,12 @@ class FixedStateCall(
         return false
     }
 
+    override fun noAck(): Call {
+        return this
+    }
+
     override fun result(status: Status) {
-        listener.onPostSendMessage(request(), status)
+        listener?.onPostSendMessage(request(), status)
+        listener = null
     }
 }
