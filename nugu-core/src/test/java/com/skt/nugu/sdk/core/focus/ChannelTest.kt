@@ -7,7 +7,7 @@ import org.junit.Test
 class ChannelTest : FocusChangeManager() {
     private val clientA = TestClient()
     private val clientB = TestClient()
-    private val testChannel = Channel(DIALOG_CHANNEL_NAME, DIALOG_CHANNEL_PRIORITY)
+    private val testChannel = Channel(DIALOG_CHANNEL_NAME, Channel.Priority(DIALOG_CHANNEL_PRIORITY, DIALOG_CHANNEL_PRIORITY))
 
     @Test
     fun getName() {
@@ -16,7 +16,8 @@ class ChannelTest : FocusChangeManager() {
 
     @Test
     fun getPriority() {
-        Assert.assertEquals(testChannel.priority, DIALOG_CHANNEL_PRIORITY)
+        Assert.assertEquals(testChannel.priority.acquire, DIALOG_CHANNEL_PRIORITY)
+        Assert.assertEquals(testChannel.priority.release, DIALOG_CHANNEL_PRIORITY)
     }
 
     @Test
@@ -33,13 +34,6 @@ class ChannelTest : FocusChangeManager() {
         assertFocusChange(clientA, FocusState.NONE)
 
         Assert.assertFalse(testChannel.setFocus(FocusState.NONE))
-    }
-
-    @Test
-    fun priorityComparison() {
-        val lowerPriorityChannel = Channel(CONTENT_CHANNEL_NAME, CONTENT_CHANNEL_PRIORITY)
-        Assert.assertTrue(testChannel > lowerPriorityChannel)
-        Assert.assertFalse(lowerPriorityChannel > testChannel)
     }
 
     @Test

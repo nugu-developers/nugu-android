@@ -51,7 +51,7 @@ object AndroidAudioFocusInteractor {
     ) : AudioFocusInteractor,
         FocusManagerInterface.OnFocusChangedListener, ChannelObserver {
 
-        private val channelName = DefaultFocusChannel.INTRUSION_CHANNEL_NAME
+        private val channelName = DefaultFocusChannel.INTERACTION_CHANNEL_NAME
 
         init {
             audioFocusManager.addListener(this)

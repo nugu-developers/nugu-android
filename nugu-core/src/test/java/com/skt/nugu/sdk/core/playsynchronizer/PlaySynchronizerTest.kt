@@ -72,26 +72,6 @@ class PlaySynchronizerTest {
     }
 
     @Test
-    fun testSimpleReleaseWithoutSync() {
-        val synchronizer = PlaySynchronizer()
-        val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
-
-        val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
-
-        synchronizer.prepareSync(syncObj1)
-        synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseWithoutSync(syncObj1)
-
-        verify(syncObj2, never()).requestReleaseSync()
-    }
-
-    @Test
     fun testDifferentDialogRequestIdReleaseSync() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
