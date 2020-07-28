@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2
 
-import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -24,19 +23,22 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
+import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
 internal class HTTP2Call(
     val timeoutScheduler: ScheduledExecutorService,
     val transport: Transport?,
     val request: MessageRequest,
-    val listener: MessageSender.OnSendMessageListener
-) :
-    com.skt.nugu.sdk.core.interfaces.message.Call {
+    listener: MessageSender.OnSendMessageListener
+) : MessageCall {
     private val timeoutFutures = ConcurrentHashMap<Int, ScheduledFuture<*>>()
     private var executed = false
     private var canceled = false
     private var callback: MessageSender.Callback? = null
+    private var listener: MessageSender.OnSendMessageListener? = listener
     private val callTimeoutMillis = 1000 * 10L
+    private var noAck = false
+
     companion object{
         private const val TAG = "HTTP2Call"
     }
@@ -64,10 +66,13 @@ internal class HTTP2Call(
         scheduleTimeout()
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION)
+            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
         }
 
+        if(noAck) {
+            result(Status.OK)
+        }
         return true
     }
 
@@ -81,7 +86,7 @@ internal class HTTP2Call(
             canceled = true
         }
         Logger.d(TAG, "cancel")
-        result(Status.CANCELLED)
+        result(Status.CANCELLED.withDescription("Client Closed Request"))
     }
 
     override fun execute(): Status {
@@ -115,11 +120,12 @@ internal class HTTP2Call(
         }
 
         if (transport?.send(this) != true) {
-            return Status(
-                Status.Code.FAILED_PRECONDITION
-            ).withDescription("send failed")
+            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
 
+        if(noAck) {
+            result(Status.OK)
+        }
         try {
             latch.await(callTimeoutMillis, TimeUnit.MILLISECONDS)
         } catch (e: InterruptedException) {
@@ -131,15 +137,17 @@ internal class HTTP2Call(
     override fun result(status: Status) {
         cancelScheduledTimeout()
 
-        callback?.let {
-            if (status.isOk()) {
-                it.onSuccess(request())
-            } else {
-                it.onFailure(request(), status)
-            }
-            listener.onPostSendMessage(request(), status)
+        // Notify Callback
+        if (status.isOk()) {
+            callback?.onSuccess(request())
+        } else {
+            callback?.onFailure(request(), status)
         }
         callback = null
+
+        // Notify Listener
+        listener?.onPostSendMessage(request(), status)
+        listener = null
     }
 
     private val hashCode : Int by lazy {
@@ -155,6 +163,11 @@ internal class HTTP2Call(
                 result(Status.DEADLINE_EXCEEDED)
             }, callTimeoutMillis, TimeUnit.MILLISECONDS)
         }
+    }
+
+    override fun noAck(): MessageCall {
+        noAck = true
+        return this
     }
 
     private fun cancelScheduledTimeout() {

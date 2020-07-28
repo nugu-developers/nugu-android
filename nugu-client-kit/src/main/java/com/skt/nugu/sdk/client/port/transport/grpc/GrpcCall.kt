@@ -15,30 +15,31 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc
 
-import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
-import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.*
 import java.util.concurrent.*
+import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
 internal class GrpcCall(
     val timeoutScheduler: ScheduledExecutorService,
     val transport: Transport?,
     val request: MessageRequest,
-    val listener: MessageSender.OnSendMessageListener
+    listener: MessageSender.OnSendMessageListener
 ) :
-    com.skt.nugu.sdk.core.interfaces.message.Call {
+    MessageCall {
     private val timeoutFutures = ConcurrentHashMap<Int, ScheduledFuture<*>>()
     private var executed = false
     private var canceled = false
     private var callback: MessageSender.Callback? = null
-    private val callTimeoutMillis = 1000 * 10L
+    private var listener: MessageSender.OnSendMessageListener? = listener
+    private var callTimeoutMillis = 1000 * 10L
+    private var noAck = false
+
     companion object{
         private const val TAG = "GrpcCall"
     }
@@ -73,10 +74,13 @@ internal class GrpcCall(
         scheduleTimeout()
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("unexpected network status"))
+            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
         }
 
+        if(noAck) {
+            result(Status.OK)
+        }
         return true
     }
 
@@ -105,7 +109,7 @@ internal class GrpcCall(
             canceled = true
         }
         Logger.d(TAG, "cancel")
-        result(Status.CANCELLED)
+        result(Status.CANCELLED.withDescription("Client Closed Request"))
     }
 
     override fun execute(): Status {
@@ -138,9 +142,11 @@ internal class GrpcCall(
         }
 
         if (transport?.send(this) != true) {
-            return Status(
-                Status.Code.FAILED_PRECONDITION
-            ).withDescription("send failed")
+            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+        }
+
+        if(noAck) {
+            result(Status.OK)
         }
 
         try {
@@ -151,18 +157,24 @@ internal class GrpcCall(
         return result
     }
 
+    override fun noAck(): MessageCall {
+        noAck = true
+        return this
+    }
+
     override fun result(status: Status) {
         cancelScheduledTimeout()
 
-        callback?.let {
-            if (status.isOk()) {
-                it.onSuccess(request())
-            } else {
-                it.onFailure(request(), status)
-            }
-            listener.onPostSendMessage(request(), status)
+        // Notify Callback
+        if (status.isOk()) {
+            callback?.onSuccess(request())
+        } else {
+            callback?.onFailure(request(), status)
         }
         callback = null
-    }
 
+        // Notify Listener
+        listener?.onPostSendMessage(request(), status)
+        listener = null
+    }
 }

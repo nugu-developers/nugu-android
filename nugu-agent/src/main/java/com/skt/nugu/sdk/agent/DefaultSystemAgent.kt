@@ -408,7 +408,8 @@ class DefaultSystemAgent(
     private fun sendEvent(
         name: String,
         referrerDialogRequestId: String? = null,
-        payload: String? = null
+        payload: String? = null,
+        noAck: Boolean = false
     ) {
         val tempNamespaceAndName = if (name == EVENT_NAME_SYNCHRONIZE_STATE) {
             null
@@ -418,7 +419,7 @@ class DefaultSystemAgent(
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
-                messageSender.newCall(
+                val call = messageSender.newCall(
                     EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString())
                         .also {
                             if (payload != null) {
@@ -429,7 +430,11 @@ class DefaultSystemAgent(
                                 it.referrerDialogRequestId(referrerDialogRequestId)
                             }
                         }.build()
-                ).enqueue(object : MessageSender.Callback {
+                )
+                if(noAck) {
+                    call.noAck()
+                }
+                call.enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
                     }
                     override fun onSuccess(request: MessageRequest) {
@@ -482,10 +487,10 @@ class DefaultSystemAgent(
     }
 
     /**
-     * Execute event in thread for synchronize state
+     * Execute a disconnect in thread.
      */
     private fun executeDisconnectEvent() {
-        sendEvent(EVENT_NAME_DISCONNECT)
+        sendEvent(name = EVENT_NAME_DISCONNECT, noAck = true)
     }
 
     override fun onContextAvailable(jsonContext: String) {

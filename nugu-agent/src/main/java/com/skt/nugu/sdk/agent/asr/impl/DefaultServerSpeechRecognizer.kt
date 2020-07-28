@@ -152,7 +152,6 @@ class DefaultServerSpeechRecognizer(
             )
         request.call = call
         currentRequest = request
-
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 Logger.w(TAG, "[startProcessor] failed to send recognize event")
