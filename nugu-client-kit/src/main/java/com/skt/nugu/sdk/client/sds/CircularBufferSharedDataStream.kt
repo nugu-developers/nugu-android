@@ -29,6 +29,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
     companion object {
         private const val TAG = "CircularBufferSharedDataStream"
 
+        const val EOS = -3
         const val OVERRUN = -2
         const val UNDERRUN = -1
     }
@@ -196,7 +197,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
             var dstOffsetInBytes = offsetInBytes
             var leftSizeInBytes = sizeInBytes
 
-            while (leftSizeInBytes > 0 && !isClosing.get()) {
+            while (leftSizeInBytes > 0) {
                 isReading = true
                 var read = 0
                 lock.read {
@@ -235,16 +236,24 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
                     }
                 }
 
-                if (read == 0 && !isClosing.get()) {
-                    synchronized(waitLock) {
-                        if (!isClosing.get() && !isBufferFullFilled) {
-                            waitLock.wait()
+                if (read == 0) {
+                    if(!isClosing.get()) {
+                        synchronized(waitLock) {
+                            if (!isClosing.get() && !isBufferFullFilled) {
+                                waitLock.wait()
+                            }
                         }
                     }
 
                     if (isBufferFullFilled) {
                         isReading = false
-                        return 0
+                        return if (sizeInBytes == leftSizeInBytes) {
+                            // nothing to read
+                            EOS
+                        } else {
+                            // something read
+                            sizeInBytes - leftSizeInBytes
+                        }
                     }
                 }
             }
