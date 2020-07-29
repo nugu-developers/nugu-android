@@ -385,7 +385,8 @@ class NuguAndroidClient private constructor(
                             builder.defaultEpdTimeoutMillis,
                             DefaultFocusChannel.INTERACTION_CHANNEL_NAME,
                             DefaultFocusChannel.DIALOG_CHANNEL_NAME,
-                            dialogChannelFocusHolderManager
+                            dialogChannelFocusHolderManager,
+                            getPlaySynchronizer()
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
                             dialogChannelFocusHolderManager.addOnStateChangeListener(this)
