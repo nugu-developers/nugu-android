@@ -45,6 +45,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -65,7 +66,8 @@ class DefaultASRAgent(
     private val defaultEpdTimeoutMillis: Long,
     private val userInteractionDialogChannelName: String,
     private val internalDialogChannelName: String,
-    private val focusHolderManager: FocusHolderManager
+    private val focusHolderManager: FocusHolderManager,
+    private val playSynchronizer: PlaySynchronizerInterface
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
     , SpeechRecognizer.OnStateChangeListener
@@ -107,8 +109,24 @@ class DefaultASRAgent(
     }
 
     data class ExpectSpeechDirectiveParam(
-        val directive: ExpectSpeechDirective
-    ) : SessionManagerInterface.Requester
+        val directive: ExpectSpeechDirective,
+        val handler: AbstractDirectiveHandler
+    ) : SessionManagerInterface.Requester, PlaySynchronizerInterface.SynchronizeObject {
+        override fun getPlayServiceId(): String? = directive.payload.playServiceId
+
+        override fun getDialogRequestId(): String = directive.header.dialogRequestId
+
+        override fun requestReleaseSync() {
+            handler.cancelDirective(directive.header.messageId)
+        }
+
+        override fun onSyncStateChanged(
+            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+            started: List<PlaySynchronizerInterface.SynchronizeObject>
+        ) {
+            // ignore
+        }
+    }
 
     private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
     private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
@@ -125,7 +143,6 @@ class DefaultASRAgent(
     private var audioInputStream: SharedDataStream? = null
     private var audioFormat: AudioFormat? = null
     private var wakeupInfo: WakeupInfo? = null
-    private var currentDialogAttributeId: String? = null
     private var expectSpeechDirectiveParam: ExpectSpeechDirectiveParam? = null
     private var endPointDetectorParam: EndPointDetectorParam? = null
     private var startRecognitionCallback: ASRAgentInterface.StartRecognitionCallback? = null
@@ -226,7 +243,7 @@ class DefaultASRAgent(
                     "[executePreHandleExpectSpeechDirective] invalid payload"
                 )
             } else {
-                executePreHandleExpectSpeechInternal(ExpectSpeechDirectiveParam(ExpectSpeechDirective(info.directive.header, payload)))
+                executePreHandleExpectSpeechInternal(ExpectSpeechDirectiveParam(ExpectSpeechDirective(info.directive.header, payload), this))
             }
         }
     }
@@ -235,23 +252,12 @@ class DefaultASRAgent(
         Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, param: $param")
         expectSpeechDirectiveParam?.let {
             sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+            playSynchronizer.releaseSync(it)
         }
 
         expectSpeechDirectiveParam = param
         sessionManager.activate(param.directive.header.dialogRequestId, param)
-        attributeStorageManager.setAttributes(param.directive.header.messageId, HashMap<String, Any>().apply {
-            param.directive.payload.also { payload ->
-                payload.playServiceId?.let {
-                    put("playServiceId", it)
-                }
-                payload.domainTypes?.let {
-                    put("domainTypes", it)
-                }
-                payload.asrContext?.let {
-                    put("asrContext", it)
-                }
-            }
-        })
+        attributeStorageManager.setAttributes(param)
     }
 
     override fun handleDirective(info: DirectiveInfo) {
@@ -425,19 +431,23 @@ class DefaultASRAgent(
     override fun cancelDirective(info: DirectiveInfo) {
         executor.submit {
             if (info.directive.getName() == NAME_EXPECT_SPEECH) {
-                val request = currentRequest
-                if (request == null) {
-                    expectSpeechDirectiveParam?.let {
-                        if(it.directive.header.messageId == info.directive.getMessageId()) {
-                            sessionManager.deactivate(it.directive.header.dialogRequestId, it)
-                            clearPreHandledExpectSpeech()
-                            clearCurrentAttributeKeyIfMatchWith(it)
-                        }
-                    }
-                } else {
-                    executeStopRecognitionOnAttributeUnset(info.directive.getMessageId())
+                executeCancelExpectSpeechDirective(info.directive.getMessageId())
+            }
+        }
+    }
+
+    private fun executeCancelExpectSpeechDirective(messageId: String) {
+        val request = currentRequest
+        if (request == null) {
+            expectSpeechDirectiveParam?.let {
+                if(it.directive.header.messageId == messageId) {
+                    sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                    clearPreHandledExpectSpeech()
+                    clearCurrentAttributeKeyIfMatchWith(it)
                 }
             }
+        } else {
+            executeStopRecognitionOnAttributeUnset(messageId)
         }
     }
 
@@ -985,24 +995,47 @@ class DefaultASRAgent(
     }
 
     private inner class AttributeStorageManager(private val storage: DialogAttributeStorageInterface) {
-        private var currentSetKey: String? = null
-        fun setAttributes(key: String, attr: Map<String, Any>) {
-            val current = currentSetKey
-            if(current != null && current != key) {
-                clearAttributes(current)
+        private var currentParam: ExpectSpeechDirectiveParam? = null
+
+        fun setAttributes(param: ExpectSpeechDirectiveParam) {
+            val key = param.directive.header.messageId
+            val attr = HashMap<String, Any>().apply {
+                param.directive.payload.also { payload ->
+                    payload.playServiceId?.let {
+                        put("playServiceId", it)
+                    }
+                    payload.domainTypes?.let {
+                        put("domainTypes", it)
+                    }
+                    payload.asrContext?.let {
+                        put("asrContext", it)
+                    }
+                }
             }
 
-            currentSetKey = key
+            val current = currentParam
+            if(current != null && current != param) {
+                clearAttributes(current.directive.header.messageId)
+            }
+
+            currentParam = param
             storage.setAttributes(attr)
             onSetAttribute(key)
+
+            playSynchronizer.prepareSync(param)
+            playSynchronizer.startSync(param)
         }
 
         fun clearAttributes(key: String) {
-            if(currentSetKey == key) {
-                storage.clearAttributes()
-                currentSetKey = null
-                onUnsetAttribute(key)
+            currentParam?.let {
+                if(it.directive.header.messageId == key) {
+                    storage.clearAttributes()
+                    currentParam = null
+                    onUnsetAttribute(key)
+                    playSynchronizer.releaseSync(it)
+                }
             }
+            currentParam = null
         }
     }
 }
