@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.skt.nugu.sdk.core.attachment
 
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
@@ -29,79 +30,181 @@ import kotlin.concurrent.withLock
 class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentManagerInterface {
     companion object {
         private const val TAG = "AttachmentManager"
+        private const val ATTACHMENT_PRESERVE_DURATION = 1000L * 60 * 60L
     }
 
+    private data class AttachmentStatus(
+        var readerCreated: Boolean = false,
+        var writerCreated: Boolean = false,
+        var writerClosed: Boolean = false,
+        var receiveEndAttachment: Boolean = false,
+        val createdAt: Long = System.currentTimeMillis()
+    )
+
     private val lock: Lock = ReentrantLock()
-    private val timeoutAttachments = LinkedHashSet<String>()
-    private val attachmentsMap = HashMap<String, Attachment>()
+    private val attachments = HashMap<String, Attachment>()
+    private val attachmentsStatus = HashMap<String, AttachmentStatus>()
     private val attachmentTimeoutFutureMap = HashMap<String, Future<*>>()
     private val scheduleExecutor = ScheduledThreadPoolExecutor(1)
 
-    private fun createWriter(attachmentId: String): Attachment.Writer? {
-        lock.withLock {
-            return getAttachmentLocked(attachmentId)?.createWriter()
-        }
-    }
-
     override fun createReader(attachmentId: String): Attachment.Reader? {
         lock.withLock {
-            return getAttachmentLocked(attachmentId)?.createReader()
-        }
-    }
+            val status = attachmentsStatus[attachmentId]
+            return if (status != null) {
+                val reader = attachments[attachmentId]?.createReader()
+                if (reader != null) {
+                    status.readerCreated = true
 
-    private fun getAttachmentLocked(attachmentId: String): Attachment? {
-        if(timeoutAttachments.contains(attachmentId)) {
-            return null
-        }
+//                    if(status.writerClosed) {
+//                        // remove attachment if writer closed.
+//                        attachments.remove(attachmentId)
+//                    }
+                }
 
-        var attachment = attachmentsMap[attachmentId]
+                Logger.d(
+                    TAG,
+                    "[createReader] Attachment Created Before - attachmentId: $attachmentId, status: $status, created reader: $reader"
+                )
+                reader
+            } else {
+                val attachment = StreamAttachment(attachmentId)
+                val reader = attachment.createReader()
+                attachments[attachmentId] = attachment
+                attachmentsStatus[attachmentId] = AttachmentStatus(readerCreated = true)
 
-        if (attachment == null) {
-            attachment = StreamAttachment(attachmentId)
-            attachmentsMap[attachmentId] = attachment
-        }
-
-        return attachment
-    }
-
-    override fun removeAttachmentIfConsumed(attachmentId: String) {
-        val attachment = attachmentsMap[attachmentId]
-        if (attachment != null) {
-            if (attachment.hasCreatedReader()) {
-                Logger.d(TAG, "[removeAttachmentIfConsumed] removed : $attachmentId")
-                attachmentsMap.remove(attachmentId)
+                Logger.d(
+                    TAG,
+                    "[createReader] New Attachment Created - attachmentId: $attachmentId, status: $status, created reader: $reader"
+                )
+                reader
             }
         }
+    }
+
+    override fun removeAttachment(attachmentId: String) {
+        lock.withLock {
+            val attachmentRemoved = attachments.remove(attachmentId)
+            Logger.d(
+                TAG,
+                "[removeAttachment] attachmentId: $attachmentId, attachmentRemoved: $attachmentRemoved"
+            )
+            val removedStatus = removeStatusIfNoMoreNeedLocked(attachmentId)
+
+            trimTimeoutAttachmentLocked()
+
+            if (attachmentRemoved != null || removedStatus != null) {
+                Logger.d(
+                    TAG,
+                    "[removeAttachment] attachment size: ${attachments.size}, status size: ${attachmentsStatus.size}"
+                )
+            }
+        }
+    }
+
+    private fun removeStatusIfNoMoreNeedLocked(attachmentId: String): AttachmentStatus? {
+        val status = attachmentsStatus[attachmentId]
+
+        val removed = if (status != null) {
+            if (status.readerCreated && status.receiveEndAttachment) {
+                attachmentsStatus.remove(attachmentId)
+            } else {
+                null
+            }
+        } else {
+            null
+        }
+
+        if(removed != null) {
+            Logger.d(
+                TAG,
+                "[removeStatusIfNoMoreNeedLocked] removed - id: $attachmentId, status: $status"
+            )
+        } else {
+            Logger.d(
+                TAG,
+                "[removeStatusIfNoMoreNeedLocked] not removed - id: $attachmentId, status: $status"
+            )
+        }
+        return removed
     }
 
     override fun onAttachment(attachment: AttachmentMessage) {
-        with(attachment) {
-            attachmentTimeoutFutureMap.remove(parentMessageId)?.cancel(true)
+        val attachmentId = attachment.parentMessageId
+        lock.withLock {
+            attachmentTimeoutFutureMap.remove(attachmentId)?.cancel(true)
 
-            val writer = createWriter(parentMessageId)
-            if(writer == null) {
-                Logger.d(TAG, "[onAttachment] receive timeout attachment: $parentMessageId")
-                return@with
+            var status = attachmentsStatus[attachmentId]
+            val writer = if (status != null) {
+                val attachmentStream = attachments[attachmentId]
+                if (attachmentStream != null && !status.writerClosed) {
+                    attachmentStream.createWriter()
+                } else {
+                    null
+                }
+            } else {
+                val attachmentStream = StreamAttachment(attachmentId)
+                attachments[attachmentId] = attachmentStream
+                status = AttachmentStatus(writerCreated = true)
+                attachmentsStatus[attachmentId] = status
+                Logger.d(TAG, "[onAttachment] New Attachment Created- attachmentId: $attachmentId")
+                attachmentStream.createWriter()
             }
 
-            writer.write(content)
-            if (isEnd) {
-                Logger.d(TAG, "[onAttachment] receive end attachment: $parentMessageId")
-                writer.close()
-                removeAttachmentIfConsumed(parentMessageId)
-            } else {
-                attachmentTimeoutFutureMap[parentMessageId] = scheduleExecutor.schedule({
-                    Logger.d(TAG, "[onAttachment] attachment timeout: $parentMessageId")
-                    lock.withLock {
-                        timeoutAttachments.add(parentMessageId)
-                        if(timeoutAttachments.size > 50) {
-                            timeoutAttachments.remove(timeoutAttachments.first())
-                        }
-                    }
+            if (writer != null) {
+                writer.write(attachment.content)
+                if (attachment.isEnd) {
                     writer.close()
-                    removeAttachmentIfConsumed(parentMessageId)
-                }, timeoutInSeconds, TimeUnit.SECONDS)
+                } else {
+                    attachmentTimeoutFutureMap[attachmentId] = scheduleExecutor.schedule({
+                        Logger.d(TAG, "[onAttachment] attachment timeout: $attachmentId")
+                        lock.withLock {
+                            writer.close()
+                            status.writerClosed = true
+                            removeAttachment(attachmentId)
+                        }
+                    }, timeoutInSeconds, TimeUnit.SECONDS)
+                }
+            }
+
+            if (attachment.isEnd) {
+                Logger.d(TAG, "[onAttachment] receive end attachment: $attachmentId")
+                status.writerClosed = true
+                status.receiveEndAttachment = true
+                tryRemoveAttachmentAndStatusLocked(attachmentId)
             }
         }
+    }
+
+    private fun tryRemoveAttachmentAndStatusLocked(attachmentId: String) {
+        val removedStatus = removeStatusIfNoMoreNeedLocked(attachmentId)
+        val removedAttachment = if (removedStatus != null) {
+            attachments.remove(attachmentId)
+        } else {
+            null
+        }
+        trimTimeoutAttachmentLocked()
+
+        Logger.d(
+            TAG,
+            "[tryRemoveAttachmentAndStatusLocked] attachmentId: $attachmentId, removedAttachment: $removedAttachment, removedStatus: $removedStatus"
+        )
+        if (removedStatus != null || removedAttachment != null) {
+            Logger.d(
+                TAG,
+                "[tryRemoveAttachmentAndStatusLocked] attachment size: ${attachments.size}, status size: ${attachmentsStatus.size}"
+            )
+        }
+    }
+
+    private fun trimTimeoutAttachmentLocked() {
+        val current = System.currentTimeMillis()
+        val removeTargets = attachmentsStatus.filter {
+            current - it.value.createdAt > ATTACHMENT_PRESERVE_DURATION
+        }
+        removeTargets.forEach {
+            attachmentsStatus.remove(it.key)
+            attachments.remove(it.key)
+        }
+        Logger.d(TAG, "[trimTimeoutStatusLocked] removeTargets: $removeTargets")
     }
 }
