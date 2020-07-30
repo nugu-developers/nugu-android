@@ -30,7 +30,7 @@ interface AttachmentManagerInterface {
      * Called when the attachmentManager no longer need to manage attachment.
      * @param attachmentId the attachment Id
      */
-    fun removeAttachmentIfConsumed(attachmentId: String)
+    fun removeAttachment(attachmentId: String)
     /**
      * Called when attachment arrived
      * @param attachment the received attachment

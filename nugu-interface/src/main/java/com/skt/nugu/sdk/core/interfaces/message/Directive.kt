@@ -57,6 +57,6 @@ data class Directive (
     fun destroy() {
 //        Logger.d(TAG, "[destroy]")
         attachmentReader?.close()
-        attachmentManager?.removeAttachmentIfConsumed(header.messageId)
+        attachmentManager?.removeAttachment(header.messageId)
     }
 }
