@@ -58,7 +58,9 @@ interface DialogUXStateAggregatorInterface {
          * About [dialogMode] @see [com.skt.nugu.sdk.core.interfaces.capability.asr.ASRAgentInterface.OnMultiturnListener]
          * @param newState : changed state.
          * @param dialogMode : true if dialog mode, false otherwise.
+         * @param chips : the chips which is valid currently
+         * @param sessionActivated : true if session activated, false otherwise.
          */
-        fun onDialogUXStateChanged(newState: DialogUXState, dialogMode: Boolean, chips: RenderDirective.Payload?)
+        fun onDialogUXStateChanged(newState: DialogUXState, dialogMode: Boolean, chips: RenderDirective.Payload?, sessionActivated: Boolean)
     }
 }

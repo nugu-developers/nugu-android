@@ -98,7 +98,8 @@ class DialogUXStateAggregator(
     override fun addListener(listener: DialogUXStateAggregatorInterface.Listener) {
         executor.submit {
             listeners.add(listener)
-            listener.onDialogUXStateChanged(currentState, dialogModeEnabled, getCurrentChips())
+            val activeSessions = sessionManager.getActiveSessions()
+            listener.onDialogUXStateChanged(currentState, dialogModeEnabled, getCurrentChips(activeSessions), activeSessions.isNotEmpty())
         }
     }
 
@@ -202,20 +203,20 @@ class DialogUXStateAggregator(
     }
 
     private fun notifyOnStateChangeIfSomethingChanged() {
-        getCurrentChips().let { chips ->
+        val activeSessions = sessionManager.getActiveSessions()
+        getCurrentChips(activeSessions).let { chips ->
             NotifyParams(currentState, dialogModeEnabled, chips).let {notifyParams ->
                 if(notifyParams != lastNotifyParams) {
                     lastNotifyParams = notifyParams
                     listeners.forEach {
-                        it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips)
+                        it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips, activeSessions.isNotEmpty())
                     }
                 }
             }
         }
     }
 
-    private fun getCurrentChips(): RenderDirective.Payload? {
-        val activeSessions = sessionManager.getActiveSessions()
+    private fun getCurrentChips(activeSessions: Map<String, SessionManagerInterface.Session>): RenderDirective.Payload? {
         val chips = lastReceivedChips
         Logger.d(TAG, "[getCurrentChips] activeSessions: $activeSessions, lastReceivedChips: $chips")
 
