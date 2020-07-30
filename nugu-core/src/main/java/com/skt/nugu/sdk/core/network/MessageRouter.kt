@@ -109,6 +109,7 @@ class MessageRouter(
      * Set the observer to this object.
      */
     override fun setObserver(observer: MessageRouterObserverInterface) {
+        Logger.d(TAG, "[setObserver] $observer")
         this.observer = observer
     }
 
@@ -136,7 +137,8 @@ class MessageRouter(
         status: ConnectionStatusListener.Status,
         reason: ConnectionStatusListener.ChangedReason
     ) {
-        observer?.onConnectionStatusChanged(status, reason)
+        observer?.onConnectionStatusChanged(status, reason) ?:
+        Logger.d(TAG, "[notifyObserverOnConnectionStatusChanged] observer is ${observer}")
     }
 
     /**
@@ -157,6 +159,8 @@ class MessageRouter(
             this.status = status
             this.reason = reason
             notifyObserverOnConnectionStatusChanged(status, reason)
+        } else {
+            Logger.d(TAG, "[setConnectionStatus] status is not changed ($status, ${this.status})")
         }
     }
 

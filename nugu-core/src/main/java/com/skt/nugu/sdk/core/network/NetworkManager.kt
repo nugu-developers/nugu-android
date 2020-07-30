@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.network
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -30,15 +31,15 @@ class NetworkManager private constructor(
     MessageRouterObserverInterface {
 
     companion object {
+        private const val TAG = "NetworkManager"
         /**
          * Create a [NetworkManager]
          * @return a [NetworkManager] instance
          */
         fun create(messageRouter: MessageRouterInterface): NetworkManager {
+            Logger.d(TAG, "[create] $messageRouter")
             val connectionManager = NetworkManager(messageRouter)
-
             messageRouter.setObserver(connectionManager)
-
             return connectionManager
         }
     }
@@ -101,6 +102,7 @@ class NetworkManager private constructor(
      * @param observer The observer to add.
      */
     override fun addConnectionStatusListener(listener: ConnectionStatusListener) {
+        Logger.d(TAG, "[addConnectionStatusListener] $listener")
         connectionStatusObservers.add(listener)
         listener.onConnectionStatusChanged(
             messageRouter.getConnectionStatus(),
@@ -113,6 +115,7 @@ class NetworkManager private constructor(
      * @param observer The observer to remove.
      */
     override fun removeConnectionStatusListener(listener: ConnectionStatusListener) {
+        Logger.d(TAG, "[removeConnectionStatusListener] $listener")
         connectionStatusObservers.remove(listener)
     }
 
@@ -123,7 +126,13 @@ class NetworkManager private constructor(
         status: ConnectionStatusListener.Status,
         reason: ConnectionStatusListener.ChangedReason
     ) {
-        connectionStatusObservers.forEach { it.onConnectionStatusChanged(status,reason) }
+        connectionStatusObservers.forEach {
+            Logger.d(TAG, "[onConnectionStatusChanged] status = $status, $it")
+            it.onConnectionStatusChanged(status,reason)
+        }
+        if(connectionStatusObservers.size == 0) {
+            Logger.d(TAG, "[onConnectionStatusChanged] size = ${connectionStatusObservers.size}")
+        }
     }
 
     override fun receiveDirectives(directives: List<DirectiveMessage>) {
