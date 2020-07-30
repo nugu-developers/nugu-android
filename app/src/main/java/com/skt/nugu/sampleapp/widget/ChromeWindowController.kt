@@ -141,12 +141,13 @@ class ChromeWindowController(
     override fun onDialogUXStateChanged(
         newState: DialogUXStateAggregatorInterface.DialogUXState,
         dialogMode: Boolean,
-        chips: RenderDirective.Payload?
+        chips: RenderDirective.Payload?,
+        sessionActivated: Boolean
     ) {
         bottomSheet.post {
-            Log.d(TAG, "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode")
+            Log.d(TAG, "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode, chips: $chips, sessionActivated: $sessionActivated")
 
-            voiceChromeController.onDialogUXStateChanged(newState, dialogMode, chips)
+            voiceChromeController.onDialogUXStateChanged(newState, dialogMode, chips, sessionActivated)
 
             when(newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
@@ -290,7 +291,8 @@ class ChromeWindowController(
         override fun onDialogUXStateChanged(
             newState: DialogUXStateAggregatorInterface.DialogUXState,
             dialogMode: Boolean,
-            chips: RenderDirective.Payload?
+            chips: RenderDirective.Payload?,
+            sessionActivated: Boolean
         ) {
             when (newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
