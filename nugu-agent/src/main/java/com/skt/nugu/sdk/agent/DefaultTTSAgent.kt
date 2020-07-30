@@ -149,6 +149,7 @@ class DefaultTTSAgent(
         }
 
         fun clear() {
+            directive.getAttachmentReader()
             directive.destroy()
         }
 
