@@ -231,6 +231,7 @@ class DefaultAudioPlayerAgent(
                         }
                     }
 
+                    directive.getAttachmentReader()
                     directive.destroy()
                 }
             }
