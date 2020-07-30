@@ -25,7 +25,6 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc.TransportState.*
-import com.skt.nugu.sdk.client.port.transport.grpc2.Grpc2Call
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
@@ -63,7 +62,7 @@ internal class GrpcTransport private constructor(
             )
         }
     }
-
+    
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayClient? = null
     private var registryClient: RegistryClient = RegistryClient(address = address, dnsLookup = dnsLookup)
@@ -245,6 +244,8 @@ internal class GrpcTransport private constructor(
         Logger.d(TAG, "[shutdown] $this")
 
         executor.submit{
+            scheduler.shutdown()
+
             registryClient.shutdown()
 
             deviceGatewayClient?.shutdown()

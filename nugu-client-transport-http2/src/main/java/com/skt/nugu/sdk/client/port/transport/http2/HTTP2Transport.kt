@@ -255,6 +255,7 @@ internal class HTTP2Transport(
         Logger.d(TAG, "[shutdown] $this")
 
         executor.submit {
+            scheduler.shutdown()
             registryClient.shutdown()
 
             deviceGatewayClient?.shutdown()
