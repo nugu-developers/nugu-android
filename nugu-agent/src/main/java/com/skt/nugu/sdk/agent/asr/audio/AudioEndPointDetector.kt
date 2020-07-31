@@ -67,11 +67,50 @@ interface AudioEndPointDetector {
      */
     interface OnStateChangedListener {
         /**
-         * Called when state changed
-         *
-         * @param state changed state
+         * Called when ready to listening(the epd start)
          */
-        fun onStateChanged(state: State)
+        fun onExpectingSpeech()
+
+        /**
+         * Called when the speech start
+         * @param eventPosition the position which speech start detected at reader, null if not available.
+         */
+        fun onSpeechStart(eventPosition: Long?)
+
+        /**
+         * Called when the speech end
+         * @param eventPosition the position which speech end detected at reader, null if not available
+         */
+        fun onSpeechEnd(eventPosition: Long?)
+
+        /**
+         * Called when the timeout occur
+         * @param type the type for timeout
+         */
+        fun onTimeout(type: TimeoutType)
+
+        /**
+         * Called when stopped by [stopDetector]
+         */
+        fun onStop()
+
+        /**
+         * Called when occur error
+         * @param type the type for error
+         * @param e the exception, only exist if [type] is [ErrorType.ERROR_EXCEPTION]
+         */
+        fun onError(type: ErrorType, e: Exception? = null)
+    }
+
+    enum class TimeoutType {
+        LISTENING_TIMEOUT,
+        SPEECH_TIMEOUT
+    }
+
+    enum class ErrorType {
+        ERROR_EPD_ENGINE,
+        ERROR_AUDIO_INPUT,
+        ERROR_EXCEPTION
     }
 
     /**
@@ -108,16 +147,4 @@ interface AudioEndPointDetector {
      * @param listener the listener that removed
      */
     fun removeListener(listener: OnStateChangedListener)
-
-    /**
-     * Get speech start position at stream of reader provided at [startDetector]
-     * @return start position: if exist, null: otherwise
-     */
-    fun getSpeechStartPosition(): Long?
-
-    /**
-     * Get speech end position at stream of reader provided at [startDetector]
-     * @return end position: if exist, null: otherwise
-     */
-    fun getSpeechEndPosition(): Long?
 }
