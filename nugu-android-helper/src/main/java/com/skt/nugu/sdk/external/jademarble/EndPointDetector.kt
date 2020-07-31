@@ -44,37 +44,37 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
 
     init {
         endPointDetector.addStateChangeObserver(object : TycheEdgePointDetectorStateObserver {
-            override fun onStateChange(state: TycheEdgePointDetectorStateObserver.State, eventPosition: Long?) {
-                val mapState = when (state) {
-                    TycheEdgePointDetectorStateObserver.State.EXPECTING_SPEECH -> AudioEndPointDetector.State.EXPECTING_SPEECH
-                    TycheEdgePointDetectorStateObserver.State.SPEECH_START -> {
-                        speechStartPosition = eventPosition
-                        AudioEndPointDetector.State.SPEECH_START
-                    }
-                    TycheEdgePointDetectorStateObserver.State.SPEECH_END -> {
-                        speechEndPosition = eventPosition
-                        closeAudioInputStreamReader()
-                        AudioEndPointDetector.State.SPEECH_END
-                    }
-                    TycheEdgePointDetectorStateObserver.State.TIMEOUT -> {
-                        closeAudioInputStreamReader()
-                        AudioEndPointDetector.State.TIMEOUT
-                    }
-                    TycheEdgePointDetectorStateObserver.State.STOP -> {
-                        closeAudioInputStreamReader()
-                        AudioEndPointDetector.State.STOP
-                    }
-                    TycheEdgePointDetectorStateObserver.State.ERROR -> {
-                        closeAudioInputStreamReader()
-                        AudioEndPointDetector.State.ERROR
-                    }
-                }
+            override fun onExpectingSpeech() {
+                setState(AudioEndPointDetector.State.EXPECTING_SPEECH)
+            }
 
-                Log.d(
-                    TAG,
-                    "[TycheEdgePointDetectorStateObserver::onStateChange] state: $state, mapState: $mapState, eventPosition: $eventPosition"
-                )
-                setState(mapState)
+            override fun onSpeechStart(eventPosition: Long) {
+                speechStartPosition = eventPosition
+                setState(AudioEndPointDetector.State.SPEECH_START)
+            }
+
+            override fun onSpeechEnd(eventPosition: Long) {
+                speechEndPosition = eventPosition
+                closeAudioInputStreamReader()
+                setState(AudioEndPointDetector.State.SPEECH_END)
+            }
+
+            override fun onStop() {
+                closeAudioInputStreamReader()
+                setState(AudioEndPointDetector.State.STOP)
+            }
+
+            override fun onTimeout(type: TycheEdgePointDetectorStateObserver.TimeoutType) {
+                closeAudioInputStreamReader()
+                setState(AudioEndPointDetector.State.TIMEOUT)
+            }
+
+            override fun onError(
+                type: TycheEdgePointDetectorStateObserver.ErrorType,
+                e: Exception?
+            ) {
+                closeAudioInputStreamReader()
+                setState(AudioEndPointDetector.State.ERROR)
             }
 
             private fun closeAudioInputStreamReader() {
