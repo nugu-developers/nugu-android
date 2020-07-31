@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+Version 0.9.14 *(2020-07-31)*
+-----------------------------
+* Fix: Disconnect is not detected at intermittent timing (#1005)
+* Fix: Fixed issue where epd does not stop (#1010)
+* Fix: Fix an issue that returns 0 when reading for SDS buffer after close (#1015)
+* Fix: Prevent memory leaks at AttachmentManager (#1019)
+* Fix: Missing a call to shutdown() on scheduler of Transport (#1026)
+* Improve: Send PhoneCall.CallArrived event with full context (#1003)
+* Improve: Add feature noAck at Call (#1006)
+* Improve: Update webview interface to handle withdrawn user (#1008)
+* Improve: Update the priority of focus (#1012)
+* Improve: Synchronize  ASR.ExpectSpeech as Play (#1017)
+* Improve: Provide session status at onDialogUXStateChanged (#1022)
+* Improve: Notify EPD status with more info (#1029)
+
 Version 0.9.13 *(2020-07-23)*
 -----------------------------
 * Fix: Notify valid chips on dialog ux state change (#996)
