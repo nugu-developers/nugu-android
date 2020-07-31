@@ -39,34 +39,54 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
     private var audioInputStreamReader: SharedDataStream.Reader? = null
     private var audioFormat: AudioFormat? = null
 
-    private var speechStartPosition: Long? = null
-    private var speechEndPosition: Long? = null
-
     init {
         endPointDetector.addStateChangeObserver(object : TycheEdgePointDetectorStateObserver {
             override fun onExpectingSpeech() {
-                setState(AudioEndPointDetector.State.EXPECTING_SPEECH)
+                if(setState(AudioEndPointDetector.State.EXPECTING_SPEECH)) {
+                    listeners.forEach {
+                        it.onExpectingSpeech()
+                    }
+                }
             }
 
             override fun onSpeechStart(eventPosition: Long) {
-                speechStartPosition = eventPosition
-                setState(AudioEndPointDetector.State.SPEECH_START)
+                if(setState(AudioEndPointDetector.State.SPEECH_START)) {
+                    listeners.forEach {
+                        it.onSpeechStart(eventPosition)
+                    }
+                }
             }
 
             override fun onSpeechEnd(eventPosition: Long) {
-                speechEndPosition = eventPosition
                 closeAudioInputStreamReader()
-                setState(AudioEndPointDetector.State.SPEECH_END)
+                if(setState(AudioEndPointDetector.State.SPEECH_END)) {
+                    listeners.forEach {
+                        it.onSpeechEnd(eventPosition)
+                    }
+                }
             }
 
             override fun onStop() {
                 closeAudioInputStreamReader()
-                setState(AudioEndPointDetector.State.STOP)
+                if(setState(AudioEndPointDetector.State.STOP)) {
+                    listeners.forEach {
+                        it.onStop()
+                    }
+                }
             }
 
             override fun onTimeout(type: TycheEdgePointDetectorStateObserver.TimeoutType) {
                 closeAudioInputStreamReader()
-                setState(AudioEndPointDetector.State.TIMEOUT)
+                if(setState(AudioEndPointDetector.State.TIMEOUT)) {
+                    listeners.forEach {
+                        it.onTimeout(
+                            when (type) {
+                                TycheEdgePointDetectorStateObserver.TimeoutType.SPEECH_TIMEOUT -> AudioEndPointDetector.TimeoutType.SPEECH_TIMEOUT
+                                TycheEdgePointDetectorStateObserver.TimeoutType.LISTENING_TIMEOUT -> AudioEndPointDetector.TimeoutType.LISTENING_TIMEOUT
+                            }
+                        )
+                    }
+                }
             }
 
             override fun onError(
@@ -74,7 +94,17 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
                 e: Exception?
             ) {
                 closeAudioInputStreamReader()
-                setState(AudioEndPointDetector.State.ERROR)
+                if(setState(AudioEndPointDetector.State.ERROR)) {
+                    listeners.forEach {
+                        it.onError(
+                            when (type) {
+                                TycheEdgePointDetectorStateObserver.ErrorType.ERROR_EPD_ENGINE -> AudioEndPointDetector.ErrorType.ERROR_EPD_ENGINE
+                                TycheEdgePointDetectorStateObserver.ErrorType.ERROR_AUDIO_INPUT -> AudioEndPointDetector.ErrorType.ERROR_AUDIO_INPUT
+                                TycheEdgePointDetectorStateObserver.ErrorType.ERROR_EXCEPTION -> AudioEndPointDetector.ErrorType.ERROR_EXCEPTION
+                            }, e
+                        )
+                    }
+                }
             }
 
             private fun closeAudioInputStreamReader() {
@@ -85,16 +115,14 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
         })
     }
 
-    private fun setState(state: AudioEndPointDetector.State) {
+    private fun setState(state: AudioEndPointDetector.State): Boolean {
         if (this.state == state) {
-            return
+            return false
         }
 
         Log.d(TAG, "[setState] state: $state")
-
         this.state = state
-
-        notifyOnStateChanged(state)
+        return true
     }
 
     override fun startDetector(
@@ -105,8 +133,6 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
         pauseLengthInMilliseconds: Int
     ): Boolean {
         Log.d(TAG, "[startDetector] $reader")
-        speechStartPosition = null
-        speechEndPosition = null
         this.audioInputStreamReader = reader
         this.audioFormat = audioFormat
         return reader.let {
@@ -140,15 +166,5 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
     override fun removeListener(listener: AudioEndPointDetector.OnStateChangedListener) {
         Log.d(TAG, "[removeObserver] $listener")
         listeners.remove(listener)
-    }
-
-    override fun getSpeechStartPosition(): Long? = speechStartPosition
-
-    override fun getSpeechEndPosition(): Long? = speechEndPosition
-
-    private fun notifyOnStateChanged(state: AudioEndPointDetector.State) {
-        for (listener in listeners) {
-            listener.onStateChanged(state)
-        }
     }
 }

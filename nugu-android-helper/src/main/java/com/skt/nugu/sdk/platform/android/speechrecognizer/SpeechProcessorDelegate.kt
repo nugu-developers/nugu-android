@@ -79,7 +79,12 @@ class SpeechProcessorDelegate(
                         ASRAgentInterface.State.BUSY -> AudioEndPointDetector.State.SPEECH_END
                     }
 
-                    listener.onStateChanged(epdState)
+                    when(epdState) {
+                        AudioEndPointDetector.State.EXPECTING_SPEECH -> listener.onExpectingSpeech()
+                        AudioEndPointDetector.State.SPEECH_START -> listener.onSpeechStart(null)
+                        AudioEndPointDetector.State.SPEECH_END -> listener.onSpeechEnd(null)
+                        else -> listener.onStop()
+                    }
                 }
             }
         }.apply {

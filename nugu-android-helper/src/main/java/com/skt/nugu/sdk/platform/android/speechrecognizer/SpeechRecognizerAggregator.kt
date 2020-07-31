@@ -88,41 +88,66 @@ class SpeechRecognizerAggregator(
         })
 
         speechProcessor.addListener(object : AudioEndPointDetector.OnStateChangedListener {
-            override fun onStateChanged(state: AudioEndPointDetector.State) {
-                Log.d(
-                    TAG,
-                    "[AudioEndPointDetectorStateObserverInterface::onStateChange] state: $state"
-                )
+            override fun onExpectingSpeech() {
                 executor.submit {
-                    speechProcessorState = state
+                    speechProcessorState = AudioEndPointDetector.State.EXPECTING_SPEECH
 
-                    val aggregatorState = when (state) {
-                        AudioEndPointDetector.State.EXPECTING_SPEECH -> {
-                            if (keywordDetector?.getDetectorState() == KeywordDetector.State.ACTIVE) {
-                                keywordDetector.stopDetect()
-                            }
-                            isTriggerStoppingByStartListening = false
-                            SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH
-                        }
-                        AudioEndPointDetector.State.SPEECH_START -> SpeechRecognizerAggregatorInterface.State.SPEECH_START
-                        AudioEndPointDetector.State.SPEECH_END -> SpeechRecognizerAggregatorInterface.State.SPEECH_END
-                        AudioEndPointDetector.State.STOP -> SpeechRecognizerAggregatorInterface.State.STOP
-                        AudioEndPointDetector.State.ERROR -> SpeechRecognizerAggregatorInterface.State.ERROR
-                        AudioEndPointDetector.State.TIMEOUT -> SpeechRecognizerAggregatorInterface.State.TIMEOUT
+                    if (keywordDetector?.getDetectorState() == KeywordDetector.State.ACTIVE) {
+                        keywordDetector.stopDetect()
                     }
+                    isTriggerStoppingByStartListening = false
 
-                    if (!state.isActive()) {
-                        audioProvider.releaseAudioInputStream(speechProcessor)
-                        if(keywordDetectorState == KeywordDetector.State.ACTIVE) {
-                            keywordDetectorInactivationRunnable = Runnable {
-                                setState(aggregatorState)
-                            }
-                        } else {
+                    updateState(AudioEndPointDetector.State.EXPECTING_SPEECH , SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH)
+                }
+            }
+
+            override fun onSpeechStart(eventPosition: Long?) {
+                executor.submit {
+                    speechProcessorState = AudioEndPointDetector.State.SPEECH_START
+                    updateState(AudioEndPointDetector.State.SPEECH_START , SpeechRecognizerAggregatorInterface.State.SPEECH_START)
+                }
+            }
+
+            override fun onSpeechEnd(eventPosition: Long?) {
+                executor.submit {
+                    speechProcessorState = AudioEndPointDetector.State.SPEECH_END
+                    updateState(AudioEndPointDetector.State.SPEECH_END , SpeechRecognizerAggregatorInterface.State.SPEECH_END)
+                }
+            }
+
+            override fun onTimeout(type: AudioEndPointDetector.TimeoutType) {
+                executor.submit {
+                    speechProcessorState = AudioEndPointDetector.State.TIMEOUT
+                    updateState(AudioEndPointDetector.State.TIMEOUT , SpeechRecognizerAggregatorInterface.State.TIMEOUT)
+                }
+            }
+
+            override fun onStop() {
+                executor.submit {
+                    speechProcessorState = AudioEndPointDetector.State.STOP
+                    updateState(AudioEndPointDetector.State.STOP , SpeechRecognizerAggregatorInterface.State.STOP)
+                }
+            }
+
+            override fun onError(type: AudioEndPointDetector.ErrorType, e: Exception?) {
+                executor.submit {
+                    speechProcessorState = AudioEndPointDetector.State.ERROR
+                    updateState(AudioEndPointDetector.State.ERROR , SpeechRecognizerAggregatorInterface.State.ERROR)
+                }
+            }
+
+            private fun updateState(state: AudioEndPointDetector.State, aggregatorState: SpeechRecognizerAggregatorInterface.State) {
+                if (!state.isActive()) {
+                    audioProvider.releaseAudioInputStream(speechProcessor)
+                    if(keywordDetectorState == KeywordDetector.State.ACTIVE) {
+                        keywordDetectorInactivationRunnable = Runnable {
                             setState(aggregatorState)
                         }
                     } else {
                         setState(aggregatorState)
                     }
+                } else {
+                    setState(aggregatorState)
                 }
             }
         })

@@ -237,87 +237,141 @@ class DefaultClientSpeechRecognizer(
         }
     }
 
-    override fun onStateChanged(state: AudioEndPointDetector.State) {
-        Logger.d(TAG, "[onStateChanged] AudioEndPointDetector prev: ${this.epdState} / next: $state , $currentRequest")
-
+    override fun onExpectingSpeech() {
+        Logger.d(TAG, "[AudioEndPointDetector::onExpectingSpeech]")
         val request = startLock.withLock {
             currentRequest
         }
 
         if(request == null) {
-            Logger.e(TAG, "[onStateChanged] null request. check this!!!")
-            epdState = state
+            Logger.e(TAG, "[AudioEndPointDetector::onExpectingSpeech] null request. check this!!!")
+            epdState = AudioEndPointDetector.State.EXPECTING_SPEECH
             return
         }
 
-        val speechProcessorState = when (state) {
-            AudioEndPointDetector.State.EXPECTING_SPEECH -> {
-                messageSender.newCall(
-                    request.eventMessage
-                ).apply {
-                    request.call = this
-                    if(!this.enqueue(null)) {
-                        request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
-                        endPointDetector.stopDetector()
-                    }
-                }
-                SpeechRecognizer.State.EXPECTING_SPEECH
-                /*
-                if(!messageSender.sendMessage(request.eventMessage)) {
-                    request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
-                    endPointDetector.stopDetector()
-                }
-                SpeechRecognizer.State.EXPECTING_SPEECH*/
-            }
-            AudioEndPointDetector.State.SPEECH_START -> {
-                startSpeechSenderThread(request, endPointDetector.getSpeechStartPosition())
-                SpeechRecognizer.State.SPEECH_START
-            }
-            AudioEndPointDetector.State.SPEECH_END -> {
-                request.senderThread?.requestFinish()
-                SpeechRecognizer.State.SPEECH_END
-            }
-            AudioEndPointDetector.State.TIMEOUT -> {
-                if (epdState == AudioEndPointDetector.State.EXPECTING_SPEECH) {
-                    request.senderThread?.requestStop()
-                    handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
-                    epdState = AudioEndPointDetector.State.TIMEOUT
-                    return
-                } else {
-                    request.senderThread?.requestFinish()
-                    SpeechRecognizer.State.SPEECH_END
-                }
-            }
-            AudioEndPointDetector.State.STOP -> {
-                val errorType = request.errorTypeForCausingEpdStop
-                val prevEpdState = epdState
-                epdState = AudioEndPointDetector.State.STOP
-
-                if(errorType != null) {
-                    request.senderThread?.requestStop()
-                    handleError(errorType)
-                    return
-                } else if(request.stopByCancel == false && prevEpdState == AudioEndPointDetector.State.SPEECH_START){
-                    request.senderThread?.requestFinish()
-                    SpeechRecognizer.State.SPEECH_END
-                } else {
-                    request.senderThread?.requestStop()
-                    handleCancel()
-                    return
-                }
-            }
-
-            AudioEndPointDetector.State.ERROR -> {
-                epdState = AudioEndPointDetector.State.ERROR
-                request.senderThread?.requestStop()
-                handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
-                return
+        messageSender.newCall(
+            request.eventMessage
+        ).apply {
+            request.call = this
+            if(!this.enqueue(null)) {
+                request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
+                endPointDetector.stopDetector()
             }
         }
+        epdState = AudioEndPointDetector.State.EXPECTING_SPEECH
+        setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
+    }
 
-        epdState = state
+    override fun onSpeechStart(eventPosition: Long?) {
+        Logger.d(TAG, "[AudioEndPointDetector::onSpeechStart] eventPosition:$eventPosition")
+        val request = startLock.withLock {
+            currentRequest
+        }
 
-        setState(speechProcessorState, request)
+        if(request == null) {
+            Logger.e(TAG, "[AudioEndPointDetector::onSpeechStart] null request. check this!!!")
+            epdState = AudioEndPointDetector.State.SPEECH_START
+            return
+        }
+
+        startSpeechSenderThread(request, eventPosition)
+        epdState = AudioEndPointDetector.State.SPEECH_START
+        setState(SpeechRecognizer.State.SPEECH_START, request)
+    }
+
+    override fun onSpeechEnd(eventPosition: Long?) {
+        Logger.d(TAG, "[AudioEndPointDetector::onSpeechEnd] eventPosition:$eventPosition")
+        val request = startLock.withLock {
+            currentRequest
+        }
+
+        if(request == null) {
+            Logger.e(TAG, "[AudioEndPointDetector::onSpeechEnd] null request. check this!!!")
+            epdState = AudioEndPointDetector.State.SPEECH_END
+            return
+        }
+
+        request.senderThread?.requestFinish()
+        epdState = AudioEndPointDetector.State.SPEECH_END
+        setState(SpeechRecognizer.State.SPEECH_END, request)
+    }
+
+    override fun onTimeout(type: AudioEndPointDetector.TimeoutType) {
+        Logger.d(TAG, "[AudioEndPointDetector::onTimeout] type:$type")
+        val request = startLock.withLock {
+            currentRequest
+        }
+
+        if(request == null) {
+            Logger.e(TAG, "[AudioEndPointDetector::onTimeout] null request. check this!!!")
+            epdState = AudioEndPointDetector.State.TIMEOUT
+            return
+        }
+
+        when(type) {
+            AudioEndPointDetector.TimeoutType.LISTENING_TIMEOUT -> {
+                request.senderThread?.requestStop()
+                handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
+                epdState = AudioEndPointDetector.State.TIMEOUT
+            }
+            AudioEndPointDetector.TimeoutType.SPEECH_TIMEOUT -> {
+                request.senderThread?.requestFinish()
+                epdState = AudioEndPointDetector.State.TIMEOUT
+                setState(SpeechRecognizer.State.SPEECH_END, request)
+            }
+        }
+    }
+
+    override fun onStop() {
+        Logger.d(TAG, "[AudioEndPointDetector::onStop]")
+        val request = startLock.withLock {
+            currentRequest
+        }
+
+        if(request == null) {
+            Logger.e(TAG, "[AudioEndPointDetector::onStop] null request. check this!!!")
+            epdState = AudioEndPointDetector.State.STOP
+            return
+        }
+
+        val errorType = request.errorTypeForCausingEpdStop
+        val prevEpdState = epdState
+        epdState = AudioEndPointDetector.State.STOP
+
+        if(errorType != null) {
+            request.senderThread?.requestStop()
+            handleError(errorType)
+            return
+        } else if(request.stopByCancel == false && prevEpdState == AudioEndPointDetector.State.SPEECH_START){
+            request.senderThread?.requestFinish()
+            epdState = AudioEndPointDetector.State.STOP
+            setState(SpeechRecognizer.State.SPEECH_END, request)
+        } else {
+            request.senderThread?.requestStop()
+            handleCancel()
+            return
+        }
+    }
+
+    override fun onError(type: AudioEndPointDetector.ErrorType, e: Exception?) {
+        Logger.d(TAG, "[AudioEndPointDetector::onError] type: $type, e:$e")
+        val request = startLock.withLock {
+            currentRequest
+        }
+
+        if(request == null) {
+            Logger.e(TAG, "[AudioEndPointDetector::onError] null request. check this!!!")
+            epdState = AudioEndPointDetector.State.ERROR
+            return
+        }
+
+        epdState = AudioEndPointDetector.State.ERROR
+        request.senderThread?.requestStop()
+        handleError(when(type) {
+            AudioEndPointDetector.ErrorType.ERROR_EPD_ENGINE -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+            AudioEndPointDetector.ErrorType.ERROR_AUDIO_INPUT -> ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT
+            AudioEndPointDetector.ErrorType.ERROR_EXCEPTION -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+        })
     }
 
     private fun startSpeechSenderThread(request: RecognizeRequest, speechStartPosition: Long?) {
