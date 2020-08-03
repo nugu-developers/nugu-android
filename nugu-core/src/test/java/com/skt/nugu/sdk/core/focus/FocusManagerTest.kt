@@ -4,6 +4,8 @@ import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.verify
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.log.LogInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import org.junit.Assert
 import org.junit.Test
 
@@ -12,13 +14,17 @@ const val INCORRECT_CHANNEL_NAME = "dlstoddmsfhEh"
 const val DIALOG_CHANNEL_NAME = "dialog_channel"
 const val ALERTS_CHANNEL_NAME = "alerts_channel"
 const val CONTENT_CHANNEL_NAME = "content_channel"
+const val INTERACT_CHANNEL_NAME = "interact_channel"
 const val ANOTHER_CHANNEL_NAME = "another_channel"
 
 const val DIALOG_INTERFACE_NAME = "dialog"
 const val ALERTS_INTERFACE_NAME = "alerts"
 const val CONTENT_INTERFACE_NAME = "content"
+const val INTERACT_INTERFACE_NAME = "interact"
 const val ANOTHER_INTERFACE_NAME = "another"
 
+const val INTERACT_ACQUIRE_PRIORITY = 50
+const val INTERACT_RELEASE_PRIORITY = 900
 const val DIALOG_CHANNEL_PRIORITY = 100
 const val ALERTS_CHANNEL_PRIORITY = 200
 const val CONTENT_CHANNEL_PRIORITY = 300
@@ -29,6 +35,7 @@ class FocusManagerTest : FocusChangeManager() {
     private val dialogClient = TestClient()
     private val anotherDialogClient = TestClient()
     private val alertsClient = TestClient()
+    private val interactClient = TestClient()
     private val contentClient = TestClient()
 
     private val dialogChannelConfiguration = FocusManagerInterface.ChannelConfiguration(
@@ -49,12 +56,33 @@ class FocusManagerTest : FocusChangeManager() {
         CONTENT_CHANNEL_PRIORITY
     )
 
+    private val interactChannelConfiguration = FocusManagerInterface.ChannelConfiguration(
+        INTERACT_CHANNEL_NAME,
+        INTERACT_ACQUIRE_PRIORITY,
+        INTERACT_RELEASE_PRIORITY
+    )
+
     init {
+        Logger.logger = object : LogInterface {
+            override fun d(tag: String, msg: String, throwable: Throwable?) {
+                System.out.println("$tag - $msg")
+            }
+
+            override fun e(tag: String, msg: String, throwable: Throwable?) {
+            }
+
+            override fun w(tag: String, msg: String, throwable: Throwable?) {
+            }
+
+            override fun i(tag: String, msg: String, throwable: Throwable?) {
+            }
+        }
         focusManager = FocusManager(
             listOf(
                 dialogChannelConfiguration,
                 alertsChannelConfiguration,
-                contentChannelConfiguration
+                contentChannelConfiguration,
+                interactChannelConfiguration
             )
         )
     }
@@ -150,6 +178,38 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(contentClient, FocusState.BACKGROUND)
         assertFocusChange(dialogClient, FocusState.FOREGROUND)
+    }
+
+    @Test
+    fun acquireHigherPriorityChannelWithLowerForegroundAndHigherBackgroundChannelTaken() {
+
+        Assert.assertTrue(
+            focusManager.acquireChannel(
+                DIALOG_CHANNEL_NAME,
+                dialogClient,
+                DIALOG_INTERFACE_NAME
+            )
+        )
+        assertFocusChange(dialogClient, FocusState.FOREGROUND)
+
+        Assert.assertTrue(
+            focusManager.acquireChannel(
+                INTERACT_CHANNEL_NAME,
+                interactClient,
+                INTERACT_INTERFACE_NAME
+            )
+        )
+
+        Assert.assertTrue(
+            focusManager.acquireChannel(
+                CONTENT_CHANNEL_NAME,
+                contentClient,
+                CONTENT_INTERFACE_NAME
+            )
+        )
+        assertFocusChange(contentClient, FocusState.BACKGROUND)
+        assertFocusChange(interactClient, FocusState.FOREGROUND)
+        assertFocusChange(dialogClient, FocusState.BACKGROUND)
     }
 
     @Test

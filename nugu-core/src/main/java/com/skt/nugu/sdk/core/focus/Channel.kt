@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.focus
 
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
+import com.skt.nugu.sdk.core.utils.Logger
 
 data class Channel(
     val name: String,
@@ -41,6 +42,7 @@ data class Channel(
     private var observer: ChannelObserver? = null
 
     fun setFocus(focus: FocusState): Boolean {
+        Logger.d(TAG, "[setFocus] focus: $focus, $state")
         if (focus == state.focusState) {
             return false
         }

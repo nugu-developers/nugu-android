@@ -109,8 +109,9 @@ class FocusManager(
         val foregroundChannel = getHighestPriorityActiveChannel()
         Logger.d(
             TAG,
-            "[acquireChannelHelper] ${channelToAcquire.name}, $interfaceName , foreground: ${foregroundChannel?.name}"
+            "[acquireChannelHelper] ${channelToAcquire.name}, $interfaceName, foreground: ${foregroundChannel?.name}"
         )
+
         channelToAcquire.setInterfaceName(interfaceName)
         synchronized(activeChannels) {
             activeChannels.add(channelToAcquire)
@@ -122,8 +123,17 @@ class FocusManager(
             foregroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
             foregroundChannel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
             channelToAcquire.priority.acquire < foregroundChannel.priority.release -> {
-                setChannelFocus(foregroundChannel, FocusState.BACKGROUND)
-                setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+                val existHigherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
+                    activeChannels.filter { it.priority.release < channelToAcquire.priority.acquire && it != foregroundChannel}
+                }.any()
+
+                if(existHigherPriorityChannelExceptForegroundChannel) {
+                    // Even if the request channel has higher priority than foreground channel, get background focus due to another higher priority channels exist.
+                    setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
+                } else {
+                    setChannelFocus(foregroundChannel, FocusState.BACKGROUND)
+                    setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+                }
             }
             else -> {
                 setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
@@ -171,6 +181,7 @@ class FocusManager(
 
     private fun setChannelFocus(channel: Channel, focus: FocusState) {
         if (channel.setFocus(focus) == false) {
+            Logger.d(TAG, "[setChannelFocus] $channel, $focus")
             return
         }
 
