@@ -146,11 +146,19 @@ class DialogUXStateAggregator(
 
     override fun onStateChanged(state: ASRAgentInterface.State) {
         Logger.d(TAG, "[onStateChanged-ASR] state: $state")
+        val prevState = asrState
+
         asrState = state
 
         executor.submit {
             when (state) {
-                ASRAgentInterface.State.IDLE -> tryEnterIdleState()
+                ASRAgentInterface.State.IDLE -> {
+                    if(prevState == ASRAgentInterface.State.BUSY) {
+                        tryEnterIdleState()
+                    } else {
+                        tryEnterIdleState(0)
+                    }
+                }
                 ASRAgentInterface.State.RECOGNIZING -> {
                     setState(DialogUXStateAggregatorInterface.DialogUXState.LISTENING)
                 }
@@ -269,12 +277,12 @@ class DialogUXStateAggregator(
      * Dialog관련 임의의 Activity가 끝났을 시, Idle 상태로 가기위해 시도
      * ex) TTSAgent Finish, Speech Recognition Finish
      */
-    private fun tryEnterIdleState() {
+    private fun tryEnterIdleState(delay: Long = transitionDelayForIdleState) {
         Logger.d(TAG, "[tryEnterIdleState] $dialogModeEnabled")
         tryEnterIdleStateRunnableFuture?.cancel(true)
         tryEnterIdleStateRunnableFuture = multiturnSpeakingToListeningScheduler.schedule(
             tryEnterIdleStateRunnable,
-            transitionDelayForIdleState,
+            delay,
             TimeUnit.MILLISECONDS
         )
     }
