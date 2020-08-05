@@ -20,7 +20,6 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.tts.TTSPlayContextProvider
-import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
@@ -35,7 +34,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -54,17 +53,14 @@ import java.util.concurrent.Executors
 class DefaultTTSAgent(
     private val speechPlayer: MediaPlayerInterface,
     private val messageSender: MessageSender,
-    private val focusManager: FocusManagerInterface,
+    private val focusManager: SeamlessFocusManagerInterface,
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val channelName: String,
-    private val focusHolderManager: FocusHolderManager
+    channelName: String
 ) : AbstractCapabilityAgent(NAMESPACE)
-    , ChannelObserver
     , TTSAgentInterface
     , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
-    , FocusHolderManager.OnStateChangeListener
     , PlayStackManagerInterface.PlayContextProvider
     , StopDirectiveHandler.Controller {
 
@@ -113,7 +109,6 @@ class DefaultTTSAgent(
         info: DirectiveInfo,
         val payload: SpeakPayload
     ) : PlaySynchronizerInterface.SynchronizeObject
-        , FocusHolderManager.FocusHolder
         , DirectiveInfo by info {
         var sourceId: SourceId = SourceId.ERROR()
         var isPlaybackInitiated = false
@@ -124,7 +119,6 @@ class DefaultTTSAgent(
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
-                    focusHolderManager.abandon(this@SpeakDirectiveInfo)
                     clear()
 
                     if (this@SpeakDirectiveInfo == currentInfo) {
@@ -136,6 +130,8 @@ class DefaultTTSAgent(
                         if (nextInfo != null) {
                             preparedSpeakInfo = null
                             executePlaySpeakInfo(nextInfo)
+                        } else {
+                            focusManager.release(focusRequester, currentFocus)
                         }
                     } else {
                         Logger.d(TAG, "[onReleased] (focus: $currentFocus)")
@@ -193,6 +189,15 @@ class DefaultTTSAgent(
 
     private val playContextManager = TTSPlayContextProvider()
 
+    private val focusRequester = SeamlessFocusManagerInterface.Requester(channelName, object: ChannelObserver {
+        override fun onFocusChanged(newFocus: FocusState) {
+            Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
+            executor.submit {
+                executeOnFocusChanged(newFocus)
+            }
+        }
+    }, NAMESPACE)
+
     init {
         Logger.d(TAG, "[init]")
         speechPlayer.setPlaybackEventListener(this)
@@ -223,10 +228,12 @@ class DefaultTTSAgent(
         }
 
         playSynchronizer.prepareSync(speakInfo)
+        if(currentFocus != FocusState.FOREGROUND) {
+            focusManager.prepare(focusRequester)
+        }
         executor.submit {
             executePreHandleSpeakDirective(speakInfo)
         }
-        focusHolderManager.request(speakInfo)
     }
 
     override fun handleDirective(info: DirectiveInfo) {
@@ -476,11 +483,7 @@ class DefaultTTSAgent(
         if (currentFocus == FocusState.FOREGROUND) {
             executeOnFocusChanged(currentFocus, true)
         } else {
-            if (!focusManager.acquireChannel(
-                    channelName,
-                    this,
-                    NAMESPACE
-                )
+            if (!focusManager.acquire(focusRequester)
             ) {
                 Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
             }
@@ -488,13 +491,6 @@ class DefaultTTSAgent(
     }
 
     private var currentFocus: FocusState = FocusState.NONE
-
-    override fun onFocusChanged(newFocus: FocusState) {
-        Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
-        executor.submit {
-            executeOnFocusChanged(newFocus)
-        }
-    }
 
     private fun executeOnFocusChanged(newFocus: FocusState, ignoreFocusChanges: Boolean = false) {
         Logger.d(TAG, "[executeOnFocusChanged] currentFocus: $currentFocus, newFocus: $newFocus, ignoreFocusChanges: $ignoreFocusChanges")
@@ -517,7 +513,6 @@ class DefaultTTSAgent(
             FocusState.FOREGROUND -> {
                 currentInfo?.let {
                     val countDownLatch = CountDownLatch(1)
-                    focusHolderManager.request(it)
                     playSynchronizer.startSync(it,
                         object : PlaySynchronizerInterface.OnRequestSyncListener {
                             override fun onGranted() {
@@ -1010,20 +1005,6 @@ class DefaultTTSAgent(
     ): Boolean = true
 
     override fun onResponseTimeout(dialogRequestId: String) {
-    }
-
-    override fun onStateChanged(state: FocusHolderManager.State) {
-        executor.submit {
-            Logger.d(TAG, "[onStateChanged-FocusHolder] $state , $currentFocus, $preparedSpeakInfo, $currentInfo")
-            if (state == FocusHolderManager.State.HOLD) {
-                return@submit
-            }
-
-            if (currentFocus != FocusState.NONE && preparedSpeakInfo ==null && currentInfo == null) {
-                focusManager.releaseChannel(channelName, this)
-                currentFocus = FocusState.NONE
-            }
-        }
     }
 
     override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {

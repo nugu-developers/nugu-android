@@ -24,7 +24,6 @@ import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.asr.impl.DefaultClientSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.impl.DefaultServerSpeechRecognizer
 import com.skt.nugu.sdk.agent.asr.payload.ExpectSpeechDirective
-import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -37,7 +36,7 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -50,12 +49,14 @@ import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DefaultASRAgent(
     private val inputProcessorManager: InputProcessorManagerInterface,
-    private val focusManager: FocusManagerInterface,
+    private val focusManager: SeamlessFocusManagerInterface,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val sessionManager: SessionManagerInterface,
@@ -64,16 +65,14 @@ class DefaultASRAgent(
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
     private val defaultEpdTimeoutMillis: Long,
-    private val userInteractionDialogChannelName: String,
-    private val internalDialogChannelName: String,
-    private val focusHolderManager: FocusHolderManager,
+    userInteractionDialogChannelName: String,
+    internalDialogChannelName: String,
+    dummyChannelName: String,
     private val playSynchronizer: PlaySynchronizerInterface
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
     , SpeechRecognizer.OnStateChangeListener
-    , ChannelObserver
-    , FocusHolderManager.OnStateChangeListener
-    , FocusHolderManager.FocusHolder {
+    , ChannelObserver {
     companion object {
         private const val TAG = "DefaultASRAgent"
 
@@ -158,6 +157,18 @@ class DefaultASRAgent(
     private val clientEpdSpeechRecognizer: SpeechRecognizer?
 
     private val attributeStorageManager = AttributeStorageManager(dialogAttributeStorage)
+
+    private val userSpeechFocusRequester =
+        SeamlessFocusManagerInterface.Requester(userInteractionDialogChannelName, this, NAMESPACE)
+    private val expectSpeechFocusRequester =
+        SeamlessFocusManagerInterface.Requester(internalDialogChannelName, this, NAMESPACE)
+    private val dummyFocusRequester = SeamlessFocusManagerInterface.Requester(dummyChannelName, object: ChannelObserver {
+        override fun onFocusChanged(newFocus: FocusState) {
+            // no-op
+        }
+    }, NAMESPACE)
+
+    private val scheduleExecutor = ScheduledThreadPoolExecutor(1)
 
     private val speechToTextConverterEventObserver =
         object : ASRAgentInterface.OnResultListener {
@@ -255,6 +266,9 @@ class DefaultASRAgent(
             playSynchronizer.releaseSync(it)
         }
 
+        if(focusState != FocusState.FOREGROUND) {
+            focusManager.prepare(expectSpeechFocusRequester)
+        }
         expectSpeechDirectiveParam = param
         sessionManager.activate(param.directive.header.dialogRequestId, param)
         attributeStorageManager.setAttributes(param)
@@ -491,7 +505,7 @@ class DefaultASRAgent(
         jsonContext: String) {
         Logger.d(
             TAG,
-            "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState"
+            "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState, expectSpeechDirectiveParam: $expectSpeechDirectiveParam"
         )
         if(isRequested) {
             callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
@@ -509,14 +523,13 @@ class DefaultASRAgent(
         }
 
         if (focusState != FocusState.FOREGROUND) {
-            if (!focusManager.acquireChannel(
-                    if (expectSpeechDirectiveParam == null) {
-                        userInteractionDialogChannelName
-                    } else {
-                        internalDialogChannelName
-                    }, this,
-                    NAMESPACE
-                )
+            val requester = if (expectSpeechDirectiveParam == null) {
+                userSpeechFocusRequester
+            } else {
+                expectSpeechFocusRequester
+            }
+
+            if (!focusManager.acquire(requester)
             ) {
                 Logger.e(
                     TAG,
@@ -583,8 +596,8 @@ class DefaultASRAgent(
                 }
             }
             FocusState.BACKGROUND -> {
-                focusManager.releaseChannel(userInteractionDialogChannelName, this)
-                focusManager.releaseChannel(internalDialogChannelName, this)
+                focusManager.release(userSpeechFocusRequester, FocusState.BACKGROUND)
+                focusManager.release(expectSpeechFocusRequester, FocusState.BACKGROUND)
             }
             FocusState.NONE -> executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
         }
@@ -747,20 +760,6 @@ class DefaultASRAgent(
         }
     }
 
-    override fun onStateChanged(state: FocusHolderManager.State) {
-        executor.submit {
-            if(state != FocusHolderManager.State.UNHOLD) {
-                return@submit
-            }
-
-            if(focusState != FocusState.NONE && !currentSpeechRecognizer.isRecognizing()) {
-                focusManager.releaseChannel(userInteractionDialogChannelName, this)
-                focusManager.releaseChannel(internalDialogChannelName, this)
-                focusState = FocusState.NONE
-            }
-        }
-    }
-
     override fun startRecognition(
         audioInputStream: SharedDataStream?,
         audioFormat: AudioFormat?,
@@ -843,9 +842,18 @@ class DefaultASRAgent(
                 }
             }
 
-            focusHolderManager.abandon(this)
-        } else {
-            focusHolderManager.request(this)
+            if(focusState != FocusState.NONE) {
+                if(this.state == ASRAgentInterface.State.BUSY) {
+                    focusManager.acquire(dummyFocusRequester)
+                    scheduleExecutor.schedule({
+                        focusManager.release(dummyFocusRequester, FocusState.BACKGROUND)
+                    }, 200, TimeUnit.MILLISECONDS)
+                } else {
+                    focusManager.release(userSpeechFocusRequester, focusState)
+                    focusManager.release(expectSpeechFocusRequester, focusState)
+                    focusState = FocusState.NONE
+                }
+            }
         }
 
 //        if (!state.isRecognizing()) {

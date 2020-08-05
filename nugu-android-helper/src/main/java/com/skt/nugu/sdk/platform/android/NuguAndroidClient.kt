@@ -374,7 +374,7 @@ class NuguAndroidClient private constructor(
                     return with(container) {
                         DefaultASRAgent(
                             getInputManagerProcessor(),
-                            getAudioFocusManager(),
+                            getAudioSeamlessFocusManager(),
                             getMessageSender(),
                             getContextManager(),
                             getSessionManager(),
@@ -384,12 +384,11 @@ class NuguAndroidClient private constructor(
                             builder.endPointDetector,
                             builder.defaultEpdTimeoutMillis,
                             DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
-                            DefaultFocusChannel.DIALOG_CHANNEL_NAME,
-                            dialogChannelFocusHolderManager,
+                            DefaultFocusChannel.INTERNAL_DIALOG_CHANNEL_NAME,
+                            DefaultFocusChannel.INTERACTION_CHANNEL_NAME,
                             getPlaySynchronizer()
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
-                            dialogChannelFocusHolderManager.addOnStateChangeListener(this)
 
                             CancelRecognizeDirectiveHandler(this).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
@@ -429,7 +428,7 @@ class NuguAndroidClient private constructor(
                             DefaultAudioPlayerAgent(
                                 builder.playerFactory.createAudioPlayer(),
                                 getMessageSender(),
-                                getAudioFocusManager(),
+                                getAudioSeamlessFocusManager(),
                                 getContextManager(),
                                 playbackRouter,
                                 getPlaySynchronizer(),
@@ -478,16 +477,13 @@ class NuguAndroidClient private constructor(
                     DefaultTTSAgent(
                         builder.playerFactory.createSpeakPlayer(),
                         getMessageSender(),
-                        getAudioFocusManager(),
+                        getAudioSeamlessFocusManager(),
                         getContextManager(),
                         getPlaySynchronizer(),
-                        DefaultFocusChannel.DIALOG_CHANNEL_NAME,
-                        dialogChannelFocusHolderManager
+                        DefaultFocusChannel.DIALOG_CHANNEL_NAME
                     ).apply {
                         getAudioPlayStackManager().addPlayContextProvider(this)
                         getDirectiveSequencer().addDirectiveHandler(this)
-
-                        dialogChannelFocusHolderManager.addOnStateChangeListener(this)
 
                         StopDirectiveHandler(this).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
@@ -688,9 +684,8 @@ class NuguAndroidClient private constructor(
                         it,
                         TTSScenarioPlayer(
                             container.getPlaySynchronizer(),
-                            container.getAudioFocusManager(),
+                            container.getAudioSeamlessFocusManager(),
                             DefaultFocusChannel.DIALOG_CHANNEL_NAME,
-                            dialogChannelFocusHolderManager,
                             builder.playerFactory.createSpeakPlayer(),
                             container.getAudioPlayStackManager()
                         ),
