@@ -19,29 +19,48 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 
 class DefaultFocusChannel {
     companion object {
+        private const val TOP_PRIORITY = 10
+        private const val FIRST_PRIORITY = 100
+        private const val SECOND_PRIORITY = 200
+        private const val THIRD_PRIORITY = 300
+        private const val NO_PRIORITY = 10000
+
         // If you add other channel, only allow to use positive number for priority
         // Also, each priority must be a multiple of 2.
         const val INTERACTION_CHANNEL_NAME = "Interaction"
-        const val INTERACTION_CHANNEL_ACQUIRE_PRIORITY = 50
-        const val INTERACTION_CHANNEL_RELEASE_PRIORITY = 900
-        const val DIALOG_CHANNEL_NAME = "Dialog"
-        const val DIALOG_CHANNEL_PRIORITY = 100
+        const val INTERACTION_CHANNEL_ACQUIRE_PRIORITY = TOP_PRIORITY
+        const val INTERACTION_CHANNEL_RELEASE_PRIORITY = NO_PRIORITY
+
         const val COMMUNICATIONS_CHANNEL_NAME = "Communications"
-        const val COMMUNICATIONS_CHANNEL_PRIORITY = 150
+        const val COMMUNICATIONS_CHANNEL_PRIORITY = FIRST_PRIORITY
+
+        const val DIALOG_CHANNEL_NAME = "Dialog"
+        const val DIALOG_CHANNEL_PRIORITY = SECOND_PRIORITY
+
         const val ALERTS_CHANNEL_NAME = "Alerts"
-        const val ALERTS_CHANNEL_PRIORITY = 200
+        const val ALERTS_CHANNEL_PRIORITY = SECOND_PRIORITY
+
         const val CONTENT_CHANNEL_NAME = "Content"
-        const val CONTENT_CHANNEL_PRIORITY = 400
+        const val CONTENT_CHANNEL_ACQUIRE_PRIORITY = SECOND_PRIORITY
+        const val CONTENT_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
+
+        const val USER_DIALOG_CHANNEL_NAME = "UserDialog"
+        const val USER_DIALOG_CHANNEL_ACQUIRE_PRIORITY = FIRST_PRIORITY
+        const val USER_DIALOG_CHANNEL_RELEASE_PRIORITY = SECOND_PRIORITY
 
         const val INTERNAL_DIALOG_CHANNEL_NAME = "InternalDialog"
-        const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = 300
-        const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = 500
+        const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = THIRD_PRIORITY
+        const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = SECOND_PRIORITY
 
         fun getDefaultAudioChannels(): List<FocusManagerInterface.ChannelConfiguration> {
             return listOf(
                 FocusManagerInterface.ChannelConfiguration(
                     INTERACTION_CHANNEL_NAME,
                     INTERACTION_CHANNEL_ACQUIRE_PRIORITY, INTERACTION_CHANNEL_RELEASE_PRIORITY
+                ),
+                FocusManagerInterface.ChannelConfiguration(
+                    USER_DIALOG_CHANNEL_NAME,
+                    USER_DIALOG_CHANNEL_ACQUIRE_PRIORITY, USER_DIALOG_CHANNEL_RELEASE_PRIORITY
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     INTERNAL_DIALOG_CHANNEL_NAME,
@@ -64,8 +83,8 @@ class DefaultFocusChannel {
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     CONTENT_CHANNEL_NAME,
-                    CONTENT_CHANNEL_PRIORITY,
-                    CONTENT_CHANNEL_PRIORITY
+                    CONTENT_CHANNEL_ACQUIRE_PRIORITY,
+                    CONTENT_CHANNEL_RELEASE_PRIORITY
                 )
             )
         }
