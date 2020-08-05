@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.agent.dialog
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface

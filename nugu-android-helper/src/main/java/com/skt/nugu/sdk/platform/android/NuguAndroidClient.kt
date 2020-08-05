@@ -40,10 +40,8 @@ import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.common.tts.TTSScenarioPlayer
 import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.agent.delegation.DelegationClient
-import com.skt.nugu.sdk.agent.dialog.DialogFocusHolderManager
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.dialog.FocusHolderManagerImpl
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
@@ -347,9 +345,6 @@ class NuguAndroidClient private constructor(
 
     private val playbackRouter: PlaybackRouter =
         com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
-
-    private val dialogChannelFocusHolderManager =
-        DialogFocusHolderManager(FocusHolderManagerImpl(builder.dialogUXStateTransitionDelay))
 
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate
@@ -800,7 +795,6 @@ class NuguAndroidClient private constructor(
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
         asrAgent?.addOnMultiturnListener(dialogUXStateAggregator)
-        asrAgent?.addOnMultiturnListener(dialogChannelFocusHolderManager)
         chipsAgent?.addListener(dialogUXStateAggregator)
 
         val osContextProvider = object : OsContextProvider() {
