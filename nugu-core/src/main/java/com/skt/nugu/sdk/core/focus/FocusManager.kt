@@ -151,12 +151,12 @@ class FocusManager(
             foregroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
             foregroundChannel.channel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
             channelToAcquire.priority.acquire <= foregroundChannel.channel.priority.release -> {
-                val existHigherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
-                    activeChannels.filter { it.channel.priority.release < channelToAcquire.priority.acquire && it.channel != foregroundChannel.channel}
-                }.any()
+                val higherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
+                    activeChannels.filter { it.channel.priority.release < channelToAcquire.priority.acquire && it.channel != foregroundChannel.channel && it.channel != channelToAcquire }
+                }
                 Logger.d(TAG, "$activeChannels")
 
-                if(existHigherPriorityChannelExceptForegroundChannel) {
+                if(higherPriorityChannelExceptForegroundChannel.any()) {
                     // Even if the request channel has higher priority than foreground channel, get background focus due to another higher priority channels exist.
                     setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
                 } else {
