@@ -106,11 +106,6 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
                     }
 
                     override fun onError(error: NuguOAuthError) {
-                        // The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
-                        Log.e(TAG, "An unexpected error has occurred. " +
-                                "Please check the logs for details\n" +
-                                "$error")
-
                         handleOAuthError(error)
                     }
                 })
@@ -123,12 +118,6 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
                 }
 
                 override fun onError(error: NuguOAuthError) {
-                    Log.e(TAG, "An unexpected error has occurred." +
-                            "Please check the logs for details\n" +
-                            "$error")
-                    // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
-                    PreferenceHelper.credentials(this@LoginActivity, "")
-
                     handleOAuthError(error)
                 }
             })
@@ -141,7 +130,13 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
             Toast.makeText(this, R.string.sdk_not_initialized, Toast.LENGTH_LONG).show()
             return
         }
-
+        val storedCredentials = PreferenceHelper.credentials(this@LoginActivity)
+        // serialized a credential, extract of refreshToken
+        authClient.setCredentials(storedCredentials)
+        if(authClient.isLogin() && authClient.getRefreshToken().isEmpty()) {
+            startMainActivity()
+            return
+        }
         authClient.login(object : NuguOAuthInterface.OnLoginListener {
             override fun onSuccess(credentials: Credentials) {
                 // save credentials
@@ -151,7 +146,6 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
             }
 
             override fun onError(error: NuguOAuthError) {
-                // please try again in a few minutes
                 handleOAuthError(error)
             }
         })
@@ -161,41 +155,50 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
      * Handles failed OAuth attempts.
      */
     private fun handleOAuthError(error: NuguOAuthError) {
+        // The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
+        Log.e(TAG, "An unexpected error has occurred. " +
+                "Please check the logs for details\n" +
+                "$error")
         if(error.error == NuguOAuthError.NETWORK_ERROR) {
             NuguSnackbar.with(findViewById(R.id.baseLayout))
                 .message(R.string.authorization_failure_message)
                 .show()
-        } else if(error.error == NuguOAuthError.INVALID_CLIENT && error.description == NuguOAuthError.FINISHED) {
-            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                .message(R.string.service_finished)
-                .show()
         } else {
-            when(error.code) {
-                NuguOAuthError.USER_ACCOUNT_CLOSED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_account_closed)
-                        .show()
-                }
-                NuguOAuthError.USER_ACCOUNT_PAUSED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_account_paused)
-                        .show()
-                }
-                NuguOAuthError.USER_DEVICE_DISCONNECTED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_device_disconnected)
-                        .show()
-                }
-                NuguOAuthError.USER_DEVICE_UNEXPECTED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_device_unexpected)
-                        .show()
-                }
-                else -> {
-                    // check detail
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.authentication_failed)
-                        .show()
+            // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
+            PreferenceHelper.credentials(this@LoginActivity, "")
+
+            if(error.error == NuguOAuthError.INVALID_CLIENT && error.description == NuguOAuthError.FINISHED) {
+                NuguSnackbar.with(findViewById(R.id.baseLayout))
+                    .message(R.string.service_finished)
+                    .show()
+            } else {
+                when(error.code) {
+                    NuguOAuthError.USER_ACCOUNT_CLOSED -> {
+                        NuguSnackbar.with(findViewById(R.id.baseLayout))
+                            .message(R.string.user_account_closed)
+                            .show()
+                    }
+                    NuguOAuthError.USER_ACCOUNT_PAUSED -> {
+                        NuguSnackbar.with(findViewById(R.id.baseLayout))
+                            .message(R.string.user_account_paused)
+                            .show()
+                    }
+                    NuguOAuthError.USER_DEVICE_DISCONNECTED -> {
+                        NuguSnackbar.with(findViewById(R.id.baseLayout))
+                            .message(R.string.user_device_disconnected)
+                            .show()
+                    }
+                    NuguOAuthError.USER_DEVICE_UNEXPECTED -> {
+                        NuguSnackbar.with(findViewById(R.id.baseLayout))
+                            .message(R.string.user_device_unexpected)
+                            .show()
+                    }
+                    else -> {
+                        // check detail
+                        NuguSnackbar.with(findViewById(R.id.baseLayout))
+                            .message(R.string.authentication_failed)
+                            .show()
+                    }
                 }
             }
         }

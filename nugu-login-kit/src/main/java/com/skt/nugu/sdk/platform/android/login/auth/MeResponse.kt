@@ -35,10 +35,11 @@ data class MeResponse(
         @Throws(JSONException::class)
         fun parse(string: String): MeResponse {
             JSONObject(string).apply {
+
                 return MeResponse(
                     anonymous = getBoolean("anonymous"),
                     deviceId = getString("deviceId"),
-                    tid = getString("tid"),
+                    tid = if(isNull("tid")) "" else getString("tid"),
                     userId = getString("userId")
                 )
             }
