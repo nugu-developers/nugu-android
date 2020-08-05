@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -30,6 +31,7 @@ import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 
 interface SdkContainer {
     fun getInputManagerProcessor(): InputProcessorManagerInterface
+    fun getAudioSeamlessFocusManager(): SeamlessFocusManagerInterface
     fun getAudioFocusManager(): FocusManagerInterface
     fun getAudioPlayStackManager(): PlayStackManagerInterface
     fun getDisplayPlayStackManager(): PlayStackManagerInterface
