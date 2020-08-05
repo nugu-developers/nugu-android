@@ -41,13 +41,30 @@ class FocusManager(
     private val allChannelConfigurations: MutableMap<String, FocusManagerInterface.ChannelConfiguration> = HashMap()
     private val allChannels: MutableMap<String, Channel> = HashMap()
 
+    private data class ActiveChannel(
+        val channel: Channel,
+        val activatedIndex: Long = currentIndex++
+    ) {
+        companion object {
+            private var currentIndex = 0L
+        }
+    }
+
     /**
      * activeChannels must be thread safe.
      * Do synchronize when use.
      */
     //@GuardedBy("activeChannels")
-    private val activeChannels = TreeSet<Channel>(Comparator<Channel> { p0, p1 -> p1.priority.acquire - p0.priority.acquire })
+    private val activeChannels = TreeSet<ActiveChannel>(Comparator<ActiveChannel> { p0, p1 ->
+        val diff = p1.channel.priority.acquire - p0.channel.priority.acquire
+        if(diff != 0) {
+            diff
+        } else {
+            p0.activatedIndex.compareTo(p1.activatedIndex)
+        }
+    })
     private val executor = Executors.newSingleThreadExecutor()
+    private var foregroundChannel: Channel? = null
 
     private val listeners = CopyOnWriteArraySet<FocusManagerInterface.OnFocusChangedListener>()
 
@@ -99,39 +116,51 @@ class FocusManager(
         channelObserver: ChannelObserver,
         interfaceName: String
     ) {
+        val contains = synchronized(activeChannels) {
+            activeChannels.filter {
+                it.channel == channelToAcquire
+            }.any()
+        }
+
         val shouldReleaseChannelFocus =
-            !(activeChannels.contains(channelToAcquire) && channelToAcquire.getInterfaceName() == interfaceName)
+            !(contains && channelToAcquire.getInterfaceName() == interfaceName)
 
         if (shouldReleaseChannelFocus) {
             setChannelFocus(channelToAcquire, FocusState.NONE)
+            removeActiveChannel(channelToAcquire)
         }
 
         val foregroundChannel = getHighestPriorityActiveChannel()
         Logger.d(
             TAG,
-            "[acquireChannelHelper] ${channelToAcquire.name}, $interfaceName, foreground: ${foregroundChannel?.name}"
+            "[acquireChannelHelper] $channelToAcquire, $interfaceName, foreground: ${foregroundChannel?.channel?.name}"
         )
 
         channelToAcquire.setInterfaceName(interfaceName)
         synchronized(activeChannels) {
-            activeChannels.add(channelToAcquire)
+            ActiveChannel(channelToAcquire).let {
+                if(activeChannels.add(it)) {
+                    Logger.d(TAG, "[acquireChannelHelper] create & added at active: $it")
+                }
+            }
         }
 
         channelToAcquire.setObserver(channelObserver)
 
         when {
             foregroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
-            foregroundChannel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
-            channelToAcquire.priority.acquire < foregroundChannel.priority.release -> {
+            foregroundChannel.channel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+            channelToAcquire.priority.acquire <= foregroundChannel.channel.priority.release -> {
                 val existHigherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
-                    activeChannels.filter { it.priority.release < channelToAcquire.priority.acquire && it != foregroundChannel}
+                    activeChannels.filter { it.channel.priority.release < channelToAcquire.priority.acquire && it.channel != foregroundChannel.channel}
                 }.any()
+                Logger.d(TAG, "$activeChannels")
 
                 if(existHigherPriorityChannelExceptForegroundChannel) {
                     // Even if the request channel has higher priority than foreground channel, get background focus due to another higher priority channels exist.
                     setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
                 } else {
-                    setChannelFocus(foregroundChannel, FocusState.BACKGROUND)
+                    setChannelFocus(foregroundChannel.channel, FocusState.BACKGROUND)
                     setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
                 }
             }
@@ -141,19 +170,27 @@ class FocusManager(
         }
     }
 
+    private fun removeActiveChannel(channel: Channel) {
+        synchronized(activeChannels) {
+            activeChannels.findLast { it.channel == channel }?.let {
+                Logger.d(TAG, "[removeActiveChannel] remove:$it")
+                activeChannels.remove(it)
+            }
+        }
+    }
+
     private fun releaseChannelHelper(
         channelToRelease: Channel,
         channelObserver: ChannelObserver
     ): Boolean {
-        Logger.d(TAG, "[releaseChannelHelper] ${channelToRelease.name}, ${channelToRelease.state.interfaceName}")
+        Logger.d(TAG, "[releaseChannelHelper] ${channelToRelease}, ${channelToRelease.state.interfaceName}")
         if (!channelToRelease.doesObserverOwnChannel(channelObserver)) {
+            Logger.d(TAG, "[releaseChannelHelper] not matched current observer")
             return false
         }
 
-        val wasForegrounded = isChannelForegrounded(channelToRelease)
-        synchronized(activeChannels) {
-            activeChannels.remove(channelToRelease)
-        }
+        val wasForegrounded = foregroundChannel == channelToRelease
+        removeActiveChannel(channelToRelease)
 
         setChannelFocus(channelToRelease, FocusState.NONE)
         if (wasForegrounded) {
@@ -172,17 +209,18 @@ class FocusManager(
         }
 
         setChannelFocus(foregroundChannel, FocusState.NONE)
-
-        synchronized(activeChannels) {
-            activeChannels.remove(foregroundChannel)
-        }
+        removeActiveChannel(foregroundChannel)
         foregroundHighestPriorityActiveChannel()
     }
 
     private fun setChannelFocus(channel: Channel, focus: FocusState) {
-        if (channel.setFocus(focus) == false) {
+        if (!channel.setFocus(focus)) {
             Logger.d(TAG, "[setChannelFocus] $channel, $focus")
             return
+        }
+
+        if(focus == FocusState.FOREGROUND) {
+            foregroundChannel = channel
         }
 
         listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName) }
@@ -190,16 +228,14 @@ class FocusManager(
 
     private fun getChannel(channelName: String): Channel? = allChannels[channelName]
 
-    private fun getHighestPriorityActiveChannel(): Channel? =
+    private fun getHighestPriorityActiveChannel(): ActiveChannel? =
         synchronized(activeChannels) { activeChannels.lastOrNull() }
-
-    private fun isChannelForegrounded(channelToRelease: Channel) = getHighestPriorityActiveChannel() == channelToRelease
 
     private fun foregroundHighestPriorityActiveChannel() {
         val channelToForeground = getHighestPriorityActiveChannel()
-        Logger.d(TAG, "[foregroundHighestPriorityActiveChannel] ${channelToForeground?.name}")
+        Logger.d(TAG, "[foregroundHighestPriorityActiveChannel] ${channelToForeground?.channel?.name}, $activeChannels")
         if (channelToForeground != null) {
-            setChannelFocus(channelToForeground, FocusState.FOREGROUND)
+            setChannelFocus(channelToForeground.channel, FocusState.FOREGROUND)
         } else {
             Logger.d(TAG, "[foregroundHighestPriorityActiveChannel] non channel to foreground.")
         }

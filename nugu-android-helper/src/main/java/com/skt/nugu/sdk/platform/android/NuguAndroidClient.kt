@@ -383,7 +383,7 @@ class NuguAndroidClient private constructor(
                             SpeexEncoder(),
                             builder.endPointDetector,
                             builder.defaultEpdTimeoutMillis,
-                            DefaultFocusChannel.INTERACTION_CHANNEL_NAME,
+                            DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
                             DefaultFocusChannel.DIALOG_CHANNEL_NAME,
                             dialogChannelFocusHolderManager,
                             getPlaySynchronizer()
