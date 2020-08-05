@@ -23,6 +23,7 @@ class DefaultFocusChannel {
         private const val FIRST_PRIORITY = 100
         private const val SECOND_PRIORITY = 200
         private const val THIRD_PRIORITY = 300
+        private const val FOURTH_PRIORITY = 400
         private const val NO_PRIORITY = 10000
 
         // If you add other channel, only allow to use positive number for priority
@@ -41,15 +42,15 @@ class DefaultFocusChannel {
         const val ALERTS_CHANNEL_PRIORITY = SECOND_PRIORITY
 
         const val CONTENT_CHANNEL_NAME = "Content"
-        const val CONTENT_CHANNEL_ACQUIRE_PRIORITY = SECOND_PRIORITY
-        const val CONTENT_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
+        const val CONTENT_CHANNEL_ACQUIRE_PRIORITY = THIRD_PRIORITY
+        const val CONTENT_CHANNEL_RELEASE_PRIORITY = FOURTH_PRIORITY
 
         const val USER_DIALOG_CHANNEL_NAME = "UserDialog"
         const val USER_DIALOG_CHANNEL_ACQUIRE_PRIORITY = FIRST_PRIORITY
         const val USER_DIALOG_CHANNEL_RELEASE_PRIORITY = SECOND_PRIORITY
 
         const val INTERNAL_DIALOG_CHANNEL_NAME = "InternalDialog"
-        const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = THIRD_PRIORITY
+        const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = FOURTH_PRIORITY
         const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = SECOND_PRIORITY
 
         fun getDefaultAudioChannels(): List<FocusManagerInterface.ChannelConfiguration> {
