@@ -24,23 +24,20 @@ import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
 class TTSScenarioPlayer(
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val focusManager: FocusManagerInterface,
+    private val focusManager: SeamlessFocusManagerInterface,
     private val focusChannelName: String,
-    private val focusHolderManager: FocusHolderManager,
     private val player: MediaPlayerInterface,
     audioPlayStackManager: PlayStackManagerInterface
 ) : MediaPlayerControlInterface.PlaybackEventListener
-    , ChannelObserver
-    , FocusHolderManager.OnStateChangeListener
-{
+    , ChannelObserver {
     companion object {
         private const val TAG = "TTSScenarioPlayer"
         private val DUMMY_PLAY_SYNC_CALLBACK =
@@ -83,9 +80,10 @@ class TTSScenarioPlayer(
 
     private var focusState: FocusState = FocusState.NONE
 
+    private val focusRequester = SeamlessFocusManagerInterface.Requester(focusChannelName, this, TAG)
+
     init {
         player.setPlaybackEventListener(this)
-        focusHolderManager.addOnStateChangeListener(this)
         audioPlayStackManager.addPlayContextProvider(ttsPlayContextProvider)
     }
 
@@ -104,6 +102,9 @@ class TTSScenarioPlayer(
     fun prepare(source: Source) {
         Logger.d(TAG, "[prepare] source: $source")
         playSynchronizer.prepareSync(source)
+        if(focusState != FocusState.FOREGROUND) {
+            focusManager.prepare(focusRequester)
+        }
         executor.submit {
             Logger.d(TAG, "[prepare] execute source: $source")
             // clear lastImplicitStoppedSource
@@ -113,14 +114,12 @@ class TTSScenarioPlayer(
             preparedSource?.let {
                 it.onCanceled()
                 playSynchronizer.releaseSyncImmediately(it, DUMMY_PLAY_SYNC_CALLBACK)
-                focusHolderManager.abandon(it)
             }
             // update prepared source
             preparedSource = source
             // cancel current
             executeStopPlayer()
         }
-        focusHolderManager.request(source)
     }
 
     fun start(source: Source) {
@@ -137,37 +136,51 @@ class TTSScenarioPlayer(
                 return@submit
             }
 
-            executeStartPreparedSourceIfExist()
-
-        }
-    }
-
-    private fun executeStartPreparedSourceIfExist() {
-        Logger.d(TAG, "[executeStartPreparedSource] preparedSource: $preparedSource")
-        if (preparedSource == null) {
-            return
-        }
-
-        if (focusState == FocusState.FOREGROUND) {
-            executeStartPreparedSourceOnForeground()
-        } else {
-            if (!focusManager.acquireChannel(focusChannelName, this, TAG)) {
-                Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
+            if(executeStartPreparedSourceIfExist()) {
+                releaseFocus()
             }
         }
     }
 
-    private fun executeStartPreparedSourceOnForeground() {
-        Logger.d(TAG, "[executeStartPreparedSourceOnForeground] $preparedSource")
-        val source = preparedSource ?: return
-        preparedSource = null
-        currentSource = source
-        focusHolderManager.request(source)
-        playSynchronizer.startSync(source, DUMMY_PLAY_SYNC_CALLBACK)
-        startPlayer(source)
+    private fun releaseFocus() {
+        if(focusState != FocusState.NONE && preparedSource == null && currentSource == null) {
+            focusManager.release(focusRequester, focusState)
+            focusState = FocusState.NONE
+        }
     }
 
-    private fun startPlayer(source: Source) {
+    private fun executeStartPreparedSourceIfExist(): Boolean {
+        Logger.d(TAG, "[executeStartPreparedSource] preparedSource: $preparedSource")
+        if (preparedSource == null) {
+            return false
+        }
+
+        if (focusState == FocusState.FOREGROUND) {
+            return executeStartPreparedSourceOnForeground()
+        } else {
+            if (!focusManager.acquire(focusRequester)) {
+                Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
+            }
+        }
+        return true
+    }
+
+    private fun executeStartPreparedSourceOnForeground(): Boolean {
+        Logger.d(TAG, "[executeStartPreparedSourceOnForeground] $preparedSource")
+        val source = preparedSource ?: return false
+        preparedSource = null
+        currentSource = source
+        playSynchronizer.startSync(source, DUMMY_PLAY_SYNC_CALLBACK)
+
+        return if(!startPlayer(source)) {
+            playSynchronizer.releaseSync(source, DUMMY_PLAY_SYNC_CALLBACK)
+            false
+        } else {
+            true
+        }
+    }
+
+    private fun startPlayer(source: Source): Boolean {
         source.getReader()?.let {
             val sourceId = player.setSource(it)
             Logger.d(TAG, "[startPlayer] sourceId: $sourceId, source: $source")
@@ -179,9 +192,7 @@ class TTSScenarioPlayer(
                         "setSource failed"
                     )
                 }
-                playSynchronizer.releaseSync(source, DUMMY_PLAY_SYNC_CALLBACK)
-                focusHolderManager.abandon(source)
-                return
+                return false
             }
 
             if (!player.play(sourceId)) {
@@ -191,13 +202,13 @@ class TTSScenarioPlayer(
                         "playFailed"
                     )
                 }
-                playSynchronizer.releaseSync(source, DUMMY_PLAY_SYNC_CALLBACK)
-                focusHolderManager.abandon(source)
-                return
+                return false
             }
             idAndSourceMap[sourceId] = source
             currentSourceId = sourceId
+            return true
         }
+        return false
     }
 
     fun cancel(source: Source) {
@@ -238,7 +249,9 @@ class TTSScenarioPlayer(
 
             when (newFocus) {
                 FocusState.FOREGROUND -> {
-                    executeStartPreparedSourceOnForeground()
+                    if(!executeStartPreparedSourceOnForeground()) {
+                        releaseFocus()
+                    }
                 }
                 else -> {
                     executeStopPlayer()
@@ -280,9 +293,10 @@ class TTSScenarioPlayer(
                         listener.onPlaybackFinished(it)
                     }
                     playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
-                    focusHolderManager.abandon(it)
                 }
-                executeStartPreparedSourceIfExist()
+                if(executeStartPreparedSourceIfExist()) {
+                    releaseFocus()
+                }
             }
         }
     }
@@ -303,9 +317,10 @@ class TTSScenarioPlayer(
                         listener.onPlaybackError(it, type, error)
                     }
                     playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
-                    focusHolderManager.abandon(it)
                 }
-                executeStartPreparedSourceIfExist()
+                if(executeStartPreparedSourceIfExist()) {
+                    releaseFocus()
+                }
             }
         }
     }
@@ -338,25 +353,11 @@ class TTSScenarioPlayer(
                     } else {
                         playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
                     }
-                    focusHolderManager.abandon(it)
                 }
 
-                executeStartPreparedSourceIfExist()
-            }
-        }
-    }
-
-    override fun onStateChanged(state: FocusHolderManager.State) {
-        executor.submit {
-            Logger.d(TAG, "[onStateChanged-FocusHolder] $state, $focusState, $preparedSource, $currentSource")
-
-            if(state == FocusHolderManager.State.HOLD) {
-                return@submit
-            }
-
-            if(focusState != FocusState.NONE && preparedSource == null && currentSource == null) {
-                focusManager.releaseChannel(focusChannelName, this)
-                focusState = FocusState.NONE
+                if(executeStartPreparedSourceIfExist()) {
+                    releaseFocus()
+                }
             }
         }
     }

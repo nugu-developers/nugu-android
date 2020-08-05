@@ -44,7 +44,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
-import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
@@ -60,7 +60,7 @@ import java.util.concurrent.*
 class DefaultAudioPlayerAgent(
     private val mediaPlayer: MediaPlayerInterface,
     private val messageSender: MessageSender,
-    private val focusManager: FocusManagerInterface,
+    private val focusManager: SeamlessFocusManagerInterface,
     private val contextManager: ContextManagerInterface,
     private val playbackRouter: PlaybackRouter,
     private val playSynchronizer: PlaySynchronizerInterface,
@@ -210,6 +210,8 @@ class DefaultAudioPlayerAgent(
         override fun getPlayServiceId(): String? = currentItem?.getPlayServiceId()
     }
 
+    private val focusRequester = SeamlessFocusManagerInterface.Requester(channelName, this, NAMESPACE)
+
     inner class AudioInfo(
         val payload: PlayPayload,
         val directive: Directive,
@@ -227,7 +229,7 @@ class DefaultAudioPlayerAgent(
                     if (currentItem == this@AudioInfo) {
                         currentItem = null
                         if (!playDirectiveController.willBeHandle() && focus != FocusState.NONE) {
-                            focusManager.releaseChannel(channelName, this@DefaultAudioPlayerAgent)
+                            focusManager.release(focusRequester, focus)
                         }
                     }
 
@@ -360,6 +362,10 @@ class DefaultAudioPlayerAgent(
                 playSynchronizer.prepareSync(this)
             }
 
+            if(focus == FocusState.NONE) {
+                focusManager.prepare(focusRequester)
+            }
+
             executor.submit {
                 waitFinishPreExecuteInfo?.let {
                     notifyOnReleaseAudioInfo(it, true)
@@ -412,7 +418,7 @@ class DefaultAudioPlayerAgent(
         }
 
         private fun executeFetchItem(item: AudioInfo): Boolean {
-            Logger.d(TAG, "[executeFetchItem] item: $item")
+            Logger.d(TAG, "[executeFetchItem::$INNER_TAG] item: $item")
             progressTimer.stop()
             currentItem = item
             playServiceId = item.getPlayServiceId()
@@ -445,14 +451,14 @@ class DefaultAudioPlayerAgent(
                     try {
                         mediaPlayer.setSource(URI.create(item.payload.audioItem.stream.url.trim()))
                     } catch (th: Throwable) {
-                        Logger.w(TAG, "[executePlayNextItem] failed to create uri", th)
+                        Logger.w(TAG, "[executeFetchSource::$INNER_TAG] failed to create uri", th)
                         SourceId.ERROR()
                     }
                 }
             }
 
             if (sourceId.isError()) {
-                Logger.w(TAG, "[executePlayNextItem] failed to setSource")
+                Logger.w(TAG, "[executeFetchSource::$INNER_TAG] failed to setSource")
                 executeOnPlaybackError(
                     sourceId,
                     ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
@@ -522,11 +528,7 @@ class DefaultAudioPlayerAgent(
             }
 
             if (FocusState.FOREGROUND != focus) {
-                if (!focusManager.acquireChannel(
-                        channelName,
-                        this@DefaultAudioPlayerAgent,
-                        NAMESPACE
-                    )
+                if (!focusManager.acquire(focusRequester)
                 ) {
                     progressTimer.stop()
                     sendPlaybackFailedEvent(
@@ -573,8 +575,14 @@ class DefaultAudioPlayerAgent(
                     }
                 }
                 waitPlayExecuteInfo?.let {
-                    waitPlayExecuteInfo = null
-                    executeHandlePlayDirective()
+                    Logger.d(TAG, "$willBeHandleDirectives, ${it.directive.getMessageId()}")
+                    Logger.d(TAG, "${it.directive.getMessageId()}, asdf")
+                    if(willBeHandleDirectives.containsKey(it.directive.getMessageId())) {
+                        Logger.d(TAG, "[onPlayerStopped] waitPlayExecuteInfo is not handled yet, handled at onExecute()")
+                    } else {
+                        waitPlayExecuteInfo = null
+                        executeHandlePlayDirective()
+                    }
                 }
             }
         }
@@ -691,7 +699,7 @@ class DefaultAudioPlayerAgent(
                 }
                 FocusState.BACKGROUND -> {
                     // The behavior should be same with when sent event.
-                    if(focusManager.acquireChannel(channelName, this, NAMESPACE)) {
+                    if(focusManager.acquire(focusRequester)) {
                         pauseReason = null
                     }
                 }
@@ -1281,7 +1289,7 @@ class DefaultAudioPlayerAgent(
                 }
 
                 if (!mediaPlayer.resume(sourceId)) {
-                    focusManager.releaseChannel(channelName, this)
+                    focusManager.release(focusRequester, focus)
                     return
                 }
                 return
