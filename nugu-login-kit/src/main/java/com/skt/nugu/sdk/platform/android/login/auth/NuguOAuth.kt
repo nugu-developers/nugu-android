@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnLoginListener as OnLoginListener
@@ -115,7 +116,6 @@ class NuguOAuth private constructor(
     private var onceLoginListener: OnceLoginListener? = null
 
     private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize"
-
 
     inner class OnceLoginListener(val realListener : OnLoginListener) : OnLoginListener {
         private var called = false
@@ -248,6 +248,15 @@ class NuguOAuth private constructor(
     fun setCredentials(credential : String) = setCredentials(Credentials.parse(credential))
     fun setCredentials(credential : Credentials) = client.setCredentials(credential)
 
+    fun getRefreshToken() = client.getCredentials().refreshToken
+    fun getIssuedTime() : Long {
+        val credential = client.getCredentials()
+        return credential.issuedTime
+    }
+    fun getExpiresInMillis() : Long {
+        val credential = client.getCredentials()
+        return credential.expiresIn * 1000
+    }
     /**
      * Check whether a user is authenticated or not
      * @return trus is authorized, otherwise not authorized
@@ -385,6 +394,8 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
         checkRedirectUri()
+
+        clearAuthorization()
 
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)

@@ -39,12 +39,15 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.login.auth.Credentials
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
@@ -52,7 +55,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     NavigationView.OnNavigationItemSelectedListener
     , ConnectionStatusListener
     , AudioPlayerAgentInterface.Listener
-    , SystemAgentInterfaceListener {
+    , SystemAgentInterfaceListener
+    , TokenRefresher.Listener {
     companion object {
         private const val TAG = "MainActivity"
         private val permissions = arrayOf(
@@ -100,6 +104,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     )
 
     private val templateRenderer = FragmentTemplateRenderer(supportFragmentManager,containerIds)
+    private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +145,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
 
         version.text = "v${BuildConfig.VERSION_NAME}"
+
+        tokenRefresher.setListener(this)
+        tokenRefresher.start()
     }
 
     override fun onResume() {
@@ -210,6 +218,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.getClient().removeSystemAgentListener(this)
         // shutdown a server
         ClientManager.getClient().shutdown()
+
+        tokenRefresher.stop()
         super.onDestroy()
     }
 
@@ -386,32 +396,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 }
                 ConnectionStatusListener.ChangedReason.INVALID_AUTH -> {
                     /** Authentication failed Please refresh your access_token. **/
-                    NuguOAuth.getClient().login(object : AuthStateListener {
-                        override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
-                            when(newState) {
-                                AuthStateListener.State.REFRESHED -> {
-                                    Log.d(TAG, "Connect to the server")
-                                    ClientManager.getClient().connect()
-                                    return false
-                                }
-                                AuthStateListener.State.UNRECOVERABLE_ERROR -> {
-                                    Log.d(TAG, "Authentication failed")
-                                    NuguSnackbar.with(findViewById(R.id.drawer_layout))
-                                        .message(R.string.authentication_failed)
-                                        .duration(NuguSnackbar.LENGTH_LONG)
-                                        .show()
-                                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_UNAUTHORIZED_ERROR)
-                                    return false
-                                }
-                                AuthStateListener.State.UNINITIALIZED,
-                                AuthStateListener.State.EXPIRED -> {
-                                    Log.d(TAG, "Authentication in progress")
-                                }
-                            }
-
-                            return true
-                        }
-                    })
+                    performRevoke()
                 }
             }
         }
@@ -428,11 +413,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
         Log.d(TAG, "[onRevoke] The device has been revoked ($reason)")
-        ClientManager.getClient().disconnect()
-        NuguOAuth.getClient().clearAuthorization()
-        PreferenceHelper.credentials(this@MainActivity, "")
-        LoginActivity.invokeActivity(this)
-        finish()
+        performRevoke()
     }
 
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
@@ -448,4 +429,79 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
         }
     }
+
+    /**
+     * Please check if you can renew the refresh_token according to device condition
+     * It is recommended to proceed to the idle state.
+     * Return {@code true} if the token needs to be refresh_token, Otherwise, it is called 30 seconds again.
+     */
+    override fun onShouldRefreshToken(): Boolean {
+        if(chromeWindowController.isShown()) {
+            return false
+        }
+        return true
+    }
+
+    override fun onCredentialsChanged(credentials: Credentials) {
+        PreferenceHelper.credentials(this, credentials.toString())
+        ClientManager.getClient().disconnect()
+        ClientManager.getClient().connect()
+    }
+
+    override fun onRefreshTokenError(error: NuguOAuthError) {
+        Log.e(TAG, "An unexpected error has occurred. " +
+                "Please check the logs for details\n" +
+                "$error")
+
+        if(error.error == NuguOAuthError.NETWORK_ERROR) {
+            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                .message(R.string.authorization_failure_message)
+                .show()
+            return
+        } else if(error.error == NuguOAuthError.INVALID_CLIENT && error.description == NuguOAuthError.FINISHED) {
+            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                .message(R.string.service_finished)
+                .show()
+        } else {
+            when(error.code) {
+                NuguOAuthError.USER_ACCOUNT_CLOSED -> {
+                    NuguSnackbar.with(findViewById(R.id.baseLayout))
+                        .message(R.string.user_account_closed)
+                        .show()
+                }
+                NuguOAuthError.USER_ACCOUNT_PAUSED -> {
+                    NuguSnackbar.with(findViewById(R.id.baseLayout))
+                        .message(R.string.user_account_paused)
+                        .show()
+                }
+                NuguOAuthError.USER_DEVICE_DISCONNECTED -> {
+                    NuguSnackbar.with(findViewById(R.id.baseLayout))
+                        .message(R.string.user_device_disconnected)
+                        .show()
+                }
+                NuguOAuthError.USER_DEVICE_UNEXPECTED -> {
+                    NuguSnackbar.with(findViewById(R.id.baseLayout))
+                        .message(R.string.user_device_unexpected)
+                        .show()
+                }
+                else -> {
+                    // check detail
+                    NuguSnackbar.with(findViewById(R.id.baseLayout))
+                        .message(R.string.authentication_failed)
+                        .show()
+                }
+            }
+        }
+
+        performRevoke()
+    }
+
+    private fun performRevoke() {
+        ClientManager.getClient().disconnect()
+        NuguOAuth.getClient().clearAuthorization()
+        PreferenceHelper.credentials(this@MainActivity, "")
+        LoginActivity.invokeActivity(this)
+        finish()
+    }
+
 }
