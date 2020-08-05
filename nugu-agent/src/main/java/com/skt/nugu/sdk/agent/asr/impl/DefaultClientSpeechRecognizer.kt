@@ -334,20 +334,26 @@ class DefaultClientSpeechRecognizer(
             return
         }
 
+        val senderThread = request.senderThread
         val errorType = request.errorTypeForCausingEpdStop
         val prevEpdState = epdState
         epdState = AudioEndPointDetector.State.STOP
 
         if(errorType != null) {
-            request.senderThread?.requestStop()
+            senderThread?.requestStop()
             handleError(errorType)
             return
         } else if(request.stopByCancel == false && prevEpdState == AudioEndPointDetector.State.SPEECH_START){
-            request.senderThread?.requestFinish()
+            senderThread?.requestFinish()
             epdState = AudioEndPointDetector.State.STOP
             setState(SpeechRecognizer.State.SPEECH_END, request)
         } else {
-            request.senderThread?.requestStop()
+            if(senderThread == null) {
+                sendStopRecognizeEvent(request.eventMessage)
+            } else {
+                senderThread.requestStop()
+            }
+
             handleCancel()
             return
         }
