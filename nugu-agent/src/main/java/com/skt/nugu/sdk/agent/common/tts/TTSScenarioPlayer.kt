@@ -16,7 +16,6 @@
 
 package com.skt.nugu.sdk.agent.common.tts
 
-import com.skt.nugu.sdk.agent.dialog.FocusHolderManager
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
@@ -58,8 +57,7 @@ class TTSScenarioPlayer(
     }
 
     abstract class Source
-        : PlaySynchronizerInterface.SynchronizeObject
-        , FocusHolderManager.FocusHolder {
+        : PlaySynchronizerInterface.SynchronizeObject {
         var isCancelRequested = false
         internal var stopCalled = false
 
