@@ -39,6 +39,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
+import com.skt.nugu.sdk.core.focus.SeamlessFocusManager
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
@@ -47,6 +48,7 @@ import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -100,6 +102,8 @@ class NuguClient private constructor(
         DefaultFocusChannel.getDefaultAudioChannels(),
         "Audio"
     )
+    val audioSeamlessFocusManager: SeamlessFocusManagerInterface = SeamlessFocusManager(audioFocusManager, DefaultFocusChannel.INTERACTION_CHANNEL_NAME)
+
     private val messageRouter: MessageRouter =
         MessageRouter(builder.transportFactory, builder.authDelegate)
     val networkManager: ConnectionManagerInterface
@@ -144,6 +148,8 @@ class NuguClient private constructor(
             sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
                     inputProcessorManager
+
+                override fun getAudioSeamlessFocusManager(): SeamlessFocusManagerInterface = audioSeamlessFocusManager
 
                 override fun getAudioFocusManager(): FocusManagerInterface = audioFocusManager
 
