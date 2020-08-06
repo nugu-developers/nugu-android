@@ -34,6 +34,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import java.util.concurrent.Executors
@@ -44,7 +45,8 @@ class MessageAgent(
     contextStateProviderRegistry: ContextStateProviderRegistry,
     contextGetter: ContextGetterInterface,
     messageSender: MessageSender,
-    directiveSequencer: DirectiveSequencerInterface
+    directiveSequencer: DirectiveSequencerInterface,
+    interactionControlManager: InteractionControlManagerInterface
 ) : CapabilityAgent
     , MessageAgentInterface
     , SupportedInterfaceContextProvider
@@ -207,6 +209,7 @@ class MessageAgent(
                     this@MessageAgent,
                     messageSender,
                     contextGetter,
+                    interactionControlManager,
                     namespaceAndName
                 )
             )

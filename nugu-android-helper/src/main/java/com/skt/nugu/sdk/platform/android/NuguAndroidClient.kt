@@ -688,7 +688,8 @@ class NuguAndroidClient private constructor(
                         container.getContextManager(),
                         container.getContextManager(),
                         container.getMessageSender(),
-                        container.getDirectiveSequencer()
+                        container.getDirectiveSequencer(),
+                        container.getInteractionControlManager()
                     )
                 })
             }

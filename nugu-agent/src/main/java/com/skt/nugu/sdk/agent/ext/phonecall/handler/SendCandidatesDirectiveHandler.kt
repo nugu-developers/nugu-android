@@ -28,6 +28,9 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
 import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -37,6 +40,7 @@ class SendCandidatesDirectiveHandler(
     private val controller: Controller,
     private val messageSender: MessageSender,
     private val contextGetter: ContextGetterInterface,
+    private val interactionControlManager: InteractionControlManagerInterface,
     private val namespaceAndName: NamespaceAndName
 ) : AbstractDirectiveHandler() {
     companion object {
@@ -66,11 +70,27 @@ class SendCandidatesDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
+
+            val interactionControl = if(payload.interactionControl != null) {
+                object : InteractionControl {
+                    override fun getMode(): InteractionControlMode = when(payload.interactionControl.mode) {
+                        com.skt.nugu.sdk.agent.common.InteractionControl.Mode.MULTI_TURN -> InteractionControlMode.MULTI_TURN
+                        com.skt.nugu.sdk.agent.common.InteractionControl.Mode.NONE -> InteractionControlMode.NONE
+                    }
+                }
+            } else {
+                null
+            }
+
+            interactionControl?.let {
+                interactionControlManager.start(it)
+            }
+
             controller.sendCandidates(payload, object: Callback {
                 override fun onSuccess(context: Context) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.newCall(
+                            if(!messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     PhoneCallAgent.NAMESPACE,
@@ -83,11 +103,21 @@ class SendCandidatesDirectiveHandler(
                                     .build()
                             ).enqueue(object : MessageSender.Callback{
                                 override fun onFailure(request: MessageRequest, status: Status) {
+                                    interactionControl?.let {
+                                        interactionControlManager.finish(it)
+                                    }
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                    interactionControl?.let {
+                                        interactionControlManager.finish(it)
+                                    }
                                 }
-                            })
+                            })) {
+                                interactionControl?.let {
+                                    interactionControlManager.finish(it)
+                                }
+                            }
                         }
                     }, null, HashMap<NamespaceAndName, ContextState>().apply {
                         put(namespaceAndName, PhoneCallAgent.StateContext(context))
@@ -96,6 +126,9 @@ class SendCandidatesDirectiveHandler(
 
                 override fun onFailure() {
                     // can't send without context
+                    interactionControl?.let {
+                        interactionControlManager.finish(it)
+                    }
                 }
             })
         }
