@@ -39,6 +39,9 @@ import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -68,7 +71,8 @@ class DefaultASRAgent(
     userInteractionDialogChannelName: String,
     internalDialogChannelName: String,
     dummyChannelName: String,
-    private val playSynchronizer: PlaySynchronizerInterface
+    private val playSynchronizer: PlaySynchronizerInterface,
+    private val interactionControlManager: InteractionControlManagerInterface
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
     , SpeechRecognizer.OnStateChangeListener
@@ -975,6 +979,9 @@ class DefaultASRAgent(
     }
 
     private var currentAttributeKey: String? = null
+    private val interactionControl = object: InteractionControl {
+        override fun getMode(): InteractionControlMode = InteractionControlMode.MULTI_TURN
+    }
 
     fun onSetAttribute(
         key: String
@@ -985,6 +992,7 @@ class DefaultASRAgent(
             onMultiturnListeners.forEach {
                 it.onMultiturnStateChanged(true)
             }
+            interactionControlManager.start(interactionControl)
         }
     }
 
@@ -998,6 +1006,7 @@ class DefaultASRAgent(
             onMultiturnListeners.forEach {
                 it.onMultiturnStateChanged(false)
             }
+            interactionControlManager.finish(interactionControl)
         }
         executeStopRecognitionOnAttributeUnset(key)
     }

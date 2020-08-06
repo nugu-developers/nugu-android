@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -36,7 +37,7 @@ class DialogUXStateAggregator(
     , ASRAgentInterface.OnStateChangeListener
     , TTSAgentInterface.Listener
     , ConnectionStatusListener
-    , ASRAgentInterface.OnMultiturnListener
+    , InteractionControlManagerInterface.Listener
     , ChipsAgentInterface.Listener
 {
     companion object {

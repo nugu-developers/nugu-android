@@ -381,7 +381,8 @@ class NuguAndroidClient private constructor(
                             DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
                             DefaultFocusChannel.INTERNAL_DIALOG_CHANNEL_NAME,
                             DefaultFocusChannel.INTERACTION_CHANNEL_NAME,
-                            getPlaySynchronizer()
+                            getPlaySynchronizer(),
+                            getInteractionControlManager()
                         ).apply {
                             getDirectiveSequencer().addDirectiveHandler(this)
 
@@ -790,11 +791,12 @@ class NuguAndroidClient private constructor(
             null
         }
 
-        dialogUXStateAggregator = DialogUXStateAggregator(builder.dialogUXStateTransitionDelay, client.getSdkContainer().getSessionManager(), displayAgent)
+        dialogUXStateAggregator = DialogUXStateAggregator(builder.dialogUXStateTransitionDelay, client.getSdkContainer().getSessionManager(), displayAgent).apply {
+            client.getSdkContainer().getInteractionControlManager().addListener(this)
+        }
 
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
-        asrAgent?.addOnMultiturnListener(dialogUXStateAggregator)
         chipsAgent?.addListener(dialogUXStateAggregator)
 
         val osContextProvider = object : OsContextProvider() {
