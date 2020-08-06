@@ -44,6 +44,11 @@ interface DisplayAggregatorInterface:
          *
          * It is a good time to display template.
          *
+         * If exist rendered template already in [displayType],
+         * the renderer should clear the previous rendered template
+         * and do not miss call [displayCardCleared] after cleared.
+         * The SDK will not call [clear] for the previous template.
+         *
          * If true returned, the renderer should call [displayCardRendered] after display rendered.
          *
          * @param templateId the unique identifier for the template card
