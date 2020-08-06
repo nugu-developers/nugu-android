@@ -399,7 +399,9 @@ class DefaultAudioPlayerAgent(
                     }
 
                     // fetch only offset
-                    executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
+                    duration?.let {
+                        executeFetchOffset(nextAudioInfo.payload.audioItem.stream.offsetInMilliseconds)
+                    }
 
                     waitPlayExecuteInfo = nextAudioInfo
                     // finish preExecute
@@ -428,7 +430,6 @@ class DefaultAudioPlayerAgent(
 
             return if(executeFetchSource(item)) {
                 item.isFetched = true
-                executeFetchOffset(item.payload.audioItem.stream.offsetInMilliseconds)
                 true
             } else {
                 false
@@ -460,15 +461,6 @@ class DefaultAudioPlayerAgent(
                 return false
             }
             return true
-        }
-
-        private fun executeFetchOffset(offsetInMilliseconds: Long) {
-            if (mediaPlayer.getOffset(sourceId) != offsetInMilliseconds) {
-                mediaPlayer.seekTo(
-                    sourceId,
-                    offsetInMilliseconds
-                )
-            }
         }
 
         override fun onExecute(directive: Directive) {
@@ -620,6 +612,13 @@ class DefaultAudioPlayerAgent(
                     if(sourceId == id) {
                         this@DefaultAudioPlayerAgent.duration = duration
 
+                        // should fetch offset
+                        if(duration != null) {
+                            currentItem?.let {
+                                executeFetchOffset(it.payload.audioItem.stream.offsetInMilliseconds)
+                            }
+                        }
+
                         createAudioInfoContext()?.let { context->
                             durationListeners.forEach { listener ->
                                 listener.onRetrieved(duration, context)
@@ -669,6 +668,16 @@ class DefaultAudioPlayerAgent(
             } else {
                 playSynchronizer.releaseSync(this, this.onReleaseCallback)
             }
+        }
+    }
+
+    private fun executeFetchOffset(offsetInMilliseconds: Long) {
+        Logger.d(TAG, "[executeFetchOffset] $offsetInMilliseconds")
+        if (mediaPlayer.getOffset(sourceId) != offsetInMilliseconds) {
+            mediaPlayer.seekTo(
+                sourceId,
+                offsetInMilliseconds
+            )
         }
     }
 
