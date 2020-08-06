@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent.ext.phonecall.payload
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.common.InteractionControl
 import com.skt.nugu.sdk.agent.ext.phonecall.CallType
 import com.skt.nugu.sdk.agent.ext.phonecall.Context
 import com.skt.nugu.sdk.agent.ext.phonecall.Person
@@ -34,7 +35,9 @@ data class SendCandidatesPayload(
     @SerializedName("callType")
     val callType: CallType?,
     @SerializedName("candidates")
-    val candidates: Array<Person>?
+    val candidates: Array<Person>?,
+    @SerializedName("interactionControl")
+    val interactionControl: InteractionControl?
 ) {
     fun toJson(): JsonElement = Gson().toJsonTree(this)
 
@@ -52,6 +55,7 @@ data class SendCandidatesPayload(
             if (other.candidates == null) return false
             if (!candidates.contentEquals(other.candidates)) return false
         } else if (other.candidates != null) return false
+        if (interactionControl != other.interactionControl) return false
 
         return true
     }
@@ -62,6 +66,9 @@ data class SendCandidatesPayload(
         result = 31 * result + (recipientIntended?.hashCode() ?: 0)
         result = 31 * result + (callType?.hashCode() ?: 0)
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
+        result = 31 * result + (interactionControl?.hashCode() ?: 0)
         return result
     }
+
+
 }

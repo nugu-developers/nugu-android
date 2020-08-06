@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -45,7 +46,8 @@ class PhoneCallAgent(
     private val channelName: String,
     private val focusObserver: ChannelObserver? = null,
     private val enableSendEvent: Boolean = true,
-    directiveSequencer: DirectiveSequencerInterface
+    directiveSequencer: DirectiveSequencerInterface,
+    interactionControlManager: InteractionControlManagerInterface
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , SendCandidatesDirectiveHandler.Controller
@@ -104,6 +106,7 @@ class PhoneCallAgent(
                     this@PhoneCallAgent,
                     messageSender,
                     contextGetter,
+                    interactionControlManager,
                     namespaceAndName
                 )
             )
