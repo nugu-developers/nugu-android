@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
@@ -44,4 +45,5 @@ interface SdkContainer {
     fun getDirectiveGroupProcessor(): DirectiveGroupProcessorInterface
     fun getDialogAttributeStorage(): DialogAttributeStorageInterface
     fun getSessionManager(): SessionManagerInterface
+    fun getInteractionControlManager(): InteractionControlManagerInterface
 }

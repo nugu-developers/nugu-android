@@ -40,6 +40,7 @@ import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
 import com.skt.nugu.sdk.core.focus.SeamlessFocusManager
+import com.skt.nugu.sdk.core.interaction.InteractionControlManager
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
@@ -51,6 +52,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
@@ -114,6 +116,7 @@ class NuguClient private constructor(
 
     private val audioPlayStackManager: PlayStackManager = PlayStackManager("Audio")
     private val displayPlayStackManager: PlayStackManager = PlayStackManager("Display")
+    private val interactionControlManager = InteractionControlManager()
 
     private val sdkContainer: SdkContainer
 
@@ -176,6 +179,7 @@ class NuguClient private constructor(
                 override fun getDialogAttributeStorage(): DialogAttributeStorageInterface = dialogAttributeStorage
 
                 override fun getSessionManager(): SessionManagerInterface = sessionManger
+                override fun getInteractionControlManager(): InteractionControlManagerInterface = interactionControlManager
             }
 
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
