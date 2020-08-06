@@ -25,7 +25,9 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.SeekBar
 import com.google.gson.Gson
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
@@ -146,7 +148,12 @@ class TemplateViews {
                                         item.button?.setButton(displayId, holder.view.button)
 
                                         holder.view.setOnClickListener {
-                                            handleElementSelected(displayId, item.token)
+                                            handleOnClickEvent(
+                                                eventType = item.eventType,
+                                                textInput = item.textInput,
+                                                templateId = displayId,
+                                                token = item.token
+                                            )
                                         }
                                     }
                                 }
@@ -187,7 +194,12 @@ class TemplateViews {
                                         item.icon?.setImage(Size.MEDIUM, holder.view.icon)
 
                                         holder.view.setOnClickListener {
-                                            handleElementSelected(displayId, item.token)
+                                            handleOnClickEvent(
+                                                eventType = item.eventType,
+                                                textInput = item.textInput,
+                                                templateId = displayId,
+                                                token = item.token
+                                            )
                                         }
                                     }
                                 }
@@ -224,7 +236,12 @@ class TemplateViews {
                                         item.icon?.setImage(Size.MEDIUM, holder.view.icon)
 
                                         holder.view.setOnClickListener {
-                                            handleElementSelected(displayId, item.token)
+                                            handleOnClickEvent(
+                                                eventType = item.eventType,
+                                                textInput = item.textInput,
+                                                templateId = displayId,
+                                                token = item.token
+                                            )
                                         }
                                     }
                                 }
@@ -262,7 +279,12 @@ class TemplateViews {
                                         item.footer?.setText(holder.view.footer)
 
                                         holder.view.setOnClickListener {
-                                            handleElementSelected(displayId, item.token)
+                                            handleOnClickEvent(
+                                                eventType = item.eventType,
+                                                textInput = item.textInput,
+                                                templateId = displayId,
+                                                token = item.token
+                                            )
                                         }
                                     }
                                 }
@@ -307,10 +329,18 @@ class TemplateViews {
                                             holder.view.button
                                         )
                                         holder.view.button?.setOnClickListener {
-                                            handleElementSelected(displayId, item.toggle?.token)
+                                            handleOnClickEvent(
+                                                templateId = displayId,
+                                                token = item.token
+                                            )
                                         }
                                         holder.view.setOnClickListener {
-                                            handleElementSelected(displayId, item.token)
+                                            handleOnClickEvent(
+                                                eventType = item.eventType,
+                                                textInput = item.textInput,
+                                                templateId = displayId,
+                                                token = item.token
+                                            )
                                         }
                                     }
                                 }
@@ -649,38 +679,51 @@ class TemplateViews {
             }
         }
 
-        fun handleElementSelected(templateId: String, token: String?, postback: String? = null) {
-            if (token == null) {
-                return
-            }
-            ClientManager.getClient().getDisplay()?.apply {
-                try {
-                    setElementSelected(
-                        templateId,
-                        token,
-                        postback,
-                        object :
-                            DisplayInterface.OnElementSelectedCallback {
-                            override fun onSuccess(dialogRequestId: String) {
-                                Log.d(
-                                    TAG,
-                                    "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId"
-                                )
-                            }
+        fun handleOnClickEvent(
+            eventType: EventType? = EventType.Display_ElementSelected,
+            templateId: String,
+            token: String?,
+            postback: String? = null,
+            textInput: String? = null
+        ) {
+            try {
+                when (eventType) {
+                    EventType.Text_TextInput -> {
+                        textInput?.let {
+                            ClientManager.getClient().requestTextInput(it)
+                        } ?: throw IllegalStateException("[setElementSelected] textInput is empty")
+                    }
+                    else /* "Display.ElementSelected" */ -> {
+                        if (token == null) {
+                            throw IllegalStateException("[setElementSelected] token is empty")
+                        }
+                        ClientManager.getClient().getDisplay()
+                            ?.setElementSelected(templateId, token, postback, object :
+                                DisplayInterface.OnElementSelectedCallback {
+                                override fun onSuccess(dialogRequestId: String) {
+                                    Log.d(
+                                        TAG,
+                                        "[setElementSelected::onSuccess] dialogRequestId: $dialogRequestId"
+                                    )
+                                }
 
-                            override fun onError(
-                                dialogRequestId: String,
-                                errorType: DisplayInterface.ErrorType
-                            ) {
-                                Log.d(
-                                    TAG,
-                                    "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType"
-                                )
-                            }
-                        })
-                } catch (e: IllegalStateException) {
-                    Log.w(TAG, "[setElementSelected]", e)
+                                override fun onError(
+                                    dialogRequestId: String,
+                                    errorType: DisplayInterface.ErrorType
+                                ) {
+                                    Log.d(
+                                        TAG,
+                                        "[setElementSelected::onError] dialogRequestId: $dialogRequestId / errorType: $errorType"
+                                    )
+                                }
+                            }) ?: throw IllegalStateException("[setElementSelected] not initialized")
+                    }
                 }
+            } catch (e: IllegalStateException) {
+                Log.e(
+                    TAG,
+                    "[setElementSelected] $e"
+                )
             }
         }
     }

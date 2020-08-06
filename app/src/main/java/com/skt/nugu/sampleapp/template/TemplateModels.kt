@@ -84,6 +84,13 @@ enum class Repeat {
     NONE
 }
 
+enum class EventType {
+    @SerializedName("Display.ElementSelected")
+    Display_ElementSelected,
+    @SerializedName("Text.TextInput")
+    Text_TextInput
+}
+
 class Title(
     @SerializedName("logo") val logo: Image,
     @SerializedName("iconUrl") val iconUrl: String?,
@@ -115,7 +122,9 @@ class Button(
     @SerializedName("status") val status: String?,
     @SerializedName("text") val text: String?,
     @SerializedName("token") val token: String,
-    @SerializedName("postback") val postback: String?
+    @SerializedName("postback") val postback: String?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class ToggleButton(
@@ -240,7 +249,9 @@ class TextList1Item(
     @SerializedName("token") val token: String,
     @SerializedName("header") val header: Text,
     @SerializedName("body") val body: Text,
-    @SerializedName("footer") val footer: Text?
+    @SerializedName("footer") val footer: Text?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class TextList2(
@@ -264,7 +275,9 @@ class TextList2Item(
     @SerializedName("header") val header: Text?,
     @SerializedName("body") val body: Text?,
     @SerializedName("toggle") val toggle: ToggleButton?,
-    @SerializedName("footer") val footer: Text?
+    @SerializedName("footer") val footer: Text?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class TextList3Item(
@@ -273,7 +286,9 @@ class TextList3Item(
     @SerializedName("header") val header: Text?,
     @SerializedName("body") val body: List<Text>?,
     @SerializedName("button") val button: Button?,
-    @SerializedName("footer") val footer: Text?
+    @SerializedName("footer") val footer: Text?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class ImageList3(
@@ -287,7 +302,9 @@ class ImageList3Item(
     @SerializedName("token") val token: String,
     @SerializedName("image") val image: Image?,
     @SerializedName("header") val header: Text?,
-    @SerializedName("icon") val icon: Image?
+    @SerializedName("icon") val icon: Image?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class ImageList2(
@@ -302,7 +319,9 @@ class ImageList2Item(
     @SerializedName("image") val image: Image?,
     @SerializedName("header") val header: Text?,
     @SerializedName("footer") val footer: Text?,
-    @SerializedName("icon") val icon: Image?
+    @SerializedName("icon") val icon: Image?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class ImageList1(
@@ -316,7 +335,9 @@ class ImageList1Item(
     @SerializedName("token") val token: String,
     @SerializedName("image") val image: Image?,
     @SerializedName("header") val header: Text?,
-    @SerializedName("footer") val footer: Text?
+    @SerializedName("footer") val footer: Text?,
+    @SerializedName("eventType") val eventType: EventType?,
+    @SerializedName("textInput") val textInput: String?
 )
 
 class Weather1(
