@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+Version 0.9.15 *(2020-08-07)*
+-----------------------------
+* Fix: Send missing StopRecognize event (#1037)
+    * When ASR canceled before speech start, send missing StopRecognizer event.
+* Improve: Improve focus management (#1032)
+    * Even if the request channel has higher priority than foreground channel, get background focus due to another higher priority channels exist.
+* Improve: Update DialogUX's state immediately (#1034)
+* Improve: Apply the policy for Sound Layer's priority (#1039)
+* Improve: Prevent calls when seek is not possible (#1041)
+    * If duration is null, do not seek.
+* Improve: Improve focus & playSync management on TTS stop/finish (#1043)
+    * Release playSync on TTS stop/finish immediately.
+    * Release focus afterTTS stop/finish event.
+* New: Apply Interaction Mode (#1046)
+
 Version 0.9.14 *(2020-07-31)*
 -----------------------------
 * Fix: Disconnect is not detected at intermittent timing (#1005)
