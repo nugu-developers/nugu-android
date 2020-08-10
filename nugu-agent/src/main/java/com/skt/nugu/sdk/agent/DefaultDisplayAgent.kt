@@ -25,6 +25,8 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
+import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -37,6 +39,7 @@ class DefaultDisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
     private val sessionManager: SessionManagerInterface,
+    private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
     contextStateProviderRegistry: ContextStateProviderRegistry,
     enableDisplayLifeCycleManagement: Boolean,
     private val defaultDuration: Long
@@ -93,6 +96,25 @@ class DefaultDisplayAgent(
                 // TemplateDirectiveInfo.requestReleaseSync also called.
                 // so we skip this.
             }
+        }
+
+        val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
+            override fun getPlayServiceId(): String? = payload.playServiceId
+
+            override fun clear() {
+                executor.submit {
+                    executeCancelUnknownInfo(getTemplateId(), true)
+                }
+            }
+
+            override fun getLayerType(): LayerType = when(payload.getContextLayerInternal()) {
+                DisplayAgentInterface.ContextLayer.ALERT -> LayerType.ALERT
+                DisplayAgentInterface.ContextLayer.CALL -> LayerType.CALL
+                DisplayAgentInterface.ContextLayer.MEDIA -> LayerType.MEDIA
+                else -> LayerType.INFO
+            }
+
+            override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
         }
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
@@ -333,6 +355,7 @@ class DefaultDisplayAgent(
                     })
                     synchronizer.startSync(it, null)
                 }
+                interLayerDisplayPolicyManager.onDisplayLayerRendered(it.layerForInterLayerDisplayPolicy)
 
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
@@ -368,6 +391,7 @@ class DefaultDisplayAgent(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
                 cleanupInfo(templateId, it)
+                interLayerDisplayPolicyManager.onDisplayLayerCleared(it.layerForInterLayerDisplayPolicy)
 
                 listeners.forEach { listener ->
                     listener.onCleared(templateId)
