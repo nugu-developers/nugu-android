@@ -39,6 +39,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
+import com.skt.nugu.sdk.core.display.InterLayerDisplayPolicyManagerImpl
 import com.skt.nugu.sdk.core.focus.SeamlessFocusManager
 import com.skt.nugu.sdk.core.interaction.InteractionControlManager
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
@@ -49,6 +50,7 @@ import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -147,6 +149,7 @@ class NuguClient private constructor(
 
             val dialogAttributeStorage = DialogAttributeStorage()
             val sessionManger = SessionManager()
+            val interLayerDisplayPolicyManager = InterLayerDisplayPolicyManagerImpl()
 
             sdkContainer = object : SdkContainer {
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
@@ -180,6 +183,7 @@ class NuguClient private constructor(
 
                 override fun getSessionManager(): SessionManagerInterface = sessionManger
                 override fun getInteractionControlManager(): InteractionControlManagerInterface = interactionControlManager
+                override fun getInterLayerDisplayPolicyManager(): InterLayerDisplayPolicyManager = interLayerDisplayPolicyManager
             }
 
             systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
