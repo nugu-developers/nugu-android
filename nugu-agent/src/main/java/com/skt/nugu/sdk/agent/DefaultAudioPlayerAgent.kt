@@ -965,14 +965,16 @@ class DefaultAudioPlayerAgent(
     }
     
     private fun createAudioInfoContext(): AudioPlayerAgentInterface.Context? {
-        currentItem?.let {
-            return AudioPlayerAgentInterface.Context(
-                it.payload.playServiceId+";"+it.payload.audioItem.stream.token,
-                it.payload.playServiceId+";"+it.payload.audioItem.stream.token,
-                it.payload.audioItem.metaData?.template?.toString(),
-                getOffsetInMilliseconds(),
-                it.getDialogRequestId()
-            )
+        currentItem?.let {current ->
+            current.sourceAudioInfo?.let { source ->
+                return AudioPlayerAgentInterface.Context(
+                    source.payload.playServiceId+";"+source.payload.audioItem.stream.token,
+                    source.payload.playServiceId+";"+source.payload.audioItem.stream.token,
+                    current.payload.audioItem.metaData?.template?.toString(),
+                    getOffsetInMilliseconds(),
+                    current.getDialogRequestId()
+                )
+            }
         }
 
         return null
