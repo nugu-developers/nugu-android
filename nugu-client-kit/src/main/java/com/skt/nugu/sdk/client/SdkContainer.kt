@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
@@ -46,4 +47,5 @@ interface SdkContainer {
     fun getDialogAttributeStorage(): DialogAttributeStorageInterface
     fun getSessionManager(): SessionManagerInterface
     fun getInteractionControlManager(): InteractionControlManagerInterface
+    fun getInterLayerDisplayPolicyManager(): InterLayerDisplayPolicyManager
 }
