@@ -443,7 +443,8 @@ class NuguAndroidClient private constructor(
                                     getContextManager(),
                                     getMessageSender(),
                                     this,
-                                    this
+                                    this,
+                                    getInterLayerDisplayPolicyManager()
                                 ).apply {
                                     getDirectiveSequencer().addDirectiveHandler(this)
                                 }

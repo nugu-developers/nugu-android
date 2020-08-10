@@ -20,11 +20,14 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
+import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -35,7 +38,8 @@ class AudioPlayerLyricsDirectiveHandler(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
     private val visibilityController: VisibilityController,
-    private val pageController: PagingController
+    private val pageController: PagingController,
+    private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager
 ): AbstractDirectiveHandler() {
     companion object {
         private const val TAG = "AudioPlayerLyricsDirectiveHandler"
@@ -83,14 +87,18 @@ class AudioPlayerLyricsDirectiveHandler(
 
     private data class VisibilityLyricsPayload(
         @SerializedName("playServiceId")
-        val playServiceId: String
+        val playServiceId: String,
+        @SerializedName("playStackControl")
+        val playStackControl: PlayStackControl?
     )
 
     private data class PageControlLyricsPayload(
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("direction")
-        val direction: Direction
+        val direction: Direction,
+        @SerializedName("playStackControl")
+        val playStackControl: PlayStackControl?
     )
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -124,6 +132,12 @@ class AudioPlayerLyricsDirectiveHandler(
                         sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId, referrerDialogRequestId)
                     }
                 }
+                interLayerDisplayPolicyManager.onPlayStarted(object : InterLayerDisplayPolicyManager.PlayLayer {
+                    override fun getPlayServiceId(): String? = playServiceId
+                    override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
+                    override fun getLayerType(): LayerType = LayerType.MEDIA
+                    override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+                })
             }
             CONTROL_LYRICS_PAGE -> {
                 val payload = MessageFactory.create(info.directive.payload, PageControlLyricsPayload::class.java)
@@ -140,6 +154,12 @@ class AudioPlayerLyricsDirectiveHandler(
                         sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_FAILED", playServiceId, direction, referrerDialogRequestId)
                     }
                 }
+                interLayerDisplayPolicyManager.onPlayStarted(object : InterLayerDisplayPolicyManager.PlayLayer {
+                    override fun getPlayServiceId(): String? = payload.playServiceId
+                    override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
+                    override fun getLayerType(): LayerType = LayerType.MEDIA
+                    override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+                })
             }
         }
 
