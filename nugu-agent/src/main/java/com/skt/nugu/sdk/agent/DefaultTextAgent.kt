@@ -117,7 +117,7 @@ class DefaultTextAgent(
         if(textSourceHandler?.handleTextSource(info.directive.payload, info.directive.header) == true) {
             Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
         } else {
-            val dialogRequestId = executeSendTextInputEventInternal(payload.text, payload.token, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
+            val dialogRequestId = executeSendTextInputEventInternal(payload.text, true, payload.token, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
                 override fun onRequestCreated(dialogRequestId: String) {
                     internalTextSourceHandleListeners.forEach {
                         it.onRequestCreated(dialogRequestId)
@@ -180,12 +180,16 @@ class DefaultTextAgent(
         }, StateRefreshPolicy.NEVER, stateRequestToken)
     }
 
-    override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?): String {
+    override fun requestTextInput(
+        text: String,
+        includeDialogAttribute: Boolean,
+        listener: TextAgentInterface.RequestListener?
+    ): String {
         Logger.d(TAG, "[requestTextInput] text: $text")
-        return executeSendTextInputEventInternal(text, null, null, listener)
+        return executeSendTextInputEventInternal(text, includeDialogAttribute, null, null, listener)
     }
 
-    private fun createMessage(text: String, context: String, token: String?, dialogRequestId: String, referrerDialogRequestId: String?) =
+    private fun createMessage(text: String, includeDialogAttribute: Boolean, context: String, token: String?, dialogRequestId: String, referrerDialogRequestId: String?) =
         EventMessageRequest.Builder(
             context,
             NAMESPACE,
@@ -200,9 +204,11 @@ class DefaultTextAgent(
                     addProperty("token", it)
                 }
 
-                dialogAttributeStorage.getAttributes()?.let { attrs ->
-                    attrs.forEach {attr ->
-                        add(attr.key, Gson().toJsonTree(attr.value))
+                if(includeDialogAttribute) {
+                    dialogAttributeStorage.getAttributes()?.let { attrs ->
+                        attrs.forEach { attr ->
+                            add(attr.key, Gson().toJsonTree(attr.value))
+                        }
                     }
                 }
             }.toString()
@@ -210,6 +216,7 @@ class DefaultTextAgent(
 
     private fun executeSendTextInputEventInternal(
         text: String,
+        includeDialogAttribute: Boolean,
         token: String?,
         referrerDialogRequestId: String?,
         listener: TextAgentInterface.RequestListener?
@@ -220,7 +227,7 @@ class DefaultTextAgent(
             override fun onContext(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
-                    createMessage(text, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
+                    createMessage(text, includeDialogAttribute, jsonContext, token, dialogRequestId, referrerDialogRequestId).let {
                         listener?.onRequestCreated(dialogRequestId)
 
                         val call = messageSender.newCall(it)

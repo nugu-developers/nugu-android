@@ -56,8 +56,9 @@ interface TextAgentInterface {
 
     /**
      * @param text the input text which to send request.
+     * @param includeDialogAttribute the flag to include or not dialog's attribute
      * @param listener the listener for request
      * @return the dialogRequestId for request
      */
-    fun requestTextInput(text: String, listener: RequestListener?): String
+    fun requestTextInput(text: String, includeDialogAttribute: Boolean = true, listener: RequestListener? = null): String
 }

@@ -172,8 +172,11 @@ interface ClientHelperInterface {
      * Send request for NUGU with text input.
      * The client receive the same response(directive) as when they requested ASR.
      * @param text : the source text for
+     * @param includeDialogAttribute the flag to include or not dialog's attribute
+     * @param listener the listener for request
+     * @return the dialogRequestId for request
      */
-    fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener? = null)
+    fun requestTextInput(text: String, includeDialogAttribute: Boolean = true, listener: TextAgentInterface.RequestListener? = null): String?
 
     // TTS
     /**

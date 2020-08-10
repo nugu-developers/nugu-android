@@ -899,9 +899,11 @@ class NuguAndroidClient private constructor(
         asrAgent?.removeOnResultListener(listener)
     }
 
-    override fun requestTextInput(text: String, listener: TextAgentInterface.RequestListener?) {
-        textAgent?.requestTextInput(text, listener)
-    }
+    override fun requestTextInput(
+        text: String,
+        includeDialogAttribute: Boolean,
+        listener: TextAgentInterface.RequestListener?
+    ): String? = textAgent?.requestTextInput(text, includeDialogAttribute, listener)
 
     override fun requestTTS(
         text: String,
