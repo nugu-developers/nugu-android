@@ -47,6 +47,7 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
                             .isNullOrBlank() && it.getPlayServiceId() != layer.getPlayServiceId()
                     }
                 }.forEach {
+                    Logger.d(TAG, "[onDisplayLayerRendered] clear: $it")
                     it.clear()
                 }
             }
@@ -92,6 +93,7 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
                     else -> false
                 }
             }.forEach {
+                Logger.d(TAG, "[onPlayStarted] clear: $it")
                 it.clear()
             }
             Logger.d(TAG, "[onPlayStarted] $layer")

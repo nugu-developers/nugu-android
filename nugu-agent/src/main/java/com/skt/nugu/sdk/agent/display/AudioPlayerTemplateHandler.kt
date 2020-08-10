@@ -26,12 +26,15 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
+import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import java.util.concurrent.*
 
 class AudioPlayerTemplateHandler(
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val sessionManager: SessionManagerInterface
+    private val sessionManager: SessionManagerInterface,
+    private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager
 ) : AbstractDirectiveHandler()
     , AudioPlayerDisplayInterface
     , AudioPlayerMetadataDirectiveHandler.Listener
@@ -96,6 +99,20 @@ class AudioPlayerTemplateHandler(
 
             override fun onDenied() {
             }
+        }
+
+        val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
+            override fun getPlayServiceId(): String? = payload.playServiceId
+
+            override fun clear() {
+                executor.submit {
+                    executeCancelUnknownInfo(this@TemplateDirectiveInfo, true)
+                }
+            }
+
+            override fun getLayerType(): LayerType = LayerType.MEDIA
+
+            override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
         }
 
         override fun getPlayServiceId(): String? = payload.playServiceId
@@ -273,16 +290,9 @@ class AudioPlayerTemplateHandler(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onRendered] $templateId")
-                playSynchronizer.startSync(
-                    it,
-                    object : PlaySynchronizerInterface.OnRequestSyncListener {
-                        override fun onGranted() {
+                playSynchronizer.startSync(it)
+                interLayerDisplayPolicyManager.onDisplayLayerRendered(it.layerForInterLayerDisplayPolicy)
 
-                        }
-
-                        override fun onDenied() {
-                        }
-                    })
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
                 }
@@ -308,6 +318,7 @@ class AudioPlayerTemplateHandler(
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] $templateId")
                 cleanupInfo(templateId, it)
+                interLayerDisplayPolicyManager.onDisplayLayerCleared(it.layerForInterLayerDisplayPolicy)
             }
         }
     }
