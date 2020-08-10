@@ -463,6 +463,7 @@ class DefaultASRAgent(
                     clearPreHandledExpectSpeech()
                     clearCurrentAttributeKeyIfMatchWith(it)
                 }
+                setState(ASRAgentInterface.State.IDLE)
             }
         } else {
             executeStopRecognitionOnAttributeUnset(messageId)
@@ -603,7 +604,14 @@ class DefaultASRAgent(
                 focusManager.release(userSpeechFocusRequester, FocusState.BACKGROUND)
                 focusManager.release(expectSpeechFocusRequester, FocusState.BACKGROUND)
             }
-            FocusState.NONE -> executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
+            FocusState.NONE -> {
+                if(state == ASRAgentInterface.State.EXPECTING_SPEECH) {
+                    expectSpeechDirectiveParam?.let {
+                        executeCancelExpectSpeechDirective(it.directive.header.messageId)
+                    }
+                }
+                executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
+            }
         }
     }
 
