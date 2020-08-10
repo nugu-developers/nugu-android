@@ -594,6 +594,7 @@ class NuguAndroidClient private constructor(
                                         getMessageSender()
                                     ),
                                     getSessionManager(),
+                                    getInterLayerDisplayPolicyManager(),
                                     getContextManager(),
                                     builder.enableDisplayLifeCycleManagement,
                                     builder.defaultDisplayDuration
