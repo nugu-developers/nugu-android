@@ -33,6 +33,8 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
+import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
@@ -56,6 +58,7 @@ class DefaultTTSAgent(
     private val focusManager: SeamlessFocusManagerInterface,
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
+    private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
     channelName: String
 ) : AbstractCapabilityAgent(NAMESPACE)
     , TTSAgentInterface
@@ -115,6 +118,15 @@ class DefaultTTSAgent(
         var isDelayedCancel = false
         var cancelByStop = false
         var state = TTSAgentInterface.State.IDLE
+
+        val layerForDisplayPolicy = object : InterLayerDisplayPolicyManager.PlayLayer {
+            override fun getPlayServiceId(): String? = payload.playServiceId
+            override fun getPushPlayServiceId(): String? =
+                payload.playStackControl?.getPushPlayServiceId()
+
+            override fun getLayerType(): LayerType = LayerType.INFO
+            override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+        }
 
         fun clear() {
             directive.getAttachmentReader()
@@ -449,6 +461,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executePlaySpeakInfo] $speakInfo")
         currentInfo = speakInfo
         val text = speakInfo.payload.text
+        interLayerDisplayPolicyManager.onPlayStarted(speakInfo.layerForDisplayPolicy)
         listeners.forEach {
             it.onReceiveTTSText(text, speakInfo.getDialogRequestId())
         }

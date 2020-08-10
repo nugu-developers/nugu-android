@@ -477,6 +477,7 @@ class NuguAndroidClient private constructor(
                         getAudioSeamlessFocusManager(),
                         getContextManager(),
                         getPlaySynchronizer(),
+                        getInterLayerDisplayPolicyManager(),
                         DefaultFocusChannel.DIALOG_CHANNEL_NAME
                     ).apply {
                         getAudioPlayStackManager().addPlayContextProvider(this)
