@@ -613,6 +613,7 @@ class DefaultTTSAgent(
     private fun executeTryReleaseFocus() {
         if(preparedSpeakInfo == null && currentInfo == null && currentFocus != FocusState.NONE) {
             focusManager.release(focusRequester, currentFocus)
+            currentFocus = FocusState.NONE
         }
     }
     
@@ -820,14 +821,14 @@ class DefaultTTSAgent(
         setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
         info.state = TTSAgentInterface.State.STOPPED
 
+        val cancelByStop = info.cancelByStop
+
         with(info) {
             if (cancelByStop) {
                 lastImplicitStoppedInfo = null
-                result.setFailed("playback stopped", true)
                 executeReleaseSyncImmediately(this)
             } else {
                 lastImplicitStoppedInfo = info
-                result.setFailed("playback stopped", false)
                 executeReleaseSync(this)
             }
         }
@@ -836,16 +837,37 @@ class DefaultTTSAgent(
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
                     executeTryReleaseFocus()
+                    with(info) {
+                        if (cancelByStop) {
+                            result.setFailed("playback stopped", true)
+                        } else {
+                            result.setFailed("playback stopped", false)
+                        }
+                    }
                 }
             }
 
             override fun onSuccess(request: MessageRequest) {
                 executor.submit {
                     executeTryReleaseFocus()
+                    with(info) {
+                        if (cancelByStop) {
+                            result.setFailed("playback stopped", true)
+                        } else {
+                            result.setFailed("playback stopped", false)
+                        }
+                    }
                 }
             }
         })) {
             executeTryReleaseFocus()
+            with(info) {
+                if (cancelByStop) {
+                    result.setFailed("playback stopped", true)
+                } else {
+                    result.setFailed("playback stopped", false)
+                }
+            }
         }
     }
 
@@ -861,22 +883,24 @@ class DefaultTTSAgent(
         setCurrentStateAndToken(TTSAgentInterface.State.FINISHED, info.payload.token)
         info.state = TTSAgentInterface.State.FINISHED
 
-        setHandlingCompleted()
         executeReleaseSync(info)
         if(!sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
                     executeTryReleaseFocus()
+                    setHandlingCompleted(info)
                 }
             }
 
             override fun onSuccess(request: MessageRequest) {
                 executor.submit {
                     executeTryReleaseFocus()
+                    setHandlingCompleted(info)
                 }
             }
         })) {
             executeTryReleaseFocus()
+            setHandlingCompleted(info)
         }
     }
 
