@@ -44,6 +44,7 @@ import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
@@ -416,6 +417,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
         runOnUiThread {
+            Log.d(TAG, "[onStateChanged-AudioPlayer] activity: $activity, context: $context")
             if (activity == AudioPlayerAgentInterface.State.PLAYING) {
                 MusicPlayerService.startService(this, context)
             }
