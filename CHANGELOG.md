@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 0.9.16 *(2020-08-11)*
+-----------------------------
+* Fix: Fix ASR.ExpectSpeech canceled by tts' focus. (#1050)
+* Fix: Send templateId for AudioPlayer correctly (#1057)
+* Improve: Apply the layer policy (#998)
+    * Close the info,alert,overlay display if the other play which has no display started.
+* Improve: Update SilverTray v4.2.3 (#1051)
+* New: Add includeDialogAttribute flag on requestTextInput (#1053)
+
 Version 0.9.15 *(2020-08-07)*
 -----------------------------
 * Fix: Send missing StopRecognize event (#1037)
