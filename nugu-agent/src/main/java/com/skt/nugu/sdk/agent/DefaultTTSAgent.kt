@@ -60,6 +60,7 @@ class DefaultTTSAgent(
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
     private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
+    private val cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy,
     channelName: String
 ) : AbstractCapabilityAgent(NAMESPACE)
     , TTSAgentInterface
@@ -850,37 +851,27 @@ class DefaultTTSAgent(
         if(!sendPlaybackEvent(EVENT_SPEECH_STOPPED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
-                    executeTryReleaseFocus()
-                    with(info) {
-                        if (cancelByStop) {
-                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_ALL)
-                        } else {
-                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_NONE)
-                        }
-                    }
+                    executePlaybackStoppedCompleted(info)
                 }
             }
 
             override fun onSuccess(request: MessageRequest) {
                 executor.submit {
-                    executeTryReleaseFocus()
-                    with(info) {
-                        if (cancelByStop) {
-                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_ALL)
-                        } else {
-                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_NONE)
-                        }
-                    }
+                    executePlaybackStoppedCompleted(info)
                 }
             }
         })) {
-            executeTryReleaseFocus()
-            with(info) {
-                if (cancelByStop) {
-                    result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_ALL)
-                } else {
-                    result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_NONE)
-                }
+            executePlaybackStoppedCompleted(info)
+        }
+    }
+
+    private fun executePlaybackStoppedCompleted(info: SpeakDirectiveInfo) {
+        executeTryReleaseFocus()
+        with(info) {
+            if (cancelByStop) {
+                result.setFailed("playback canceled", DirectiveHandlerResult.POLICY_CANCEL_ALL)
+            } else {
+                result.setFailed("playback stopped", cancelPolicyOnStopTTS)
             }
         }
     }
