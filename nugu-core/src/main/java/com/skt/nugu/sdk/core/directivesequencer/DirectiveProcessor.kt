@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -44,12 +45,15 @@ class DirectiveProcessor(
             onHandlingCompleted(directive)
         }
 
-        override fun setFailed(description: String, cancelAll: Boolean) {
+        override fun setFailed(
+            description: String,
+            cancelPolicy: com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult.CancelPolicy
+        ) {
             listeners.forEach {
                 it.onFailed(directive, description)
             }
 
-            onHandlingFailed(directive, description, cancelAll)
+            onHandlingFailed(directive, description, cancelPolicy)
         }
     }
 
@@ -120,20 +124,12 @@ class DirectiveProcessor(
         }
     }
 
-    private fun scrubDialogRequestIdLocked(dialogRequestId: String) {
-        if (dialogRequestId.isEmpty()) {
-            Logger.d(TAG, "[scrubDialogRequestIdLocked] emptyDialogRequestId")
-            return
-        }
+    private fun scrubWithConditionLocked(shouldClear: (Directive) -> Boolean) {
+        Logger.d(TAG, "[scrubWithConditionLocked]")
 
-        Logger.d(TAG, "[scrubDialogRequestIdLocked] dialogRequestId : $dialogRequestId")
+        var changed = cancelDirectiveBeingPreHandledLocked(shouldClear)
 
-        var changed = cancelDirectiveBeingPreHandledLocked(dialogRequestId)
-
-
-        val freed = clearDirectiveBeingHandledLocked {
-            it.getDialogRequestId() == dialogRequestId
-        }
+        val freed = clearDirectiveBeingHandledLocked(shouldClear)
 
         if (freed.isNotEmpty()) {
             cancelingQueue.addAll(freed)
@@ -143,8 +139,7 @@ class DirectiveProcessor(
         // Filter matching directives from m_handlingQueue and put them in m_cancelingQueue.
         val temp = ArrayDeque<DirectiveAndPolicy>()
         for (directiveAndPolicy in handlingQueue) {
-            val id = directiveAndPolicy.directive.getDialogRequestId()
-            if (id.isNotEmpty() && id == dialogRequestId) {
+            if(shouldClear(directiveAndPolicy.directive)) {
                 cancelingQueue.offer(directiveAndPolicy.directive)
                 changed = true
             } else {
@@ -154,10 +149,40 @@ class DirectiveProcessor(
         handlingQueue = temp
     }
 
-    private fun cancelDirectiveBeingPreHandledLocked(dialogRequestId: String): Boolean {
+    private fun scrubDialogRequestIdLocked(dialogRequestId: String) {
+        if (dialogRequestId.isEmpty()) {
+            Logger.d(TAG, "[scrubDialogRequestIdLocked] emptyDialogRequestId")
+            return
+        }
+
+        Logger.d(TAG, "[scrubDialogRequestIdLocked] dialogRequestId : $dialogRequestId")
+
+        scrubWithConditionLocked{ directive: Directive ->
+            directive.getDialogRequestId() == dialogRequestId
+        }
+    }
+
+    private fun scrubDialogRequestIdWithTargetsLocked(dialogRequestId: String, scrubTargets: Set<NamespaceAndName>) {
+        if (dialogRequestId.isEmpty()) {
+            Logger.d(TAG, "[scrubDialogRequestIdWithTargetsLocked] emptyDialogRequestId")
+            return
+        }
+
+        if(scrubTargets.isEmpty()) {
+            Logger.d(TAG, "[scrubDialogRequestIdWithTargetsLocked] empty targets")
+            return
+        }
+
+        Logger.d(TAG, "[scrubDialogRequestIdWithTargetsLocked] dialogRequestId : $dialogRequestId")
+
+        scrubWithConditionLocked{ directive: Directive ->
+            directive.getDialogRequestId() == dialogRequestId && scrubTargets.contains(directive.getNamespaceAndName())
+        }
+    }
+
+    private fun cancelDirectiveBeingPreHandledLocked(shouldClear: (Directive) -> Boolean): Boolean {
         directiveBeingPreHandled?.let {
-            val id = it.getDialogRequestId()
-            if (id == dialogRequestId) {
+            if(shouldClear(it)){
                 cancelingQueue.offer(directiveBeingPreHandled)
                 directiveBeingPreHandled = null
                 return true
@@ -226,12 +251,17 @@ class DirectiveProcessor(
         }
     }
 
-    private fun onHandlingFailed(directive: Directive, description: String, cancelAll: Boolean) {
-        Logger.d(TAG, "[onHandlingFailed] messageId: ${directive.getMessageId()} ,description : $description, cancelAll: $cancelAll")
+    private fun onHandlingFailed(directive: Directive, description: String, cancelPolicy: com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult.CancelPolicy) {
+        Logger.d(TAG, "[onHandlingFailed] messageId: ${directive.getMessageId()} ,description : $description, cancelPolicy: $cancelPolicy")
         lock.withLock {
             removeDirectiveLocked(directive)
-            if(cancelAll) {
+
+            if(cancelPolicy.cancelAll) {
                 scrubDialogRequestIdLocked(directive.getDialogRequestId())
+            } else {
+                cancelPolicy.partialTargets?.let {
+                    scrubDialogRequestIdWithTargetsLocked(directive.getDialogRequestId(), it)
+                }
             }
         }
     }

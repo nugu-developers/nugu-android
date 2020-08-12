@@ -33,6 +33,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
@@ -852,9 +853,9 @@ class DefaultTTSAgent(
                     executeTryReleaseFocus()
                     with(info) {
                         if (cancelByStop) {
-                            result.setFailed("playback stopped", true)
+                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_ALL)
                         } else {
-                            result.setFailed("playback stopped", false)
+                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_NONE)
                         }
                     }
                 }
@@ -865,9 +866,9 @@ class DefaultTTSAgent(
                     executeTryReleaseFocus()
                     with(info) {
                         if (cancelByStop) {
-                            result.setFailed("playback stopped", true)
+                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_ALL)
                         } else {
-                            result.setFailed("playback stopped", false)
+                            result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_NONE)
                         }
                     }
                 }
@@ -876,9 +877,9 @@ class DefaultTTSAgent(
             executeTryReleaseFocus()
             with(info) {
                 if (cancelByStop) {
-                    result.setFailed("playback stopped", true)
+                    result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_ALL)
                 } else {
-                    result.setFailed("playback stopped", false)
+                    result.setFailed("playback stopped", DirectiveHandlerResult.POLICY_CANCEL_NONE)
                 }
             }
         }

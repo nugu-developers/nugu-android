@@ -59,9 +59,12 @@ abstract class AbstractDirectiveHandler: DirectiveHandler {
                     result.setCompleted()
                 }
 
-                override fun setFailed(description: String, cancelAll: Boolean) {
+                override fun setFailed(
+                    description: String,
+                    cancelPolicy: DirectiveHandlerResult.CancelPolicy
+                ) {
                     directiveInfoMap.remove(messageId)
-                    result.setFailed(description, cancelAll)
+                    result.setFailed(description, cancelPolicy)
                 }
             })
         directiveInfoMap[directive.getMessageId()] = info
