@@ -495,8 +495,15 @@ class DefaultASRAgent(
     }
 
     override fun onFocusChanged(newFocus: FocusState) {
-        executor.submit {
-            executeOnFocusChanged(newFocus)
+        try {
+            Logger.d(TAG, "[onFocusChanged] start $newFocus")
+            executor.submit {
+                executeOnFocusChanged(newFocus)
+            }.get(100, TimeUnit.MILLISECONDS)
+        } catch (e: Exception) {
+            Logger.d(TAG, "[onFocusChanged] end $newFocus / occur exception: $e")
+        } finally {
+            Logger.d(TAG, "[onFocusChanged] end $newFocus")
         }
     }
 
@@ -601,6 +608,11 @@ class DefaultASRAgent(
                 }
             }
             FocusState.BACKGROUND -> {
+                if(expectSpeechDirectiveParam == null) {
+                    currentAttributeKey?.let { key ->
+                        attributeStorageManager.clearAttributes(key)
+                    }
+                }
                 focusManager.release(userSpeechFocusRequester, FocusState.BACKGROUND)
                 focusManager.release(expectSpeechFocusRequester, FocusState.BACKGROUND)
             }
