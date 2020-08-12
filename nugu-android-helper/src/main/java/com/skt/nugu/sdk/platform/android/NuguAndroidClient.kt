@@ -79,6 +79,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.interfaces.context.OsContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
@@ -202,6 +203,8 @@ class NuguAndroidClient private constructor(
         internal var messageClient: MessageClient? = null
 
         internal var enableChips: Boolean = true
+
+        internal var cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_NONE
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -330,6 +333,11 @@ class NuguAndroidClient private constructor(
          * @param enable the flag to enable or disable chips.
          */
         fun enableChips(enable: Boolean) = apply { this.enableChips = enable }
+
+        /**
+         * @param policy the cancel policy on stop tts
+         */
+        fun cancelPolicyOnStopTTS(policy: DirectiveHandlerResult.CancelPolicy) = apply { this.cancelPolicyOnStopTTS = policy }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
@@ -479,6 +487,7 @@ class NuguAndroidClient private constructor(
                         getContextManager(),
                         getPlaySynchronizer(),
                         getInterLayerDisplayPolicyManager(),
+                        builder.cancelPolicyOnStopTTS,
                         DefaultFocusChannel.DIALOG_CHANNEL_NAME
                     ).apply {
                         getAudioPlayStackManager().addPlayContextProvider(this)
