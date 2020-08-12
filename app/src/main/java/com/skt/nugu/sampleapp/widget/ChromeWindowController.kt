@@ -29,6 +29,7 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
@@ -39,7 +40,8 @@ class ChromeWindowController(
     private val callback: OnChromeWindowCallback
 ) : SpeechRecognizerAggregatorInterface.OnStateChangeListener
     , DialogUXStateAggregatorInterface.Listener
-    , ASRAgentInterface.OnResultListener {
+    , ASRAgentInterface.OnResultListener
+    , TTSAgentInterface.Listener {
     companion object {
         private const val TAG = "ChromeWindowController"
 
@@ -88,6 +90,10 @@ class ChromeWindowController(
         finishImmediately()
     }
 
+    private var isThinking = false
+    private var isSpeaking = false
+    private var isDialogMode = false
+
     init {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback(){
@@ -99,6 +105,9 @@ class ChromeWindowController(
                 Logger.d(TAG, "[onStateChanged] $newState")
                 when(newState) {
                     BottomSheetBehavior.STATE_COLLAPSED -> {
+                        if(isThinking  || (isDialogMode && isSpeaking)) {
+                            return
+                        }
                         finishImmediately()
                     }
                     BottomSheetBehavior.STATE_HIDDEN -> callback.onHiddenFinished()
@@ -138,12 +147,27 @@ class ChromeWindowController(
         }
     }
 
+    override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
+        isSpeaking = state == TTSAgentInterface.State.PLAYING
+    }
+
+    override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
+        // no op
+    }
+
+    override fun onError(dialogRequestId: String) {
+        // no op
+    }
+
     override fun onDialogUXStateChanged(
         newState: DialogUXStateAggregatorInterface.DialogUXState,
         dialogMode: Boolean,
         chips: RenderDirective.Payload?,
         sessionActivated: Boolean
     ) {
+        isDialogMode = dialogMode
+        isThinking = newState == DialogUXStateAggregatorInterface.DialogUXState.THINKING
+
         bottomSheet.post {
             Log.d(TAG, "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode, chips: $chips, sessionActivated: $sessionActivated")
 
