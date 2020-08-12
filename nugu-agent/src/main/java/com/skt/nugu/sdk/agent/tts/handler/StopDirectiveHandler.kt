@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.agent.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import java.util.*
 
 class StopDirectiveHandler(
@@ -53,7 +54,7 @@ class StopDirectiveHandler(
     override fun handleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, Payload::class.java)
         if(payload == null) {
-            info.result.setFailed("Invalid Payload", true)
+            info.result.setFailed("Invalid Payload", DirectiveHandlerResult.POLICY_CANCEL_ALL)
             return
         }
 

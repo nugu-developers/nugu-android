@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent.ext.message.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.common.tts.TTSScenarioPlayer
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.ReadMessageDirective
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -27,6 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -82,7 +82,11 @@ class ReadMessageDirectiveHandler(
 
             override fun onStop(cancelAssociation: Boolean) {
                 Logger.d(TAG, "[onStop] cancelAssociation: $cancelAssociation")
-                info.result.setFailed("playback stopped", cancelAssociation)
+                info.result.setFailed("playback stopped", if(cancelAssociation){
+                    DirectiveHandlerResult.POLICY_CANCEL_ALL
+                } else{
+                    DirectiveHandlerResult.POLICY_CANCEL_NONE
+                })
             }
 
             override fun onFinish() {
