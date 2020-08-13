@@ -79,7 +79,7 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                         // no attachment received
                         Logger.d(TAG, "[createReader] attachment timeout: $attachmentId")
                         lock.withLock {
-                            attachment.createWriter().close()
+                            attachment.createWriter().close(true)
                             newStatus.writerCreated = true
                             newStatus.writerClosed = true
                             removeAttachment(attachmentId)
@@ -173,7 +173,7 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                     attachmentTimeoutFutureMap[attachmentId] = scheduleExecutor.schedule({
                         Logger.d(TAG, "[onAttachment] attachment timeout: $attachmentId")
                         lock.withLock {
-                            writer.close()
+                            writer.close(true)
                             status.writerClosed = true
                             removeAttachment(attachmentId)
                         }

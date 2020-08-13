@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.attachment
 
+import java.io.IOException
 import java.nio.ByteBuffer
 
 /**
@@ -44,8 +45,9 @@ interface Attachment {
 
         /**
          * Close the writer
+         * @param error true: if close by occur error, false: otherwise
          */
-        fun close()
+        fun close(error: Boolean = false)
 
         /**
          * Check whether closed or not
@@ -65,6 +67,7 @@ interface Attachment {
          *
          * @return the total number of bytes which read, or -1 if cannot read anymore because of various reason.
          */
+        @Throws(IOException::class)
         fun read(bytes: ByteArray, offsetInBytes: Int, sizeInBytes: Int): Int
 
         /** Read bytes from attachment
@@ -74,12 +77,14 @@ interface Attachment {
          *
          * @return the total number of bytes which read, or -1 if cannot read anymore because of various reason.
          */
+        @Throws(IOException::class)
         fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int
 
         /** Read chunk buffer from attachment.
          * The next call will return next chunk. This is independent of other read api.
          * @return the next chunk, or null if reader closed or no more next chunk.
          */
+        @Throws(IOException::class)
         fun readChunk(): ByteBuffer?
 
         /**
