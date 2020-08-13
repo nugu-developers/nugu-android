@@ -580,24 +580,24 @@ class DefaultASRAgent(
 
         focusState = newFocus
 
+        val inputStream = this.audioInputStream
+        val audioFormat = this.audioFormat
+        val wakeupInfo = this.wakeupInfo
+        val expectSpeechDirectiveParam = this.expectSpeechDirectiveParam
+        val epdParam = this.endPointDetectorParam
+        val callback = this.startRecognitionCallback
+        val context = contextForRecognitionOnForegroundFocus
+
+        this.audioInputStream = null
+        this.audioFormat = null
+        this.wakeupInfo =  null
+        this.expectSpeechDirectiveParam = null
+        this.endPointDetectorParam = null
+        this.startRecognitionCallback = null
+        this.contextForRecognitionOnForegroundFocus = null
+
         when (newFocus) {
             FocusState.FOREGROUND -> {
-                val inputStream = this.audioInputStream
-                val audioFormat = this.audioFormat
-                val wakeupInfo = this.wakeupInfo
-                val expectSpeechDirectiveParam = this.expectSpeechDirectiveParam
-                val epdParam = this.endPointDetectorParam
-                val callback = this.startRecognitionCallback
-                val context = contextForRecognitionOnForegroundFocus
-
-                this.audioInputStream = null
-                this.audioFormat = null
-                this.wakeupInfo =  null
-                this.expectSpeechDirectiveParam = null
-                this.endPointDetectorParam = null
-                this.startRecognitionCallback = null
-                this.contextForRecognitionOnForegroundFocus = null
-
                 if (inputStream == null || audioFormat == null) {
                     Logger.e(TAG, "[executeInternalStartRecognition] invalid audio input")
                     callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
@@ -618,11 +618,12 @@ class DefaultASRAgent(
                 focusManager.release(expectSpeechFocusRequester, FocusState.BACKGROUND)
             }
             FocusState.NONE -> {
-                if(state == ASRAgentInterface.State.EXPECTING_SPEECH) {
-                    expectSpeechDirectiveParam?.let {
-                        executeCancelExpectSpeechDirective(it.directive.header.messageId)
-                    }
+                expectSpeechDirectiveParam?.let {
+                    executeCancelExpectSpeechDirective(it.directive.header.messageId)
                 }
+
+                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+
                 executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
             }
         }
