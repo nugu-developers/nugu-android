@@ -75,7 +75,9 @@ data class Contact(
         @SerializedName("T114")
         T114,
         @SerializedName("NONE")
-        NONE
+        NONE,
+        @SerializedName("EMERGENCY")
+        EMERGENCY
     }
 
     fun toJson(): JsonElement = Gson().toJsonTree(this)

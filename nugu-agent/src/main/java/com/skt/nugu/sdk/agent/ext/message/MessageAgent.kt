@@ -57,7 +57,7 @@ class MessageAgent(
         private const val TAG = "MessageAgent"
         const val NAMESPACE = "Message"
 
-        val VERSION = Version(1, 1)
+        val VERSION = Version(1, 2)
     }
 
     override fun getInterfaceName(): String = NAMESPACE
