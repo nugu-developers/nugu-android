@@ -21,6 +21,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.support.customtabs.CustomTabsIntent
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 
 /**
@@ -28,6 +29,7 @@ import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
  */
 class NuguOAuthCallbackActivity : Activity() {
     /** Get NuguOAuth instance **/
+    private val TAG = "NuguOAuthCallbackActivity"
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String? = NuguOAuth.ACTION_LOGIN
     private var handler: Handler = Handler()
@@ -76,6 +78,10 @@ class NuguOAuthCallbackActivity : Activity() {
                         startActivity(signInIntent)
                     }
                 })
+            }
+            else -> {
+                Logger.d(TAG, "[onCreate] unexpected action=$action")
+                finish()
             }
         }
     }
