@@ -86,7 +86,7 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
             }
 
             displayLayers.filter {
-                when (it.getLayerType()) {
+                it.getPlayServiceId() != layer.getPlayServiceId() && when (it.getLayerType()) {
                     LayerType.INFO,
                     LayerType.ALERT,
                     LayerType.OVERLAY_DISPLAY -> true
