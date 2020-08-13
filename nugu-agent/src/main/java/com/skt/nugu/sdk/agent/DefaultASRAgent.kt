@@ -514,7 +514,8 @@ class DefaultASRAgent(
         expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
-        jsonContext: String) {
+        jsonContext: String,
+        byUser: Boolean) {
         Logger.d(
             TAG,
             "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState, expectSpeechDirectiveParam: $expectSpeechDirectiveParam"
@@ -535,7 +536,7 @@ class DefaultASRAgent(
         }
 
         if (focusState != FocusState.FOREGROUND) {
-            val requester = if (expectSpeechDirectiveParam == null) {
+            val requester = if (expectSpeechDirectiveParam == null || byUser) {
                 userSpeechFocusRequester
             } else {
                 expectSpeechFocusRequester
@@ -901,7 +902,8 @@ class DefaultASRAgent(
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
         param: EndPointDetectorParam?,
-        callback: ASRAgentInterface.StartRecognitionCallback?
+        callback: ASRAgentInterface.StartRecognitionCallback?,
+        byUser: Boolean = true
     ) {
         Logger.d(TAG, "[executeStartRecognition] state: $state")
         if (!canRecognizing()) {
@@ -924,7 +926,9 @@ class DefaultASRAgent(
                         expectSpeechDirectiveParam,
                         param,
                         callback,
-                        jsonContext)
+                        jsonContext,
+                        byUser
+                    )
                 }
             }
         })
