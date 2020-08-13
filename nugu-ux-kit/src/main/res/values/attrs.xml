@@ -9,6 +9,8 @@
             <enum name="blue" value="0" />
             <enum name="white" value="1" />
         </attr>
+        <attr name="autoPlay" format="boolean"/>
+        <attr name="loopPlay" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="NuguFloatingActionButton">

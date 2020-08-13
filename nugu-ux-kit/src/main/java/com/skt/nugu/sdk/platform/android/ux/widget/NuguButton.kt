@@ -15,17 +15,23 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.widget
 
+import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.StateListDrawable
 import android.os.Build
 import android.os.Handler
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.util.DisplayMetrics
-import android.view.View
+import android.view.Gravity
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
 import com.skt.nugu.sdk.platform.android.ux.R
 
 /**
@@ -49,6 +55,17 @@ class NuguButton @JvmOverloads constructor(
 
     private val drawableRes: MutableMap<String, Int> = HashMap()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+
+    private var autoPlay = false
+    private var loopPlay = true
+
+    private fun isAnimating(): Boolean = running
+    private var animationSet: AnimatorSet? = null
+
+    private var wasAnimatingWhenDetached = false
+    private var wasAnimatingWhenNotShown = false
+    private var running = false
+    private var isInitialized: Boolean = false
 
     private var numberOfDots = 3
     private val animationHandler = Handler()
@@ -81,13 +98,16 @@ class NuguButton @JvmOverloads constructor(
             }
         }
     }
+
     fun isFab() = nuguButtonType == TYPE_FAB
 
     init {
         init(attrs)
         initView()
         loadDrawableRes()
-        setupDrawable()
+        setupImageDrawable()
+        setupBackground()
+        isInitialized = true
     }
 
     companion object {
@@ -103,10 +123,41 @@ class NuguButton @JvmOverloads constructor(
         ).apply {
             nuguButtonType = getInt(R.styleable.NuguButton_types, TYPE_FAB)
             nuguButtonColor = getInt(R.styleable.NuguButton_colors, COLOR_BLUE)
+
+            autoPlay = getBoolean(R.styleable.NuguButton_autoPlay, false)
+            loopPlay = getBoolean(R.styleable.NuguButton_loopPlay, true)
         }.recycle()
     }
+    private lateinit var imageView: ImageView
 
     private fun initView() {
+        removeAllViews()
+        removeAllViewsInLayout()
+
+        val baseLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        val size = when (nuguButtonType) {
+            TYPE_FAB -> 8f
+            else -> 13f
+        }
+        baseLayout.setBackgroundColor(android.R.color.black)
+        imageView = ImageView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dpToPx(size, context)
+            }
+        }
+        baseLayout.addView(imageView)
+        addView(baseLayout)
+
         isClickable = true
         isFocusable = true
     }
@@ -122,16 +173,26 @@ class NuguButton @JvmOverloads constructor(
         drawableRes["fab_white"] = R.drawable.fab_white
         drawableRes["fab_white_pressed"] = R.drawable.fab_white_pressed
         drawableRes["fab_disabled"] = R.drawable.fab_disabled
-        drawableRes["btn_blue_activated"] = R.drawable.btn_blue_activated
-        drawableRes["btn_white_activated"] = R.drawable.btn_white_activated
+        drawableRes["btn_blue_activated"] = R.drawable.btn_toggle_blue
+        drawableRes["btn_white_activated"] = R.drawable.btn_toggle_white
         drawableRes["fab_blue_activated"] = R.drawable.btn_blue_activated
         drawableRes["fab_white_activated"] = R.drawable.btn_white_activated
+        drawableRes["btn_white_micicon"] = R.drawable.btn_white_micicon
+        drawableRes["btn_blue_micicon"] = R.drawable.btn_blue_micicon
+        drawableRes["fab_blue_micicon"] = R.drawable.fab_blue_micicon
+        drawableRes["fab_white_micicon"] = R.drawable.fab_white_micicon
+        drawableRes["fab_blue_nugulogo"] = R.drawable.fab_blue_nugulogo
+        drawableRes["fab_white_nugulogo"] = R.drawable.fab_white_nugulogo
+        drawableRes["btn_blue_nugulogo"] = R.drawable.btn_blue_nugulogo
+        drawableRes["btn_white_nugulogo"] = R.drawable.btn_white_nugulogo
+        drawableRes["fab_disabled_micicon"] = R.drawable.fab_disabled_micicon
+        drawableRes["btn_disabled_micicon"] = R.drawable.btn_disabled_micicon
     }
 
     /**
      * Set background color
      */
-    private fun setupDrawable() {
+    private fun setupBackground() {
         val type = when (nuguButtonType) {
             TYPE_FAB -> {
                 "fab"
@@ -191,11 +252,60 @@ class NuguButton @JvmOverloads constructor(
         background = states
     }
 
+    private fun setupImageDrawable() {
+        //fab_white_
+        val type = when (nuguButtonType) {
+            TYPE_FAB -> {
+                "fab"
+            }
+            TYPE_BUTTON -> {
+                "btn"
+            }
+            else -> throw IllegalStateException(nuguButtonType.toString())
+        }
+        val color = when (nuguButtonColor) {
+            COLOR_BLUE -> {
+                "blue"
+            }
+            COLOR_WHITE -> {
+                "white"
+            }
+            else -> throw IllegalArgumentException(nuguButtonColor.toString())
+        }
+
+        imageView.setImageResource(0)
+        if (isEnabled) {
+            if (!isActivated) {
+                imageView.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context,
+                        drawableRes["${type}_${color}_micicon"]
+                            ?: throw IllegalArgumentException("${type}_${color}_micicon")
+                    )
+                )
+            }
+        } else {
+            //fab_disabled_micicon
+            imageView.setImageDrawable(
+                ContextCompat.getDrawable(
+                    context,
+                    drawableRes["${type}_disabled_micicon"]
+                        ?: throw IllegalArgumentException("${type}_disabled_micicon")
+                )
+            )
+        }
+    }
+
     /**
      * This is called when the view is attached to a window.
      **/
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+
+        if (isEnabled && (autoPlay || wasAnimatingWhenDetached)) {
+            playAnimation()
+        }
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             // This is needed to mimic newer platform behavior.
             // https://stackoverflow.com/a/53625860/715633
@@ -210,6 +320,9 @@ class NuguButton @JvmOverloads constructor(
 
     override fun setActivated(activated: Boolean) {
         super.setActivated(activated)
+
+        setupImageDrawable()
+
         if (activated && isEnabled) {
             animationHandler.post(dotAnimationRunnable)
         } else {
@@ -236,6 +349,200 @@ class NuguButton @JvmOverloads constructor(
                     (x + dotSize / 2).toFloat(),
                     startingY.toFloat(), (dotSize / 2).toFloat(), paint
                 )
+            }
+        }
+    }
+
+    private val ICON_MIC = 0
+    private val ICON_LOGO = 1
+    private val ICON_FLAGS = intArrayOf(ICON_MIC, ICON_LOGO)
+
+    fun getImageDrawableResId(icon: Int): Drawable {
+        val type = when (nuguButtonType) {
+            TYPE_FAB -> {
+                "fab"
+            }
+            TYPE_BUTTON -> {
+                "btn"
+            }
+            else -> throw IllegalStateException(nuguButtonType.toString())
+        }
+        val color = when (nuguButtonColor) {
+            COLOR_BLUE -> {
+                "blue"
+            }
+            COLOR_WHITE -> {
+                "white"
+            }
+            else -> throw IllegalArgumentException(nuguButtonColor.toString())
+        }
+        val icon = when (icon) {
+            ICON_MIC -> {
+                "micicon"
+            }
+            ICON_LOGO -> {
+                "nugulogo"
+            }
+            else -> throw IllegalArgumentException(icon.toString())
+        }
+
+        return ContextCompat.getDrawable(
+            context,
+            drawableRes[type + "_" + color + "_" + icon]
+                ?: throw IllegalArgumentException(type + "_" + color + "_" + icon)
+        )!!
+    }
+
+    /**
+     * Set animation
+     */
+    private fun setupAnimations() {
+        imageView.setImageResource(0)
+        imageView.setImageDrawable(getImageDrawableResId(ICON_MIC))
+
+        val animator1 = ObjectAnimator.ofFloat(imageView, "rotationY", 0F, 90F)
+        val animator2 = ObjectAnimator.ofFloat(imageView, "rotationY", -90F, 0F)
+        val animator3 = ObjectAnimator.ofFloat(imageView, "rotationY", 0F, 90F)
+        val animator4 = ObjectAnimator.ofFloat(imageView, "rotationY", -90F, 0F)
+
+        animator1?.let {
+            it.duration = 500
+            it.startDelay = 0
+        }
+        animator2?.let {
+            it.duration = 500
+            it.startDelay = 0
+            it.addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+                override fun onAnimationCancel(animation: Animator?) {}
+                override fun onAnimationStart(animation: Animator?) {
+                    imageView.setImageResource(0)
+                    imageView.setImageDrawable(getImageDrawableResId(ICON_LOGO))
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {}
+            })
+        }
+        animator3?.let {
+            it.duration = 500
+            it.startDelay = 3000
+        }
+        animator4?.let {
+            it.duration = 500
+            it.startDelay = 0
+            it.addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+                override fun onAnimationCancel(animation: Animator?) {}
+                override fun onAnimationStart(animation: Animator?) {
+                    imageView.setImageResource(0)
+                    imageView.setImageDrawable(getImageDrawableResId(ICON_MIC))
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                }
+            })
+        }
+        animationSet = AnimatorSet().apply {
+            play(animator1).before(animator2)
+            play(animator2).before(animator3)
+            play(animator3).before(animator4)
+            play(animator4).after(animator3)
+
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    if (loopPlay) {
+                        animationSet?.startDelay = 3000
+                        animationSet?.start()
+                    }
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {
+                }
+
+                override fun onAnimationStart(animation: Animator?) {
+                }
+            })
+        }
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+        val size = when (nuguButtonType) {
+            TYPE_FAB -> 72f
+            else -> 56f
+        }
+        super.onMeasure(MeasureSpec.makeMeasureSpec(dpToPx(size,context), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dpToPx(size,context), MeasureSpec.EXACTLY))
+    }
+
+    /**
+     * Start the animation playing
+     */
+    fun playAnimation() {
+        if (running) {
+            return
+        }
+
+        if (isShown) {
+            if (animationSet == null) {
+                setupAnimations()
+            }
+            animationSet?.start()
+
+            running = true
+        } else {
+            wasAnimatingWhenNotShown = true
+        }
+    }
+
+    /**
+     * Resume the animation playing
+     */
+    fun resumeAnimation() {
+        playAnimation()
+    }
+
+    /**
+     * Pause the animation
+     */
+    fun pauseAnimation() {
+        animationSet?.pause()
+        running = false
+    }
+
+    /**
+     * Stop(Cancels) the animation
+     */
+    fun stopAnimation() {
+        running = false
+        wasAnimatingWhenDetached = false
+        wasAnimatingWhenNotShown = false
+        animationSet?.removeAllListeners()
+        animationSet?.end()
+        animationSet?.cancel()
+        animationSet = null
+    }
+
+    /**
+     * Set the enabled state of this view.
+     * @param enabled True if this view is enabled, false otherwise.
+     */
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        if (!enabled) {
+            if (autoPlay) {
+                stopAnimation()
+            }
+        }
+        setupImageDrawable()
+        invalidate()
+
+        if (enabled) {
+            if (autoPlay) {
+                resumeAnimation()
             }
         }
     }
