@@ -786,7 +786,7 @@ class DefaultTTSAgent(
             executor.submit {
                 executePlaybackError(
                     ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                    event.toString()
+                    "Invalid Source ID"
                 )
             }
         } else {
@@ -797,7 +797,7 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackStarted() {
-        Logger.d(TAG, "[executePlaybackStarted] $currentInfo")
+        Logger.d(TAG, "[executePlaybackStarted] currentInfo: $currentInfo")
         val info = currentInfo ?: return
         info.payload.playStackControl?.getPushPlayServiceId()?.let {
             playContextManager.onPlaybackStarted(it)
@@ -827,10 +827,10 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackStopped() {
+        Logger.d(TAG, "[executePlaybackStopped] currentState: $currentState, currentInfo: $currentInfo")
         if (currentState == TTSAgentInterface.State.STOPPED) {
             return
         }
-        Logger.d(TAG, "[executePlaybackStopped] $currentInfo")
         val info = currentInfo ?: return
         playContextManager.onPlaybackStopped()
         setCurrentStateAndToken(TTSAgentInterface.State.STOPPED, info.payload.token)
@@ -910,8 +910,9 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackError(type: ErrorType, error: String) {
-        Logger.e(TAG, "[executePlaybackError] type: $type, error: $error")
+        Logger.e(TAG, "[executePlaybackError] type: $type, error: $error, currentInfo: $currentInfo")
         val info = currentInfo ?: return
+
         listeners.forEach {
             it.onError(info.getDialogRequestId())
         }
