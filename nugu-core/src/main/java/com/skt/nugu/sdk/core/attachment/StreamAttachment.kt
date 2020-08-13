@@ -17,6 +17,8 @@ package com.skt.nugu.sdk.core.attachment
 
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.utils.Logger
+import java.io.EOFException
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -32,6 +34,8 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
         fun onBufferFullFilled()
     }
 
+    private var exceptionOnReadEnd: IOException? = null
+
     private val bufferEventListeners = HashSet<BufferEventListener>()
     private val attachmentContents = ArrayList<ByteBuffer>()
     private var reachEnd = false
@@ -46,8 +50,16 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
             notifyBufferFilled()
         }
 
-        override fun close() {
+        override fun close(error: Boolean) {
             lock.write {
+                if(error) {
+                    exceptionOnReadEnd = if (attachmentContents.isEmpty()) {
+                        EOFException("Unexpectedly reach end: no attachment")
+                    } else {
+                        EOFException("Unexpectedly reach end: partially received but not completed.")
+                    }
+                }
+
                 reachEnd = true
             }
 
@@ -104,7 +116,12 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                         }
 
                         if(reachEnd) {
-                            return null
+                            val e = exceptionOnReadEnd
+                            if(e == null) {
+                                return null
+                            } else {
+                                throw e
+                            }
                         }
                     }
 
@@ -151,7 +168,12 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                             // 끝까지 읽었음.
                             isReading = false
                             if (leftSizeInBytes == sizeInBytes) {
-                                return -1
+                                val e = exceptionOnReadEnd
+                                if(e == null) {
+                                    return -1
+                                } else {
+                                    throw e
+                                }
                             } else {
                                 return sizeInBytes - leftSizeInBytes
                             }
@@ -175,7 +197,12 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                 val read = sizeInBytes - leftSizeInBytes
 
                 return if(read == 0 && isClosing) {
-                    -1
+                    val e = exceptionOnReadEnd
+                    if(e == null) {
+                        return -1
+                    } else {
+                        throw e
+                    }
                 } else {
                     read
                 }
