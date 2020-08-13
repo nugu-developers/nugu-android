@@ -70,7 +70,22 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                 val attachment = StreamAttachment(attachmentId)
                 val reader = attachment.createReader()
                 attachments[attachmentId] = attachment
-                attachmentsStatus[attachmentId] = AttachmentStatus(readerCreated = true)
+                val newStatus = AttachmentStatus(readerCreated = true)
+                attachmentsStatus[attachmentId] = newStatus
+
+                val timeoutFuture = attachmentTimeoutFutureMap[attachmentId]
+                if(timeoutFuture == null) {
+                    attachmentTimeoutFutureMap[attachmentId] = scheduleExecutor.schedule({
+                        // no attachment received
+                        Logger.d(TAG, "[createReader] attachment timeout: $attachmentId")
+                        lock.withLock {
+                            attachment.createWriter().close()
+                            newStatus.writerCreated = true
+                            newStatus.writerClosed = true
+                            removeAttachment(attachmentId)
+                        }
+                    }, timeoutInSeconds, TimeUnit.SECONDS)
+                }
 
                 Logger.d(
                     TAG,
