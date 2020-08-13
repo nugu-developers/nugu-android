@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent.ext.message.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.ext.message.Context
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.payload.SendCandidatesPayload

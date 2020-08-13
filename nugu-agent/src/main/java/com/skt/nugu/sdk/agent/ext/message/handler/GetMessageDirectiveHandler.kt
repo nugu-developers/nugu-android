@@ -27,6 +27,9 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -35,7 +38,8 @@ import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 class GetMessageDirectiveHandler (
     private val controller: Controller,
     private val messageSender: MessageSender,
-    private val contextGetter: ContextGetterInterface
+    private val contextGetter: ContextGetterInterface,
+    private val interactionControlManager: InteractionControlManagerInterface
 ) : AbstractDirectiveHandler() {
     companion object {
         private const val NAME_GET_MESSAGE = "GetMessage"
@@ -63,11 +67,27 @@ class GetMessageDirectiveHandler (
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
+
+            val interactionControl = if(payload.interactionControl != null) {
+                object : InteractionControl {
+                    override fun getMode(): InteractionControlMode = when(payload.interactionControl.mode) {
+                        com.skt.nugu.sdk.agent.common.InteractionControl.Mode.MULTI_TURN -> InteractionControlMode.MULTI_TURN
+                        com.skt.nugu.sdk.agent.common.InteractionControl.Mode.NONE -> InteractionControlMode.NONE
+                    }
+                }
+            } else {
+                null
+            }
+
+            interactionControl?.let {
+                interactionControlManager.start(it)
+            }
+
             controller.getMessageList(payload, object : Callback {
                 override fun onSuccess(messages: List<Contact>?) {
                     contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.newCall(
+                            if(!messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MessageAgent.NAMESPACE,
@@ -87,11 +107,15 @@ class GetMessageDirectiveHandler (
                                     .build()
                             ).enqueue(object : MessageSender.Callback{
                                 override fun onFailure(request: MessageRequest, status: Status) {
+                                    onComplete()
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                    onComplete()
                                 }
-                            })
+                            })) {
+                                onComplete()
+                            }
                         }
                     })
                 }
@@ -99,7 +123,7 @@ class GetMessageDirectiveHandler (
                 override fun onFailure(errorCode: String) {
                     contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
-                            messageSender.newCall(
+                            if(!messageSender.newCall(
                                 EventMessageRequest.Builder(
                                     jsonContext,
                                     MessageAgent.NAMESPACE,
@@ -113,13 +137,23 @@ class GetMessageDirectiveHandler (
                                     .build()
                             ).enqueue(object : MessageSender.Callback{
                                 override fun onFailure(request: MessageRequest, status: Status) {
+                                    onComplete()
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                    onComplete()
                                 }
-                            })
+                            })) {
+                                onComplete()
+                            }
                         }
                     })
+                }
+
+                private fun onComplete() {
+                    interactionControl?.let {
+                        interactionControlManager.finish(it)
+                    }
                 }
             })
         }

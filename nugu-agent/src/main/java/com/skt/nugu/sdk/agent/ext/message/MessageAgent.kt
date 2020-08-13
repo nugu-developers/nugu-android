@@ -224,7 +224,8 @@ class MessageAgent(
                 GetMessageDirectiveHandler(
                     this@MessageAgent,
                     messageSender,
-                    contextGetter
+                    contextGetter,
+                    interactionControlManager
                 )
             )
 
