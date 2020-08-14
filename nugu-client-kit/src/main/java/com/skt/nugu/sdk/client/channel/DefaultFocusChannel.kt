@@ -36,10 +36,12 @@ class DefaultFocusChannel {
         const val COMMUNICATIONS_CHANNEL_PRIORITY = FIRST_PRIORITY
 
         const val DIALOG_CHANNEL_NAME = "Dialog"
-        const val DIALOG_CHANNEL_PRIORITY = SECOND_PRIORITY
+        const val DIALOG_CHANNEL_ACQUIRE_PRIORITY = SECOND_PRIORITY
+        const val DIALOG_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
 
         const val ALERTS_CHANNEL_NAME = "Alerts"
-        const val ALERTS_CHANNEL_PRIORITY = SECOND_PRIORITY
+        const val ALERTS_CHANNEL_ACQUIRE_PRIORITY = SECOND_PRIORITY
+        const val ALERTS_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
 
         const val CONTENT_CHANNEL_NAME = "Content"
         const val CONTENT_CHANNEL_ACQUIRE_PRIORITY = THIRD_PRIORITY
@@ -51,7 +53,7 @@ class DefaultFocusChannel {
 
         const val INTERNAL_DIALOG_CHANNEL_NAME = "InternalDialog"
         const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = FOURTH_PRIORITY
-        const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = SECOND_PRIORITY
+        const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
 
         fun getDefaultAudioChannels(): List<FocusManagerInterface.ChannelConfiguration> {
             return listOf(
@@ -69,8 +71,8 @@ class DefaultFocusChannel {
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     DIALOG_CHANNEL_NAME,
-                    DIALOG_CHANNEL_PRIORITY,
-                    DIALOG_CHANNEL_PRIORITY
+                    DIALOG_CHANNEL_ACQUIRE_PRIORITY,
+                    DIALOG_CHANNEL_RELEASE_PRIORITY
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     COMMUNICATIONS_CHANNEL_NAME,
@@ -79,8 +81,8 @@ class DefaultFocusChannel {
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     ALERTS_CHANNEL_NAME,
-                    ALERTS_CHANNEL_PRIORITY,
-                    ALERTS_CHANNEL_PRIORITY
+                    ALERTS_CHANNEL_ACQUIRE_PRIORITY,
+                    ALERTS_CHANNEL_RELEASE_PRIORITY
                 ),
                 FocusManagerInterface.ChannelConfiguration(
                     CONTENT_CHANNEL_NAME,
