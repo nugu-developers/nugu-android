@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+Version 0.9.17 *(2020-08-14)*
+-----------------------------
+* Fix: Clear a dialog attribute before new tts start (#1061)
+* Fix: Fix wrong layer policy issue (#1067)
+    * Do not clear display when start a play with same playServiceId.
+* Fix: Fix missing callback when asr failed by background focus. (#1075)
+* Fix: Intent extras missing when NuguOAuthCallbackActivity started (#1076)
+* Fix: Eliminate duplicate sessionId when create context (#1081)
+* Fix: Use distinct value for DialogRequestId,MessageId (#1083)
+* Improve: Add Nugu Button Animation (#1036)
+* Improve: Handling exception case for attachment (#1060)
+    * Handling when no attachments are received
+    * Handling exception for attachment
+* Improve: Apply Sound Layer Policy (#1074)
+* New: Apply CancelPolicy for DirectiveResultHandler (#1063)
+    * Add a policy to decide whether to execute/cancel per directive, after a directive failed.
+* New: Apply InteractionControl at Message.GetMessage (#1070)
+* New: Apply Message Interface v1.2 (#1072)
+    * Add EMERGENCY value at Contact.Type
+
 Version 0.9.16 *(2020-08-11)*
 -----------------------------
 * Fix: Fix ASR.ExpectSpeech canceled by tts' focus. (#1050)
