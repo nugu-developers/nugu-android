@@ -1575,7 +1575,9 @@ class DefaultAudioPlayerAgent(
 
     private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
         currentItem?.apply {
-            val timeUUID = UUIDGeneration.timeUUID().toString()
+            val dialogRequestId = UUIDGeneration.timeUUID().toString()
+            val messageId = UUIDGeneration.timeUUID().toString()
+
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val token = payload.audioItem.stream.token
@@ -1585,8 +1587,8 @@ class DefaultAudioPlayerAgent(
                         eventName,
                         VERSION.toString()
                     )
-                        .dialogRequestId(timeUUID)
-                        .messageId(timeUUID)
+                        .dialogRequestId(dialogRequestId)
+                        .messageId(messageId)
                         .payload(
                             JsonObject().apply {
                                 addProperty("playServiceId", payload.playServiceId)

@@ -940,14 +940,15 @@ class DefaultTTSAgent(
         referrerDialogRequestId: String,
         callback: MessageSender.Callback? = null
     ) {
-        val timeUUID = UUIDGeneration.timeUUID().toString()
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+        val messageId = UUIDGeneration.timeUUID().toString()
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 val messageRequest =
                     EventMessageRequest.Builder(jsonContext, namespace, name, VERSION.toString())
-                        .dialogRequestId(timeUUID)
-                        .messageId(timeUUID)
+                        .dialogRequestId(dialogRequestId)
+                        .messageId(messageId)
                         .payload(
                             JsonObject().apply {
                                 addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
@@ -974,7 +975,8 @@ class DefaultTTSAgent(
         playServiceId: String?,
         listener: TTSAgentInterface.OnPlaybackListener?
     ): String {
-        val timeUUID = UUIDGeneration.timeUUID().toString()
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+        val messageId = UUIDGeneration.timeUUID().toString()
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
@@ -985,8 +987,8 @@ class DefaultTTSAgent(
                         NAME_SPEECH_PLAY,
                         VERSION.toString()
                     )
-                        .dialogRequestId(timeUUID)
-                        .messageId(timeUUID)
+                        .dialogRequestId(dialogRequestId)
+                        .messageId(messageId)
                         .payload(JsonObject().apply {
                             addProperty("format", Format.TEXT.name)
                             addProperty("text", text)
@@ -1000,11 +1002,11 @@ class DefaultTTSAgent(
                     messageRequest
                 )
                 listener?.let {
-                    requestListenerMap[timeUUID] = it
+                    requestListenerMap[dialogRequestId] = it
                 }
                 call.enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
-                        requestListenerMap.remove(timeUUID)?.onError(timeUUID)
+                        requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
                     }
                     override fun onSuccess(request: MessageRequest) {
 
@@ -1013,7 +1015,7 @@ class DefaultTTSAgent(
             }
         }, namespaceAndName)
 
-        return timeUUID
+        return dialogRequestId
     }
 
     override fun onSendEventFinished(dialogRequestId: String) {
