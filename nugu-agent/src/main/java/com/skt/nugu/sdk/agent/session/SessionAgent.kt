@@ -65,13 +65,14 @@ class SessionAgent(
 
         override fun toFullJsonString(): String = buildCompactContext().apply {
             add("list", JsonArray().apply {
-                sessions.forEach {
-                    it.value.let { session ->
-                        add(JsonObject().apply {
-                            addProperty("sessionId", session.sessionId)
-                            addProperty("playServiceId", session.playServiceId)
-                        })
-                    }
+                // remove duplication
+                val uniqueSessions = HashSet<SessionManagerInterface.Session>(sessions.values)
+
+                uniqueSessions.forEach { session ->
+                    add(JsonObject().apply {
+                        addProperty("sessionId", session.sessionId)
+                        addProperty("playServiceId", session.playServiceId)
+                    })
                 }
             })
         }.toString()
