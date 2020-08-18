@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -76,8 +77,10 @@ class DefaultLocationAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
+        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         contextUpdateLock.withLock {
             contextSetter.setState(
                 namespaceAndName,

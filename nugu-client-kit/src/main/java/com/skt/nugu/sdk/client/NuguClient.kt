@@ -29,7 +29,6 @@ import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.core.utils.UserAgent
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.context.PlayStackContextManager
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
@@ -38,6 +37,7 @@ import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
+import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
 import com.skt.nugu.sdk.core.display.InterLayerDisplayPolicyManagerImpl
 import com.skt.nugu.sdk.core.focus.SeamlessFocusManager

@@ -18,14 +18,11 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextState
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -88,7 +85,7 @@ class DefaultMicrophoneAgent(
     }
 
     override fun onSettingsChanged(settings: Microphone.Settings) {
-        provideState(contextManager, namespaceAndName, 0)
+        provideState(contextManager, namespaceAndName, ContextType.FULL,0)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -202,10 +199,11 @@ class DefaultMicrophoneAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
         executor.submit {
-            Logger.d(TAG, "[provideState]")
+            Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
             contextSetter.setState(namespaceAndName, StateContext(defaultMicrophone?.getSettings()), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }
     }

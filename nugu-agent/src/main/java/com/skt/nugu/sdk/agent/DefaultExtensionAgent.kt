@@ -19,14 +19,11 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextState
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -112,8 +109,10 @@ class DefaultExtensionAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
+        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         contextSetter.setState(
             namespaceAndName,
             StateContext(client?.getData()),

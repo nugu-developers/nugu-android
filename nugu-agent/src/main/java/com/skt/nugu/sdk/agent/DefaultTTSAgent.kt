@@ -663,8 +663,11 @@ class DefaultTTSAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
+        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+
         executor.submit {
             val info = currentInfo
             if (currentState == TTSAgentInterface.State.PLAYING) {

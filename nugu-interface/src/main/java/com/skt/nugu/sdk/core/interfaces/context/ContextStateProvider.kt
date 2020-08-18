@@ -33,5 +33,5 @@ interface ContextStateProvider {
      * @param namespaceAndName the namespace and name to be updated.
      * @param stateRequestToken the token which should be used to update state.
      */
-    fun provideState(contextSetter: ContextSetterInterface, namespaceAndName: NamespaceAndName, stateRequestToken: Int)
+    fun provideState(contextSetter: ContextSetterInterface, namespaceAndName: NamespaceAndName, contextType: ContextType, stateRequestToken: Int)
 }
