@@ -106,6 +106,12 @@ class DefaultASRAgent(
         )
 
         private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
+
+        private fun buildCompactContext(): JsonObject = JsonObject().apply {
+            addProperty("version", VERSION.toString())
+        }
+
+        private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
     data class ExpectSpeechDirectiveParam(
@@ -467,6 +473,10 @@ class DefaultASRAgent(
         }
     }
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -477,18 +487,9 @@ class DefaultASRAgent(
 
         contextSetter.setState(
             namespaceAndName,
-            object: ContextState {
-                val state = JsonObject().apply {
-                    addProperty(
-                        "version",
-                        VERSION.toString()
-                    )
-                }.toString()
-
-                override fun toFullJsonString(): String = state
-                override fun toCompactJsonString(): String = state
-            },
+            contextState,
             StateRefreshPolicy.NEVER,
+            contextType,
             stateRequestToken
         )
     }

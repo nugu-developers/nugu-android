@@ -44,8 +44,8 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
-import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -983,7 +983,7 @@ class DefaultAudioPlayerAgent(
     private fun changeActivity(activity: AudioPlayerAgentInterface.State) {
         Logger.d(TAG, "[changeActivity] $currentActivity/$activity")
         currentActivity = activity
-        executeProvideState(contextManager, namespaceAndName, 0)
+        executeProvideState(contextManager, namespaceAndName, ContextType.FULL, 0)
         notifyOnActivityChanged()
     }
 
@@ -1365,7 +1365,7 @@ class DefaultAudioPlayerAgent(
     ) {
         Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         executor.submit {
-            executeProvideState(contextSetter, namespaceAndName, stateRequestToken)
+            executeProvideState(contextSetter, namespaceAndName, contextType, stateRequestToken)
         }
     }
 
@@ -1376,16 +1376,20 @@ class DefaultAudioPlayerAgent(
         val offsetInMilliseconds: Long,
         val durationInMilliseconds: Long?,
         val lyricsVisible: Boolean?
-    ) : ContextState {
+    ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            internal val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             addProperty("playerActivity", playerActivity.name)
 
             if(playerActivity != AudioPlayerAgentInterface.State.IDLE) {
@@ -1408,30 +1412,41 @@ class DefaultAudioPlayerAgent(
                 addProperty("lyricsVisible", it)
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     private fun executeProvideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
-        val playerActivity =
-            if (currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {
-                AudioPlayerAgentInterface.State.PLAYING
-            } else {
-                currentActivity
-            }
+        if (contextType == ContextType.COMPACT) {
+            contextSetter.setState(
+                namespaceAndName,
+                StateContext.CompactContextState,
+                StateRefreshPolicy.ALWAYS,
+                contextType,
+                stateRequestToken
+            )
+        } else {
+            val playerActivity =
+                if (currentActivity == AudioPlayerAgentInterface.State.PAUSED && pauseReason == null) {
+                    AudioPlayerAgentInterface.State.PLAYING
+                } else {
+                    currentActivity
+                }
 
-        contextSetter.setState(namespaceAndName, StateContext(
-            playerActivity,
-            playServiceId,
-            token,
-            getOffsetInMilliseconds(),
-            duration,
-            lyricsPresenter?.getVisibility()
-        ), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            contextSetter.setState(
+                namespaceAndName, StateContext(
+                    playerActivity,
+                    playServiceId,
+                    token,
+                    getOffsetInMilliseconds(),
+                    duration,
+                    lyricsPresenter?.getVisibility()
+                ), StateRefreshPolicy.ALWAYS, contextType, stateRequestToken
+            )
+        }
     }
 
     private fun sendPlaybackStartedEvent() {

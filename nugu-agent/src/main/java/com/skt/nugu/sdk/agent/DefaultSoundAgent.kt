@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.chips.ChipsAgent
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -54,6 +55,12 @@ class DefaultSoundAgent(
 
         private val BEEP = NamespaceAndName(NAMESPACE, NAME_BEEP)
         private const val PAYLOAD_PLAY_SERVICE_ID = "playServiceId"
+
+        private fun buildCompactContext(): JsonObject = JsonObject().apply {
+            addProperty("version", VERSION.toString())
+        }
+
+        private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
     internal data class SoundPayload(
@@ -69,6 +76,10 @@ class DefaultSoundAgent(
         contextManager.setStateProvider(namespaceAndName, this)
     }
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -81,15 +92,9 @@ class DefaultSoundAgent(
             soundProvider.let {
                 contextSetter.setState(
                     namespaceAndName,
-                    object: ContextState {
-                        val state = JsonObject().apply {
-                            addProperty("version", VERSION.toString())
-                        }.toString()
-
-                        override fun toFullJsonString(): String = state
-                        override fun toCompactJsonString(): String = state
-                    },
+                    contextState,
                     StateRefreshPolicy.NEVER,
+                    contextType,
                     stateRequestToken
                 )
             }

@@ -75,23 +75,25 @@ class PhoneCallAgent(
     private var state = State.IDLE
     private var focusState = FocusState.NONE
 
-    data class StateContext(val context: Context) : ContextState {
+    data class StateContext(val context: Context) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             addProperty("state", context.state.name)
             context.template?.let {
                 add("template", it.toJson())
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     init {
@@ -132,9 +134,20 @@ class PhoneCallAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         executor.submit {
-            contextSetter.setState(namespaceAndName, StateContext(client.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            contextSetter.setState(
+                namespaceAndName,
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    client.getContext()
+                ),
+                StateRefreshPolicy.ALWAYS,
+                contextType,
+                stateRequestToken
+            )
         }
     }
 

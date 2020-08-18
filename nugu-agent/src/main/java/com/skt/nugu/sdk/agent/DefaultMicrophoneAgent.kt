@@ -17,18 +17,18 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
 class DefaultMicrophoneAgent(
@@ -47,7 +47,7 @@ class DefaultMicrophoneAgent(
         private const val TAG = "MicrophoneAgent"
 
         const val NAMESPACE = "Mic"
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1, 0)
 
         const val NAME_SET_MIC = "SetMic"
         private const val NAME_SET_MIC_SUCCEEDED = "SetMicSucceeded"
@@ -63,20 +63,23 @@ class DefaultMicrophoneAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
 
-    internal data class StateContext(private val settings: Microphone.Settings?): ContextState {
+    internal data class StateContext(private val settings: Microphone.Settings?) :
+        BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
-            addProperty("micStatus", if(settings?.onOff == true) "ON" else "OFF")
+        override fun value(): String = buildCompactContext().apply {
+            addProperty("micStatus", if (settings?.onOff == true) "ON" else "OFF")
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     init {
@@ -85,7 +88,7 @@ class DefaultMicrophoneAgent(
     }
 
     override fun onSettingsChanged(settings: Microphone.Settings) {
-        provideState(contextManager, namespaceAndName, ContextType.FULL,0)
+        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -160,6 +163,7 @@ class DefaultMicrophoneAgent(
                 ).enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
                     }
+
                     override fun onSuccess(request: MessageRequest) {
                     }
                 })
@@ -203,8 +207,16 @@ class DefaultMicrophoneAgent(
         stateRequestToken: Int
     ) {
         executor.submit {
-            Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
-            contextSetter.setState(namespaceAndName, StateContext(defaultMicrophone?.getSettings()), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            Logger.d(
+                TAG,
+                "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+            )
+            contextSetter.setState(
+                namespaceAndName,
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    defaultMicrophone?.getSettings()
+                ), StateRefreshPolicy.ALWAYS, contextType, stateRequestToken
+            )
         }
     }
 }

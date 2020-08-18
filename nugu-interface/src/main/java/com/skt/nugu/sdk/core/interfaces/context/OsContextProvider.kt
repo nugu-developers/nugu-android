@@ -27,8 +27,8 @@ abstract class OsContextProvider: ClientContextProvider {
 
     internal data class StateContext(
         val type: Type
-    ) : ClientContextState {
-        override fun toFullJsonString(): String = "\"${type.value}\""
+    ) : BaseContextState {
+        override fun value(): String = "\"${type.value}\""
     }
 
     final override fun getName(): String = "os"
@@ -43,6 +43,7 @@ abstract class OsContextProvider: ClientContextProvider {
             namespaceAndName,
             StateContext(getType()),
             StateRefreshPolicy.NEVER,
+            contextType,
             stateRequestToken
         )
     }

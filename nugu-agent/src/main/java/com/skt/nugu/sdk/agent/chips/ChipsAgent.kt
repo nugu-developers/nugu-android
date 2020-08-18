@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.chips
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.DefaultSoundAgent
 import com.skt.nugu.sdk.agent.chips.handler.RenderDirectiveHandler
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -54,6 +55,10 @@ class ChipsAgent(
 
     override fun getInterfaceName(): String = NAMESPACE
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -61,10 +66,7 @@ class ChipsAgent(
         stateRequestToken: Int
     ) {
         Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
-        contextSetter.setState(namespaceAndName, object : ContextState {
-            override fun toFullJsonString(): String = COMPACT_STATE
-            override fun toCompactJsonString(): String = COMPACT_STATE
-        }, StateRefreshPolicy.NEVER, stateRequestToken)
+        contextSetter.setState(namespaceAndName, contextState, StateRefreshPolicy.NEVER, contextType, stateRequestToken)
     }
 
     override fun addListener(listener: ChipsAgentInterface.Listener) {

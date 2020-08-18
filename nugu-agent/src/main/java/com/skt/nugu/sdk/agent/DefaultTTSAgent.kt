@@ -659,16 +659,20 @@ class DefaultTTSAgent(
     internal data class StateContext(
         private val state: TTSAgentInterface.State,
         private val token: String?
-    ): ContextState {
+    ): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             addProperty(
                 "ttsActivity", when (state) {
                     TTSAgentInterface.State.PLAYING -> TTSAgentInterface.State.PLAYING.name
@@ -680,8 +684,6 @@ class DefaultTTSAgent(
                 addProperty("token", it)
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -693,23 +695,34 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
 
         executor.submit {
-            val info = currentInfo
-            if (currentState == TTSAgentInterface.State.PLAYING) {
-                // just log error
-                // context always updated if requested.
-                if (info == null) {
-                    Logger.e(TAG, "[provideState] failed: currentInfo is null")
-                } else if (info.sourceId.isError()) {
-                    Logger.e(TAG, "[provideState] failed: sourceId is error")
+            if(contextType == ContextType.COMPACT) {
+                contextSetter.setState(
+                    namespaceAndName,
+                    StateContext.CompactContextState,
+                    StateRefreshPolicy.ALWAYS,
+                    contextType,
+                    stateRequestToken
+                )
+            } else {
+                val info = currentInfo
+                if (currentState == TTSAgentInterface.State.PLAYING) {
+                    // just log error
+                    // context always updated if requested.
+                    if (info == null) {
+                        Logger.e(TAG, "[provideState] failed: currentInfo is null")
+                    } else if (info.sourceId.isError()) {
+                        Logger.e(TAG, "[provideState] failed: sourceId is error")
+                    }
                 }
-            }
 
-            contextSetter.setState(
-                namespaceAndName,
-                StateContext(currentState, currentToken),
-                StateRefreshPolicy.ALWAYS,
-                stateRequestToken
-            )
+                contextSetter.setState(
+                    namespaceAndName,
+                    StateContext(currentState, currentToken),
+                    StateRefreshPolicy.ALWAYS,
+                    contextType,
+                    stateRequestToken
+                )
+            }
         }
     }
 

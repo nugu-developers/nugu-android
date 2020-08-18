@@ -26,8 +26,9 @@ interface ContextSetterInterface {
 
     fun setState(
         namespaceAndName: NamespaceAndName,
-        state: ContextState,
+        state: BaseContextState,
         refreshPolicy: StateRefreshPolicy,
+        type: ContextType,
         stateRequestToken: Int = 0
     ): SetStateResult
 

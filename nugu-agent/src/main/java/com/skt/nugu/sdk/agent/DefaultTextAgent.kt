@@ -68,6 +68,12 @@ class DefaultTextAgent(
         )
 
         const val NAME_TEXT_INPUT = "TextInput"
+
+        private fun buildCompactContext(): JsonObject = JsonObject().apply {
+            addProperty("version", VERSION.toString())
+        }
+
+        private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
@@ -162,20 +168,17 @@ class DefaultTextAgent(
         return configuration
     }
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        contextSetter.setState(namespaceAndName, object: ContextState{
-            val state = JsonObject().apply {
-                addProperty("version", VERSION.toString())
-            }.toString()
-
-            override fun toFullJsonString(): String = state
-            override fun toCompactJsonString(): String = state
-        }, StateRefreshPolicy.NEVER, stateRequestToken)
+        contextSetter.setState(namespaceAndName, contextState, StateRefreshPolicy.NEVER, contextType, stateRequestToken)
     }
 
     override fun requestTextInput(

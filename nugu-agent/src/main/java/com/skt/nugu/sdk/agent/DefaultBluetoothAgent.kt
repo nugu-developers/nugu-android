@@ -130,12 +130,16 @@ class DefaultBluetoothAgent(
     data class StateContext(
         val hostController: BluetoothHost?,
         val activeDevice: BluetoothDevice?
-    ): ContextState {
+    ): BaseContextState {
         companion object {
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             hostController?.let { hostController ->
                 add("device", JsonObject().apply {
                     addProperty("name", hostController.name)
@@ -162,8 +166,6 @@ class DefaultBluetoothAgent(
                 })
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -287,16 +289,23 @@ class DefaultBluetoothAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         executor.submit {
-            if(bluetoothProvider == null) {
+            if (bluetoothProvider == null) {
                 contextSetter.setState(
-                    namespaceAndName, object: ContextState{
-                        val state = buildCompactContext().toString()
-                        override fun toFullJsonString(): String = state
-                        override fun toCompactJsonString(): String = state
-                    },
+                    namespaceAndName, StateContext.CompactContextState,
                     StateRefreshPolicy.NEVER,
+                    contextType,
+                    stateRequestToken
+                )
+            } else if (contextType == ContextType.COMPACT) {
+                contextSetter.setState(
+                    namespaceAndName, StateContext.CompactContextState,
+                    StateRefreshPolicy.ALWAYS,
+                    contextType,
                     stateRequestToken
                 )
             } else {
@@ -307,6 +316,7 @@ class DefaultBluetoothAgent(
                         bluetoothProvider.activeDevice()
                     ),
                     StateRefreshPolicy.ALWAYS,
+                    contextType,
                     stateRequestToken
                 )
             }

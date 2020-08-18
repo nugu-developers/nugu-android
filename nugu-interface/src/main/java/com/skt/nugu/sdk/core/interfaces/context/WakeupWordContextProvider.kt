@@ -30,9 +30,10 @@ abstract class WakeupWordContextProvider : ClientContextProvider {
         contextSetter.setState(
             namespaceAndName,
             object: ClientContextState {
-                override fun toFullJsonString(): String = "\"${getWakeupWord()}\""
+                override fun value(): String = "\"${getWakeupWord()}\""
             },
             StateRefreshPolicy.ALWAYS,
+            contextType,
             stateRequestToken
         )
     }

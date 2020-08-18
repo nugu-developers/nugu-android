@@ -76,6 +76,7 @@ class DefaultDelegationAgent(
             namespaceAndName,
             StateContext(null),
             StateRefreshPolicy.SOMETIMES,
+            ContextType.FULL,
             0
         )
     }
@@ -134,15 +135,19 @@ class DefaultDelegationAgent(
         return configuration
     }
 
-    internal data class StateContext(private val appContext: DelegationClient.Context?): ContextState {
+    internal data class StateContext(private val appContext: DelegationClient.Context?): BaseContextState {
         companion object {
             private fun buildCompactContext() = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
-        override fun toFullJsonString(): String {
+        override fun value(): String {
             if (appContext == null) {
                 return ""
             }
@@ -159,8 +164,6 @@ class DefaultDelegationAgent(
                 add("data", jsonData)
             }.toString()
         }
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -173,8 +176,11 @@ class DefaultDelegationAgent(
         executor.submit {
             contextSetter.setState(
                 namespaceAndName,
-                StateContext(defaultClient.getAppContext()),
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    defaultClient.getAppContext()
+                ),
                 StateRefreshPolicy.SOMETIMES,
+                contextType,
                 stateRequestToken
             )
         }
