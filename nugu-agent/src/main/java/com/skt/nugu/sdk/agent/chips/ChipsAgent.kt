@@ -57,8 +57,10 @@ class ChipsAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
+        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         contextSetter.setState(namespaceAndName, object : ContextState {
             override fun toFullJsonString(): String = COMPACT_STATE
             override fun toCompactJsonString(): String = COMPACT_STATE

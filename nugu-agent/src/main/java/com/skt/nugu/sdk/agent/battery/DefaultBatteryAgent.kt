@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.utils.Logger
 
 class DefaultBatteryAgent(
     private val batteryStatusProvider: BatteryStatusProvider,
@@ -61,8 +62,11 @@ class DefaultBatteryAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
+        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+
         val level = batteryStatusProvider.getBatteryLevel().coerceIn(0, 100)
         val charging = batteryStatusProvider.isCharging() ?: false
 

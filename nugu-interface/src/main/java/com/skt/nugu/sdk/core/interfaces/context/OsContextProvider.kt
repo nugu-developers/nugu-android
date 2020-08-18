@@ -36,6 +36,7 @@ abstract class OsContextProvider: ClientContextProvider {
     final override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
         contextSetter.setState(

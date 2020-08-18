@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.DefaultDelegationAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.*
 import com.skt.nugu.sdk.agent.version.Version
@@ -25,6 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
@@ -168,8 +170,10 @@ class MediaPlayerAgent(
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
+        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         executor.submit {
             contextSetter.setState(namespaceAndName, StateContext(mediaPlayer.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
         }

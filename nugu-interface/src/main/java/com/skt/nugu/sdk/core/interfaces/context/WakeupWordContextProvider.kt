@@ -24,6 +24,7 @@ abstract class WakeupWordContextProvider : ClientContextProvider {
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
+        contextType: ContextType,
         stateRequestToken: Int
     ) {
         contextSetter.setState(

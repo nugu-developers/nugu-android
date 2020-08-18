@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,139 +13,235 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.skt.nugu.sdk.core.context
 
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.LoopThread
-import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class ContextManager : ContextManagerInterface {
     companion object {
         private const val TAG = "ContextManager"
+        private val PROVIDE_STATE_DEFAULT_TIMEOUT = 2000L
     }
 
     private data class GetContextParam(
+        // input
         val contextRequester: ContextRequester,
         val target: NamespaceAndName?,
-        val given: HashMap<NamespaceAndName, ContextState>?
+        val given: MutableMap<NamespaceAndName, ContextState>?,
+
+        // intermediate
+        var outdateFuture: ScheduledFuture<*>? = null,
+        val pendings: MutableMap<NamespaceAndName, ContextType> = HashMap(),
+
+        // output
+        val updated: MutableMap<NamespaceAndName, SetStateParam> = HashMap()
     )
 
     private data class StateInfo(
-        var stateProvider: ContextStateProvider?,
-        var refreshPolicy: StateRefreshPolicy = StateRefreshPolicy.ALWAYS,
-        var stateContext: CachedStateContext? = null
+        var refreshPolicy: StateRefreshPolicy,
+        var stateContext: CachedStateContext
     )
 
     private data class CachedStateContext(val delegate: ContextState) : ContextState by delegate {
-        val fullStateJsonString = toFullJsonString()
-        val compactStateJsonString = toCompactJsonString()
+        val fullStateJsonString: String by lazy {
+            toFullJsonString()
+        }
+        val compactStateJsonString: String by lazy {
+            toCompactJsonString()
+        }
     }
 
-    private val namespaceNameToStateInfo: MutableMap<NamespaceAndName, StateInfo> = HashMap()
+    private data class SetStateParam(
+        val state: ContextState,
+        val refreshPolicy: StateRefreshPolicy,
+        val type: ContextType
+    )
+
+    private val lock = ReentrantLock()
+    private val stateProviders = HashMap<NamespaceAndName, ContextStateProvider>()
+    private val namespaceNameToStateInfo = HashMap<NamespaceAndName, StateInfo>()
     private val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
 
-    private val contextRequesterQueue: Queue<GetContextParam> =
-        LinkedList()
-    private val pendingOnStateProviders = HashSet<NamespaceAndName>()
-    private val stateProviderLock = ReentrantLock()
     private var stateRequestToken: Int = 0
+    private val getContextRequestMap = HashMap<Int, GetContextParam>()
 
     private val stringBuilderForContext = StringBuilder(8192)
 
-    private val updateStatesThread: LoopThread = object : LoopThread() {
-        private val PROVIDE_STATE_DEFAULT_TIMEOUT = 2000L
+    private val executor = Executors.newSingleThreadScheduledExecutor()
 
-        override fun onLoop() {
-            stateProviderLock.withLock {
-                requestStatesLocked()
+    override fun setState(
+        namespaceAndName: NamespaceAndName,
+        state: ContextState,
+        refreshPolicy: StateRefreshPolicy,
+        stateRequestToken: Int
+    ): ContextSetterInterface.SetStateResult {
+        lock.withLock {
+            if (stateRequestToken == 0) {
+                updateStateLocked(namespaceAndName, state, refreshPolicy)
+                return ContextSetterInterface.SetStateResult.SUCCESS
             }
 
-            if (waitUntilRequestStatesFinished()) {
-                // Finished
-                sendContextToRequesters()
-            } else {
-                // Timeout
-                sendContextToRequesters(ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT)
+            val request = getContextRequestMap[stateRequestToken]
+            if (request == null) {
+                Logger.w(
+                    TAG,
+                    "[setState] outdated request for stateRequestToken: $stateRequestToken (no request)"
+                )
+                return ContextSetterInterface.SetStateResult.STATE_TOKEN_OUTDATED
+            }
+
+            val type = request.pendings.remove(namespaceAndName)
+            if (type == null) {
+                Logger.w(
+                    TAG,
+                    "[setState] outdated request for stateRequestToken: $stateRequestToken (no pending)"
+                )
+                return ContextSetterInterface.SetStateResult.STATE_TOKEN_OUTDATED
+            }
+
+            updateStateLocked(namespaceAndName, state, refreshPolicy)
+            request.updated[namespaceAndName] = SetStateParam(state, refreshPolicy, type)
+
+            if (request.pendings.isEmpty()) {
+                request.outdateFuture?.cancel(true)
+                executor.submit {
+                    Logger.d(TAG, "[setState] onContextAvailable token: $stateRequestToken")
+                    val tempRequest = getContextRequestMap.remove(stateRequestToken)
+                    tempRequest?.contextRequester?.onContextAvailable(
+                        buildContextLocked(
+                            tempRequest.target,
+                            tempRequest.given
+                        )
+                    )
+                }
+            }
+
+            Logger.d(
+                TAG,
+                "[setState] success - namespaceAndName: $namespaceAndName, state: $state, refreshPolicy: $refreshPolicy, stateRequestToken: $stateRequestToken"
+            )
+            return ContextSetterInterface.SetStateResult.SUCCESS
+        }
+    }
+
+    private fun updateStateLocked(
+        namespaceAndName: NamespaceAndName,
+        state: ContextState,
+        refreshPolicy: StateRefreshPolicy
+    ) {
+        var stateInfo = namespaceNameToStateInfo[namespaceAndName]
+        if(stateInfo == null) {
+            stateInfo = StateInfo(refreshPolicy, CachedStateContext(state))
+            namespaceNameToStateInfo[namespaceAndName] = stateInfo
+        } else {
+            stateInfo.refreshPolicy = refreshPolicy
+            if(stateInfo.stateContext != state) {
+                stateInfo.stateContext = CachedStateContext(state)
             }
         }
+    }
 
-        private fun waitUntilRequestStatesFinished(): Boolean {
-            val start = System.currentTimeMillis()
-            while (pendingOnStateProviders.isNotEmpty()) {
-                if (System.currentTimeMillis() - start > PROVIDE_STATE_DEFAULT_TIMEOUT) {
-                    Logger.w(
-                        TAG,
-                        "[waitUntilRequestStateFinished] failed pending : ${pendingOnStateProviders.size}"
-                    )
-                    stateProviderLock.withLock {
-                        pendingOnStateProviders.forEach {
-                            Logger.w(TAG, "[waitUntilRequestStateFinished] failed pending : $it")
+    override fun getContext(
+        contextRequester: ContextRequester,
+        target: NamespaceAndName?,
+        given: HashMap<NamespaceAndName, ContextState>?
+    ) {
+        lock.withLock {
+            if (stateRequestToken == 0) {
+                stateRequestToken++
+            }
+            val token = stateRequestToken++
+            val param = GetContextParam(
+                contextRequester,
+                target,
+                given
+            )
+            getContextRequestMap[token] = param
+
+            param.apply {
+                stateProviders.forEach {
+                    if (given == null || !given.containsKey(it.key)) {
+                        // if not given
+                        val stateInfo = namespaceNameToStateInfo[it.key]
+                        if (stateInfo == null || stateInfo.refreshPolicy != StateRefreshPolicy.NEVER) {
+                            // if should be provided
+                            if (target == null || it.key == target) {
+                                pendings[it.key] = ContextType.FULL
+                            } else {
+                                pendings[it.key] = ContextType.COMPACT
+                            }
                         }
                     }
-                    return false
                 }
-                sleep(10)
-            }
-            return true
-        }
-    }
 
-    init {
-        updateStatesThread.start()
-    }
-
-    private fun requestStatesLocked() {
-        Logger.d(TAG, "[requestStatesLocked]")
-        stateRequestToken++
-
-        if (0 == stateRequestToken) {
-            stateRequestToken++
-        }
-
-        val curStateReqToken = stateRequestToken
-
-        for (it in namespaceNameToStateInfo) {
-            val stateInfo = it.value
-            if (StateRefreshPolicy.ALWAYS == stateInfo.refreshPolicy ||
-                StateRefreshPolicy.SOMETIMES == stateInfo.refreshPolicy
-            ) {
-                pendingOnStateProviders.add(it.key)
-                stateInfo.stateProvider?.provideState(this, it.key, curStateReqToken)
-            }
-        }
-    }
-
-    private fun sendContextToRequesters(error: ContextRequester.ContextRequestError? = null) {
-        Logger.d(TAG, "[sendContextToRequesters]")
-
-        synchronized(contextRequesterQueue) {
-            while (contextRequesterQueue.isNotEmpty()) {
-                with(contextRequesterQueue.poll()) {
-                    val strContext: String = stateProviderLock.withLock {
-                        buildContext(target, given)
+                outdateFuture = executor.schedule({
+                    Logger.d(TAG, "[getContext] outdated token: $token")
+                    val request = lock.withLock { getContextRequestMap.remove(token) }
+                    if (request != null) {
+                        contextRequester.onContextFailure(
+                            ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT,
+                            lock.withLock { buildContextLocked(target, given) }
+                        )
                     }
-                    if(error == null) {
-                        contextRequester.onContextAvailable(strContext)
-                    } else {
-                        contextRequester.onContextFailure(error, strContext)
-                    }
+                }, PROVIDE_STATE_DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+
+                HashMap(pendings).forEach {
+                    stateProviders[it.key]?.provideState(
+                        this@ContextManager,
+                        it.key,
+                        it.value,
+                        token
+                    )
                 }
             }
         }
     }
 
-    private fun buildContext(target: NamespaceAndName?, given: Map<NamespaceAndName, ContextState>? = null): String = stringBuilderForContext.apply {
+    override fun setStateProvider(
+        namespaceAndName: NamespaceAndName,
+        stateProvider: ContextStateProvider?
+    ) {
+        lock.withLock {
+            Logger.d(TAG, "[setStateProvider] namespaceAndName: $namespaceAndName, stateProvider: $stateProvider")
+            if(stateProvider == null) {
+                stateProviders.remove(namespaceAndName)
+                namespaceNameToStateInfo.remove(namespaceAndName)
+                namespaceToNameStateInfo[namespaceAndName.namespace]?.remove(namespaceAndName.name)
+            } else {
+                stateProviders[namespaceAndName] = stateProvider
+            }
+        }
+    }
+
+    private fun buildContextLocked(target: NamespaceAndName?, given: Map<NamespaceAndName, ContextState>? = null): String = stringBuilderForContext.apply {
+        Logger.d(TAG, "[buildContext] target: $target, given: $given")
         // clear
         setLength(0)
         // write
         var keyIndex = 0
         append('{')
+
+        val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
+
+        namespaceNameToStateInfo.forEach {
+            val namespace = it.key.namespace
+            val name = it.key.name
+
+            var namespaceMap = namespaceToNameStateInfo[namespace]
+            if(namespaceMap == null) {
+                namespaceMap = HashMap()
+                namespaceToNameStateInfo[namespace] = namespaceMap
+            }
+            namespaceMap[name] = it.value
+        }
 
         namespaceToNameStateInfo.forEach { namespaceEntry ->
             if (keyIndex > 0) {
@@ -157,9 +253,9 @@ class ContextManager : ContextManagerInterface {
             append('{')
             var valueIndex = 0
             namespaceEntry.value.forEach {
-                val fullState = it.value.stateContext?.fullStateJsonString
-                val compactState = it.value.stateContext?.compactStateJsonString
-                if (fullState.isNullOrEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
+                val fullState = it.value.stateContext.fullStateJsonString
+                val compactState = it.value.stateContext.compactStateJsonString
+                if (fullState.isEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
                     // pass
                 } else {
                     if (valueIndex > 0) {
@@ -190,110 +286,4 @@ class ContextManager : ContextManagerInterface {
         }
         append('}')
     }.toString()
-
-    override fun setStateProvider(
-        namespaceAndName: NamespaceAndName,
-        stateProvider: ContextStateProvider?
-    ) {
-        stateProviderLock.withLock {
-            if (stateProvider == null) {
-                namespaceNameToStateInfo.remove(namespaceAndName)
-                namespaceToNameStateInfo[namespaceAndName.namespace]?.remove(namespaceAndName.name)
-            } else {
-                val stateInfo = namespaceNameToStateInfo[namespaceAndName]
-                if (stateInfo == null) {
-                    createNewStateInfo(namespaceAndName, StateInfo(stateProvider))
-                } else {
-                    stateInfo.stateProvider = stateProvider
-                }
-            }
-        }
-    }
-
-    private fun createNewStateInfo(namespaceAndName: NamespaceAndName, stateInfo: StateInfo) {
-        namespaceNameToStateInfo[namespaceAndName] = stateInfo
-        var map = namespaceToNameStateInfo[namespaceAndName.namespace]
-        if(map == null) {
-            map = HashMap()
-            namespaceToNameStateInfo[namespaceAndName.namespace] = map
-        }
-        map[namespaceAndName.name] = stateInfo
-    }
-
-    override fun setState(
-        namespaceAndName: NamespaceAndName,
-        state: ContextState,
-        refreshPolicy: StateRefreshPolicy,
-        stateRequestToken: Int
-    ): ContextSetterInterface.SetStateResult {
-        stateProviderLock.withLock {
-            Logger.d(
-                TAG,
-                "[setState] namespaceAndName: $namespaceAndName, state: $state, policy: $refreshPolicy, $stateRequestToken"
-            )
-
-            if (0 == stateRequestToken) {
-                return updateStateLocked(namespaceAndName, state, refreshPolicy)
-            }
-
-            if (stateRequestToken != this.stateRequestToken) {
-                return ContextSetterInterface.SetStateResult.STATE_TOKEN_OUTDATED
-            }
-
-            val status = updateStateLocked(namespaceAndName, state, refreshPolicy)
-            if (ContextSetterInterface.SetStateResult.SUCCESS == status) {
-                pendingOnStateProviders.remove(namespaceAndName)
-
-                if (pendingOnStateProviders.isEmpty()) {
-                    // notify provider
-                }
-            }
-
-            return status
-        }
-    }
-
-    private fun updateStateLocked(
-        namespaceAndName: NamespaceAndName,
-        state: ContextState,
-        refreshPolicy: StateRefreshPolicy
-    ): ContextSetterInterface.SetStateResult {
-        Logger.d(TAG, "[updateStateLocked] $namespaceAndName, $state, $refreshPolicy")
-        val stateInfo = namespaceNameToStateInfo[namespaceAndName]
-
-        return if (stateInfo == null) {
-            return when (refreshPolicy) {
-                StateRefreshPolicy.ALWAYS, StateRefreshPolicy.SOMETIMES -> {
-                    ContextSetterInterface.SetStateResult.STATE_PROVIDER_NOT_REGISTERED
-                }
-                StateRefreshPolicy.NEVER -> {
-                    createNewStateInfo(namespaceAndName, StateInfo(null, refreshPolicy, CachedStateContext(state)))
-                    ContextSetterInterface.SetStateResult.SUCCESS
-                }
-            }
-        } else {
-            if(stateInfo.stateContext?.delegate != state) {
-                Logger.d(TAG, "[updateStateLocked] update current: ${stateInfo.stateContext?.delegate}, state: $state")
-                stateInfo.stateContext = CachedStateContext(state)
-            } else {
-                Logger.d(TAG, "[updateStateLocked] skip update(equal stateContext) current: ${stateInfo.stateContext}, state: $state")
-            }
-            stateInfo.refreshPolicy = refreshPolicy
-            ContextSetterInterface.SetStateResult.SUCCESS
-        }
-    }
-
-    override fun getContext(
-        contextRequester: ContextRequester,
-        target: NamespaceAndName?,
-        given: HashMap<NamespaceAndName, ContextState>?
-    ) {
-        synchronized(contextRequesterQueue) {
-            contextRequesterQueue.offer(GetContextParam(contextRequester, target, given))
-
-            if (contextRequesterQueue.isNotEmpty()) {
-                updateStatesThread.wakeOne()
-            }
-        }
-    }
 }

@@ -16,27 +16,7 @@
 
 package com.skt.nugu.sdk.core.interfaces.context
 
-/**
- * the context state
- * Recommend to implement equals()/hashCode() for optimal performance.
- */
-interface ContextState {
-    fun toFullJsonString(): String
-    fun toCompactJsonString(): String
-}
-
-interface FullContextState {
-    fun json(): String
-}
-
-interface CompactContextState {
-    fun json(): String
-}
-
-/**
- * the helper for context state for client
- * Recommend to implement equals()/hashCode() for optimal performance.
- */
-interface ClientContextState: ContextState {
-    override fun toCompactJsonString(): String = toFullJsonString()
+enum class ContextType {
+    COMPACT,
+    FULL
 }

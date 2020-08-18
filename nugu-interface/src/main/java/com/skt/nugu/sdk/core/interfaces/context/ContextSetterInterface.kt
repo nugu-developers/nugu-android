@@ -30,4 +30,12 @@ interface ContextSetterInterface {
         refreshPolicy: StateRefreshPolicy,
         stateRequestToken: Int = 0
     ): SetStateResult
+
+//    fun setState(
+//        namespaceAndName: NamespaceAndName,
+//        state: String,
+//        refreshPolicy: StateRefreshPolicy,
+//        stateRequestToken: Int = 0,
+//        type: ContextType
+//    ): SetStateResult
 }
