@@ -18,24 +18,22 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
-import java.util.HashMap
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
 import java.util.concurrent.Executors
 
 class DefaultExtensionAgent(
@@ -84,16 +82,20 @@ class DefaultExtensionAgent(
         this.client = client
     }
 
-    internal data class StateContext(val data: String?): ContextState {
+    internal data class StateContext(val data: String?): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             data?.let {
                 try {
                     add("data", JsonParser.parseString(it).asJsonObject)
@@ -102,8 +104,6 @@ class DefaultExtensionAgent(
                 }
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -115,8 +115,11 @@ class DefaultExtensionAgent(
         Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         contextSetter.setState(
             namespaceAndName,
-            StateContext(client?.getData()),
+            if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                client?.getData()
+            ),
             StateRefreshPolicy.ALWAYS,
+            contextType,
             stateRequestToken
         )
     }

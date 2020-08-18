@@ -18,10 +18,10 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.location.Location
 import com.skt.nugu.sdk.agent.location.LocationAgentInterface
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
@@ -36,7 +36,7 @@ class DefaultLocationAgent(
 
         const val NAMESPACE = "Location"
 
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1, 0)
     }
 
     private var locationProvider: LocationProvider? = null
@@ -53,16 +53,20 @@ class DefaultLocationAgent(
         locationProvider = provider
     }
 
-    internal data class StateContext(private val location: Location?): ContextState {
+    internal data class StateContext(private val location: Location?) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             location?.let {
                 add("current", JsonObject().apply {
                     addProperty("latitude", it.latitude)
@@ -70,8 +74,6 @@ class DefaultLocationAgent(
                 })
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -80,12 +82,18 @@ class DefaultLocationAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         contextUpdateLock.withLock {
             contextSetter.setState(
                 namespaceAndName,
-                StateContext(locationProvider?.getLocation()),
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    locationProvider?.getLocation()
+                ),
                 StateRefreshPolicy.ALWAYS,
+                contextType,
                 stateRequestToken
             )
         }

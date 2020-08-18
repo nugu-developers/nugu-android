@@ -35,7 +35,7 @@ class ContextManager : ContextManagerInterface {
         // input
         val contextRequester: ContextRequester,
         val target: NamespaceAndName?,
-        val given: MutableMap<NamespaceAndName, ContextState>?,
+        val given: MutableMap<NamespaceAndName, BaseContextState>?,
 
         // intermediate
         var outdateFuture: ScheduledFuture<*>? = null,
@@ -47,20 +47,14 @@ class ContextManager : ContextManagerInterface {
 
     private data class StateInfo(
         var refreshPolicy: StateRefreshPolicy,
-        var stateContext: CachedStateContext
+        var full: CachedStateContext?,
+        var compact: CachedStateContext?
     )
 
-    private data class CachedStateContext(val delegate: ContextState) : ContextState by delegate {
-        val fullStateJsonString: String by lazy {
-            toFullJsonString()
-        }
-        val compactStateJsonString: String by lazy {
-            toCompactJsonString()
-        }
-    }
+    private data class CachedStateContext(val delegate: BaseContextState) : BaseContextState by delegate
 
     private data class SetStateParam(
-        val state: ContextState,
+        val state: BaseContextState,
         val refreshPolicy: StateRefreshPolicy,
         val type: ContextType
     )
@@ -79,13 +73,14 @@ class ContextManager : ContextManagerInterface {
 
     override fun setState(
         namespaceAndName: NamespaceAndName,
-        state: ContextState,
+        state: BaseContextState,
         refreshPolicy: StateRefreshPolicy,
+        type: ContextType,
         stateRequestToken: Int
     ): ContextSetterInterface.SetStateResult {
         lock.withLock {
             if (stateRequestToken == 0) {
-                updateStateLocked(namespaceAndName, state, refreshPolicy)
+                updateStateLocked(namespaceAndName, state, refreshPolicy, type)
                 return ContextSetterInterface.SetStateResult.SUCCESS
             }
 
@@ -98,8 +93,8 @@ class ContextManager : ContextManagerInterface {
                 return ContextSetterInterface.SetStateResult.STATE_TOKEN_OUTDATED
             }
 
-            val type = request.pendings.remove(namespaceAndName)
-            if (type == null) {
+            val pendingType = request.pendings.remove(namespaceAndName)
+            if (pendingType == null) {
                 Logger.w(
                     TAG,
                     "[setState] outdated request for stateRequestToken: $stateRequestToken (no pending)"
@@ -107,8 +102,15 @@ class ContextManager : ContextManagerInterface {
                 return ContextSetterInterface.SetStateResult.STATE_TOKEN_OUTDATED
             }
 
-            updateStateLocked(namespaceAndName, state, refreshPolicy)
+            // TODO type check
+
+            updateStateLocked(namespaceAndName, state, refreshPolicy, type)
             request.updated[namespaceAndName] = SetStateParam(state, refreshPolicy, type)
+
+            Logger.d(
+                TAG,
+                "[setState] success - namespaceAndName: $namespaceAndName, state: ${state.value()}, refreshPolicy: $refreshPolicy, type: $type, stateRequestToken: $stateRequestToken"
+            )
 
             if (request.pendings.isEmpty()) {
                 request.outdateFuture?.cancel(true)
@@ -123,36 +125,45 @@ class ContextManager : ContextManagerInterface {
                     )
                 }
             }
-
-            Logger.d(
-                TAG,
-                "[setState] success - namespaceAndName: $namespaceAndName, state: $state, refreshPolicy: $refreshPolicy, stateRequestToken: $stateRequestToken"
-            )
             return ContextSetterInterface.SetStateResult.SUCCESS
         }
     }
 
     private fun updateStateLocked(
         namespaceAndName: NamespaceAndName,
-        state: ContextState,
-        refreshPolicy: StateRefreshPolicy
+        state: BaseContextState,
+        refreshPolicy: StateRefreshPolicy,
+        type: ContextType
     ) {
         var stateInfo = namespaceNameToStateInfo[namespaceAndName]
         if(stateInfo == null) {
-            stateInfo = StateInfo(refreshPolicy, CachedStateContext(state))
+            stateInfo = if(type == ContextType.FULL) {
+                StateInfo(refreshPolicy, CachedStateContext(state), null)
+            } else {
+                StateInfo(refreshPolicy, null, CachedStateContext(state))
+            }
             namespaceNameToStateInfo[namespaceAndName] = stateInfo
         } else {
-            stateInfo.refreshPolicy = refreshPolicy
-            if(stateInfo.stateContext != state) {
-                stateInfo.stateContext = CachedStateContext(state)
+            if(type == ContextType.FULL) {
+                stateInfo.full = CachedStateContext(state)
+                stateInfo.refreshPolicy = refreshPolicy
+            } else {
+                stateInfo.compact = CachedStateContext(state)
             }
         }
+
+        var nameAndStateInfo = namespaceToNameStateInfo[namespaceAndName.namespace]
+        if(nameAndStateInfo == null) {
+            nameAndStateInfo = HashMap()
+            namespaceToNameStateInfo[namespaceAndName.namespace] = nameAndStateInfo
+        }
+        nameAndStateInfo[namespaceAndName.name] = stateInfo
     }
 
     override fun getContext(
         contextRequester: ContextRequester,
         target: NamespaceAndName?,
-        given: HashMap<NamespaceAndName, ContextState>?
+        given: HashMap<NamespaceAndName, BaseContextState>?
     ) {
         lock.withLock {
             if (stateRequestToken == 0) {
@@ -221,27 +232,13 @@ class ContextManager : ContextManagerInterface {
         }
     }
 
-    private fun buildContextLocked(target: NamespaceAndName?, given: Map<NamespaceAndName, ContextState>? = null): String = stringBuilderForContext.apply {
+    private fun buildContextLocked(target: NamespaceAndName?, given: Map<NamespaceAndName, BaseContextState>? = null): String = stringBuilderForContext.apply {
         Logger.d(TAG, "[buildContext] target: $target, given: $given")
         // clear
         setLength(0)
         // write
         var keyIndex = 0
         append('{')
-
-        val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
-
-        namespaceNameToStateInfo.forEach {
-            val namespace = it.key.namespace
-            val name = it.key.name
-
-            var namespaceMap = namespaceToNameStateInfo[namespace]
-            if(namespaceMap == null) {
-                namespaceMap = HashMap()
-                namespaceToNameStateInfo[namespace] = namespaceMap
-            }
-            namespaceMap[name] = it.value
-        }
 
         namespaceToNameStateInfo.forEach { namespaceEntry ->
             if (keyIndex > 0) {
@@ -253,9 +250,9 @@ class ContextManager : ContextManagerInterface {
             append('{')
             var valueIndex = 0
             namespaceEntry.value.forEach {
-                val fullState = it.value.stateContext.fullStateJsonString
-                val compactState = it.value.stateContext.compactStateJsonString
-                if (fullState.isEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
+                val fullState = it.value.full?.value()
+                val compactState = it.value.compact?.value()
+                if (fullState.isNullOrEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
                     // pass
                 } else {
                     if (valueIndex > 0) {
@@ -271,13 +268,13 @@ class ContextManager : ContextManagerInterface {
                         if(givenContextState == null) {
                             append(fullState)
                         } else {
-                            append(givenContextState.toFullJsonString())
+                            append(givenContextState.value())
                         }
                     } else {
                         if(givenContextState == null) {
                             append(compactState)
                         } else {
-                            append(givenContextState.toCompactJsonString())
+                            append(givenContextState.value())
                         }
                     }
                 }

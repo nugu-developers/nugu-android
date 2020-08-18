@@ -245,16 +245,20 @@ class MessageAgent(
         private val context: Context,
         private val readActivity: TTSAgentInterface.State,
         private val token: String?
-    ) : ContextState {
+    ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             addProperty("readActivity", readActivity.name)
             token?.let {
                 addProperty("token", token)
@@ -263,8 +267,6 @@ class MessageAgent(
                 add("template", template.toJson())
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -273,16 +275,21 @@ class MessageAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         executor.submit {
             contextSetter.setState(
                 namespaceAndName,
-                StateContext(
-                    client.getContext(),
-                    readMessageController.state,
-                    readMessageController.token
-                ),
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else
+                    StateContext(
+                        client.getContext(),
+                        readMessageController.state,
+                        readMessageController.token
+                    ),
                 StateRefreshPolicy.ALWAYS,
+                contextType,
                 stateRequestToken
             )
         }

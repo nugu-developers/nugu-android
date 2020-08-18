@@ -481,16 +481,20 @@ class DefaultDisplayAgent(
         pendingCloseSucceededEvents[closeTargetTemplateDirective] = listener
     }
 
-    internal data class StateContext(private val displayContext: DisplayContext): ContextState {
+    internal data class StateContext(private val displayContext: DisplayContext): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             displayContext.playServiceId?.let {
                 addProperty("playServiceId", it)
             }
@@ -508,8 +512,6 @@ class DefaultDisplayAgent(
                 })
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -518,14 +520,18 @@ class DefaultDisplayAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         executor.submit {
-            val displayContext = createDisplayContext(findHighestLayerFrom(currentInfo))
-
             contextSetter.setState(
                 namespaceAndName,
-                StateContext(displayContext),
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    createDisplayContext(findHighestLayerFrom(currentInfo))
+                ),
                 StateRefreshPolicy.ALWAYS,
+                contextType,
                 stateRequestToken
             )
         }

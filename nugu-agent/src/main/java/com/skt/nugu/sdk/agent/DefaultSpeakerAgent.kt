@@ -92,16 +92,20 @@ class DefaultSpeakerAgent(
         val mute: Boolean?
     )
 
-    internal data class StateContext(private val volumes: Map<Speaker.Type, SpeakerContext>): ContextState {
+    internal data class StateContext(private val volumes: Map<Speaker.Type, SpeakerContext>): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            internal val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactState().apply {
+        override fun value(): String = buildCompactState().apply {
             add("volumes", JsonArray().apply {
                 volumes.forEach {
                     add(it.value.toJson().apply {
@@ -110,8 +114,6 @@ class DefaultSpeakerAgent(
                 }
             })
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     private val settingObservers: MutableSet<SpeakerManagerObserver> = HashSet()
@@ -349,20 +351,39 @@ class DefaultSpeakerAgent(
 
         executor.submit {
             Logger.d(TAG, "[provideState]")
-            val volumes = HashMap<Speaker.Type, SpeakerContext>().apply {
-                speakerMap.forEach {
-                    put(it.key, SpeakerContext(
-                        it.value.getGroup(),
-                        it.value.getMinVolume(),
-                        it.value.getMaxVolume(),
-                        it.value.getDefaultVolumeStep(),
-                        it.value.getDefaultVolumeLevel(),
-                        it.value.getSpeakerSettings()
-                    ))
-                }
-            }
 
-            contextSetter.setState(namespaceAndName, StateContext(volumes), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            if(contextType == ContextType.COMPACT) {
+                contextSetter.setState(
+                    namespaceAndName,
+                    StateContext.CompactContextState,
+                    StateRefreshPolicy.ALWAYS,
+                    contextType,
+                    stateRequestToken
+                )
+            } else {
+                val volumes = HashMap<Speaker.Type, SpeakerContext>().apply {
+                    speakerMap.forEach {
+                        put(
+                            it.key, SpeakerContext(
+                                it.value.getGroup(),
+                                it.value.getMinVolume(),
+                                it.value.getMaxVolume(),
+                                it.value.getDefaultVolumeStep(),
+                                it.value.getDefaultVolumeLevel(),
+                                it.value.getSpeakerSettings()
+                            )
+                        )
+                    }
+                }
+
+                contextSetter.setState(
+                    namespaceAndName,
+                    StateContext(volumes),
+                    StateRefreshPolicy.ALWAYS,
+                    contextType,
+                    stateRequestToken
+                )
+            }
         }
     }
 

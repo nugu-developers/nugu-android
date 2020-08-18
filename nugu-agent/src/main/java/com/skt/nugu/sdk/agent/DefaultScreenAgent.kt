@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -185,23 +184,25 @@ class DefaultScreenAgent(
         return configuration
     }
 
-    internal data class StateContext(val settings: Screen.Settings): ContextState {
+    internal data class StateContext(val settings: Screen.Settings): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            internal val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             with(settings) {
                 addProperty("state", if(isOn) "ON" else "OFF")
                 addProperty("brightness", brightness)
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -210,7 +211,16 @@ class DefaultScreenAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
-        contextSetter.setState(namespaceAndName, StateContext(screen.getSettings()), StateRefreshPolicy.ALWAYS, stateRequestToken)
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
+        contextSetter.setState(
+            namespaceAndName,
+            if(contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(screen.getSettings()),
+            StateRefreshPolicy.ALWAYS,
+            contextType,
+            stateRequestToken
+        )
     }
 }

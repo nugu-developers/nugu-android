@@ -42,21 +42,23 @@ class DefaultBatteryAgent(
     internal data class StateContext(
         val level: Int,
         val charging: Boolean
-    ) : ContextState {
+    ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            internal val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             addProperty("level", level)
             addProperty("charging", charging)
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -65,15 +67,20 @@ class DefaultBatteryAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
-
-        val level = batteryStatusProvider.getBatteryLevel().coerceIn(0, 100)
-        val charging = batteryStatusProvider.isCharging() ?: false
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
 
         contextSetter.setState(
             namespaceAndName,
-            StateContext(level, charging),
+            if (contextType == ContextType.COMPACT) StateContext.CompactContextState else
+                StateContext(
+                    batteryStatusProvider.getBatteryLevel().coerceIn(0, 100),
+                    batteryStatusProvider.isCharging() ?: false
+                ),
             StateRefreshPolicy.ALWAYS,
+            contextType,
             stateRequestToken
         )
     }

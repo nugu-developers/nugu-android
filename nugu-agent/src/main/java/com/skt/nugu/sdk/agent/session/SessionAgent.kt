@@ -54,16 +54,20 @@ class SessionAgent(
 
     internal data class StateContext(
         val sessions: Map<String, SessionManagerInterface.Session>
-    ): ContextState {
+    ): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE = buildCompactContext().toString()
+
+            internal val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             add("list", JsonArray().apply {
                 // remove duplication
                 val uniqueSessions = HashSet<SessionManagerInterface.Session>(sessions.values)
@@ -76,8 +80,6 @@ class SessionAgent(
                 }
             })
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -86,12 +88,18 @@ class SessionAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         executor.submit {
             contextSetter.setState(
                 namespaceAndName,
-                StateContext(sessionManager.getActiveSessions()),
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    sessionManager.getActiveSessions()
+                ),
                 StateRefreshPolicy.ALWAYS,
+                contextType,
                 stateRequestToken
             )
         }

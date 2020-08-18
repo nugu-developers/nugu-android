@@ -24,9 +24,8 @@ import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.context.BaseContextState
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextRequester
-import com.skt.nugu.sdk.core.interfaces.context.ContextState
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
@@ -119,7 +118,7 @@ class SendCandidatesDirectiveHandler(
                                 }
                             }
                         }
-                    }, null, HashMap<NamespaceAndName, ContextState>().apply {
+                    }, null, HashMap<NamespaceAndName, BaseContextState>().apply {
                         put(namespaceAndName, PhoneCallAgent.StateContext(context))
                     })
                 }

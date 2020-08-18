@@ -133,6 +133,12 @@ class DefaultSystemAgent(
 
         private const val KEY_INACTIVITY_EVENT_PAYLOAD = "inactiveTimeInSeconds"
         const val SECONDS = 1000L
+
+        private fun buildCompactContext(): JsonObject = JsonObject().apply {
+            addProperty("version", VERSION.toString())
+        }
+
+        private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
@@ -208,6 +214,10 @@ class DefaultSystemAgent(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -217,15 +227,9 @@ class DefaultSystemAgent(
         Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
         contextSetter.setState(
             namespaceAndName,
-            object: ContextState {
-                val state = JsonObject().apply {
-                    addProperty("version", VERSION.toString())
-                }.toString()
-
-                override fun toFullJsonString(): String = state
-                override fun toCompactJsonString(): String = state
-            },
+            contextState,
             StateRefreshPolicy.NEVER,
+            contextType,
             stateRequestToken
         )
     }

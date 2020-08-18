@@ -17,7 +17,6 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.DefaultDelegationAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.*
 import com.skt.nugu.sdk.agent.version.Version
@@ -137,16 +136,20 @@ class MediaPlayerAgent(
 
     override fun getInterfaceName(): String = NAMESPACE
 
-    internal data class StateContext(val context: Context): ContextState {
+    internal data class StateContext(val context: Context): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
             private val COMPACT_STATE: String = buildCompactContext().toString()
+
+            val CompactContextState = object : BaseContextState {
+                override fun value(): String = COMPACT_STATE
+            }
         }
 
-        override fun toFullJsonString(): String = buildCompactContext().apply {
+        override fun value(): String = buildCompactContext().apply {
             with(context) {
                 addProperty("playerActivity", playerActivity.name)
                 toggle?.let {
@@ -163,8 +166,6 @@ class MediaPlayerAgent(
                 }
             }
         }.toString()
-
-        override fun toCompactJsonString(): String = COMPACT_STATE
     }
 
     override fun provideState(
@@ -173,9 +174,20 @@ class MediaPlayerAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         executor.submit {
-            contextSetter.setState(namespaceAndName, StateContext(mediaPlayer.getContext()), StateRefreshPolicy.ALWAYS, stateRequestToken)
+            contextSetter.setState(
+                namespaceAndName,
+                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
+                    mediaPlayer.getContext()
+                ),
+                StateRefreshPolicy.ALWAYS,
+                contextType,
+                stateRequestToken
+            )
         }
     }
 

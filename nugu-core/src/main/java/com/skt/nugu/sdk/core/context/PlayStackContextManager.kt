@@ -45,7 +45,7 @@ class PlayStackContextManager(
     private val executor = Executors.newSingleThreadExecutor()
 
     internal data class StateContext(private val playStack: List<String>): ClientContextState {
-        override fun toFullJsonString(): String = JsonArray().apply {
+        override fun value(): String  = JsonArray().apply {
             playStack.forEach {
                 add(it)
             }
@@ -68,6 +68,7 @@ class PlayStackContextManager(
                 namespaceAndName,
                 StateContext(buildPlayStack()),
                 StateRefreshPolicy.ALWAYS,
+                contextType,
                 stateRequestToken
             )
         }
