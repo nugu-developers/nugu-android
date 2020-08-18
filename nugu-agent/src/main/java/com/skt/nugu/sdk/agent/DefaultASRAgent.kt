@@ -51,6 +51,7 @@ import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterfa
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import jdk.nashorn.internal.ir.annotations.Ignore
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -987,20 +988,21 @@ class DefaultASRAgent(
     }
 
     private fun sendEvent(name: String, payload: JsonObject, referrerDialogRequestId: String?) {
-        messageSender.newCall(
-            EventMessageRequest.Builder(
-                contextManager.getContextWithoutUpdate(
-                    namespaceAndName
-                ), NAMESPACE, name, VERSION.toString()
-            ).referrerDialogRequestId(referrerDialogRequestId ?: "").payload(payload.toString())
-                .build()
-        ).enqueue(object : MessageSender.Callback{
-            override fun onFailure(request: MessageRequest, status: Status) {
-            }
+        contextManager.getContext(object: IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.newCall(
+                    EventMessageRequest.Builder(jsonContext, NAMESPACE, name, VERSION.toString()
+                    ).referrerDialogRequestId(referrerDialogRequestId ?: "").payload(payload.toString())
+                        .build()
+                ).enqueue(object : MessageSender.Callback{
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                    }
 
-            override fun onSuccess(request: MessageRequest) {
+                    override fun onSuccess(request: MessageRequest) {
+                    }
+                })
             }
-        })
+        }, namespaceAndName)
     }
 
     private var currentAttributeKey: String? = null
