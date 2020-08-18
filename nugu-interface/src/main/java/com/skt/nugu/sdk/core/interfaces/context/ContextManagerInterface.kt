@@ -19,7 +19,6 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 
 interface ContextGetterInterface {
     fun getContext(contextRequester: ContextRequester, target: NamespaceAndName? = null, given: HashMap<NamespaceAndName, ContextState>? = null)
-    fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String
 }
 
 interface ContextStateProviderRegistry {

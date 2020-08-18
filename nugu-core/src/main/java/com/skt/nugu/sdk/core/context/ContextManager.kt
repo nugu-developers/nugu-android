@@ -296,8 +296,4 @@ class ContextManager : ContextManagerInterface {
             }
         }
     }
-    
-    override fun getContextWithoutUpdate(namespaceAndName: NamespaceAndName?): String = stateProviderLock.withLock {
-        buildContext(namespaceAndName)
-    }
 }
