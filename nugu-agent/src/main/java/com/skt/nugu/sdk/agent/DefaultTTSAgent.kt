@@ -52,6 +52,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class DefaultTTSAgent(
     private val speechPlayer: MediaPlayerInterface,
@@ -177,9 +178,13 @@ class DefaultTTSAgent(
 
     private val focusRequester = SeamlessFocusManagerInterface.Requester(channelName, object: ChannelObserver {
         override fun onFocusChanged(newFocus: FocusState) {
-            Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
-            executor.submit {
-                executeOnFocusChanged(newFocus)
+            try {
+                Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
+                executor.submit {
+                    executeOnFocusChanged(newFocus)
+                }.get(100, TimeUnit.MILLISECONDS)
+            } catch (e: Exception) {
+                Logger.w(TAG, "[onFocusChanged] newFocus: $newFocus", e)
             }
         }
     }, NAMESPACE)
@@ -497,9 +502,11 @@ class DefaultTTSAgent(
             return
         }
 
+        val targetInfo = currentInfo
+
         when (newFocus) {
             FocusState.FOREGROUND -> {
-                currentInfo?.let {
+                targetInfo?.let {
                     val countDownLatch = CountDownLatch(1)
                     playSynchronizer.startSync(it,
                         object : PlaySynchronizerInterface.OnRequestSyncListener {
@@ -517,10 +524,27 @@ class DefaultTTSAgent(
             }
             FocusState.BACKGROUND -> {
                 executeTransitState()
+                waitUntilNotPlaying(targetInfo)
             }
             FocusState.NONE -> {
                 executeTransitState()
             }
+        }
+    }
+
+    private fun waitUntilNotPlaying(targetInfo: SpeakDirectiveInfo?) {
+        if(targetInfo == null || targetInfo.state != TTSAgentInterface.State.PLAYING) {
+            Logger.d(TAG, "[waitUntilNotPlaying] no need to wait")
+            return
+        }
+
+        val startTime = System.currentTimeMillis()
+        while(System.currentTimeMillis() - startTime < 200L) {
+            if(targetInfo.state != TTSAgentInterface.State.PLAYING) {
+                Logger.d(TAG, "[waitUntilNotPlaying] PLAYING -> ${targetInfo.state}")
+                return
+            }
+            Thread.sleep(5)
         }
     }
 
