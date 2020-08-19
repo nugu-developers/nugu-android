@@ -166,18 +166,22 @@ class DefaultClientSpeechRecognizer(
     }
 
     override fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
-        Logger.d(TAG, "[stop] epdState: ${epdState}, cancel: $cancel, cause: $cause")
+        Logger.d(TAG, "[stop] epdState: ${epdState}, cancel: $cancel, cause: $cause, request: $currentRequest")
         val request = currentRequest ?: return
 
         request.stopByCancel = cancel
         request.cancelCause = cause
 
-        if (epdState.isActive()) {
-            endPointDetector.stopDetector()
-        }
 
         if(cancel) {
             request.call?.cancel()
+        }
+
+        if (epdState.isActive()) {
+            endPointDetector.stopDetector()
+        } else {
+            // Don't need to wait until response timeout occurs.
+            handleCancel()
         }
     }
 
@@ -253,7 +257,15 @@ class DefaultClientSpeechRecognizer(
             request.eventMessage
         ).apply {
             request.call = this
-            if(!this.enqueue(null)) {
+            if(!this.enqueue(object: MessageSender.Callback {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                        Logger.d(TAG, "[onFailure] request: $request, status: $status")
+                    }
+
+                    override fun onSuccess(request: MessageRequest) {
+                        Logger.d(TAG, "[onSuccess] request: $request")
+                    }
+                })) {
                 request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
                 endPointDetector.stopDetector()
             }
@@ -432,6 +444,7 @@ class DefaultClientSpeechRecognizer(
 
     private fun handleCancel() {
         currentRequest?.let {
+            Logger.d(TAG, "[handleCancel]")
             it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
             currentRequest = null
             setState(SpeechRecognizer.State.STOP, it)
@@ -440,6 +453,7 @@ class DefaultClientSpeechRecognizer(
 
     private fun handleError(errorType: ASRAgentInterface.ErrorType) {
         currentRequest?.let {
+            Logger.d(TAG, "[handleError] errorType: $errorType")
             it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
             currentRequest = null
             setState(SpeechRecognizer.State.STOP, it)
@@ -448,6 +462,7 @@ class DefaultClientSpeechRecognizer(
 
     private fun handleFinish() {
         currentRequest?.let {
+            Logger.d(TAG, "[handleFinish]")
             currentRequest = null
             setState(SpeechRecognizer.State.STOP, it)
         }
