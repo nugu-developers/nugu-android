@@ -311,6 +311,43 @@ class FocusManagerTest : FocusChangeManager() {
     }
 
     @Test
+    fun acquireFocusOnBackgroundAlready() {
+        Assert.assertTrue(
+            focusManager.acquireChannel(
+                ALERTS_CHANNEL_NAME,
+                alertsClient,
+                ALERTS_INTERFACE_NAME
+            )
+        )
+        assertFocusChange(alertsClient, FocusState.FOREGROUND)
+
+        Assert.assertTrue(
+            focusManager.acquireChannel(
+                DIALOG_CHANNEL_NAME,
+                dialogClient,
+                DIALOG_INTERFACE_NAME
+            )
+        )
+        assertFocusChange(dialogClient, FocusState.FOREGROUND)
+        assertFocusChange(alertsClient, FocusState.BACKGROUND)
+
+        Assert.assertTrue(
+            focusManager.acquireChannel(
+                ALERTS_CHANNEL_NAME,
+                alertsClient,
+                ALERTS_INTERFACE_NAME
+            )
+        )
+
+        focusManager.releaseChannel(
+            DIALOG_CHANNEL_NAME,
+            dialogClient
+        )
+        assertFocusChange(dialogClient, FocusState.NONE)
+        assertFocusChange(alertsClient, FocusState.FOREGROUND)
+    }
+
+    @Test
     fun threeNonTargetedStopsWithThreeActivitiesHappening() {
         Assert.assertTrue(
             focusManager.acquireChannel(
