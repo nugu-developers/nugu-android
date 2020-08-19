@@ -138,10 +138,18 @@ class FocusManager(
 
         channelToAcquire.setInterfaceName(interfaceName)
         synchronized(activeChannels) {
-            ActiveChannel(channelToAcquire).let {
-                if(activeChannels.add(it)) {
-                    Logger.d(TAG, "[acquireChannelHelper] create & added at active: $it")
+            val exist = activeChannels.filter {
+                it.channel == channelToAcquire
+            }.any()
+
+            if(!exist) {
+                ActiveChannel(channelToAcquire).let {
+                    if (activeChannels.add(it)) {
+                        Logger.d(TAG, "[acquireChannelHelper] create & added at active: $it")
+                    }
                 }
+            } else {
+                Logger.d(TAG, "[acquireChannelHelper] already active channel: $channelToAcquire")
             }
         }
 
