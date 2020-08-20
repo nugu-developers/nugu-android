@@ -51,7 +51,10 @@ class ContextManager : ContextManagerInterface {
         var compact: CachedStateContext?
     )
 
-    private data class CachedStateContext(val delegate: BaseContextState) : BaseContextState by delegate
+    private data class CachedStateContext(val delegate: BaseContextState) : BaseContextState {
+        private val cacheValue: String by lazy { delegate.value() }
+        override fun value(): String = cacheValue
+    }
 
     private data class SetStateParam(
         val state: BaseContextState,
