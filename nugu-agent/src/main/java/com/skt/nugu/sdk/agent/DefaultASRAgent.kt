@@ -578,6 +578,7 @@ class DefaultASRAgent(
     private fun executeOnFocusChanged(newFocus: FocusState) {
         Logger.d(TAG, "[executeOnFocusChanged] newFocus: $newFocus")
 
+        val prevState = focusState
         focusState = newFocus
         when (newFocus) {
             FocusState.FOREGROUND -> {
@@ -613,18 +614,25 @@ class DefaultASRAgent(
                         attributeStorageManager.clearAttributes(key)
                     }
                 }
+
+                if(prevState == FocusState.NONE) {
+                    expectSpeechDirectiveParam?.let {
+                        executeCancelExpectSpeechDirective(it.directive.header.messageId)
+                    }
+
+                    this.startRecognitionCallback?.onError(
+                        UUIDGeneration.timeUUID().toString(),
+                        ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER
+                    )
+                    this.startRecognitionCallback = null
+                }
+
+                executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
+
                 focusManager.release(userSpeechFocusRequester, FocusState.BACKGROUND)
                 focusManager.release(expectSpeechFocusRequester, FocusState.BACKGROUND)
             }
             FocusState.NONE -> {
-                expectSpeechDirectiveParam?.let {
-                    executeCancelExpectSpeechDirective(it.directive.header.messageId)
-                }
-
-                this.startRecognitionCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
-                this.startRecognitionCallback = null
-
-                executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
             }
         }
     }
