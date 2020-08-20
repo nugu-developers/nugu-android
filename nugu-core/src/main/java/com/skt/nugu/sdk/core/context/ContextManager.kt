@@ -110,10 +110,17 @@ class ContextManager : ContextManagerInterface {
             updateStateLocked(namespaceAndName, state, refreshPolicy, type)
             request.updated[namespaceAndName] = SetStateParam(state, refreshPolicy, type)
 
-            Logger.d(
-                TAG,
-                "[setState] success - namespaceAndName: $namespaceAndName, state: ${state.value()}, refreshPolicy: $refreshPolicy, type: $type, stateRequestToken: $stateRequestToken"
-            )
+            if(type == ContextType.FULL) {
+                Logger.d(
+                    TAG,
+                    "[setState] success - namespaceAndName: $namespaceAndName, state: ${namespaceNameToStateInfo[namespaceAndName]?.full}, refreshPolicy: $refreshPolicy, type: $type, stateRequestToken: $stateRequestToken"
+                )
+            } else {
+                Logger.d(
+                    TAG,
+                    "[setState] success - namespaceAndName: $namespaceAndName, state: ${namespaceNameToStateInfo[namespaceAndName]?.compact}, refreshPolicy: $refreshPolicy, type: $type, stateRequestToken: $stateRequestToken"
+                )
+            }
 
             if (request.pendings.isEmpty()) {
                 request.outdateFuture?.cancel(true)
