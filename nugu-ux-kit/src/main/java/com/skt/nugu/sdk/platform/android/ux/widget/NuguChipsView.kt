@@ -32,11 +32,13 @@ import com.skt.nugu.sdk.platform.android.ux.R
  *
  * @sample [NuguChipsView]
  * val chipsView = findViewById(R.id.chipsView)
- * chipsView.setOnChipsClickListener(object : ChipTrayView.OnChipsClickListener {
- *   override fun onClick(text: String) {
+ * chipsView.setOnChipsListener(object : NuguChipsView.OnChipsListener {
+ *   override fun onClick(item: NuguChipsView.Item) {
  *   }
- * }
- * chipsView.add(Item("text", false)
+ *   override fun onScrolled(dx: Int, dy: Int) {
+ *   }
+ * })
+ * chipsView.addItem(Item("text", false))
  */
 class NuguChipsView @JvmOverloads constructor(
     context: Context,
@@ -47,6 +49,11 @@ class NuguChipsView @JvmOverloads constructor(
 
     private val adapter = AdapterChips(context)
 
+    /**
+     * Sets the maximum number of texts in the chips
+     */
+    var maxTextSize : Int = 25
+    
     /**
      * Listener used to dispatch click events.
      */
@@ -162,7 +169,7 @@ class NuguChipsView @JvmOverloads constructor(
          * Called by RecyclerView to display the data at the specified position. This method should update the contents of the itemView to reflect the item at the given position.
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
-            holder.titleView.setEllipsizeText(items[position].text)
+            holder.titleView.setEllipsizeText(items[position].text, maxTextSize)
             if (items[position].action) {
                 holder.titleView.setTextColor(highlightColor)
             } else {
@@ -207,7 +214,7 @@ class NuguChipsView @JvmOverloads constructor(
     }
 
 
-    fun TextView.setEllipsizeText(text: CharSequence, maxTextSize : Int = 14) {
+    fun TextView.setEllipsizeText(text: CharSequence, maxTextSize : Int) {
         var newText = text
         if (newText.length > maxTextSize) {
             newText = newText.substring(0, maxTextSize - 1) + Typography.ellipsis
