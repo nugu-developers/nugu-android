@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+Version 0.9.18 *(2020-08-21)*
+-----------------------------
+* Fix: Fix missing callback when asr failed by background focus. (#1075)
+    * Notify failure when asr start failed by background focus
+* Fix: Fix acquireChannel for already active channel. (#1093)
+* Fix: Fix not execute ASR.ExpectSpeech (#1097)
+* Fix: Fix wrong channel when request ASR by DM (#1105)
+* Improve: Improve ContextManager (#1045)
+    * Request required context only.
+* Improve: Return focus changes after tts stop (#1089)
+* Improve: Do not wait unitil response timeout, when asr stop requested (#1095)
+* Improve: Change maximum number of texts in the chips (#1103)
+
 Version 0.9.17 *(2020-08-14)*
 -----------------------------
 * Fix: Clear a dialog attribute before new tts start (#1061)
