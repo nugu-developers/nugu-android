@@ -373,7 +373,7 @@ class DefaultASRAgent(
                     setHandlingCompleted(info)
                 }
             }
-        })
+        }, false)
     }
 
     private fun parseExpectSpeechPayload(directive: Directive): ExpectSpeechPayload? {
