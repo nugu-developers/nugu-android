@@ -23,4 +23,6 @@ interface Call {
     fun enqueue(callback: MessageSender.Callback?): Boolean
     fun noAck(): Call
     fun result(status: Status)
+    fun callTimeout(millis: Long): Call
+    fun callTimeout(): Long
 }

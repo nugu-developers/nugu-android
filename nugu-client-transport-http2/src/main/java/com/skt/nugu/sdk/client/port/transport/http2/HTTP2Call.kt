@@ -36,7 +36,7 @@ internal class HTTP2Call(
     private var canceled = false
     private var callback: MessageSender.Callback? = null
     private var listener: MessageSender.OnSendMessageListener? = listener
-    private val callTimeoutMillis = 1000 * 10L
+    private var callTimeoutMillis = 1000 * 10L
     private var noAck = false
 
     companion object{
@@ -173,5 +173,12 @@ internal class HTTP2Call(
     private fun cancelScheduledTimeout() {
         timeoutFutures.remove(hashCode)?.cancel(true)
     }
+
+    override fun callTimeout(millis: Long): MessageCall {
+        callTimeoutMillis = millis
+        return this
+    }
+
+    override fun callTimeout() = callTimeoutMillis
 }
 

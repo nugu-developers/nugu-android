@@ -40,6 +40,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -72,6 +73,7 @@ internal class DeviceGatewayClient(policy: Policy,
 
     private val isConnected = AtomicBoolean(false)
 
+    private val scheduler  = Executors.newSingleThreadScheduledExecutor()
     /**
      * Set a policy.
      * @return the ServerPolicy
@@ -108,7 +110,8 @@ internal class DeviceGatewayClient(policy: Policy,
                 eventsService =
                     EventsService(
                         this,
-                        this@DeviceGatewayClient
+                        this@DeviceGatewayClient,
+                        scheduler
                     )
                 crashReportService =
                     CrashReportService(
@@ -285,9 +288,9 @@ internal class DeviceGatewayClient(policy: Policy,
         Logger.d(TAG, "[shutdown]")
         messageConsumer = null
         transportObserver = null
-
         disconnect()
         backoff.reset()
+        scheduler.shutdown()
     }
 
     /**
