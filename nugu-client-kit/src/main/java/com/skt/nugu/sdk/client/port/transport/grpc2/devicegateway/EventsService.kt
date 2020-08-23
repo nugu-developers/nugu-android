@@ -29,11 +29,14 @@ import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
+import java.util.concurrent.ScheduledExecutorService
 
 
 /**
@@ -41,7 +44,8 @@ import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
  */
 internal class EventsService(
     private val channel: ManagedChannel,
-    private val observer: DeviceGatewayTransport
+    private val observer: DeviceGatewayTransport,
+    private val scheduler: ScheduledExecutorService
 ) {
     companion object {
         private const val TAG = "EventsService"
@@ -56,21 +60,45 @@ internal class EventsService(
 
     internal data class ClientChannel (
         val clientCall : StreamObserver<Upstream>,
+        var scheduledFuture: ScheduledFuture<*>?,
         val responseObserver : ClientCallStreamObserver
     )
     private fun buildChannel(streamId: String, call: Call, expectedAttachment: Boolean): ClientChannel? {
         if (!isShutdown.get()) {
         val responseObserver = ClientCallStreamObserver(streamId,call,expectedAttachment)
-        VoiceServiceGrpc.newStub(channel)
-            .withDeadlineAfter(defaultTimeout, TimeUnit.MILLISECONDS)
-            .withWaitForReady()?.events(responseObserver)?.apply {
+            val stub = VoiceServiceGrpc.newStub(channel)
+                .withWaitForReady()
+            if(!expectedAttachment) {
+                stub.withDeadlineAfter(call.callTimeout(), TimeUnit.MILLISECONDS)
+            }
+            stub?.events(responseObserver)?.apply {
                 return ClientChannel(
-                        this,
+                        this, scheduleTimeout(streamId, call, expectedAttachment),
                         responseObserver
                     )
             }
         }
         return null
+    }
+
+    private fun scheduleTimeout(streamId: String, call: Call, expectedAttachment: Boolean) : ScheduledFuture<*>? {
+        if(!expectedAttachment) {
+            return null
+        }
+        return scheduler.schedule({
+            requestStreamMap[streamId]?.apply {
+                this.responseObserver.onError(
+                    Status.DEADLINE_EXCEEDED.withDescription(
+                        "Client callTimeout(${call.callTimeout()}ms)"
+                    ).asException())
+            }
+        }, call.callTimeout(), TimeUnit.MILLISECONDS)
+    }
+
+    private fun cancelScheduledTimeout(streamId: String) {
+        requestStreamMap[streamId]?.apply {
+            scheduledFuture?.cancel(true)
+        }
     }
     private fun obtainChannel(streamId: String): ClientChannel? {
         if (isShutdown.get()) {
@@ -96,7 +124,7 @@ internal class EventsService(
                             if(!call.isCanceled()) {
                                 observer.onReceiveDirectives(it)
                             }
-                            log.append("[EventsService] directive, messageId=")
+                            log.append("[onNext] directive, messageId=")
                             val elapsed = System.currentTimeMillis() - beginTimeStamp
                             it.directivesList.forEach {
                                 log.append(it.header.messageId)
@@ -119,11 +147,11 @@ internal class EventsService(
                             val currentTimeMillis =  System.currentTimeMillis()
                             if (it.attachment.seq == 0) {
                                 startAttachmentTimeMillis = currentTimeMillis
-                                Logger.d(TAG, "[EventsService] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}")
+                                Logger.d(TAG, "[onNext] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}")
                             }
                             if (it.attachment.isEnd) {
                                 val elapsed = currentTimeMillis - startAttachmentTimeMillis
-                                Logger.d(TAG, "[EventsService] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, elapsed=${elapsed}ms")
+                                Logger.d(TAG, "[onNext] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, elapsed=${elapsed}ms")
                             }
                             if(!call.isCanceled()) {
                                 observer.onReceiveAttachment(it)
@@ -131,13 +159,13 @@ internal class EventsService(
 
                             val dispatchTimestamp = currentTimeMillis - System.currentTimeMillis()
                             if(dispatchTimestamp  > 100) {
-                                Logger.w(TAG, "[EventsService] attachment, operation has been delayed (${dispatchTimestamp}ms), messageId=${it.attachment.header.messageId} ")
+                                Logger.w(TAG, "[onNext] attachment, operation has been delayed (${dispatchTimestamp}ms), messageId=${it.attachment.header.messageId} ")
                             }
                         }
                     }
                 }
                 else -> {
-                    Logger.e(TAG, "[EventsService] unknown messageCase : ${downstream.messageCase}")
+                    Logger.e(TAG, "[onNext] unknown messageCase : ${downstream.messageCase}")
                 }
             }
         }
@@ -152,6 +180,7 @@ internal class EventsService(
                     // TODO :: When sending Asr.Recognize and not sending Attachment
                     if(expectedAttachment && !isSendingAttachmentMessage) {
                         halfClose(streamId)
+                        requestStreamMap.remove(streamId)
                         log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
                         Logger.w(TAG, log.toString())
                         return
@@ -163,6 +192,7 @@ internal class EventsService(
                 }
                 Logger.e(TAG, log.toString())
                 halfClose(streamId)
+                requestStreamMap.remove(streamId)
 
                 call.result(SDKStatus.fromCode(status.code.value()).apply {
                     description = status.description
@@ -173,6 +203,8 @@ internal class EventsService(
 
         override fun onCompleted() {
             Logger.d(TAG, "[onCompleted] messageId=$streamId")
+            cancelScheduledTimeout(streamId)
+            requestStreamMap.remove(streamId)
             call.result(SDKStatus.OK)
         }
     }
@@ -180,7 +212,9 @@ internal class EventsService(
     private fun halfClose(streamId : String) {
         streamLock.withLock {
             try {
-                requestStreamMap.remove(streamId)?.clientCall?.onCompleted()
+                requestStreamMap[streamId]?.apply {
+                    this.clientCall.onCompleted()
+                }
             } catch (e: IllegalStateException) {
                 Logger.w(TAG, "[close] Exception : ${e.cause} ${e.message}")
             }
@@ -198,6 +232,8 @@ internal class EventsService(
             streamLock.withLock {
                 obtainChannel(attachment.parentMessageId)?.apply {
                     this.responseObserver.isSendingAttachmentMessage = true
+                    cancelScheduledTimeout(attachment.parentMessageId)
+                    this.scheduledFuture = scheduleTimeout(attachment.parentMessageId, call, true)
                     this.clientCall.onNext(
                         Upstream.newBuilder()
                             .setAttachmentMessage(attachment.toProtobufMessage())
@@ -251,6 +287,7 @@ internal class EventsService(
     fun shutdown() {
         if (isShutdown.compareAndSet(false, true)) {
             requestStreamMap.forEach {
+                cancelScheduledTimeout(it.key)
                 halfClose(it.key)
             }
             requestStreamMap.clear()

@@ -31,8 +31,8 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     private var canceled = false
     private var callback: MessageSender.Callback? = null
     private var listener: MessageSender.OnSendMessageListener? = listener
-    private var callTimeoutMillis = 1000 * 10L
     private var noAck = false
+    private var callTimeoutMillis = 1000 * 10L
 
     companion object{
         private const val TAG = "GrpcCall"
@@ -145,4 +145,10 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         noAck = true
         return this
     }
+
+    override fun callTimeout(millis: Long): MessageCall {
+        callTimeoutMillis = millis
+        return this
+    }
+    override fun callTimeout() = callTimeoutMillis
 }

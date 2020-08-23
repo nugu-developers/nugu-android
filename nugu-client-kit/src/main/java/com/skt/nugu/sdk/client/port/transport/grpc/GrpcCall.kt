@@ -177,4 +177,11 @@ internal class GrpcCall(
         listener?.onPostSendMessage(request(), status)
         listener = null
     }
+
+    override fun callTimeout(millis: Long): MessageCall {
+        callTimeoutMillis = millis
+        return this
+    }
+
+    override fun callTimeout() = callTimeoutMillis
 }

@@ -34,6 +34,7 @@ class FixedStateCall(
     override fun isCanceled() = false
 
     override fun cancel() {
+        // no op
     }
 
     override fun execute(): Status {
@@ -47,6 +48,7 @@ class FixedStateCall(
     }
 
     override fun noAck(): Call {
+        // no op
         return this
     }
 
@@ -54,4 +56,10 @@ class FixedStateCall(
         listener?.onPostSendMessage(request(), status)
         listener = null
     }
+
+    override fun callTimeout(millis: Long): Call {
+        // no op
+        return this
+    }
+    override fun callTimeout() = 0L
 }
