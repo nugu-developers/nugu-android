@@ -116,23 +116,8 @@ class DefaultASRAgent(
 
     data class ExpectSpeechDirectiveParam(
         val directive: ExpectSpeechDirective,
-        val handler: AbstractDirectiveHandler
-    ) : SessionManagerInterface.Requester, PlaySynchronizerInterface.SynchronizeObject {
-        override fun getPlayServiceId(): String? = directive.payload.playServiceId
-
-        override fun getDialogRequestId(): String = directive.header.dialogRequestId
-
-        override fun requestReleaseSync() {
-            handler.cancelDirective(directive.header.messageId)
-        }
-
-        override fun onSyncStateChanged(
-            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-            started: List<PlaySynchronizerInterface.SynchronizeObject>
-        ) {
-            // ignore
-        }
-    }
+        val playSyncObject: PlaySynchronizerInterface.SynchronizeObject
+    ) : SessionManagerInterface.Requester
 
     private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
     private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
@@ -261,7 +246,26 @@ class DefaultASRAgent(
                     "[executePreHandleExpectSpeechDirective] invalid payload"
                 )
             } else {
-                executePreHandleExpectSpeechInternal(ExpectSpeechDirectiveParam(ExpectSpeechDirective(info.directive.header, payload), this))
+                executePreHandleExpectSpeechInternal(ExpectSpeechDirectiveParam(ExpectSpeechDirective(info.directive.header, payload), object: PlaySynchronizerInterface.SynchronizeObject {
+                    override fun getPlayServiceId(): String? = payload.playServiceId
+
+                    override fun getDialogRequestId(): String = info.directive.header.dialogRequestId
+
+                    override fun requestReleaseSync() {
+                        executor.submit {
+                            Logger.d(TAG, "[requestReleaseSync]")
+                            executeCancelExpectSpeechDirective(info.directive.header.messageId)
+                        }
+                    }
+
+                    override fun onSyncStateChanged(
+                        prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+                        started: List<PlaySynchronizerInterface.SynchronizeObject>
+                    ) {
+                        // ignore
+                    }
+
+                }))
             }
         }
     }
@@ -270,7 +274,7 @@ class DefaultASRAgent(
         Logger.d(TAG, "[executePreHandleExpectSpeechInternal] success, param: $param")
         expectSpeechDirectiveParam?.let {
             sessionManager.deactivate(it.directive.header.dialogRequestId, it)
-            playSynchronizer.releaseSync(it)
+            playSynchronizer.releaseSync(it.playSyncObject)
         }
 
         if(focusState != FocusState.FOREGROUND) {
@@ -451,6 +455,7 @@ class DefaultASRAgent(
 
     override fun cancelDirective(info: DirectiveInfo) {
         executor.submit {
+            Logger.d(TAG, "[cancelDirective] ${info.directive}")
             if (info.directive.getName() == NAME_EXPECT_SPEECH) {
                 executeCancelExpectSpeechDirective(info.directive.getMessageId())
             }
@@ -458,6 +463,7 @@ class DefaultASRAgent(
     }
 
     private fun executeCancelExpectSpeechDirective(messageId: String) {
+        Logger.d(TAG, "[executeCancelExpectSpeechDirective] messageId: $messageId")
         val request = currentRequest
         if (request == null) {
             expectSpeechDirectiveParam?.let {
@@ -948,6 +954,7 @@ class DefaultASRAgent(
     }
 
     private fun executeStopRecognitionOnAttributeUnset(key: String) {
+        Logger.d(TAG, "[executeStopRecognitionOnAttributeUnset] key: $key, currentRequest: $currentRequest")
         currentRequest?.let {
             if(it.attributeKey == key) {
                 Logger.d(TAG, "[executeStopRecognitionOnAttributeUnset] key: $key")
@@ -1073,8 +1080,8 @@ class DefaultASRAgent(
             storage.setAttributes(attr)
             onSetAttribute(key)
 
-            playSynchronizer.prepareSync(param)
-            playSynchronizer.startSync(param)
+            playSynchronizer.prepareSync(param.playSyncObject)
+            playSynchronizer.startSync(param.playSyncObject)
         }
 
         fun clearAttributes(key: String) {
@@ -1083,7 +1090,7 @@ class DefaultASRAgent(
                     storage.clearAttributes()
                     currentParam = null
                     onUnsetAttribute(key)
-                    playSynchronizer.releaseSync(it)
+                    playSynchronizer.releaseSync(it.playSyncObject)
                 }
             }
             currentParam = null
