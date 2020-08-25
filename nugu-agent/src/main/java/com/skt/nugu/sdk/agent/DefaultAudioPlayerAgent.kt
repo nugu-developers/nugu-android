@@ -1245,7 +1245,14 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> {
-                executeTryPlayCurrentItemIfReady()
+                if(!playDirectiveController.willBeHandle()) {
+                    executeTryPlayCurrentItemIfReady()
+                } else {
+                    Logger.d(
+                        TAG,
+                        "[executeOnForegroundFocus] skip. will be play directive handled."
+                    )
+                }
                 return
             }
             AudioPlayerAgentInterface.State.PAUSED -> {
