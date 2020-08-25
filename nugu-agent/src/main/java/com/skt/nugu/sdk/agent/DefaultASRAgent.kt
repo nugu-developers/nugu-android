@@ -877,7 +877,7 @@ class DefaultASRAgent(
             }
 
             if(focusState != FocusState.NONE) {
-                if(this.state == ASRAgentInterface.State.BUSY) {
+                if(this.state == ASRAgentInterface.State.BUSY && focusState == FocusState.FOREGROUND) {
                     focusManager.acquire(dummyFocusRequester)
                     scheduleExecutor.schedule({
                         focusManager.release(dummyFocusRequester, FocusState.BACKGROUND)
