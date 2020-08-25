@@ -20,7 +20,8 @@ interface PlayStackManagerInterface {
         val playServiceId: String,
         val timestamp: Long,
         val isBackground: Boolean = false,
-        val persistent: Boolean = true
+        val persistent: Boolean = true,
+        val affectPersistent: Boolean = true
     ): Comparable<PlayContext> {
         override fun compareTo(other: PlayContext): Int {
             val diff = other.timestamp - timestamp
