@@ -302,8 +302,8 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    description = body.get("error_description").toString(),
-                    code = body.optString("code")
+                    description = body.get("resultMessage").toString(),
+                    code = body.optString("resultCode")
                 )
             }
             else -> {
