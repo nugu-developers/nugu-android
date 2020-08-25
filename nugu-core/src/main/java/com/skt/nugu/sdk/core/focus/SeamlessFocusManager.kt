@@ -62,6 +62,10 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
             }
             focusManager.releaseChannel(requester.channelName, requester.channelObserver)
             Logger.d(TAG, "[release] requester: $requester, focusState: $focusState, removed: $removed")
+
+            if(requesterSet.isEmpty() && focus == FocusState.FOREGROUND) {
+                focusManager.releaseChannel(holderChannelName, this)
+            }
         }
     }
 
@@ -70,7 +74,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
             focus = newFocus
 
             Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
-            if(newFocus == FocusState.BACKGROUND) {
+            if((newFocus == FocusState.FOREGROUND && requesterSet.isEmpty()) || newFocus == FocusState.BACKGROUND) {
                 focusManager.releaseChannel(holderChannelName, this)
             }
         }
