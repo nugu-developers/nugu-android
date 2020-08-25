@@ -130,10 +130,9 @@ class FocusManager(
             removeActiveChannel(channelToAcquire)
         }
 
-        val foregroundChannel = getHighestPriorityActiveChannel()
         Logger.d(
             TAG,
-            "[acquireChannelHelper] $channelToAcquire, $interfaceName, foreground: ${foregroundChannel?.channel?.name}"
+            "[acquireChannelHelper] $channelToAcquire, $interfaceName, foreground: ${foregroundChannel?.name}"
         )
 
         channelToAcquire.setInterfaceName(interfaceName)
@@ -155,12 +154,14 @@ class FocusManager(
 
         channelToAcquire.setObserver(channelObserver)
 
+        val currentForegroundChannel = foregroundChannel
+
         when {
-            foregroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
-            foregroundChannel.channel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
-            channelToAcquire.priority.acquire <= foregroundChannel.channel.priority.release -> {
+            currentForegroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+            currentForegroundChannel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+            channelToAcquire.priority.acquire <= currentForegroundChannel.priority.release -> {
                 val higherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
-                    activeChannels.filter { it.channel.priority.release < channelToAcquire.priority.acquire && it.channel != foregroundChannel.channel && it.channel != channelToAcquire }
+                    activeChannels.filter { it.channel.priority.release < channelToAcquire.priority.acquire && it.channel != currentForegroundChannel && it.channel != channelToAcquire }
                 }
                 Logger.d(TAG, "$activeChannels")
 
@@ -168,7 +169,7 @@ class FocusManager(
                     // Even if the request channel has higher priority than foreground channel, get background focus due to another higher priority channels exist.
                     setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
                 } else {
-                    setChannelFocus(foregroundChannel.channel, FocusState.BACKGROUND)
+                    setChannelFocus(currentForegroundChannel, FocusState.BACKGROUND)
                     setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
                 }
             }
