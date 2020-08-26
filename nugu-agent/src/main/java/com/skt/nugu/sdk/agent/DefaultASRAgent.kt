@@ -128,7 +128,7 @@ class DefaultASRAgent(
 
     private var focusState = FocusState.NONE
 
-    private var isRequested: Boolean = false
+    private var isWaitingFocusToStart: Boolean = false
     private var currentRequest: SpeechRecognizer.Request? = null
 
     private var audioInputStream: SharedDataStream? = null
@@ -369,7 +369,7 @@ class DefaultASRAgent(
                 dialogRequestId: String,
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
             ) {
-                if(state == ASRAgentInterface.State.EXPECTING_SPEECH && !isRequested) {
+                if(state == ASRAgentInterface.State.EXPECTING_SPEECH && !isWaitingFocusToStart) {
                     // back to idle state only when failed to request
                     setState(ASRAgentInterface.State.IDLE)
                     setHandlingExpectSpeechFailed(param, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
@@ -526,7 +526,7 @@ class DefaultASRAgent(
             TAG,
             "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState, expectSpeechDirectiveParam: $expectSpeechDirectiveParam"
         )
-        if(isRequested) {
+        if(isWaitingFocusToStart) {
             callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             return
         }
@@ -559,7 +559,6 @@ class DefaultASRAgent(
             }
         }
 
-        isRequested = true
         if (focusState == FocusState.FOREGROUND) {
             executeInternalStartRecognition(
                 audioInputStream,
@@ -571,6 +570,8 @@ class DefaultASRAgent(
                 jsonContext
             )
         } else {
+            isWaitingFocusToStart = true
+
             this.audioInputStream = audioInputStream
             this.audioFormat = audioFormat
             this.wakeupInfo = wakeupInfo
@@ -588,6 +589,8 @@ class DefaultASRAgent(
         focusState = newFocus
         when (newFocus) {
             FocusState.FOREGROUND -> {
+                isWaitingFocusToStart = false
+
                 val inputStream = this.audioInputStream
                 val audioFormat = this.audioFormat
                 val wakeupInfo = this.wakeupInfo
@@ -622,6 +625,9 @@ class DefaultASRAgent(
                 }
 
                 if(prevState == FocusState.NONE) {
+                    // disable flag if we failed
+                    isWaitingFocusToStart = false
+
                     expectSpeechDirectiveParam?.let {
                         executeCancelExpectSpeechDirective(it.directive.header.messageId)
                     }
@@ -719,7 +725,6 @@ class DefaultASRAgent(
         }
 
         clearPreHandledExpectSpeech()
-        isRequested = false
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
