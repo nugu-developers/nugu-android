@@ -176,7 +176,8 @@ class DefaultTTSAgent(
 
     private val playContextManager = TTSPlayContextProvider()
 
-    private val focusRequester = SeamlessFocusManagerInterface.Requester(channelName, object: ChannelObserver {
+    private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
+    private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, object: ChannelObserver {
         override fun onFocusChanged(newFocus: FocusState) {
             try {
                 Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
@@ -476,7 +477,7 @@ class DefaultTTSAgent(
         if (currentFocus == FocusState.FOREGROUND) {
             executeOnFocusChanged(currentFocus, true)
         } else {
-            if (!focusManager.acquire(focusRequester)
+            if (!focusManager.acquire(focusRequester, focusChannel)
             ) {
                 Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
             }
@@ -651,7 +652,7 @@ class DefaultTTSAgent(
 
     private fun executeTryReleaseFocus() {
         if(preparedSpeakInfo == null && currentInfo == null && currentFocus != FocusState.NONE) {
-            focusManager.release(focusRequester, currentFocus)
+            focusManager.release(focusRequester, focusChannel, currentFocus)
             currentFocus = FocusState.NONE
         }
     }

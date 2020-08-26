@@ -33,8 +33,8 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
-import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
@@ -150,15 +150,12 @@ class DefaultASRAgent(
 
     private val attributeStorageManager = AttributeStorageManager(dialogAttributeStorage)
 
-    private val userSpeechFocusRequester =
-        SeamlessFocusManagerInterface.Requester(userInteractionDialogChannelName, this, NAMESPACE)
-    private val expectSpeechFocusRequester =
-        SeamlessFocusManagerInterface.Requester(internalDialogChannelName, this, NAMESPACE)
-    private val dummyFocusRequester = SeamlessFocusManagerInterface.Requester(dummyChannelName, object: ChannelObserver {
-        override fun onFocusChanged(newFocus: FocusState) {
-            // no-op
-        }
-    }, NAMESPACE)
+    private val asrFocusRequester = object : SeamlessFocusManagerInterface.Requester {}
+    private val userSpeechFocusChannel =
+        SeamlessFocusManagerInterface.Channel(userInteractionDialogChannelName, this, NAMESPACE)
+    private val expectSpeechFocusChannel =
+        SeamlessFocusManagerInterface.Channel(internalDialogChannelName, this, NAMESPACE)
+    private val dummyFocusRequester = object : SeamlessFocusManagerInterface.Requester {}
 
     private val scheduleExecutor = ScheduledThreadPoolExecutor(1)
 
@@ -278,7 +275,7 @@ class DefaultASRAgent(
         }
 
         if(focusState != FocusState.FOREGROUND) {
-            focusManager.prepare(expectSpeechFocusRequester)
+            focusManager.prepare(asrFocusRequester)
         }
         expectSpeechDirectiveParam = param
         sessionManager.activate(param.directive.header.dialogRequestId, param)
@@ -542,13 +539,13 @@ class DefaultASRAgent(
         }
 
         if (focusState != FocusState.FOREGROUND) {
-            val requester = if (expectSpeechDirectiveParam == null || byUser) {
-                userSpeechFocusRequester
+            val channel = if (expectSpeechDirectiveParam == null || byUser) {
+                userSpeechFocusChannel
             } else {
-                expectSpeechFocusRequester
+                expectSpeechFocusChannel
             }
 
-            if (!focusManager.acquire(requester)
+            if (!focusManager.acquire(asrFocusRequester, channel)
             ) {
                 Logger.e(
                     TAG,
@@ -635,8 +632,8 @@ class DefaultASRAgent(
 
                 executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
 
-                focusManager.release(userSpeechFocusRequester, FocusState.BACKGROUND)
-                focusManager.release(expectSpeechFocusRequester, FocusState.BACKGROUND)
+                focusManager.release(asrFocusRequester, userSpeechFocusChannel, FocusState.BACKGROUND)
+                focusManager.release(asrFocusRequester, expectSpeechFocusChannel, FocusState.BACKGROUND)
             }
             FocusState.NONE -> {
             }
@@ -884,15 +881,15 @@ class DefaultASRAgent(
 
             if(focusState != FocusState.NONE) {
                 if(this.state == ASRAgentInterface.State.BUSY && focusState == FocusState.FOREGROUND) {
-                    focusManager.acquire(dummyFocusRequester)
+                    focusManager.prepare(dummyFocusRequester)
                     scheduleExecutor.schedule({
-                        focusManager.release(dummyFocusRequester, FocusState.BACKGROUND)
+                        focusManager.cancel(dummyFocusRequester)
                     }, 200, TimeUnit.MILLISECONDS)
-                } else {
-                    focusManager.release(userSpeechFocusRequester, focusState)
-                    focusManager.release(expectSpeechFocusRequester, focusState)
-                    focusState = FocusState.NONE
                 }
+
+                focusManager.release(asrFocusRequester, userSpeechFocusChannel, focusState)
+                focusManager.release(asrFocusRequester, expectSpeechFocusChannel, focusState)
+                focusState = FocusState.NONE
             }
         }
 

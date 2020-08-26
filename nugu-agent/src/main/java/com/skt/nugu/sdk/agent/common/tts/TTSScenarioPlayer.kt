@@ -77,8 +77,9 @@ class TTSScenarioPlayer(
     private val ttsPlayContextProvider = TTSPlayContextProvider()
 
     private var focusState: FocusState = FocusState.NONE
-
-    private val focusRequester = SeamlessFocusManagerInterface.Requester(focusChannelName, this, TAG)
+    
+    private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
+    private val focusChannel = SeamlessFocusManagerInterface.Channel(focusChannelName, this, TAG)
 
     init {
         player.setPlaybackEventListener(this)
@@ -142,7 +143,7 @@ class TTSScenarioPlayer(
 
     private fun releaseFocus() {
         if(focusState != FocusState.NONE && preparedSource == null && currentSource == null) {
-            focusManager.release(focusRequester, focusState)
+            focusManager.release(focusRequester, focusChannel, focusState)
             focusState = FocusState.NONE
         }
     }
@@ -156,7 +157,7 @@ class TTSScenarioPlayer(
         if (focusState == FocusState.FOREGROUND) {
             return executeStartPreparedSourceOnForeground()
         } else {
-            if (!focusManager.acquire(focusRequester)) {
+            if (!focusManager.acquire(focusRequester, focusChannel)) {
                 Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
             }
         }
