@@ -186,9 +186,9 @@ internal class EventsService(
         }
 
         override fun onCompleted() {
-            Logger.d(TAG, "[onCompleted] messageId=$streamId")
             cancelScheduledTimeout(streamId)
             requestStreamMap.remove(streamId)
+            Logger.d(TAG, "[onCompleted] messageId=$streamId, numRequests=${requestStreamMap.size}")
             call.result(SDKStatus.OK)
         }
     }

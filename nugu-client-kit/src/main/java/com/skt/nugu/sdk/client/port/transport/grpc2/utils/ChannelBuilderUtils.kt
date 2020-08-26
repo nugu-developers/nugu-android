@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
 import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
+import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import io.grpc.*
@@ -37,6 +38,7 @@ class ChannelBuilderUtils {
             val channelBuilder = ManagedChannelBuilder
                 .forAddress(policy.hostname, policy.port)
                 .userAgent(userAgent())
+            Logger.i(TAG,  "userAgent=${userAgent()}")
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
                     authorization.toString()
