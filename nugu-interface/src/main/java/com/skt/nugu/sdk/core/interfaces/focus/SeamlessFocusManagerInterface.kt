@@ -17,13 +17,16 @@
 package com.skt.nugu.sdk.core.interfaces.focus
 
 interface SeamlessFocusManagerInterface {
-    data class Requester(
+    interface Requester
+
+    data class Channel(
         val channelName: String,
         val channelObserver: ChannelObserver,
         val interfaceName: String
     )
 
     fun prepare(requester: Requester)
-    fun acquire(requester: Requester): Boolean
-    fun release(requester: Requester, focusState: FocusState)
+    fun cancel(requester: Requester)
+    fun acquire(requester: Requester, channel: Channel): Boolean
+    fun release(requester: Requester, channel: Channel, focusState: FocusState)
 }

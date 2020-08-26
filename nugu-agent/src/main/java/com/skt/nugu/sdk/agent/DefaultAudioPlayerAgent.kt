@@ -210,7 +210,8 @@ class DefaultAudioPlayerAgent(
         override fun getPlayServiceId(): String? = currentItem?.getPlayServiceId()
     }
 
-    private val focusRequester = SeamlessFocusManagerInterface.Requester(channelName, this, NAMESPACE)
+    private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
+    private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, this, NAMESPACE)
 
     inner class AudioInfo(
         val payload: PlayPayload,
@@ -229,7 +230,7 @@ class DefaultAudioPlayerAgent(
                     if (currentItem == this@AudioInfo) {
                         currentItem = null
                         if (!playDirectiveController.willBeHandle() && focus != FocusState.NONE) {
-                            focusManager.release(focusRequester, focus)
+                            focusManager.release(focusRequester, focusChannel, focus)
                         }
                     }
 
@@ -528,7 +529,7 @@ class DefaultAudioPlayerAgent(
             }
 
             if (FocusState.FOREGROUND != focus) {
-                if (!focusManager.acquire(focusRequester)
+                if (!focusManager.acquire(focusRequester, focusChannel)
                 ) {
                     progressTimer.stop()
                     sendPlaybackFailedEvent(
@@ -699,7 +700,7 @@ class DefaultAudioPlayerAgent(
                 }
                 FocusState.BACKGROUND -> {
                     // The behavior should be same with when sent event.
-                    if(focusManager.acquire(focusRequester)) {
+                    if(focusManager.acquire(focusRequester, focusChannel)) {
                         pauseReason = null
                     }
                 }
@@ -1298,7 +1299,7 @@ class DefaultAudioPlayerAgent(
                 }
 
                 if (!mediaPlayer.resume(sourceId)) {
-                    focusManager.release(focusRequester, focus)
+                    focusManager.release(focusRequester, focusChannel, focus)
                     return
                 }
                 return
