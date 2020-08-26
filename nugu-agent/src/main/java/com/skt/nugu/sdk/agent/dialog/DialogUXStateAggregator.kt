@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -31,6 +32,7 @@ import kotlin.collections.HashSet
 class DialogUXStateAggregator(
     private val transitionDelayForIdleState: Long,
     private val sessionManager: SessionManagerInterface,
+    private val seamlessFocusManager: SeamlessFocusManagerInterface,
     private val displayAgent: DisplayAgentInterface?
 ) :
     DialogUXStateAggregatorInterface
@@ -82,6 +84,7 @@ class DialogUXStateAggregator(
 
     private var displaySustainFuture: ScheduledFuture<*>? = null
     private val renderedDisplayTemplates = CopyOnWriteArraySet<String>()
+    private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
 
     init {
         displayAgent?.addListener(object: DisplayAgentInterface.Listener {
@@ -187,6 +190,14 @@ class DialogUXStateAggregator(
     private fun setState(newState: DialogUXStateAggregatorInterface.DialogUXState) {
         tryEnterIdleStateRunnableFuture?.cancel(true)
         tryEnterIdleStateRunnableFuture = null
+
+        if(newState == DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+            seamlessFocusManager.cancel(focusRequester)
+        } else {
+            if(currentState == DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+                seamlessFocusManager.prepare(focusRequester)
+            }
+        }
 
         currentState = newState
         notifyOnStateChangeIfSomethingChanged()
