@@ -54,7 +54,6 @@ internal class EventsService(
 
     private val isShutdown = AtomicBoolean(false)
     private val streamLock = ReentrantLock()
-    //private var lastSentEventMessage : EventMessageRequest? = null
 
     private val requestStreamMap = ConcurrentHashMap<String, ClientChannel?>()
 
@@ -65,32 +64,35 @@ internal class EventsService(
     )
     private fun buildChannel(streamId: String, call: Call, expectedAttachment: Boolean): ClientChannel? {
         if (!isShutdown.get()) {
-        val responseObserver = ClientCallStreamObserver(streamId,call,expectedAttachment)
-            val stub = VoiceServiceGrpc.newStub(channel)
-                .withWaitForReady()
-            if(!expectedAttachment) {
-                stub.withDeadlineAfter(call.callTimeout(), TimeUnit.MILLISECONDS)
-            }
-            stub?.events(responseObserver)?.apply {
+            val responseObserver = ClientCallStreamObserver(streamId, call, expectedAttachment)
+            VoiceServiceGrpc.newStub(channel).withWaitForReady()?.events(responseObserver)?.apply {
                 return ClientChannel(
-                        this, scheduleTimeout(streamId, call, expectedAttachment),
-                        responseObserver
-                    )
+                    this, scheduleTimeout(streamId, call),
+                    responseObserver
+                )
             }
         }
         return null
     }
-
-    private fun scheduleTimeout(streamId: String, call: Call, expectedAttachment: Boolean) : ScheduledFuture<*>? {
-        if(!expectedAttachment) {
+    private fun obtainChannel(streamId: String): ClientChannel? {
+        if (isShutdown.get()) {
             return null
         }
+        return requestStreamMap[streamId]
+    }
+
+    private fun scheduleTimeout(streamId: String, call: Call) : ScheduledFuture<*>? {
         return scheduler.schedule({
             requestStreamMap[streamId]?.apply {
-                this.responseObserver.onError(
-                    Status.DEADLINE_EXCEEDED.withDescription(
-                        "Client callTimeout(${call.callTimeout()}ms)"
-                    ).asException())
+                if(this.responseObserver.isReceivedDownstream.compareAndSet(true, false)) {
+                    Logger.w(TAG,"[scheduleTimeout] Renew the schedule, It occurs because the downstream is too slow. $streamId")
+                    scheduleTimeout(streamId, call)
+                } else {
+                    this.responseObserver.onError(
+                        Status.DEADLINE_EXCEEDED.withDescription(
+                            "Client callTimeout(${call.callTimeout()}ms)"
+                        ).asException())
+                }
             }
         }, call.callTimeout(), TimeUnit.MILLISECONDS)
     }
@@ -100,20 +102,14 @@ internal class EventsService(
             scheduledFuture?.cancel(true)
         }
     }
-    private fun obtainChannel(streamId: String): ClientChannel? {
-        if (isShutdown.get()) {
-            return null
-        }
-        return requestStreamMap[streamId]
-    }
 
     inner class ClientCallStreamObserver(val streamId: String, val call: Call, val expectedAttachment: Boolean) : StreamObserver<Downstream> {
         private var startAttachmentTimeMillis = 0L
-        private var isReceivedDownstream = false
+        var isReceivedDownstream = AtomicBoolean(false)
         var isSendingAttachmentMessage = false
 
         override fun onNext(downstream: Downstream) {
-            isReceivedDownstream = true
+            isReceivedDownstream.set(true)
 
             when (downstream.messageCase) {
                 Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
@@ -171,32 +167,20 @@ internal class EventsService(
         }
 
         override fun onError(t: Throwable) {
-            if (!isShutdown.get()) {
-                val status = Status.fromThrowable(t)
+            val status = Status.fromThrowable(t)
+            call.result(SDKStatus.fromCode(status.code.value()).apply {
+                description = status.description
+            })
 
+            if (!isShutdown.get()) {
                 val log = StringBuilder()
                 log.append("[onError] ${status.code}, ${status.description}, $streamId")
                 if(status.code == Status.Code.DEADLINE_EXCEEDED) {
-                    // TODO :: When sending Asr.Recognize and not sending Attachment
                     if(expectedAttachment && !isSendingAttachmentMessage) {
-                        halfClose(streamId)
-                        requestStreamMap.remove(streamId)
                         log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
-                        Logger.w(TAG, log.toString())
-                        return
-                    }
-                    if(isReceivedDownstream) {
-                        Logger.e(TAG, log.toString())
-                        return
                     }
                 }
                 Logger.e(TAG, log.toString())
-                halfClose(streamId)
-                requestStreamMap.remove(streamId)
-
-                call.result(SDKStatus.fromCode(status.code.value()).apply {
-                    description = status.description
-                })
                 observer.onError(status)
             }
         }
@@ -216,7 +200,7 @@ internal class EventsService(
                     this.clientCall.onCompleted()
                 }
             } catch (e: IllegalStateException) {
-                Logger.w(TAG, "[close] Exception : ${e.cause} ${e.message}")
+                Logger.w(TAG, "[close] cause:${e.cause}, message:${e.message}")
             }
         }
     }
@@ -233,7 +217,7 @@ internal class EventsService(
                 obtainChannel(attachment.parentMessageId)?.apply {
                     this.responseObserver.isSendingAttachmentMessage = true
                     cancelScheduledTimeout(attachment.parentMessageId)
-                    this.scheduledFuture = scheduleTimeout(attachment.parentMessageId, call, true)
+                    this.scheduledFuture = scheduleTimeout(attachment.parentMessageId, call)
                     this.clientCall.onNext(
                         Upstream.newBuilder()
                             .setAttachmentMessage(attachment.toProtobufMessage())
@@ -263,18 +247,17 @@ internal class EventsService(
             val expectedAttachment = event.checkIfEventMessageIsAsrRecognize()
             streamLock.withLock {
                 buildChannel(event.messageId, call, expectedAttachment)?.apply {
-                    if(expectedAttachment) {
-                        requestStreamMap[event.messageId] = this
-                    }
+                    requestStreamMap[event.messageId] = this
+                    Logger.d(TAG, "[onNext] event=${event.namespace}.${event.name}, messageId=${event.messageId}")
                     this.clientCall.onNext(
                         Upstream.newBuilder()
                             .setEventMessage(event.toProtobufMessage())
                             .build()
                     )
-                    if(!expectedAttachment) {
-                        this.clientCall.onCompleted()
-                    }
                 }
+            }
+            if(!expectedAttachment) {
+                halfClose(event.messageId)
             }
         } catch (e: IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
