@@ -52,6 +52,7 @@ object AndroidAudioFocusInteractor {
         FocusManagerInterface.OnFocusChangedListener, ChannelObserver {
 
         private val channelName = DefaultFocusChannel.INTERACTION_CHANNEL_NAME
+        private val releaseCallbackMap = HashMap<String, Runnable>()
 
         init {
             audioFocusManager.addListener(this)
@@ -107,6 +108,9 @@ object AndroidAudioFocusInteractor {
 
         private fun acquire(focusOwner: String) {
             Log.d(TAG, "[acquire] focusOwner: $focusOwner")
+            releaseCallbackMap.remove(focusOwner)?.let {
+                handler.removeCallbacks(it)
+            }
             handler.post {
                 // whenever acquired, request audio focus
                 if(requestAudioFocus(audioFocusChangeListener)) {
@@ -119,7 +123,11 @@ object AndroidAudioFocusInteractor {
 
         private fun release(focusOwner: String) {
             Log.d(TAG, "[release] focusOwner: $focusOwner")
-            handler.postDelayed({
+            releaseCallbackMap.remove(focusOwner)?.let {
+                handler.removeCallbacks(it)
+            }
+
+            Runnable {
                 focusOwnerReferences.remove(focusOwner)
                 if (focusOwnerReferences.isEmpty()) {
                     abandonAudioFocus(audioFocusChangeListener)
@@ -128,7 +136,10 @@ object AndroidAudioFocusInteractor {
                     audioFocusManager.releaseChannel(channelName, this)
                     Log.d(TAG, "[release] abandonAudioFocus")
                 }
-            }, 500)
+            }.apply {
+                releaseCallbackMap[focusOwner] = this
+                handler.postDelayed(this, 500)
+            }
         }
 
         private fun requestAudioFocus(listener: AudioManager.OnAudioFocusChangeListener): Boolean {
