@@ -645,8 +645,8 @@ class DefaultASRAgent(
                     }
                 }
 
-                focusManager.release(asrFocusRequester, userSpeechFocusChannel, FocusState.BACKGROUND)
-                focusManager.release(asrFocusRequester, expectSpeechFocusChannel, FocusState.BACKGROUND)
+                focusManager.release(asrFocusRequester, userSpeechFocusChannel)
+                focusManager.release(asrFocusRequester, expectSpeechFocusChannel)
             }
             FocusState.NONE -> {
             }
@@ -899,8 +899,8 @@ class DefaultASRAgent(
                     }, 200, TimeUnit.MILLISECONDS)
                 }
 
-                focusManager.release(asrFocusRequester, userSpeechFocusChannel, focusState)
-                focusManager.release(asrFocusRequester, expectSpeechFocusChannel, focusState)
+                focusManager.release(asrFocusRequester, userSpeechFocusChannel)
+                focusManager.release(asrFocusRequester, expectSpeechFocusChannel)
                 focusState = FocusState.NONE
             }
         }

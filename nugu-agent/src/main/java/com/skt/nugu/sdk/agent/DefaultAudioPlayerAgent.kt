@@ -230,7 +230,7 @@ class DefaultAudioPlayerAgent(
                     if (currentItem == this@AudioInfo) {
                         currentItem = null
                         if (!playDirectiveController.willBeHandle() && focus != FocusState.NONE) {
-                            focusManager.release(focusRequester, focusChannel, focus)
+                            focusManager.release(focusRequester, focusChannel)
                         }
                     }
 
@@ -1299,7 +1299,7 @@ class DefaultAudioPlayerAgent(
                 }
 
                 if (!mediaPlayer.resume(sourceId)) {
-                    focusManager.release(focusRequester, focusChannel, focus)
+                    focusManager.release(focusRequester, focusChannel)
                     return
                 }
                 return

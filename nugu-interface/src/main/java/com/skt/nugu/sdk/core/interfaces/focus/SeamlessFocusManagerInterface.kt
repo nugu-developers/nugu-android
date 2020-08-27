@@ -28,5 +28,5 @@ interface SeamlessFocusManagerInterface {
     fun prepare(requester: Requester)
     fun cancel(requester: Requester)
     fun acquire(requester: Requester, channel: Channel): Boolean
-    fun release(requester: Requester, channel: Channel, focusState: FocusState)
+    fun release(requester: Requester, channel: Channel)
 }
