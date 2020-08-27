@@ -143,7 +143,7 @@ class TTSScenarioPlayer(
 
     private fun releaseFocus() {
         if(focusState != FocusState.NONE && preparedSource == null && currentSource == null) {
-            focusManager.release(focusRequester, focusChannel, focusState)
+            focusManager.release(focusRequester, focusChannel)
             focusState = FocusState.NONE
         }
     }

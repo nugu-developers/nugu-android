@@ -652,7 +652,7 @@ class DefaultTTSAgent(
 
     private fun executeTryReleaseFocus() {
         if(preparedSpeakInfo == null && currentInfo == null && currentFocus != FocusState.NONE) {
-            focusManager.release(focusRequester, focusChannel, currentFocus)
+            focusManager.release(focusRequester, focusChannel)
             currentFocus = FocusState.NONE
         }
     }
