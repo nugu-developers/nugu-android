@@ -605,7 +605,7 @@ class DefaultASRAgent(
                 this.contextForRecognitionOnForegroundFocus = null
 
                 if (inputStream == null || audioFormat == null) {
-                    Logger.e(TAG, "[executeInternalStartRecognition] invalid audio input")
+                    Logger.e(TAG, "[executeOnFocusChanged] invalid audio input")
                     callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
                     return
                 }
@@ -637,6 +637,13 @@ class DefaultASRAgent(
                 }
 
                 executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
+                while(currentSpeechRecognizer.isRecognizing()) {
+                    try {
+                        Thread.sleep(10)
+                    } catch (e: Exception) {
+                        Logger.w(TAG, "[executeOnFocusChanged] occur exception", e)
+                    }
+                }
 
                 focusManager.release(asrFocusRequester, userSpeechFocusChannel, FocusState.BACKGROUND)
                 focusManager.release(asrFocusRequester, expectSpeechFocusChannel, FocusState.BACKGROUND)
