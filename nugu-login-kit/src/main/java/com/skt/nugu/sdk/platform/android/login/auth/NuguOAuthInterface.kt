@@ -82,6 +82,13 @@ interface NuguOAuthInterface {
     fun requestMe(listener: OnMeResponseListener)
 
     /**
+     * Request introspect
+     * The introspect specified by [https://tools.ietf.org/html/rfc7662#section-2.1], OAuth 2.0 Token Introspection
+     * @param listener Listener to receive result.
+     */
+    fun introspect(listener: OnIntrospectResponseListener)
+
+    /**
      * On login actions listener
      */
     interface OnLoginListener {
@@ -136,6 +143,22 @@ interface NuguOAuthInterface {
          * Listener called when a request completes successfully.
          */
         fun onSuccess(response: MeResponse)
+
+        /**
+         * Listener called when a request fails
+         * @param error the NuguOAuthError
+         */
+        fun onError(error: NuguOAuthError)
+    }
+
+    /**
+     * On [introspect] actions listener
+     */
+    interface OnIntrospectResponseListener {
+        /**
+         * Listener called when a request completes successfully.
+         */
+        fun onSuccess(response: IntrospectResponse)
 
         /**
          * Listener called when a request fails

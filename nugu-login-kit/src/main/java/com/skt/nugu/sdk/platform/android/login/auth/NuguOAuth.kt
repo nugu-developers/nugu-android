@@ -524,14 +524,6 @@ class NuguOAuth private constructor(
         }
     }
 
-    /**
-     * {
-    "anonymous": true,
-    "deviceId": "string",
-    "tid": "string",
-    "userId": "string"
-    }
-     */
     fun getMe(data: String, listener: OnDeviceAuthorizationListener) {
         this.options.grantType = NuguOAuthOptions.DEVICE_CODE
 
@@ -541,6 +533,23 @@ class NuguOAuth private constructor(
         executor.submit {
             runCatching {
                 client.handleStartDeviceAuthorization(data)
+            }.onSuccess {
+                listener.onSuccess(it)
+            }.onFailure {
+                listener.onError(NuguOAuthError(it))
+            }
+        }
+    }
+
+    override fun introspect(listener: NuguOAuthInterface.OnIntrospectResponseListener) {
+        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
+
+        checkClientId()
+        checkClientSecret()
+
+        executor.submit {
+            runCatching {
+                client.handleIntrospect()
             }.onSuccess {
                 listener.onSuccess(it)
             }.onFailure {

@@ -351,6 +351,41 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     fun buildAuthorization(): String {
         return getCredentials().tokenType + " " + getCredentials().accessToken
     }
+
+    fun handleIntrospect(): IntrospectResponse {
+        val form = FormEncodingBuilder()
+            .add("client_id", options.clientId)
+            .add("client_secret", options.clientSecret)
+            .add("token", getCredentials().accessToken)
+
+        val request = Request.Builder(
+            uri = "$baseUrl/v1/auth/oauth/introspect",
+            form = form
+        ).build()
+        val response = client.newCall(request)
+        when (response.code) {
+            HttpURLConnection.HTTP_OK -> {
+                IntrospectResponse.parse(response.body)?.let {
+                    return it
+                }
+            }
+            HttpURLConnection.HTTP_UNAUTHORIZED,
+            HttpURLConnection.HTTP_BAD_REQUEST -> {
+                val body = JSONObject(response.body)
+                throw BaseException.UnAuthenticatedException(
+                    error = body.get("error").toString(),
+                    description = body.get("error_description").toString(),
+                    code = body.optString("code")
+                )
+            }
+            else -> {
+                throw BaseException.HttpErrorException(
+                    response.code,
+                    response.body
+                )
+            }
+        }
+    }
 }
 
 
