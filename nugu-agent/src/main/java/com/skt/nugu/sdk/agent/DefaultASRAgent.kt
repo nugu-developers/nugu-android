@@ -615,7 +615,7 @@ class DefaultASRAgent(
                 }
             }
             FocusState.BACKGROUND -> {
-                if(expectSpeechDirectiveParam == null) {
+                if(expectSpeechDirectiveParam == null && state == ASRAgentInterface.State.EXPECTING_SPEECH) {
                     currentAttributeKey?.let { key ->
                         attributeStorageManager.clearAttributes(key)
                     }
