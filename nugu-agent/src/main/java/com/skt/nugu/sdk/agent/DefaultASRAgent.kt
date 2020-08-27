@@ -502,7 +502,7 @@ class DefaultASRAgent(
             Logger.d(TAG, "[onFocusChanged] start $newFocus")
             executor.submit {
                 executeOnFocusChanged(newFocus)
-            }.get(100, TimeUnit.MILLISECONDS)
+            }.get(300, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
             Logger.d(TAG, "[onFocusChanged] end $newFocus / occur exception: $e")
         } finally {
@@ -901,7 +901,6 @@ class DefaultASRAgent(
 
                 focusManager.release(asrFocusRequester, userSpeechFocusChannel)
                 focusManager.release(asrFocusRequester, expectSpeechFocusChannel)
-                focusState = FocusState.NONE
             }
         }
 
