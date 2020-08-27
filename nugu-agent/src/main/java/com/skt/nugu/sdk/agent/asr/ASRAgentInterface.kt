@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent.asr
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.common.EventCallback
-import java.util.concurrent.Future
 
 /**
  * The public interface for ASRAgent
