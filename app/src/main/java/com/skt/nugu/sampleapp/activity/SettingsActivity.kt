@@ -23,14 +23,11 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import android.widget.*
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
-import com.skt.nugu.sdk.platform.android.login.auth.MeResponse
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
+import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
 class SettingsActivity : AppCompatActivity() {
@@ -108,15 +105,32 @@ class SettingsActivity : AppCompatActivity() {
         }
         initBtnListeners()
 
-        NuguOAuth.getClient().requestMe(object : NuguOAuthInterface.OnMeResponseListener{
-            override fun onSuccess(response: MeResponse) {
+        NuguOAuth.getClient().introspect(object : NuguOAuthInterface.OnIntrospectResponseListener{
+            override fun onSuccess(response: IntrospectResponse) {
                 runOnUiThread {
-                    textLoginId.text = response.tid
+                    if(response.active) {
+                        if(response.username.isEmpty()) {
+                            Log.d(TAG, "Anonymous logined")
+                        } else {
+                            textLoginId.text = response.username
+                        }
+                    } else {
+                        Log.d(TAG, "the token is inactive. response=$response")
+                        NuguToast.with(this@SettingsActivity)
+                            .message(R.string.authentication_failed)
+                            .duration(NuguToast.LENGTH_SHORT)
+                            .show()
+                    }
                 }
             }
 
             override fun onError(error: NuguOAuthError) {
+                /** See more details in [LoginActivity.handleOAuthError] **/
                 Log.d(TAG, error.toString())
+                NuguToast.with(this@SettingsActivity)
+                    .message(R.string.authentication_failed)
+                    .duration(NuguToast.LENGTH_SHORT)
+                    .show()
             }
         })
     }
@@ -162,6 +176,7 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 
                 override fun onError(error: NuguOAuthError) {
+                    /** See more details in [LoginActivity.handleOAuthError] **/
                     NuguToast.with(this@SettingsActivity)
                         .message(R.string.revoke_failed)
                         .duration(NuguToast.LENGTH_SHORT)
