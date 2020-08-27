@@ -203,6 +203,7 @@ class FocusManager(
 
         setChannelFocus(channelToRelease, FocusState.NONE)
         if (wasForegrounded) {
+            foregroundChannel = null
             foregroundHighestPriorityActiveChannel()
         }
         return true
