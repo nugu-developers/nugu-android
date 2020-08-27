@@ -38,6 +38,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
     private val requesterSet = HashSet<Requester>()
     private var focus = FocusState.NONE
     private var currentForegroundFocusInterfaceName: String? = null
+    private var lastAcquiringFocusInterfaceName: String? = null
 
     init {
         focusManager.addListener(this)
@@ -67,6 +68,9 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
         lock.withLock {
             val removed = requesterSet.remove(requester)
             val result = focusManager.acquireChannel(channel.channelName, channel.channelObserver, channel.interfaceName)
+            if(result) {
+                lastAcquiringFocusInterfaceName = channel.interfaceName
+            }
             Logger.d(TAG, "[acquire] result: $result, requester: $requester, channel: $channel, removed: $removed")
             return result
         }
@@ -78,7 +82,11 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
     ) {
         lock.withLock {
             val removed = requesterSet.remove(requester)
-            if(requesterSet.isNotEmpty() && focus == FocusState.NONE && channel.interfaceName == currentForegroundFocusInterfaceName) {
+            if(requesterSet.isNotEmpty()
+                && focus == FocusState.NONE
+                && channel.interfaceName == currentForegroundFocusInterfaceName
+                && lastAcquiringFocusInterfaceName == null
+            ) {
                 Logger.d(TAG, "[release] acquire group channel before release requester")
                 focusManager.acquireChannel(holderChannelName, this, HOLDER_INTERFACE_NAME)
             }
@@ -108,6 +116,12 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
         interfaceName: String
     ) {
         lock.withLock {
+            if(newFocus == FocusState.FOREGROUND || newFocus == FocusState.BACKGROUND) {
+                if(interfaceName == lastAcquiringFocusInterfaceName) {
+                    lastAcquiringFocusInterfaceName = null
+                }
+            }
+
             if(newFocus == FocusState.FOREGROUND) {
                 currentForegroundFocusInterfaceName = interfaceName
             } else {
