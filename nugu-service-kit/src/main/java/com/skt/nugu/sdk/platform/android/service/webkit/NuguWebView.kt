@@ -60,19 +60,24 @@ class NuguWebView @JvmOverloads constructor(
 
     companion object {
         private val JS_INTERFACE_NAME = "NuguWebCommonHandler"
+        private const val TAG = "NuguWebView"
     }
 
-    private fun cookies() = mutableMapOf(
-        "Authorization" to authorization.toString(),
-        "Poc-Id" to pocId.toString(),
-        "App-Version" to appVersion.toString(),
-        "Theme" to theme.name,
-        "Os-Type-Code" to "MBL_AND",
-        "Os-Version" to Build.VERSION.RELEASE,
-        "Sdk-Version" to BuildConfig.VERSION_NAME,
-        "Phone-Model-Name" to Build.MODEL,
-        "Oauth-Redirect-Uri" to redirectUri.toString()
-    )
+    private val cookies by lazy {
+        mutableMapOf(
+            "Authorization" to authorization.toString(),
+            "Poc-Id" to pocId.toString(),
+            "App-Version" to appVersion.toString(),
+            "Theme" to theme.name,
+            "Os-Type-Code" to "MBL_AND",
+            "Os-Version" to Build.VERSION.RELEASE,
+            "Sdk-Version" to BuildConfig.VERSION_NAME,
+            "Phone-Model-Name" to Build.MODEL,
+            "Oauth-Redirect-Uri" to redirectUri.toString(),
+            "ClientId" to clientId.toString(),
+            "GrantType" to grantType.toString()
+        )
+    }
 
     var authorization: String? = null
     var pocId: String? = null
@@ -82,6 +87,8 @@ class NuguWebView @JvmOverloads constructor(
     var webChromeClientListener: WebChromeClientListener? = null
     var windowListener: WindowListener? = null
     var redirectUri : String? = null
+    var clientId : String? = null
+    var grantType : String? = null
 
     init {
         addView(
