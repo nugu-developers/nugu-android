@@ -157,6 +157,10 @@ class NuguWebView @JvmOverloads constructor(
         webView.destroy()
     }
 
+    fun setCookie(key: String, value: String) {
+        cookies[key] = value
+    }
+
     private fun updateCookies(url: String) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -164,8 +168,7 @@ class NuguWebView @JvmOverloads constructor(
             } else {
                 CookieManager.getInstance().removeAllCookie()
             }
-
-            cookies().forEach { (key, value) ->
+            cookies.forEach { (key, value) ->
                 val header = StringBuilder()
                 header.append(key).append("=").append(value)
                 Log.d("NuguWebView", "$key=$value")
@@ -177,7 +180,9 @@ class NuguWebView @JvmOverloads constructor(
                 CookieSyncManager.getInstance().sync()
             }
         } catch (e: PackageManager.NameNotFoundException) {
+            Log.e(TAG, e.toString())
         } catch (e: AndroidRuntimeException) {
+            Log.e(TAG, e.toString())
         }
     }
 
