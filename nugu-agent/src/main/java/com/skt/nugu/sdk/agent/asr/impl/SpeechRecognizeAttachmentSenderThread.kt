@@ -84,21 +84,16 @@ class SpeechRecognizeAttachmentSenderThread(
 
                 // 3. send data
                 if (encodedBuffer != null) {
-                    if (!sendAttachment(encodedBuffer, recognizeEvent)) {
-                        observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
-                        return
-                    }
+                    sendAttachment(encodedBuffer, recognizeEvent)
                 }
             }
 
             if (isStopping) {
                 observer.onStop()
             } else {
-                if (!sendAttachment(null, recognizeEvent)) {
-                    observer.onError(ASRAgentInterface.ErrorType.ERROR_NETWORK)
-                } else {
-                    observer.onFinish()
-                }
+                // due to thread issue, we first finish and then send last attachment...
+                observer.onFinish()
+                sendAttachment(null, recognizeEvent)
             }
         } catch (e: Exception) {
             Logger.w(TAG, "[exception]", e)
@@ -110,7 +105,7 @@ class SpeechRecognizeAttachmentSenderThread(
         }
     }
 
-    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest): Boolean {
+    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest) {
         Logger.d(
             TAG,
             "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
@@ -134,17 +129,13 @@ class SpeechRecognizeAttachmentSenderThread(
 
         currentAttachmentSequenceNumber++
 
-        messageSender.newCall(
-            attachmentMessage
-        ).enqueue(object : MessageSender.Callback{
+        messageSender.newCall(attachmentMessage).enqueue(object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
             }
 
             override fun onSuccess(request: MessageRequest) {
             }
         })
-        return true
-        /*return messageSender.sendMessage(attachmentMessage)*/
     }
 
     fun requestStop() {
