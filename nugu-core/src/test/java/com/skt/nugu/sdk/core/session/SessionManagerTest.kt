@@ -21,7 +21,8 @@ import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import org.junit.Assert
 import org.junit.Test
 
-private const val sessionKey1= "session_key_1"
+private const val sessionKey1 = "session_key_1"
+private const val sessionKey2 = "session_key_2"
 
 private val session1 = SessionManagerInterface.Session("session_1","playServiceId_1")
 
@@ -71,5 +72,16 @@ class SessionManagerTest {
 
         Thread.sleep(inactiveTimeoutForTest + 100L)
         Assert.assertTrue(sessionManager.getActiveSessions().isNotEmpty())
+    }
+
+    @Test
+    fun testActivateTwoSessionUsingOneRequester() {
+        val requester: SessionManagerInterface.Requester = mock()
+
+        sessionManager.set(sessionKey1, session1)
+        sessionManager.activate(sessionKey1, requester)
+        sessionManager.set(sessionKey2, session1)
+        sessionManager.activate(sessionKey2, requester)
+        Assert.assertTrue(sessionManager.getActiveSessions().size == 2)
     }
 }
