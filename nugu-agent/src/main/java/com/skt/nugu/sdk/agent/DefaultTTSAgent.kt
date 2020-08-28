@@ -53,6 +53,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashSet
+import kotlin.concurrent.withLock
 
 class DefaultTTSAgent(
     private val speechPlayer: MediaPlayerInterface,
@@ -111,11 +114,18 @@ class DefaultTTSAgent(
         }
     }
 
+    internal interface OnSpeakDirectiveFinishListener {
+        fun onFinish()
+    }
+
     internal inner class SpeakDirectiveInfo(
         info: DirectiveInfo,
         val payload: SpeakPayload
-    ) : PlaySynchronizerInterface.SynchronizeObject
-        , DirectiveInfo by info {
+    ) : DirectiveInfo by info {
+        private val finishLock = ReentrantLock()
+        private var isResultHandled = false
+        private val finishListeners = HashSet<OnSpeakDirectiveFinishListener>()
+
         var sourceId: SourceId = SourceId.ERROR()
         var isPlaybackInitiated = false
         var isDelayedCancel = false
@@ -126,9 +136,27 @@ class DefaultTTSAgent(
             override fun getPlayServiceId(): String? = payload.playServiceId
             override fun getPushPlayServiceId(): String? =
                 payload.playStackControl?.getPushPlayServiceId()
-
             override fun getLayerType(): LayerType = LayerType.INFO
-            override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+            override fun getDialogRequestId(): String = directive.getDialogRequestId()
+        }
+
+        val playSyncObject = object: PlaySynchronizerInterface.SynchronizeObject {
+            override fun getPlayServiceId(): String? = payload.playServiceId
+            override fun getDialogRequestId(): String = directive.getDialogRequestId()
+
+            override fun requestReleaseSync() {
+                Logger.d(TAG, "[requestReleaseSync]")
+                executor.submit {
+                    executeCancel(this@SpeakDirectiveInfo)
+                }
+            }
+
+            override fun onSyncStateChanged(
+                prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+                started: List<PlaySynchronizerInterface.SynchronizeObject>
+            ) {
+                // no-op
+            }
         }
 
         fun clear() {
@@ -136,22 +164,51 @@ class DefaultTTSAgent(
             directive.destroy()
         }
 
-        override fun getDialogRequestId(): String = directive.getDialogRequestId()
-
-        override fun getPlayServiceId(): String? = payload.playServiceId
-
-        override fun requestReleaseSync() {
-            Logger.d(TAG, "[requestReleaseSync]")
-            executor.submit {
-                executeCancel(this)
+        fun setHandlingCompleted() {
+            finishLock.withLock {
+                if (isResultHandled) {
+                    return
+                }
+                isResultHandled = true
+                result.setCompleted()
+                finishListeners.forEach {
+                    it.onFinish()
+                }
             }
         }
 
-        override fun onSyncStateChanged(
-            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-            started: List<PlaySynchronizerInterface.SynchronizeObject>
-        ) {
-            // no-op
+        fun setHandlingFailed(description: String, cancelPolicy: DirectiveHandlerResult.CancelPolicy? = null) {
+            finishLock.withLock {
+                if (isResultHandled) {
+                    return
+                }
+
+                isResultHandled = true
+                if (cancelPolicy == null) {
+                    result.setFailed(description)
+                } else {
+                    result.setFailed(description, cancelPolicy)
+                }
+                finishListeners.forEach {
+                    it.onFinish()
+                }
+            }
+        }
+
+        fun addOnFinishListener(listener: OnSpeakDirectiveFinishListener): Boolean {
+            finishLock.withLock {
+                if(isResultHandled) {
+                    return false
+                }
+
+                return finishListeners.add(listener)
+            }
+        }
+
+        fun removeOnFinishListener(listener: OnSpeakDirectiveFinishListener) {
+            finishLock.withLock {
+                finishListeners.remove(listener)
+            }
         }
     }
 
@@ -211,7 +268,7 @@ class DefaultTTSAgent(
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[preHandleDirective] info: $info")
+        Logger.d(TAG, "[preHandleDirective] start - info: $info")
         val speakInfo = createValidateSpeakInfo(info)
 
         if (speakInfo == null) {
@@ -219,13 +276,29 @@ class DefaultTTSAgent(
             return
         }
 
-        playSynchronizer.prepareSync(speakInfo)
+        playSynchronizer.prepareSync(speakInfo.playSyncObject)
         if(currentFocus != FocusState.FOREGROUND) {
             focusManager.prepare(focusRequester)
         }
+
+
+        val waitCountDownListener = CountDownLatch(1)
+        val waitStop: Boolean = currentInfo?.addOnFinishListener(object : OnSpeakDirectiveFinishListener {
+            override fun onFinish() {
+                waitCountDownListener.countDown()
+            }
+        }) ?: false
+
+        if(!waitStop) {
+            waitCountDownListener.countDown()
+        }
+
         executor.submit {
             executePreHandleSpeakDirective(speakInfo)
         }
+
+        waitCountDownListener.await()
+        Logger.d(TAG, "[preHandleDirective] end - info: $info")
     }
 
     override fun handleDirective(info: DirectiveInfo) {
@@ -303,9 +376,9 @@ class DefaultTTSAgent(
                     Logger.d(TAG, "[stop] stop lastStopped")
                     lastImplicitStoppedInfo = null
                     object : PlaySynchronizerInterface.SynchronizeObject {
-                        override fun getPlayServiceId(): String?  = lastStopped.getPlayServiceId()
+                        override fun getPlayServiceId(): String?  = lastStopped.payload.playServiceId
 
-                        override fun getDialogRequestId(): String = lastStopped.getDialogRequestId()
+                        override fun getDialogRequestId(): String = lastStopped.directive.getDialogRequestId()
 
                         override fun requestReleaseSync() {
                             // ignore.
@@ -437,7 +510,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[executeCancelPreparedSpeakInfo] cancel preparedSpeakInfo : $info")
 
         with(info) {
-            result.setFailed("Canceled by the other speak directive.")
+            setHandlingFailed("Canceled by the other speak directive.")
             executeReleaseSyncImmediately(this)
             executeTryReleaseFocus()
         }
@@ -471,7 +544,7 @@ class DefaultTTSAgent(
         val text = speakInfo.payload.text
         interLayerDisplayPolicyManager.onPlayStarted(speakInfo.layerForDisplayPolicy)
         listeners.forEach {
-            it.onReceiveTTSText(text, speakInfo.getDialogRequestId())
+            it.onReceiveTTSText(text, speakInfo.directive.getDialogRequestId())
         }
 
         if (currentFocus == FocusState.FOREGROUND) {
@@ -509,7 +582,7 @@ class DefaultTTSAgent(
             FocusState.FOREGROUND -> {
                 targetInfo?.let {
                     val countDownLatch = CountDownLatch(1)
-                    playSynchronizer.startSync(it,
+                    playSynchronizer.startSync(it.playSyncObject,
                         object : PlaySynchronizerInterface.OnRequestSyncListener {
                             override fun onGranted() {
                                 executeTransitState()
@@ -622,12 +695,12 @@ class DefaultTTSAgent(
     }
 
     private fun executeReleaseSync(info: SpeakDirectiveInfo) {
-        playSynchronizer.releaseSync(info)
+        playSynchronizer.releaseSync(info.playSyncObject)
         executeAfterExecuteRelease(info)
     }
 
     private fun executeReleaseSyncImmediately(info: SpeakDirectiveInfo) {
-        playSynchronizer.releaseSyncImmediately(info)
+        playSynchronizer.releaseSyncImmediately(info.playSyncObject)
         executeAfterExecuteRelease(info)
     }
 
@@ -745,7 +818,7 @@ class DefaultTTSAgent(
                     if (isPlaybackInitiated) {
                         stopPlaying(this)
                     } else {
-                        result.setCompleted()
+                        setHandlingCompleted()
                         executeReleaseSyncImmediately(this)
                         executeTryReleaseFocus()
                     }
@@ -849,7 +922,7 @@ class DefaultTTSAgent(
     }
 
     private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo, callback: MessageSender.Callback? = null): Boolean {
-        val playServiceId = info.getPlayServiceId()
+        val playServiceId = info.payload.playServiceId
         if (playServiceId.isNullOrBlank()) {
             Logger.d(TAG, "[sendPlaybackEvent] skip : playServiceId: $playServiceId")
             return false
@@ -910,9 +983,9 @@ class DefaultTTSAgent(
         executeTryReleaseFocus()
         with(info) {
             if (cancelByStop) {
-                result.setFailed("playback canceled", DirectiveHandlerResult.POLICY_CANCEL_ALL)
+                setHandlingFailed("playback canceled", DirectiveHandlerResult.POLICY_CANCEL_ALL)
             } else {
-                result.setFailed("playback stopped", cancelPolicyOnStopTTS)
+                setHandlingFailed("playback stopped", cancelPolicyOnStopTTS)
             }
         }
     }
@@ -934,19 +1007,19 @@ class DefaultTTSAgent(
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
                     executeTryReleaseFocus()
-                    setHandlingCompleted(info)
+                    info.setHandlingCompleted()
                 }
             }
 
             override fun onSuccess(request: MessageRequest) {
                 executor.submit {
                     executeTryReleaseFocus()
-                    setHandlingCompleted(info)
+                    info.setHandlingCompleted()
                 }
             }
         })) {
             executeTryReleaseFocus()
-            setHandlingCompleted(info)
+            info.setHandlingCompleted()
         }
     }
 
@@ -955,7 +1028,7 @@ class DefaultTTSAgent(
         val info = currentInfo ?: return
 
         listeners.forEach {
-            it.onError(info.getDialogRequestId())
+            it.onError(info.directive.getDialogRequestId())
         }
 
         if (currentState == TTSAgentInterface.State.STOPPED) {
@@ -1005,10 +1078,6 @@ class DefaultTTSAgent(
                 Logger.d(TAG, "[sendEventWithToken] $messageRequest")
             }
         }, namespaceAndName)
-    }
-
-    private fun setHandlingCompleted(info: SpeakDirectiveInfo? = currentInfo) {
-        info?.result?.setCompleted()
     }
 
     override fun requestTTS(
