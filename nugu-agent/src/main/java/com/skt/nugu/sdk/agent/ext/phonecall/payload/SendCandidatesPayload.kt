@@ -16,14 +16,14 @@
 
 package com.skt.nugu.sdk.agent.ext.phonecall.payload
 
-import com.google.gson.Gson
-import com.google.gson.JsonElement
+import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.InteractionControl
 import com.skt.nugu.sdk.agent.ext.phonecall.CallType
 import com.skt.nugu.sdk.agent.ext.phonecall.Context
 import com.skt.nugu.sdk.agent.ext.phonecall.Person
 import com.skt.nugu.sdk.agent.ext.phonecall.RecipientIntended
+import java.lang.reflect.Type
 
 data class SendCandidatesPayload(
     @SerializedName("playServiceId")
@@ -34,12 +34,55 @@ data class SendCandidatesPayload(
     val recipientIntended: RecipientIntended?,
     @SerializedName("callType")
     val callType: CallType?,
+    @SerializedName("searchTargetList")
+    val searchTargetList: Array<SearchTarget>?,
     @SerializedName("candidates")
     val candidates: Array<Person>?,
     @SerializedName("interactionControl")
     val interactionControl: InteractionControl?
 ) {
-    fun toJson(): JsonElement = Gson().toJsonTree(this)
+    companion object {
+        private val GSON: Gson = GsonBuilder().registerTypeAdapter(
+            Array<SearchTarget>::class.java,
+            Deserializer()
+        ).create()
+
+        fun fromJson(json: String): SendCandidatesPayload? = GSON.fromJson(json, SendCandidatesPayload::class.java)
+    }
+
+    enum class SearchTarget{
+        @SerializedName("CONTACT")
+        CONTACT,
+        @SerializedName("EXCHANGE")
+        EXCHANGE,
+        @SerializedName("T114")
+        T114
+    }
+
+    class Deserializer: JsonDeserializer<Array<SearchTarget>> {
+        override fun deserialize(
+            json: JsonElement?,
+            typeOfT: Type?,
+            context: JsonDeserializationContext?
+        ): Array<SearchTarget> {
+            val list = ArrayList<SearchTarget>()
+
+            val jsonArray = json?.asJsonArray ?: return list.toTypedArray()
+
+            jsonArray.forEach {
+                try {
+                    list.add(SearchTarget.valueOf(it.asString))
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+
+            return list.toTypedArray()
+        }
+    }
+
+    fun toJson(): JsonElement = GSON.toJsonTree(this)
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -51,6 +94,10 @@ data class SendCandidatesPayload(
         if (intent != other.intent) return false
         if (recipientIntended != other.recipientIntended) return false
         if (callType != other.callType) return false
+        if (searchTargetList != null) {
+            if (other.searchTargetList == null) return false
+            if (!searchTargetList.contentEquals(other.searchTargetList)) return false
+        } else if (other.searchTargetList != null) return false
         if (candidates != null) {
             if (other.candidates == null) return false
             if (!candidates.contentEquals(other.candidates)) return false
@@ -65,10 +112,9 @@ data class SendCandidatesPayload(
         result = 31 * result + intent.hashCode()
         result = 31 * result + (recipientIntended?.hashCode() ?: 0)
         result = 31 * result + (callType?.hashCode() ?: 0)
+        result = 31 * result + (searchTargetList?.contentHashCode() ?: 0)
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         result = 31 * result + (interactionControl?.hashCode() ?: 0)
         return result
     }
-
-
 }

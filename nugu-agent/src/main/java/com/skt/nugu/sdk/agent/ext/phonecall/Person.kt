@@ -45,9 +45,13 @@ data class Person(
     val contacts: Array<Contact>?
 ) {
     enum class Type {
+        @SerializedName("CONTACT")
         CONTACT,
+        @SerializedName("EXCHANGE")
         EXCHANGE,
+        @SerializedName("T114")
         T114,
+        @SerializedName("NONE")
         NONE
     }
 
