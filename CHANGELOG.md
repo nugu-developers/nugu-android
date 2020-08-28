@@ -1,6 +1,34 @@
 Change Log
 ==========
 
+Version 0.9.19 *(2020-08-28)*
+-----------------------------
+* Fix: Fix not cancel ASR.ExpectSpeech from PlaySync (#1110)
+* Fix: Fix wrong foreground channel check (#1112)
+* Fix: Fix play called twice (#1114)
+* Fix: Fix incorrect error spec in oauth/me (#1116)
+* Fix: Fix focus not release issue (#1118)
+    * Fix SeamlessFocusManager's focusHolder not release focus, after ASR.DM.
+* Fix: Enqueue callback not called (#1125)
+* Fix: Fix invalidated release for FocusInteractor (#1127)
+    * Cancels the job of release that occurred before acquire.
+* Fix: Fix not working ASR (#1131)
+    * Fix ASR.DM cancel by previous not finished ASR.
+    * Fix ASR not working after ASR.DM failed by background focus.
+* Fix: Fix invalid acquire focus at FocusHolder (#1133)
+* Fix: Tracking foreground channel correctly (#1135)
+* Fix: Fix thread issue for asr callback (#1138)
+    * In some device, response receive before onRequested called, so pre call finish before send last attachment.
+* Improve: Apply affectPersistant flag to handle exception case (#1121)
+* Improve: Apply cancel for SeamlessFocusManager (#1123)
+* Improve: Add new introspect of nugu-login-kit  (#1126)
+* Improve: Add new introspect of nugu-login-kit (#1140)
+* Improve: Add cookie to NuguWebView in nugu-service-kit (#1143)
+    * Add method to set custom cookie
+    * Add default cookies clientId, grantType
+* New: Support PhoneCall 1.1 (#1145)
+    * Add searchTargetList at SendCandidates
+
 Version 0.9.18 *(2020-08-21)*
 -----------------------------
 * Fix: Fix missing callback when asr failed by background focus. (#1075)
