@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -160,6 +161,15 @@ class DefaultDisplayAgent(
                 "SHORT" -> 7000L
                 else -> defaultDuration
             }
+        }
+
+        var lastUpdateDirectiveHeader: Header? = null
+        fun refreshUpdateDirectiveHeader(header: Header) {
+            lastUpdateDirectiveHeader?.let {
+                sessionManager.deactivate(it.dialogRequestId, this)
+            }
+            lastUpdateDirectiveHeader = header
+            sessionManager.activate(header.dialogRequestId, this)
         }
 
         var playContext: PlayStackManagerInterface.PlayContext? = null
@@ -405,6 +415,9 @@ class DefaultDisplayAgent(
         templateDirectiveInfoMap.remove(templateId)
         templateControllerMap.remove(templateId)
         sessionManager.deactivate(info.getDialogRequestId(), info)
+        info.lastUpdateDirectiveHeader?.let {
+            sessionManager.deactivate(it.dialogRequestId, info)
+        }
         releaseSyncImmediately(info)
 
         onDisplayCardCleared(info)
@@ -614,6 +627,7 @@ class DefaultDisplayAgent(
     }
 
     override fun update(
+        header: Header,
         token: String,
         payload: String,
         listener: UpdateDirectiveHandler.Controller.OnUpdateListener
@@ -634,6 +648,7 @@ class DefaultDisplayAgent(
                         currentDisplayInfo.getTemplateId()
                     )
                 }
+                currentDisplayInfo.refreshUpdateDirectiveHeader(header)
                 listener.onSuccess()
             } else {
                 listener.onFailure("no matched token (current:$currentToken / update:$token)")
