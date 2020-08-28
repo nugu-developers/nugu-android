@@ -63,8 +63,7 @@ class SendCandidatesDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload =
-            MessageFactory.create(info.directive.payload, SendCandidatesPayload::class.java)
+        val payload = SendCandidatesPayload.fromJson(info.directive.payload)
         if (payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
