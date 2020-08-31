@@ -30,6 +30,13 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
     private val lock = ReentrantLock()
     private val displayLayers = HashSet<InterLayerDisplayPolicyManager.DisplayLayer>()
 
+    private fun isEvaporatableLayer(layerType: LayerType): Boolean =  when(layerType) {
+        LayerType.MEDIA,
+        LayerType.CALL,
+        LayerType.NAVI -> false
+        else -> true
+    }
+
     override fun onDisplayLayerRendered(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
         lock.withLock {
             if(displayLayers.contains(layer)) {
@@ -37,19 +44,11 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
                 return@withLock
             }
 
-            if(layer.getLayerType() == LayerType.INFO) {
-                displayLayers.filter {
-                    when(it.getLayerType()) {
-                        LayerType.MEDIA,
-                        LayerType.CALL,
-                        LayerType.NAVI -> false
-                        else -> !it.getPlayServiceId()
-                            .isNullOrBlank() && it.getPlayServiceId() != layer.getPlayServiceId()
-                    }
-                }.forEach {
-                    Logger.d(TAG, "[onDisplayLayerRendered] clear: $it")
-                    it.clear()
-                }
+            displayLayers.filter {
+                isEvaporatableLayer(it.getLayerType())
+            }.forEach {
+                Logger.d(TAG, "[onDisplayLayerRendered] clear: $it")
+                it.clear()
             }
 
             displayLayers.add(layer)
@@ -85,17 +84,16 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
                 return@withLock
             }
 
+            // maybe sound only layer.
+
+            // clear condition
             displayLayers.filter {
-                it.getPlayServiceId() != layer.getPlayServiceId() && when (it.getLayerType()) {
-                    LayerType.INFO,
-                    LayerType.ALERT,
-                    LayerType.OVERLAY_DISPLAY -> true
-                    else -> false
-                }
+                it.getPlayServiceId() != layer.getPlayServiceId() && isEvaporatableLayer(it.getLayerType())
             }.forEach {
                 Logger.d(TAG, "[onPlayStarted] clear: $it")
                 it.clear()
             }
+
             Logger.d(TAG, "[onPlayStarted] $layer")
         }
     }
