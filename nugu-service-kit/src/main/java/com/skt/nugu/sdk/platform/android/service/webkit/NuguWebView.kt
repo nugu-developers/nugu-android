@@ -74,8 +74,8 @@ class NuguWebView @JvmOverloads constructor(
             "Sdk-Version" to BuildConfig.VERSION_NAME,
             "Phone-Model-Name" to Build.MODEL,
             "Oauth-Redirect-Uri" to redirectUri.toString(),
-            "ClientId" to clientId.toString(),
-            "GrantType" to grantType.toString()
+            "Client-Id" to clientId.toString(),
+            "Grant-Type" to grantType.toString()
         )
     }
 
