@@ -18,10 +18,16 @@
     <string name="connection_failed">Connection to server failed.</string>
     <string name="volume_mute">휴대폰 미디어 볼륨이 무음상태입니다.\n휴대폰의 볼륨을 조절해주세요.</string>
 
-    <string name="user_account_closed">탈퇴한 사용자 입니다.</string>
-    <string name="user_account_paused">휴면 상태 사용자 입니다.</string>
-    <string name="user_device_disconnected">연결 해제된 상태입니다.</string>
-    <string name="user_device_unexpected">내부 검증 토큰이 불일치 합니다.</string>
+    <string name="code_user_account_closed">탈퇴한 사용자 입니다.</string>
+    <string name="code_user_account_paused">휴면 상태 사용자 입니다.</string>
+    <string name="code_user_device_disconnected">연결 해제된 상태입니다.</string>
+    <string name="code_user_device_unexpected">내부 검증 토큰이 불일치 합니다.</string>
+
+    <string name="error_unauthorized">인가되지 않은 사용자 정보 입니다.</string>
+    <string name="error_unauthorized_client">인가되지 않은 클라이언트 입니다.</string>
+    <string name="error_invalid_token">유효하지 않은 토큰 입니다.</string>
+    <string name="error_invalid_client">유효하지 않은 클라이언 정보 입니다.</string>
+    <string name="error_access_denied">접근이 거부 되었습니다.</string>
 
     <string name="menu_setting">setting</string>
     <string name="setting_account_info">T아이디 회원정보</string>

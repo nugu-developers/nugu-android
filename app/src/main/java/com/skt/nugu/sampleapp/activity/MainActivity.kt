@@ -448,6 +448,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.getClient().connect()
     }
 
+    /** See more details in [LoginActivity.handleOAuthError] **/
     override fun onRefreshTokenError(error: NuguOAuthError) {
         Log.e(TAG, "An unexpected error has occurred. " +
                 "Please check the logs for details\n" +
@@ -458,37 +459,68 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 .message(R.string.authorization_failure_message)
                 .show()
             return
-        } else if(error.error == NuguOAuthError.INVALID_CLIENT && error.description == NuguOAuthError.FINISHED) {
-            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                .message(R.string.service_finished)
-                .show()
         } else {
             when(error.code) {
                 NuguOAuthError.USER_ACCOUNT_CLOSED -> {
                     NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_account_closed)
+                        .message(R.string.code_user_account_closed)
                         .show()
                 }
                 NuguOAuthError.USER_ACCOUNT_PAUSED -> {
                     NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_account_paused)
+                        .message(R.string.code_user_account_paused)
                         .show()
                 }
                 NuguOAuthError.USER_DEVICE_DISCONNECTED -> {
                     NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_device_disconnected)
+                        .message(R.string.code_user_device_disconnected)
                         .show()
                 }
                 NuguOAuthError.USER_DEVICE_UNEXPECTED -> {
                     NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.user_device_unexpected)
+                        .message(R.string.code_user_device_unexpected)
                         .show()
                 }
                 else -> {
-                    // check detail
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.authentication_failed)
-                        .show()
+                    when(error.error) {
+                        NuguOAuthError.UNAUTHORIZED -> {
+                            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                .message(R.string.error_unauthorized)
+                                .show()
+                        }
+                        NuguOAuthError.UNAUTHORIZED_CLIENT -> {
+                            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                .message(R.string.error_unauthorized_client)
+                                .show()
+                        }
+                        NuguOAuthError.INVALID_TOKEN -> {
+                            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                .message(R.string.error_invalid_token)
+                                .show()
+                        }
+                        NuguOAuthError.INVALID_CLIENT -> {
+                            if(error.description == NuguOAuthError.FINISHED) {
+                                NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                    .message(R.string.service_finished)
+                                    .show()
+                            } else {
+                                NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                    .message(R.string.error_invalid_client)
+                                    .show()
+                            }
+                        }
+                        NuguOAuthError.ACCESS_DENIED -> {
+                            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                .message(R.string.error_access_denied)
+                                .show()
+                        }
+                        else -> {
+                            // check detail
+                            NuguSnackbar.with(findViewById(R.id.baseLayout))
+                                .message(R.string.authentication_failed)
+                                .show()
+                        }
+                    }
                 }
             }
         }
