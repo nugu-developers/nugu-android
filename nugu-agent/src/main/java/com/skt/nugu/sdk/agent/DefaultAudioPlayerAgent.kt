@@ -577,7 +577,6 @@ class DefaultAudioPlayerAgent(
                 }
                 waitPlayExecuteInfo?.let {
                     Logger.d(TAG, "$willBeHandleDirectives, ${it.directive.getMessageId()}")
-                    Logger.d(TAG, "${it.directive.getMessageId()}, asdf")
                     if(willBeHandleDirectives.containsKey(it.directive.getMessageId())) {
                         Logger.d(TAG, "[onPlayerStopped] waitPlayExecuteInfo is not handled yet, handled at onExecute()")
                     } else {
