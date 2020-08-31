@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -160,6 +161,7 @@ class SpeechRecognizerAggregator(
     ) {
         if(keywordDetector == null) {
             Log.w(TAG, "[startListeningWithTrigger] ignored: keywordDetector is null")
+            listeningCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             return
         }
 
@@ -345,7 +347,7 @@ class SpeechRecognizerAggregator(
         Log.d(TAG, "[stop]")
         executor.submit {
             executeStopTrigger()
-            executeStopListening(true)
+            speechProcessor.stop(true)
         }
     }
 
@@ -353,12 +355,6 @@ class SpeechRecognizerAggregator(
         Log.d(TAG, "[stopListening]")
         executor.submit {
             Log.d(TAG, "[stopListening] on executor")
-            executeStopListening(cancel)
-        }
-    }
-
-    private fun executeStopListening(cancel: Boolean) {
-        if(speechProcessorState.isActive()) {
             speechProcessor.stop(cancel)
         }
     }
