@@ -55,6 +55,10 @@ class NuguWebView @JvmOverloads constructor(
         fun onCloseWindow(reason: String?)
     }
 
+    interface DocumentListener {
+        fun onSetTitle(title: String)
+    }
+
     @Keep
     enum class THEME { DARK, LIGHT }
 
@@ -86,6 +90,7 @@ class NuguWebView @JvmOverloads constructor(
     var webViewClientListener: WebViewClientListener? = null
     var webChromeClientListener: WebChromeClientListener? = null
     var windowListener: WindowListener? = null
+    var documentListener: DocumentListener? = null
     var redirectUri : String? = null
     var clientId : String? = null
     var grantType : String? = null
@@ -134,6 +139,12 @@ class NuguWebView @JvmOverloads constructor(
     override fun closeWindow(reason: String?) {
         webView.post {
             windowListener?.onCloseWindow(reason)
+        }
+    }
+
+    override fun setTitle(title: String) {
+        webView.post {
+            documentListener?.onSetTitle(title)
         }
     }
 

@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.platform.android.service.webkit.NuguWebView
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.service.webkit.Const
 
-class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListener {
+class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListener, NuguWebView.DocumentListener {
     companion object {
         private const val TAG = "SettingsAgreementActivity"
         private val REASON_WITHDRAWN_USER = "WITHDRAWN_USER"
@@ -60,6 +60,7 @@ class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListene
             appVersion = BuildConfig.VERSION_NAME
             theme = NuguWebView.THEME.LIGHT
             windowListener = this@SettingsAgreementActivity
+            documentListener = this@SettingsAgreementActivity
             loadUrl(Const.AGREEMENT_URL)
         }
     }
@@ -87,5 +88,9 @@ class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListene
         } else {
             finish()
         }
+    }
+
+    override fun onSetTitle(title: String) {
+        this.title = title
     }
 }
