@@ -26,6 +26,7 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
         fun openExternalApp(androidScheme: String?, androidAppId: String?)
         fun openInAppBrowser(url: String)
         fun closeWindow(reason: String?)
+        fun setTitle(title: String)
     }
 
     @Keep
@@ -33,6 +34,8 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
         val method: String,
         val body: JsonObject? = null
     )
+    @Keep
+    data class SetTitle(val title: String)
 
     @Keep
     data class OpenExternalApp(val androidScheme: String?, val androidAppId: String?)
@@ -69,6 +72,16 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
             if (it.method == "closeWindow") {
                 val info = gson.fromJson(it.body, CloseWindow::class.java)
                 listener.closeWindow(info?.reason)
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun setTitle(parameter: String) {
+        gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
+            if (it.method == "setTitle") {
+                val info = gson.fromJson(it.body, SetTitle::class.java)
+                listener.setTitle(info?.title.toString())
             }
         }
     }
