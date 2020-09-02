@@ -212,6 +212,7 @@ class DefaultAudioPlayerAgent(
 
     private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
     private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, this, NAMESPACE)
+    private val focusChangeListeners = CopyOnWriteArraySet<ChannelObserver>()
 
     inner class AudioInfo(
         val payload: PlayPayload,
@@ -484,7 +485,7 @@ class DefaultAudioPlayerAgent(
                         }
                     }
                 }
-            }
+            }.get()
         }
 
         override fun onCancel(directive: Directive) {
@@ -529,14 +530,26 @@ class DefaultAudioPlayerAgent(
             }
 
             if (FocusState.FOREGROUND != focus) {
+                val latch = CountDownLatch(1)
+                val focusChangeListener = object : ChannelObserver {
+                    override fun onFocusChanged(newFocus: FocusState) {
+                        if(newFocus == FocusState.BACKGROUND || newFocus == FocusState.FOREGROUND) {
+                            latch.countDown()
+                        }
+                    }
+                }
+                focusChangeListeners.add(focusChangeListener)
                 if (!focusManager.acquire(focusRequester, focusChannel)
                 ) {
+                    latch.countDown()
                     progressTimer.stop()
                     sendPlaybackFailedEvent(
                         ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
                         "Could not acquire $channelName for $NAMESPACE"
                     )
                 }
+                latch.await()
+                focusChangeListeners.remove(focusChangeListener)
             }  else {
                 executeOnForegroundFocus()
             }
@@ -1028,6 +1041,10 @@ class DefaultAudioPlayerAgent(
 
     override fun onFocusChanged(newFocus: FocusState) {
         Logger.d(TAG, "[onFocusChanged] newFocus : $newFocus")
+        focusChangeListeners.forEach {
+            it.onFocusChanged(newFocus)
+        }
+
         val wait = executor.submit {
             executeOnFocusChanged(newFocus)
         }
