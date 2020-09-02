@@ -20,17 +20,14 @@ interface InterLayerDisplayPolicyManager {
     interface Layer {
         fun getLayerType(): LayerType
         fun getDialogRequestId(): String
+        fun getPushPlayServiceId(): String?
     }
 
     interface DisplayLayer: Layer {
-        fun getPlayServiceId(): String?
         fun clear()
     }
 
-    interface PlayLayer: Layer {
-        fun getPlayServiceId(): String?
-        fun getPushPlayServiceId(): String?
-    }
+    interface PlayLayer: Layer
 
     fun onDisplayLayerRendered(layer: DisplayLayer)
     fun onDisplayLayerCleared(layer: DisplayLayer)

@@ -102,8 +102,6 @@ class AudioPlayerTemplateHandler(
         }
 
         val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
-            override fun getPlayServiceId(): String? = payload.playServiceId
-
             override fun clear() {
                 executor.submit {
                     executeCancelUnknownInfo(this@TemplateDirectiveInfo, true)
@@ -113,6 +111,7 @@ class AudioPlayerTemplateHandler(
             override fun getLayerType(): LayerType = LayerType.MEDIA
 
             override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+            override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
         }
 
         override fun getPlayServiceId(): String? = payload.playServiceId

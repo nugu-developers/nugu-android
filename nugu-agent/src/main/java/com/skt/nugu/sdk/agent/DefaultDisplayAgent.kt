@@ -100,8 +100,6 @@ class DefaultDisplayAgent(
         }
 
         val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
-            override fun getPlayServiceId(): String? = payload.playServiceId
-
             override fun clear() {
                 executor.submit {
                     executeCancelUnknownInfo(getTemplateId(), true)
@@ -116,6 +114,7 @@ class DefaultDisplayAgent(
             }
 
             override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
+            override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
         }
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
