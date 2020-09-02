@@ -70,11 +70,6 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
                 return@withLock
             }
 
-            if(layer.getPlayServiceId().isNullOrBlank()) {
-                Logger.d(TAG, "[onPlayStarted] keep display layer, PlayServiceId is empty.")
-                return@withLock
-            }
-
             val existDisplayForPlay = displayLayers.filter {
                 it.getDialogRequestId() == layer.getDialogRequestId()
             }.any()
@@ -88,7 +83,7 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
 
             // clear condition
             displayLayers.filter {
-                it.getPlayServiceId() != layer.getPlayServiceId() && isEvaporatableLayer(it.getLayerType())
+                it.getPushPlayServiceId() != layer.getPushPlayServiceId() && isEvaporatableLayer(it.getLayerType())
             }.forEach {
                 Logger.d(TAG, "[onPlayStarted] clear: $it")
                 it.clear()

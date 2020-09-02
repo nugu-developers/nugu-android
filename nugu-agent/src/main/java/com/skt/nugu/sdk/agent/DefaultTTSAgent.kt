@@ -134,7 +134,6 @@ class DefaultTTSAgent(
         var state = TTSAgentInterface.State.IDLE
 
         val layerForDisplayPolicy = object : InterLayerDisplayPolicyManager.PlayLayer {
-            override fun getPlayServiceId(): String? = payload.playServiceId
             override fun getPushPlayServiceId(): String? =
                 payload.playStackControl?.getPushPlayServiceId()
             override fun getLayerType(): LayerType = LayerType.INFO

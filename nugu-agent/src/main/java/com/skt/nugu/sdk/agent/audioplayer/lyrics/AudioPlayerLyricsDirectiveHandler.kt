@@ -133,7 +133,6 @@ class AudioPlayerLyricsDirectiveHandler(
                     }
                 }
                 interLayerDisplayPolicyManager.onPlayStarted(object : InterLayerDisplayPolicyManager.PlayLayer {
-                    override fun getPlayServiceId(): String? = playServiceId
                     override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
                     override fun getLayerType(): LayerType = LayerType.MEDIA
                     override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
@@ -155,7 +154,6 @@ class AudioPlayerLyricsDirectiveHandler(
                     }
                 }
                 interLayerDisplayPolicyManager.onPlayStarted(object : InterLayerDisplayPolicyManager.PlayLayer {
-                    override fun getPlayServiceId(): String? = payload.playServiceId
                     override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
                     override fun getLayerType(): LayerType = LayerType.MEDIA
                     override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
