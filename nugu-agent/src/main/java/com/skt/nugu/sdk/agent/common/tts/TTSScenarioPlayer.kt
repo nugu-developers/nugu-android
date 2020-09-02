@@ -59,6 +59,7 @@ class TTSScenarioPlayer(
     abstract class Source
         : PlaySynchronizerInterface.SynchronizeObject {
         var isCancelRequested = false
+        var isStartAllowed = false
         internal var stopCalled = false
 
         abstract fun getReader(): Attachment.Reader?
@@ -135,6 +136,8 @@ class TTSScenarioPlayer(
                 return@submit
             }
 
+            source.isStartAllowed = true
+
             if(executeStartPreparedSourceIfExist()) {
                 releaseFocus()
             }
@@ -167,6 +170,11 @@ class TTSScenarioPlayer(
     private fun executeStartPreparedSourceOnForeground(): Boolean {
         Logger.d(TAG, "[executeStartPreparedSourceOnForeground] $preparedSource")
         val source = preparedSource ?: return false
+
+        if(!source.isStartAllowed) {
+            Logger.d(TAG, "[executeStartPreparedSourceOnForeground] start not allowed yet")
+        }
+
         preparedSource = null
         currentSource = source
         playSynchronizer.startSync(source, DUMMY_PLAY_SYNC_CALLBACK)

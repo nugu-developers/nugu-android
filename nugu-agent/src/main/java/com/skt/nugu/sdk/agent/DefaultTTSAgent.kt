@@ -129,6 +129,7 @@ class DefaultTTSAgent(
         var sourceId: SourceId = SourceId.ERROR()
         var isPlaybackInitiated = false
         var isDelayedCancel = false
+        var isHandled = false
         var cancelByStop = false
         var state = TTSAgentInterface.State.IDLE
 
@@ -345,9 +346,10 @@ class DefaultTTSAgent(
             return
         }
 
+        nextSpeakInfo.isHandled = true
+
         if (currentInfo == null) {
-            preparedSpeakInfo = null
-            executePlaySpeakInfo(nextSpeakInfo)
+            executePreparePlaySpeakInfo()
         }
     }
 
@@ -538,8 +540,20 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun executePlaySpeakInfo(speakInfo: SpeakDirectiveInfo) {
-        Logger.d(TAG, "[executePlaySpeakInfo] $speakInfo")
+    private fun executePreparePlaySpeakInfo() {
+        val speakInfo = preparedSpeakInfo
+        Logger.d(TAG, "[executePreparePlaySpeakInfo] $speakInfo")
+        if(speakInfo == null) {
+            Logger.d(TAG, "[executePreparePlaySpeakInfo] no prepared")
+            return
+        }
+
+        if(!speakInfo.isHandled) {
+            Logger.d(TAG, "[executePreparePlaySpeakInfo] not handled yet.")
+            return
+        }
+
+        preparedSpeakInfo = null
         currentInfo = speakInfo
         val text = speakInfo.payload.text
         interLayerDisplayPolicyManager.onPlayStarted(speakInfo.layerForDisplayPolicy)
@@ -552,7 +566,7 @@ class DefaultTTSAgent(
         } else {
             if (!focusManager.acquire(focusRequester, focusChannel)
             ) {
-                Logger.e(TAG, "[executePlaySpeakInfo] not registered channel!")
+                Logger.e(TAG, "[executePreparePlaySpeakInfo] not registered channel!")
             }
         }
     }
@@ -571,21 +585,21 @@ class DefaultTTSAgent(
             else -> TTSAgentInterface.State.STOPPED
         }
 
-        Logger.d(TAG, "[executeOnFocusChanged] currentState: $currentState, desireState: $desireState")
-        if (currentState == desireState) {
+        val targetInfo = currentInfo
+
+        Logger.d(TAG, "[executeOnFocusChanged] currentState: $currentState, desireState: $desireState, $targetInfo: $targetInfo")
+        if(targetInfo == null) {
             return
         }
 
-        val targetInfo = currentInfo
-
         when (newFocus) {
             FocusState.FOREGROUND -> {
-                targetInfo?.let {
+                targetInfo.let {
                     val countDownLatch = CountDownLatch(1)
                     playSynchronizer.startSync(it.playSyncObject,
                         object : PlaySynchronizerInterface.OnRequestSyncListener {
                             override fun onGranted() {
-                                executeTransitState()
+                                executeTransitState(it)
                                 countDownLatch.countDown()
                             }
 
@@ -597,17 +611,17 @@ class DefaultTTSAgent(
                 }
             }
             FocusState.BACKGROUND -> {
-                executeTransitState()
+                executeTransitState(targetInfo)
                 waitUntilNotPlaying(targetInfo)
             }
             FocusState.NONE -> {
-                executeTransitState()
+                executeTransitState(targetInfo)
             }
         }
     }
 
-    private fun waitUntilNotPlaying(targetInfo: SpeakDirectiveInfo?) {
-        if(targetInfo == null || targetInfo.state != TTSAgentInterface.State.PLAYING) {
+    private fun waitUntilNotPlaying(targetInfo: SpeakDirectiveInfo) {
+        if(targetInfo.state != TTSAgentInterface.State.PLAYING) {
             Logger.d(TAG, "[waitUntilNotPlaying] no need to wait")
             return
         }
@@ -715,12 +729,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[onReleased] this is currentInfo")
 
         currentInfo = null
-
-        val nextInfo = preparedSpeakInfo
-        if (nextInfo != null) {
-            preparedSpeakInfo = null
-            executePlaySpeakInfo(nextInfo)
-        }
+        executePreparePlaySpeakInfo()
     }
 
     private fun executeTryReleaseFocus() {
@@ -800,13 +809,13 @@ class DefaultTTSAgent(
         }
     }
 
-    private fun executeTransitState() {
+    private fun executeTransitState(info: SpeakDirectiveInfo) {
         val newState = desireState
         Logger.d(TAG, "[executeStateChange] newState: $newState")
 
         when (newState) {
             TTSAgentInterface.State.PLAYING -> {
-                currentInfo?.apply {
+                info.apply {
                     isPlaybackInitiated = true
                     startPlaying(this)
                 }
@@ -814,7 +823,7 @@ class DefaultTTSAgent(
 
             TTSAgentInterface.State.STOPPED,
             TTSAgentInterface.State.FINISHED -> {
-                currentInfo?.apply {
+                info.apply {
                     if (isPlaybackInitiated) {
                         stopPlaying(this)
                     } else {
@@ -829,8 +838,7 @@ class DefaultTTSAgent(
             }
         }
 
-        val speakInfo = currentInfo
-        if (speakInfo != null && speakInfo.isDelayedCancel) {
+        if (info.isDelayedCancel) {
             executeCancelCurrentSpeakInfo()
         }
     }
