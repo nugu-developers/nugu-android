@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartStreaming
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toFilename
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toJson
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.*
@@ -123,12 +122,8 @@ class EventsService(
             .addPathSegment("events")
             .build()
         val headers = Headers.Builder()
-        call.headers()?.let {
-            if(it is EventMessageHeaders) {
-                for (i in 0 until it.size()) {
-                    headers[it.name(i)] = it.value(i)
-                }
-            }
+        call.headers()?.forEach {
+            headers[it.key] = it.value
         }
 
         if(!streamingCall.isExecuted()) {

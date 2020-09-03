@@ -122,6 +122,7 @@ class DefaultASRAgent(
     private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
     private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
     private val onMultiturnListeners = HashSet<ASRAgentInterface.OnMultiturnListener>()
+    private var onHeaderAttachingCallback : ASRAgentInterface.OnHeaderAttachingCallback? = null
 
     private val executor = Executors.newSingleThreadExecutor()
     private var state = ASRAgentInterface.State.IDLE
@@ -718,7 +719,8 @@ class DefaultASRAgent(
 
                     speechToTextConverterEventObserver.onCancel(cause, dialogRequestId)
                 }
-            }
+            },
+            onHeaderAttachingCallback
         ).also {
             if(it == null) {
                 expectSpeechDirectiveParam?.let {
@@ -1106,5 +1108,10 @@ class DefaultASRAgent(
             }
             currentParam = null
         }
+    }
+
+    override fun setOnHeaderAttachingCallback(callback: ASRAgentInterface.OnHeaderAttachingCallback) {
+        Logger.d(TAG, "[setOnHeaderAttachingCallback] callback: $callback")
+        onHeaderAttachingCallback = callback
     }
 }

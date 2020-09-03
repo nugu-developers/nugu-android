@@ -80,7 +80,8 @@ class DefaultServerSpeechRecognizer(
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
-        resultListener: ASRAgentInterface.OnResultListener?
+        resultListener: ASRAgentInterface.OnResultListener?,
+        headerAttachingCallback: ASRAgentInterface.OnHeaderAttachingCallback?
     ): SpeechRecognizer.Request? {
         Logger.d(
             TAG,
@@ -137,7 +138,7 @@ class DefaultServerSpeechRecognizer(
             .build()
 
         val call = messageSender.newCall(
-            eventMessage
+            eventMessage, headerAttachingCallback?.getHeaders()
         )
 
         val thread = createSenderThread(

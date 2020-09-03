@@ -20,12 +20,12 @@ import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.ChannelBuilderUtils
+import com.skt.nugu.sdk.client.port.transport.grpc.HeaderClientInterceptor
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -53,7 +53,8 @@ internal class DeviceGatewayClient(policy: Policy,
                                    var isHandOff: Boolean)
     : Transport
     , PingService.Observer
-    , EventStreamService.Observer {
+    , EventStreamService.Observer
+    , HeaderClientInterceptor.Delegate {
     companion object {
         private const val TAG = "DeviceGatewayClient"
         private const val maxAsyncCallsSize = 100
@@ -71,6 +72,8 @@ internal class DeviceGatewayClient(policy: Policy,
     private var healthCheckPolicy = policy.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
+
+    private var eventMessageHeaders: Map<String, String>? = null
 
     var asyncCalls = Collections.synchronizedMap(object : LinkedHashMap<String, Call>() {
         private val serialVersionUID = 301077066599181567L
@@ -116,7 +119,7 @@ internal class DeviceGatewayClient(policy: Policy,
         }
 
         policy.apply {
-            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(this, authorization).build()
+            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(this, authorization, this@DeviceGatewayClient).build()
             currentChannel.also {
                 pingService = PingService(VoiceServiceGrpc.newBlockingStub(it),
                     healthCheckPolicy,
@@ -143,6 +146,7 @@ internal class DeviceGatewayClient(policy: Policy,
         crashReportService = null
         ChannelBuilderUtils.shutdown(currentChannel)
         currentChannel = null
+        eventMessageHeaders = null
         isConnected.set(false)
     }
 
@@ -175,6 +179,9 @@ internal class DeviceGatewayClient(policy: Policy,
             }
             is EventMessageRequest -> {
                 asyncCalls[request.dialogRequestId] = call
+                call.headers()?.let {
+                    eventMessageHeaders = it
+                }
                 event?.sendEventMessage(toProtobufMessage(request))
             }
             is CrashReportMessageRequest -> {
@@ -428,9 +435,13 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
-        headers: MessageHeaders?,
+        headers: Map<String, String>?,
         listener: MessageSender.OnSendMessageListener
     ): Call {
         throw NotImplementedError()
+    }
+
+    override fun getHeaders(): Map<String, String>? {
+        return eventMessageHeaders
     }
 }

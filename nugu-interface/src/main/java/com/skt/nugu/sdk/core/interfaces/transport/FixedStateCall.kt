@@ -19,7 +19,6 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
-import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 
 /**
  * This class returns a predefined status
@@ -31,10 +30,9 @@ class FixedStateCall(
 ) : Call {
     private var listener: MessageSender.OnSendMessageListener? = listener
     override fun request() = request
-    override fun headers(): MessageHeaders {
+    override fun headers(): Map<String, String>? {
         throw NotImplementedError()
     }
-
     override fun isCanceled() = false
 
     override fun cancel() {
