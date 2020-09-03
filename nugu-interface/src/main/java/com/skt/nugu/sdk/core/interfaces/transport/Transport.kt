@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.core.interfaces.transport
 
 import com.skt.nugu.sdk.core.interfaces.message.Call
-import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 
@@ -68,5 +67,5 @@ interface Transport {
                           connectionTimeout: Int,
                           charge: String) {}
 
-    fun newCall(activeTransport: Transport?, request: MessageRequest, headers: MessageHeaders?, listener: MessageSender.OnSendMessageListener): Call
+    fun newCall(activeTransport: Transport?, request: MessageRequest, headers: Map<String, String>?, listener: MessageSender.OnSendMessageListener): Call
 }

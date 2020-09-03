@@ -21,11 +21,14 @@ import io.grpc.*
 /**
  *  Implementation of ClientInterceptor
  **/
-internal class HeaderClientInterceptor(val authorization: String) : ClientInterceptor {
+class HeaderClientInterceptor(val authorization: String, val delegate: Delegate) : ClientInterceptor {
     companion object {
         private const val TAG = "HeaderClientInterceptor"
         internal val AUTH_TOKEN_KEY: Metadata.Key<String> =
             Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
+    }
+    interface Delegate {
+        fun getHeaders() : Map<String, String>?
     }
 
     override fun <ReqT, RespT> interceptCall(
@@ -37,6 +40,9 @@ internal class HeaderClientInterceptor(val authorization: String) : ClientInterc
 
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
                 headers.put(AUTH_TOKEN_KEY, authorization)
+                delegate.getHeaders()?.forEach {
+                    headers.put(Metadata.Key.of(it.key, Metadata.ASCII_STRING_MARSHALLER), it.value)
+                }
 
                 super.start(object :
                     ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {

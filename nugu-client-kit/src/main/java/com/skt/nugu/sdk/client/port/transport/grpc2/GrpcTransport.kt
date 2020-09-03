@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.TransportState.*
 import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayTransport
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.*
 import java.util.concurrent.Executors
@@ -383,7 +382,7 @@ internal class GrpcTransport private constructor(
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
-        headers: MessageHeaders?,
+        headers: Map<String, String>?,
         listener: MessageSender.OnSendMessageListener
     ) =  Grpc2Call(activeTransport, request, headers, listener)
 }

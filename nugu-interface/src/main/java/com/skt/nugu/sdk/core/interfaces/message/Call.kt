@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.core.interfaces.message
 
 interface Call {
     fun request(): MessageRequest
-    fun headers(): MessageHeaders?
+    fun headers(): Map<String, String>?
     fun isCanceled(): Boolean
     fun cancel()
     fun execute(): Status

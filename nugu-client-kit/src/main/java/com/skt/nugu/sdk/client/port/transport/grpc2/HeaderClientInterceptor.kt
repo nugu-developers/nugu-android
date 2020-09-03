@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.*
 
@@ -24,7 +23,7 @@ import io.grpc.*
  **/
 class HeaderClientInterceptor(val authorization: String, val delegate: Delegate) : ClientInterceptor {
     interface Delegate {
-        fun getHeaders() : EventMessageHeaders?
+        fun getHeaders() : Map<String, String>?
     }
 
     companion object {
@@ -42,10 +41,8 @@ class HeaderClientInterceptor(val authorization: String, val delegate: Delegate)
 
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
                 headers.put(AUTH_TOKEN_KEY, authorization)
-                delegate.getHeaders()?.let {
-                    for (i in 0 until it.size()) {
-                        headers.put(Metadata.Key.of(it.name(i), Metadata.ASCII_STRING_MARSHALLER), it.value(i))
-                    }
+                delegate.getHeaders()?.forEach {
+                    headers.put(Metadata.Key.of(it.key, Metadata.ASCII_STRING_MARSHALLER), it.value)
                 }
 
                 super.start(object :

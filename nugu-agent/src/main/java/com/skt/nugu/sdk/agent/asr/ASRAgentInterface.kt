@@ -227,4 +227,21 @@ interface ASRAgentInterface {
      * @param listener the multi-turn listener that removed
      */
     fun removeOnMultiturnListener(listener: OnMultiturnListener)
+
+    /**
+     * Interface of a callback to attach a set of request headers
+     */
+    interface OnHeaderAttachingCallback {
+        /**
+         * Returns the value corresponding to the specified field
+         * @param the header name
+         * @return the header value
+         */
+        fun getHeaders() : Map<String, String>?
+    }
+
+    /**
+     * Set a callback to attach a set of request headers
+     */
+    fun setOnHeaderAttachingCallback(callback: OnHeaderAttachingCallback)
 }

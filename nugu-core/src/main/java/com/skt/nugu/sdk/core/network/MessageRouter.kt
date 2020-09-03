@@ -115,7 +115,7 @@ class MessageRouter(
     /**
      * Prepares the [MessageRequest] to be executed at some point in the future.
      */
-    override fun newCall(request: MessageRequest, headers: MessageHeaders?): Call {
+    override fun newCall(request: MessageRequest, headers: Map<String, String>?): Call {
         return activeTransport?.newCall(activeTransport, request, headers, this) ?: FixedStateCall(Status(
             Status.Code.FAILED_PRECONDITION
         ).withDescription("Transport is not initialized"), request, this)

@@ -30,9 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
@@ -78,7 +76,7 @@ internal class DeviceGatewayClient(policy: Policy,
 
     private val scheduler  = Executors.newSingleThreadScheduledExecutor()
 
-    private var eventMessageHeaders: EventMessageHeaders? = null
+    private var eventMessageHeaders: Map<String, String>? = null
     /**
      * Set a policy.
      * @return the ServerPolicy
@@ -194,7 +192,7 @@ internal class DeviceGatewayClient(policy: Policy,
             is AttachmentMessageRequest -> event?.sendAttachmentMessage(call)
             is EventMessageRequest -> {
                 call.headers()?.let {
-                    eventMessageHeaders = it as EventMessageHeaders
+                    eventMessageHeaders = it
                 }
                 event?.sendEventMessage(call)
             }
@@ -352,13 +350,13 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
-        headers: MessageHeaders?,
+        headers: Map<String, String>?,
         listener: MessageSender.OnSendMessageListener
     ): Call {
         throw NotImplementedError()
     }
 
-    override fun getHeaders(): EventMessageHeaders? {
+    override fun getHeaders(): Map<String, String>? {
         return eventMessageHeaders
     }
 }
