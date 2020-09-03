@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc2
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.Call
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
@@ -210,6 +211,7 @@ internal class RegistryClient(
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
+        headers: MessageHeaders?,
         listener: MessageSender.OnSendMessageListener
     ): Call {
         throw NotImplementedError()

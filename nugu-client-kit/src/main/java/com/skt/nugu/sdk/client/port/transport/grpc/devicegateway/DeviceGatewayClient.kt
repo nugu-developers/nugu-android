@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
@@ -427,6 +428,7 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
+        headers: MessageHeaders?,
         listener: MessageSender.OnSendMessageListener
     ): Call {
         throw NotImplementedError()

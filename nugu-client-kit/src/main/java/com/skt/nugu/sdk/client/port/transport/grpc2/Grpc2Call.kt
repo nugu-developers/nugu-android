@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
@@ -25,7 +26,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
-internal class Grpc2Call(val transport: Transport?, val request: MessageRequest, listener: MessageSender.OnSendMessageListener) :
+internal class Grpc2Call(val transport: Transport?, val request: MessageRequest, val headers: MessageHeaders?, listener: MessageSender.OnSendMessageListener) :
     MessageCall {
     private var executed = false
     private var canceled = false
@@ -39,6 +40,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     }
 
     override fun request() = request
+    override fun headers() = headers
 
     override fun enqueue(callback: MessageSender.Callback?): Boolean {
         synchronized(this) {

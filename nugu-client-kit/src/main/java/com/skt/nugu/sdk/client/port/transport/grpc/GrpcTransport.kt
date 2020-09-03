@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.Chan
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
@@ -368,7 +369,10 @@ internal class GrpcTransport private constructor(
         return true
     }
 
-    override fun newCall(activeTransport: Transport?, request: MessageRequest, listener: MessageSender.OnSendMessageListener): Call {
-        return GrpcCall(scheduler, activeTransport, request, listener)
-    }
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        headers: MessageHeaders?,
+        listener: MessageSender.OnSendMessageListener
+    ) = GrpcCall(scheduler, activeTransport, request, headers, listener)
 }

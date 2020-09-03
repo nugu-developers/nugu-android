@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.message
 
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import java.io.IOException
 
 /**
@@ -36,7 +37,7 @@ interface MessageSender {
     /**
      * Prepares the request to be executed at some point in the future.
      */
-    fun newCall(request: MessageRequest): Call
+    fun newCall(request: MessageRequest, headers: MessageHeaders? = null): Call
 
     /**
      * The callback to the result of sending the message

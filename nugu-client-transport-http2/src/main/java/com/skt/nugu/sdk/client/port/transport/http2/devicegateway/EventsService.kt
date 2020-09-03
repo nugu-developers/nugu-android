@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.client.port.transport.http2.multipart.MultipartStreaming
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toFilename
 import com.skt.nugu.sdk.client.port.transport.http2.utils.MessageRequestConverter.toJson
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.*
@@ -121,17 +122,24 @@ class EventsService(
             .addPathSegment("v2")
             .addPathSegment("events")
             .build()
+        val headers = Headers.Builder()
+        call.headers()?.let {
+            if(it is EventMessageHeaders) {
+                for (i in 0 until it.size()) {
+                    headers[it.name(i)] = it.value(i)
+                }
+            }
+        }
 
         if(!streamingCall.isExecuted()) {
-            client.newCall(Request.Builder().url(httpUrl)
-                .post(message.toMultipartRequestBody(EVENT, true, call))
-                .build()).enqueue(responseCallback)
+            val request = Request.Builder().url(httpUrl)
+                .post(message.toMultipartRequestBody(EVENT, true, call)).headers(headers.build())
+            client.newCall(request.build()).enqueue(responseCallback)
         } else {
             val request = Request.Builder().url(httpUrl)
                 .post(message.toMultipartRequestBody(EVENT, false, call))
-                .tag(responseCallback)
-                .build()
-            streamingCall.set(client.newCall(request)).enqueue(responseCallback)
+                .tag(responseCallback).headers(headers.build())
+            streamingCall.set(client.newCall(request.build())).enqueue(responseCallback)
         }
         return true
     }

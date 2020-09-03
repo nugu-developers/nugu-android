@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
+import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc2.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.BackOff
@@ -29,7 +30,9 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
@@ -53,7 +56,7 @@ internal class DeviceGatewayClient(policy: Policy,
                                    private val authorization: String?,
                                    var isHandOff: Boolean)
     :
-    DeviceGatewayTransport {
+    DeviceGatewayTransport, HeaderClientInterceptor.Delegate {
     companion object {
         private const val TAG = "DeviceGatewayClient"
     }
@@ -74,6 +77,8 @@ internal class DeviceGatewayClient(policy: Policy,
     private val isConnected = AtomicBoolean(false)
 
     private val scheduler  = Executors.newSingleThreadScheduledExecutor()
+
+    private var eventMessageHeaders: EventMessageHeaders? = null
     /**
      * Set a policy.
      * @return the ServerPolicy
@@ -105,7 +110,11 @@ internal class DeviceGatewayClient(policy: Policy,
         }
 
         policy.apply {
-            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(this, authorization).build()
+            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(
+                this,
+                authorization,
+                this@DeviceGatewayClient
+            ).build()
             currentChannel?.apply {
                 eventsService =
                     EventsService(
@@ -158,6 +167,7 @@ internal class DeviceGatewayClient(policy: Policy,
         crashReportService = null
         ChannelBuilderUtils.shutdown(currentChannel)
         currentChannel = null
+        eventMessageHeaders = null
         isConnected.set(false)
     }
 
@@ -182,7 +192,12 @@ internal class DeviceGatewayClient(policy: Policy,
         val request = call.request()
         val result = when(request) {
             is AttachmentMessageRequest -> event?.sendAttachmentMessage(call)
-            is EventMessageRequest -> event?.sendEventMessage(call)
+            is EventMessageRequest -> {
+                call.headers()?.let {
+                    eventMessageHeaders = it as EventMessageHeaders
+                }
+                event?.sendEventMessage(call)
+            }
             is CrashReportMessageRequest -> crash?.sendCrashReport(request)
             else -> false
         } ?: false
@@ -337,8 +352,13 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
+        headers: MessageHeaders?,
         listener: MessageSender.OnSendMessageListener
     ): Call {
         throw NotImplementedError()
+    }
+
+    override fun getHeaders(): EventMessageHeaders? {
+        return eventMessageHeaders
     }
 }
