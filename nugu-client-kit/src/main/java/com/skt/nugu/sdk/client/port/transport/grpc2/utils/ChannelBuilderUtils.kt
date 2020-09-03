@@ -33,7 +33,8 @@ class ChannelBuilderUtils {
         /** configures the gRPC channel. */
         fun createChannelBuilderWith(
             policy: ServerPolicy,
-            authorization: String?
+            authorization: String?,
+            delegate: HeaderClientInterceptor.Delegate
         ): ManagedChannelBuilder<*> {
             val channelBuilder = ManagedChannelBuilder
                 .forAddress(policy.hostname, policy.port)
@@ -41,7 +42,8 @@ class ChannelBuilderUtils {
             Logger.i(TAG,  "userAgent=${userAgent()}")
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
-                    authorization.toString()
+                    authorization.toString(),
+                    delegate
                 )
             )
         }

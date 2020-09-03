@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2
 
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -29,6 +30,7 @@ internal class HTTP2Call(
     val timeoutScheduler: ScheduledExecutorService,
     val transport: Transport?,
     val request: MessageRequest,
+    val headers: MessageHeaders?,
     listener: MessageSender.OnSendMessageListener
 ) : MessageCall {
     private val timeoutFutures = ConcurrentHashMap<Int, ScheduledFuture<*>>()
@@ -44,6 +46,7 @@ internal class HTTP2Call(
     }
 
     override fun request() = request
+    override fun headers() = headers
 
     override fun enqueue(callback: MessageSender.Callback?): Boolean {
         synchronized(this) {

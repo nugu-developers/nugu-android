@@ -15,15 +15,4 @@
  */
 package com.skt.nugu.sdk.core.interfaces.message
 
-interface Call {
-    fun request(): MessageRequest
-    fun headers(): MessageHeaders?
-    fun isCanceled(): Boolean
-    fun cancel()
-    fun execute(): Status
-    fun enqueue(callback: MessageSender.Callback?): Boolean
-    fun noAck(): Call
-    fun result(status: Status)
-    fun callTimeout(millis: Long): Call
-    fun callTimeout(): Long
-}
+interface MessageHeaders

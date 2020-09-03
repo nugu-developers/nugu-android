@@ -29,6 +29,7 @@ import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayT
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import java.util.concurrent.Executors
 
 /**
@@ -385,7 +386,10 @@ internal class HTTP2Transport(
         return true
     }
 
-    override fun newCall(activeTransport: Transport?, request: MessageRequest, listener: MessageSender.OnSendMessageListener): Call {
-        return HTTP2Call(scheduler, activeTransport, request, listener)
-    }
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        headers: MessageHeaders?,
+        listener: MessageSender.OnSendMessageListener
+    ) = HTTP2Call(scheduler, activeTransport, request, headers, listener)
 }

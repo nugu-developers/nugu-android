@@ -15,13 +15,18 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.*
 
 /**
  *  Implementation of ClientInterceptor
  **/
-internal class HeaderClientInterceptor(val authorization: String) : ClientInterceptor {
+class HeaderClientInterceptor(val authorization: String, val delegate: Delegate) : ClientInterceptor {
+    interface Delegate {
+        fun getHeaders() : EventMessageHeaders?
+    }
+
     companion object {
         private const val TAG = "HeaderClientInterceptor"
         internal val AUTH_TOKEN_KEY: Metadata.Key<String> =
@@ -37,6 +42,11 @@ internal class HeaderClientInterceptor(val authorization: String) : ClientInterc
 
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
                 headers.put(AUTH_TOKEN_KEY, authorization)
+                delegate.getHeaders()?.let {
+                    for (i in 0 until it.size()) {
+                        headers.put(Metadata.Key.of(it.name(i), Metadata.ASCII_STRING_MARSHALLER), it.value(i))
+                    }
+                }
 
                 super.start(object :
                     ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {

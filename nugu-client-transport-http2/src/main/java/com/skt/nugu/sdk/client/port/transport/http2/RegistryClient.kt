@@ -20,6 +20,7 @@ import com.google.gson.JsonParser
 import com.skt.nugu.sdk.client.port.transport.http2.HttpHeaders.Companion.APPLICATION_JSON
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
@@ -200,6 +201,7 @@ class RegistryClient(
     override fun newCall(
         activeTransport: Transport?,
         request: MessageRequest,
+        headers: MessageHeaders?,
         listener: MessageSender.OnSendMessageListener
     ): com.skt.nugu.sdk.core.interfaces.message.Call {
         throw NotImplementedError()

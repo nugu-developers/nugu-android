@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc
 
+import com.skt.nugu.sdk.core.interfaces.message.MessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -29,6 +30,7 @@ internal class GrpcCall(
     val timeoutScheduler: ScheduledExecutorService,
     val transport: Transport?,
     val request: MessageRequest,
+    val headers: MessageHeaders?,
     listener: MessageSender.OnSendMessageListener
 ) :
     MessageCall {
@@ -45,6 +47,7 @@ internal class GrpcCall(
     }
 
     override fun request() = request
+    override fun headers() = headers
 
     private val hashCode : Int by lazy {
         when(request) {

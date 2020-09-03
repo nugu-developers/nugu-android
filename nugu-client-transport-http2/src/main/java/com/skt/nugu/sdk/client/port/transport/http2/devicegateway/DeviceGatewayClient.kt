@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageHeaders
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
@@ -153,7 +154,6 @@ internal class DeviceGatewayClient(
         pingService = null
 
         ChannelBuilderUtils.shutdown(executor, client)
-
         isConnected.set(false)
     }
 
@@ -328,7 +328,12 @@ internal class DeviceGatewayClient(
         messageConsumer?.consumeAttachment(attachmentMessage)
     }
 
-    override fun newCall(activeTransport: Transport?, request: MessageRequest,listener: MessageSender.OnSendMessageListener): Call {
-        TODO("Not yet implemented")
+    override fun newCall(
+        activeTransport: Transport?,
+        request: MessageRequest,
+        headers: MessageHeaders?,
+        listener: MessageSender.OnSendMessageListener
+    ): Call {
+        throw NotImplementedError()
     }
 }
