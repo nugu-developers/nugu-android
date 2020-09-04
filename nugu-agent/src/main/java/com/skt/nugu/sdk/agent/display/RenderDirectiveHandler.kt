@@ -76,6 +76,9 @@ class RenderDirectiveHandler(
         // supported for v1.4
         private const val NAME_DUMMY = "Dummy"
 
+        // supported for v1.6
+        private const val NAME_UNIFIED_SEARCH1 = "UnifiedSearch1"
+
         private val FULLTEXT1 = NamespaceAndName(
             DefaultDisplayAgent.NAMESPACE,
             NAME_FULLTEXT1
@@ -235,6 +238,12 @@ class RenderDirectiveHandler(
             DefaultDisplayAgent.NAMESPACE,
             NAME_DUMMY
         )
+
+        // v1.6
+        private val UNIFIED_SEARCH1 = NamespaceAndName(
+            DefaultDisplayAgent.NAMESPACE,
+            NAME_UNIFIED_SEARCH1
+        )
     }
 
     interface Controller {
@@ -332,6 +341,8 @@ class RenderDirectiveHandler(
         configuration[TIMER] = blockingPolicy
 
         configuration[DUMMY] = blockingPolicy
+
+        configuration[UNIFIED_SEARCH1] = blockingPolicy
 
         return configuration
     }
