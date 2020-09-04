@@ -29,7 +29,8 @@ import java.util.concurrent.CopyOnWriteArraySet
 
 class ChipsAgent(
     directiveSequencer: DirectiveSequencerInterface,
-    contextStateProviderRegistry: ContextStateProviderRegistry
+    contextStateProviderRegistry: ContextStateProviderRegistry,
+    contextSetter: ContextSetterInterface
 ) : CapabilityAgent
     , ChipsAgentInterface
     , SupportedInterfaceContextProvider
@@ -51,6 +52,9 @@ class ChipsAgent(
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         directiveSequencer.addDirectiveHandler(RenderDirectiveHandler(this))
+
+        provideState(contextSetter, namespaceAndName, ContextType.FULL, 0)
+        provideState(contextSetter, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     override fun getInterfaceName(): String = NAMESPACE

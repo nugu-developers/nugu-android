@@ -81,6 +81,9 @@ class DefaultTextAgent(
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
+
+        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
+        provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     override fun addInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {

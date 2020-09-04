@@ -257,7 +257,13 @@ class DefaultBluetoothAgent(
          * Performs initialization.
          */
         contextManager.setStateProvider(namespaceAndName, this)
-        bluetoothProvider?.setOnStreamStateChangeListener(StreamingChangeHandler(focusManager, focusChannelName))
+
+        if(bluetoothProvider == null) {
+            provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
+            provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
+        } else {
+            bluetoothProvider.setOnStreamStateChangeListener(StreamingChangeHandler(focusManager, focusChannelName))
+        }
     }
 
     internal data class StartDiscoverableModePayload(
