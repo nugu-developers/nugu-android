@@ -77,6 +77,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
+import com.skt.nugu.sdk.core.interfaces.context.ContextType
 import com.skt.nugu.sdk.core.interfaces.context.OsContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
@@ -818,11 +819,17 @@ class NuguAndroidClient private constructor(
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
         chipsAgent?.addListener(dialogUXStateAggregator)
 
-        val osContextProvider = object : OsContextProvider() {
-            override fun getType(): Type = Type.ANDROID
-        }
+        initOsContextProvider()
+    }
 
-        client.setStateProvider(osContextProvider.namespaceAndName, osContextProvider)
+    private fun initOsContextProvider() {
+        object : OsContextProvider() {
+            override fun getType(): Type = Type.ANDROID
+        }.apply {
+            client.setStateProvider(namespaceAndName, this)
+            provideState(client.getSdkContainer().getContextManager(), namespaceAndName, ContextType.FULL, 0)
+            provideState(client.getSdkContainer().getContextManager(), namespaceAndName, ContextType.COMPACT, 0)
+        }
     }
 
     override fun connect() {
