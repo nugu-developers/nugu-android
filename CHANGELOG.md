@@ -1,6 +1,32 @@
 Change Log
 ==========
 
+Version 0.9.20 *(2020-09-04)*
+-----------------------------
+* Fix: Return preHandle for TTS after finish current item (#1149)
+    * Ensure execution for blocked directive before next tts handle requested.
+* Fix: Fix not stop requested on BUSY (#1154)
+* Fix: Change NuguWebView cookies naming convention from CamelCase to kebap-case (#1158)
+* Fix: Fix not working stop trigger (#1175)
+* Improve: Add Last-Asr-Event-Time in grpc header (#1130)
+    * Fix to send Header to Transport
+    * Implement to send header in event of DefaultASRAgent
+* Improve: Update policy for display management (#1152)
+    * Clear evaporatable layers when new display rendered
+    * Clear evaporatable layers when new play started which is not match playServiceId
+* Improve: Add setTitle Javascript interface to NuguWebView (#1161)
+* Improve: Prevent the tts player from starting before directive handled. (#1163)
+* Improve: Return handle of AudioPlayer.Play after focus request finished. (#1165)
+* Improve: Preset static context (#1173)
+    * client.os
+    * supportedInterfaces's static context
+* New: Apply holding session while Display.Update (#1146)
+    * If receive Display.Update(B) for display(A) and Session.Set(B), hold Session.Set(B) until display(A) cleared.
+* New: Support Text Interface v1.3 (#1156)
+    * Apply playServiceId of TextSource directive.
+* New: Support Display Interface v1.6 (#1171)
+    * Add UnifiedSearch1 Directive
+
 Version 0.9.19 *(2020-08-28)*
 -----------------------------
 * Fix: Fix not cancel ASR.ExpectSpeech from PlaySync (#1110)

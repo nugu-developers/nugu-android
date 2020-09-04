@@ -4,6 +4,6 @@ ext {
     silvertrayVersion="4.2.4"
 
 
-    nuguVersionCode=919
-    nuguVersionName="0.9.19"
+    nuguVersionCode=920
+    nuguVersionName="0.9.20"
 }
