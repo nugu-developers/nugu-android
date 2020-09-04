@@ -279,7 +279,7 @@ class SpeechRecognizerAggregator(
                     this.epdParam = epdParam
                     this.startListeningCallback = callback
                     isTriggerStoppingByStartListening = true
-                    executeStopTrigger()
+                    keywordDetector?.stopDetect()
                 }
                 SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
                 SpeechRecognizerAggregatorInterface.State.SPEECH_START -> {
@@ -346,7 +346,7 @@ class SpeechRecognizerAggregator(
     override fun stop() {
         Log.d(TAG, "[stop]")
         executor.submit {
-            executeStopTrigger()
+            keywordDetector?.stopDetect()
             speechProcessor.stop(true)
         }
     }
@@ -367,14 +367,7 @@ class SpeechRecognizerAggregator(
 
         Log.d(TAG, "[stopTrigger]")
         executor.submit {
-            executeStopTrigger()
-        }
-    }
-
-    private fun executeStopTrigger() {
-        Log.d(TAG, "[executeStopTrigger]")
-        if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
-            keywordDetector?.stopDetect()
+            keywordDetector.stopDetect()
         }
     }
 
