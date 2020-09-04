@@ -712,6 +712,7 @@ class NuguAndroidClient private constructor(
                 addAgentFactory(ChipsAgent.NAMESPACE, object: AgentFactory<ChipsAgent> {
                     override fun create(container: SdkContainer): ChipsAgent = ChipsAgent(
                         container.getDirectiveSequencer(),
+                        container.getContextManager(),
                         container.getContextManager()
                     )
                 })

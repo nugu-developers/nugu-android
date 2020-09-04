@@ -74,6 +74,8 @@ class DefaultSoundAgent(
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
+        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
+        provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     private val contextState = object : BaseContextState {
