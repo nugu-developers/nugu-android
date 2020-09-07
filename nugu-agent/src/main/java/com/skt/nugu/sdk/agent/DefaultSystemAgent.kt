@@ -150,6 +150,10 @@ class DefaultSystemAgent(
     private val executor = Executors.newSingleThreadExecutor()
     private val observers = HashSet<SystemAgentInterface.Listener>()
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     init {
         /**
          * Performs initialization.
@@ -215,10 +219,6 @@ class DefaultSystemAgent(
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
-    }
-
-    private val contextState = object : BaseContextState {
-        override fun value(): String = COMPACT_STATE
     }
 
     override fun provideState(
