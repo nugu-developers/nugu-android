@@ -555,11 +555,6 @@ class DefaultTTSAgent(
 
         preparedSpeakInfo = null
         currentInfo = speakInfo
-        val text = speakInfo.payload.text
-        interLayerDisplayPolicyManager.onPlayStarted(speakInfo.layerForDisplayPolicy)
-        listeners.forEach {
-            it.onReceiveTTSText(text, speakInfo.directive.getDialogRequestId())
-        }
 
         if (currentFocus == FocusState.FOREGROUND) {
             executeOnFocusChanged(currentFocus, true)
@@ -596,6 +591,12 @@ class DefaultTTSAgent(
             FocusState.FOREGROUND -> {
                 targetInfo.let {
                     val countDownLatch = CountDownLatch(1)
+                    val text = targetInfo.payload.text
+                    interLayerDisplayPolicyManager.onPlayStarted(targetInfo.layerForDisplayPolicy)
+                    listeners.forEach {listener->
+                        listener.onReceiveTTSText(text, targetInfo.directive.getDialogRequestId())
+                    }
+
                     playSynchronizer.startSync(it.playSyncObject,
                         object : PlaySynchronizerInterface.OnRequestSyncListener {
                             override fun onGranted() {
