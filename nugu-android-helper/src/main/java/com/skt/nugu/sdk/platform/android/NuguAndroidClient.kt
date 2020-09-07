@@ -82,6 +82,7 @@ import com.skt.nugu.sdk.core.interfaces.context.OsContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.Logger
@@ -220,6 +221,9 @@ class NuguAndroidClient private constructor(
                 null
             }
 
+        // Log
+        internal var logger: LogInterface? = AndroidLogger()
+
         /**
          * @param factory the player factory to create players used at NUGU
          */
@@ -345,6 +349,8 @@ class NuguAndroidClient private constructor(
 
         fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
 
+        fun logger(logger: LogInterface) = apply { this.logger = logger }
+
         fun build(): NuguAndroidClient {
             return NuguAndroidClient(this)
         }
@@ -357,7 +363,7 @@ class NuguAndroidClient private constructor(
 
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate
-    ).logger(AndroidLogger())
+    ).logger(builder.logger)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {

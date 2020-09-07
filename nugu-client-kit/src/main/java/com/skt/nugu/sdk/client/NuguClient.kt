@@ -88,7 +88,7 @@ class NuguClient private constructor(
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
 
-        fun logger(logger: LogInterface) = apply { this.logger = logger }
+        fun logger(logger: LogInterface?) = apply { this.logger = logger }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
         fun build() = NuguClient(this)
