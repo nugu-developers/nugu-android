@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.9.21 *(2020-09-07)*
+-----------------------------
+* Fix: Fix crash for v0.9.20 (#1178)
+
 Version 0.9.20 *(2020-09-04)*
 -----------------------------
 * Fix: Return preHandle for TTS after finish current item (#1149)
