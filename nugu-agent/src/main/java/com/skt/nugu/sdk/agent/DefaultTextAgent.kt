@@ -79,6 +79,10 @@ class DefaultTextAgent(
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     init {
         contextManager.setStateProvider(namespaceAndName, this)
 
@@ -170,10 +174,6 @@ class DefaultTextAgent(
         configuration[TEXT_SOURCE] = nonBlockingPolicy
 
         return configuration
-    }
-
-    private val contextState = object : BaseContextState {
-        override fun value(): String = COMPACT_STATE
     }
 
     override fun provideState(

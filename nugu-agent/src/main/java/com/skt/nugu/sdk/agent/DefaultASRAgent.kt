@@ -198,6 +198,10 @@ class DefaultASRAgent(
             }
         }
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     init {
         serverEpdSpeechRecognizer =
             DefaultServerSpeechRecognizer(
@@ -478,10 +482,6 @@ class DefaultASRAgent(
         } else {
             executeStopRecognitionOnAttributeUnset(messageId)
         }
-    }
-
-    private val contextState = object : BaseContextState {
-        override fun value(): String = COMPACT_STATE
     }
 
     override fun provideState(

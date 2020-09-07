@@ -49,6 +49,10 @@ class ChipsAgent(
 
     private val listeners = CopyOnWriteArraySet<ChipsAgentInterface.Listener>()
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         directiveSequencer.addDirectiveHandler(RenderDirectiveHandler(this))
@@ -58,10 +62,6 @@ class ChipsAgent(
     }
 
     override fun getInterfaceName(): String = NAMESPACE
-
-    private val contextState = object : BaseContextState {
-        override fun value(): String = COMPACT_STATE
-    }
 
     override fun provideState(
         contextSetter: ContextSetterInterface,
