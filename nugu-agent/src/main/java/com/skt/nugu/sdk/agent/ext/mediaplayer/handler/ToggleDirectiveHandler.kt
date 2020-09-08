@@ -85,6 +85,8 @@ class ToggleDirectiveHandler (
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -111,6 +113,8 @@ class ToggleDirectiveHandler (
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }

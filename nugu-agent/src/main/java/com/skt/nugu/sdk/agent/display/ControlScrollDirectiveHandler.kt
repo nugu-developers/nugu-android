@@ -123,6 +123,9 @@ class ControlScrollDirectiveHandler(
 
                     override fun onSuccess(request: MessageRequest) {
                     }
+
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         }, namespaceAndName)

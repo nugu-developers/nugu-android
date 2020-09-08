@@ -92,6 +92,8 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
                         override fun onSuccess(request: MessageRequest) {
                         }
+                        override fun onResponseStart(request: MessageRequest) {
+                        }
                     })
 
                     return
@@ -121,6 +123,8 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
                         override fun onSuccess(request: MessageRequest) {
                         }
+                        override fun onResponseStart(request: MessageRequest) {
+                        }
                     })
                 } else {
                     val message = EventMessageRequest.Builder(
@@ -142,6 +146,8 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         }
 
                         override fun onSuccess(request: MessageRequest) {
+                        }
+                        override fun onResponseStart(request: MessageRequest) {
                         }
                     })
                 }

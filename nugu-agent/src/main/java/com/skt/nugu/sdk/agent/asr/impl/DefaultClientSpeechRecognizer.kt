@@ -268,6 +268,10 @@ class DefaultClientSpeechRecognizer(
                     override fun onSuccess(request: MessageRequest) {
                         Logger.d(TAG, "[onSuccess] request: $request")
                     }
+
+                    override fun onResponseStart(request: MessageRequest) {
+                        Logger.d(TAG, "[onResponseStart] request: $request")
+                    }
                 })) {
                 request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
                 endPointDetector.stopDetector()

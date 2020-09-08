@@ -983,6 +983,9 @@ class DefaultTTSAgent(
                     executePlaybackStoppedCompleted(info)
                 }
             }
+
+            override fun onResponseStart(request: MessageRequest) {
+            }
         })) {
             executePlaybackStoppedCompleted(info)
         }
@@ -1025,6 +1028,8 @@ class DefaultTTSAgent(
                     executeTryReleaseFocus()
                     info.setHandlingCompleted()
                 }
+            }
+            override fun onResponseStart(request: MessageRequest) {
             }
         })) {
             executeTryReleaseFocus()
@@ -1129,6 +1134,8 @@ class DefaultTTSAgent(
                     }
                     override fun onSuccess(request: MessageRequest) {
 
+                    }
+                    override fun onResponseStart(request: MessageRequest) {
                     }
                 })
             }

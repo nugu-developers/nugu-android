@@ -195,6 +195,8 @@ class DefaultSoundAgent(
                     }
                     override fun onSuccess(request: MessageRequest) {
                     }
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         }, namespaceAndName)

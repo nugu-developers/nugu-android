@@ -895,6 +895,9 @@ class DefaultAudioPlayerAgent(
 
                             override fun onSuccess(request: MessageRequest) {
                             }
+
+                            override fun onResponseStart(request: MessageRequest) {
+                            }
                         })
                     }
                 }
@@ -925,6 +928,9 @@ class DefaultAudioPlayerAgent(
 
                             override fun onSuccess(request: MessageRequest) {
                             }
+
+                            override fun onResponseStart(request: MessageRequest) {
+                            }
                         })
                     }
                 }
@@ -954,6 +960,9 @@ class DefaultAudioPlayerAgent(
                             }
 
                             override fun onSuccess(request: MessageRequest) {
+                            }
+
+                            override fun onResponseStart(request: MessageRequest) {
                             }
                         })
                     }
@@ -1508,6 +1517,9 @@ class DefaultAudioPlayerAgent(
 
                         override fun onSuccess(request: MessageRequest) {
                         }
+
+                        override fun onResponseStart(request: MessageRequest) {
+                        }
                     })
                     Logger.d(TAG, "[sendEvent] $messageRequest")
                 }
@@ -1569,6 +1581,9 @@ class DefaultAudioPlayerAgent(
                         }
 
                         override fun onSuccess(request: MessageRequest) {
+                        }
+
+                        override fun onResponseStart(request: MessageRequest) {
                         }
                     })
                 }
@@ -1646,6 +1661,9 @@ class DefaultAudioPlayerAgent(
                             }
 
                             override fun onSuccess(request: MessageRequest) {
+                            }
+
+                            override fun onResponseStart(request: MessageRequest) {
                             }
                         })
                         Logger.d(TAG, "[sendEvent] $messageRequest")

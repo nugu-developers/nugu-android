@@ -82,6 +82,9 @@ class MoveDirectiveHandler(
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -108,6 +111,9 @@ class MoveDirectiveHandler(
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }

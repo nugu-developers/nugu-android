@@ -113,6 +113,8 @@ class GetMessageDirectiveHandler (
                                 override fun onSuccess(request: MessageRequest) {
                                     onComplete()
                                 }
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })) {
                                 onComplete()
                             }
@@ -142,6 +144,8 @@ class GetMessageDirectiveHandler (
 
                                 override fun onSuccess(request: MessageRequest) {
                                     onComplete()
+                                }
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })) {
                                 onComplete()

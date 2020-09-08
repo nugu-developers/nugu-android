@@ -184,6 +184,9 @@ class AudioPlayerLyricsDirectiveHandler(
 
                     override fun onSuccess(request: MessageRequest) {
                     }
+
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         }, NamespaceAndName("supportedInterfaces", NAMESPACE))
@@ -207,6 +210,9 @@ class AudioPlayerLyricsDirectiveHandler(
                     }
 
                     override fun onSuccess(request: MessageRequest) {
+                    }
+
+                    override fun onResponseStart(request: MessageRequest) {
                     }
                 })
             }

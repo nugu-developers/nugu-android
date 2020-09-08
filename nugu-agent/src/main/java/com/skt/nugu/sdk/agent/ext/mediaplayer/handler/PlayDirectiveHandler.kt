@@ -83,6 +83,9 @@ class PlayDirectiveHandler(
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -109,6 +112,9 @@ class PlayDirectiveHandler(
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }
