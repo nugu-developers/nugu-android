@@ -78,6 +78,8 @@ class ElementSelectedEventHandler(
                     override fun onSuccess(request: MessageRequest) {
                         callback?.onSuccess(dialogRequestId)
                     }
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         })

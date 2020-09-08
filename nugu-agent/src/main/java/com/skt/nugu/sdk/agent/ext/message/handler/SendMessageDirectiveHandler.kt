@@ -80,6 +80,9 @@ class SendMessageDirectiveHandler(
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -106,6 +109,9 @@ class SendMessageDirectiveHandler(
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }

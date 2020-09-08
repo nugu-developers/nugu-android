@@ -174,6 +174,9 @@ class DefaultServerSpeechRecognizer(
                     handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
                 }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
             }
+
+            override fun onResponseStart(request: MessageRequest) {
+            }
         })
 
         return request

@@ -206,6 +206,8 @@ class DefaultExtensionAgent(
                     }
                     override fun onSuccess(request: MessageRequest) {
                     }
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         }, namespaceAndName)
@@ -253,6 +255,8 @@ class DefaultExtensionAgent(
                     }
                     override fun onSuccess(request: MessageRequest) {
                         callback?.onSuccess(dialogRequestId)
+                    }
+                    override fun onResponseStart(request: MessageRequest) {
                     }
                 })
             }

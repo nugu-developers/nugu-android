@@ -82,6 +82,8 @@ class RewindDirectiveHandler(
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -108,6 +110,8 @@ class RewindDirectiveHandler(
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }

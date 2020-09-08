@@ -269,6 +269,9 @@ class PhoneCallAgent(
 
                     override fun onSuccess(request: MessageRequest) {
                     }
+
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         })
@@ -292,6 +295,9 @@ class PhoneCallAgent(
 
                     override fun onSuccess(request: MessageRequest) {
                     }
+
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         }, namespaceAndName)
@@ -314,6 +320,9 @@ class PhoneCallAgent(
                     }
 
                     override fun onSuccess(request: MessageRequest) {
+                    }
+
+                    override fun onResponseStart(request: MessageRequest) {
                     }
                 })
             }

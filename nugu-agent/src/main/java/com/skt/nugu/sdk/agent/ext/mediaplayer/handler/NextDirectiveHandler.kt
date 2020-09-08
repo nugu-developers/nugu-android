@@ -84,6 +84,9 @@ class NextDirectiveHandler(
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -110,6 +113,9 @@ class NextDirectiveHandler(
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }

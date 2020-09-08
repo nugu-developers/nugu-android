@@ -131,6 +131,8 @@ class CloseDirectiveHandler(
 
                     override fun onSuccess(request: MessageRequest) {
                     }
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
                 })
             }
         }, NamespaceAndName(

@@ -84,6 +84,8 @@ class SearchDirectiveHandler (
 
                                 override fun onSuccess(request: MessageRequest) {
                                 }
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
                             })
                         }
                     })
@@ -110,6 +112,8 @@ class SearchDirectiveHandler (
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
+                                }
+                                override fun onResponseStart(request: MessageRequest) {
                                 }
                             })
                         }

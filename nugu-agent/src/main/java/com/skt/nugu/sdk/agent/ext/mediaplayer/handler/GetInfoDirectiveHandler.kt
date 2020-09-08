@@ -66,6 +66,9 @@ class GetInfoDirectiveHandler(
 
                             override fun onSuccess(request: MessageRequest) {
                             }
+
+                            override fun onResponseStart(request: MessageRequest) {
+                            }
                         })
                     }
                 })
