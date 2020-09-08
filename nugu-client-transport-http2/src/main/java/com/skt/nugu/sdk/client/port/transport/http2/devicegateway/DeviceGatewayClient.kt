@@ -34,8 +34,6 @@ import okhttp3.*
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -178,7 +176,7 @@ internal class DeviceGatewayClient(
             is AttachmentMessageRequest -> {
                 val result = event.sendAttachmentMessage(request)
                 if(result) {
-                    call.result(SDKStatus.OK)
+                    call.onComplete(SDKStatus.OK)
                 }
                 result
             }

@@ -33,6 +33,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     private var listener: MessageSender.OnSendMessageListener? = listener
     private var noAck = false
     private var callTimeoutMillis = 1000 * 10L
+    private var invokeStartEvent = true
 
     companion object{
         private const val TAG = "GrpcCall"
@@ -60,12 +61,12 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         this.callback = callback
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+            onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
         }
 
         if(noAck) {
-            result(Status.OK)
+            onComplete(Status.OK)
         }
         return true
     }
@@ -80,7 +81,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             canceled = true
         }
         Logger.d(TAG, "cancel")
-        result(Status.CANCELLED.withDescription("Client Closed Request"))
+        onComplete(Status.CANCELLED.withDescription("Client Closed Request"))
     }
 
     override fun execute(): Status {
@@ -111,14 +112,17 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
                 result = Status.OK
                 latch.countDown()
             }
+
+            override fun onResponseStart(request: MessageRequest) {
+            }
         }
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+            onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
 
         if(noAck) {
-            result(Status.OK)
+            onComplete(Status.OK)
         }
         try {
             latch.await(callTimeoutMillis, TimeUnit.MILLISECONDS)
@@ -128,7 +132,14 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         return result
     }
 
-    override fun result(status: Status) {
+    override fun onStart() {
+        if(invokeStartEvent) {
+            callback?.onResponseStart(request())
+            invokeStartEvent = false
+        }
+    }
+
+    override fun onComplete(status: Status) {
         // Notify Callback
         if (status.isOk()) {
             callback?.onSuccess(request())

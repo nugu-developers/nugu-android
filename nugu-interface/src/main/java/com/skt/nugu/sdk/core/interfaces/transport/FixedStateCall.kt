@@ -45,7 +45,7 @@ class FixedStateCall(
 
     override fun enqueue(callback: MessageSender.Callback?): Boolean {
         callback?.onFailure(request(), status)
-        result(status)
+        onComplete(status)
         return false
     }
 
@@ -54,7 +54,10 @@ class FixedStateCall(
         return this
     }
 
-    override fun result(status: Status) {
+    override fun onStart() {
+    }
+
+    override fun onComplete(status: Status) {
         listener?.onPostSendMessage(request(), status)
         listener = null
     }

@@ -40,6 +40,7 @@ internal class GrpcCall(
     private var listener: MessageSender.OnSendMessageListener? = listener
     private var callTimeoutMillis = 1000 * 10L
     private var noAck = false
+    private var invokeStartEvent = true
 
     companion object{
         private const val TAG = "GrpcCall"
@@ -76,12 +77,12 @@ internal class GrpcCall(
         scheduleTimeout()
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+            onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
         }
 
         if(noAck) {
-            result(Status.OK)
+            onComplete(Status.OK)
         }
         return true
     }
@@ -89,7 +90,7 @@ internal class GrpcCall(
     private fun scheduleTimeout() {
         if(hashCode != -1) {
             timeoutFutures[hashCode] = timeoutScheduler.schedule({
-                result(Status.DEADLINE_EXCEEDED)
+                onComplete(Status.DEADLINE_EXCEEDED)
             }, callTimeoutMillis, TimeUnit.MILLISECONDS)
         }
     }
@@ -111,7 +112,7 @@ internal class GrpcCall(
             canceled = true
         }
         Logger.d(TAG, "cancel")
-        result(Status.CANCELLED.withDescription("Client Closed Request"))
+        onComplete(Status.CANCELLED.withDescription("Client Closed Request"))
     }
 
     override fun execute(): Status {
@@ -141,14 +142,17 @@ internal class GrpcCall(
                 result = Status.OK
                 latch.countDown()
             }
+
+            override fun onResponseStart(request: MessageRequest) {
+            }
         }
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+            onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
 
         if(noAck) {
-            result(Status.OK)
+            onComplete(Status.OK)
         }
 
         try {
@@ -164,7 +168,14 @@ internal class GrpcCall(
         return this
     }
 
-    override fun result(status: Status) {
+    override fun onStart() {
+        if(invokeStartEvent) {
+            callback?.onResponseStart(request())
+            invokeStartEvent = false
+        }
+    }
+
+    override fun onComplete(status: Status) {
         cancelScheduledTimeout()
 
         // Notify Callback

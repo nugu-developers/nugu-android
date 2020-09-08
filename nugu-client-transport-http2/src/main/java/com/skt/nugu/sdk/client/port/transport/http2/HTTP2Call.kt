@@ -39,6 +39,7 @@ internal class HTTP2Call(
     private var listener: MessageSender.OnSendMessageListener? = listener
     private var callTimeoutMillis = 1000 * 10L
     private var noAck = false
+    private var invokeStartEvent = true
 
     companion object{
         private const val TAG = "HTTP2Call"
@@ -68,12 +69,12 @@ internal class HTTP2Call(
         scheduleTimeout()
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+            onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
         }
 
         if(noAck) {
-            result(Status.OK)
+            onComplete(Status.OK)
         }
         return true
     }
@@ -88,7 +89,7 @@ internal class HTTP2Call(
             canceled = true
         }
         Logger.d(TAG, "cancel")
-        result(Status.CANCELLED.withDescription("Client Closed Request"))
+        onComplete(Status.CANCELLED.withDescription("Client Closed Request"))
     }
 
     override fun execute(): Status {
@@ -119,14 +120,17 @@ internal class HTTP2Call(
                 result = Status.OK
                 latch.countDown()
             }
+
+            override fun onResponseStart(request: MessageRequest) {
+            }
         }
 
         if (transport?.send(this) != true) {
-            result(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+            onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
 
         if(noAck) {
-            result(Status.OK)
+            onComplete(Status.OK)
         }
         try {
             latch.await(callTimeoutMillis, TimeUnit.MILLISECONDS)
@@ -136,7 +140,14 @@ internal class HTTP2Call(
         return result
     }
 
-    override fun result(status: Status) {
+    override fun onStart() {
+        if(invokeStartEvent) {
+            callback?.onResponseStart(request())
+            invokeStartEvent = false
+        }
+    }
+
+    override fun onComplete(status: Status) {
         cancelScheduledTimeout()
 
         // Notify Callback
@@ -162,7 +173,7 @@ internal class HTTP2Call(
     private fun scheduleTimeout() {
         if(hashCode != -1) {
             timeoutFutures[hashCode] = timeoutScheduler.schedule({
-                result(Status.DEADLINE_EXCEEDED)
+                onComplete(Status.DEADLINE_EXCEEDED)
             }, callTimeoutMillis, TimeUnit.MILLISECONDS)
         }
     }

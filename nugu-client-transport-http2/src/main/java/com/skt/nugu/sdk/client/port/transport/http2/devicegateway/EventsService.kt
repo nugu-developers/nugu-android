@@ -157,26 +157,26 @@ class EventsService(
                     }
                 }
                 HttpURLConnection.HTTP_BAD_REQUEST -> {
-                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.INTERNAL)
+                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.INTERNAL)
                     observer.onError(Status.INTERNAL)
                 }
                 HttpURLConnection.HTTP_UNAUTHORIZED,
                 HttpURLConnection.HTTP_FORBIDDEN -> {
-                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNAUTHENTICATED)
+                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNAUTHENTICATED)
                     observer.onError(Status.UNAUTHENTICATED)
                 }
                 HttpURLConnection.HTTP_BAD_GATEWAY,
                 HttpURLConnection.HTTP_UNAVAILABLE,
                 HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> {
-                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNAVAILABLE)
+                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNAVAILABLE)
                     observer.onError(Status.UNAVAILABLE)
                 }
                 HttpURLConnection.HTTP_UNSUPPORTED_TYPE -> {
-                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNIMPLEMENTED)
+                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNIMPLEMENTED)
                     observer.onError(Status.UNIMPLEMENTED)
                 }
                 else -> {
-                    call.getRequestBody().call?.result(com.skt.nugu.sdk.core.interfaces.message.Status.UNKNOWN)
+                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNKNOWN)
                     observer.onError(Status.UNKNOWN)
                 }
             }
@@ -188,7 +188,7 @@ class EventsService(
             val status = Status.fromThrowable(throwable)
             Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $throwable")
 
-            call?.result(SDKStatus.fromCode(status.code.value).apply {
+            call?.onComplete(SDKStatus.fromCode(status.code.value).apply {
                 description = status.description
             })
 

@@ -44,6 +44,7 @@ interface MessageSender {
     interface Callback {
         fun onFailure(request: MessageRequest, status: Status)
         fun onSuccess(request: MessageRequest)
+        fun onResponseStart(request: MessageRequest)
     }
 
     /**
