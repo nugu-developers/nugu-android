@@ -41,13 +41,11 @@ class AudioSourceManager(
 
     private val audioLock = ReentrantLock()
     //@GuardedBy("audioLock")
-    private var audioSource: AudioSource? = null
-    //@GuardedBy("audioLock")
     private var audioInputStream: SharedDataStream? = null
     //@GuardedBy("audioLock")
     private val consumerReferences = HashSet<Any>()
 
-    private var writeThread: Thread? = null
+    private var writeThread: WriterThread? = null
 
     /**
      * Return [SharedDataStream] if already open or success to open.
@@ -65,8 +63,6 @@ class AudioSourceManager(
                 if(!openAudioSource.open()) {
                     return null
                 }
-                audioSource = openAudioSource
-
                 val openAudioInputStream =
                     AudioInputStream.open(audioSourceFactory.getFormat().sampleRateHz * 2 * 10)
                 audioInputStream = openAudioInputStream
@@ -105,9 +101,8 @@ class AudioSourceManager(
 
     private fun closeResources() {
         Log.d(TAG, "[closeResources]")
-        audioSource?.close()
-        audioSource = null
         audioInputStream = null
+        writeThread?.requestFinish()
         writeThread = null
     }
 
@@ -127,11 +122,15 @@ class AudioSourceManager(
         private val audioInputStream: SharedDataStream,
         private val audioSource: AudioSource
     ) : Thread("WriterThread") {
+        private val audioSourceLock = ReentrantLock()
+
         override fun run() {
             audioInputStream.createWriter().use {
                 val temp = ByteArray(2048)
                 while (true) {
-                    val read = audioSource.read(temp, 0, temp.size)
+                    val read = audioSourceLock.withLock {
+                        audioSource.read(temp, 0, temp.size)
+                    }
                     if (read > 0) {
                         it.write(temp, 0, read)
                     } else {
@@ -139,6 +138,12 @@ class AudioSourceManager(
                         return
                     }
                 }
+            }
+        }
+
+        fun requestFinish() {
+            audioSourceLock.withLock {
+                audioSource.close()
             }
         }
     }
