@@ -979,12 +979,12 @@ class DefaultTTSAgent(
             }
 
             override fun onSuccess(request: MessageRequest) {
-                executor.submit {
-                    executePlaybackStoppedCompleted(info)
-                }
             }
 
             override fun onResponseStart(request: MessageRequest) {
+                executor.submit {
+                    executePlaybackStoppedCompleted(info)
+                }
             }
         })) {
             executePlaybackStoppedCompleted(info)
@@ -1023,13 +1023,12 @@ class DefaultTTSAgent(
                 }
             }
 
-            override fun onSuccess(request: MessageRequest) {
+            override fun onSuccess(request: MessageRequest) {}
+            override fun onResponseStart(request: MessageRequest) {
                 executor.submit {
                     executeTryReleaseFocus()
                     info.setHandlingCompleted()
                 }
-            }
-            override fun onResponseStart(request: MessageRequest) {
             }
         })) {
             executeTryReleaseFocus()
