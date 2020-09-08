@@ -255,10 +255,10 @@ class DefaultTextAgent(
                             }
 
                             override fun onSuccess(request: MessageRequest) {
-                                listener?.onReceiveResponse(dialogRequestId)
                             }
 
                             override fun onResponseStart(request: MessageRequest) {
+                                listener?.onReceiveResponse(dialogRequestId)
                             }
                         })
                     }

@@ -107,12 +107,12 @@ class SendCandidatesDirectiveHandler(
                                 }
 
                                 override fun onSuccess(request: MessageRequest) {
-                                    interactionControl?.let {
-                                        interactionControlManager.finish(it)
-                                    }
                                 }
 
                                 override fun onResponseStart(request: MessageRequest) {
+                                    interactionControl?.let {
+                                        interactionControlManager.finish(it)
+                                    }
                                 }
                             })) {
                                 interactionControl?.let {

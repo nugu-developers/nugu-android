@@ -222,10 +222,10 @@ class DefaultDelegationAgent(
                         }
 
                         override fun onSuccess(request: MessageRequest) {
-                            listener?.onSuccess()
                         }
 
                         override fun onResponseStart(request: MessageRequest) {
+                            listener?.onSuccess()
                         }
                     })
                 }
