@@ -173,7 +173,7 @@ internal class DeviceGatewayClient(policy: Policy,
             is AttachmentMessageRequest -> {
                 val result = event?.sendAttachmentMessage(toProtobufMessage(request)) ?: false
                 if(result) {
-                    call.result(SDKStatus.OK)
+                    call.onComplete(SDKStatus.OK)
                 }
                 result
             }
@@ -187,7 +187,7 @@ internal class DeviceGatewayClient(policy: Policy,
             is CrashReportMessageRequest -> {
                 val result = crash?.sendCrashReport(request) ?: false
                 if(result) {
-                    call.result(SDKStatus.OK)
+                    call.onComplete(SDKStatus.OK)
                 }
                 result
             }
@@ -304,7 +304,8 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
         val message = convertToDirectives(directiveMessage)
         val dialogRequestId =  message.first().header.dialogRequestId
-        asyncCalls[dialogRequestId]?.result(SDKStatus.OK)
+        asyncCalls[dialogRequestId]?.onStart()
+        asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
         if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
             messageConsumer?.consumeDirectives(message)
         }
@@ -323,7 +324,8 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
         val message = convertToAttachmentMessage(attachmentMessage)
         val dialogRequestId = message.header.dialogRequestId
-        asyncCalls[dialogRequestId]?.result(SDKStatus.OK)
+        asyncCalls[dialogRequestId]?.onStart()
+        asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
         if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
             messageConsumer?.consumeAttachment(message)
         }

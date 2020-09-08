@@ -29,7 +29,6 @@ import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -110,6 +109,7 @@ internal class EventsService(
 
         override fun onNext(downstream: Downstream) {
             isReceivedDownstream.set(true)
+            call.onStart()
 
             when (downstream.messageCase) {
                 Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
@@ -132,7 +132,7 @@ internal class EventsService(
                             Logger.d(TAG, log.toString())
                         }
                         if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
-                            call.result(SDKStatus.UNAUTHENTICATED)
+                            call.onComplete(SDKStatus.UNAUTHENTICATED)
                             observer.onError(Status.UNAUTHENTICATED)
                         }
                     }
@@ -168,7 +168,7 @@ internal class EventsService(
 
         override fun onError(t: Throwable) {
             val status = Status.fromThrowable(t)
-            call.result(SDKStatus.fromCode(status.code.value()).apply {
+            call.onComplete(SDKStatus.fromCode(status.code.value()).apply {
                 description = status.description
             })
 
@@ -189,7 +189,7 @@ internal class EventsService(
             cancelScheduledTimeout(streamId)
             requestStreamMap.remove(streamId)
             Logger.d(TAG, "[onCompleted] messageId=$streamId, numRequests=${requestStreamMap.size}")
-            call.result(SDKStatus.OK)
+            call.onComplete(SDKStatus.OK)
         }
     }
 

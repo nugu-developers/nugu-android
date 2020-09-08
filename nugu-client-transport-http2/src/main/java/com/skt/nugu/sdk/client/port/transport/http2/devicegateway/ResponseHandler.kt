@@ -71,6 +71,8 @@ class ResponseHandler {
                         headers: Map<String, String>,
                         body: Buffer
                     ) {
+                        call?.onStart()
+
                         when (headers[CONTENT_TYPE]) {
                             APPLICATION_OPUS -> {
                                 val attachment =
