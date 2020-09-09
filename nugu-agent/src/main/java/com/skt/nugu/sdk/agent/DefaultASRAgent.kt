@@ -119,6 +119,16 @@ class DefaultASRAgent(
         val playSyncObject: PlaySynchronizerInterface.SynchronizeObject
     ) : SessionManagerInterface.Requester
 
+    data class InternalStartRecognitionParam(
+        val audioInputStream: SharedDataStream,
+        val audioFormat: AudioFormat,
+        val wakeupInfo: WakeupInfo?,
+        val expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
+        val endPointDetectorParam: EndPointDetectorParam?,
+        val callback: ASRAgentInterface.StartRecognitionCallback?,
+        val jsonContext: String
+    )
+
     private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
     private val onResultListeners = HashSet<ASRAgentInterface.OnResultListener>()
     private val onMultiturnListeners = HashSet<ASRAgentInterface.OnMultiturnListener>()
@@ -129,17 +139,10 @@ class DefaultASRAgent(
 
     private var focusState = FocusState.NONE
 
-    private var isWaitingFocusToStart: Boolean = false
+    private var waitingFocusInternalStartRecognitionParam: InternalStartRecognitionParam? = null
     private var currentRequest: SpeechRecognizer.Request? = null
 
-    private var audioInputStream: SharedDataStream? = null
-    private var audioFormat: AudioFormat? = null
-    private var wakeupInfo: WakeupInfo? = null
     private var expectSpeechDirectiveParam: ExpectSpeechDirectiveParam? = null
-    private var endPointDetectorParam: EndPointDetectorParam? = null
-    private var startRecognitionCallback: ASRAgentInterface.StartRecognitionCallback? = null
-
-    private var contextForRecognitionOnForegroundFocus: String? = null
 
     private var currentAudioProvider: AudioProvider? = null
     private val speechProcessorLock = ReentrantLock()
@@ -374,7 +377,7 @@ class DefaultASRAgent(
                 dialogRequestId: String,
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
             ) {
-                if(state == ASRAgentInterface.State.EXPECTING_SPEECH && !isWaitingFocusToStart) {
+                if(state == ASRAgentInterface.State.EXPECTING_SPEECH && waitingFocusInternalStartRecognitionParam == null) {
                     // back to idle state only when failed to request
                     setState(ASRAgentInterface.State.IDLE)
                     setHandlingExpectSpeechFailed(param, info, "[executeHandleExpectSpeechDirective] executeStartRecognition failed")
@@ -507,6 +510,12 @@ class DefaultASRAgent(
             executor.submit {
                 executeOnFocusChanged(newFocus)
             }.get(300, TimeUnit.MILLISECONDS)
+
+            if(newFocus == FocusState.BACKGROUND) {
+                while(state != ASRAgentInterface.State.IDLE) {
+                    Thread.sleep(10)
+                }
+            }
         } catch (e: Exception) {
             Logger.d(TAG, "[onFocusChanged] end $newFocus / occur exception: $e")
         } finally {
@@ -527,7 +536,7 @@ class DefaultASRAgent(
             TAG,
             "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState, expectSpeechDirectiveParam: $expectSpeechDirectiveParam"
         )
-        if(isWaitingFocusToStart) {
+        if(waitingFocusInternalStartRecognitionParam != null) {
             callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             return
         }
@@ -539,6 +548,12 @@ class DefaultASRAgent(
             )
 
             callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
+            return
+        }
+
+        // getContext 하는 중에 preHandle로 인해 expectSpeechDirectiveParam이 변경되었을 경우 실패처리한다.
+        if(expectSpeechDirectiveParam != null && expectSpeechDirectiveParam != this.expectSpeechDirectiveParam) {
+            callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_UNKNOWN)
             return
         }
 
@@ -560,26 +575,20 @@ class DefaultASRAgent(
             }
         }
 
-        if (focusState == FocusState.FOREGROUND) {
-            executeInternalStartRecognition(
-                audioInputStream,
-                audioFormat,
-                wakeupInfo,
-                expectSpeechDirectiveParam,
-                param,
-                callback,
-                jsonContext
-            )
-        } else {
-            isWaitingFocusToStart = true
-
-            this.audioInputStream = audioInputStream
-            this.audioFormat = audioFormat
-            this.wakeupInfo = wakeupInfo
-            this.expectSpeechDirectiveParam = expectSpeechDirectiveParam
-            this.endPointDetectorParam = param
-            this.startRecognitionCallback = callback
-            this.contextForRecognitionOnForegroundFocus = jsonContext
+        InternalStartRecognitionParam(
+            audioInputStream,
+            audioFormat,
+            wakeupInfo,
+            expectSpeechDirectiveParam,
+            param,
+            callback,
+            jsonContext
+        ).apply {
+            if (focusState == FocusState.FOREGROUND) {
+                executeInternalStartRecognition(this)
+            } else {
+                waitingFocusInternalStartRecognitionParam = this
+            }
         }
     }
 
@@ -590,32 +599,21 @@ class DefaultASRAgent(
         focusState = newFocus
         when (newFocus) {
             FocusState.FOREGROUND -> {
-                isWaitingFocusToStart = false
-
-                val inputStream = this.audioInputStream
-                val audioFormat = this.audioFormat
-                val wakeupInfo = this.wakeupInfo
-                val expectSpeechDirectiveParam = this.expectSpeechDirectiveParam
-                val epdParam = this.endPointDetectorParam
-                val callback = this.startRecognitionCallback
-                val context = contextForRecognitionOnForegroundFocus
-
-                this.audioInputStream = null
-                this.audioFormat = null
-                this.wakeupInfo =  null
-                this.expectSpeechDirectiveParam = null
-                this.endPointDetectorParam = null
-                this.startRecognitionCallback = null
-                this.contextForRecognitionOnForegroundFocus = null
-
-                if (inputStream == null || audioFormat == null) {
-                    Logger.e(TAG, "[executeOnFocusChanged] invalid audio input")
-                    callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+                val param = waitingFocusInternalStartRecognitionParam
+                waitingFocusInternalStartRecognitionParam = null
+                if(param == null) {
                     return
                 }
 
-                if (state != ASRAgentInterface.State.RECOGNIZING && context != null) {
-                    executeInternalStartRecognition(inputStream, audioFormat, wakeupInfo, expectSpeechDirectiveParam, epdParam, callback, context)
+                if(param.expectSpeechDirectiveParam != null && param.expectSpeechDirectiveParam != expectSpeechDirectiveParam) {
+                    param.callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+                    return
+                }
+
+                if (state != ASRAgentInterface.State.RECOGNIZING) {
+                    executeInternalStartRecognition(param)
+                } else {
+                    param.callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
                 }
             }
             FocusState.BACKGROUND -> {
@@ -627,17 +625,17 @@ class DefaultASRAgent(
 
                 if(prevState == FocusState.NONE) {
                     // disable flag if we failed
-                    isWaitingFocusToStart = false
+                    val param = waitingFocusInternalStartRecognitionParam
+                    waitingFocusInternalStartRecognitionParam = null
 
                     expectSpeechDirectiveParam?.let {
                         executeCancelExpectSpeechDirective(it.directive.header.messageId)
                     }
 
-                    this.startRecognitionCallback?.onError(
+                    param?.callback?.onError(
                         UUIDGeneration.timeUUID().toString(),
                         ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER
                     )
-                    this.startRecognitionCallback = null
                 }
 
                 executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
@@ -658,26 +656,20 @@ class DefaultASRAgent(
     }
 
     private fun executeInternalStartRecognition(
-        audioInputStream: SharedDataStream,
-        audioFormat: AudioFormat,
-        wakeupInfo: WakeupInfo?,
-        expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
-        param: EndPointDetectorParam?,
-        callback: ASRAgentInterface.StartRecognitionCallback?,
-        jsonContext: String
+        param: InternalStartRecognitionParam
     ) {
         Logger.d(TAG, "[executeInternalStartRecognition]")
         executeSelectSpeechProcessor()
         currentRequest = currentSpeechRecognizer.start(
-            audioInputStream,
-            audioFormat,
-            jsonContext,
-            wakeupInfo,
-            expectSpeechDirectiveParam,
-            param ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
+            param.audioInputStream,
+            param.audioFormat,
+            param.jsonContext,
+            param.wakeupInfo,
+            param.expectSpeechDirectiveParam,
+            param.endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(dialogRequestId: String) {
-                    expectSpeechDirectiveParam?.let {
+                    param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
@@ -689,7 +681,7 @@ class DefaultASRAgent(
                 }
 
                 override fun onCompleteResult(result: String, dialogRequestId: String) {
-                    expectSpeechDirectiveParam?.let {
+                    param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
@@ -697,14 +689,14 @@ class DefaultASRAgent(
                 }
 
                 override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
-                    expectSpeechDirectiveParam?.let {
+                    param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendResponseTimeout(expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
+                        sendResponseTimeout(param.expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
+                        sendListenTimeout(param.expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
                     }
                     speechToTextConverterEventObserver.onError(type, dialogRequestId)
                 }
@@ -713,7 +705,7 @@ class DefaultASRAgent(
                     cause: ASRAgentInterface.CancelCause,
                     dialogRequestId: String
                 ) {
-                    expectSpeechDirectiveParam?.let {
+                    param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
@@ -723,17 +715,19 @@ class DefaultASRAgent(
             onHeaderAttachingCallback
         ).also {
             if(it == null) {
-                expectSpeechDirectiveParam?.let {
+                param.expectSpeechDirectiveParam?.let {
                     sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                 }
 
-                callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
+                param.callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             } else {
-                callback?.onSuccess(it.eventMessage.dialogRequestId)
+                param.callback?.onSuccess(it.eventMessage.dialogRequestId)
             }
         }
 
-        clearPreHandledExpectSpeech()
+        if(expectSpeechDirectiveParam == param.expectSpeechDirectiveParam) {
+            expectSpeechDirectiveParam = null
+        }
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
@@ -964,6 +958,9 @@ class DefaultASRAgent(
 
     private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
         currentSpeechRecognizer.stop(cancel, cause)
+        expectSpeechDirectiveParam?.let {
+            executeCancelExpectSpeechDirective(it.directive.header.messageId)
+        }
     }
 
     private fun executeStopRecognitionOnAttributeUnset(key: String) {
