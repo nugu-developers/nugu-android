@@ -25,6 +25,7 @@ interface InterLayerDisplayPolicyManager {
 
     interface DisplayLayer: Layer {
         fun clear()
+        fun refresh()
     }
 
     interface PlayLayer: Layer
@@ -32,4 +33,5 @@ interface InterLayerDisplayPolicyManager {
     fun onDisplayLayerRendered(layer: DisplayLayer)
     fun onDisplayLayerCleared(layer: DisplayLayer)
     fun onPlayStarted(layer: PlayLayer)
+    fun onPlayFinished(layer: PlayLayer)
 }

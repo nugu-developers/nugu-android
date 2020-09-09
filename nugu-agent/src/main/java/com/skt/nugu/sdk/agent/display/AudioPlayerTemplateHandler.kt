@@ -108,6 +108,10 @@ class AudioPlayerTemplateHandler(
                 }
             }
 
+            override fun refresh() {
+                // nothing
+            }
+
             override fun getLayerType(): LayerType = LayerType.MEDIA
 
             override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
