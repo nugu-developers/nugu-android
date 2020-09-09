@@ -50,7 +50,7 @@ interface NuguOAuthInterface {
      * @param activity The activity making the call.
      * @param loginId t-id
      */
-    fun accountByInAppBrowser(activity: Activity, loginId: String)
+    fun accountByInAppBrowser(activity: Activity)
 
     /**
      * Start a login with credentials. Only Type2
