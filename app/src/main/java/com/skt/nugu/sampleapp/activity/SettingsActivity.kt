@@ -186,8 +186,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         textLoginId.setOnClickListener {
-            val loginId = textLoginId.text.toString()
-            NuguOAuth.getClient().accountByInAppBrowser(this, loginId)
+            NuguOAuth.getClient().accountByInAppBrowser(this)
         }
 
         buttonPrivacy.setOnClickListener {

@@ -56,7 +56,6 @@ class NuguOAuth private constructor(
         internal const val KEY_REDIRECT_SCHEME = "nugu_redirect_scheme"
         internal const val KEY_REDIRECT_HOST = "nugu_redirect_host"
 
-        val EXTRA_OAUTH_LOGIN_ID = "nugu.intent.extra.oauth.login.id"
         val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
         val ACTION_LOGIN = "nugu.intent.action.oauth.LOGIN"
         val ACTION_ACCOUNT = "nugu.intent.action.oauth.ACCOUNT"
@@ -338,25 +337,24 @@ class NuguOAuth private constructor(
     /**
      * Creating a accountinfo intent
      */
-    fun getAccountInfoIntent(loginId: String) = Intent(Intent.ACTION_VIEW).apply {
-        data = getAccountInfoUri(loginId)
+    fun getAccountInfoIntent() = Intent(Intent.ACTION_VIEW).apply {
+        data = getAccountInfoUri()
     }
     /**
      * Creating a accountinfo uri
      */
-    fun getAccountInfoUri(loginId: String) : Uri{
+    fun getAccountInfoUri() : Uri{
         val appendUri = String.format(
-            "&login_id=%s&service_type=%d",
-            loginId,
-            21
+            "&prompt=%s&access_token=%s",
+            "mypage",
+            client.getCredentials().accessToken
         )
         return Uri.parse(makeAuthorizeUri() + appendUri)
     }
 
-    override fun accountByInAppBrowser(activity: Activity, loginId: String) {
+    override fun accountByInAppBrowser(activity: Activity) {
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
-            putExtra(EXTRA_OAUTH_LOGIN_ID, loginId)
             activity.startActivityForResult(this, REQUEST_ACCOUNT)
         }
     }

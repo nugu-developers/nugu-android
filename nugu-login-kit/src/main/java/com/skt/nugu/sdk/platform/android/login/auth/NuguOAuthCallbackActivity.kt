@@ -67,14 +67,12 @@ class NuguOAuthCallbackActivity : Activity() {
                 })
             }
             NuguOAuth.ACTION_ACCOUNT -> {
-                val loginId= intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_LOGIN_ID)
-
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(loginId.toString()), object :
+                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
-                        val signInIntent = auth.getAccountInfoIntent(loginId.toString())
+                        val signInIntent = auth.getAccountInfoIntent()
                         startActivity(signInIntent)
                     }
                 })
