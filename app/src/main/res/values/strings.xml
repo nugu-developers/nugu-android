@@ -26,7 +26,7 @@
     <string name="error_unauthorized">인가되지 않은 사용자 정보 입니다.</string>
     <string name="error_unauthorized_client">인가되지 않은 클라이언트 입니다.</string>
     <string name="error_invalid_token">유효하지 않은 토큰 입니다.</string>
-    <string name="error_invalid_client">유효하지 않은 클라이언 정보 입니다.</string>
+    <string name="error_invalid_client">유효하지 않은 클라이언트 정보 입니다.</string>
     <string name="error_access_denied">접근이 거부 되었습니다.</string>
 
     <string name="menu_setting">setting</string>
