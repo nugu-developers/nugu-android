@@ -18,9 +18,6 @@ package com.skt.nugu.sdk.agent.asr
 import com.google.gson.annotations.SerializedName
 
 data class ExpectSpeechPayload private constructor(
-    @SerializedName("sessionId")
-    @Deprecated("removed soon")
-    val sessionId: String,
     @SerializedName("playServiceId")
     val playServiceId: String?,
     @SerializedName("domainTypes")
@@ -70,7 +67,6 @@ data class ExpectSpeechPayload private constructor(
 
         other as ExpectSpeechPayload
 
-        if (sessionId != other.sessionId) return false
         if (playServiceId != other.playServiceId) return false
         if (domainTypes != null) {
             if (other.domainTypes == null) return false
@@ -82,12 +78,9 @@ data class ExpectSpeechPayload private constructor(
     }
 
     override fun hashCode(): Int {
-        var result = sessionId.hashCode()
-        result = 31 * result + (playServiceId?.hashCode() ?: 0)
+        var result = playServiceId?.hashCode() ?: 0
         result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
         result = 31 * result + (asrContext?.hashCode() ?: 0)
         return result
     }
-
-
 }
