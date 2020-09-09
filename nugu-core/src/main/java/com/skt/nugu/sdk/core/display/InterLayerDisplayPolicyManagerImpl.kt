@@ -19,6 +19,10 @@ package com.skt.nugu.sdk.core.display
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -29,6 +33,8 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
 
     private val lock = ReentrantLock()
     private val displayLayers = HashSet<InterLayerDisplayPolicyManager.DisplayLayer>()
+    private val refreshFutureMap = HashMap<InterLayerDisplayPolicyManager.PlayLayer, MutableList<Pair<InterLayerDisplayPolicyManager.DisplayLayer, Future<*>>>>()
+    private val displayRefreshScheduler = Executors.newSingleThreadScheduledExecutor()
 
     private fun isEvaporatableLayer(layerType: LayerType): Boolean =  when(layerType) {
         LayerType.MEDIA,
@@ -89,7 +95,36 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
                 it.clear()
             }
 
+            // refresh condition
+            displayLayers.filter {
+                it.getPushPlayServiceId() == layer.getPushPlayServiceId()
+            }.forEach {
+                Logger.d(TAG, "[onPlayStarted] refresh: $it")
+                var list = refreshFutureMap[layer]
+                if(list == null) {
+                    list = ArrayList()
+                    refreshFutureMap[layer] = list
+                }
+                val displayLayer = it
+                val future = displayRefreshScheduler.scheduleAtFixedRate({
+                    it.refresh()
+                }, 0, 900, TimeUnit.MILLISECONDS)
+                list.add(Pair(displayLayer, future))
+            }
+
             Logger.d(TAG, "[onPlayStarted] $layer")
+        }
+    }
+
+    override fun onPlayFinished(layer: InterLayerDisplayPolicyManager.PlayLayer) {
+        lock.withLock {
+            refreshFutureMap.remove(layer)?.forEach {
+                it.second.cancel(true)
+                displayRefreshScheduler.submit {
+                    it.first.refresh()
+                }
+            }
+            Logger.d(TAG, "[onPlayFinished] $layer")
         }
     }
 }

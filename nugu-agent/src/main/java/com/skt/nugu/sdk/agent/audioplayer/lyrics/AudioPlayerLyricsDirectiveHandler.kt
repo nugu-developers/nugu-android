@@ -132,11 +132,14 @@ class AudioPlayerLyricsDirectiveHandler(
                         sendVisibilityEvent("$NAME_HIDE_LYRICS$NAME_FAILED", playServiceId, referrerDialogRequestId)
                     }
                 }
-                interLayerDisplayPolicyManager.onPlayStarted(object : InterLayerDisplayPolicyManager.PlayLayer {
+                object : InterLayerDisplayPolicyManager.PlayLayer {
                     override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
                     override fun getLayerType(): LayerType = LayerType.MEDIA
                     override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
-                })
+                }.apply {
+                    interLayerDisplayPolicyManager.onPlayStarted(this)
+                    interLayerDisplayPolicyManager.onPlayFinished(this)
+                }
             }
             CONTROL_LYRICS_PAGE -> {
                 val payload = MessageFactory.create(info.directive.payload, PageControlLyricsPayload::class.java)
@@ -153,11 +156,14 @@ class AudioPlayerLyricsDirectiveHandler(
                         sendPageControlEvent("$NAME_CONTROL_LYRICS_PAGE$NAME_FAILED", playServiceId, direction, referrerDialogRequestId)
                     }
                 }
-                interLayerDisplayPolicyManager.onPlayStarted(object : InterLayerDisplayPolicyManager.PlayLayer {
+                object : InterLayerDisplayPolicyManager.PlayLayer {
                     override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
                     override fun getLayerType(): LayerType = LayerType.MEDIA
                     override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
-                })
+                }.apply {
+                    interLayerDisplayPolicyManager.onPlayStarted(this)
+                    interLayerDisplayPolicyManager.onPlayFinished(this)
+                }
             }
         }
 

@@ -718,6 +718,7 @@ class DefaultTTSAgent(
     }
 
     private fun executeAfterExecuteRelease(info: SpeakDirectiveInfo) {
+        interLayerDisplayPolicyManager.onPlayFinished(info.layerForDisplayPolicy)
         info.clear()
 
         if(info != currentInfo) {

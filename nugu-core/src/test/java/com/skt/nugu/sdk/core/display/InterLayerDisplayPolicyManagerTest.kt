@@ -70,14 +70,13 @@ class InterLayerDisplayPolicyManagerTest {
         val manager = InterLayerDisplayPolicyManagerImpl()
 
         val evaporatableInfolayer: InterLayerDisplayPolicyManager.DisplayLayer = mock()
-        whenever(evaporatableInfolayer.getPlayServiceId()).thenReturn(playServiceId1)
+        whenever(evaporatableInfolayer.getPushPlayServiceId()).thenReturn(playServiceId1)
         whenever(evaporatableInfolayer.getLayerType()).thenReturn(LayerType.INFO)
 
         manager.onDisplayLayerRendered(evaporatableInfolayer)
 
         val play1: InterLayerDisplayPolicyManager.PlayLayer = mock()
         whenever(play1.getPushPlayServiceId()).thenReturn(pushPlayServiceId2)
-        whenever(play1.getPlayServiceId()).thenReturn(playServiceId2)
         whenever(play1.getDialogRequestId()).thenReturn(dialogRequestId2)
 
         manager.onPlayStarted(play1)

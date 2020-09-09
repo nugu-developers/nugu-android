@@ -106,6 +106,10 @@ class DefaultDisplayAgent(
                 }
             }
 
+            override fun refresh() {
+                notifyUserInteraction(getTemplateId())
+            }
+
             override fun getLayerType(): LayerType = when(payload.getContextLayerInternal()) {
                 DisplayAgentInterface.ContextLayer.ALERT -> LayerType.ALERT
                 DisplayAgentInterface.ContextLayer.CALL -> LayerType.CALL
