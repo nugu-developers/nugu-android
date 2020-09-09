@@ -30,11 +30,7 @@ data class PlayStackControl(
         PUSH
     }
 
-    fun getPushPlayServiceId(): String? = if (type == Type.PUSH) {
-        playServiceId
-    } else {
-        null
-    }
+    fun getPushPlayServiceId(): String? = playServiceId
 
     fun toJsonObject(): JsonObject = Gson().toJsonTree(this).asJsonObject
 }
