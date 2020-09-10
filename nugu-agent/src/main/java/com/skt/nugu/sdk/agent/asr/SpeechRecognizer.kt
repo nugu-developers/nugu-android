@@ -53,8 +53,7 @@ interface SpeechRecognizer {
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
-        resultListener: ASRAgentInterface.OnResultListener?,
-        headerAttachingCallback: ASRAgentInterface.OnHeaderAttachingCallback?
+        resultListener: ASRAgentInterface.OnResultListener?
     ): Request?
 
     fun stop(cancel: Boolean, cause: ASRAgentInterface.CancelCause)

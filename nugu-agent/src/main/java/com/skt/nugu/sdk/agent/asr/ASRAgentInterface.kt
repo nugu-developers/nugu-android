@@ -239,9 +239,4 @@ interface ASRAgentInterface {
          */
         fun getHeaders() : Map<String, String>?
     }
-
-    /**
-     * Set a callback to attach a set of request headers
-     */
-    fun setOnHeaderAttachingCallback(callback: OnHeaderAttachingCallback)
 }
