@@ -29,6 +29,10 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.Preferences
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -42,6 +46,13 @@ class DefaultServerSpeechRecognizer(
 ) : SpeechRecognizer, InputProcessor {
     companion object {
         private const val TAG = "DefaultServerSpeechRecognizer"
+
+        private val dateFormat: DateFormat by lazy {
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
+                isLenient = false
+                timeZone = TimeZone.getTimeZone("GMT")
+            }
+        }
     }
 
     private data class RecognizeRequest(
@@ -137,7 +148,7 @@ class DefaultServerSpeechRecognizer(
             .build()
 
         val call = messageSender.newCall(
-            eventMessage, headerAttachingCallback?.getHeaders()
+            eventMessage, hashMapOf("Last-Asr-Event-Time" to Preferences.get("Last-Asr-Event-Time").toString())
         )
 
         val thread = createSenderThread(
@@ -175,6 +186,7 @@ class DefaultServerSpeechRecognizer(
             }
 
             override fun onResponseStart(request: MessageRequest) {
+                Preferences.set("Last-Asr-Event-Time", dateFormat.format(Calendar.getInstance().time))
             }
         })
 
