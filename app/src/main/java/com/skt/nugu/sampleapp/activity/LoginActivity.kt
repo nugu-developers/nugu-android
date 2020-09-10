@@ -87,40 +87,49 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
 
     /** Type1 : authorization_code **/
     fun startAuthorizationCodeLogin() {
-        if(!isSdkInitialized) {
+        if (!isSdkInitialized) {
             Toast.makeText(this, R.string.sdk_not_initialized, Toast.LENGTH_LONG).show()
             return
         }
         val storedCredentials = PreferenceHelper.credentials(this@LoginActivity)
-        // serialized a credential, extract of refreshToken
-        val refreshToken = Credentials.parse(storedCredentials).refreshToken
+        authClient.setCredentials(storedCredentials)
+        val refreshToken = authClient.getRefreshToken()
 
         when {
             refreshToken.isEmpty() ->
-                authClient.loginByInAppBrowser(activity = this, listener = object : NuguOAuthInterface.OnLoginListener {
+                authClient.loginByInAppBrowser(
+                    activity = this,
+                    listener = object : NuguOAuthInterface.OnLoginListener {
+                        override fun onSuccess(credentials: Credentials) {
+                            // save credentials
+                            PreferenceHelper.credentials(this@LoginActivity, credentials.toString())
+                            // successful, calls IntroActivity.
+                            startIntroActivity()
+                        }
+
+                        override fun onError(error: NuguOAuthError) {
+                            handleOAuthError(error)
+                        }
+                    })
+            else -> {
+                if(authClient.isLogin()) {
+                    startMainActivity()
+                    return
+                }
+                
+                authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
                     override fun onSuccess(credentials: Credentials) {
                         // save credentials
                         PreferenceHelper.credentials(this@LoginActivity, credentials.toString())
-                        // successful, calls IntroActivity.
-                        startIntroActivity()
+                        // successful, calls MainActivity.
+                        startMainActivity()
                     }
 
                     override fun onError(error: NuguOAuthError) {
                         handleOAuthError(error)
                     }
                 })
-            else -> authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
-                override fun onSuccess(credentials: Credentials) {
-                    // save credentials
-                    PreferenceHelper.credentials(this@LoginActivity, credentials.toString())
-                    // successful, calls MainActivity.
-                    startMainActivity()
-                }
-
-                override fun onError(error: NuguOAuthError) {
-                    handleOAuthError(error)
-                }
-            })
+            }
         }
     }
 
