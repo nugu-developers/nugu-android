@@ -55,6 +55,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
@@ -135,11 +136,11 @@ class NuguClient private constructor(
                 addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
             }
             val attachmentManager = AttachmentManager()
-            val messageInterpreter =
-                MessageInterpreter(directiveGroupProcessor, attachmentManager)
+            val messageDispatcher =
+                MessageDispatcher(directiveGroupProcessor, attachmentManager)
 
             networkManager = NetworkManager.create(messageRouter).apply {
-                addMessageObserver(messageInterpreter)
+                addMessageObserver(messageDispatcher)
             }
 
             val contextManager = ContextManager()
@@ -152,6 +153,8 @@ class NuguClient private constructor(
             val interLayerDisplayPolicyManager = InterLayerDisplayPolicyManagerImpl()
 
             sdkContainer = object : SdkContainer {
+                override fun getMessageDispatcher(): MessageObserver = messageDispatcher
+
                 override fun getInputManagerProcessor(): InputProcessorManagerInterface =
                     inputProcessorManager
 

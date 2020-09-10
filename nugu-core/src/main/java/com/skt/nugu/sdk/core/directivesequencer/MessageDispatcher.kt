@@ -21,16 +21,16 @@ import com.skt.nugu.sdk.core.utils.Logger
 
 
 /**
- * Class that convert an message to [Directive] or [AttachmentMessage],
- * and then directives will be passed to [DirectiveGroupProcessor],
- * attachments will be handled by [AttachmentManagerInterface].
+ * Class that dispatch messages.
+ * Directives will be passed to [DirectiveGroupProcessor],
+ * Attachments will be handled by [AttachmentManagerInterface].
  */
-class MessageInterpreter(
+class MessageDispatcher(
     private val directiveGroupProcessor: DirectiveGroupProcessor,
     private val attachmentManager: AttachmentManagerInterface
 ) : MessageObserver {
     companion object {
-        private const val TAG = "MessageInterpreter"
+        private const val TAG = "MessageDispatcher"
     }
 
     override fun receiveDirectives(directives: List<DirectiveMessage>) {
