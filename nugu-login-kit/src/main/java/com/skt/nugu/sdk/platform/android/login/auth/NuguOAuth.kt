@@ -271,6 +271,13 @@ class NuguOAuth private constructor(
     }
 
     /**
+     * Get a scope
+     * @returns the scope
+     * */
+    fun getScope(): String? {
+        return client.getCredentials().scope
+    }
+    /**
      * Gets an auth status
      * @returns the current state
      * */
