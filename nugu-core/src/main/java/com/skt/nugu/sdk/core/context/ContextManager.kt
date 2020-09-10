@@ -262,7 +262,16 @@ class ContextManager : ContextManagerInterface {
             namespaceEntry.value.forEach {
                 val fullState = it.value.full?.value()
                 val compactState = it.value.compact?.value()
-                if (fullState.isNullOrEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES) {
+                val givenContextState = given?.get(NamespaceAndName(namespaceEntry.key, it.key))
+                val value: String? = if (target == null || (target.namespace == namespaceEntry.key && target.name == it.key) || compactState == null) {
+                    // need full
+                    // full case
+                    givenContextState?.value() ?: fullState
+                } else {
+                    givenContextState?.value() ?: compactState
+                }
+
+                if (value == null || (value.isEmpty() && it.value.refreshPolicy == StateRefreshPolicy.SOMETIMES)) {
                     // pass
                 } else {
                     if (valueIndex > 0) {
@@ -271,22 +280,7 @@ class ContextManager : ContextManagerInterface {
                     valueIndex++
 
                     append("\"${it.key}\":")
-                    val givenContextState = given?.get(NamespaceAndName(namespaceEntry.key, it.key))
-                    if (target == null || (target.namespace == namespaceEntry.key && target.name == it.key) || compactState == null) {
-                        // need full
-                        // full case
-                        if(givenContextState == null) {
-                            append(fullState)
-                        } else {
-                            append(givenContextState.value())
-                        }
-                    } else {
-                        if(givenContextState == null) {
-                            append(compactState)
-                        } else {
-                            append(givenContextState.value())
-                        }
-                    }
+                    append(value)
                 }
             }
             append('}')
