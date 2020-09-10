@@ -56,11 +56,13 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
+import com.skt.nugu.sdk.core.interfaces.preferences.PreferencesInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
 import com.skt.nugu.sdk.core.session.SessionManager
+import com.skt.nugu.sdk.core.utils.Preferences
 
 class NuguClient private constructor(
     builder: Builder
@@ -77,6 +79,8 @@ class NuguClient private constructor(
         // Log
         internal var logger: LogInterface? = null
 
+        internal var preferences: PreferencesInterface? = null
+
         // sdk version for userAgent
         internal var sdkVersion: String = "1.0"
         // client version for userAgent
@@ -90,6 +94,7 @@ class NuguClient private constructor(
             apply { agentFactoryMap[namespace] = factory }
 
         fun logger(logger: LogInterface?) = apply { this.logger = logger }
+        fun preferences(pref: PreferencesInterface?) = apply { this.preferences = preferences }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
         fun build() = NuguClient(this)
@@ -128,6 +133,8 @@ class NuguClient private constructor(
     init {
         with(builder) {
             Logger.logger = logger
+            Preferences.preferences = preferences
+
             UserAgent.setVersion(sdkVersion, clientVersion)
             val directiveGroupProcessor = DirectiveGroupProcessor(
                 directiveSequencer

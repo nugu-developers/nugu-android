@@ -26,7 +26,12 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.Preferences
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 import kotlin.math.max
 
@@ -39,6 +44,14 @@ class DefaultClientSpeechRecognizer(
 , AudioEndPointDetector.OnStateChangedListener {
     companion object {
         private const val TAG = "DefaultClientSpeechRecognizer"
+
+        // RFC 2616 specified: RFC 822, updated by RFC 1123 format with fixed GMT.
+        private val dateFormat: DateFormat by lazy {
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
+                isLenient = false
+                timeZone = TimeZone.getTimeZone("GMT")
+            }
+        }
     }
 
     private data class RecognizeRequest (
@@ -254,7 +267,7 @@ class DefaultClientSpeechRecognizer(
         }
         messageSender.newCall(
             request.eventMessage,
-            request.headerAttachingCallback?.getHeaders()
+            hashMapOf("Last-Asr-Event-Time" to Preferences.get("Last-Asr-Event-Time").toString())
         ).apply {
             request.call = this
             if(!this.enqueue(object: MessageSender.Callback {
@@ -268,6 +281,7 @@ class DefaultClientSpeechRecognizer(
 
                     override fun onResponseStart(request: MessageRequest) {
                         Logger.d(TAG, "[onResponseStart] request: $request")
+                        Preferences.set("Last-Asr-Event-Time", dateFormat.format(Calendar.getInstance().time))
                     }
                 })) {
                 request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK

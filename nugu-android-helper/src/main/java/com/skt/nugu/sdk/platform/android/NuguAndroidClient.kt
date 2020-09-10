@@ -83,6 +83,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterfa
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
+import com.skt.nugu.sdk.core.interfaces.preferences.PreferencesInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.Logger
@@ -90,6 +91,7 @@ import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient.Builder
 import com.skt.nugu.sdk.platform.android.battery.AndroidBatteryStatusProvider
+import com.skt.nugu.sdk.platform.android.content.AndroidPreferences
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractorFactory
@@ -223,6 +225,8 @@ class NuguAndroidClient private constructor(
 
         // Log
         internal var logger: LogInterface? = AndroidLogger()
+        // Preferences
+        internal var preferences: PreferencesInterface? = AndroidPreferences(context)
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -351,6 +355,8 @@ class NuguAndroidClient private constructor(
 
         fun logger(logger: LogInterface) = apply { this.logger = logger }
 
+        fun pref(preferences: PreferencesInterface) = apply { this.preferences = preferences }
+
         fun build(): NuguAndroidClient {
             return NuguAndroidClient(this)
         }
@@ -364,6 +370,7 @@ class NuguAndroidClient private constructor(
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate
     ).logger(builder.logger)
+        .preferences(builder.preferences)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {
