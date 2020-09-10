@@ -31,8 +31,10 @@ data class Credentials(
     var expiresIn: Long,
     /** The issued Time **/
     var issuedTime: Long,
-    /** OAuth Access Token Type **/
-    var tokenType: String
+    /** The access Token Type **/
+    var tokenType: String,
+    /** The scope string **/
+    var scope: String?
 ) {
 
     /**
@@ -44,6 +46,7 @@ data class Credentials(
         expiresIn = 0
         issuedTime = 0
         tokenType = ""
+        scope = null
     }
 
     /**
@@ -56,6 +59,7 @@ data class Credentials(
         json.put("expires_in", expiresIn)
         json.put("issued_time", issuedTime)
         json.put("refresh_token", refreshToken)
+        json.put("scope", scope)
         return json.toString()
     }
     /**
@@ -70,7 +74,8 @@ data class Credentials(
             refreshToken = "",
             expiresIn = 0,
             issuedTime = 0,
-            tokenType = ""
+            tokenType = "",
+            scope = null
         )
 
         /**
@@ -90,7 +95,8 @@ data class Credentials(
                     expiresIn = getLong("expires_in"),
                     issuedTime = if(!has("issued_time")) Date().time else getLong("issued_time"),
                     tokenType = getString("token_type"),
-                    refreshToken = if (!has("refresh_token")) "" else getString("refresh_token")
+                    refreshToken = if (!has("refresh_token")) "" else getString("refresh_token"),
+                    scope =  if (!has("scope")) null else getString("scope")
                 )
             }
         }
@@ -124,6 +130,12 @@ data class Credentials(
         private var tokenType: String = ""
 
         /**
+         * A space-delimited set of scopes used to determine the scope of any returned tokens.
+         * @see [https://tools.ietf.org/html/rfc6749#section-3.3]
+         */
+        private var scope: String? = null
+
+        /**
          * Returns a new instance of an Credentials based on this builder.
          */
         fun build() = Credentials(
@@ -131,7 +143,8 @@ data class Credentials(
             refreshToken,
             expiresIn,
             issuedTime,
-            tokenType
+            tokenType,
+            scope
         )
     }
 }
