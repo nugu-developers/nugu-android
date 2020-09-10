@@ -49,8 +49,7 @@ class DefaultClientSpeechRecognizer(
         var senderThread: SpeechRecognizeAttachmentSenderThread?,
         override val eventMessage: EventMessageRequest,
         val expectSpeechParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
-        val resultListener: ASRAgentInterface.OnResultListener?,
-        val headerAttachingCallback: ASRAgentInterface.OnHeaderAttachingCallback?
+        val resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request {
         override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
@@ -92,8 +91,7 @@ class DefaultClientSpeechRecognizer(
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
-        resultListener: ASRAgentInterface.OnResultListener?,
-        headerAttachingCallback: ASRAgentInterface.OnHeaderAttachingCallback?
+        resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
         Logger.d(
             TAG,
@@ -144,8 +142,7 @@ class DefaultClientSpeechRecognizer(
                 null,
                 eventMessage,
                 expectSpeechDirectiveParam,
-                resultListener,
-                headerAttachingCallback
+                resultListener
             )
 
         return startLock.withLock {

@@ -80,8 +80,7 @@ class DefaultServerSpeechRecognizer(
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         epdParam: EndPointDetectorParam,
-        resultListener: ASRAgentInterface.OnResultListener?,
-        headerAttachingCallback: ASRAgentInterface.OnHeaderAttachingCallback?
+        resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
         Logger.d(
             TAG,
