@@ -22,11 +22,11 @@ import com.skt.nugu.sdk.agent.common.Direction
  */
 interface DisplayAgentInterface:
     DisplayInterface<DisplayAgentInterface.Renderer, DisplayAgentInterface.Controller> {
-    enum class ContextLayer(val priority: Int) {
-        CALL(400),
-        ALERT(300),
-        INFO(200),
-        MEDIA(100)
+    enum class ContextLayer {
+        CALL,
+        ALERT,
+        INFO,
+        MEDIA
     }
 
     interface Listener {
@@ -60,6 +60,7 @@ interface DisplayAgentInterface:
          * @param templateType the template type
          * @param templateContent the content of template in structured JSON
          * @param dialogRequestId the dialog request id
+         * @param contextLayer the layer type
          * @return true: if will render, false: otherwise
          */
         fun render(templateId: String, templateType: String, templateContent: String, dialogRequestId: String, contextLayer: ContextLayer): Boolean
