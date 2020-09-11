@@ -1,6 +1,27 @@
 Change Log
 ==========
 
+Version 0.9.22 *(2020-09-11)*
+-----------------------------
+* Fix: Fix not return to idle state of DIalogUX (#1182)
+    * Call onRecieveTTS only if acquire focus success.
+* Fix: Fix using wrong expectSpeechParam  (#1192)
+* Fix: Skip invalid value on build context (#1199)
+* Improve: Add Last-Asr-Event-Time in grpc header (#1130)
+* Improve: Use playStackControl's playServiceId for Layer policy (#1167)
+    * Use playStackControl at Layer policy
+    * Refresh display if same play running
+* Improve: Add scope to OAuth to use server-initiative-directive (#1169)
+* Improve: Allow to change logger (#1177)
+* Improve: Change endpoint URI of mypage in nugu-login-kit (#1184)
+* Improve: Add onResponseStart to MessageSender.Callback that occurs when the response data starts to be received (#1187)
+* Improve: Remove sessionId at ExpectSpeechPayload (#1190)
+    * Fix crash when call hashCode() for ExpectSpeechPayload. (sessionId is null)
+* Improve: Add data field when requesting OAuth token (#1205)
+* Improve: Update libs (#1207)
+    * keensenese : 0.2.2 -> 0.2.3
+    * jademarble : 0.2.0 -> 0.2.1
+
 Version 0.9.21 *(2020-09-07)*
 -----------------------------
 * Fix: Fix crash for v0.9.20 (#1178)
