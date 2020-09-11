@@ -92,14 +92,14 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("grant_type", grantType)
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
+            .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         when (GrantType.valueOf(grantType.toUpperCase())) {
             GrantType.CLIENT_CREDENTIALS -> {
-                form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
+                // no op
             }
             GrantType.AUTHORIZATION_CODE -> {
-                form.add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
-                    .add("code", code.toString())
+                form.add("code", code.toString())
                     .add("redirect_uri", options.redirectUri.toString())
             }
             GrantType.REFRESH_TOKEN -> {
@@ -282,7 +282,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
         }
         return false
     }
-
+    @Deprecated("Use introspect")
     fun handleMe() : MeResponse {
         val header = Headers()
             .add("authorization", buildAuthorization())
@@ -320,6 +320,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("token", getCredentials().accessToken)
+            .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         val request = Request.Builder(
             uri = "$baseUrl/v1/auth/oauth/revoke",
@@ -357,6 +358,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("token", getCredentials().accessToken)
+            .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         val request = Request.Builder(
             uri = "$baseUrl/v1/auth/oauth/introspect",
