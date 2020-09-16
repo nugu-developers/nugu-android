@@ -162,7 +162,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
     fun isExpired(): Boolean {
         // Add a delay to be sure to not make a request with an expired token
         val now = Date().time
-        return (credential.expiresIn * 1000) + credential.issuedTime > now
+        return (credential.expiresIn * 1000) + credential.issuedTime < now
     }
 
     /**
