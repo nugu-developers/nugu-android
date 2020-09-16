@@ -22,7 +22,6 @@ import android.net.Uri
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
-import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -115,6 +114,8 @@ class NuguOAuth private constructor(
     private var onceLoginListener: OnceLoginListener? = null
 
     private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize"
+    // CSRF protection
+    private var clientState: String = ""
 
     inner class OnceLoginListener(val realListener : OnLoginListener) : OnLoginListener {
         private var called = false
@@ -324,6 +325,11 @@ class NuguOAuth private constructor(
         }
         client.setOptions(this.options)
     }
+    fun generateClientState() = UUID.randomUUID().toString().apply {
+        clientState = this
+    }
+    fun verifyState(state : String?) = state == this.clientState
+    fun verifyCode(code : String?) = !code.isNullOrBlank()
 
     private fun makeAuthorizeUri() = String.format(
             authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
@@ -335,12 +341,17 @@ class NuguOAuth private constructor(
      * Creating a login intent
      */
     fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
-        data = Uri.parse(makeAuthorizeUri())
+        data = getLoginUri()
     }
     /**
      * Creating a login uri
      */
-    fun getLoginUri() = Uri.parse(makeAuthorizeUri())
+    fun getLoginUri() : Uri {
+        val appendUri = String.format(
+            "&state=%s", generateClientState()
+        )
+        return Uri.parse(makeAuthorizeUri() + appendUri)
+    }
     /**
      * Creating a accountinfo intent
      */
@@ -350,11 +361,12 @@ class NuguOAuth private constructor(
     /**
      * Creating a accountinfo uri
      */
-    fun getAccountInfoUri() : Uri{
+    fun getAccountInfoUri() : Uri {
         val appendUri = String.format(
-            "&prompt=%s&access_token=%s",
+            "&prompt=%s&access_token=%s&state=%s",
             "mypage",
-            client.getCredentials().accessToken
+            client.getCredentials().accessToken,
+            generateClientState()
         )
         return Uri.parse(makeAuthorizeUri() + appendUri)
     }
@@ -365,21 +377,36 @@ class NuguOAuth private constructor(
             activity.startActivityForResult(this, REQUEST_ACCOUNT)
         }
     }
+    @Deprecated("Use setCodeFromIntent")
+    fun hasAuthCodeFromIntent(intent: Any) = setCodeFromIntent(intent)
+
     /**
      * Helper function to extract out from the onNewIntent(Intent) for Sign In.
      * @param intent
      * @return true is successful extract of authCode, otherwise false
-    */
-    fun hasAuthCodeFromIntent(intent: Any): Boolean {
-        this.code = when (intent) {
+     */
+    fun setCodeFromIntent(intent: Any): Boolean {
+        var state : String? = null
+        var code : String? = null
+        when (intent) {
             is Intent -> intent.dataString?.let {
                 Uri.parse(URLDecoder.decode(it, "UTF-8")).let {
-                    it.getQueryParameter("code")
+                    code = it.getQueryParameter("code")
+                    state = it.getQueryParameter("state")
                 }
             }
-            else -> null
         }
-        return !this.code.isNullOrBlank()
+
+        if(!verifyState(state)) {
+            Logger.d(TAG, "[setCodeFromIntent] Csrf failed. state=$state")
+            return false
+        }
+        if(!verifyCode(code)) {
+            Logger.d(TAG, "[setCodeFromIntent] code is null or blank. code=$code")
+            return false
+        }
+        this.code = code
+        return true
     }
 
     /**

@@ -51,7 +51,7 @@ class NuguOAuthCallbackActivity : Activity() {
                     return
                 }
 
-                if(auth.hasAuthCodeFromIntent(intent as Intent)) {
+                if(auth.setCodeFromIntent(intent as Intent)) {
                     signIn()
                     return
                 }
@@ -99,7 +99,7 @@ class NuguOAuthCallbackActivity : Activity() {
         super.onNewIntent(intent)
         handler.removeCallbacks(finishRunnable)
 
-        auth.hasAuthCodeFromIntent(intent as Intent)
+        auth.setCodeFromIntent(intent as Intent)
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
                 signIn()
