@@ -92,6 +92,7 @@ class DefaultClientSpeechRecognizer(
     private val listeners = HashSet<SpeechRecognizer.OnStateChangeListener>()
 
     private var currentRequest: RecognizeRequest? = null
+    private var isEpdRunning: Boolean = false
 
     init {
         endPointDetector.addListener(this)
@@ -160,6 +161,7 @@ class DefaultClientSpeechRecognizer(
 
         return startLock.withLock {
             currentRequest = request
+            isEpdRunning = true
             if (!endPointDetector.startDetector(
                     audioInputStream.createReader(),
                     audioFormat,
@@ -170,6 +172,7 @@ class DefaultClientSpeechRecognizer(
             ) {
                 Logger.e(TAG, "[startProcessor] failed to start epd.")
                 currentRequest = null
+                isEpdRunning = false
                 null
             } else {
                 Logger.d(TAG, "[startProcessor] started")
@@ -190,7 +193,7 @@ class DefaultClientSpeechRecognizer(
             request.call?.cancel()
         }
 
-        if (epdState.isActive()) {
+        if (isEpdRunning) {
             endPointDetector.stopDetector()
         } else {
             // Don't need to wait until response timeout occurs.
@@ -265,6 +268,7 @@ class DefaultClientSpeechRecognizer(
             epdState = AudioEndPointDetector.State.EXPECTING_SPEECH
             return
         }
+
         messageSender.newCall(
             request.eventMessage,
             hashMapOf("Last-Asr-Event-Time" to Preferences.get("Last-Asr-Event-Time").toString())
@@ -321,6 +325,7 @@ class DefaultClientSpeechRecognizer(
             return
         }
 
+        isEpdRunning = false
         request.senderThread?.requestFinish()
         epdState = AudioEndPointDetector.State.SPEECH_END
         setState(SpeechRecognizer.State.SPEECH_END, request)
@@ -338,6 +343,7 @@ class DefaultClientSpeechRecognizer(
             return
         }
 
+        isEpdRunning = false
         when(type) {
             AudioEndPointDetector.TimeoutType.LISTENING_TIMEOUT -> {
                 request.senderThread?.requestStop()
@@ -364,6 +370,7 @@ class DefaultClientSpeechRecognizer(
             return
         }
 
+        isEpdRunning = false
         val senderThread = request.senderThread
         val errorType = request.errorTypeForCausingEpdStop
         val prevEpdState = epdState
@@ -401,6 +408,7 @@ class DefaultClientSpeechRecognizer(
             return
         }
 
+        isEpdRunning = false
         epdState = AudioEndPointDetector.State.ERROR
         request.senderThread?.requestStop()
         handleError(when(type) {
@@ -465,6 +473,7 @@ class DefaultClientSpeechRecognizer(
             Logger.d(TAG, "[handleCancel]")
             it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
             currentRequest = null
+            isEpdRunning = false
             setState(SpeechRecognizer.State.STOP, it)
         }
     }
@@ -474,6 +483,7 @@ class DefaultClientSpeechRecognizer(
             Logger.d(TAG, "[handleError] errorType: $errorType")
             it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
             currentRequest = null
+            isEpdRunning = false
             setState(SpeechRecognizer.State.STOP, it)
         }
     }
@@ -482,6 +492,7 @@ class DefaultClientSpeechRecognizer(
         currentRequest?.let {
             Logger.d(TAG, "[handleFinish]")
             currentRequest = null
+            isEpdRunning = false
             setState(SpeechRecognizer.State.STOP, it)
         }
     }
