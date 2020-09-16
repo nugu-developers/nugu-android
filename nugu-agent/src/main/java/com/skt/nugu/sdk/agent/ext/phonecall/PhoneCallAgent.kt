@@ -186,8 +186,6 @@ class PhoneCallAgent(
 
     override fun onIdle(playServiceId: String) {
         executor.submit {
-            focusManager.releaseChannel(channelName,this)
-
             if (state == State.IDLE) {
                 return@submit
             }
@@ -203,8 +201,6 @@ class PhoneCallAgent(
 
     override fun onOutgoing() {
         executor.submit {
-            focusManager.acquireChannel(channelName, this, NAMESPACE)
-
             if (state == State.IDLE) {
 
             } else {
@@ -216,8 +212,6 @@ class PhoneCallAgent(
 
     override fun onEstablished(playServiceId: String) {
         executor.submit {
-            focusManager.acquireChannel(channelName, this, NAMESPACE)
-
             if (state == State.OUTGOING || state == State.INCOMING) {
                 // CallEstablished
                 if(enableSendEvent) {
@@ -235,8 +229,6 @@ class PhoneCallAgent(
         caller: Caller
     ) {
         executor.submit {
-            focusManager.acquireChannel(channelName, this, NAMESPACE)
-
             if (state == State.IDLE) {
                 // CallArrived
                 if(enableSendEvent) {
@@ -339,5 +331,13 @@ class PhoneCallAgent(
 
             focusObserver?.onFocusChanged(newFocus)
         }
+    }
+
+    fun acquireFocus() {
+        focusManager.acquireChannel(channelName, this, NAMESPACE)
+    }
+
+    fun releaseFocus() {
+        focusManager.releaseChannel(channelName,this)
     }
 }
