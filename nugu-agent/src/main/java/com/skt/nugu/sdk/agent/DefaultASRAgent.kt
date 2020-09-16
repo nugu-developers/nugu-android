@@ -637,7 +637,7 @@ class DefaultASRAgent(
                     )
                 }
 
-                executeStopRecognition(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
+                currentSpeechRecognizer.stop(true, ASRAgentInterface.CancelCause.LOSS_FOCUS)
                 while(currentSpeechRecognizer.isRecognizing()) {
                     try {
                         Thread.sleep(10)
