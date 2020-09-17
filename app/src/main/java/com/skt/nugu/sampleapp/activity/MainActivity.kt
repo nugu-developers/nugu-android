@@ -533,7 +533,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         NuguOAuth.getClient().clearAuthorization()
         PreferenceHelper.credentials(this@MainActivity, "")
         LoginActivity.invokeActivity(this)
-        finish()
+        finishAffinity()
     }
 
 }

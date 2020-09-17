@@ -172,7 +172,7 @@ class SettingsActivity : AppCompatActivity() {
                     NuguOAuth.getClient().clearAuthorization()
                     PreferenceHelper.credentials(this@SettingsActivity,"")
                     LoginActivity.invokeActivity(this@SettingsActivity)
-                    finish()
+                    finishAffinity()
                 }
                 
                 override fun onError(error: NuguOAuthError) {
