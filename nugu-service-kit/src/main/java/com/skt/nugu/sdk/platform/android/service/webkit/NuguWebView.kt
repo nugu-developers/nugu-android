@@ -108,6 +108,12 @@ class NuguWebView @JvmOverloads constructor(
         webView.webViewClient = DefaultWebViewClient(context)
     }
 
+    fun cacheMode(mode: Int) {
+        webView.settings?.apply {
+            cacheMode = mode
+        }
+    }
+
     fun loadUrl(url: String) {
         updateCookies(url)
         webView.loadUrl(url)
