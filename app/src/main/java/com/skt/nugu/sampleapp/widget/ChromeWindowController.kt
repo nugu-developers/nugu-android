@@ -44,18 +44,11 @@ class ChromeWindowController(
     , TTSAgentInterface.Listener {
     companion object {
         private const val TAG = "ChromeWindowController"
-
-        private const val DELAY_TIME_LONG = 1500L
-        private const val DELAY_TIME_SHORT = 150L
     }
 
     interface OnChromeWindowCallback {
         fun onExpandStarted()
         fun onHiddenFinished()
-    }
-
-    private val finishRunnable = Runnable {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
     private val bottomSheet: FrameLayout by lazy {
@@ -87,7 +80,9 @@ class ChromeWindowController(
     }
 
     fun dismiss() {
-        finishImmediately()
+        bottomSheet.post {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        }
     }
 
     private var isThinking = false
@@ -108,7 +103,7 @@ class ChromeWindowController(
                         if(isThinking  || (isDialogMode && isSpeaking)) {
                             return
                         }
-                        finishImmediately()
+                        dismiss()
                     }
                     BottomSheetBehavior.STATE_HIDDEN -> callback.onHiddenFinished()
                 }
@@ -184,7 +179,7 @@ class ChromeWindowController(
                     handleSpeaking(dialogMode)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
-                    finishDelayed(DELAY_TIME_LONG)
+                    dismiss()
                 }
                 else -> {
                     // nothing to do
@@ -203,7 +198,6 @@ class ChromeWindowController(
         }
 
         updateChips(payload)
-        cancelFinishDelayed()
 
         if (PreferenceHelper.enableWakeupBeep(activity)) {
             SoundPoolCompat.play(SoundPoolCompat.LocalBeep.WAKEUP)
@@ -222,10 +216,9 @@ class ChromeWindowController(
         chipsView.visibility = View.GONE
 
         if(!dialogMode) {
-            finishImmediately()
+            dismiss()
             return
         }
-        cancelFinishDelayed()
     }
 
     override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
@@ -282,20 +275,6 @@ class ChromeWindowController(
                 SoundPoolCompat.play(SoundPoolCompat.LocalBeep.SUCCESS)
             }
         }
-    }
-
-    private fun cancelFinishDelayed() {
-        bottomSheet.removeCallbacks(finishRunnable)
-    }
-
-    private fun finishDelayed(time: Long) {
-        bottomSheet.removeCallbacks(finishRunnable)
-        bottomSheet.postDelayed(finishRunnable, time)
-    }
-
-    private fun finishImmediately() {
-        bottomSheet.removeCallbacks(finishRunnable)
-        bottomSheet.post(finishRunnable)
     }
 
     private val voiceChromeController = object : SpeechRecognizerAggregatorInterface.OnStateChangeListener, DialogUXStateAggregatorInterface.Listener {
