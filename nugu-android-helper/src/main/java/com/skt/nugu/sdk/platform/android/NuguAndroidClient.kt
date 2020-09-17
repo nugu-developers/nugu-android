@@ -55,6 +55,7 @@ import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.session.SessionAgent
+import com.skt.nugu.sdk.agent.sound.BeepDirectiveDelegate
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
@@ -204,6 +205,8 @@ class NuguAndroidClient private constructor(
 
         internal var soundProvider: SoundProvider? = null
 
+        internal var beepDirectiveDelegate: BeepDirectiveDelegate? = null
+
         internal var messageClient: MessageClient? = null
 
         internal var enableChips: Boolean = true
@@ -332,6 +335,11 @@ class NuguAndroidClient private constructor(
          * @param provider the provider for content URIs for sounds.
          */
         fun soundProvider(provider: SoundProvider?) = apply { this.soundProvider = provider }
+
+        /**
+         * @param beepDirectiveDelegate provider for content URIs for sounds.
+         */
+        fun beepDirectiveDelegate(beepDirectiveDelegate: BeepDirectiveDelegate?) = apply { this.beepDirectiveDelegate = beepDirectiveDelegate }
 
         /**
          * @param client the provider for MessageAgent
@@ -693,7 +701,8 @@ class NuguAndroidClient private constructor(
                                     builder.playerFactory.createBeepPlayer(),
                                     getMessageSender(),
                                     getContextManager(),
-                                    it
+                                    it,
+                                    builder.beepDirectiveDelegate
                                 ).apply {
                                     getDirectiveSequencer().addDirectiveHandler(this)
                                 }
