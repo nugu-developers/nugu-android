@@ -16,9 +16,9 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
-import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.chips.ChipsAgent
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
+import com.skt.nugu.sdk.agent.sound.BeepDirective
+import com.skt.nugu.sdk.agent.sound.BeepDirectiveDelegate
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -37,7 +37,8 @@ class DefaultSoundAgent(
     private val mediaPlayer: UriSourcePlayablePlayer,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
-    private val soundProvider: SoundProvider
+    private val soundProvider: SoundProvider,
+    private val beepDirectiveDelegate: BeepDirectiveDelegate?
 ) : AbstractCapabilityAgent(NAMESPACE) {
 
     companion object {
@@ -63,12 +64,7 @@ class DefaultSoundAgent(
         private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
-    internal data class SoundPayload(
-        @SerializedName("playServiceId")
-        val playServiceId: String,
-        @SerializedName("beepName")
-        val beepName: String
-    )
+
 
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -114,7 +110,7 @@ class DefaultSoundAgent(
     }
 
     private fun handleBeep(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, SoundPayload::class.java)
+        val payload = BeepDirective.Payload.fromJson(info.directive.payload)
         if (payload == null) {
             Logger.d(TAG, "[handleBeep] unexpected payload: ${info.directive.payload}")
             setHandlingFailed(
@@ -128,15 +124,15 @@ class DefaultSoundAgent(
         executor.submit {
             val playServiceId = payload.playServiceId
             val referrerDialogRequestId = info.directive.header.dialogRequestId
-            val beepName = try {
-                SoundProvider.BeepName.valueOf(payload.beepName)
-            } catch (e: IllegalArgumentException) {
-                Logger.d(TAG, "[handleBeep] No enum constant : ${payload.beepName}")
-                sendBeepFailedEvent(playServiceId, referrerDialogRequestId)
-                return@submit
+
+            val success = if(beepDirectiveDelegate != null) {
+                beepDirectiveDelegate.beep(mediaPlayer, soundProvider, BeepDirective(info.directive.header, payload))
+            } else {
+                val sourceId = mediaPlayer.setSource(soundProvider.getContentUri(payload.beepName))
+                !sourceId.isError() && mediaPlayer.play(sourceId)
             }
-            val sourceId = mediaPlayer.setSource(soundProvider.getContentUri(beepName))
-            if (!sourceId.isError() && mediaPlayer.play(sourceId)) {
+
+            if (success) {
                 sendBeepSucceededEvent(playServiceId, referrerDialogRequestId)
             } else {
                 sendBeepFailedEvent(playServiceId, referrerDialogRequestId)
