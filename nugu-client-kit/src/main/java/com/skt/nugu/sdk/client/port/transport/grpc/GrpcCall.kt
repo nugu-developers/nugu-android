@@ -170,8 +170,8 @@ internal class GrpcCall(
 
     override fun onStart() {
         if(invokeStartEvent) {
-            callback?.onResponseStart(request())
             invokeStartEvent = false
+            callback?.onResponseStart(request())
         }
     }
 
@@ -180,6 +180,10 @@ internal class GrpcCall(
 
         // Notify Callback
         if (status.isOk()) {
+            if(invokeStartEvent) {
+                invokeStartEvent = false
+                callback?.onResponseStart(request())
+            }
             callback?.onSuccess(request())
         } else {
             callback?.onFailure(request(), status)

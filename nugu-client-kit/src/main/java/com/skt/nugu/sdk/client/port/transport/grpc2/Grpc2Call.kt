@@ -134,14 +134,18 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
 
     override fun onStart() {
         if(invokeStartEvent) {
-            callback?.onResponseStart(request())
             invokeStartEvent = false
+            callback?.onResponseStart(request())
         }
     }
 
     override fun onComplete(status: Status) {
         // Notify Callback
         if (status.isOk()) {
+            if(invokeStartEvent) {
+                invokeStartEvent = false
+                callback?.onResponseStart(request())
+            }
             callback?.onSuccess(request())
         } else {
             callback?.onFailure(request(), status)

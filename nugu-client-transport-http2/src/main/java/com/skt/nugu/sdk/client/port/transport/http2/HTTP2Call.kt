@@ -142,8 +142,8 @@ internal class HTTP2Call(
 
     override fun onStart() {
         if(invokeStartEvent) {
-            callback?.onResponseStart(request())
             invokeStartEvent = false
+            callback?.onResponseStart(request())
         }
     }
 
@@ -152,6 +152,10 @@ internal class HTTP2Call(
 
         // Notify Callback
         if (status.isOk()) {
+            if(invokeStartEvent) {
+                invokeStartEvent = false
+                callback?.onResponseStart(request())
+            }
             callback?.onSuccess(request())
         } else {
             callback?.onFailure(request(), status)
