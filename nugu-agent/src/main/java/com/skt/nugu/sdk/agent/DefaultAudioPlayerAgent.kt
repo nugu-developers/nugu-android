@@ -165,7 +165,7 @@ class DefaultAudioPlayerAgent(
 
     private var currentActivity: AudioPlayerAgentInterface.State =
         AudioPlayerAgentInterface.State.IDLE
-    private var focus: FocusState = FocusState.NONE
+    private var currentFocus: FocusState = FocusState.NONE
 
     private var currentItem: AudioInfo? = null
 
@@ -212,7 +212,6 @@ class DefaultAudioPlayerAgent(
 
     private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
     private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, this, NAMESPACE)
-    private val focusChangeListeners = CopyOnWriteArraySet<ChannelObserver>()
 
     inner class AudioInfo(
         val payload: PlayPayload,
@@ -227,10 +226,10 @@ class DefaultAudioPlayerAgent(
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 executor.submit {
-                    Logger.d(TAG, "[onGranted] onReleased: ${directive.getMessageId()} , ${this@AudioInfo}, $focus")
+                    Logger.d(TAG, "[onGranted] onReleased: ${directive.getMessageId()} , ${this@AudioInfo}, $currentFocus")
                     if (currentItem == this@AudioInfo) {
                         currentItem = null
-                        if (!playDirectiveController.willBeHandle() && focus != FocusState.NONE) {
+                        if (!playDirectiveController.willBeHandle() && currentFocus != FocusState.NONE) {
                             focusManager.release(focusRequester, focusChannel)
                         }
                     }
@@ -364,7 +363,7 @@ class DefaultAudioPlayerAgent(
                 playSynchronizer.prepareSync(this)
             }
 
-            if(focus == FocusState.NONE) {
+            if(currentFocus == FocusState.NONE) {
                 focusManager.prepare(focusRequester)
             }
 
@@ -473,6 +472,7 @@ class DefaultAudioPlayerAgent(
 
         override fun onExecute(directive: Directive) {
             Logger.d(TAG, "[onExecute::$INNER_TAG] ${directive.getMessageId()}")
+
             executor.submit {
                 if(willBeHandleDirectives.remove(directive.getMessageId()) != null) {
                     waitPlayExecuteInfo?.let {
@@ -522,34 +522,22 @@ class DefaultAudioPlayerAgent(
         private fun executeHandlePlayDirective() {
             Logger.d(
                 TAG,
-                "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $focus"
+                "[executeHandlePlayDirective] currentActivity:$currentActivity, focus: $currentFocus"
             )
 
             if(currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
                 pauseReason = PauseReason.BY_PLAY_DIRECTIVE
             }
 
-            if (FocusState.FOREGROUND != focus) {
-                val latch = CountDownLatch(1)
-                val focusChangeListener = object : ChannelObserver {
-                    override fun onFocusChanged(newFocus: FocusState) {
-                        if(newFocus == FocusState.BACKGROUND || newFocus == FocusState.FOREGROUND) {
-                            latch.countDown()
-                        }
-                    }
-                }
-                focusChangeListeners.add(focusChangeListener)
+            if (FocusState.FOREGROUND != currentFocus) {
                 if (!focusManager.acquire(focusRequester, focusChannel)
                 ) {
-                    latch.countDown()
                     progressTimer.stop()
                     sendPlaybackFailedEvent(
                         ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
                         "Could not acquire $channelName for $NAMESPACE"
                     )
                 }
-                latch.await()
-                focusChangeListeners.remove(focusChangeListener)
             }  else {
                 executeOnForegroundFocus()
             }
@@ -704,7 +692,7 @@ class DefaultAudioPlayerAgent(
 
     private fun executeResumeByButton() {
         if (currentActivity == AudioPlayerAgentInterface.State.PAUSED) {
-            when (focus) {
+            when (currentFocus) {
                 FocusState.FOREGROUND -> {
                     if (!mediaPlayer.resume(sourceId)) {
                         Logger.w(TAG, "[executeResume] failed to resume: $sourceId")
@@ -1050,9 +1038,6 @@ class DefaultAudioPlayerAgent(
 
     override fun onFocusChanged(newFocus: FocusState) {
         Logger.d(TAG, "[onFocusChanged] newFocus : $newFocus")
-        focusChangeListeners.forEach {
-            it.onFocusChanged(newFocus)
-        }
 
         val wait = executor.submit {
             executeOnFocusChanged(newFocus)
@@ -1067,14 +1052,14 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnPlaybackStarted(id: SourceId) {
-        Logger.d(TAG, "[executeOnPlaybackStarted] id: $id, focus: $focus")
+        Logger.d(TAG, "[executeOnPlaybackStarted] id: $id, focus: $currentFocus")
         progressTimer.start()
         sendPlaybackStartedEvent()
         executeOnPlaybackPlayingInternal(id)
     }
 
     private fun executeOnPlaybackResumed(id: SourceId) {
-        Logger.d(TAG, "[executeOnPlaybackResumed] id: $id, focus: $focus")
+        Logger.d(TAG, "[executeOnPlaybackResumed] id: $id, focus: $currentFocus")
         progressTimer.resume()
         pauseReason?.let {
             sendPlaybackResumedEvent()
@@ -1090,7 +1075,7 @@ class DefaultAudioPlayerAgent(
         playCalled = false
 
         // check focus state due to focus can be change after mediaPlayer.start().
-        when (focus) {
+        when (currentFocus) {
             FocusState.FOREGROUND -> {
             }
             FocusState.BACKGROUND -> {
@@ -1137,7 +1122,7 @@ class DefaultAudioPlayerAgent(
             lifeCycleScheduler?.onPaused(id)
         } else {
             // if implicit pause status & foreground state, try resume.
-            if(focus == FocusState.FOREGROUND) {
+            if(currentFocus == FocusState.FOREGROUND) {
                 mediaPlayer.resume(id)
             }
         }
@@ -1182,7 +1167,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> {
-                if (focus != FocusState.NONE) {
+                if (currentFocus != FocusState.NONE) {
                     handlePlaybackCompleted(true)
                 }
             }
@@ -1243,11 +1228,11 @@ class DefaultAudioPlayerAgent(
             TAG,
             "[executeOnFocusChanged] focus: $newFocus, currentActivity: $currentActivity"
         )
-        if (focus == newFocus) {
+        if (currentFocus == newFocus) {
             return
         }
 
-        focus = newFocus
+        currentFocus = newFocus
 
         when (newFocus) {
             FocusState.FOREGROUND -> {
