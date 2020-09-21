@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+Version 0.9.23 *(2020-09-21)*
+-----------------------------
+* Fix: Fix missing EPD stop (#1214)
+* Fix: Fix wrong stop ExpectSpeech (#1218)
+* Fix: Fix missing state param in nugu-login-kit (#1220)
+* Fix: Fix wrong logic to check if token has expired (#1222)
+* Fix: Fix audioplayer not working (#1230)
+    * Fix invalid focus change waiting
+* Improve: Update SilverTray v4.2.5 (#1211)
+* Improve: Do not manage focus at PhoneCallAgent (#1216)
+* Improve: Add cacheMode method to NuguWebView (#1224)
+* Improve: Add beep directive delegate (#1227)
+* Improve: Prevent the issue of not calling onResponseStart (#1234)
+* New: Delegate System.Exception directive (#1233)
+
 Version 0.9.22 *(2020-09-11)*
 -----------------------------
 * Fix: Fix not return to idle state of DIalogUX (#1182)
