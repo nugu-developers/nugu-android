@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client
 
+import com.skt.nugu.sdk.agent.DefaultSystemAgent
 import com.skt.nugu.sdk.client.agent.factory.*
 import com.skt.nugu.sdk.core.focus.FocusManager
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
@@ -34,6 +35,7 @@ import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
+import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
@@ -86,7 +88,15 @@ class NuguClient private constructor(
         // client version for userAgent
         internal var clientVersion: String = "1.0"
 
+        internal var systemExceptionDelegate: ExceptionDirectiveDelegate? = null
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
+
+
+        /**
+         * @param delegate the delegate which handle System.Exception directive.
+         */
+        fun systemExceptionDirectiveDelegate(delegate: ExceptionDirectiveDelegate?) = apply { this.systemExceptionDelegate = delegate }
 
         fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
@@ -196,7 +206,21 @@ class NuguClient private constructor(
                 override fun getInterLayerDisplayPolicyManager(): InterLayerDisplayPolicyManager = interLayerDisplayPolicyManager
             }
 
-            systemAgent = DefaultAgentFactory.SYSTEM.create(sdkContainer)
+            systemAgent = object : SystemAgentFactory {
+                /**
+                 * Create an instance of Impl
+                 * initializing is performed at default initializer
+                 */
+                override fun create(container: SdkContainer): AbstractSystemAgent = with(container) {
+                    DefaultSystemAgent(
+                        getMessageSender(),
+                        getConnectionManager(),
+                        getContextManager(),
+                        getDirectiveSequencer(),
+                        systemExceptionDelegate
+                    )
+                }
+            }.create(sdkContainer)
 
             agentFactoryMap.forEach {
                 agentMap[it.key] = it.value.create(sdkContainer)

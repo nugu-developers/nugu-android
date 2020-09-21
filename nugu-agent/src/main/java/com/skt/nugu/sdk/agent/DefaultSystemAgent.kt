@@ -18,6 +18,8 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
+import com.skt.nugu.sdk.agent.system.ExceptionDirective
+import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.system.handler.RevokeDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -42,18 +44,13 @@ class DefaultSystemAgent(
     messageSender: MessageSender,
     connectionManager: ConnectionManagerInterface,
     contextManager: ContextManagerInterface,
-    directiveSequencer: DirectiveSequencerInterface
+    directiveSequencer: DirectiveSequencerInterface,
+    private val exceptionDirectiveDelegate: ExceptionDirectiveDelegate?
 ) : AbstractSystemAgent(
     messageSender,
     connectionManager,
     contextManager
 ), RevokeDirectiveHandler.Controller {
-    internal data class ExceptionPayload(
-        @SerializedName("code")
-        val code: String,
-        @SerializedName("description")
-        val description: String?
-    )
 
     /**
      * This class handles providing configuration for the System Capability agent
@@ -344,28 +341,33 @@ class DefaultSystemAgent(
         Logger.d(TAG, "[handleException] $info")
         executor.submit {
             val payload =
-                MessageFactory.create(info.directive.payload, ExceptionPayload::class.java)
-            if (payload != null) {
-                when (payload.code) {
-                    CODE_UNAUTHORIZED_REQUEST_EXCEPTION,
-                    CODE_PLAY_ROUTER_PROCESSING_EXCEPTION,
-                    CODE_TTS_SPEAKING_EXCEPTION -> {
-                        val exceptionCode = try {
-                            SystemAgentInterface.ExceptionCode.valueOf(payload.code)
-                        } catch (e: Exception) {
-                            // ignore
-                            null
-                        }
+                MessageFactory.create(info.directive.payload, ExceptionDirective.Payload::class.java)
+            if (payload != null ) {
+                val exceptionCode = try {
+                    SystemAgentInterface.ExceptionCode.valueOf(payload.code)
+                } catch (e: Exception) {
+                    // ignore
+                    null
+                }
 
-                        if (exceptionCode != null) {
-                            observers.forEach {
-                                it.onException(exceptionCode, payload.description)
+                if(exceptionDirectiveDelegate == null) {
+                    when (payload.code) {
+                        CODE_UNAUTHORIZED_REQUEST_EXCEPTION,
+                        CODE_PLAY_ROUTER_PROCESSING_EXCEPTION,
+                        CODE_TTS_SPEAKING_EXCEPTION -> {
+                            if (exceptionCode != null) {
+                                observers.forEach {
+                                    it.onException(exceptionCode, payload.description)
+                                }
                             }
                         }
+                        CODE_ASR_RECOGNIZING_EXCEPTION,
+                        CODE_INTERNAL_SERVICE_EXCEPTION -> {
+                        }
                     }
-                    CODE_ASR_RECOGNIZING_EXCEPTION,
-                    CODE_INTERNAL_SERVICE_EXCEPTION -> {
-                    }
+
+                } else {
+                    exceptionDirectiveDelegate.onException(ExceptionDirective(info.directive.header, payload))
                 }
                 Logger.e(TAG, "EXCEPTION : ${payload.code}, ${payload.description}")
             }

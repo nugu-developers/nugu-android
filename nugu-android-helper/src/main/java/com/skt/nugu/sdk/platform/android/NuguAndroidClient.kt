@@ -61,6 +61,7 @@ import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
+import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
@@ -213,6 +214,8 @@ class NuguAndroidClient private constructor(
 
         internal var cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_NONE
 
+        internal var systemExceptionDirectiveDelegate: ExceptionDirectiveDelegate? = null
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
         internal var clientVersion: String? = null
@@ -337,9 +340,14 @@ class NuguAndroidClient private constructor(
         fun soundProvider(provider: SoundProvider?) = apply { this.soundProvider = provider }
 
         /**
-         * @param beepDirectiveDelegate provider for content URIs for sounds.
+         * @param delegate the delegate which handle Sound.Beep directive.
          */
-        fun beepDirectiveDelegate(beepDirectiveDelegate: BeepDirectiveDelegate?) = apply { this.beepDirectiveDelegate = beepDirectiveDelegate }
+        fun beepDirectiveDelegate(delegate: BeepDirectiveDelegate?) = apply { this.beepDirectiveDelegate = delegate }
+
+        /**
+         * @param delegate the delegate which handle System.Exception directive.
+         */
+        fun systemExceptionDirectiveDelegate(delegate: ExceptionDirectiveDelegate?) = apply { this.systemExceptionDirectiveDelegate = delegate }
 
         /**
          * @param client the provider for MessageAgent
@@ -378,6 +386,7 @@ class NuguAndroidClient private constructor(
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate
     ).logger(builder.logger)
+        .systemExceptionDirectiveDelegate(builder.systemExceptionDirectiveDelegate)
         .preferences(builder.preferences)
         .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
