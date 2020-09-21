@@ -71,12 +71,12 @@ class DialogUXStateAggregator(
 
     private val tryEnterIdleStateRunnable: Runnable = Runnable {
         executor.submit {
+            Logger.d(TAG, "[tryEnterIdleStateRunnable] state: $currentState, dialogModeEnabled: $dialogModeEnabled, asrState: $asrState, ttsState: $ttsState, isTtsPreparing: $isTtsPreparing")
             if (currentState != DialogUXStateAggregatorInterface.DialogUXState.IDLE
                 && !dialogModeEnabled
                 && !asrState.isRecognizing()
                 && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && !isTtsPreparing
             ) {
-                Logger.d(TAG, "[tryEnterIdleStateRunnable]")
                 setState(DialogUXStateAggregatorInterface.DialogUXState.IDLE)
             }
         }
