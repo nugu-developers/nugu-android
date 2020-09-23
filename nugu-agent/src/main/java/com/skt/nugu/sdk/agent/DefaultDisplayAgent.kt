@@ -168,12 +168,37 @@ class DefaultDisplayAgent(
         }
 
         var lastUpdateDirectiveHeader: Header? = null
+        var lastUpdateDirectivePlaySyncObject: PlaySynchronizerInterface.SynchronizeObject? = null
         fun refreshUpdateDirectiveHeader(header: Header) {
             lastUpdateDirectiveHeader?.let {
                 sessionManager.deactivate(it.dialogRequestId, this)
             }
+            lastUpdateDirectivePlaySyncObject?.let {
+                playSynchronizer.releaseSyncImmediately(it)
+            }
             lastUpdateDirectiveHeader = header
+
             sessionManager.activate(header.dialogRequestId, this)
+
+            lastUpdateDirectivePlaySyncObject = object : PlaySynchronizerInterface.SynchronizeObject {
+                override fun getPlayServiceId(): String? = payload.playServiceId
+
+                override fun getDialogRequestId(): String = header.dialogRequestId
+
+                override fun requestReleaseSync() {
+                    // nothing.
+                }
+
+                override fun onSyncStateChanged(
+                    prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
+                    started: List<PlaySynchronizerInterface.SynchronizeObject>
+                ) {
+                    // nothing.
+                }
+            }.apply {
+                playSynchronizer.prepareSync(this)
+                playSynchronizer.startSync(this)
+            }
         }
 
         var playContext: PlayStackManagerInterface.PlayContext? = null
@@ -280,6 +305,9 @@ class DefaultDisplayAgent(
         playSynchronizer.let {
             it.releaseSyncImmediately(info, info.onReleaseCallback)
             it.releaseSyncImmediately(info.dummyPlaySyncForTimer, info.onReleaseCallback)
+            info.lastUpdateDirectivePlaySyncObject?.let {playSyncObject ->
+                it.releaseSyncImmediately(playSyncObject)
+            }
         }
     }
 
