@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 0.9.24 *(2020-09-24)*
+-----------------------------
+* Fix: Cancel focus when preHandled ASR.DM canceled. (#1240)
+* Fix: Fix an issue where the current request was canceled by the timeout event of the previous request (#1245)
+* Improve: Prevent closing AudioSource while read (#1185)
+* Improve: Apply PlaySync for Display.Update directive (#1242)
+* Improve: Apply focus for Sound(Beep) (#1244)
+* Improve: Notify missing callback for startListening (#1250)
+    * Notify ERROR_ALREADY_RECOGNIZING while prev request executing.
+* New: Add ASRBeepPlayer (#1248)
+
 Version 0.9.23 *(2020-09-21)*
 -----------------------------
 * Fix: Fix missing EPD stop (#1214)
