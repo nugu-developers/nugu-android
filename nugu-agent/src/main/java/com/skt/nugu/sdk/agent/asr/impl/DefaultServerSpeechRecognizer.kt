@@ -398,7 +398,11 @@ class DefaultServerSpeechRecognizer(
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {
-        handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+        currentRequest?.let {
+            if(it.eventMessage.messageId == dialogRequestId) {
+                handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+            }
+        }
     }
 
     private fun handleFinish() {
