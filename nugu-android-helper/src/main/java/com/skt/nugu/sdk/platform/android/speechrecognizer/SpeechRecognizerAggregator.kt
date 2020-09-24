@@ -270,6 +270,7 @@ class SpeechRecognizerAggregator(
                 SpeechRecognizerAggregatorInterface.State.WAITING -> {
                     if(isTriggerStoppingByStartListening || keywordDetector?.getDetectorState() == KeywordDetector.State.INACTIVE) {
                         Log.w(TAG, "[startListening] will be started after trigger stopped. skip request.")
+                        callback?.onError(UUIDGeneration.toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
                         return@submit
                     }
 
