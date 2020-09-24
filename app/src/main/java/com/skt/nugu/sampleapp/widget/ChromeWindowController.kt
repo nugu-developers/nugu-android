@@ -198,10 +198,6 @@ class ChromeWindowController(
         }
 
         updateChips(payload)
-
-        if (PreferenceHelper.enableWakeupBeep(activity)) {
-            SoundPoolCompat.play(SoundPoolCompat.LocalBeep.WAKEUP)
-        }
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         callback.onExpandStarted()
     }
@@ -228,13 +224,6 @@ class ChromeWindowController(
     override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
         bottomSheet.post {
             when(type) {
-                ASRAgentInterface.ErrorType.ERROR_NETWORK ,
-                ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT ,
-                ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT -> {
-                    if (PreferenceHelper.enableRecognitionBeep(activity)) {
-                        SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
-                    }
-                }
                 ASRAgentInterface.ErrorType.ERROR_UNKNOWN -> {
                     SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NOTACCEPTABLE_ERROR)
                 }
@@ -246,11 +235,7 @@ class ChromeWindowController(
     }
 
     override fun onNoneResult(dialogRequestId: String) {
-        bottomSheet.post {
-            if (PreferenceHelper.enableRecognitionBeep(activity)) {
-                SoundPoolCompat.play(SoundPoolCompat.LocalBeep.FAIL)
-            }
-        }
+
     }
 
     override fun onPartialResult(result: String, dialogRequestId: String) {
@@ -269,10 +254,6 @@ class ChromeWindowController(
 
             if(sttTextView.visibility != View.VISIBLE) {
                 sttTextView.visibility = View.VISIBLE
-            }
-
-            if(PreferenceHelper.enableRecognitionBeep(activity)) {
-                SoundPoolCompat.play(SoundPoolCompat.LocalBeep.SUCCESS)
             }
         }
     }

@@ -85,14 +85,16 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterfa
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
-import com.skt.nugu.sdk.core.interfaces.preferences.PreferencesInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.preferences.PreferencesInterface
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient.Builder
 import com.skt.nugu.sdk.platform.android.battery.AndroidBatteryStatusProvider
+import com.skt.nugu.sdk.platform.android.beep.AsrBeepPlayer
+import com.skt.nugu.sdk.platform.android.beep.AsrBeepResourceProvider
 import com.skt.nugu.sdk.platform.android.content.AndroidPreferences
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
@@ -215,6 +217,8 @@ class NuguAndroidClient private constructor(
         internal var cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_NONE
 
         internal var systemExceptionDirectiveDelegate: ExceptionDirectiveDelegate? = null
+
+        internal var asrBeepResourceProvider: AsrBeepResourceProvider? = null
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
@@ -343,6 +347,11 @@ class NuguAndroidClient private constructor(
          * @param delegate the delegate which handle Sound.Beep directive.
          */
         fun beepDirectiveDelegate(delegate: BeepDirectiveDelegate?) = apply { this.beepDirectiveDelegate = delegate }
+
+        /**
+         * @param provider the beep resource provider
+         */
+        fun asrBeepResourceProvider(provider: AsrBeepResourceProvider?) = apply { this.asrBeepResourceProvider = provider }
 
         /**
          * @param delegate the delegate which handle System.Exception directive.
@@ -505,6 +514,39 @@ class NuguAndroidClient private constructor(
                                 }
 
                                 getAudioPlayStackManager().addPlayContextProvider(this)
+
+                                addASRResultListener(object: ASRAgentInterface.OnResultListener {
+                                    override fun onNoneResult(dialogRequestId: String) {
+                                        // fail beep
+                                    }
+
+                                    override fun onPartialResult(
+                                        result: String,
+                                        dialogRequestId: String
+                                    ) {
+                                        // no-op
+                                    }
+
+                                    override fun onCompleteResult(
+                                        result: String,
+                                        dialogRequestId: String
+                                    ) {
+                                        // success
+                                    }
+
+                                    override fun onError(
+                                        type: ASRAgentInterface.ErrorType,
+                                        dialogRequestId: String
+                                    ) {
+
+                                    }
+
+                                    override fun onCancel(
+                                        cause: ASRAgentInterface.CancelCause,
+                                        dialogRequestId: String
+                                    ) {
+                                    }
+                                })
                             }
                         }
                 })
@@ -852,6 +894,18 @@ class NuguAndroidClient private constructor(
         ttsAgent?.addListener(dialogUXStateAggregator)
         asrAgent?.addOnStateChangeListener(dialogUXStateAggregator)
         chipsAgent?.addListener(dialogUXStateAggregator)
+
+        asrAgent?.let { asrAgent ->
+            builder.asrBeepResourceProvider?.let { provider ->
+                AsrBeepPlayer(
+                    client.audioFocusManager,
+                    DefaultFocusChannel.ASR_BEEP_CHANNEL_NAME,
+                    asrAgent,
+                    provider,
+                    builder.playerFactory.createBeepPlayer()
+                )
+            }
+        }
 
         initOsContextProvider()
     }

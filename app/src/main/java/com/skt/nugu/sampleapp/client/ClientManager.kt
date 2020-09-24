@@ -37,6 +37,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechProcessorDelegate
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
+import com.skt.nugu.sdk.platform.android.beep.AsrBeepResourceProvider
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URI
@@ -184,6 +185,73 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                         Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsefail_800ms)
                             .toString()
                     );
+                }
+            })
+            .asrBeepResourceProvider(object : AsrBeepResourceProvider {
+                private val wakeupResource = URI.create(
+                    Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.wakeup_500ms)
+                        .toString()
+                )
+
+                private val responseFailResource = URI.create(
+                    Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsefail_800ms)
+                        .toString()
+                )
+
+                private val responseSuccessResource = URI.create(
+                    Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsesuccess_800ms)
+                        .toString()
+                )
+                override fun getOnStartListeningResource(): URI? {
+                    return if (PreferenceHelper.enableWakeupBeep(context)) {
+                        wakeupResource
+                    } else {
+                        null
+                    }
+                }
+
+                override fun getOnErrorNetworkResource(): URI? {
+                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                        responseFailResource
+                    } else {
+                        null
+                    }
+                }
+
+                override fun getOnErrorAudioInputResource(): URI? {
+                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                        responseFailResource
+                    } else {
+                        null
+                    }
+                }
+
+                override fun getOnErrorListeningTimeoutResource(): URI? {
+                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                        responseFailResource
+                    } else {
+                        null
+                    }
+                }
+
+                override fun getOnErrorUnknownResource(): URI? = null
+
+                override fun getOnErrorResponseTimeoutResource(): URI? = null
+
+                override fun getOnNoneResultResource(): URI? {
+                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                        responseFailResource
+                    } else {
+                        null
+                    }
+                }
+
+                override fun getOnCompleteResultResource(): URI? {
+                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                        responseSuccessResource
+                    } else {
+                        null
+                    }
                 }
             })
             .build()

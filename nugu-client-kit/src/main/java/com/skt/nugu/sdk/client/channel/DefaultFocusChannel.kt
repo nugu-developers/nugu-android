@@ -60,6 +60,10 @@ class DefaultFocusChannel {
         const val SOUND_BEEP_CHANNEL_ACQUIRE_PRIORITY = FIFTH_PRIORITY
         const val SOUND_BEEP_CHANNEL_RELEASE_PRIORITY = FIFTH_PRIORITY
 
+        const val ASR_BEEP_CHANNEL_NAME = "ASRBeep"
+        const val ASR_BEEP_CHANNEL_ACQUIRE_PRIORITY = FIFTH_PRIORITY
+        const val ASR_BEEP_CHANNEL_RELEASE_PRIORITY = FOURTH_PRIORITY
+
         fun getDefaultAudioChannels(): List<FocusManagerInterface.ChannelConfiguration> {
             return listOf(
                 FocusManagerInterface.ChannelConfiguration(
@@ -98,6 +102,11 @@ class DefaultFocusChannel {
                     SOUND_BEEP_CHANNEL_NAME,
                     SOUND_BEEP_CHANNEL_ACQUIRE_PRIORITY,
                     SOUND_BEEP_CHANNEL_RELEASE_PRIORITY
+                ),
+                FocusManagerInterface.ChannelConfiguration(
+                    ASR_BEEP_CHANNEL_NAME,
+                    ASR_BEEP_CHANNEL_ACQUIRE_PRIORITY,
+                    ASR_BEEP_CHANNEL_RELEASE_PRIORITY
                 )
             )
         }
