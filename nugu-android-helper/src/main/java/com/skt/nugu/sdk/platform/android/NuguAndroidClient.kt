@@ -711,6 +711,8 @@ class NuguAndroidClient private constructor(
                                     getMessageSender(),
                                     getContextManager(),
                                     it,
+                                    DefaultFocusChannel.SOUND_BEEP_CHANNEL_NAME,
+                                    getAudioFocusManager(),
                                     builder.beepDirectiveDelegate
                                 ).apply {
                                     getDirectiveSequencer().addDirectiveHandler(this)

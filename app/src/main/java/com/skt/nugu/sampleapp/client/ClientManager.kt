@@ -15,27 +15,31 @@
  */
 package com.skt.nugu.sampleapp.client
 
+import android.content.ContentResolver
 import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.skt.nugu.sampleapp.R
+import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.agent.sound.SoundProvider
+import com.skt.nugu.sdk.core.interfaces.context.WakeupWordContextProvider
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.external.jademarble.EndPointDetector
+import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceManager
 import com.skt.nugu.sdk.platform.android.audiosource.audiorecord.AudioRecordSourceFactory
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechProcessorDelegate
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
-import com.skt.nugu.sdk.external.jademarble.EndPointDetector
-import com.skt.nugu.sampleapp.utils.PreferenceHelper
-import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
-import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import java.io.File
 import java.io.FileOutputStream
+import java.net.URI
 import java.util.concurrent.Executors
 
 /**
@@ -168,13 +172,21 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             audioSourceManager
         ).defaultEpdTimeoutMillis(7000L)
             .endPointDetector(
-            EndPointDetector(
-                context.getDir(
-                    "skt_nugu_assets",
-                    Context.MODE_PRIVATE
-                ).absolutePath + File.separator + "skt_epd_model.raw"
-            )
-        ).build()
+                EndPointDetector(
+                    context.getDir(
+                        "skt_nugu_assets",
+                        Context.MODE_PRIVATE
+                    ).absolutePath + File.separator + "skt_epd_model.raw"
+                )
+            ).soundProvider(object : SoundProvider {
+                override fun getContentUri(name: SoundProvider.BeepName): URI {
+                    return URI.create(
+                        Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsefail_800ms)
+                            .toString()
+                    );
+                }
+            })
+            .build()
 
         client.addAudioPlayerListener(this)
         client.addOnDirectiveHandlingListener(directiveHandlingListener)
