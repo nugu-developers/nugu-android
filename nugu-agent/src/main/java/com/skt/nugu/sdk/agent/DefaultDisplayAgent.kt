@@ -146,7 +146,11 @@ class DefaultDisplayAgent(
             started: List<PlaySynchronizerInterface.SynchronizeObject>
         ) {
             executor.submit {
-                if(prepared.isEmpty() && started.size == 1) {
+                val copyStarted = ArrayList(started)
+                copyStarted.remove(this)
+                copyStarted.remove(lastUpdateDirectivePlaySyncObject)
+
+                if(prepared.isEmpty() && copyStarted.isEmpty()) {
                     executeCancelUnknownInfo(getTemplateId(), false)
                 } else {
                     Logger.d(TAG, "[onSyncStateChanged] something synced again, so stop timer.")
