@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.mediaplayer
+package com.skt.nugu.sdk.agent.ext.mediaplayer.event
 
-enum class PlayerActivity {
-    PLAYING,
-    STOPPED,
-    PAUSED
+interface EventCallback {
+    fun onSuccess(message:String?)
+    fun onFailure(errorCode: String)
 }

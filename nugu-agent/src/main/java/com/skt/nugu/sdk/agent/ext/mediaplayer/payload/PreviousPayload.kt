@@ -32,7 +32,9 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Action
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Target
 
 data class PreviousPayload(
@@ -41,7 +43,12 @@ data class PreviousPayload(
     /**
      * the unique string to identify
      */
-    @SerializedName("target")
+    @SerializedName("token")
     val token: String,
-    val target: Target
+    @SerializedName("action")
+    val action: Action,
+    @SerializedName("target")
+    val target: Target,
+    @SerializedName("data")
+    val data: JsonObject?
 )

@@ -18,38 +18,15 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 
 /**
- * toggle information.
+ * User information.
  * If not supported, should be null.
  * When create event, exclude field not supported.
  */
-data class Toggle(
-    /**
-     * repeat, null if not supported
-     */
-    val repeat: Repeat?,
-    /**
-     * shuffle, null if not supported
-     */
-    val shuffle: Shuffle?
+data class User(
+    val isLogin: String,
+    val hasVoucher: String
 ) {
-    enum class Repeat {
-        ALL,
-        ONE,
-        NONE
-    }
-    enum class Shuffle {
-        ON,
-        OFF
-    }
-    fun toJson(): JsonElement = JsonObject().apply {
-        repeat?.let { repeat ->
-            addProperty("repeat", repeat.name)
-        }
-        shuffle?.let { shuffle ->
-            addProperty("shuffle", shuffle.name)
-        }
-    }
+    fun toJson(): JsonElement = Gson().toJsonTree(this)
 }

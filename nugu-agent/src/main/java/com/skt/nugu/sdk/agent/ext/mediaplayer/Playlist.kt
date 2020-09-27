@@ -16,7 +16,26 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
-interface EventCallback {
-    fun onSuccess(message:String?)
-    fun onFailure(reason: String)
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+
+/**
+ * Playlist information.
+ * If not supported, should be null.
+ * When create event, exclude field not supported.
+ */
+data class Playlist(
+    val type : Type?,
+    val name: String,
+    val number: String,
+    val length: String,
+    val currentSongOrder: String
+) {
+    enum class Type {
+        CHART,
+        PLAYLIST,
+        THEMELIST,
+        DEFAULT
+    }
+    fun toJson(): JsonElement = Gson().toJsonTree(this)
 }
