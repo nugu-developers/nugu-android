@@ -17,11 +17,14 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Playlist
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.NextCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.NextPayload
-import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.PreviousPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -40,13 +43,14 @@ class NextDirectiveHandler(
     companion object {
         private const val NAME_NEXT = "Next"
         private const val NAME_SUCCEEDED = "Succeeded"
+        private const val NAME_SUSPENDED = "Suspended"
         private const val NAME_FAILED = "Failed"
 
         private val NEXT = NamespaceAndName(MediaPlayerAgent.NAMESPACE, NAME_NEXT)
     }
 
     interface Controller {
-        fun next(payload: NextPayload, callback: EventCallback)
+        fun next(payload: NextPayload, callback: NextCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -59,7 +63,51 @@ class NextDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.next(payload, object: EventCallback {
+            controller.next(payload, object:
+                NextCallback {
+                override fun onSuspended(
+                    song: Song?,
+                    playlist: Playlist?,
+                    target: String
+                ) {
+                    contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+                        override fun onContext(jsonContext: String) {
+                            messageSender.newCall(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    MediaPlayerAgent.NAMESPACE,
+                                    "${NAME_NEXT}${NAME_SUSPENDED}",
+                                    MediaPlayerAgent.VERSION.toString()
+                                ).payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                    addProperty("token", payload.token)
+                                    song?.let {
+                                        add("song", song.toJson())
+                                    }
+                                    playlist?.let {
+                                        add("playlist", playlist.toJson())
+                                    }
+                                    addProperty("issueCode", target)
+                                    payload.data?.let {
+                                        add("data", it)
+                                    }
+                                }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
+                                    .build()
+                            ).enqueue( object : MessageSender.Callback {
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
+                            })
+                        }
+                    })
+                }
+
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
@@ -92,7 +140,7 @@ class NextDirectiveHandler(
                     })
                 }
 
-                override fun onFailure(reason: String) {
+                override fun onFailure(errorCode: String) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
                             messageSender.newCall(
@@ -104,7 +152,7 @@ class NextDirectiveHandler(
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("token", payload.token)
-                                    addProperty("reason", reason)
+                                    addProperty("errorCode", errorCode)
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()

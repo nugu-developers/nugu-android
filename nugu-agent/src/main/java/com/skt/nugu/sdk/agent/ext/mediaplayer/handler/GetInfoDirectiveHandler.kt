@@ -2,8 +2,11 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
-import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.GetInfoPayload
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.GetInfoCallback
+import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.Payload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -18,61 +21,109 @@ class GetInfoDirectiveHandler(
     private val controller: Controller,
     private val messageSender: MessageSender,
     private val contextGetter: ContextGetterInterface
-): AbstractDirectiveHandler() {
+) : AbstractDirectiveHandler() {
     companion object {
         private const val NAME_GET_INFO = "GetInfo"
-        private const val NAME_RESPONSE_INFO = "ResponseInfo"
+        private const val NAME_SUCCEEDED = "Succeeded"
+        private const val NAME_FAILED = "Failed"
 
         private val GET_INFO = NamespaceAndName(MediaPlayerAgent.NAMESPACE, NAME_GET_INFO)
     }
 
     interface Controller {
-        fun getInfo(payload: GetInfoPayload): Map<GetInfoPayload.InfoItem, String>?
+        fun getInfo(payload: Payload, callback: GetInfoCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, GetInfoPayload::class.java)
-        if(payload == null) {
+        val payload = MessageFactory.create(info.directive.payload, Payload::class.java)
+        if (payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            val infos = controller.getInfo(payload)
-            if(infos != null) {
-                contextGetter.getContext(object: IgnoreErrorContextRequestor() {
-                    override fun onContext(jsonContext: String) {
-                        messageSender.newCall(
-                            EventMessageRequest.Builder(
-                                jsonContext,
-                                MediaPlayerAgent.NAMESPACE,
-                                NAME_RESPONSE_INFO,
-                                MediaPlayerAgent.VERSION.toString()
-                            ).payload(JsonObject().apply {
-                                addProperty("playServiceId", payload.playServiceId)
-                                addProperty("token", payload.token)
-                                add("infos", JsonObject().apply {
-                                    infos.forEach {
-                                        addProperty(it.key.value, it.value)
+            controller.getInfo(payload, object : GetInfoCallback {
+                override fun onSuccess(
+                    song: Song?,
+                    issueDate: String?,
+                    playTime: String?,
+                    playListName: String?
+                ) {
+                    contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+                        override fun onContext(jsonContext: String) {
+                            messageSender.newCall(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    MediaPlayerAgent.NAMESPACE,
+                                    "${NAME_GET_INFO}${NAME_SUCCEEDED}",
+                                    MediaPlayerAgent.VERSION.toString()
+                                ).payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                    addProperty("token", payload.token)
+                                    add("info", JsonObject().apply {
+                                        song?.let {
+                                            add("song", song.toJson())
+                                        }
+                                        issueDate?.let {
+                                            addProperty("issueDate", issueDate)
+                                        }
+                                        playTime?.let {
+                                            addProperty("playTime", playTime)
+                                        }
+                                        playListName?.let {
+                                            addProperty("playListName", playListName)
+                                        }
+                                    })
+                                }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
+                                    .build()
+                            ).enqueue( object : MessageSender.Callback {
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
+                            })
+                        }
+                    })
+                }
+
+                override fun onFailure(errorCode: String?) {
+                    contextGetter.getContext(object: IgnoreErrorContextRequestor() {
+                        override fun onContext(jsonContext: String) {
+                            messageSender.newCall(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    MediaPlayerAgent.NAMESPACE,
+                                    "${NAME_GET_INFO}${NAME_FAILED}",
+                                    MediaPlayerAgent.VERSION.toString()
+                                ).payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                    addProperty("token", payload.token)
+                                    errorCode?.let {
+                                        addProperty("errorCode", errorCode)
                                     }
-                                })
-                            }.toString())
-                                .referrerDialogRequestId(info.directive.getDialogRequestId())
-                                .build()
-                        ).enqueue( object : MessageSender.Callback {
-                            override fun onFailure(request: MessageRequest, status: Status) {
-                            }
+                                }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
+                                    .build()
+                            ).enqueue( object : MessageSender.Callback {
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
 
-                            override fun onSuccess(request: MessageRequest) {
-                            }
+                                override fun onSuccess(request: MessageRequest) {
+                                }
 
-                            override fun onResponseStart(request: MessageRequest) {
-                            }
-                        })
-                    }
-                })
-            }
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
+                            })
+                        }
+                    })
+                }
+            })
         }
     }
 

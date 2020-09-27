@@ -16,8 +16,7 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
-enum class PlayerActivity {
-    PLAYING,
-    STOPPED,
-    PAUSED
+enum class Action {
+    CHECK,
+    EXECUTE
 }

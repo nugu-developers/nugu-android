@@ -24,6 +24,10 @@ enum class Category {
     CHART,
     RECENT_PLAYED,
     FAVORITE,
-    LIKE,
-    PLAYLIST
+    LIKE_SONG,
+    LIKE_ALBUM,
+    LIKE_ARTIST,
+    LIKE_THEME,
+    PLAYLIST,
+    NOWPLAYING
 }

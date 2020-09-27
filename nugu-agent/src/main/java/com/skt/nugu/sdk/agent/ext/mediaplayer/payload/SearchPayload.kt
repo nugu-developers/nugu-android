@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Category
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
 
 data class SearchPayload(
     @SerializedName("playServiceId")
@@ -27,20 +28,10 @@ data class SearchPayload(
      */
     @SerializedName("token")
     val token: String,
-    @SerializedName("category")
-    val category: Category,
-    @SerializedName("theme")
-    val theme: String?,
-    @SerializedName("genre")
-    val genre: String?,
-    @SerializedName("artist")
-    val artist: String?,
-    @SerializedName("album")
-    val album: String?,
-    @SerializedName("title")
-    val title: String?,
-    @SerializedName("etc")
-    val etc: Array<String>?
+    @SerializedName("asrText")
+    val asrText: String?,
+    @SerializedName("song")
+    val song: Song?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -50,30 +41,16 @@ data class SearchPayload(
 
         if (playServiceId != other.playServiceId) return false
         if (token != other.token) return false
-        if (category != other.category) return false
-        if (theme != other.theme) return false
-        if (genre != other.genre) return false
-        if (artist != other.artist) return false
-        if (album != other.album) return false
-        if (title != other.title) return false
-        if (etc != null) {
-            if (other.etc == null) return false
-            if (!etc.contentEquals(other.etc)) return false
-        } else if (other.etc != null) return false
-
+        if (asrText != other.asrText) return false
+        if (song != other.song) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = playServiceId.hashCode()
         result = 31 * result + token.hashCode()
-        result = 31 * result + category.hashCode()
-        result = 31 * result + (theme?.hashCode() ?: 0)
-        result = 31 * result + (genre?.hashCode() ?: 0)
-        result = 31 * result + (artist?.hashCode() ?: 0)
-        result = 31 * result + (album?.hashCode() ?: 0)
-        result = 31 * result + (title?.hashCode() ?: 0)
-        result = 31 * result + (etc?.contentHashCode() ?: 0)
+        result = 31 * result + (asrText?.hashCode() ?: 0)
+        result = 31 * result + (song?.hashCode() ?: 0)
         return result
     }
 }

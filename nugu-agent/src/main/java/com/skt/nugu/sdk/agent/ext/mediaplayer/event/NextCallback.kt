@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.agent.ext.mediaplayer
+package com.skt.nugu.sdk.agent.ext.mediaplayer.event
 
-enum class PlayerActivity {
-    PLAYING,
-    STOPPED,
-    PAUSED
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Playlist
+import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
+
+interface NextCallback : EventCallback{
+    fun onSuspended(song: Song?, playlist: Playlist?, target: String)
 }

@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
  */
 interface MediaPlayer
     : PlayDirectiveHandler.Controller
+    , StopDirectiveHandler.Controller
     , SearchDirectiveHandler.Controller
     , PreviousDirectiveHandler.Controller
     , NextDirectiveHandler.Controller

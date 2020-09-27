@@ -16,14 +16,11 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.mediaplayer.EventCallback
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.TogglePayload
-import com.skt.nugu.sdk.agent.ext.message.MessageAgent
-import com.skt.nugu.sdk.agent.ext.message.handler.GetMessageDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -60,7 +57,8 @@ class ToggleDirectiveHandler (
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.toggle(payload, object: EventCallback {
+            controller.toggle(payload, object:
+                EventCallback {
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
@@ -92,7 +90,7 @@ class ToggleDirectiveHandler (
                     })
                 }
 
-                override fun onFailure(reason: String) {
+                override fun onFailure(errorCode: String) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
                             messageSender.newCall(
@@ -104,7 +102,7 @@ class ToggleDirectiveHandler (
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("token", payload.token)
-                                    addProperty("reason", reason)
+                                    addProperty("errorCode", errorCode)
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()

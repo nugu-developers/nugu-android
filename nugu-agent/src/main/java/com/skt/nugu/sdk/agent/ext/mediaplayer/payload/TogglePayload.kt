@@ -67,10 +67,10 @@ data class TogglePayload(
      * like, null if not supported
      */
     @SerializedName("like")
-    val like: Boolean?,
+    val like: String?,
     /**
      * shuffle, null if not supported
      */
     @SerializedName("shuffle")
-    val shuffle: Boolean?
+    val shuffle: String?
 )

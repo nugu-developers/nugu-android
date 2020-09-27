@@ -17,6 +17,8 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.*
+import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.*
 import com.skt.nugu.sdk.agent.version.Version
@@ -26,7 +28,6 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 class MediaPlayerAgent(
@@ -38,6 +39,7 @@ class MediaPlayerAgent(
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , PlayDirectiveHandler.Controller
+    , StopDirectiveHandler.Controller
     , SearchDirectiveHandler.Controller
     , PreviousDirectiveHandler.Controller
     , NextDirectiveHandler.Controller
@@ -65,7 +67,13 @@ class MediaPlayerAgent(
                     contextGetter
                 )
             )
-
+            addDirectiveHandler(
+                StopDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
             addDirectiveHandler(
                 SearchDirectiveHandler(
                     this@MediaPlayerAgent,
@@ -151,18 +159,19 @@ class MediaPlayerAgent(
 
         override fun value(): String = buildCompactContext().apply {
             with(context) {
+                addProperty("appStatus", appStatus)
                 addProperty("playerActivity", playerActivity.name)
+                user?.let {
+                    add("user", it.toJson())
+                }
+                currentSong?.let {
+                    add("currentSong", it.toJson())
+                }
+                playlist?.let {
+                    add("playlist", it.toJson())
+                }
                 toggle?.let {
-                    it.repeat?.let { repeat ->
-                        addProperty("repeat", repeat)
-                    }
-                    it.like?.let { like ->
-                        addProperty("like", like)
-
-                    }
-                    it.shuffle?.let { shuffle ->
-                        addProperty("shuffle", shuffle)
-                    }
+                    add("toggle", it.toJson())
                 }
             }
         }.toString()
@@ -191,7 +200,7 @@ class MediaPlayerAgent(
         }
     }
 
-    override fun play(payload: PlayPayload, callback: EventCallback) {
+    override fun play(payload: PlayPayload, callback: PlayCallback) {
         executor.submit {
             mediaPlayer.play(payload, callback)
         }
@@ -203,13 +212,13 @@ class MediaPlayerAgent(
         }
     }
 
-    override fun previous(payload: PreviousPayload, callback: EventCallback) {
+    override fun previous(payload: PreviousPayload, callback: PreviousCallback) {
         executor.submit {
             mediaPlayer.previous(payload, callback)
         }
     }
 
-    override fun next(payload: NextPayload, callback: EventCallback) {
+    override fun next(payload: NextPayload, callback: NextCallback) {
         executor.submit {
             mediaPlayer.next(payload, callback)
         }
@@ -224,6 +233,12 @@ class MediaPlayerAgent(
     override fun resume(payload: Payload, callback: EventCallback) {
         executor.submit {
             mediaPlayer.resume(payload, callback)
+        }
+    }
+
+    override fun stop(payload: Payload, callback: EventCallback) {
+        executor.submit {
+            mediaPlayer.stop(payload, callback)
         }
     }
 
@@ -245,9 +260,9 @@ class MediaPlayerAgent(
         }
     }
 
-    override fun getInfo(payload: GetInfoPayload): Map<GetInfoPayload.InfoItem, String>? {
-        return executor.submit(Callable {
-            mediaPlayer.getInfo(payload)
-        }).get()
+    override fun getInfo(payload: Payload, callback: GetInfoCallback) {
+        executor.submit {
+            mediaPlayer.getInfo(payload, callback)
+        }
     }
 }
