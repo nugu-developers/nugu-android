@@ -67,7 +67,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
     ): Boolean {
         lock.withLock {
             val removed = requesterSet.remove(requester)
-            val result = focusManager.acquireChannel(channel.channelName, channel.channelObserver, channel.interfaceName)
+            val result = focusManager.acquireChannel(channel.channelName, channel.channelObserver, channel.interfaceName, channel.finishListener)
             if(result) {
                 lastAcquiringFocusInterfaceName = channel.interfaceName
             }

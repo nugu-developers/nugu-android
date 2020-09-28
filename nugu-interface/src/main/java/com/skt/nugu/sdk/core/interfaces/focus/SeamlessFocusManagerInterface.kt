@@ -22,7 +22,8 @@ interface SeamlessFocusManagerInterface {
     data class Channel(
         val channelName: String,
         val channelObserver: ChannelObserver,
-        val interfaceName: String
+        val interfaceName: String,
+        val finishListener: FocusManagerInterface.OnFinishListener? = null
     )
 
     fun prepare(requester: Requester)

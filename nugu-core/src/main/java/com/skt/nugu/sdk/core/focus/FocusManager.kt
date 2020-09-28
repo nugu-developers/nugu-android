@@ -79,16 +79,18 @@ class FocusManager(
     override fun acquireChannel(
         channelName: String,
         channelObserver: ChannelObserver,
-        interfaceName: String
+        interfaceName: String,
+        finishListener: FocusManagerInterface.OnFinishListener?
     ): Boolean {
         val channelToAcquire = getChannel(channelName)
 
         if (channelToAcquire == null) {
+            finishListener?.onFinish()
             return false
         }
 
         executor.submit {
-            acquireChannelHelper(channelToAcquire, channelObserver, interfaceName)
+            acquireChannelHelper(channelToAcquire, channelObserver, interfaceName, finishListener)
         }
 
         return true
@@ -114,7 +116,8 @@ class FocusManager(
     private fun acquireChannelHelper(
         channelToAcquire: Channel,
         channelObserver: ChannelObserver,
-        interfaceName: String
+        interfaceName: String,
+        finishListener: FocusManagerInterface.OnFinishListener?
     ) {
         val contains = synchronized(activeChannels) {
             activeChannels.filter {
@@ -177,6 +180,8 @@ class FocusManager(
                 setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
             }
         }
+
+        finishListener?.onFinish()
     }
 
     private fun removeActiveChannel(channel: Channel) {
