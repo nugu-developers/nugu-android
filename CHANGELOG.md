@@ -1,7 +1,11 @@
 Change Log
 ==========
 
-Version 0.9.25 *(2020-09-25)*
+Version 0.9.26 *(2020-09-28)*
+-----------------------------
+* Fix: Revert "Prevent closing AudioSource while read #1185"
+
+Version 0.9.25 *(2020-09-28)*
 -----------------------------
 * Fix: Fix side effect for #1242 (#1252)
 * Fix: Change provideState() of SoundAgent (#1256)
