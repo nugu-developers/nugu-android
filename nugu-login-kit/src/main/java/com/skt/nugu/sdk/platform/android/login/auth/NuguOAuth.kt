@@ -157,7 +157,8 @@ class NuguOAuth private constructor(
      */
     fun login(stateListener: AuthStateListener?) {
         Logger.d(TAG, "[login]")
-        clearAuthorization()
+
+        setAuthState(AuthStateListener.State.UNINITIALIZED)
 
         stateListener?.let {
             removeAuthStateListener(it)
@@ -426,8 +427,6 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
         checkRedirectUri()
-
-        clearAuthorization()
 
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)

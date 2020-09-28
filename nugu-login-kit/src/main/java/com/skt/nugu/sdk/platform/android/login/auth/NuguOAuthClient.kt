@@ -123,8 +123,6 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                 }
                 HttpURLConnection.HTTP_UNAUTHORIZED,
                 HttpURLConnection.HTTP_BAD_REQUEST -> {
-                    credential.clear()
-
                     val body = JSONObject(response.body)
                     throw BaseException.UnAuthenticatedException(
                         error = body.get("error").toString(),
@@ -140,7 +138,6 @@ internal class NuguOAuthClient(private val baseUrl: String) {
                     ) {
                         return AuthFlowState.REQUEST_ISSUE_TOKEN
                     }
-                    credential.clear()
 
                     throw BaseException.HttpErrorException(
                         response.code,
