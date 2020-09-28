@@ -119,6 +119,9 @@ class FocusManager(
         interfaceName: String,
         finishListener: FocusManagerInterface.OnFinishListener?
     ) {
+        // TODO: this should be called at last, but call first to solve issue (hack) should be fixed later.
+        finishListener?.onFinish()
+
         val contains = synchronized(activeChannels) {
             activeChannels.filter {
                 it.channel == channelToAcquire
@@ -180,8 +183,6 @@ class FocusManager(
                 setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
             }
         }
-
-        finishListener?.onFinish()
     }
 
     private fun removeActiveChannel(channel: Channel) {
