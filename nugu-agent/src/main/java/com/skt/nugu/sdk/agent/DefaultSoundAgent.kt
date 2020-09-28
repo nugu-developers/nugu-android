@@ -68,16 +68,16 @@ class DefaultSoundAgent(
         private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
+    private val contextState = object : BaseContextState {
+        override fun value(): String = COMPACT_STATE
+    }
+
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
         provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
         provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
-    }
-
-    private val contextState = object : BaseContextState {
-        override fun value(): String = COMPACT_STATE
     }
 
     override fun provideState(
