@@ -88,17 +88,13 @@ class DefaultSoundAgent(
     ) {
         Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
 
-        executor.submit {
-            soundProvider.let {
-                contextSetter.setState(
-                    namespaceAndName,
-                    contextState,
-                    StateRefreshPolicy.NEVER,
-                    contextType,
-                    stateRequestToken
-                )
-            }
-        }
+        contextSetter.setState(
+            namespaceAndName,
+            contextState,
+            StateRefreshPolicy.NEVER,
+            contextType,
+            stateRequestToken
+        )
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
