@@ -115,9 +115,11 @@ class BackOff private constructor(builder: Builder) {
      *  clean up
      */
     fun reset() {
-        this.waitTime = baseDelay
-        this.attempts = 0
-        this.scheduledFuture?.cancel(true)
+        synchronized(this) {
+            this.waitTime = baseDelay
+            this.attempts = 0
+            this.scheduledFuture?.cancel(true)
+        }
     }
 
     /**
@@ -148,30 +150,35 @@ class BackOff private constructor(builder: Builder) {
      *
      */
     fun awaitRetry(code: Status.Code, observer: Observer) {
-        if (scheduledFuture?.isDone == false) {
-            return
+        synchronized(this) {
+            if (scheduledFuture?.isDone == false) {
+                return
+            }
+
+            if (!isAttemptExceed()) {
+                observer.onError(BackoffError.MaxAttemptExceed)
+                return
+            }
+
+            // Increase attempts count
+            attempts++
+
+            if (!isRetryableServiceException(code)) {
+                observer.onError(BackoffError.NoRetryableException)
+                return
+            }
+
+            val duration = duration()
+            scheduledFuture = executorService.schedule({
+                // Retry done
+                observer.onRetry(attempts)
+            }, duration, TimeUnit.MILLISECONDS)
+
+            Logger.w(
+                TAG,
+                String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}")
+            )
         }
-
-        if (!isAttemptExceed()) {
-            observer.onError(BackoffError.MaxAttemptExceed)
-            return
-        }
-
-        // Increase attempts count
-        attempts++
-
-        if (!isRetryableServiceException(code)) {
-            observer.onError(BackoffError.NoRetryableException)
-            return
-        }
-
-        val duration = duration()
-        scheduledFuture = executorService.schedule({
-            // Retry done
-            observer.onRetry(attempts)
-        }, duration, TimeUnit.MILLISECONDS)
-
-        Logger.w(TAG, String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}"))
     }
 
 
