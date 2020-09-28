@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 0.9.25 *(2020-09-25)*
+-----------------------------
+* Fix: Fix side effect for #1242 (#1252)
+* Fix: Change provideState() of SoundAgent (#1256)
+* Fix: Return AudioPlayer.Play handle after focus requested (#1259)
+
 Version 0.9.24 *(2020-09-24)*
 -----------------------------
 * Fix: Cancel focus when preHandled ASR.DM canceled. (#1240)
