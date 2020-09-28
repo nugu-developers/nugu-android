@@ -44,6 +44,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
+import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -211,7 +212,15 @@ class DefaultAudioPlayerAgent(
     }
 
     private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
-    private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, this, NAMESPACE)
+    private val onFocusFinishListener = object : FocusManagerInterface.OnFinishListener {
+        val listeners = CopyOnWriteArraySet<FocusManagerInterface.OnFinishListener>()
+
+        override fun onFinish() {
+            listeners.forEach { it.onFinish() }
+        }
+    }
+
+    private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, this, NAMESPACE, onFocusFinishListener)
 
     inner class AudioInfo(
         val payload: PlayPayload,
@@ -530,14 +539,27 @@ class DefaultAudioPlayerAgent(
             }
 
             if (FocusState.FOREGROUND != currentFocus) {
+                val countDownLatch = CountDownLatch(1)
+                val listener = object : FocusManagerInterface.OnFinishListener {
+                    override fun onFinish() {
+                        Logger.d(TAG, "[executeHandlePlayDirective] acquire focus finished.")
+                        onFocusFinishListener.listeners.remove(this)
+                        countDownLatch.countDown()
+                    }
+                }
+
+                onFocusFinishListener.listeners.add(listener)
                 if (!focusManager.acquire(focusRequester, focusChannel)
                 ) {
+                    onFocusFinishListener.listeners.remove(listener)
+                    countDownLatch.countDown()
                     progressTimer.stop()
                     sendPlaybackFailedEvent(
                         ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
                         "Could not acquire $channelName for $NAMESPACE"
                     )
                 }
+                countDownLatch.await()
             }  else {
                 executeOnForegroundFocus()
             }

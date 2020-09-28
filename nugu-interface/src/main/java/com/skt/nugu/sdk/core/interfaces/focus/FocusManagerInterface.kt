@@ -28,7 +28,11 @@ interface FocusManagerInterface {
         fun onFocusChanged(channelConfiguration: ChannelConfiguration, newFocus: FocusState, interfaceName: String)
     }
 
-    fun acquireChannel(channelName: String, channelObserver: ChannelObserver, interfaceName: String): Boolean
+    interface OnFinishListener {
+        fun onFinish()
+    }
+
+    fun acquireChannel(channelName: String, channelObserver: ChannelObserver, interfaceName: String, finishListener: OnFinishListener? = null): Boolean
     fun releaseChannel(channelName: String, channelObserver: ChannelObserver): Future<Boolean>
 
     fun addListener(listener: OnFocusChangedListener)
