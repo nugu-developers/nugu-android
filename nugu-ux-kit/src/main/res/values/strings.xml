@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">NuguUXKit</string>
+    <string name="guide_text">말씀해주세요</string>
 </resources>
