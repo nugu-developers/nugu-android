@@ -259,6 +259,11 @@ class NuguOAuth private constructor(
         return credential.expiresIn * 1000
     }
     /**
+     * Check if the token is expired
+     **/
+    fun isExpired() = client.isExpired()
+
+    /**
      * Check whether a user is authenticated or not
      * @return trus is authorized, otherwise not authorized
      */
