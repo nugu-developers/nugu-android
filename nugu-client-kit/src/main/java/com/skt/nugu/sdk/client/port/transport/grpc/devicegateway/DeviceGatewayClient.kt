@@ -75,7 +75,7 @@ internal class DeviceGatewayClient(policy: Policy,
 
     private var eventMessageHeaders: Map<String, String>? = null
 
-    var asyncCalls = Collections.synchronizedMap(object : LinkedHashMap<String, Call>() {
+    private var asyncCalls = Collections.synchronizedMap(object : LinkedHashMap<String, Call>() {
         private val serialVersionUID = 301077066599181567L
         override fun removeEldestEntry(p0: MutableMap.MutableEntry<String, Call>?): Boolean {
             return size > maxAsyncCallsSize
@@ -174,11 +174,12 @@ internal class DeviceGatewayClient(policy: Policy,
                 val result = event?.sendAttachmentMessage(toProtobufMessage(request)) ?: false
                 if(result) {
                     call.onComplete(SDKStatus.OK)
+                    asyncCalls[request.parentMessageId]?.reschedule()
                 }
                 result
             }
             is EventMessageRequest -> {
-                asyncCalls[request.dialogRequestId] = call
+                asyncCalls[request.messageId] = call
                 call.headers()?.let {
                     eventMessageHeaders = it
                 }
@@ -288,6 +289,11 @@ internal class DeviceGatewayClient(policy: Policy,
 
         disconnect()
         backoff.reset()
+
+        asyncCalls.forEach{
+            it.value.cancel()
+        }
+        asyncCalls.clear()
     }
 
     /**
@@ -303,10 +309,10 @@ internal class DeviceGatewayClient(policy: Policy,
 
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
         val message = convertToDirectives(directiveMessage)
-        val dialogRequestId =  message.first().header.dialogRequestId
-        asyncCalls[dialogRequestId]?.onStart()
-        asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
-        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
+        val messageId =  message.first().header.messageId
+        asyncCalls[messageId]?.onStart()
+        asyncCalls[messageId]?.onComplete(SDKStatus.OK)
+        if(asyncCalls[messageId]?.isCanceled() != true) {
             messageConsumer?.consumeDirectives(message)
         }
     }
@@ -323,10 +329,10 @@ internal class DeviceGatewayClient(policy: Policy,
 
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
         val message = convertToAttachmentMessage(attachmentMessage)
-        val dialogRequestId = message.header.dialogRequestId
-        asyncCalls[dialogRequestId]?.onStart()
-        asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
-        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
+        val parentMessageId = message.parentMessageId
+        asyncCalls[parentMessageId]?.onStart()
+        asyncCalls[parentMessageId]?.onComplete(SDKStatus.OK)
+        if(asyncCalls[parentMessageId]?.isCanceled() != true) {
             messageConsumer?.consumeAttachment(message)
         }
     }

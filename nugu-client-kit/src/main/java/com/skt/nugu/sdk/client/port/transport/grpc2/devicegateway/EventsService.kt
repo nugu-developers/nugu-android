@@ -120,7 +120,7 @@ internal class EventsService(
                             if(!call.isCanceled()) {
                                 observer.onReceiveDirectives(it)
                             }
-                            log.append("[onNext] directive, messageId=")
+                            log.append("[onNext] directive, requestMessageId={$streamId}, messageId=")
                             val elapsed = System.currentTimeMillis() - beginTimeStamp
                             it.directivesList.forEach {
                                 log.append(it.header.messageId)
@@ -143,11 +143,11 @@ internal class EventsService(
                             val currentTimeMillis =  System.currentTimeMillis()
                             if (it.attachment.seq == 0) {
                                 startAttachmentTimeMillis = currentTimeMillis
-                                Logger.d(TAG, "[onNext] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}")
+                                Logger.d(TAG, "[onNext] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, requestMessageId={$streamId}")
                             }
                             if (it.attachment.isEnd) {
                                 val elapsed = currentTimeMillis - startAttachmentTimeMillis
-                                Logger.d(TAG, "[onNext] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, elapsed=${elapsed}ms")
+                                Logger.d(TAG, "[onNext] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, requestMessageId={$streamId}, elapsed=${elapsed}ms")
                             }
                             if(!call.isCanceled()) {
                                 observer.onReceiveAttachment(it)
