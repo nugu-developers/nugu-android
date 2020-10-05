@@ -8,7 +8,7 @@
     android:clipToPadding="false"
     android:elevation="10dp"
     app:behavior_hideable="true"
-    app:layout_behavior="com.skt.nugu.sampleapp.widget.ChromeWindowBottomSheetBehavior">
+    app:layout_behavior="com.skt.nugu.sdk.platform.android.ux.widget.ChromeWindowBottomSheetBehavior">
 
     <com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
         android:id="@+id/voice_chrome"
