@@ -167,4 +167,8 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         return this
     }
     override fun callTimeout() = callTimeoutMillis
+
+    override fun reschedule() {
+        // no op
+    }
 }

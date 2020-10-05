@@ -27,4 +27,5 @@ interface Call {
     fun onComplete(status: Status)
     fun callTimeout(millis: Long): Call
     fun callTimeout(): Long
+    fun reschedule()
 }

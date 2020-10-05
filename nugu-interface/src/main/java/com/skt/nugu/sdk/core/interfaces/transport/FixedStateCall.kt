@@ -67,4 +67,7 @@ class FixedStateCall(
         return this
     }
     override fun callTimeout() = 0L
+
+    override fun reschedule() {
+    }
 }

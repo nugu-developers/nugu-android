@@ -197,5 +197,12 @@ internal class HTTP2Call(
     }
 
     override fun callTimeout() = callTimeoutMillis
+
+    override fun reschedule() {
+        if(!isCanceled()) {
+            cancelScheduledTimeout()
+            scheduleTimeout()
+        }
+    }
 }
 

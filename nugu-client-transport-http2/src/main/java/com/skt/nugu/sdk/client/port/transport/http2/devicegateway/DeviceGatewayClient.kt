@@ -34,6 +34,7 @@ import okhttp3.*
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -78,6 +79,12 @@ internal class DeviceGatewayClient(
 
     private val isConnected = AtomicBoolean(false)
 
+    private var asyncCalls = Collections.synchronizedMap(object : LinkedHashMap<String, Call>() {
+        private val serialVersionUID = 301077066599181567L
+        override fun removeEldestEntry(p0: MutableMap.MutableEntry<String, Call>?): Boolean {
+            return size > maxAsyncCallsSize
+        }
+    })
     /**
      * Set a policy.
      * @return the ServerPolicy
@@ -177,10 +184,12 @@ internal class DeviceGatewayClient(
                 val result = event.sendAttachmentMessage(request)
                 if(result) {
                     call.onComplete(SDKStatus.OK)
+                    asyncCalls[request.parentMessageId]?.reschedule()
                 }
                 result
             }
             is EventMessageRequest -> {
+                asyncCalls[request.messageId] = call
                 event.sendEventMessage(call)
             }
             is CrashReportMessageRequest ->  true /* Deprecated */
@@ -287,6 +296,11 @@ internal class DeviceGatewayClient(
 
         disconnect()
         backoff.reset()
+
+        asyncCalls.forEach{
+            it.value.cancel()
+        }
+        asyncCalls.clear()
     }
 
     /**
