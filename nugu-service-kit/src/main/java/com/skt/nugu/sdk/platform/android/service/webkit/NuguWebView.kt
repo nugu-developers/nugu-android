@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.platform.android.service.webkit
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -31,7 +30,6 @@ import android.view.ViewGroup
 import android.webkit.*
 import android.widget.FrameLayout
 import com.skt.nugu.sdk.platform.android.service.BuildConfig
-
 
 class NuguWebView @JvmOverloads constructor(
     context: Context,
