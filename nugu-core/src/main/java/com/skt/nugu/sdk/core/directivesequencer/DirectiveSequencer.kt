@@ -120,4 +120,8 @@ class DirectiveSequencer :
             receivingThread.wakeAll()
         }
     }
+
+    override fun cancelDialogRequestId(dialogRequestId: String) {
+        directiveProcessor.cancelDialogRequestId(dialogRequestId)
+    }
 }
