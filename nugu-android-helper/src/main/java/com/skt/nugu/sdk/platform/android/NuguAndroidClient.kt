@@ -52,6 +52,7 @@ import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
+import com.skt.nugu.sdk.agent.routine.RoutineAgent
 import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.session.SessionAgent
@@ -907,6 +908,12 @@ class NuguAndroidClient private constructor(
             }
         }
 
+        getAgent(RoutineAgent.NAMESPACE)?.let {routineAgent ->
+            textAgent?.let {
+                (routineAgent as RoutineAgent).textAgent = textAgent
+            }
+        }
+
         initOsContextProvider()
     }
 
@@ -1014,9 +1021,12 @@ class NuguAndroidClient private constructor(
 
     override fun requestTextInput(
         text: String,
+        playServiceId: String?,
+        token: String?,
+        referrerDialogRequestId: String?,
         includeDialogAttribute: Boolean,
         listener: TextAgentInterface.RequestListener?
-    ): String? = textAgent?.requestTextInput(text, includeDialogAttribute, listener)
+    ): String? = textAgent?.requestTextInput(text, playServiceId, token, referrerDialogRequestId, includeDialogAttribute, listener)
 
     override fun requestTTS(
         text: String,

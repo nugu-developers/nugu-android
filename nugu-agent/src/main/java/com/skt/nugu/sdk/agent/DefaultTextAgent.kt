@@ -187,11 +187,14 @@ class DefaultTextAgent(
 
     override fun requestTextInput(
         text: String,
+        playServiceId: String?,
+        token: String?,
+        referrerDialogRequestId: String?,
         includeDialogAttribute: Boolean,
         listener: TextAgentInterface.RequestListener?
     ): String {
         Logger.d(TAG, "[requestTextInput] text: $text")
-        return executeSendTextInputEventInternal(text, includeDialogAttribute, null,null, null, listener)
+        return executeSendTextInputEventInternal(text, includeDialogAttribute, playServiceId,token, referrerDialogRequestId, listener)
     }
 
     private fun createMessage(text: String, includeDialogAttribute: Boolean, context: String, playServiceId: String?, token: String?, dialogRequestId: String, referrerDialogRequestId: String?) =

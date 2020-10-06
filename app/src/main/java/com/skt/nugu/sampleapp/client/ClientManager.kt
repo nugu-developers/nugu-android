@@ -24,7 +24,10 @@ import android.util.Log
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.routine.RoutineAgent
 import com.skt.nugu.sdk.agent.sound.SoundProvider
+import com.skt.nugu.sdk.client.SdkContainer
+import com.skt.nugu.sdk.client.agent.factory.AgentFactory
 import com.skt.nugu.sdk.core.interfaces.context.WakeupWordContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -172,6 +175,11 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             NuguOAuth.create(context),
             audioSourceManager
         ).defaultEpdTimeoutMillis(7000L)
+            .addAgentFactory(RoutineAgent.NAMESPACE, object: AgentFactory<RoutineAgent> {
+                override fun create(container: SdkContainer): RoutineAgent = with(container) {
+                    RoutineAgent(getMessageSender(), getContextManager(), getDirectiveSequencer(), getDirectiveSequencer(), getDirectiveGroupProcessor())
+                }
+            })
             .endPointDetector(
                 EndPointDetector(
                     context.getDir(
