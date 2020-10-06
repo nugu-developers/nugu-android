@@ -19,6 +19,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import java.util.concurrent.CopyOnWriteArraySet
 
 class DirectiveGroupProcessor(
     private val directiveSequencer: DirectiveSequencerInterface
@@ -26,7 +27,7 @@ class DirectiveGroupProcessor(
     DirectiveGroupProcessorInterface {
     private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
     private val prePreprocessedListeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
-    private val postPreprocessedListeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
+    private val postPreprocessedListeners = CopyOnWriteArraySet<DirectiveGroupProcessorInterface.Listener>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
         prePreprocessedListeners.forEach {
