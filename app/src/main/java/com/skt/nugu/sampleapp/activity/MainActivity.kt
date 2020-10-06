@@ -38,6 +38,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
@@ -373,30 +374,43 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT -> {
-                    /** If you want to reconnect to the server, run the code below.
-                        But it can be recursive, so you need to manage the count of attempts.
-                        if(attempts++ < maxAttempts) {
-                            ClientManager.getClient().connect()
-                        }
+                    /**
+                     * only server-initiative-directive
+                     * If you want to reconnect to the server, run the code below.
+                     * But it can be recursive, so you need to manage the count of attempts.
                      **/
-                    NuguSnackbar.with(findViewById(R.id.drawer_layout))
-                        .message(R.string.connection_failed)
-                        .duration(NuguSnackbar.LENGTH_LONG)
-                        .show()
+                    if(NuguOAuth.getClient().isSidSupported()) {
+                        ExponentialBackOff.awaitConnectedAndRetry(this, object : ExponentialBackOff.Callback {
+                            override fun onRetry() {
+                                ClientManager.getClient().disconnect()
+                                ClientManager.getClient().connect()
+                            }
 
-                    val cm = this.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                    val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
-                    if(activeNetwork?.isConnected == true) {
-                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
-                    } else {
-                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
+                            override fun onError(reason: ExponentialBackOff.ErrorCode) {
+                                NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                                    .message(R.string.connection_failed)
+                                    .duration(NuguSnackbar.LENGTH_LONG)
+                                    .show()
+
+                                val cm = this@MainActivity.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                                val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
+                                if(activeNetwork?.isConnected == true) {
+                                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
+                                } else {
+                                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
+                                }
+                            }
+                        })
                     }
+
                 }
                 ConnectionStatusListener.ChangedReason.INVALID_AUTH -> {
                     /** Authentication failed Please refresh your access_token. **/
                     performRevoke()
                 }
             }
+        } else if(status == ConnectionStatusListener.Status.CONNECTED) {
+            ExponentialBackOff.reset()
         }
     }
 
