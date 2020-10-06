@@ -20,9 +20,6 @@ import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
@@ -30,9 +27,11 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
-import java.util.concurrent.Future
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -172,11 +171,21 @@ interface ClientHelperInterface {
      * Send request for NUGU with text input.
      * The client receive the same response(directive) as when they requested ASR.
      * @param text : the source text for
+     * @param playServiceId the playServiceId for request
+     * @param token: the token for request
+     * @param referrerDialogRequestId the referrerDialogRequestId for request
      * @param includeDialogAttribute the flag to include or not dialog's attribute
      * @param listener the listener for request
      * @return the dialogRequestId for request
      */
-    fun requestTextInput(text: String, includeDialogAttribute: Boolean = true, listener: TextAgentInterface.RequestListener? = null): String?
+    fun requestTextInput(
+        text: String,
+        playServiceId: String? = null,
+        token: String? = null,
+        referrerDialogRequestId: String? = null,
+        includeDialogAttribute: Boolean = true,
+        listener: TextAgentInterface.RequestListener? = null
+    ): String?
 
     // TTS
     /**
