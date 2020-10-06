@@ -299,6 +299,9 @@ class AudioPlayerTemplateHandler(
                 controller?.let { templateController ->
                     templateControllerMap[templateId] = templateController
                 }
+
+                setHandlingCompleted(it)
+
                 sessionManager.activate(it.getDialogRequestId(), it)
                 it.playContext = it.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
