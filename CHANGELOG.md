@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 0.9.27 *(2020-10-06)*
+-----------------------------
+* Fix: Do not clear tokens during login (#1261)
+* Fix: Fix thread synchronization issue in the backoff (#1262)
+* Fix: Fix wrong calltimeout in Grpc(v1) and Http2 (#1277)
+* Improve: Add isExpired to NuguOAuth (#1272)
+* Improve: Provide helper API to enable AudioPlayerAgent, LocationAgent (#1274)
+* New: Support Routine v1.0 (#1195)
+* New: Update MediaPlayer Interface v1.0 (#1254)
+* New: Add ChromeWindow in nugu-login-kit (#1268)
+
 Version 0.9.26 *(2020-09-28)*
 -----------------------------
 * Fix: Revert "Prevent closing AudioSource while read #1185"
