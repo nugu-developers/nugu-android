@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
@@ -30,7 +31,7 @@ import kotlin.concurrent.withLock
 
 class DirectiveProcessor(
     private val directiveRouter: DirectiveRouter
-) {
+): DirectiveProcessorInterface {
     companion object {
         private const val TAG = "DirectiveProcessor"
     }
@@ -159,6 +160,12 @@ class DirectiveProcessor(
 
         scrubWithConditionLocked{ directive: Directive ->
             directive.getDialogRequestId() == dialogRequestId
+        }
+    }
+
+    override fun cancelDialogRequestId(dialogRequestId: String) {
+        lock.withLock {
+            scrubDialogRequestIdLocked(dialogRequestId)
         }
     }
 

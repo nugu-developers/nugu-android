@@ -20,7 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 /**
  * Interface for sequencing and handling directives.
  */
-interface DirectiveSequencerInterface {
+interface DirectiveSequencerInterface: DirectiveProcessorInterface {
     interface OnDirectiveHandlingListener {
         fun onRequested(directive: Directive)
         fun onCompleted(directive: Directive)
