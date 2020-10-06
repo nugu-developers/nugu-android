@@ -298,6 +298,12 @@ class NuguOAuth private constructor(
         return client.getCredentials().scope
     }
     /**
+     * Returns true if server-initiative-directive is supported.
+     **/
+    fun isSidSupported() : Boolean {
+        return getScope()?.contains("device:S.I.D.") ?: false
+    }
+    /**
      * Gets an auth status
      * @returns the current state
      * */
