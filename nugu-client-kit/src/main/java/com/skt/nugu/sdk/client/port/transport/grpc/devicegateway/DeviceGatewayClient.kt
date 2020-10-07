@@ -174,12 +174,15 @@ internal class DeviceGatewayClient(policy: Policy,
                 val result = event?.sendAttachmentMessage(toProtobufMessage(request)) ?: false
                 if(result) {
                     call.onComplete(SDKStatus.OK)
-                    asyncCalls[request.parentMessageId]?.reschedule()
+                    asyncCalls[request.dialogRequestId]?.reschedule()
                 }
                 result
             }
             is EventMessageRequest -> {
-                asyncCalls[request.messageId] = call
+                asyncCalls[request.dialogRequestId]?.let {
+                    Logger.w(TAG, "This request has already been requested (dialogRequestId=${request.dialogRequestId})")
+                }
+                asyncCalls[request.dialogRequestId] = call
                 call.headers()?.let {
                     eventMessageHeaders = it
                 }
@@ -309,10 +312,10 @@ internal class DeviceGatewayClient(policy: Policy,
 
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
         val message = convertToDirectives(directiveMessage)
-        val messageId =  message.first().header.messageId
-        asyncCalls[messageId]?.onStart()
-        asyncCalls[messageId]?.onComplete(SDKStatus.OK)
-        if(asyncCalls[messageId]?.isCanceled() != true) {
+        val dialogRequestId =  message.first().header.dialogRequestId
+        asyncCalls[dialogRequestId]?.onStart()
+        asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
+        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
             messageConsumer?.consumeDirectives(message)
         }
     }
@@ -329,10 +332,10 @@ internal class DeviceGatewayClient(policy: Policy,
 
     override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) {
         val message = convertToAttachmentMessage(attachmentMessage)
-        val parentMessageId = message.parentMessageId
-        asyncCalls[parentMessageId]?.onStart()
-        asyncCalls[parentMessageId]?.onComplete(SDKStatus.OK)
-        if(asyncCalls[parentMessageId]?.isCanceled() != true) {
+        val dialogRequestId = message.header.dialogRequestId
+        asyncCalls[dialogRequestId]?.onStart()
+        asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
+        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
             messageConsumer?.consumeAttachment(message)
         }
     }
