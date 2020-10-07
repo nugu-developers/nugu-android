@@ -25,7 +25,7 @@ import com.google.gson.JsonElement
  * When create event, exclude field not supported.
  */
 data class User(
-    val isLogin: String,
+    val isLogIn: String,
     val hasVoucher: String
 ) {
     fun toJson(): JsonElement = Gson().toJsonTree(this)
