@@ -16,11 +16,19 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.google.gson.annotations.SerializedName
+
 data class Context(
+    @SerializedName("appStatus")
     val appStatus: String,
+    @SerializedName("playerActivity")
     val playerActivity: PlayerActivity,
+    @SerializedName("user")
     val user: User?,
+    @SerializedName("currentSong")
     val currentSong: Song?,
+    @SerializedName("playlist")
     val playlist: Playlist?,
+    @SerializedName("toggle")
     val toggle: Toggle?
 )

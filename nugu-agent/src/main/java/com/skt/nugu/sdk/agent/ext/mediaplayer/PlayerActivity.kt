@@ -16,8 +16,13 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.google.gson.annotations.SerializedName
+
 enum class PlayerActivity {
+    @SerializedName("PLAYING")
     PLAYING,
+    @SerializedName("STOPPED")
     STOPPED,
+    @SerializedName("PAUSED")
     PAUSED
 }

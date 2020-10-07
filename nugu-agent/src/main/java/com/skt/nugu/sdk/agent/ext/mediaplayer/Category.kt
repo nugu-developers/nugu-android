@@ -16,18 +16,33 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.google.gson.annotations.SerializedName
+
 enum class Category {
+    @SerializedName("NONE")
     NONE,
+    @SerializedName("RECOMMEND")
     RECOMMEND,
+    @SerializedName("POPULAR")
     POPULAR,
+    @SerializedName("NEW")
     NEW,
+    @SerializedName("CHART")
     CHART,
+    @SerializedName("RECENT_PLAYED")
     RECENT_PLAYED,
+    @SerializedName("FAVORITE")
     FAVORITE,
+    @SerializedName("LIKE_SONG")
     LIKE_SONG,
+    @SerializedName("LIKE_ALBUM")
     LIKE_ALBUM,
+    @SerializedName("LIKE_ARTIST")
     LIKE_ARTIST,
+    @SerializedName("LIKE_THEME")
     LIKE_THEME,
+    @SerializedName("PLAYLIST")
     PLAYLIST,
+    @SerializedName("NOWPLAYING")
     NOWPLAYING
 }

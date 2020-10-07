@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
 
 /**
  * Playlist information.
@@ -25,10 +26,15 @@ import com.google.gson.JsonElement
  * When create event, exclude field not supported.
  */
 data class Playlist(
+    @SerializedName("type")
     val type : Type?,
+    @SerializedName("name")
     val name: String,
+    @SerializedName("number")
     val number: String,
+    @SerializedName("length")
     val length: String,
+    @SerializedName("currentSongOrder")
     val currentSongOrder: String
 ) {
     enum class Type {

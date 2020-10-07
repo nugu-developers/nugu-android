@@ -16,7 +16,11 @@
 
 package com.skt.nugu.sdk.agent.ext.mediaplayer
 
+import com.google.gson.annotations.SerializedName
+
 enum class Target {
+    @SerializedName("TRACK")
     TRACK,
+    @SerializedName("PLAYLIST")
     PLAYLIST
 }
