@@ -71,14 +71,12 @@ class DirectiveProcessor(
     private val lock = ReentrantLock()
     private val processingLoop: LoopThread = object : LoopThread() {
         override fun onLoop() {
-            lock.withLock {
-                var cancelHandled: Boolean
-                var queuedHandled: Boolean
-                do {
-                    cancelHandled = processCancelingQueueLocked()
-                    queuedHandled = handleQueuedDirectivesLocked()
-                } while (cancelHandled || queuedHandled)
-            }
+            var cancelHandled: Boolean
+            var queuedHandled: Boolean
+            do {
+                cancelHandled = processCancelingQueue()
+                queuedHandled = handleQueuedDirectives()
+            } while (cancelHandled || queuedHandled)
         }
     }
     private var isEnabled = true
@@ -307,27 +305,35 @@ class DirectiveProcessor(
         }
     }
 
-    private fun processCancelingQueueLocked(): Boolean {
-        Logger.d(TAG, "[processCancelingQueueLocked] cancelingQueue size : ${cancelingQueue.size}")
-        if (cancelingQueue.isEmpty()) {
-            return false
+    private fun processCancelingQueue(): Boolean {
+        val copyCancelingQueue = lock.withLock {
+            Logger.d(
+                TAG,
+                "[processCancelingQueueLocked] cancelingQueue size : ${cancelingQueue.size}"
+            )
+            if (cancelingQueue.isEmpty()) {
+                return false
+            }
+
+            val copyCancelingQueue = cancelingQueue
+            cancelingQueue = ArrayDeque()
+            copyCancelingQueue
         }
 
-        val copyCancelingQueue = cancelingQueue
-        cancelingQueue = ArrayDeque()
-        lock.unlock()
         for (directive in copyCancelingQueue) {
             directiveRouter.cancelDirective(directive)
             listeners.forEach {
                 it.onCanceled(directive)
             }
         }
-        lock.lock()
         return true
     }
 
-    private fun handleQueuedDirectivesLocked(): Boolean {
+    private fun handleQueuedDirectives(): Boolean {
+        lock.lock()
+
         if (handlingQueue.isEmpty()) {
+            lock.unlock()
             return false
         }
 
@@ -377,6 +383,7 @@ class DirectiveProcessor(
             }
         }
 
+        lock.unlock()
         return handleDirectiveCalled
     }
 
