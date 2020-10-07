@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
 
 /**
  * User information.
@@ -25,7 +26,9 @@ import com.google.gson.JsonElement
  * When create event, exclude field not supported.
  */
 data class User(
+    @SerializedName("isLogIn")
     val isLogIn: String,
+    @SerializedName("hasVoucher")
     val hasVoucher: String
 ) {
     fun toJson(): JsonElement = Gson().toJsonTree(this)

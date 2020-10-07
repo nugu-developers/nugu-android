@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
 
 /**
  * toggle information.
@@ -29,19 +30,26 @@ data class Toggle(
     /**
      * repeat, null if not supported
      */
+    @SerializedName("repeat")
     val repeat: Repeat?,
     /**
      * shuffle, null if not supported
      */
+    @SerializedName("shuffle")
     val shuffle: Shuffle?
 ) {
     enum class Repeat {
+        @SerializedName("ALL")
         ALL,
+        @SerializedName("ONE")
         ONE,
+        @SerializedName("NONE")
         NONE
     }
     enum class Shuffle {
+        @SerializedName("ON")
         ON,
+        @SerializedName("OFF")
         OFF
     }
     fun toJson(): JsonElement = JsonObject().apply {

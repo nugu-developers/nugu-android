@@ -36,8 +36,8 @@ data class Song(
     val title: String?,
     @SerializedName("duration")
     val duration: String?,
-    @SerializedName("valissueDate")
-    val valissueDate: String?,
+    @SerializedName("issueDate")
+    val issueDate: String?,
     @SerializedName("etc")
     val etc: String?
 ) {
