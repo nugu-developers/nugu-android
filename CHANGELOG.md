@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 0.9.28 *(2020-10-07)*
+-----------------------------
+* Fix: Fix wrong context to MediaPlayerAgent (#1282)
+* Fix: Fix wrong calltimeout in Grpc(v1) #1277 (#1284)
+* Improve: Lock more finely (#1280)
+
 Version 0.9.27 *(2020-10-06)*
 -----------------------------
 * Fix: Do not clear tokens during login (#1261)
