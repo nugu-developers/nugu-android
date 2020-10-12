@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 0.9.29 *(2020-10-12)*
+-----------------------------
+* Fix: Fix crash issue (#1286)
+
 Version 0.9.28 *(2020-10-07)*
 -----------------------------
 * Fix: Fix wrong context to MediaPlayerAgent (#1282)
