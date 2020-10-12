@@ -442,12 +442,20 @@ class NuguOAuth private constructor(
     /**
      * Determine success.
      * @param true is success, otherwise false
-     * */
+     **/
     fun setResult(result: Boolean) {
+        setResult(result, authError)
+    }
+    /**
+     * Determine success.
+     * @param true is success, otherwise false
+     * @param error the NuguOAuthError
+     **/
+    fun setResult(result: Boolean, error: NuguOAuthError) {
         if (result) {
             onceLoginListener?.onSuccess(client.getCredentials())
         } else {
-            onceLoginListener?.onError(authError)
+            onceLoginListener?.onError(error)
         }
     }
 

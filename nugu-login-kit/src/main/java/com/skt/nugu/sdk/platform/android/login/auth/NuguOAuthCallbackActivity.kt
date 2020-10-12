@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.login.auth
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -62,7 +63,13 @@ class NuguOAuthCallbackActivity : Activity() {
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         val signInIntent = auth.getLoginIntent()
+                        try {
                         startActivity(signInIntent)
+                        } catch (e : ActivityNotFoundException) {
+                            Logger.e(TAG, "[onCreate] action=$action, $e")
+                            auth.setResult(false, NuguOAuthError(e))
+                            finish()
+                        }
                     }
                 })
             }
@@ -73,7 +80,13 @@ class NuguOAuthCallbackActivity : Activity() {
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         val signInIntent = auth.getAccountInfoIntent()
-                        startActivity(signInIntent)
+                        try {
+                            startActivity(signInIntent)
+                        } catch (e : ActivityNotFoundException) {
+                            Logger.e(TAG, "[onCreate] action=$action, $e")
+                            auth.setResult(false, NuguOAuthError(e))
+                            finish()
+                        }
                     }
                 })
             }
