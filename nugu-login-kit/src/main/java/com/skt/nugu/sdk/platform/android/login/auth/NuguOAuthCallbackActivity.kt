@@ -67,7 +67,9 @@ class NuguOAuthCallbackActivity : Activity() {
                         startActivity(signInIntent)
                         } catch (e : ActivityNotFoundException) {
                             Logger.e(TAG, "[onCreate] action=$action, $e")
-                            auth.setResult(false, NuguOAuthError(e))
+                            val nuguError = NuguOAuthError(e)
+                            nuguError.error = NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR
+                            auth.setResult(false, nuguError)
                             finish()
                         }
                     }
@@ -84,7 +86,9 @@ class NuguOAuthCallbackActivity : Activity() {
                             startActivity(signInIntent)
                         } catch (e : ActivityNotFoundException) {
                             Logger.e(TAG, "[onCreate] action=$action, $e")
-                            auth.setResult(false, NuguOAuthError(e))
+                            val nuguError = NuguOAuthError(e)
+                            nuguError.error = NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR
+                            auth.setResult(false, nuguError)
                             finish()
                         }
                     }

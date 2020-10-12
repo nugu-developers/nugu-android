@@ -64,6 +64,9 @@ class NuguOAuthError(val throwable: Throwable) {
         /** unknown errors **/
         val UNKNOWN_ERROR = "unknown_error"
 
+        /** no activity found errors **/
+        val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
+
         /** poc status **/
         val FINISHED = "FINISHED"
         val DROP = "DROP"
