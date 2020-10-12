@@ -269,6 +269,12 @@ class MessageRouter(
         return builder.toString()
     }
 
+    override fun onPreSendMessage(request: MessageRequest) {
+        messageSenderListeners.forEach {
+            it.onPreSendMessage(request)
+        }
+    }
+
     override fun onPostSendMessage(request: MessageRequest, status: Status) {
         messageSenderListeners.forEach {
             it.onPostSendMessage(request, status)

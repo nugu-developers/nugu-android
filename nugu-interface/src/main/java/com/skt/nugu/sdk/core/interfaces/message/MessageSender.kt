@@ -26,9 +26,14 @@ interface MessageSender {
      */
     interface OnSendMessageListener {
         /**
+         * Called when pre send message
+         * @param request the messageRequest to be sent
+         */
+        fun onPreSendMessage(request: MessageRequest)
+        /**
          * Called when post send message
-         * @param messageRequest the messageRequest to be sent
-         * @param result the success or failure to send the [messageRequest]
+         * @param request the messageRequest to be sent
+         * @param status the success or failure to send the [request]
          */
         fun onPostSendMessage(request: MessageRequest, status: Status)
     }
