@@ -79,6 +79,8 @@ internal class GrpcCall(
         if (transport?.send(this) != true) {
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
+        } else {
+            listener?.onPreSendMessage(request())
         }
 
         if(noAck) {
@@ -149,6 +151,8 @@ internal class GrpcCall(
 
         if (transport?.send(this) != true) {
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+        } else {
+            listener?.onPreSendMessage(request())
         }
 
         if(noAck) {
