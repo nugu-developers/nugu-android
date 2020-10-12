@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.service.webkit
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -63,6 +64,8 @@ class NuguWebView @JvmOverloads constructor(
     companion object {
         private val JS_INTERFACE_NAME = "NuguWebCommonHandler"
         private const val TAG = "NuguWebView"
+        /** no activity found errors **/
+        private const val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
     }
 
     private val cookies by lazy {
@@ -126,7 +129,11 @@ class NuguWebView @JvmOverloads constructor(
                         ?: WebViewUtils.buildGooglePlayIntent(context, it)
                 }
             intent?.let {
-                this.context.startActivity(it)
+                try {
+                    this.context.startActivity(it)
+                } catch (e: ActivityNotFoundException) {
+                    windowListener?.onCloseWindow(ACTIVITY_NOT_FOUND_ERROR)
+                }
             }
         }
     }
@@ -136,7 +143,11 @@ class NuguWebView @JvmOverloads constructor(
             val intent = CustomTabsIntent.Builder()
                 .enableUrlBarHiding()
                 .build()
-            intent.launchUrl(context, Uri.parse(url))
+            try {
+                intent.launchUrl(context, Uri.parse(url))
+            } catch (e : ActivityNotFoundException) {
+                windowListener?.onCloseWindow(ACTIVITY_NOT_FOUND_ERROR)
+            }
         }
     }
 
