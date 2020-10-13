@@ -28,6 +28,16 @@ interface NuguOAuthInterface {
     fun isLogin(): Boolean
 
     /**
+     * Checking the authorization status
+     * @return true is authorized, otherwise false
+     */
+    fun isAuthorizationCodeLogin(): Boolean
+    /**
+     * Checking the authorization status
+     * @return true is authorized, otherwise false
+     */
+    fun isClientCredentialsLogin(): Boolean
+    /**
      * Set the authorization options
      * @param options is [NuguOAuthOptions]
      */
