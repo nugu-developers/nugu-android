@@ -395,6 +395,15 @@ class NuguOAuth private constructor(
             activity.startActivityForResult(this, REQUEST_ACCOUNT)
         }
     }
+
+    override fun accountByInAppBrowser(activity: Activity, listener: NuguOAuthInterface.OnAccountListener) {
+        this.onceLoginListener = OnceLoginListener(listener)
+        Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+            putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
+            activity.startActivityForResult(this, REQUEST_ACCOUNT)
+        }
+    }
+
     @Deprecated("Use setCodeFromIntent")
     fun hasAuthCodeFromIntent(intent: Any) = setCodeFromIntent(intent)
 

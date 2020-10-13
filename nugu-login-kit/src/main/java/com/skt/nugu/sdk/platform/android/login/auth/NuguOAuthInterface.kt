@@ -60,7 +60,15 @@ interface NuguOAuthInterface {
      * @param activity The activity making the call.
      * @param loginId t-id
      */
+    @Deprecated("Use accountByInAppBrowser(activity: Activity, listener: OnAccountListener)")
     fun accountByInAppBrowser(activity: Activity)
+
+    /**
+     * Start a account info with browser. Only Type1
+     * @param activity The activity making the call.
+     * @param loginId t-id
+     */
+    fun accountByInAppBrowser(activity: Activity, listener: OnAccountListener)
 
     /**
      * Start a login with credentials. Only Type2
@@ -98,6 +106,12 @@ interface NuguOAuthInterface {
      */
     fun introspect(listener: OnIntrospectResponseListener)
 
+    /**
+     * On account actions listener
+     */
+    interface OnAccountListener : OnLoginListener {
+        override fun onSuccess(credentials: Credentials) { /** do not override **/ }
+    }
     /**
      * On login actions listener
      */
