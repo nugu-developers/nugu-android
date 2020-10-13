@@ -277,6 +277,18 @@ class NuguOAuth private constructor(
         return result
     }
 
+    override fun isClientCredentialsLogin(): Boolean {
+        val hasAccessToken = client.getCredentials().accessToken != ""
+        val hasRefreshToken = client.getCredentials().refreshToken != ""
+        return hasAccessToken && !hasRefreshToken
+    }
+
+    override fun isAuthorizationCodeLogin(): Boolean {
+        val hasAccessToken = client.getCredentials().accessToken != ""
+        val hasRefreshToken = client.getCredentials().refreshToken != ""
+        return hasAccessToken && hasRefreshToken
+    }
+
     /**
      * Get a scope
      * @returns the scope

@@ -46,7 +46,7 @@ class NuguOAuthCallbackActivity : Activity() {
         action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
-                if (auth.isLogin()) {
+                if (auth.isAuthorizationCodeLogin()) {
                     auth.setResult(true)
                     finish()
                     return

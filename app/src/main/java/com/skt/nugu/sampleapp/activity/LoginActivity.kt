@@ -92,11 +92,11 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
             return
         }
         val storedCredentials = PreferenceHelper.credentials(this@LoginActivity)
+        // serialized a credential
         authClient.setCredentials(storedCredentials)
-        val refreshToken = authClient.getRefreshToken()
 
         when {
-            refreshToken.isEmpty() ->
+            !authClient.isAuthorizationCodeLogin() ->
                 authClient.loginByInAppBrowser(
                     activity = this,
                     listener = object : NuguOAuthInterface.OnLoginListener {
@@ -112,11 +112,11 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
                         }
                     })
             else -> {
-                if(authClient.isLogin()) {
+                if(!authClient.isExpired()) {
                     startMainActivity()
                     return
                 }
-                
+                val refreshToken = authClient.getRefreshToken()
                 authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
                     override fun onSuccess(credentials: Credentials) {
                         // save credentials
@@ -140,12 +140,13 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
             return
         }
         val storedCredentials = PreferenceHelper.credentials(this@LoginActivity)
-        // serialized a credential, extract of refreshToken
+        // serialized a credential
         authClient.setCredentials(storedCredentials)
-        if(authClient.isLogin() && authClient.getRefreshToken().isEmpty()) {
+        if(authClient.isClientCredentialsLogin() && !authClient.isExpired()) {
             startMainActivity()
             return
         }
+
         authClient.login(object : NuguOAuthInterface.OnLoginListener {
             override fun onSuccess(credentials: Credentials) {
                 // save credentials
