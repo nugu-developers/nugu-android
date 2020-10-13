@@ -186,7 +186,18 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         textLoginId.setOnClickListener {
-            NuguOAuth.getClient().accountByInAppBrowser(this)
+            NuguOAuth.getClient().accountByInAppBrowser(this, object : NuguOAuthInterface.OnAccountListener{
+                override fun onError(error: NuguOAuthError) {
+                    when(error.error) {
+                        NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR -> {
+                            Log.d(TAG, error.description)
+                        }
+                        NuguOAuthError.SECURITY_ERROR -> {
+                            Log.d(TAG, error.description)
+                        }
+                    }
+                }
+            })
         }
 
         buttonPrivacy.setOnClickListener {
