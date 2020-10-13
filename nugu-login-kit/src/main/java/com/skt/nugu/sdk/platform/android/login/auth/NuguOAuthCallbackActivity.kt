@@ -30,7 +30,10 @@ import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
  */
 class NuguOAuthCallbackActivity : Activity() {
     /** Get NuguOAuth instance **/
-    private val TAG = "NuguOAuthCallbackActivity"
+    companion object {
+        private val TAG = "NuguOAuthCallbackActivity"
+
+    }
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String? = NuguOAuth.ACTION_LOGIN
     private var handler: Handler = Handler()
@@ -52,8 +55,8 @@ class NuguOAuthCallbackActivity : Activity() {
                     return
                 }
 
-                if(auth.setCodeFromIntent(intent as Intent)) {
-                    signIn()
+                if (auth.setCodeFromIntent(intent as Intent)) {
+                    performLogin()
                     return
                 }
 
@@ -62,14 +65,12 @@ class NuguOAuthCallbackActivity : Activity() {
                 CustomTabActivityHelper.openCustomTab(this, intent, auth.getLoginUri(), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
-                        val signInIntent = auth.getLoginIntent()
-                        try {
-                        startActivity(signInIntent)
-                        } catch (e : ActivityNotFoundException) {
-                            Logger.e(TAG, "[onCreate] action=$action, $e")
-                            val nuguError = NuguOAuthError(e)
-                            nuguError.error = NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR
-                            auth.setResult(false, nuguError)
+                        runCatching {
+                            val signInIntent = auth.getLoginIntent()
+                            startActivity(signInIntent)
+                        }.onFailure {
+                            Logger.e(TAG, "[onCreate] fallback, action=$action, $it")
+                            auth.setResult(false, NuguOAuthError(it))
                             finish()
                         }
                     }
@@ -78,21 +79,23 @@ class NuguOAuthCallbackActivity : Activity() {
             NuguOAuth.ACTION_ACCOUNT -> {
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(), object :
-                    CustomTabActivityHelper.CustomTabFallback {
-                    override fun openUri(activity: Activity?, uri: Uri?) {
-                        val signInIntent = auth.getAccountInfoIntent()
-                        try {
-                            startActivity(signInIntent)
-                        } catch (e : ActivityNotFoundException) {
-                            Logger.e(TAG, "[onCreate] action=$action, $e")
-                            val nuguError = NuguOAuthError(e)
-                            nuguError.error = NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR
-                            auth.setResult(false, nuguError)
-                            finish()
+                CustomTabActivityHelper.openCustomTab(
+                    this,
+                    intent,
+                    auth.getAccountInfoUri(),
+                    object :
+                        CustomTabActivityHelper.CustomTabFallback {
+                        override fun openUri(activity: Activity?, uri: Uri?) {
+                            runCatching {
+                                val signInIntent = auth.getAccountInfoIntent()
+                                startActivity(signInIntent)
+                            }.onFailure {
+                                Logger.e(TAG, "[onCreate] fallback, action=$action, $it")
+                                auth.setResult(false, NuguOAuthError(it))
+                                finish()
+                            }
                         }
-                    }
-                })
+                    })
             }
             else -> {
                 Logger.d(TAG, "[onCreate] unexpected action=$action")
@@ -117,9 +120,9 @@ class NuguOAuthCallbackActivity : Activity() {
         handler.removeCallbacks(finishRunnable)
 
         auth.setCodeFromIntent(intent as Intent)
-        when(action) {
+        when (action) {
             NuguOAuth.ACTION_LOGIN -> {
-                signIn()
+                performLogin()
             }
             NuguOAuth.ACTION_ACCOUNT -> {
                 finish()
@@ -130,9 +133,8 @@ class NuguOAuthCallbackActivity : Activity() {
     /**
      * Perform a login.
      */
-    private fun signIn() {
-        auth.login(object :
-            AuthStateListener {
+    private fun performLogin() {
+        auth.login(object : AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     auth.setResult(true)

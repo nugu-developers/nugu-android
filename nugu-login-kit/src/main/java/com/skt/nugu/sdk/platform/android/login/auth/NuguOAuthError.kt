@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.login.auth
 
+import android.content.ActivityNotFoundException
 import com.skt.nugu.sdk.platform.android.login.exception.BaseException
 import java.net.SocketException
 import java.net.SocketTimeoutException
@@ -30,6 +31,8 @@ class NuguOAuthError(val throwable: Throwable) {
         else if (throwable is UnknownHostException) NETWORK_ERROR
         else if (throwable is SocketTimeoutException) NETWORK_ERROR
         else if (throwable is SocketException) NETWORK_ERROR
+        else if (throwable is ActivityNotFoundException) ACTIVITY_NOT_FOUND_ERROR
+        else if (throwable is SecurityException) SECURITY_ERROR
         else UNKNOWN_ERROR
     var description: String = throwable.message ?: "unspecified"
     var code: String? =  (throwable as? BaseException.UnAuthenticatedException)?.code
@@ -64,8 +67,11 @@ class NuguOAuthError(val throwable: Throwable) {
         /** unknown errors **/
         val UNKNOWN_ERROR = "unknown_error"
 
-        /** no activity found errors **/
+        /** ActivityNotFoundException **/
         val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
+
+        /** SecurityException **/
+        val SECURITY_ERROR = "security_error"
 
         /** poc status **/
         val FINISHED = "FINISHED"
