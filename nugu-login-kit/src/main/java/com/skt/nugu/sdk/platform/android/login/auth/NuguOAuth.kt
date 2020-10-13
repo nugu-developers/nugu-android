@@ -464,7 +464,6 @@ class NuguOAuth private constructor(
      */
     override fun login(listener: OnLoginListener) {
         this.options.grantType = NuguOAuthOptions.CLIENT_CREDENTIALS
-        this.onceLoginListener = OnceLoginListener(listener)
 
         checkClientId()
         checkClientSecret()
@@ -472,7 +471,7 @@ class NuguOAuth private constructor(
         this.login(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
-            ) = handleAuthState(newState)
+            ) = handleAuthState(newState, OnceLoginListener(listener))
         })
     }
 
@@ -484,7 +483,6 @@ class NuguOAuth private constructor(
         listener: OnLoginListener
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.onceLoginListener =  OnceLoginListener(listener)
         this.code = code
 
         checkClientId()
@@ -493,7 +491,7 @@ class NuguOAuth private constructor(
         this.login(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
-            ) = handleAuthState(newState)
+            ) = handleAuthState(newState, OnceLoginListener(listener))
         })
     }
 
@@ -502,7 +500,6 @@ class NuguOAuth private constructor(
      */
     override fun loginSilently(refreshToken: String, listener: OnLoginListener) {
         this.options.grantType = NuguOAuthOptions.REFRESH_TOKEN
-        this.onceLoginListener =  OnceLoginListener(listener)
         this.refreshToken = refreshToken
 
         checkClientId()
@@ -511,22 +508,22 @@ class NuguOAuth private constructor(
         this.login(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
-            ) = handleAuthState(newState)
+            ) = handleAuthState(newState, OnceLoginListener(listener))
         })
     }
 
-    private fun handleAuthState(newState: AuthStateListener.State) : Boolean {
+    private fun handleAuthState(newState: AuthStateListener.State, listener: OnceLoginListener) : Boolean {
         when(newState) {
             AuthStateListener.State.EXPIRED,
             AuthStateListener.State.UNINITIALIZED -> { /* noop */}
             AuthStateListener.State.REFRESHED -> {
                 /* Authentication successful */
-                setResult(true)
+                listener.onSuccess(client.getCredentials())
                 return false
             }
             AuthStateListener.State.UNRECOVERABLE_ERROR -> {
                 /* Authentication error */
-                setResult(false)
+                listener.onError(authError)
                 return false
             }
         }
@@ -538,7 +535,6 @@ class NuguOAuth private constructor(
         listener: OnLoginListener
     ) {
         this.options.grantType = NuguOAuthOptions.DEVICE_CODE
-        this.onceLoginListener =  OnceLoginListener(listener)
         this.code = code
 
         checkClientId()
@@ -547,7 +543,7 @@ class NuguOAuth private constructor(
         this.login(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
-            ) = handleAuthState(newState)
+            ) = handleAuthState(newState, OnceLoginListener(listener))
         })
     }
 
