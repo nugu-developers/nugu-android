@@ -576,6 +576,7 @@ class NuguOAuth private constructor(
         }
     }
 
+    @Deprecated("Use introspect")
     fun getMe(data: String, listener: OnDeviceAuthorizationListener) {
         this.options.grantType = NuguOAuthOptions.DEVICE_CODE
 
