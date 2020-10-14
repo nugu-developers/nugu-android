@@ -36,6 +36,8 @@ data class SendCandidatesPayload(
     val callType: CallType?,
     @SerializedName("searchTargetList")
     val searchTargetList: Array<SearchTarget>?,
+    @SerializedName("searchScene")
+    val searchScene: String?,
     @SerializedName("candidates")
     val candidates: Array<Person>?,
     @SerializedName("interactionControl")
@@ -50,6 +52,7 @@ data class SendCandidatesPayload(
         fun fromJson(json: String): SendCandidatesPayload? = GSON.fromJson(json, SendCandidatesPayload::class.java)
     }
 
+    @Deprecated("deprecated at v1.2")
     enum class SearchTarget{
         @SerializedName("CONTACT")
         CONTACT,
@@ -83,7 +86,6 @@ data class SendCandidatesPayload(
 
     fun toJson(): JsonElement = GSON.toJsonTree(this)
 
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -98,6 +100,7 @@ data class SendCandidatesPayload(
             if (other.searchTargetList == null) return false
             if (!searchTargetList.contentEquals(other.searchTargetList)) return false
         } else if (other.searchTargetList != null) return false
+        if (searchScene != other.searchScene) return false
         if (candidates != null) {
             if (other.candidates == null) return false
             if (!candidates.contentEquals(other.candidates)) return false
@@ -113,6 +116,7 @@ data class SendCandidatesPayload(
         result = 31 * result + (recipientIntended?.hashCode() ?: 0)
         result = 31 * result + (callType?.hashCode() ?: 0)
         result = 31 * result + (searchTargetList?.contentHashCode() ?: 0)
+        result = 31 * result + (searchScene?.hashCode() ?: 0)
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         result = 31 * result + (interactionControl?.hashCode() ?: 0)
         return result

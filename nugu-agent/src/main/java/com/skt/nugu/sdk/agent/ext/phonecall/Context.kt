@@ -22,7 +22,8 @@ import com.google.gson.annotations.SerializedName
 
 data class Context(
     val state: State,
-    val template: Template?
+    val template: Template?,
+    val recipient: Recipient?
 ) {
     enum class Intent {
         @SerializedName("CALL")
@@ -46,6 +47,8 @@ data class Context(
         val callType: CallType?,
         @SerializedName("recipientIntended")
         val recipientIntended: RecipientIntended?,
+        @SerializedName("searchScene")
+        val searchScene: String?,
         @SerializedName("candidates")
         val candidates: Array<Person>?
     ) {
@@ -60,6 +63,7 @@ data class Context(
             if (intent != other.intent) return false
             if (callType != other.callType) return false
             if (recipientIntended != other.recipientIntended) return false
+            if (searchScene != other.searchScene) return false
             if (candidates != null) {
                 if (other.candidates == null) return false
                 if (!candidates.contentEquals(other.candidates)) return false
@@ -72,8 +76,16 @@ data class Context(
             var result = intent?.hashCode() ?: 0
             result = 31 * result + (callType?.hashCode() ?: 0)
             result = 31 * result + (recipientIntended?.hashCode() ?: 0)
+            result = 31 * result + (searchScene?.hashCode() ?: 0)
             result = 31 * result + (candidates?.contentHashCode() ?: 0)
             return result
         }
     }
+
+    data class Recipient(
+        val name: String?,
+        val token: String?,
+        val isMobile: Boolean?,
+        val isRecentMissed: Boolean?
+    )
 }
