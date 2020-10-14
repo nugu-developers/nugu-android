@@ -9,7 +9,7 @@
             android:supportsRtl="true"
             tools:replace="android:allowBackup">
         <activity
-                android:name="com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthCallbackActivity"
+                android:name="com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity"
                 android:launchMode="singleTask"
                 android:theme="@style/Nugu.NoDisplay">
             <intent-filter>
@@ -21,5 +21,8 @@
                 <data android:host="@string/nugu_redirect_host" android:scheme="@string/nugu_redirect_scheme" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.skt.nugu.sdk.platform.android.login.view.WebViewActivity"/>
+
     </application>
 </manifest>
