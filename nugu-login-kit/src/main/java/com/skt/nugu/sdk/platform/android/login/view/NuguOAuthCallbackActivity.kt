@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.platform.android.login.auth
+package com.skt.nugu.sdk.platform.android.login.view
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.support.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 
 /**
@@ -32,12 +34,15 @@ class NuguOAuthCallbackActivity : Activity() {
     /** Get NuguOAuth instance **/
     companion object {
         private val TAG = "NuguOAuthCallbackActivity"
+        const val RESULT_WEBVIEW_FAILED = RESULT_FIRST_USER + 1
+        const val EXTRA_ERROR  = "error"
+        private const val requestCode = 100
+        private const val finishDelayMillis = 100L
 
     }
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String? = NuguOAuth.ACTION_LOGIN
     private var handler: Handler = Handler()
-
     private val finishRunnable = Runnable { finish() }
     /**
      * Called when the activity is starting.
@@ -67,11 +72,12 @@ class NuguOAuthCallbackActivity : Activity() {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         runCatching {
                             val signInIntent = auth.getLoginIntent()
-                            startActivity(signInIntent)
+                            startActivityForResult(signInIntent, requestCode)
                         }.onFailure {
                             Logger.e(TAG, "[onCreate] fallback, action=$action, $it")
-                            auth.setResult(false, NuguOAuthError(it))
-                            finish()
+                            startActivityForResult(Intent(activity, WebViewActivity::class.java).apply {
+                                data = uri
+                            }, requestCode)
                         }
                     }
                 })
@@ -88,11 +94,12 @@ class NuguOAuthCallbackActivity : Activity() {
                         override fun openUri(activity: Activity?, uri: Uri?) {
                             runCatching {
                                 val signInIntent = auth.getAccountInfoIntent()
-                                startActivity(signInIntent)
+                                startActivityForResult(signInIntent, requestCode)
                             }.onFailure {
                                 Logger.e(TAG, "[onCreate] fallback, action=$action, $it")
-                                auth.setResult(false, NuguOAuthError(it))
-                                finish()
+                                startActivityForResult(Intent(activity, WebViewActivity::class.java).apply {
+                                    data = uri
+                                }, requestCode)
                             }
                         }
                     })
@@ -106,7 +113,15 @@ class NuguOAuthCallbackActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        handler.postDelayed(finishRunnable, 100)
+        handler.postDelayed(finishRunnable, finishDelayMillis)
+
+        if(resultCode == RESULT_WEBVIEW_FAILED) {
+            val error = data?.extras?.getSerializable(EXTRA_ERROR)
+            if (error is Throwable) {
+                auth.setResult(false, NuguOAuthError(error))
+            } else auth.setResult(false)
+            finish()
+        }
     }
 
     /**

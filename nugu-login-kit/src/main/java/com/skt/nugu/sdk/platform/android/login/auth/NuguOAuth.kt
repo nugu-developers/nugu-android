@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
+import com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.*
