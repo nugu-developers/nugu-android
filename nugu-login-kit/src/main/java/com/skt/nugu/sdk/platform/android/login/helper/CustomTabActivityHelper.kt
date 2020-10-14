@@ -1,6 +1,7 @@
 package com.skt.nugu.sdk.platform.android.login.helper
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.net.Uri
 import android.support.customtabs.CustomTabsIntent
 import android.support.v4.app.ActivityCompat.startActivityForResult
@@ -42,9 +43,18 @@ object CustomTabActivityHelper {
         if (packageName == null) {
             fallback?.openUri(activity, uri)
         } else {
-            customTabsIntent.intent.setPackage(packageName)
-            customTabsIntent.intent.data = uri
-            startActivityForResult(activity, customTabsIntent.intent, CHROME_CUSTOM_TAB_REQUEST_CODE, null)
+            try {
+                customTabsIntent.intent.setPackage(packageName)
+                customTabsIntent.intent.data = uri
+                startActivityForResult(
+                    activity,
+                    customTabsIntent.intent,
+                    CHROME_CUSTOM_TAB_REQUEST_CODE,
+                    null
+                )
+            } catch (e : Throwable) {
+                fallback?.openUri(activity, uri)
+            }
         }
     }
 }
