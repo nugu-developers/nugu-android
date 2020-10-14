@@ -62,7 +62,7 @@ class PhoneCallAgent(
         private const val TAG = "PhoneCallAgent"
 
         const val NAMESPACE = "PhoneCall"
-        val VERSION = Version(1, 1)
+        val VERSION = Version(1, 2)
 
         private const val NAME_CALL_ARRIVED = "CallArrived"
         private const val NAME_CALL_ENDED = "CallEnded"
@@ -92,6 +92,30 @@ class PhoneCallAgent(
             addProperty("state", context.state.name)
             context.template?.let {
                 add("template", it.toJson())
+            }
+            context.recipient?.let {
+                add("recipient", JsonObject().apply {
+                    it.name?.let {
+                        addProperty("name",it)
+                    }
+                    it.token?.let {
+                        addProperty("token",it)
+                    }
+                    it.isMobile?.let {
+                        addProperty("isMobile",if(it) {
+                            "TRUE"
+                        } else {
+                            "FALSE"
+                        })
+                    }
+                    it.isRecentMissed?.let {
+                        addProperty("isRecentMissed",if(it) {
+                            "TRUE"
+                        } else {
+                            "FALSE"
+                        })
+                    }
+                })
             }
         }.toString()
     }
