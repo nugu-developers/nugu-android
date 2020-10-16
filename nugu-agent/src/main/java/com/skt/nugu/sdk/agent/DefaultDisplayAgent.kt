@@ -81,6 +81,7 @@ class DefaultDisplayAgent(
     ) : PlaySynchronizerInterface.SynchronizeObject
         , SessionManagerInterface.Requester
         , AbstractDirectiveHandler.DirectiveInfo by info {
+        var clearRequested: Boolean = false
         var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
         val dummyPlaySyncForTimer = object : PlaySynchronizerInterface.SynchronizeObject {
             override fun getPlayServiceId(): String? = payload.playServiceId
@@ -268,10 +269,12 @@ class DefaultDisplayAgent(
             val timer = contextLayerTimer?.get(current.payload.getContextLayerInternal())
             if (immediate) {
                 timer?.stop(templateId)
+                current.clearRequested = true
                 renderer?.clear(templateId, true)
             } else {
                 timer?.stop(templateId)
                 timer?.start(templateId, current.getDuration()) {
+                    current.clearRequested = true
                     renderer?.clear(templateId, true)
                 }
             }
@@ -372,7 +375,7 @@ class DefaultDisplayAgent(
                 }
 
                 listeners.forEach { listener ->
-                    listener.onRendered(templateId)
+                    listener.onRendered(templateId, it.getDialogRequestId())
                 }
             }
         }
@@ -397,7 +400,7 @@ class DefaultDisplayAgent(
                 interLayerDisplayPolicyManager.onDisplayLayerCleared(it.layerForInterLayerDisplayPolicy)
 
                 listeners.forEach { listener ->
-                    listener.onCleared(templateId)
+                    listener.onCleared(templateId, it.getDialogRequestId(), !it.clearRequested)
                 }
             }
         }

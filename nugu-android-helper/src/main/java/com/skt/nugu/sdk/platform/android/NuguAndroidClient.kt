@@ -924,8 +924,11 @@ class NuguAndroidClient private constructor(
         }
 
         getAgent(RoutineAgent.NAMESPACE)?.let {routineAgent ->
-            textAgent?.let {
-                (routineAgent as RoutineAgent).textAgent = textAgent
+            if((routineAgent is RoutineAgent) ) {
+                textAgent?.let {
+                    routineAgent.textAgent = textAgent
+                }
+                displayAgent?.addListener(routineAgent)
             }
         }
 

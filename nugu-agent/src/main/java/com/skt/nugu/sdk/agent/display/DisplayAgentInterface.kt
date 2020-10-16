@@ -30,8 +30,8 @@ interface DisplayAgentInterface:
     }
 
     interface Listener {
-        fun onRendered(templateId: String)
-        fun onCleared(templateId: String)
+        fun onRendered(templateId: String, dialogRequestId: String)
+        fun onCleared(templateId: String, dialogRequestId: String, canceled: Boolean)
     }
 
     fun addListener(listener: Listener)
