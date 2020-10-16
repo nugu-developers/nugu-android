@@ -29,7 +29,9 @@ data class Context(
         @SerializedName("recipientIntended")
         val recipientIntended: RecipientIntended?,
         @SerializedName("candidates")
-        val candidates: List<Contact>?
+        val candidates: List<Contact>?,
+        @SerializedName("searchScene")
+        val searchScene: String?
     ) {
         fun toJson(): JsonElement = Gson().toJsonTree(this)
     }
