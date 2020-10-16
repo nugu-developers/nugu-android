@@ -166,7 +166,7 @@ class RoutineAgent(
             if(action.type == Action.Type.TEXT && action.text != null) {
                 doTextAction(action)
             } else if(action.type == Action.Type.DATA && action.data != null){
-                doDataAction(action.data)
+                doDataAction(action.playServiceId, action.data)
             }
         }
 
@@ -196,7 +196,7 @@ class RoutineAgent(
             })
         }
 
-        private fun doDataAction(data: JsonObject) {
+        private fun doDataAction(playServiceId: String, data: JsonObject) {
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val request = EventMessageRequest.Builder(
@@ -205,7 +205,7 @@ class RoutineAgent(
                         "ActionTriggered",
                         VERSION.toString()
                     ).payload(JsonObject().apply {
-                        addProperty("playServiceId", directive.payload.playServiceId)
+                        addProperty("playServiceId", playServiceId)
                         add("data", data)
                     }.toString())
                         .referrerDialogRequestId(directive.header.referrerDialogRequestId)
