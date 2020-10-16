@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -128,29 +129,43 @@ class RoutineAgent(
         private var currentActionIndex: Int = 0
         private var currentActionHandlingListener : DirectiveGroupHandlingListener? = null
         private var currentActionDialogRequestId: String? = null
+        private var isPaused = false
 
         fun start() {
+            Logger.d(TAG, "[RoutineRequest] start")
             directive.payload.actions.firstOrNull()?.let {
                 doAction(it)
             }
         }
 
         fun cancel() {
+            Logger.d(TAG, "[RoutineRequest] cancel")
             currentActionDialogRequestId?.let {
                 directiveProcessor.cancelDialogRequestId(it)
             }
             listener.onCancel()
         }
 
+        fun pause() {
+            Logger.d(TAG, "[RoutineRequest] pause")
+//            currentActionDialogRequestId?.let {
+//                directiveProcessor.cancelDialogRequestId(it)
+//            }
+            isPaused = true
+        }
+
         fun doContinue() {
-            currentActionDialogRequestId?.let {
-                directiveProcessor.cancelDialogRequestId(it)
-            }
-//            tryStartNextAction()
+            Logger.d(TAG, "[RoutineRequest] doContinue")
+            isPaused = false
+            tryStartNextAction()
         }
 
         private fun tryStartNextAction() {
-            Logger.d(TAG, "[tryStartNextAction] $currentActionIndex")
+            Logger.d(TAG, "[RoutineRequest] tryStartNextAction - $currentActionIndex, isPaused: $isPaused")
+            if(isPaused) {
+                return
+            }
+
             currentActionIndex++
             if(currentActionIndex < directive.payload.actions.size) {
                 doAction(directive.payload.actions[currentActionIndex])
@@ -162,7 +177,7 @@ class RoutineAgent(
         fun getCurrentActionIndex(): Int = currentActionIndex
 
         private fun doAction(action: Action) {
-            Logger.d(TAG, "[doAction] $action")
+            Logger.d(TAG, "[RoutineRequest] doAction - $action")
             if(action.type == Action.Type.TEXT && action.text != null) {
                 doTextAction(action)
             } else if(action.type == Action.Type.DATA && action.data != null){
@@ -174,6 +189,7 @@ class RoutineAgent(
             textAgent?.requestTextInput(action.text!!, action.playServiceId, action.token, null,false, object : TextAgentInterface.RequestListener {
                 override fun onRequestCreated(dialogRequestId: String) {
                     Logger.d(TAG, "[onRequestCreated] dialogRequestId: $dialogRequestId")
+                    textInputRequests.add(dialogRequestId)
                     currentActionDialogRequestId = dialogRequestId
                     currentActionHandlingListener = DirectiveGroupHandlingListener(dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
                         override fun onFinish() {
@@ -238,6 +254,8 @@ class RoutineAgent(
 
     private var state = RoutineAgentInterface.State.IDLE
     private var currentRoutineRequest: RoutineRequest? = null
+    private var textInputRequests = HashSet<String>()
+    private var causingPauseRequests = HashMap<String, EventMessageRequest>()
     var textAgent: TextAgentInterface? = null
 
     override fun getInterfaceName(): String = NAMESPACE
@@ -247,6 +265,74 @@ class RoutineAgent(
         directiveSequencer.addDirectiveHandler(StopDirectiveHandler(this))
         directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this))
         contextManager.setStateProvider(namespaceAndName,this)
+        messageSender.addOnSendMessageListener(object : MessageSender.OnSendMessageListener {
+            override fun onPreSendMessage(request: MessageRequest) {
+                if (request is EventMessageRequest) {
+                    if(textInputRequests.remove(request.dialogRequestId)) {
+                        // if my text request, skip pause.
+                        return
+                    }
+
+                    if(shouldPauseRoutine(request)) {
+                        causingPauseRequests[request.dialogRequestId] = request
+                        currentRoutineRequest?.let {
+                            Logger.d(TAG, "[onPreSendMessage] pause routine by: $request")
+                            it.pause()
+                        }
+                    }
+                }
+            }
+
+            override fun onPostSendMessage(request: MessageRequest, status: Status) {
+                Logger.d(TAG, "[onPostSendMessage] request: $request, status: $status")
+                if(!status.isOk() && request is EventMessageRequest) {
+                    if(causingPauseRequests.remove(request.dialogRequestId) != null) {
+                        currentRoutineRequest?.let {
+                            Logger.d(TAG, "[onPostSendMessage] cancel current request (causing request: $request)")
+                            it.cancel()
+                        }
+                    }
+                }
+            }
+
+            private fun shouldPauseRoutine(request: EventMessageRequest): Boolean {
+                return (request.namespace == "Text" && request.name == "TextInput") ||
+                        (request.namespace == "Display" && request.name == "ElementSelected") ||
+                        (request.namespace == "ASR" && request.name == "Recognize")
+            }
+        })
+
+        directiveSequencer.addOnDirectiveHandlingListener(object : DirectiveSequencerInterface.OnDirectiveHandlingListener {
+            override fun onRequested(directive: Directive) {
+            }
+
+            override fun onCompleted(directive: Directive) {
+                if(directive.getNamespace() == "ASR" && directive.getName() == "ExpectSpeech") {
+                    currentRoutineRequest?.let {
+                        Logger.d(TAG, "pause routine by ASR.ExpectSpeech directive")
+                        it.pause()
+                    }
+                }
+            }
+
+            override fun onCanceled(directive: Directive) {
+            }
+
+            override fun onFailed(directive: Directive, description: String) {
+            }
+        })
+
+        directiveGroupProcessor.addPostProcessedListener(object : DirectiveGroupProcessorInterface.Listener {
+            override fun onReceiveDirectives(directives: List<Directive>) {
+                directives.firstOrNull()?.getDialogRequestId()?.let {dialogRequestId ->
+                    if(causingPauseRequests.remove(dialogRequestId) != null) {
+                        if(!directives.any { it.getNamespaceAndName() ==  ContinueDirectiveHandler.CONTINUE || (it.getNamespace() == "ASR" && it.getName() == "NotifyResult")}) {
+                            currentRoutineRequest?.cancel()
+                        }
+                    }
+                }
+            }
+        })
     }
 
     override fun provideState(
