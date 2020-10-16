@@ -22,7 +22,9 @@ data class Chip(
     @SerializedName("type")
     val type: Type,
     @SerializedName("text")
-    val text: String
+    val text: String,
+    @SerializedName("token")
+    val token: String?
 ) {
     enum class Type {
         ACTION, GENERAL
