@@ -88,11 +88,11 @@ class DialogUXStateAggregator(
 
     init {
         displayAgent?.addListener(object: DisplayAgentInterface.Listener {
-            override fun onRendered(templateId: String) {
+            override fun onRendered(templateId: String, dialogRequestId: String) {
                 renderedDisplayTemplates.add(templateId)
             }
 
-            override fun onCleared(templateId: String) {
+            override fun onCleared(templateId: String, dialogRequestId: String, canceled: Boolean) {
                 renderedDisplayTemplates.remove(templateId)
             }
         })

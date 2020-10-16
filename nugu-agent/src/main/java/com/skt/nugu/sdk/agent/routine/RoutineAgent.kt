@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.routine
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.routine.handler.ContinueDirectiveHandler
 import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
 import com.skt.nugu.sdk.agent.routine.handler.StopDirectiveHandler
@@ -48,7 +49,8 @@ class RoutineAgent(
     SupportedInterfaceContextProvider,
     StartDirectiveHandler.Controller,
     StopDirectiveHandler.Controller,
-    ContinueDirectiveHandler.Controller {
+    ContinueDirectiveHandler.Controller,
+    DisplayAgentInterface.Listener {
     companion object {
         private const val TAG = "RoutineAgent"
 
@@ -130,6 +132,7 @@ class RoutineAgent(
         private var currentActionHandlingListener : DirectiveGroupHandlingListener? = null
         private var currentActionDialogRequestId: String? = null
         private var isPaused = false
+        private var isCanceled = false
 
         fun start() {
             Logger.d(TAG, "[RoutineRequest] start")
@@ -139,7 +142,11 @@ class RoutineAgent(
         }
 
         fun cancel() {
-            Logger.d(TAG, "[RoutineRequest] cancel")
+            Logger.d(TAG, "[RoutineRequest] cancel: $isCanceled")
+            if(isCanceled) {
+                return
+            }
+            isCanceled = true
             currentActionDialogRequestId?.let {
                 directiveProcessor.cancelDialogRequestId(it)
             }
@@ -154,6 +161,14 @@ class RoutineAgent(
             isPaused = true
         }
 
+        fun cancelIfCurrentRoutineDisplayCleared(dialogRequestId: String) {
+            Logger.d(TAG, "[RoutineRequest] cancelIfCurrentRoutineDisplayCleared: $currentActionDialogRequestId, $dialogRequestId")
+            if(currentActionDialogRequestId == dialogRequestId) {
+                Logger.d(TAG, "[RoutineRequest] cancelIfCurrentRoutineDisplayCleared: $dialogRequestId")
+                cancel()
+            }
+        }
+
         fun doContinue() {
             Logger.d(TAG, "[RoutineRequest] doContinue")
             isPaused = false
@@ -162,7 +177,7 @@ class RoutineAgent(
 
         private fun tryStartNextAction() {
             Logger.d(TAG, "[RoutineRequest] tryStartNextAction - $currentActionIndex, isPaused: $isPaused")
-            if(isPaused) {
+            if(isPaused || isCanceled) {
                 return
             }
 
@@ -515,5 +530,14 @@ class RoutineAgent(
         }
 
         return false
+    }
+
+    override fun onRendered(templateId: String, dialogRequestId: String) {
+    }
+
+    override fun onCleared(templateId: String, dialogRequestId: String, canceled: Boolean) {
+        if(canceled) {
+            currentRoutineRequest?.cancelIfCurrentRoutineDisplayCleared(dialogRequestId)
+        }
     }
 }
