@@ -46,7 +46,7 @@ class ContinueDirectiveHandler(
     companion object {
         private const val NAME_CONTINUE = "Continue"
 
-        private val CONTINUE = NamespaceAndName(RoutineAgent.NAMESPACE, NAME_CONTINUE)
+        val CONTINUE = NamespaceAndName(RoutineAgent.NAMESPACE, NAME_CONTINUE)
     }
 
     data class ContinueDirective(
@@ -90,7 +90,10 @@ class ContinueDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[CONTINUE] = BlockingPolicy()
+        configurations[CONTINUE] = BlockingPolicy(
+            BlockingPolicy.MEDIUM_AUDIO,
+            false
+        )
 
         return configurations
     }
