@@ -583,7 +583,7 @@ class DefaultBluetoothAgent(
         payload: StartDiscoverableModePayload,
         referrerDialogRequestId: String
     ) {
-        listener?.onDiscoverableStart(payload.durationInSeconds)?.apply {
+        listener?.onDiscoverableStart(referrerDialogRequestId, payload.durationInSeconds)?.apply {
             Logger.d(TAG, "discoverable start (success:$success)")
             if (success) {
                 sendEvent(

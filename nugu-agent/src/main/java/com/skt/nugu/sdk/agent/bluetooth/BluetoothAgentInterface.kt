@@ -80,7 +80,7 @@ interface BluetoothAgentInterface {
      * @param event a [BluetoothEvent]
      */
     interface Listener {
-        fun onDiscoverableStart(durationInSeconds: Long = 0) : DiscoverableStartResult
+        fun onDiscoverableStart(dialogRequestId: String, durationInSeconds: Long = 0) : DiscoverableStartResult
         fun onDiscoverableFinish() : Boolean
         fun onAVRCPCommand(command: AVRCPCommand)
     }
