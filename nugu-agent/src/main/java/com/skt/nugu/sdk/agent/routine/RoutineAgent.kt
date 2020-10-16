@@ -313,7 +313,7 @@ class RoutineAgent(
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", directive.payload.playServiceId)
                                 }.toString())
-                                    .referrerDialogRequestId(directive.header.referrerDialogRequestId)
+                                    .referrerDialogRequestId(directive.header.dialogRequestId)
                                     .build()
                             ).enqueue(object : MessageSender.Callback {
                                 override fun onFailure(request: MessageRequest, status: Status) {
@@ -356,7 +356,7 @@ class RoutineAgent(
                     ).payload(JsonObject().apply {
                         addProperty("playServiceId", directive.payload.playServiceId)
                     }.toString())
-                        .referrerDialogRequestId(directive.header.referrerDialogRequestId)
+                        .referrerDialogRequestId(directive.header.dialogRequestId)
                         .build()
                 ).enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
@@ -385,7 +385,7 @@ class RoutineAgent(
                     ).payload(JsonObject().apply {
                         addProperty("playServiceId", directive.payload.playServiceId)
                     }.toString())
-                        .referrerDialogRequestId(directive.header.referrerDialogRequestId)
+                        .referrerDialogRequestId(directive.header.dialogRequestId)
                         .build()
                 ).enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
