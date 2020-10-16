@@ -29,7 +29,9 @@ data class SendCandidatesPayload(
     @SerializedName("candidates")
     val candidates: Array<Contact>?,
     @SerializedName("interactionControl")
-    val interactionControl: InteractionControl?
+    val interactionControl: InteractionControl?,
+    @SerializedName("searchScene")
+    val searchScene: String?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -44,6 +46,7 @@ data class SendCandidatesPayload(
             if (!candidates.contentEquals(other.candidates)) return false
         } else if (other.candidates != null) return false
         if (interactionControl != other.interactionControl) return false
+        if (searchScene != other.searchScene) return false
 
         return true
     }
@@ -53,6 +56,8 @@ data class SendCandidatesPayload(
         result = 31 * result + recipientIntended.hashCode()
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         result = 31 * result + (interactionControl?.hashCode() ?: 0)
+        result = 31 * result + (searchScene?.hashCode() ?: 0)
         return result
     }
+
 }
