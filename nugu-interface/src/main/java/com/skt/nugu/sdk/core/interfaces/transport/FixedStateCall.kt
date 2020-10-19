@@ -29,6 +29,7 @@ class FixedStateCall(
     listener: MessageSender.OnSendMessageListener
 ) : Call {
     private var listener: MessageSender.OnSendMessageListener? = listener
+    private var isOnPreSendMessageCalled = false
     override fun request() = request
     override fun headers(): Map<String, String>? {
         throw NotImplementedError()
@@ -44,6 +45,8 @@ class FixedStateCall(
     }
 
     override fun enqueue(callback: MessageSender.Callback?): Boolean {
+        isOnPreSendMessageCalled = true
+        listener?.onPreSendMessage(request())
         callback?.onFailure(request(), status)
         onComplete(status)
         return false
@@ -58,6 +61,10 @@ class FixedStateCall(
     }
 
     override fun onComplete(status: Status) {
+        if(!isOnPreSendMessageCalled) {
+            isOnPreSendMessageCalled = true
+            listener?.onPreSendMessage(request())
+        }
         listener?.onPostSendMessage(request(), status)
         listener = null
     }
