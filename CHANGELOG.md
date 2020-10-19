@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+Version 0.9.31 *(2020-10-19)*
+-----------------------------
+* Improve: Apply Routine's stop(pause) condition (#1285)
+* Improve: Update nugu-login-kit (#1291)
+    * Fix correct listeners for each grantType
+    * Add isAuthorizationCodeLogin and isClientCredentialsLogin method
+    * Support login with webview when external browser startActivity fails
+    * Add deprecation annotation for getMe method
+    * Add listener to accountByInAppBrowser
+    * Handling java.lang.SecurityException issues
+    * Handling ActivityNotFound exception in openCustomTab
+* Improve: Add dialogRequestId param to onDiscoverableStart of BluetoothAgent (#1295)
+* Improve: Support Chips Interface v1.1 (#1298)
+    * add token field at Chip
+* Improve: Support Message Interface v1.3 (#1300)
+* New: Support PhoneCall v1.2 (#1292)
+    * Apply SearchScene field
+    * Add recipient field at context
+    * Deprecate SearchTarget
+
 Version 0.9.30 *(2020-10-12)*
 -----------------------------
 * Fix: Fix crash issue (#1286)
