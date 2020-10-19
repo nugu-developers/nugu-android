@@ -31,6 +31,7 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -44,7 +45,8 @@ class RoutineAgent(
     private val contextManager: ContextManagerInterface,
     private val directiveProcessor: DirectiveProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
-    private val directiveGroupProcessor: DirectiveGroupProcessorInterface
+    private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
+    private val seamlessFocusManager: SeamlessFocusManagerInterface
 ) : CapabilityAgent,
     SupportedInterfaceContextProvider,
     StartDirectiveHandler.Controller,
@@ -127,7 +129,7 @@ class RoutineAgent(
     private inner class RoutineRequest(
         val directive: StartDirectiveHandler.StartDirective,
         val listener: RoutineRequestListener
-    ) {
+    ): SeamlessFocusManagerInterface.Requester {
         private var currentActionIndex: Int = 0
         private var currentActionHandlingListener : DirectiveGroupHandlingListener? = null
         private var currentActionDialogRequestId: String? = null
@@ -388,6 +390,9 @@ class RoutineAgent(
                     override fun onCancel() {
                         Logger.d(TAG, "[start] onCancel()")
                         state = RoutineAgentInterface.State.STOPPED
+                        currentRoutineRequest?.let {
+                            seamlessFocusManager.cancel(it)
+                        }
                         currentRoutineRequest = null
                         sendRoutineStopEvent(directive)
                     }
@@ -395,6 +400,9 @@ class RoutineAgent(
                     override fun onFinish() {
                         Logger.d(TAG, "[start] onFinish()")
                         state = RoutineAgentInterface.State.FINISHED
+                        currentRoutineRequest?.let {
+                            seamlessFocusManager.cancel(it)
+                        }
                         currentRoutineRequest = null
                         sendRoutineFinishEvent(directive)
                     }
@@ -429,6 +437,9 @@ class RoutineAgent(
 
                                 override fun onResponseStart(request: MessageRequest) {
                                     countDownLatch.countDown()
+                                    currentRoutineRequest?.let {
+                                        seamlessFocusManager.prepare(it)
+                                    }
                                     start()
                                 }
                             })
