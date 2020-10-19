@@ -60,11 +60,10 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         }
         this.callback = callback
 
+        listener?.onPreSendMessage(request())
         if (transport?.send(this) != true) {
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
-        } else {
-            listener?.onPreSendMessage(request())
         }
 
         if(noAck) {
@@ -119,10 +118,9 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             }
         }
 
+        listener?.onPreSendMessage(request())
         if (transport?.send(this) != true) {
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
-        } else {
-            listener?.onPreSendMessage(request())
         }
 
         if(noAck) {
