@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -357,11 +358,24 @@ class DefaultBluetoothAgent(
         this.listener = listener
     }
 
-    private fun sendEventSync(name: String, playServiceId: String, referrerDialogRequestId : String, hasPairedDevices: Boolean? = null): Boolean {
-        return sendEvent(name, playServiceId, referrerDialogRequestId, hasPairedDevices,  CountDownLatch(1))
+    private fun sendEventSync(
+        name: String,
+        playServiceId: String,
+        referrerDialogRequestId: String,
+        dialogRequestId: String? = null,
+        hasPairedDevices: Boolean? = null
+    ): Boolean {
+        return sendEvent(name, playServiceId, referrerDialogRequestId, dialogRequestId, hasPairedDevices,  CountDownLatch(1))
     }
 
-    private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId : String, hasPairedDevices: Boolean? = null, waitResult : CountDownLatch? = null): Boolean {
+    private fun sendEvent(
+        name: String,
+        playServiceId: String,
+        referrerDialogRequestId: String,
+        dialogRequestId: String? = null,
+        hasPairedDevices: Boolean? = null,
+        waitResult: CountDownLatch? = null
+    ): Boolean {
         var result = false
 
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
@@ -373,9 +387,13 @@ class DefaultBluetoothAgent(
                         hasPairedDevices?.let {
                             addProperty(KEY_HAS_PAIRED_DEVICES, it)
                         }
-                    }.toString()).build()
+                    }.toString())
+                if(dialogRequestId != null) {
+                    request.dialogRequestId(dialogRequestId)
+                }
+
                 val status = messageSender.newCall(
-                    request
+                    request.build()
                 ).execute()
                 result = status.isOk()
                 waitResult?.countDown()
@@ -583,13 +601,15 @@ class DefaultBluetoothAgent(
         payload: StartDiscoverableModePayload,
         referrerDialogRequestId: String
     ) {
-        listener?.onDiscoverableStart(referrerDialogRequestId, payload.durationInSeconds)?.apply {
+        val dialogRequestId = UUIDGeneration.timeUUID().toString()
+        listener?.onDiscoverableStart(dialogRequestId, payload.durationInSeconds)?.apply {
             Logger.d(TAG, "discoverable start (success:$success)")
             if (success) {
                 sendEvent(
                     EVENT_NAME_START_DISCOVERABLE_MODE_SUCCEEDED,
                     payload.playServiceId,
                     referrerDialogRequestId,
+                    dialogRequestId,
                     hasPairedDevices
                 )
             } else {
@@ -597,6 +617,7 @@ class DefaultBluetoothAgent(
                     EVENT_NAME_START_DISCOVERABLE_MODE_FAILED,
                     payload.playServiceId,
                     referrerDialogRequestId,
+                    dialogRequestId,
                     hasPairedDevices
                 )
             }
