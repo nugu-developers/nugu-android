@@ -995,7 +995,7 @@ class DefaultAudioPlayerAgent(
             }
         }
     }
-    
+
     private fun createAudioInfoContext(): AudioPlayerAgentInterface.Context? {
         currentItem?.let {current ->
             current.sourceAudioInfo?.let { source ->
@@ -1494,7 +1494,7 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun sendPlaybackFinishedEvent() {
-        sendEventWithOffset(EVENT_NAME_PLAYBACK_FINISHED)
+        sendEventWithOffset(name = EVENT_NAME_PLAYBACK_FINISHED, fullContext = true)
     }
 
     private fun sendPlaybackStoppedEvent(stopReason: StopReason) {
@@ -1545,9 +1545,10 @@ class DefaultAudioPlayerAgent(
     private fun sendEventWithOffset(
         name: String,
         offset: Long = getOffsetInMilliseconds(),
-        condition: () -> Boolean = { true }
+        condition: () -> Boolean = { true },
+        fullContext: Boolean = false
     ) {
-        sendEvent(name, offset, condition)
+        sendEvent(name, offset, condition, fullContext)
     }
 
     private fun sendPlaybackFailedEvent(type: ErrorType, errorMsg: String) {
@@ -1583,7 +1584,7 @@ class DefaultAudioPlayerAgent(
                             }
                         }.toString()).build()
 
-                    messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                    messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback {
                         override fun onFailure(request: MessageRequest, status: Status) {
                         }
 
@@ -1599,44 +1600,46 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun sendProgressReportDelay(actual: Long) {
-        sendEvent(EVENT_NAME_PROGRESS_REPORT_DELAY_ELAPSED, actual) { true }
+        sendEvent(EVENT_NAME_PROGRESS_REPORT_DELAY_ELAPSED, actual, { true }, false)
     }
 
     private fun sendProgressReportInterval(actual: Long) {
-        sendEvent(EVENT_NAME_PROGRESS_REPORT_INTERVAL_ELAPSED, actual) { true }
+        sendEvent(EVENT_NAME_PROGRESS_REPORT_INTERVAL_ELAPSED, actual, { true }, false)
     }
 
     private fun sendNextCommandIssued() {
         sendEventWithOffset(
             name = NAME_NEXT_COMMAND_ISSUED,
-            condition = { true })
+            condition = { true }, fullContext = true
+        )
     }
 
     private fun sendPreviousCommandIssued() {
         sendEventWithOffset(
             name = NAME_PREVIOUS_COMMAND_ISSUED,
-            condition = { true })
+            condition = { true }, fullContext = true
+        )
     }
 
     private fun sendPlayCommandIssued() {
         sendEventWithOffset(
             name = NAME_PLAY_COMMAND_ISSUED,
-            condition = { currentActivity.isActive() })
+            condition = { currentActivity.isActive() }, fullContext = true)
     }
 
     private fun sendPauseCommandIssued() {
         sendEventWithOffset(
             name = NAME_PAUSE_COMMAND_ISSUED,
-            condition = { currentActivity.isActive() })
+            condition = { currentActivity.isActive() }, fullContext = true)
     }
 
     private fun sendStopCommandIssued() {
         sendEventWithOffset(
             name = NAME_STOP_COMMAND_ISSUED,
-            condition = { currentActivity.isActive() })
+            condition = { currentActivity.isActive() }, fullContext = true)
     }
 
-    private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean) {
+    private fun sendEvent(eventName: String, offset: Long, condition: () -> Boolean, fullContext: Boolean) {
         currentItem?.apply {
             val dialogRequestId = UUIDGeneration.timeUUID().toString()
             val messageId = UUIDGeneration.timeUUID().toString()
@@ -1663,7 +1666,8 @@ class DefaultAudioPlayerAgent(
                         .build()
 
                     if (condition.invoke()) {
-                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
+                        messageSender.newCall(messageRequest).enqueue(object :
+                            MessageSender.Callback {
                             override fun onFailure(request: MessageRequest, status: Status) {
                             }
 
@@ -1678,7 +1682,7 @@ class DefaultAudioPlayerAgent(
                         Logger.w(TAG, "[sendEvent] unsatisfied condition, so skip send.")
                     }
                 }
-            }, namespaceAndName)
+            }, if (fullContext) null else namespaceAndName)
         }
     }
 
@@ -1687,11 +1691,11 @@ class DefaultAudioPlayerAgent(
             Logger.w(TAG, "[onButtonPressed] button: $button, state : $currentActivity")
             when (button) {
                 PlaybackButton.PLAY -> executeResumeByButton()
-                                        //sendPlayCommandIssued()
+                //sendPlayCommandIssued()
                 PlaybackButton.PAUSE -> executePause(PauseReason.BY_PAUSE_DIRECTIVE)
-                                        //sendPauseCommandIssued()
+                //sendPauseCommandIssued()
                 PlaybackButton.STOP -> executeStop()
-                                        //sendStopCommandIssued()
+                //sendStopCommandIssued()
                 PlaybackButton.NEXT -> sendNextCommandIssued()
                 PlaybackButton.PREVIOUS -> sendPreviousCommandIssued()
             }
