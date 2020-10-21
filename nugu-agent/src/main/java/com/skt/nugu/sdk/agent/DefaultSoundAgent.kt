@@ -136,6 +136,10 @@ class DefaultSoundAgent(
                         Logger.d(TAG, "[onFocusChanged] focus: $newFocus, name: $focusInterfaceName")
                         when (newFocus) {
                             FocusState.FOREGROUND -> {
+                                if(isHandled) {
+                                    return@submit
+                                }
+
                                 isHandled = true
                                 val success = if (beepDirectiveDelegate != null) {
                                     beepDirectiveDelegate.beep(
