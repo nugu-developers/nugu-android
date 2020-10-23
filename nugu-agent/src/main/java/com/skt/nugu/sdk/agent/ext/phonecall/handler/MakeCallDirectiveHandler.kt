@@ -40,6 +40,7 @@ class MakeCallDirectiveHandler(
         private const val NAME_MAKE_CALL = "MakeCall"
 
         private const val NAME_FAILED = "Failed"
+        private const val NAME_SUCCEEDED = "Succeeded"
 
         private val MAKE_CALL = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_MAKE_CALL)
     }
@@ -70,7 +71,33 @@ class MakeCallDirectiveHandler(
             info.result.setCompleted()
             controller.makeCall(payload, object : Callback {
                 override fun onSuccess() {
-                    // no-op
+                    contextGetter.getContext(object : IgnoreErrorContextRequestor() {
+                        override fun onContext(jsonContext: String) {
+                            messageSender.newCall(
+                                EventMessageRequest.Builder(
+                                    jsonContext,
+                                    PhoneCallAgent.NAMESPACE,
+                                    "$NAME_MAKE_CALL$NAME_SUCCEEDED",
+                                    PhoneCallAgent.VERSION.toString()
+                                ).payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                    add("recipient", payload.recipient.toJson())
+                                }.toString())
+                                    .referrerDialogRequestId(info.directive.getDialogRequestId())
+                                    .build()
+                            ).enqueue(object : MessageSender.Callback{
+                                override fun onFailure(request: MessageRequest, status: Status) {
+                                }
+
+                                override fun onSuccess(request: MessageRequest) {
+                                }
+
+                                override fun onResponseStart(request: MessageRequest) {
+                                }
+                            })
+
+                        }
+                    }, namespaceAndName)
                 }
 
                 override fun onFailure(errorCode: ErrorCode) {
