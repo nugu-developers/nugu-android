@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+Version 0.9.32 *(2020-10-23)*
+-----------------------------
+* Fix: Fix the parameter of referrerDialogRequestId to dialogRequestId #1295 (#1303)
+* Fix: Prevent beep.play called twice. (#1308)
+* Fix: Prevent tts cancel from previous focus release (#1315)
+* Improve: Send full context for some events (#1304)
+    * XXXCommandIssued
+    * PlaybackFinished
+* Improve: Cache AudioPlayer's context at init (#1306)
+* Improve: Update SilverTray v4.2.6 (#1310)
+* Improve: Update library (#1313)
+    * Jademarble v0.2.2
+    * Keensense v0.2.4
+* New: Support PhoneCall v1.2 (#1317)
+    * Add MakeCallSucceeded event
+
 Version 0.9.31 *(2020-10-19)*
 -----------------------------
 * Improve: Apply Routine's stop(pause) condition (#1285)
