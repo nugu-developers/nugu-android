@@ -131,6 +131,7 @@ class DefaultTTSAgent(
         var isDelayedCancel = false
         var isHandled = false
         var cancelByStop = false
+        var canBeCanceledByFocusNone = false
         var state = TTSAgentInterface.State.IDLE
 
         val layerForDisplayPolicy = object : InterLayerDisplayPolicyManager.PlayLayer {
@@ -230,6 +231,8 @@ class DefaultTTSAgent(
 
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
+
+    private var currentFocus: FocusState = FocusState.NONE
 
     private val playContextManager = TTSPlayContextProvider()
 
@@ -556,6 +559,7 @@ class DefaultTTSAgent(
         currentInfo = speakInfo
 
         if (currentFocus == FocusState.FOREGROUND) {
+            speakInfo.canBeCanceledByFocusNone = true
             executeOnFocusChanged(currentFocus, true)
         } else {
             if (!focusManager.acquire(focusRequester, focusChannel)
@@ -564,8 +568,6 @@ class DefaultTTSAgent(
             }
         }
     }
-
-    private var currentFocus: FocusState = FocusState.NONE
 
     private fun executeOnFocusChanged(newFocus: FocusState, ignoreFocusChanges: Boolean = false) {
         Logger.d(TAG, "[executeOnFocusChanged] currentFocus: $currentFocus, newFocus: $newFocus, ignoreFocusChanges: $ignoreFocusChanges")
@@ -589,6 +591,7 @@ class DefaultTTSAgent(
         when (newFocus) {
             FocusState.FOREGROUND -> {
                 targetInfo.let {
+                    it.canBeCanceledByFocusNone = true
                     val countDownLatch = CountDownLatch(1)
                     val text = targetInfo.payload.text
                     interLayerDisplayPolicyManager.onPlayStarted(targetInfo.layerForDisplayPolicy)
@@ -611,11 +614,16 @@ class DefaultTTSAgent(
                 }
             }
             FocusState.BACKGROUND -> {
-                executeTransitState(targetInfo)
-                waitUntilNotPlaying(targetInfo)
+                targetInfo.let {
+                    it.canBeCanceledByFocusNone = true
+                    executeTransitState(it)
+                    waitUntilNotPlaying(it)
+                }
             }
             FocusState.NONE -> {
-                executeTransitState(targetInfo)
+                if(targetInfo.canBeCanceledByFocusNone) {
+                    executeTransitState(targetInfo)
+                }
             }
         }
     }
