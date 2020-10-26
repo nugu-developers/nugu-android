@@ -109,9 +109,7 @@ interface NuguOAuthInterface {
     /**
      * On account actions listener
      */
-    interface OnAccountListener : OnLoginListener {
-        override fun onSuccess(credentials: Credentials) { /** do not override **/ }
-    }
+    interface OnAccountListener : OnLoginListener
     /**
      * On login actions listener
      */

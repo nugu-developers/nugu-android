@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sampleapp.activity
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -104,7 +105,10 @@ class SettingsActivity : AppCompatActivity() {
             spinnerWakeupWord.setSelection(1)
         }
         initBtnListeners()
+        updateAccountInfo()
+    }
 
+    private fun updateAccountInfo() {
         NuguOAuth.getClient().introspect(object : NuguOAuthInterface.OnIntrospectResponseListener{
             override fun onSuccess(response: IntrospectResponse) {
                 runOnUiThread {
@@ -184,27 +188,32 @@ class SettingsActivity : AppCompatActivity() {
                 }
             })
         }
-
+        
         textLoginId.setOnClickListener {
             NuguOAuth.getClient().accountByInAppBrowser(this, object : NuguOAuthInterface.OnAccountListener{
+                override fun onSuccess(credentials: Credentials) {
+                    PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
+                    ClientManager.getClient().disconnect()
+                    ClientManager.getClient().connect()
+                    updateAccountInfo()
+                }
+
                 override fun onError(error: NuguOAuthError) {
-                    when(error.error) {
-                        NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR -> {
-                            Log.d(TAG, error.description)
-                        }
-                        NuguOAuthError.SECURITY_ERROR -> {
-                            Log.d(TAG, error.description)
-                        }
-                    }
+                    Log.d(TAG, error.toString())
                 }
             })
         }
 
         buttonPrivacy.setOnClickListener {
-            val intent  = Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse("https://privacy.sktelecom.com/view.do?ctg=policy&name=policy")
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("https://privacy.sktelecom.com/view.do?ctg=policy&name=policy")
+                })
+            } catch (e: SecurityException) {
+                Log.d(TAG, "[buttonPrivacy] $e")
+            } catch (e: ActivityNotFoundException) {
+                Log.d(TAG, "[buttonPrivacy] $e")
             }
-            startActivity(intent)
         }
 
         buttonService.setOnClickListener {
