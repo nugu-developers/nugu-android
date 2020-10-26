@@ -65,7 +65,7 @@ class DefaultTTSAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
     private val cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy,
-    channelName: String
+    private val channelName: String
 ) : AbstractCapabilityAgent(NAMESPACE)
     , TTSAgentInterface
     , InputProcessor
@@ -121,7 +121,7 @@ class DefaultTTSAgent(
     internal inner class SpeakDirectiveInfo(
         info: DirectiveInfo,
         val payload: SpeakPayload
-    ) : DirectiveInfo by info {
+    ) : DirectiveInfo by info, SeamlessFocusManagerInterface.Requester {
         private val finishLock = ReentrantLock()
         private var isResultHandled = false
         private val finishListeners = HashSet<OnSpeakDirectiveFinishListener>()
@@ -131,8 +131,87 @@ class DefaultTTSAgent(
         var isDelayedCancel = false
         var isHandled = false
         var cancelByStop = false
-        var canBeCanceledByFocusNone = false
         var state = TTSAgentInterface.State.IDLE
+
+        val focusChannel: SeamlessFocusManagerInterface.Channel = SeamlessFocusManagerInterface.Channel(channelName, object: ChannelObserver {
+            override fun onFocusChanged(newFocus: FocusState) {
+                try {
+                    Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
+                    executor.submit {
+                        when (newFocus) {
+                            FocusState.FOREGROUND -> {
+                                val countDownLatch = CountDownLatch(1)
+                                val text = payload.text
+                                interLayerDisplayPolicyManager.onPlayStarted(layerForDisplayPolicy)
+                                listeners.forEach {listener->
+                                    listener.onReceiveTTSText(text, directive.getDialogRequestId())
+                                }
+
+                                playSynchronizer.startSync(playSyncObject,
+                                    object : PlaySynchronizerInterface.OnRequestSyncListener {
+                                        override fun onGranted() {
+                                            isPlaybackInitiated = true
+                                            startPlaying()
+                                            countDownLatch.countDown()
+                                        }
+
+                                        override fun onDenied() {
+                                            countDownLatch.countDown()
+                                        }
+                                    })
+                                countDownLatch.await()
+                            }
+                            FocusState.BACKGROUND -> {
+                                if(!isResultHandled) {
+                                    if (isPlaybackInitiated && state != TTSAgentInterface.State.STOPPED && state != TTSAgentInterface.State.FINISHED) {
+                                        stopPlaying(this@SpeakDirectiveInfo)
+                                        waitUntilNotPlaying()
+                                    } else {
+                                        setHandlingCompleted()
+                                        executeReleaseSyncImmediately(this@SpeakDirectiveInfo)
+                                        executeTryReleaseFocus(this@SpeakDirectiveInfo)
+                                    }
+                                }
+                            }
+                            FocusState.NONE -> {
+                                if(!isResultHandled) {
+                                    if (isPlaybackInitiated && state != TTSAgentInterface.State.STOPPED && state != TTSAgentInterface.State.FINISHED) {
+                                        stopPlaying(this@SpeakDirectiveInfo)
+                                        waitUntilNotPlaying()
+                                    } else {
+                                        setHandlingCompleted()
+                                        executeReleaseSyncImmediately(this@SpeakDirectiveInfo)
+                                        executeTryReleaseFocus(this@SpeakDirectiveInfo)
+                                    }
+                                }
+                            }
+                        }
+
+                        if (isDelayedCancel) {
+                            executeCancelCurrentSpeakInfo()
+                        }
+                    }.get(100, TimeUnit.MILLISECONDS)
+                } catch (e: Exception) {
+                    Logger.w(TAG, "[onFocusChanged] newFocus: $newFocus", e)
+                }
+            }
+
+            private fun waitUntilNotPlaying() {
+                if(state != TTSAgentInterface.State.PLAYING) {
+                    Logger.d(TAG, "[waitUntilNotPlaying] no need to wait")
+                    return
+                }
+
+                val startTime = System.currentTimeMillis()
+                while(System.currentTimeMillis() - startTime < 200L) {
+                    if(state != TTSAgentInterface.State.PLAYING) {
+                        Logger.d(TAG, "[waitUntilNotPlaying] PLAYING -> ${state}")
+                        return
+                    }
+                    Thread.sleep(5)
+                }
+            }
+        }, "${NAMESPACE}-${directive.header.messageId}")
 
         val layerForDisplayPolicy = object : InterLayerDisplayPolicyManager.PlayLayer {
             override fun getPushPlayServiceId(): String? =
@@ -159,6 +238,30 @@ class DefaultTTSAgent(
                 // no-op
             }
         }
+
+        private fun startPlaying() {
+            directive.getAttachmentReader()?.let {
+                with(speechPlayer.setSource(it)) {
+                    sourceId = this
+                    Logger.d(TAG, "[startPlaying] sourceId: $this, info: $this@SpeakDirectiveInfo")
+                    when {
+                        isError() -> executePlaybackError(
+                            ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                            "setSource failed"
+                        )
+                        !speechPlayer.play(this) -> executePlaybackError(
+                            ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                            "playFailed"
+                        )
+                        else -> {
+                            isAlreadyPausing = false
+                            isAlreadyStopping = false
+                        }
+                    }
+                }
+            }
+        }
+
 
         fun clear() {
             directive.getAttachmentReader()
@@ -227,28 +330,10 @@ class DefaultTTSAgent(
     private var currentToken: String? = null
 
     //    @GuardedBy("stateLock")
-    private var desireState = TTSAgentInterface.State.IDLE
-
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
 
-    private var currentFocus: FocusState = FocusState.NONE
-
     private val playContextManager = TTSPlayContextProvider()
-
-    private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
-    private val focusChannel = SeamlessFocusManagerInterface.Channel(channelName, object: ChannelObserver {
-        override fun onFocusChanged(newFocus: FocusState) {
-            try {
-                Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
-                executor.submit {
-                    executeOnFocusChanged(newFocus)
-                }.get(100, TimeUnit.MILLISECONDS)
-            } catch (e: Exception) {
-                Logger.w(TAG, "[onFocusChanged] newFocus: $newFocus", e)
-            }
-        }
-    }, NAMESPACE)
 
     init {
         Logger.d(TAG, "[init]")
@@ -280,10 +365,7 @@ class DefaultTTSAgent(
         }
 
         playSynchronizer.prepareSync(speakInfo.playSyncObject)
-        if(currentFocus != FocusState.FOREGROUND) {
-            focusManager.prepare(focusRequester)
-        }
-
+        focusManager.prepare(speakInfo)
 
         val waitCountDownListener = CountDownLatch(1)
         val waitStop: Boolean = currentInfo?.addOnFinishListener(object : OnSpeakDirectiveFinishListener {
@@ -516,7 +598,7 @@ class DefaultTTSAgent(
         with(info) {
             setHandlingFailed("Canceled by the other speak directive.")
             executeReleaseSyncImmediately(this)
-            executeTryReleaseFocus()
+            executeTryReleaseFocus(info)
         }
     }
 
@@ -533,7 +615,6 @@ class DefaultTTSAgent(
             cancelByStop = cancelAssociation
             if (isPlaybackInitiated) {
                 if (state != TTSAgentInterface.State.FINISHED && state != TTSAgentInterface.State.STOPPED) {
-                    desireState = TTSAgentInterface.State.STOPPED
                     stopPlaying(info)
                 }
             } else {
@@ -558,112 +639,9 @@ class DefaultTTSAgent(
         preparedSpeakInfo = null
         currentInfo = speakInfo
 
-        if (currentFocus == FocusState.FOREGROUND) {
-            speakInfo.canBeCanceledByFocusNone = true
-            executeOnFocusChanged(currentFocus, true)
-        } else {
-            if (!focusManager.acquire(focusRequester, focusChannel)
-            ) {
-                Logger.e(TAG, "[executePreparePlaySpeakInfo] not registered channel!")
-            }
-        }
-    }
-
-    private fun executeOnFocusChanged(newFocus: FocusState, ignoreFocusChanges: Boolean = false) {
-        Logger.d(TAG, "[executeOnFocusChanged] currentFocus: $currentFocus, newFocus: $newFocus, ignoreFocusChanges: $ignoreFocusChanges")
-        if(!ignoreFocusChanges && currentFocus == newFocus) {
-            return
-        }
-
-        currentFocus = newFocus
-        desireState = when (newFocus) {
-            FocusState.FOREGROUND -> TTSAgentInterface.State.PLAYING
-            else -> TTSAgentInterface.State.STOPPED
-        }
-
-        val targetInfo = currentInfo
-
-        Logger.d(TAG, "[executeOnFocusChanged] currentState: $currentState, desireState: $desireState, $targetInfo: $targetInfo")
-        if(targetInfo == null) {
-            return
-        }
-
-        when (newFocus) {
-            FocusState.FOREGROUND -> {
-                targetInfo.let {
-                    it.canBeCanceledByFocusNone = true
-                    val countDownLatch = CountDownLatch(1)
-                    val text = targetInfo.payload.text
-                    interLayerDisplayPolicyManager.onPlayStarted(targetInfo.layerForDisplayPolicy)
-                    listeners.forEach {listener->
-                        listener.onReceiveTTSText(text, targetInfo.directive.getDialogRequestId())
-                    }
-
-                    playSynchronizer.startSync(it.playSyncObject,
-                        object : PlaySynchronizerInterface.OnRequestSyncListener {
-                            override fun onGranted() {
-                                executeTransitState(it)
-                                countDownLatch.countDown()
-                            }
-
-                            override fun onDenied() {
-                                countDownLatch.countDown()
-                            }
-                        })
-                    countDownLatch.await()
-                }
-            }
-            FocusState.BACKGROUND -> {
-                targetInfo.let {
-                    it.canBeCanceledByFocusNone = true
-                    executeTransitState(it)
-                    waitUntilNotPlaying(it)
-                }
-            }
-            FocusState.NONE -> {
-                if(targetInfo.canBeCanceledByFocusNone) {
-                    executeTransitState(targetInfo)
-                }
-            }
-        }
-    }
-
-    private fun waitUntilNotPlaying(targetInfo: SpeakDirectiveInfo) {
-        if(targetInfo.state != TTSAgentInterface.State.PLAYING) {
-            Logger.d(TAG, "[waitUntilNotPlaying] no need to wait")
-            return
-        }
-
-        val startTime = System.currentTimeMillis()
-        while(System.currentTimeMillis() - startTime < 200L) {
-            if(targetInfo.state != TTSAgentInterface.State.PLAYING) {
-                Logger.d(TAG, "[waitUntilNotPlaying] PLAYING -> ${targetInfo.state}")
-                return
-            }
-            Thread.sleep(5)
-        }
-    }
-
-    private fun startPlaying(info: SpeakDirectiveInfo) {
-        info.directive.getAttachmentReader()?.let {
-            with(speechPlayer.setSource(it)) {
-                info.sourceId = this
-                Logger.d(TAG, "[startPlaying] sourceId: $this, info: $info")
-                when {
-                    isError() -> executePlaybackError(
-                        ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                        "setSource failed"
-                    )
-                    !speechPlayer.play(this) -> executePlaybackError(
-                        ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                        "playFailed"
-                    )
-                    else -> {
-                        isAlreadyPausing = false
-                        isAlreadyStopping = false
-                    }
-                }
-            }
+        if (!focusManager.acquire(speakInfo, speakInfo.focusChannel)
+        ) {
+            Logger.e(TAG, "[executePreparePlaySpeakInfo] not registered channel!")
         }
     }
 
@@ -731,7 +709,7 @@ class DefaultTTSAgent(
         info.clear()
 
         if(info != currentInfo) {
-            Logger.d(TAG, "[onReleased] (focus: $currentFocus)")
+            Logger.d(TAG, "[onReleased] this is not current info")
             return
         }
 
@@ -741,11 +719,8 @@ class DefaultTTSAgent(
         executePreparePlaySpeakInfo()
     }
 
-    private fun executeTryReleaseFocus() {
-        if(preparedSpeakInfo == null && currentInfo == null && currentFocus != FocusState.NONE) {
-            focusManager.release(focusRequester, focusChannel)
-            currentFocus = FocusState.NONE
-        }
+    private fun executeTryReleaseFocus(info: SpeakDirectiveInfo) {
+        focusManager.release(info, info.focusChannel)
     }
     
     internal data class StateContext(
@@ -815,40 +790,6 @@ class DefaultTTSAgent(
                     stateRequestToken
                 )
             }
-        }
-    }
-
-    private fun executeTransitState(info: SpeakDirectiveInfo) {
-        val newState = desireState
-        Logger.d(TAG, "[executeStateChange] newState: $newState")
-
-        when (newState) {
-            TTSAgentInterface.State.PLAYING -> {
-                info.apply {
-                    isPlaybackInitiated = true
-                    startPlaying(this)
-                }
-            }
-
-            TTSAgentInterface.State.STOPPED,
-            TTSAgentInterface.State.FINISHED -> {
-                info.apply {
-                    if (isPlaybackInitiated) {
-                        stopPlaying(this)
-                    } else {
-                        setHandlingCompleted()
-                        executeReleaseSyncImmediately(this)
-                        executeTryReleaseFocus()
-                    }
-                }
-            }
-            else -> {
-
-            }
-        }
-
-        if (info.isDelayedCancel) {
-            executeCancelCurrentSpeakInfo()
         }
     }
 
@@ -1000,8 +941,8 @@ class DefaultTTSAgent(
     }
 
     private fun executePlaybackStoppedCompleted(info: SpeakDirectiveInfo) {
-        executeTryReleaseFocus()
         with(info) {
+            executeTryReleaseFocus(this)
             if (cancelByStop) {
                 setHandlingFailed("playback canceled", DirectiveHandlerResult.POLICY_CANCEL_ALL)
             } else {
@@ -1026,7 +967,7 @@ class DefaultTTSAgent(
         if(!sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
-                    executeTryReleaseFocus()
+                    executeTryReleaseFocus(info)
                     info.setHandlingCompleted()
                 }
             }
@@ -1034,12 +975,12 @@ class DefaultTTSAgent(
             override fun onSuccess(request: MessageRequest) {}
             override fun onResponseStart(request: MessageRequest) {
                 executor.submit {
-                    executeTryReleaseFocus()
+                    executeTryReleaseFocus(info)
                     info.setHandlingCompleted()
                 }
             }
         })) {
-            executeTryReleaseFocus()
+            executeTryReleaseFocus(info)
             info.setHandlingCompleted()
         }
     }
@@ -1064,7 +1005,7 @@ class DefaultTTSAgent(
         }
 
         executeReleaseSync(info)
-        executeTryReleaseFocus()
+        executeTryReleaseFocus(info)
     }
 
     private fun sendEventWithToken(
