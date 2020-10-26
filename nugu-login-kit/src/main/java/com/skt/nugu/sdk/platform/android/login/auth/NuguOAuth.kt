@@ -398,6 +398,7 @@ class NuguOAuth private constructor(
     }
 
     override fun accountByInAppBrowser(activity: Activity, listener: NuguOAuthInterface.OnAccountListener) {
+        this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceLoginListener = OnceLoginListener(listener)
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
@@ -588,7 +589,6 @@ class NuguOAuth private constructor(
 
     @Deprecated("Use introspect")
     fun getMe(data: String, listener: OnDeviceAuthorizationListener) {
-        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
 
         checkClientId()
         checkClientSecret()
@@ -605,8 +605,6 @@ class NuguOAuth private constructor(
     }
 
     override fun introspect(listener: NuguOAuthInterface.OnIntrospectResponseListener) {
-        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
-
         checkClientId()
         checkClientSecret()
 

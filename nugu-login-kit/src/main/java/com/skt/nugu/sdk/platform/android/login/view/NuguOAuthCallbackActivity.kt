@@ -83,6 +83,11 @@ class NuguOAuthCallbackActivity : Activity() {
                 })
             }
             NuguOAuth.ACTION_ACCOUNT -> {
+                if (auth.setCodeFromIntent(intent as Intent)) {
+                    performLogin()
+                    return
+                }
+
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
                 CustomTabActivityHelper.openCustomTab(
@@ -134,14 +139,10 @@ class NuguOAuthCallbackActivity : Activity() {
         super.onNewIntent(intent)
         handler.removeCallbacks(finishRunnable)
 
-        auth.setCodeFromIntent(intent as Intent)
-        when (action) {
-            NuguOAuth.ACTION_LOGIN -> {
-                performLogin()
-            }
-            NuguOAuth.ACTION_ACCOUNT -> {
-                finish()
-            }
+        if (auth.setCodeFromIntent(intent as Intent)) {
+            performLogin()
+        } else {
+            finish()
         }
     }
 

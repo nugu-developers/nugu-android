@@ -30,7 +30,13 @@ class WebViewActivity : Activity() {
         actionBar?.setDisplayHomeAsUpEnabled(true)
         title = ""
 
-        val webView = WebView(this)
+        val webView = try { WebView(this) } catch (e: Throwable) {
+                setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_FAILED, Intent().apply {
+                    putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, e)
+                })
+                finish()
+                return
+            }
         setDefaultWebSettings(webView)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
