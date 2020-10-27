@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.platform.android.audiosource.audiorecord
 
 import android.media.AudioRecord
-import android.util.Log
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSource
 import java.nio.ByteBuffer
 
@@ -37,7 +37,7 @@ internal class AudioRecordSource(
     private var audioRecord: AudioRecord? = null
 
     override fun open(): Boolean {
-        Log.d(TAG, "[open]")
+        Logger.d(TAG, "[open]")
         if(audioRecord != null) {
             return false
         }
@@ -86,7 +86,7 @@ internal class AudioRecordSource(
     }
 
     override fun close() {
-        Log.d(TAG, "[close]")
+        Logger.d(TAG, "[close]")
         audioRecord?.apply {
             if(recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                 stop()

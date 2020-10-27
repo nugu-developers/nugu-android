@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.external.silvertray
 
-import android.util.Log
 import com.skt.nugu.silvertray.codec.MediaFormat
 import com.skt.nugu.silvertray.source.DataSource
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
@@ -74,16 +73,16 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
                 headerReadTotal += headerReadCount
                 headerReadTotal } < HEADER_BUFFER_SIZE) {
             if (headerReadCount < 0) {
-                Log.d(TAG, "[readSampleData] end of stream")
+                Logger.d(TAG, "[readSampleData] end of stream")
                 return 0
             }
-            Log.w(TAG, "[readSampleData] Failed to read header. retry ($headerReadCount)")
+            Logger.w(TAG, "[readSampleData] Failed to read header. retry ($headerReadCount)")
         }
 
         val inputSize = ((buffer[0].toInt() and 0xFF) shl 24) or ((buffer[1].toInt() and 0xFF) shl 16) or
                 ((buffer[2].toInt() and 0xFF) shl 8) or ((buffer[3].toInt() and 0xFF) shl 0)
         if (inputSize <= 0) {
-            Log.e(TAG, "[readSampleData] Failed to get input size ($inputSize)")
+            Logger.e(TAG, "[readSampleData] Failed to get input size ($inputSize)")
             return 0
         }
 
@@ -93,7 +92,7 @@ internal class RawCBRStreamSource(private val attachmentReader: Attachment.Reade
                 totalCount += readCount
                 totalCount }  < inputSize) {
             if (readCount < 0) {
-                Log.e(TAG, "[readSampleData] Input size is $inputSize and read count $readCount, but reached to end of stream")
+                Logger.e(TAG, "[readSampleData] Input size is $inputSize and read count $readCount, but reached to end of stream")
                 return 0
             }
         }

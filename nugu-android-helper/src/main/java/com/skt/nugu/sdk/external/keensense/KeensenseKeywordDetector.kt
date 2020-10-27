@@ -16,13 +16,13 @@
 
 package com.skt.nugu.sdk.external.keensense
 
-import android.util.Log
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
 import com.skt.nugu.keensense.tyche.TycheKeywordDetector
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordPowerMeasure
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.PowerMeasure
@@ -116,10 +116,10 @@ class KeensenseKeywordDetector(
 
             return if (!result.get()) {
                 it.release()
-                Log.w(TAG, "[startDetect] failed - already executing ")
+                Logger.w(TAG, "[startDetect] failed - already executing ")
                 false
             } else {
-                Log.d(TAG, "[startDetect] start")
+                Logger.d(TAG, "[startDetect] start")
                 true
             }
         }

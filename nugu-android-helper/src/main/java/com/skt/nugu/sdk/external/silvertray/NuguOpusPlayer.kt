@@ -15,12 +15,12 @@
  */
 package com.skt.nugu.sdk.external.silvertray
 
-import android.util.Log
 import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.silvertray.player.EventListener
 import com.skt.nugu.silvertray.player.Player
 import com.skt.nugu.silvertray.player.Status
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.silvertray.player.DurationListener
 
 /**
@@ -46,13 +46,13 @@ class NuguOpusPlayer(private val streamType: Int) :
             }
 
             override fun onStatusChanged(status: Status) {
-                Log.d(TAG, "[onStatusChanged] status: $status")
+                Logger.d(TAG, "[onStatusChanged] status: $status")
                 handleStatusChanged(status)
             }
         })
         player.addDurationListener(object : DurationListener {
             override fun onFoundDuration(duration: Long) {
-                Log.d(TAG, "[onFoundDuration] duration: $duration")
+                Logger.d(TAG, "[onFoundDuration] duration: $duration")
                 durationListener?.onRetrieved(currentSourceId, duration)
             }
         })
@@ -94,7 +94,7 @@ class NuguOpusPlayer(private val streamType: Int) :
         val source = RawCBRStreamSource(attachmentReader)
         player.prepare(source, streamType)
         currentSourceId.id++
-        Log.d(TAG, "[setSource] ${currentSourceId.id}")
+        Logger.d(TAG, "[setSource] ${currentSourceId.id}")
         return currentSourceId
     }
 
@@ -102,7 +102,7 @@ class NuguOpusPlayer(private val streamType: Int) :
         if(currentSourceId.id != id.id) {
             return false
         }
-        Log.d(TAG, "[play] $id")
+        Logger.d(TAG, "[play] $id")
         player.start()
         return true
     }
@@ -111,7 +111,7 @@ class NuguOpusPlayer(private val streamType: Int) :
         if(currentSourceId.id != id.id) {
             return false
         }
-        Log.d(TAG, "[stop] $id")
+        Logger.d(TAG, "[stop] $id")
         player.reset()
         return true
     }
@@ -125,7 +125,7 @@ class NuguOpusPlayer(private val streamType: Int) :
             return false
         }
 
-        Log.d(TAG, "[pause] $id")
+        Logger.d(TAG, "[pause] $id")
         player.pause()
         return true
     }

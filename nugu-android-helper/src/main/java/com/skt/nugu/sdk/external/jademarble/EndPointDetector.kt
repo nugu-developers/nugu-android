@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.external.jademarble
 
-import android.util.Log
 import com.skt.nugu.jademarblelib.TycheEdgePointDetectorStateObserver
 import com.skt.nugu.jademarblelib.TycheEndPointDetector
 import com.skt.nugu.jademarblelib.TycheEndPointDetectorInterface
@@ -23,6 +22,7 @@ import com.skt.nugu.jademarblelib.core.AudioInput
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.utils.Logger
 
 /**
  * Porting class for [TycheEndPointDetector] to use in NUGU SDK
@@ -108,7 +108,7 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
             }
 
             private fun closeAudioInputStreamReader() {
-                Log.d(TAG, "[closeAudioInputStreamReader]")
+                Logger.d(TAG, "[closeAudioInputStreamReader]")
                 audioInputStreamReader?.close()
                 audioInputStreamReader = null
             }
@@ -120,7 +120,7 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
             return false
         }
 
-        Log.d(TAG, "[setState] state: $state")
+        Logger.d(TAG, "[setState] state: $state")
         this.state = state
         return true
     }
@@ -132,7 +132,7 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
         maxDurationInSeconds: Int,
         pauseLengthInMilliseconds: Int
     ): Boolean {
-        Log.d(TAG, "[startDetector] $reader")
+        Logger.d(TAG, "[startDetector] $reader")
         this.audioInputStreamReader = reader
         this.audioFormat = audioFormat
         return reader.let {
@@ -154,17 +154,17 @@ class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
     }
 
     override fun stopDetector() {
-        Log.d(TAG, "[stopDetector]")
+        Logger.d(TAG, "[stopDetector]")
         endPointDetector.stop()
     }
 
     override fun addListener(listener: AudioEndPointDetector.OnStateChangedListener) {
-        Log.d(TAG, "[addObserver] $listener")
+        Logger.d(TAG, "[addObserver] $listener")
         listeners.add(listener)
     }
 
     override fun removeListener(listener: AudioEndPointDetector.OnStateChangedListener) {
-        Log.d(TAG, "[removeObserver] $listener")
+        Logger.d(TAG, "[removeObserver] $listener")
         listeners.remove(listener)
     }
 }

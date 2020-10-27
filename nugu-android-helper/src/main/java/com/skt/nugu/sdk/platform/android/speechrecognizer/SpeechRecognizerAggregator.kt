@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.platform.android.speechrecognizer
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
@@ -64,7 +63,7 @@ class SpeechRecognizerAggregator(
     init {
         keywordDetector?.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
             override fun onStateChange(state: KeywordDetector.State) {
-                Log.d(TAG, "[KeywordDetector::onStateChange] state: $state")
+                Logger.d(TAG, "[KeywordDetector::onStateChange] state: $state")
                 executor.submit {
                     keywordDetectorState = state
 
@@ -73,11 +72,11 @@ class SpeechRecognizerAggregator(
                     } else {
                         val resultRunnable = keywordDetectorResultRunnable
                         if (resultRunnable != null) {
-                            Log.d(TAG, "[executeOnKeywordDetectorStateChanged] start runnable")
+                            Logger.d(TAG, "[executeOnKeywordDetectorStateChanged] start runnable")
                             keywordDetectorResultRunnable = null
                             resultRunnable.run()
                         } else {
-                            Log.e(TAG, "[executeOnKeywordDetectorStateChanged] keywordDetectorResultRunnable is null!!!")
+                            Logger.e(TAG, "[executeOnKeywordDetectorStateChanged] keywordDetectorResultRunnable is null!!!")
                         }
                         isTriggerStoppingByStartListening = false
 
@@ -160,32 +159,32 @@ class SpeechRecognizerAggregator(
         listeningCallback: ASRAgentInterface.StartRecognitionCallback?
     ) {
         if(keywordDetector == null) {
-            Log.w(TAG, "[startListeningWithTrigger] ignored: keywordDetector is null")
+            Logger.w(TAG, "[startListeningWithTrigger] ignored: keywordDetector is null")
             listeningCallback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             return
         }
 
         executor.submit {
             if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
-                Log.w(TAG, "[startListeningWithTrigger] failed - already executing")
+                Logger.w(TAG, "[startListeningWithTrigger] failed - already executing")
                 return@submit
             }
 
             if(isActive()) {
-                Log.w(TAG, "[startListeningWithTrigger] failed - active state($state)")
+                Logger.w(TAG, "[startListeningWithTrigger] failed - active state($state)")
                 return@submit
             }
 
             val inputStream = audioProvider.acquireAudioInputStream(keywordDetector)
             if (inputStream == null) {
-                Log.w(TAG, "[startListeningWithTrigger] failed - null input stream")
+                Logger.w(TAG, "[startListeningWithTrigger] failed - null input stream")
                 return@submit
             }
 
             val audioFormat = audioProvider.getFormat()
             val isStarted = keywordDetector.startDetect(inputStream, audioFormat, object: KeywordDetector.DetectorResultObserver {
                 override fun onDetected(wakeupInfo: WakeupInfo) {
-                    Log.d(
+                    Logger.d(
                         TAG,
                         "[onDetected] wakeupInfo: $wakeupInfo"
                     )
@@ -207,7 +206,7 @@ class SpeechRecognizerAggregator(
                 }
 
                 override fun onStopped() {
-                    Log.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
+                    Logger.d(TAG, "[onStopped] $isTriggerStoppingByStartListening")
                     keywordDetectorResultRunnable = Runnable {
 
                         if (isTriggerStoppingByStartListening) {
@@ -235,7 +234,7 @@ class SpeechRecognizerAggregator(
                 }
 
                 override fun onError(errorType: KeywordDetector.DetectorResultObserver.ErrorType) {
-                    Log.d(TAG, "[onError] errorType: $errorType")
+                    Logger.d(TAG, "[onError] errorType: $errorType")
                     keywordDetectorResultRunnable = Runnable {
                         setState(SpeechRecognizerAggregatorInterface.State.ERROR)
                         triggerCallback?.onTriggerFinished(null)
@@ -257,24 +256,24 @@ class SpeechRecognizerAggregator(
     }
 
     override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?) {
-        Log.d(
+        Logger.d(
             TAG,
             "[startListening]"
         )
         executor.submit {
-            Log.d(
+            Logger.d(
                 TAG,
                 "[startListening] on executor - wakeupInfo: $wakeupInfo, state: $state, keywordDetectorState: ${keywordDetector?.getDetectorState()}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
             )
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.WAITING -> {
                     if(isTriggerStoppingByStartListening || keywordDetector?.getDetectorState() == KeywordDetector.State.INACTIVE) {
-                        Log.w(TAG, "[startListening] will be started after trigger stopped. skip request.")
+                        Logger.w(TAG, "[startListening] will be started after trigger stopped. skip request.")
                         callback?.onError(UUIDGeneration.toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
                         return@submit
                     }
 
-                    Log.d(TAG, "[startListening] will be started after trigger stopped.")
+                    Logger.d(TAG, "[startListening] will be started after trigger stopped.")
                     this.audioFormat = audioProvider.getFormat()
                     this.wakeupInfo = wakeupInfo
                     this.epdParam = epdParam
@@ -284,7 +283,7 @@ class SpeechRecognizerAggregator(
                 }
                 SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
                 SpeechRecognizerAggregatorInterface.State.SPEECH_START -> {
-                    Log.w(TAG, "[startListening] Not allowed at $state")
+                    Logger.w(TAG, "[startListening] Not allowed at $state")
                 }
                 else -> {
                     executeStartListeningInternal(
@@ -336,7 +335,7 @@ class SpeechRecognizerAggregator(
             )
             countDownLatch.await()
         } else {
-            Log.e(
+            Logger.e(
                 TAG,
                 "[startListeningInternal] Failed to open AudioInputStream"
             )
@@ -345,7 +344,7 @@ class SpeechRecognizerAggregator(
     }
 
     override fun stop() {
-        Log.d(TAG, "[stop]")
+        Logger.d(TAG, "[stop]")
         executor.submit {
             keywordDetector?.stopDetect()
             speechProcessor.stop(true)
@@ -353,27 +352,28 @@ class SpeechRecognizerAggregator(
     }
 
     override fun stopListening(cancel: Boolean) {
-        Log.d(TAG, "[stopListening]")
+        Logger.d(TAG, "[stopListening]")
         executor.submit {
-            Log.d(TAG, "[stopListening] on executor")
+            Logger.d(TAG, "[stopListening] on executor")
             speechProcessor.stop(cancel)
         }
+
     }
 
     override fun stopTrigger() {
         if(keywordDetector == null) {
-            Log.w(TAG, "[stopTrigger] ignored: keywordDetector is null")
+            Logger.w(TAG, "[stopTrigger] ignored: keywordDetector is null")
             return
         }
 
-        Log.d(TAG, "[stopTrigger]")
+        Logger.d(TAG, "[stopTrigger]")
         executor.submit {
             keywordDetector.stopDetect()
         }
     }
 
     override fun addListener(listener: SpeechRecognizerAggregatorInterface.OnStateChangeListener) {
-        Log.d(TAG, "[addListener] $listener")
+        Logger.d(TAG, "[addListener] $listener")
         listeners.add(listener)
 
         val state = this.state
@@ -383,7 +383,7 @@ class SpeechRecognizerAggregator(
     }
 
     override fun removeListener(listener: SpeechRecognizerAggregatorInterface.OnStateChangeListener) {
-        Log.d(TAG, "[removeListener] $listener")
+        Logger.d(TAG, "[removeListener] $listener")
         listeners.remove(listener)
     }
 
@@ -396,7 +396,7 @@ class SpeechRecognizerAggregator(
     }
 
     private fun setState(state: SpeechRecognizerAggregatorInterface.State) {
-        Log.d(TAG, "[setState] ${this.state} / $state")
+        Logger.d(TAG, "[setState] ${this.state} / $state")
         if (this.state == state) {
             return
         }
@@ -407,7 +407,7 @@ class SpeechRecognizerAggregator(
     }
 
     private fun notifyOnStateChange(state: SpeechRecognizerAggregatorInterface.State) {
-        Log.d(TAG, "[notifyOnStateChange] state: $state")
+        Logger.d(TAG, "[notifyOnStateChange] state: $state")
         val copyListeners = HashSet(listeners)
 
         handler.post {

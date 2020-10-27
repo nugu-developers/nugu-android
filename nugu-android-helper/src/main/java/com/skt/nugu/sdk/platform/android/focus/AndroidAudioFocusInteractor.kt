@@ -20,11 +20,11 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.utils.Logger
 
 /**
  * This class manage an external audio player (such as music or video player apps) focus changes.
@@ -107,7 +107,7 @@ object AndroidAudioFocusInteractor {
         private val handler = Handler(Looper.getMainLooper())
 
         private fun acquire(focusOwner: String) {
-            Log.d(TAG, "[acquire] focusOwner: $focusOwner")
+            Logger.d(TAG, "[acquire] focusOwner: $focusOwner")
             releaseCallbackMap.remove(focusOwner)?.let {
                 handler.removeCallbacks(it)
             }
@@ -116,13 +116,13 @@ object AndroidAudioFocusInteractor {
                 if(requestAudioFocus(audioFocusChangeListener)) {
                     audioFocusManager.releaseChannel(channelName, this)
                 }
-                Log.d(TAG, "[acquire] requestAudioFocus")
+                Logger.d(TAG, "[acquire] requestAudioFocus")
                 focusOwnerReferences.add(focusOwner)
             }
         }
 
         private fun release(focusOwner: String) {
-            Log.d(TAG, "[release] focusOwner: $focusOwner")
+            Logger.d(TAG, "[release] focusOwner: $focusOwner")
             releaseCallbackMap.remove(focusOwner)?.let {
                 handler.removeCallbacks(it)
             }
@@ -134,7 +134,7 @@ object AndroidAudioFocusInteractor {
 
                     // Since the change of the audio focus is no longer known and don't care about anymore, we need to release the focus here.
                     audioFocusManager.releaseChannel(channelName, this)
-                    Log.d(TAG, "[release] abandonAudioFocus")
+                    Logger.d(TAG, "[release] abandonAudioFocus")
                 }
             }.apply {
                 releaseCallbackMap[focusOwner] = this
@@ -158,7 +158,7 @@ object AndroidAudioFocusInteractor {
                 )
             }
 
-            Log.d(TAG, "[requestAudioFocus] result: $result")
+            Logger.d(TAG, "[requestAudioFocus] result: $result")
             if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
                 return false
             }
@@ -177,7 +177,7 @@ object AndroidAudioFocusInteractor {
                 audioManager.abandonAudioFocus(listener)
             }
 
-            Log.d(TAG, "[abandonAudioFocus] result: $result")
+            Logger.d(TAG, "[abandonAudioFocus] result: $result")
         }
     }
 }
