@@ -16,8 +16,8 @@
 package com.skt.nugu.sdk.platform.android.audiosource.audiorecord
 
 import android.media.MediaRecorder
-import android.util.Log
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceFactory
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSource
 
@@ -61,7 +61,7 @@ class AudioRecordSourceFactory(
             android.media.AudioFormat.ENCODING_PCM_16BIT -> 16
             android.media.AudioFormat.ENCODING_PCM_FLOAT -> 32
             else -> {
-                Log.e(TAG, "[getBitsPerSample] unsupported audioFormat: $audioFormat")
+                Logger.e(TAG, "[getBitsPerSample] unsupported audioFormat: $audioFormat")
                 -1
             }
         }
@@ -72,7 +72,7 @@ class AudioRecordSourceFactory(
             android.media.AudioFormat.CHANNEL_IN_MONO -> 1
             android.media.AudioFormat.CHANNEL_IN_STEREO -> 2
             else -> {
-                Log.e(TAG, "[getBitsPerSample] unsupported channel: $channelConfig")
+                Logger.e(TAG, "[getBitsPerSample] unsupported channel: $channelConfig")
                 -1
             }
         }

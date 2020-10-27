@@ -15,11 +15,11 @@
  */
 package com.skt.nugu.sdk.platform.android.audiosource
 
-import android.util.Log
 import com.skt.nugu.sdk.client.audio.AudioInputStream
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -58,7 +58,7 @@ class AudioSourceManager(
      * @return [audioInputStream], if failed to create/open [AudioSource] return null
      */
     override fun acquireAudioInputStream(consumer: Any): SharedDataStream? {
-        Log.d(TAG, "[acquireAudioInputStream] consumer: $consumer / consumers: ${consumerReferences.size}")
+        Logger.d(TAG, "[acquireAudioInputStream] consumer: $consumer / consumers: ${consumerReferences.size}")
         audioLock.withLock {
             if (audioInputStream == null) {
                 val openAudioSource = audioSourceFactory.create()
@@ -87,7 +87,7 @@ class AudioSourceManager(
      * @param consumer the consumer which has consumed [audioInputStream]
      */
     override fun releaseAudioInputStream(consumer: Any) {
-        Log.d(TAG, "[releaseAudioInputStream] consumer: $consumer / consumers: ${consumerReferences.size}")
+        Logger.d(TAG, "[releaseAudioInputStream] consumer: $consumer / consumers: ${consumerReferences.size}")
         audioLock.withLock {
             if (consumerReferences.isNotEmpty() && audioInputStream != null) {
                 // only valid case
@@ -98,13 +98,13 @@ class AudioSourceManager(
 
                 }
             } else {
-                Log.e(TAG, "[releaseAudioInputStream] not referenced consumer: $consumer")
+                Logger.e(TAG, "[releaseAudioInputStream] not referenced consumer: $consumer")
             }
         }
     }
 
     private fun closeResources() {
-        Log.d(TAG, "[closeResources]")
+        Logger.d(TAG, "[closeResources]")
         audioSource?.close()
         audioSource = null
         audioInputStream = null
@@ -135,7 +135,7 @@ class AudioSourceManager(
                     if (read > 0) {
                         it.write(temp, 0, read)
                     } else {
-                        Log.d(TAG, "[WriterThread] nothing to write")
+                        Logger.d(TAG, "[WriterThread] nothing to write")
                         return
                     }
                 }

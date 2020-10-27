@@ -18,9 +18,9 @@ package com.skt.nugu.sdk.platform.android.mediaplayer
 import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.Log
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
+import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
 
 /**
@@ -56,14 +56,14 @@ class AndroidMediaPlayer(
         }
 
         player.setOnCompletionListener {
-            Log.d(TAG, "[onCompletion]")
+            Logger.d(TAG, "[onCompletion]")
             playerActivity = AudioPlayerAgentInterface.State.FINISHED
             playbackEventListener?.onPlaybackFinished(currentSourceId)
         }
     }
 
     override fun setSource(uri: URI): SourceId {
-        Log.d(TAG, "[setSource] $uri")
+        Logger.d(TAG, "[setSource] $uri")
         try {
             player.reset()
             playerActivity = AudioPlayerAgentInterface.State.IDLE
@@ -71,7 +71,7 @@ class AndroidMediaPlayer(
             player.prepare()
             playerActivity = AudioPlayerAgentInterface.State.PAUSED
         } catch (e: Exception) {
-            Log.e(TAG, "[setSource] $uri", e)
+            Logger.e(TAG, "[setSource] $uri", e)
             return SourceId.ERROR()
         }
 
@@ -90,7 +90,7 @@ class AndroidMediaPlayer(
     }
 
     override fun play(id: SourceId): Boolean {
-        Log.d(TAG, "[play] $id")
+        Logger.d(TAG, "[play] $id")
         return if (id.id == currentSourceId.id && playerActivity == AudioPlayerAgentInterface.State.PAUSED) {
             try {
                 player.start()
@@ -108,7 +108,7 @@ class AndroidMediaPlayer(
     }
 
     override fun stop(id: SourceId): Boolean {
-        Log.d(TAG, "[stop] $id")
+        Logger.d(TAG, "[stop] $id")
         if (id.id == currentSourceId.id && playerActivity.isActive()) {
             player.stop()
             playerActivity = AudioPlayerAgentInterface.State.STOPPED
@@ -120,7 +120,7 @@ class AndroidMediaPlayer(
     }
 
     override fun pause(id: SourceId): Boolean {
-        Log.d(TAG, "[pause] $id, ${player.isPlaying}")
+        Logger.d(TAG, "[pause] $id, ${player.isPlaying}")
         if (id.id == currentSourceId.id && player.isPlaying) {
             player.pause()
             playerActivity = AudioPlayerAgentInterface.State.PAUSED
@@ -132,7 +132,7 @@ class AndroidMediaPlayer(
     }
 
     override fun resume(id: SourceId): Boolean {
-        Log.d(TAG, "[resume] $id")
+        Logger.d(TAG, "[resume] $id")
         if (id.id == currentSourceId.id && playerActivity.isActive()) {
             player.start()
             playerActivity = AudioPlayerAgentInterface.State.PLAYING

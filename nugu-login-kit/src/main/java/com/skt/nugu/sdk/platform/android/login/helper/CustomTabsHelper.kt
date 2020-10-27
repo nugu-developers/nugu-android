@@ -5,7 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.text.TextUtils
-import android.util.Log
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 
 
@@ -110,7 +110,7 @@ object CustomTabsHelper {
                 return true
             }
         } catch (e: RuntimeException) {
-            Log.e(
+            Logger.e(
                 TAG,
                 "Runtime exception while getting specialized handlers"
             )

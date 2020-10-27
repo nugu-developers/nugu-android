@@ -15,14 +15,13 @@
  */
 package com.skt.nugu.sdk.platform.android.speechrecognizer
 
-import android.util.Log
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import java.util.concurrent.Future
+import com.skt.nugu.sdk.core.utils.Logger
 
 /**
  * This class delegate SpeechProcessor to NUGU SDK to avoid conflict with NUGU SDK.
@@ -44,7 +43,7 @@ class SpeechProcessorDelegate(
      * Request starting epd to [ASRAgentInterface]
      */
     fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?) {
-        Log.d(TAG, "[startDetector]")
+        Logger.d(TAG, "[startDetector]")
         asrAgent.startRecognition(audioInputStream, audioFormat, wakeupInfo, epdParam, callback)
     }
 
@@ -62,7 +61,7 @@ class SpeechProcessorDelegate(
         object : ASRAgentInterface.OnStateChangeListener {
             override fun onStateChanged(state: ASRAgentInterface.State) {
                 if(!epdState.isActive() && !state.isRecognizing()) {
-                    Log.d(
+                    Logger.d(
                         TAG,
                         "[AudioEndPointDetectorStateObserverInterface] invalid state change : $epdState / $state"
                     )
