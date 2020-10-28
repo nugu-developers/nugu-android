@@ -175,7 +175,7 @@ class NuguChipsView @JvmOverloads constructor(
             } else {
                 holder.titleView.setTextColor(defaultColor)
             }
-            holder.titleView.setOnClickListener {
+            holder.titleView.setThrottledOnClickListener {
                 listener?.onClick(items[position])
             }
         }

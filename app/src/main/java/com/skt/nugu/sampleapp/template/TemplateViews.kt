@@ -36,6 +36,7 @@ import com.skt.nugu.sampleapp.template.view.viewholder.TemplateViewHolder
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
+import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 class TemplateViews {
     companion object {
@@ -147,7 +148,7 @@ class TemplateViews {
                                         item.footer?.setText(holder.view.footer)
                                         item.button?.setButton(displayId, holder.view.button)
 
-                                        holder.view.setOnClickListener {
+                                        holder.view.setThrottledOnClickListener {
                                             handleOnClickEvent(
                                                 eventType = item.eventType,
                                                 textInput = item.textInput,
@@ -193,7 +194,7 @@ class TemplateViews {
                                         item.footer?.setText(holder.view.footer)
                                         item.icon?.setImage(Size.MEDIUM, holder.view.icon)
 
-                                        holder.view.setOnClickListener {
+                                        holder.view.setThrottledOnClickListener {
                                             handleOnClickEvent(
                                                 eventType = item.eventType,
                                                 textInput = item.textInput,
@@ -235,7 +236,7 @@ class TemplateViews {
                                         item.header?.setText(holder.view.header)
                                         item.icon?.setImage(Size.MEDIUM, holder.view.icon)
 
-                                        holder.view.setOnClickListener {
+                                        holder.view.setThrottledOnClickListener {
                                             handleOnClickEvent(
                                                 eventType = item.eventType,
                                                 textInput = item.textInput,
@@ -278,7 +279,7 @@ class TemplateViews {
                                         item.header?.setText(holder.view.header)
                                         item.footer?.setText(holder.view.footer)
 
-                                        holder.view.setOnClickListener {
+                                        holder.view.setThrottledOnClickListener {
                                             handleOnClickEvent(
                                                 eventType = item.eventType,
                                                 textInput = item.textInput,
@@ -328,13 +329,13 @@ class TemplateViews {
                                             textList.toggleStyle,
                                             holder.view.button
                                         )
-                                        holder.view.button?.setOnClickListener {
+                                        holder.view.button?.setThrottledOnClickListener {
                                             handleOnClickEvent(
                                                 templateId = displayId,
                                                 token = item.token
                                             )
                                         }
-                                        holder.view.setOnClickListener {
+                                        holder.view.setThrottledOnClickListener {
                                             handleOnClickEvent(
                                                 eventType = item.eventType,
                                                 textInput = item.textInput,
@@ -563,15 +564,15 @@ class TemplateViews {
 
                 collapsed.visibility = View.VISIBLE
 
-                prev.setOnClickListener {
+                prev.setThrottledOnClickListener {
                     ClientManager.getClient().getPlaybackRouter().buttonPressed(
                         PlaybackButton.PREVIOUS
                     )
                 }
-                bar_prev.setOnClickListener {
+                bar_prev.setThrottledOnClickListener {
                     prev.callOnClick()
                 }
-                play.setOnClickListener {
+                play.setThrottledOnClickListener {
                     if (ClientManager.playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
                         ClientManager.getClient().getPlaybackRouter().buttonPressed(
                             PlaybackButton.PAUSE
@@ -582,19 +583,19 @@ class TemplateViews {
                         )
                     }
                 }
-                bar_play.setOnClickListener {
+                bar_play.setThrottledOnClickListener {
                     play.callOnClick()
                 }
 
-                next.setOnClickListener {
+                next.setThrottledOnClickListener {
                     ClientManager.getClient().getPlaybackRouter().buttonPressed(
                         PlaybackButton.NEXT
                     )
                 }
-                bar_next.setOnClickListener {
+                bar_next.setThrottledOnClickListener {
                     next.callOnClick()
                 }
-                bar_close.setOnClickListener {
+                bar_close.setThrottledOnClickListener {
                     close.callOnClick()
                 }
                 item.content.settings?.let {
@@ -604,7 +605,7 @@ class TemplateViews {
                             else R.drawable.btn_like_inactive
                         )
                         favorite.visibility = View.VISIBLE
-                        favorite.setOnClickListener { _ ->
+                        favorite.setThrottledOnClickListener { _ ->
                             ClientManager.getClient().audioPlayerAgent?.requestFavoriteCommand(it)
                         }
                     }
@@ -615,7 +616,7 @@ class TemplateViews {
                             Repeat.NONE -> repeat.setImageResource(R.drawable.btn_repeat_inactive)
                         }
                         repeat.visibility = View.VISIBLE
-                        repeat.setOnClickListener { _ ->
+                        repeat.setThrottledOnClickListener { _ ->
                             ClientManager.getClient().audioPlayerAgent?.requestRepeatCommand(
                                 when (it) {
                                     Repeat.ALL -> AudioPlayerAgentInterface.RepeatMode.ALL
@@ -631,7 +632,7 @@ class TemplateViews {
                             else R.drawable.btn_random_inactive
                         )
                         shuffle.visibility = View.VISIBLE
-                        shuffle.setOnClickListener { _ ->
+                        shuffle.setThrottledOnClickListener { _ ->
                             ClientManager.getClient().audioPlayerAgent?.requestShuffleCommand(it)
                         }
                     }

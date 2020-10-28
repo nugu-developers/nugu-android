@@ -30,6 +30,7 @@ import com.skt.nugu.sampleapp.template.view.AbstractDisplayView
 import com.skt.nugu.sampleapp.template.view.DisplayAudioPlayer
 import com.skt.nugu.sampleapp.template.view.DisplayWeather3
 import com.skt.nugu.sampleapp.template.view.ItemWeather3
+import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 fun String.setDuration(view: DisplayAudioPlayer) {
     val duration = try {
@@ -214,7 +215,7 @@ fun Button.setButton(templateId: String, widget: TextView) {
 
     widget.visibility = View.VISIBLE
     widget.text = this.text
-    widget.setOnClickListener {
+    widget.setThrottledOnClickListener {
         TemplateViews.handleOnClickEvent(
             eventType = this.eventType,
             textInput = this.textInput,
