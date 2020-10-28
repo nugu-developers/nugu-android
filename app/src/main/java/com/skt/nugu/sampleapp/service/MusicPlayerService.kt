@@ -24,6 +24,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.os.SystemClock
 import android.support.v4.app.NotificationCompat
 import android.util.Log
 import android.view.View
@@ -36,6 +37,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.application.SampleApplication
 import com.skt.nugu.sampleapp.client.ClientManager
 import org.json.JSONObject
+import java.util.WeakHashMap
 
 class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
     companion object {
@@ -120,11 +122,17 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
     }
 
     private fun onActionStop() {
+        if(isThrottled(ACTION_STOP)) {
+            return
+        }
         ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.STOP)
         stopServiceSelf()
     }
 
     private fun onActionPlay() {
+        if(isThrottled(ACTION_PLAY)) {
+            return
+        }
         if (playerActivity == AudioPlayerAgentInterface.State.PLAYING) {
             ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.PAUSE)
         } else if (playerActivity == AudioPlayerAgentInterface.State.PAUSED) {
@@ -133,10 +141,16 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
     }
 
     private fun onActionPrev() {
+        if(isThrottled(ACTION_PREV)) {
+            return
+        }
         ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.PREVIOUS)
     }
 
     private fun onActionNext() {
+        if(isThrottled(ACTION_NEXT)) {
+            return
+        }
         ClientManager.getClient().getPlaybackRouter().buttonPressed(PlaybackButton.NEXT)
     }
 
@@ -264,5 +278,16 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
             Intent(context, MusicPlayerService::class.java).apply { this.action = action },
             PendingIntent.FLAG_UPDATE_CURRENT
         )
+    }
+
+    private val throttledMap: MutableMap<String, Long> = WeakHashMap()
+    fun isThrottled(key: String, throttleInMillis: Long = 1000L) : Boolean {
+        val currentMillis = SystemClock.uptimeMillis()
+        var previousMillis = throttledMap[key] ?: 0L
+        if (currentMillis - previousMillis < throttleInMillis) {
+            return true
+        }
+        throttledMap[key] = currentMillis
+        return false
     }
 }
