@@ -871,9 +871,7 @@ class DefaultTTSAgent(
     private fun executePlaybackStarted() {
         Logger.d(TAG, "[executePlaybackStarted] currentInfo: $currentInfo")
         val info = currentInfo ?: return
-        info.payload.playStackControl?.getPushPlayServiceId()?.let {
-            playContextManager.onPlaybackStarted(it)
-        }
+        playContextManager.onPlaybackStarted(info.payload.playStackControl?.getPushPlayServiceId())
         setCurrentStateAndToken(TTSAgentInterface.State.PLAYING, info.payload.token)
         info.state = TTSAgentInterface.State.PLAYING
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)

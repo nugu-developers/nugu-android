@@ -17,10 +17,12 @@
 package com.skt.nugu.sdk.agent.common.tts
 
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 
 class TTSPlayContextProvider
     : PlayStackManagerInterface.PlayContextProvider {
     companion object {
+        private const val TAG = "TTSPlayContextProvider"
         private const val CONTEXT_PRESERVATION_DURATION_AFTER_TTS_FINISHED = 7000L
     }
 
@@ -33,21 +35,27 @@ class TTSPlayContextProvider
         null
     }
 
-    fun onPlaybackStarted(playServiceId: String) {
-        currentPlayContext =
+    fun onPlaybackStarted(playServiceId: String?) {
+        Logger.d(TAG, "[onPlaybackStarted] $playServiceId")
+        currentPlayContext = if(!playServiceId.isNullOrBlank()) {
             PlayStackManagerInterface.PlayContext(
                 playServiceId,
                 System.currentTimeMillis()
             )
+        } else {
+            null
+        }
         playContextValidTimestamp = Long.MAX_VALUE
     }
 
     fun onPlaybackStopped() {
+        Logger.d(TAG, "[onPlaybackStopped]")
         currentPlayContext = null
         playContextValidTimestamp = Long.MAX_VALUE
     }
 
     fun onPlaybackFinished() {
+        Logger.d(TAG, "[onPlaybackFinished]")
         currentPlayContext?.let {
             currentPlayContext =
                 PlayStackManagerInterface.PlayContext(it.playServiceId, it.timestamp,
