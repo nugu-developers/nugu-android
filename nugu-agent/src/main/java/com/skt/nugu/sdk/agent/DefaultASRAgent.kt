@@ -1068,6 +1068,7 @@ class DefaultASRAgent(
         private var currentParam: ExpectSpeechDirectiveParam? = null
 
         fun setAttributes(param: ExpectSpeechDirectiveParam) {
+            Logger.d(TAG, "[AttributeStorageManager::setAttributes] currentParam: $currentParam, param: $param")
             val key = param.directive.header.messageId
             val attr = HashMap<String, Any>().apply {
                 param.directive.payload.also { payload ->
@@ -1097,6 +1098,7 @@ class DefaultASRAgent(
         }
 
         fun clearAttributes(key: String) {
+            Logger.d(TAG, "[AttributeStorageManager::clearAttributes] currentParam: $currentParam, key: $key")
             currentParam?.let {
                 if(it.directive.header.messageId == key) {
                     storage.clearAttributes()
