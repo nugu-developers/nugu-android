@@ -1105,7 +1105,6 @@ class DefaultASRAgent(
                     playSynchronizer.releaseSync(it.playSyncObject)
                 }
             }
-            currentParam = null
         }
     }
 }
