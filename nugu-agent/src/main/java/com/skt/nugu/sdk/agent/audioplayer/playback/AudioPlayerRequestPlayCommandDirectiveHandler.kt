@@ -80,7 +80,7 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
                     })
                 }
             }
-        }, NamespaceAndName("supportedInterfaces", NAMESPACE))
+        })
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
