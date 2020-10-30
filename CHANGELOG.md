@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+Version 0.9.33 *(2020-10-30)*
+-----------------------------
+* Fix: Prevent multiple rapid clicks (#1331)
+* Fix: Fix wrong management for tts's playStack  (#1333)
+* Fix: Fix invalid clear for current param(attr) (#1336)
+* Improve: Prevent invalid holder focus acquisition (#1320)
+* Improve: Fix tts's focus thread issue (#1322)
+    * Solve focus change threading issue : change request from per agent  to per directive
+* Improve: Update the Authentication Token via accountByInAppBrowser method (#1323)
+* Improve: Replace android.util.log to nugu's LogInterface (#1328)
+* Improve: Implement ThrottledOnClickListener (#1332)
+* Improve: Send full context for RequestPlayCommandIssued (#1338)
+
 Version 0.9.32 *(2020-10-23)*
 -----------------------------
 * Fix: Fix the parameter of referrerDialogRequestId to dialogRequestId #1295 (#1303)
