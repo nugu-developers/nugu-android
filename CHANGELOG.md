@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.9.34 *(2020-11-02)*
+-----------------------------
+* Fix: Fix side-effect from issue-1320 (#1346)
+* New: Support Text Interface v1.4 (#1341)
+    * Add source field
+    * Support TextRedirect directive
+* New: Support TTS Interface v1.3 (#1343)
+
 Version 0.9.33 *(2020-10-30)*
 -----------------------------
 * Fix: Prevent multiple rapid clicks (#1331)
