@@ -89,7 +89,7 @@ class DefaultTTSAgent(
         private const val TAG = "DefaultTTSAgent"
 
         const val NAMESPACE = "TTS"
-        private val VERSION = Version(1, 2)
+        private val VERSION = Version(1, 3)
 
         private const val NAME_SPEAK = "Speak"
 
@@ -877,23 +877,15 @@ class DefaultTTSAgent(
         sendPlaybackEvent(EVENT_SPEECH_STARTED, info)
     }
 
-    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo, callback: MessageSender.Callback? = null): Boolean {
-        val playServiceId = info.payload.playServiceId
-        if (playServiceId.isNullOrBlank()) {
-            Logger.d(TAG, "[sendPlaybackEvent] skip : playServiceId: $playServiceId")
-            return false
-        }
-
+    private fun sendPlaybackEvent(name: String, info: SpeakDirectiveInfo, callback: MessageSender.Callback? = null) {
         sendEventWithToken(
             NAMESPACE,
             name,
-            playServiceId,
+            info.payload.playServiceId,
             info.payload.token,
             info.directive.header.dialogRequestId,
             callback
         )
-
-        return true
     }
 
     private fun executePlaybackStopped() {
@@ -918,7 +910,7 @@ class DefaultTTSAgent(
             }
         }
 
-        if(!sendPlaybackEvent(EVENT_SPEECH_STOPPED, info, object: MessageSender.Callback {
+        sendPlaybackEvent(EVENT_SPEECH_STOPPED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
                     executePlaybackStoppedCompleted(info)
@@ -933,9 +925,7 @@ class DefaultTTSAgent(
                     executePlaybackStoppedCompleted(info)
                 }
             }
-        })) {
-            executePlaybackStoppedCompleted(info)
-        }
+        })
     }
 
     private fun executePlaybackStoppedCompleted(info: SpeakDirectiveInfo) {
@@ -962,7 +952,8 @@ class DefaultTTSAgent(
         info.state = TTSAgentInterface.State.FINISHED
 
         executeReleaseSync(info)
-        if(!sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
+
+        sendPlaybackEvent(EVENT_SPEECH_FINISHED, info, object: MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 executor.submit {
                     executeTryReleaseFocus(info)
@@ -977,10 +968,7 @@ class DefaultTTSAgent(
                     info.setHandlingCompleted()
                 }
             }
-        })) {
-            executeTryReleaseFocus(info)
-            info.setHandlingCompleted()
-        }
+        })
     }
 
     private fun executePlaybackError(type: ErrorType, error: String) {
@@ -1009,7 +997,7 @@ class DefaultTTSAgent(
     private fun sendEventWithToken(
         namespace: String,
         name: String,
-        playServiceId: String,
+        playServiceId: String?,
         token: String,
         referrerDialogRequestId: String,
         callback: MessageSender.Callback? = null
@@ -1025,7 +1013,9 @@ class DefaultTTSAgent(
                         .messageId(messageId)
                         .payload(
                             JsonObject().apply {
-                                addProperty(KEY_PLAY_SERVICE_ID, playServiceId)
+                                playServiceId?.let {
+                                    addProperty(KEY_PLAY_SERVICE_ID, it)
+                                }
                                 addProperty(KEY_TOKEN, token)
                             }.toString()
                         )
