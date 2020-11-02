@@ -51,7 +51,9 @@ class DefaultTextAgent(
         @SerializedName("text")
         val text: String,
         @SerializedName("token")
-        val token: String
+        val token: String,
+        @SerializedName("source")
+        val source: String?
     )
 
     companion object {
@@ -128,7 +130,7 @@ class DefaultTextAgent(
             Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(payload.text,
-                payload.playServiceId == null, payload.playServiceId, payload.token, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
+                payload.playServiceId == null, payload.playServiceId, payload.token, payload.source, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
                 override fun onRequestCreated(dialogRequestId: String) {
                     internalTextSourceHandleListeners.forEach {
                         it.onRequestCreated(dialogRequestId)
@@ -194,10 +196,10 @@ class DefaultTextAgent(
         listener: TextAgentInterface.RequestListener?
     ): String {
         Logger.d(TAG, "[requestTextInput] text: $text")
-        return executeSendTextInputEventInternal(text, includeDialogAttribute, playServiceId,token, referrerDialogRequestId, listener)
+        return executeSendTextInputEventInternal(text, includeDialogAttribute, playServiceId,token, null, referrerDialogRequestId, listener)
     }
 
-    private fun createMessage(text: String, includeDialogAttribute: Boolean, context: String, playServiceId: String?, token: String?, dialogRequestId: String, referrerDialogRequestId: String?) =
+    private fun createMessage(text: String, includeDialogAttribute: Boolean, context: String, playServiceId: String?, token: String?, source: String?, dialogRequestId: String, referrerDialogRequestId: String?) =
         EventMessageRequest.Builder(
             context,
             NAMESPACE,
@@ -210,6 +212,9 @@ class DefaultTextAgent(
                 addProperty("text", text)
                 token?.let {
                     addProperty("token", it)
+                }
+                source?.let {
+                    addProperty("source", it)
                 }
 
                 playServiceId?.let {
@@ -231,6 +236,7 @@ class DefaultTextAgent(
         includeDialogAttribute: Boolean,
         playServiceId: String?,
         token: String?,
+        source: String?,
         referrerDialogRequestId: String?,
         listener: TextAgentInterface.RequestListener?
     ): String {
@@ -240,7 +246,7 @@ class DefaultTextAgent(
             override fun onContext(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
-                    createMessage(text, includeDialogAttribute, jsonContext, playServiceId, token, dialogRequestId, referrerDialogRequestId).let {
+                    createMessage(text, includeDialogAttribute, jsonContext, playServiceId, token, source, dialogRequestId, referrerDialogRequestId).let {
                         listener?.onRequestCreated(dialogRequestId)
 
                         val call = messageSender.newCall(it)
