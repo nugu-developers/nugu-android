@@ -177,7 +177,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         ).defaultEpdTimeoutMillis(7000L)
             .addAgentFactory(RoutineAgent.NAMESPACE, object: AgentFactory<RoutineAgent> {
                 override fun create(container: SdkContainer): RoutineAgent = with(container) {
-                    RoutineAgent(getMessageSender(), getContextManager(), getDirectiveSequencer(), getDirectiveSequencer(), getDirectiveGroupProcessor())
+                    RoutineAgent(getMessageSender(), getContextManager(), getDirectiveSequencer(), getDirectiveSequencer(), getDirectiveGroupProcessor(), getAudioSeamlessFocusManager())
                 }
             })
             .endPointDetector(
