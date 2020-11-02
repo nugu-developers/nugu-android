@@ -51,8 +51,15 @@ interface TextAgentInterface {
         fun onRequested(dialogRequestId: String)
     }
 
+    interface InternalTextRedirectHandlerListener: RequestListener {
+        fun onRequested(dialogRequestId: String)
+    }
+
     fun addInternalTextSourceHandlerListener(listener: InternalTextSourceHandlerListener)
     fun removeInternalTextSourceHandlerListener(listener: InternalTextSourceHandlerListener)
+
+    fun addInternalTextRedirectHandlerListener(listener: InternalTextRedirectHandlerListener)
+    fun removeInternalTextRedirectHandlerListener(listener: InternalTextRedirectHandlerListener)
 
     /**
      * @param text the input text which to send request.

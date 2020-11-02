@@ -56,17 +56,34 @@ class DefaultTextAgent(
         val source: String?
     )
 
+    internal data class TextRedirectPayload(
+        @SerializedName("playServiceId")
+        val playServiceId: String,
+        @SerializedName("text")
+        val text: String,
+        @SerializedName("token")
+        val token: String,
+        @SerializedName("targetPlayServiceId")
+        val targetPlayServiceId: String?
+    )
+
     companion object {
         private const val TAG = "TextAgent"
 
         const val NAMESPACE = "Text"
-        private val VERSION = Version(1,3)
+        private val VERSION = Version(1,4)
 
         private const val NAME_TEXT_SOURCE = "TextSource"
+        private const val NAME_TEXT_REDIRECT = "TextRedirect"
 
         val TEXT_SOURCE = NamespaceAndName(
             NAMESPACE,
             NAME_TEXT_SOURCE
+        )
+
+        val TEXT_REDIRECT = NamespaceAndName(
+            NAMESPACE,
+            NAME_TEXT_REDIRECT
         )
 
         const val NAME_TEXT_INPUT = "TextInput"
@@ -79,6 +96,7 @@ class DefaultTextAgent(
     }
 
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
+    private val internalTextRedirectHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextRedirectHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
 
     private val contextState = object : BaseContextState {
@@ -100,6 +118,14 @@ class DefaultTextAgent(
         internalTextSourceHandleListeners.remove(listener)
     }
 
+    override fun addInternalTextRedirectHandlerListener(listener: TextAgentInterface.InternalTextRedirectHandlerListener) {
+        internalTextRedirectHandleListeners.add(listener)
+    }
+
+    override fun removeInternalTextRedirectHandlerListener(listener: TextAgentInterface.InternalTextRedirectHandlerListener) {
+        internalTextRedirectHandleListeners.remove(listener)
+    }
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
         Logger.d(TAG, "[preHandleDirective] info: $info")
@@ -108,26 +134,29 @@ class DefaultTextAgent(
     override fun handleDirective(info: DirectiveInfo) {
         Logger.d(TAG, "[handleDirective] info: $info")
         executor.submit {
-            executeHandleDirective(info)
+            when(info.directive.getNamespaceAndName()) {
+                TEXT_SOURCE -> executeHandleTextSourceDirective(info)
+                TEXT_REDIRECT -> executeHandleTextRedirectDirective(info)
+            }
         }
     }
 
-    private fun executeHandleDirective(info: DirectiveInfo) {
-        Logger.d(TAG, "[executeHandleDirective] info: $info")
+    private fun executeHandleTextSourceDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[executeHandleTextSourceDirective] info: $info")
         val payload =
             MessageFactory.create(info.directive.payload, TextSourcePayload::class.java)
         if (payload == null) {
-            Logger.d(TAG, "[executeHandleDirective] invalid payload: ${info.directive.payload}")
+            Logger.d(TAG, "[executeHandleTextSourceDirective] invalid payload: ${info.directive.payload}")
             executeSetHandlingFailed(
                 info,
-                "[executeHandleDirective] invalid payload: ${info.directive.payload}"
+                "[executeHandleTextSourceDirective] invalid payload: ${info.directive.payload}"
             )
             return
         }
 
         executeSetHandlingCompleted(info)
         if(textSourceHandler?.handleTextSource(info.directive.payload, info.directive.header) == true) {
-            Logger.d(TAG, "[executeHandleDirective] handled at TextSourceHandler($textSourceHandler)")
+            Logger.d(TAG, "[executeHandleTextSourceDirective] handled at TextSourceHandler($textSourceHandler)")
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(payload.text,
                 payload.playServiceId == null, payload.playServiceId, payload.token, payload.source, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
@@ -155,6 +184,49 @@ class DefaultTextAgent(
         }
     }
 
+    private fun executeHandleTextRedirectDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[executeHandleTextRedirectDirective] info: $info")
+        val payload =
+            MessageFactory.create(info.directive.payload, TextRedirectPayload::class.java)
+        if (payload == null) {
+            Logger.d(TAG, "[executeHandleTextRedirectDirective] invalid payload: ${info.directive.payload}")
+            executeSetHandlingFailed(
+                info,
+                "[executeHandleTextRedirectDirective] invalid payload: ${info.directive.payload}"
+            )
+            return
+        }
+
+        executeSetHandlingCompleted(info)
+
+        val targetPlayServiceId = payload.targetPlayServiceId
+
+        val dialogRequestId = executeSendTextInputEventInternal(payload.text,
+            targetPlayServiceId == null, targetPlayServiceId, payload.token, null, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
+                override fun onRequestCreated(dialogRequestId: String) {
+                    internalTextRedirectHandleListeners.forEach {
+                        it.onRequestCreated(dialogRequestId)
+                    }
+                }
+
+                override fun onReceiveResponse(dialogRequestId: String) {
+                    internalTextRedirectHandleListeners.forEach {
+                        it.onReceiveResponse(dialogRequestId)
+                    }
+                }
+
+                override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
+                    internalTextRedirectHandleListeners.forEach {
+                        it.onError(dialogRequestId, type)
+                    }
+                }
+            })
+        
+        internalTextRedirectHandleListeners.forEach {
+            it.onRequested(dialogRequestId)
+        }
+    }
+
     private fun executeSetHandlingCompleted(info: DirectiveInfo) {
         Logger.d(TAG, "[executeSetHandlingCompleted] info: $info")
         info.result.setCompleted()
@@ -174,6 +246,7 @@ class DefaultTextAgent(
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configuration[TEXT_SOURCE] = nonBlockingPolicy
+        configuration[TEXT_REDIRECT] = nonBlockingPolicy
 
         return configuration
     }
