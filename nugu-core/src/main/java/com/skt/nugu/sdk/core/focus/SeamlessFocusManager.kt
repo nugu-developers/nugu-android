@@ -86,6 +86,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
     ) {
         lock.withLock {
             val removed = shouldBeReleaseRequesterSet.remove(requester)
+            shouldBeAcquireRequesterSet.remove(requester)
             if(shouldBeAcquireRequesterSet.isNotEmpty()
                 && focus == FocusState.NONE
                 && channel.interfaceName == currentForegroundFocusInterfaceName
@@ -93,6 +94,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
                 && removed
             ) {
                 Logger.d(TAG, "[release] acquire group channel before release requester")
+                Logger.d(TAG, "[release] $shouldBeAcquireRequesterSet")
                 focusManager.acquireChannel(holderChannelName, this, HOLDER_INTERFACE_NAME)
             }
             focusManager.releaseChannel(channel.channelName, channel.channelObserver)
