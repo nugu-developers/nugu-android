@@ -35,8 +35,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
     }
 
     private val lock = ReentrantLock()
-    private val shouldBeAcquireRequesterSet = HashSet<Requester>()
-    private val shouldBeReleaseRequesterSet = HashSet<Requester>()
+    private val requesterSet = HashSet<Requester>()
     private var focus = FocusState.NONE
     private var currentForegroundFocusInterfaceName: String? = null
     private var lastAcquiringFocusInterfaceName: String? = null
@@ -47,19 +46,16 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
 
     override fun prepare(requester: Requester) {
         lock.withLock {
-            val addedAtAcquire = shouldBeAcquireRequesterSet.add(requester)
-            val addedAtRelease = shouldBeReleaseRequesterSet.add(requester)
-            Logger.d(TAG, "[prepare] addedAtAcquire: $addedAtAcquire, addedAtRelease: $addedAtRelease, requester: $requester")
+            val added = requesterSet.add(requester)
+            Logger.d(TAG, "[prepare] added: $added, requester: $requester")
         }
     }
 
     override fun cancel(requester: Requester) {
         lock.withLock {
-            val removedFromAcquire = shouldBeAcquireRequesterSet.remove(requester)
-            val removedFromRelease = shouldBeReleaseRequesterSet.remove(requester)
-            Logger.d(TAG, "[cancel] removedFromAcquire: $removedFromAcquire, removedFromRelease: $removedFromRelease, requester: $requester")
-            
-            if(shouldBeAcquireRequesterSet.isEmpty() && focus == FocusState.FOREGROUND) {
+            val removed = requesterSet.remove(requester)
+            Logger.d(TAG, "[cancel] removed: $removed, requester: $requester")
+            if(requesterSet.isEmpty() && focus == FocusState.FOREGROUND) {
                 focusManager.releaseChannel(holderChannelName, this)
             }
         }
@@ -70,7 +66,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
         channel: SeamlessFocusManagerInterface.Channel
     ): Boolean {
         lock.withLock {
-            val removed = shouldBeAcquireRequesterSet.remove(requester)
+            val removed = requesterSet.remove(requester)
             val result = focusManager.acquireChannel(channel.channelName, channel.channelObserver, channel.interfaceName, channel.finishListener)
             if(result) {
                 lastAcquiringFocusInterfaceName = channel.interfaceName
@@ -85,22 +81,19 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
         channel: SeamlessFocusManagerInterface.Channel
     ) {
         lock.withLock {
-            val removed = shouldBeReleaseRequesterSet.remove(requester)
-            shouldBeAcquireRequesterSet.remove(requester)
-            if(shouldBeAcquireRequesterSet.isNotEmpty()
+            val removed = requesterSet.remove(requester)
+            if(requesterSet.isNotEmpty()
                 && focus == FocusState.NONE
                 && channel.interfaceName == currentForegroundFocusInterfaceName
                 && lastAcquiringFocusInterfaceName == null
-                && removed
             ) {
                 Logger.d(TAG, "[release] acquire group channel before release requester")
-                Logger.d(TAG, "[release] $shouldBeAcquireRequesterSet")
                 focusManager.acquireChannel(holderChannelName, this, HOLDER_INTERFACE_NAME)
             }
             focusManager.releaseChannel(channel.channelName, channel.channelObserver)
             Logger.d(TAG, "[release] requester: $requester, channel, $channel, removed: $removed")
 
-            if(shouldBeAcquireRequesterSet.isEmpty() && focus == FocusState.FOREGROUND) {
+            if(requesterSet.isEmpty() && focus == FocusState.FOREGROUND) {
                 focusManager.releaseChannel(holderChannelName, this)
             }
         }
@@ -111,7 +104,7 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
             focus = newFocus
 
             Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
-            if((newFocus == FocusState.FOREGROUND && shouldBeAcquireRequesterSet.isEmpty()) || newFocus == FocusState.BACKGROUND) {
+            if((newFocus == FocusState.FOREGROUND && requesterSet.isEmpty()) || newFocus == FocusState.BACKGROUND) {
                 focusManager.releaseChannel(holderChannelName, this)
             }
         }
