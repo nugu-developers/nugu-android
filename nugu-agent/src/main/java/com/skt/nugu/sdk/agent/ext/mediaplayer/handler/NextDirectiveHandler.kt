@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -50,7 +51,7 @@ class NextDirectiveHandler(
     }
 
     interface Controller {
-        fun next(payload: NextPayload, callback: NextCallback)
+        fun next(header: Header, payload: NextPayload, callback: NextCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -63,7 +64,7 @@ class NextDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.next(payload, object:
+            controller.next(info.directive.header, payload, object:
                 NextCallback {
                 override fun onSuspended(
                     song: Song?,
