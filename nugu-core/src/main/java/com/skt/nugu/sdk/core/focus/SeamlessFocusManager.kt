@@ -91,7 +91,6 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
                 && focus == FocusState.NONE
                 && channel.interfaceName == currentForegroundFocusInterfaceName
                 && lastAcquiringFocusInterfaceName == null
-                && removed
             ) {
                 Logger.d(TAG, "[release] acquire group channel before release requester")
                 Logger.d(TAG, "[release] $shouldBeAcquireRequesterSet")
