@@ -17,9 +17,7 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Playlist
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
@@ -30,6 +28,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -50,7 +49,7 @@ class PlayDirectiveHandler(
     }
 
     interface Controller {
-        fun play(payload: PlayPayload, callback: PlayCallback)
+        fun play(header: Header, payload: PlayPayload, callback: PlayCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -63,7 +62,7 @@ class PlayDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.play(payload, object: PlayCallback {
+            controller.play(info.directive.header, payload, object: PlayCallback {
                 override fun onSuspended(
                     song: Song?,
                     playlist: Playlist?,

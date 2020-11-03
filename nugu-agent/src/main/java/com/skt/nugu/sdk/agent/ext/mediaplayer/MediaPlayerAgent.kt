@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
@@ -200,69 +201,69 @@ class MediaPlayerAgent(
         }
     }
 
-    override fun play(payload: PlayPayload, callback: PlayCallback) {
+    override fun play(header: Header, payload: PlayPayload, callback: PlayCallback) {
         executor.submit {
-            mediaPlayer.play(payload, callback)
+            mediaPlayer.play(header, payload, callback)
         }
     }
 
-    override fun search(payload: SearchPayload, callback: EventCallback) {
+    override fun search(header: Header, payload: SearchPayload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.search(payload, callback)
+            mediaPlayer.search(header, payload, callback)
         }
     }
 
-    override fun previous(payload: PreviousPayload, callback: PreviousCallback) {
+    override fun previous(header: Header, payload: PreviousPayload, callback: PreviousCallback) {
         executor.submit {
-            mediaPlayer.previous(payload, callback)
+            mediaPlayer.previous(header, payload, callback)
         }
     }
 
-    override fun next(payload: NextPayload, callback: NextCallback) {
+    override fun next(header: Header, payload: NextPayload, callback: NextCallback) {
         executor.submit {
-            mediaPlayer.next(payload, callback)
+            mediaPlayer.next(header, payload, callback)
         }
     }
 
-    override fun move(payload: MovePayload, callback: EventCallback) {
+    override fun move(header: Header, payload: MovePayload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.move(payload, callback)
+            mediaPlayer.move(header, payload, callback)
         }
     }
 
-    override fun resume(payload: Payload, callback: EventCallback) {
+    override fun resume(header: Header, payload: Payload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.resume(payload, callback)
+            mediaPlayer.resume(header, payload, callback)
         }
     }
 
-    override fun stop(payload: Payload, callback: EventCallback) {
+    override fun stop(header: Header, payload: Payload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.stop(payload, callback)
+            mediaPlayer.stop(header, payload, callback)
         }
     }
 
-    override fun pause(payload: Payload, callback: EventCallback) {
+    override fun pause(header: Header, payload: Payload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.pause(payload, callback)
+            mediaPlayer.pause(header, payload, callback)
         }
     }
 
-    override fun rewind(payload: Payload, callback: EventCallback) {
+    override fun rewind(header: Header, payload: Payload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.rewind(payload, callback)
+            mediaPlayer.rewind(header, payload, callback)
         }
     }
 
-    override fun toggle(payload: TogglePayload, callback: EventCallback) {
+    override fun toggle(header: Header, payload: TogglePayload, callback: EventCallback) {
         executor.submit {
-            mediaPlayer.toggle(payload, callback)
+            mediaPlayer.toggle(header, payload, callback)
         }
     }
 
-    override fun getInfo(payload: Payload, callback: GetInfoCallback) {
+    override fun getInfo(header: Header, payload: Payload, callback: GetInfoCallback) {
         executor.submit {
-            mediaPlayer.getInfo(payload, callback)
+            mediaPlayer.getInfo(header, payload, callback)
         }
     }
 }

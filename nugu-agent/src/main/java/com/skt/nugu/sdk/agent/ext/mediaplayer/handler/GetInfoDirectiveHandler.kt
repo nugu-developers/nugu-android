@@ -12,6 +12,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -31,7 +32,7 @@ class GetInfoDirectiveHandler(
     }
 
     interface Controller {
-        fun getInfo(payload: Payload, callback: GetInfoCallback)
+        fun getInfo(header: Header, payload: Payload, callback: GetInfoCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -43,7 +44,7 @@ class GetInfoDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.getInfo(payload, object : GetInfoCallback {
+            controller.getInfo(info.directive.header, payload, object : GetInfoCallback {
                 override fun onSuccess(
                     song: Song?,
                     issueDate: String?,

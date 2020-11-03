@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -45,7 +46,7 @@ class SearchDirectiveHandler (
     }
 
     interface Controller {
-        fun search(payload: SearchPayload, callback: EventCallback)
+        fun search(header: Header, payload: SearchPayload, callback: EventCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -58,7 +59,7 @@ class SearchDirectiveHandler (
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.search(payload, object:
+            controller.search(info.directive.header, payload, object:
                 EventCallback {
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {

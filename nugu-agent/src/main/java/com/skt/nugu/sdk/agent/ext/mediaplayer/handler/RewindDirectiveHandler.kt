@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -45,7 +46,7 @@ class RewindDirectiveHandler(
     }
 
     interface Controller {
-        fun rewind(payload: Payload, callback: EventCallback)
+        fun rewind(header: Header, payload: Payload, callback: EventCallback)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -57,7 +58,7 @@ class RewindDirectiveHandler(
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
-            controller.rewind(payload, object:
+            controller.rewind(info.directive.header, payload, object:
                 EventCallback {
                 override fun onSuccess(message: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
