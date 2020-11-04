@@ -51,6 +51,7 @@ class MediaPlayerAgent(
     , ToggleDirectiveHandler.Controller
     , GetInfoDirectiveHandler.Controller
     , HandlePlaylistDirectiveHandler.Controller
+    , HandleLyricsDirectiveHandler.Controller
 {
     companion object {
         private const val TAG = "MediaPlayerAgent"
@@ -142,6 +143,14 @@ class MediaPlayerAgent(
 
             addDirectiveHandler(
                 HandlePlaylistDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+
+            addDirectiveHandler(
+                HandleLyricsDirectiveHandler(
                     this@MediaPlayerAgent,
                     messageSender,
                     contextGetter
@@ -283,6 +292,16 @@ class MediaPlayerAgent(
     ) {
         executor.submit {
             mediaPlayer.handlePlaylist(header, payload, callback)
+        }
+    }
+
+    override fun handleLyrics(
+        header: Header,
+        payload: HandleLyricsPayload,
+        callback: EventCallback
+    ) {
+        executor.submit {
+            mediaPlayer.handleLyrics(header, payload, callback)
         }
     }
 }
