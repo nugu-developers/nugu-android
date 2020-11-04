@@ -19,11 +19,10 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.ext.mediaplayer.Category
 
 data class Song(
     @SerializedName("category")
-    val category: Category,
+    val category: String,
     @SerializedName("theme")
     val theme: String?,
     @SerializedName("genre")
