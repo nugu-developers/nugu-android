@@ -17,7 +17,6 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer.payload
 
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.ext.mediaplayer.Category
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
 
 data class SearchPayload(
