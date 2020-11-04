@@ -32,6 +32,8 @@ interface MediaPlayer
     , PauseDirectiveHandler.Controller
     , RewindDirectiveHandler.Controller
     , ToggleDirectiveHandler.Controller
-    , GetInfoDirectiveHandler.Controller {
+    , GetInfoDirectiveHandler.Controller
+    , HandlePlaylistDirectiveHandler.Controller
+{
     fun getContext(): Context
 }
