@@ -50,6 +50,7 @@ class MediaPlayerAgent(
     , RewindDirectiveHandler.Controller
     , ToggleDirectiveHandler.Controller
     , GetInfoDirectiveHandler.Controller
+    , HandlePlaylistDirectiveHandler.Controller
 {
     companion object {
         private const val TAG = "MediaPlayerAgent"
@@ -133,6 +134,14 @@ class MediaPlayerAgent(
 
             addDirectiveHandler(
                 ToggleDirectiveHandler(
+                    this@MediaPlayerAgent,
+                    messageSender,
+                    contextGetter
+                )
+            )
+
+            addDirectiveHandler(
+                HandlePlaylistDirectiveHandler(
                     this@MediaPlayerAgent,
                     messageSender,
                     contextGetter
@@ -264,6 +273,16 @@ class MediaPlayerAgent(
     override fun getInfo(header: Header, payload: Payload, callback: GetInfoCallback) {
         executor.submit {
             mediaPlayer.getInfo(header, payload, callback)
+        }
+    }
+
+    override fun handlePlaylist(
+        header: Header,
+        payload: HandlePlaylistPayload,
+        callback: EventCallback
+    ) {
+        executor.submit {
+            mediaPlayer.handlePlaylist(header, payload, callback)
         }
     }
 }
