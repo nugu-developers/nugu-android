@@ -129,7 +129,7 @@ class RewindDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[REWIND] = BlockingPolicy()
+        configuration[REWIND] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false)
 
         return configuration
     }
