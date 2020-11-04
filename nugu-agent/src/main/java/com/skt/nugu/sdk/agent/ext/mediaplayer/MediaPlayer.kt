@@ -34,6 +34,7 @@ interface MediaPlayer
     , ToggleDirectiveHandler.Controller
     , GetInfoDirectiveHandler.Controller
     , HandlePlaylistDirectiveHandler.Controller
+    , HandleLyricsDirectiveHandler.Controller
 {
     fun getContext(): Context
 }
