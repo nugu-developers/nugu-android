@@ -180,7 +180,7 @@ class NextDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[NEXT] = BlockingPolicy()
+        configuration[NEXT] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false)
 
         return configuration
     }
