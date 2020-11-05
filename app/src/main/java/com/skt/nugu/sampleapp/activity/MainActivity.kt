@@ -68,6 +68,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
+    enum class NotificationType {
+        TOAST, VOICE
+    }
+    private var notificationType = NotificationType.TOAST
     @Volatile
     private var connectionStatus: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
 
@@ -387,17 +391,26 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                             }
 
                             override fun onError(reason: ExponentialBackOff.ErrorCode) {
-                                NuguSnackbar.with(findViewById(R.id.drawer_layout))
-                                    .message(R.string.connection_failed)
-                                    .duration(NuguSnackbar.LENGTH_LONG)
-                                    .show()
-
-                                val cm = this@MainActivity.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                                val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
-                                if(activeNetwork?.isConnected == true) {
-                                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
+                                if (isNetworkConnected()) {
+                                    when (notificationType) {
+                                        NotificationType.TOAST ->
+                                            NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                                                .message(R.string.device_gw_error_002)
+                                                .duration(NuguSnackbar.LENGTH_LONG)
+                                                .show()
+                                        NotificationType.VOICE ->
+                                            SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
+                                    }
                                 } else {
-                                    SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
+                                    when (notificationType) {
+                                        NotificationType.TOAST ->
+                                            NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                                                .message(R.string.device_gw_error_001)
+                                                .duration(NuguSnackbar.LENGTH_LONG)
+                                                .show()
+                                        NotificationType.VOICE ->
+                                            SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
+                                    }
                                 }
                             }
                         })
@@ -431,10 +444,26 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
         when(code) {
             SystemAgentInterface.ExceptionCode.PLAY_ROUTER_PROCESSING_EXCEPTION -> {
-                SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_PLAY_ROUTER_ERROR)
+                when (notificationType) {
+                    NotificationType.TOAST ->
+                        NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                            .message(R.string.device_gw_error_006)
+                            .duration(NuguSnackbar.LENGTH_LONG)
+                            .show()
+                    NotificationType.VOICE ->
+                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_PLAY_ROUTER_ERROR)
+                }
             }
             SystemAgentInterface.ExceptionCode.TTS_SPEAKING_EXCEPTION -> {
-                SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_TTS_ERROR)
+                when (notificationType) {
+                    NotificationType.TOAST ->
+                        NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                            .message(R.string.device_gw_error_006)
+                            .duration(NuguSnackbar.LENGTH_LONG)
+                            .show()
+                    NotificationType.VOICE ->
+                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_TTS_ERROR)
+                }
             }
             SystemAgentInterface.ExceptionCode.UNAUTHORIZED_REQUEST_EXCEPTION -> {
                 /** Nothing to do because handle on [onConnectionStatusChanged] **/
@@ -468,7 +497,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         if(error.error == NuguOAuthError.NETWORK_ERROR) {
             NuguSnackbar.with(findViewById(R.id.baseLayout))
-                .message(R.string.authorization_failure_message)
+                .message(R.string.device_gw_error_006)
                 .show()
             return
         } else {
@@ -529,7 +558,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                         else -> {
                             // check detail
                             NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.authentication_failed)
+                                .message(R.string.device_gw_error_003)
                                 .show()
                         }
                     }
@@ -548,4 +577,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         finishAffinity()
     }
 
+    private fun isNetworkConnected(): Boolean {
+        val connMgr = this@MainActivity.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo: NetworkInfo? = connMgr.activeNetworkInfo
+        return activeNetworkInfo?.isConnected ?: false
+    }
 }

@@ -121,7 +121,7 @@ class SettingsActivity : AppCompatActivity() {
                     } else {
                         Log.d(TAG, "the token is inactive. response=$response")
                         NuguToast.with(this@SettingsActivity)
-                            .message(R.string.authentication_failed)
+                            .message(R.string.device_gw_error_003)
                             .duration(NuguToast.LENGTH_SHORT)
                             .show()
                     }
@@ -132,7 +132,7 @@ class SettingsActivity : AppCompatActivity() {
                 /** See more details in [LoginActivity.handleOAuthError] **/
                 Log.d(TAG, error.toString())
                 NuguToast.with(this@SettingsActivity)
-                    .message(R.string.authentication_failed)
+                    .message(R.string.device_gw_error_003)
                     .duration(NuguToast.LENGTH_SHORT)
                     .show()
             }
@@ -182,7 +182,7 @@ class SettingsActivity : AppCompatActivity() {
                 override fun onError(error: NuguOAuthError) {
                     /** See more details in [LoginActivity.handleOAuthError] **/
                     NuguToast.with(this@SettingsActivity)
-                        .message(R.string.revoke_failed)
+                        .message(R.string.device_gw_error_003)
                         .duration(NuguToast.LENGTH_SHORT)
                         .show()
                 }
