@@ -10,7 +10,7 @@ import android.support.v4.app.ActivityCompat.startActivityForResult
  * This is a helper class to manage the connection to the Custom Tabs Service.
  */
 object CustomTabActivityHelper {
-    private val CHROME_CUSTOM_TAB_REQUEST_CODE: Int = 100
+    val CHROME_CUSTOM_TAB_REQUEST_CODE: Int = 100
     /**
      * To be used as a fallback to open the Uri when Custom Tabs is not available.
      */
