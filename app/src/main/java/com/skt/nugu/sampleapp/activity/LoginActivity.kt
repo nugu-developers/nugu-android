@@ -171,7 +171,7 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
                 "$error")
         if(error.error == NuguOAuthError.NETWORK_ERROR) {
             NuguSnackbar.with(findViewById(R.id.baseLayout))
-                .message(R.string.authorization_failure_message)
+                .message(R.string.device_gw_error_006)
                 .show()
         } else {
             // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
@@ -234,7 +234,7 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
                         else -> {
                             // check detail
                             NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.authentication_failed)
+                                .message(R.string.device_gw_error_003)
                                 .show()
                         }
                     }
