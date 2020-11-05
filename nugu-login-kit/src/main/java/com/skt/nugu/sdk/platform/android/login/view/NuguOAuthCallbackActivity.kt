@@ -36,14 +36,19 @@ class NuguOAuthCallbackActivity : Activity() {
         private val TAG = "NuguOAuthCallbackActivity"
         const val RESULT_WEBVIEW_FAILED = RESULT_FIRST_USER + 1
         const val EXTRA_ERROR  = "error"
-        private const val requestCode = 100
+        private val WEBVIEW_REQUEST_CODE = CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE + 1
         private const val finishDelayMillis = 100L
-
     }
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String? = NuguOAuth.ACTION_LOGIN
     private var handler: Handler = Handler()
-    private val finishRunnable = Runnable { finish() }
+    private val finishRunnable = Runnable {
+        if(firstRequestCode == nextRequestCode) {
+            finish()
+        }
+    }
+    private var nextRequestCode = CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE
+    private var firstRequestCode = 0
     /**
      * Called when the activity is starting.
      * @see [Activity.onCreate]}
@@ -64,21 +69,17 @@ class NuguOAuthCallbackActivity : Activity() {
                     performLogin()
                     return
                 }
-
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
                 CustomTabActivityHelper.openCustomTab(this, intent, auth.getLoginUri(), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
-                        runCatching {
-                            val signInIntent = auth.getLoginIntent()
-                            startActivityForResult(signInIntent, requestCode)
-                        }.onFailure {
-                            Logger.e(TAG, "[onCreate] fallback, action=$action, $it")
-                            startActivityForResult(Intent(activity, WebViewActivity::class.java).apply {
-                                data = uri
-                            }, requestCode)
-                        }
+                        nextRequestCode = WEBVIEW_REQUEST_CODE
+                        Logger.e(TAG, "[onCreate] fallback, action=$action")
+                        startActivityForResult(Intent(activity, WebViewActivity::class.java).apply {
+                            putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
+                            data = uri
+                        }, nextRequestCode)
                     }
                 })
             }
@@ -90,22 +91,15 @@ class NuguOAuthCallbackActivity : Activity() {
 
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(
-                    this,
-                    intent,
-                    auth.getAccountInfoUri(),
-                    object :
+                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(), object :
                         CustomTabActivityHelper.CustomTabFallback {
                         override fun openUri(activity: Activity?, uri: Uri?) {
-                            runCatching {
-                                val signInIntent = auth.getAccountInfoIntent()
-                                startActivityForResult(signInIntent, requestCode)
-                            }.onFailure {
-                                Logger.e(TAG, "[onCreate] fallback, action=$action, $it")
-                                startActivityForResult(Intent(activity, WebViewActivity::class.java).apply {
-                                    data = uri
-                                }, requestCode)
-                            }
+                            Logger.e(TAG, "[onCreate] fallback, action=$action")
+                            nextRequestCode = WEBVIEW_REQUEST_CODE
+                            startActivityForResult(Intent(activity, WebViewActivity::class.java).apply {
+                                putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
+                                data = uri
+                            }, nextRequestCode)
                         }
                     })
             }
@@ -118,6 +112,7 @@ class NuguOAuthCallbackActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        firstRequestCode = requestCode
         handler.postDelayed(finishRunnable, finishDelayMillis)
 
         if(resultCode == RESULT_WEBVIEW_FAILED) {

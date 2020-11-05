@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http:www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.skt.nugu.sdk.platform.android.login.view
 
 import android.annotation.SuppressLint
@@ -7,12 +22,16 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.ViewGroup
 import android.webkit.*
-import android.widget.RelativeLayout
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import java.io.File
 
-class WebViewActivity : Activity() {
+/**
+ * This Activity is used as a fallback when there is no browser installed that supports
+ * Chrome Custom Tabs
+ */
+class WebViewActivity : /**AppCompatActivity()**/
+    Activity() {
     companion object {
         const val SCHEME_HTTPS = "https"
         const val SCHEME_HTTP = "http"
@@ -21,15 +40,7 @@ class WebViewActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val layout = RelativeLayout(this)
-        layout.layoutParams = RelativeLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        )
-        setContentView(layout)
-        actionBar?.setDisplayHomeAsUpEnabled(true)
-        title = ""
-
+        val action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
         val webView = try { WebView(this) } catch (e: Throwable) {
                 setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_FAILED, Intent().apply {
                     putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, e)
@@ -37,6 +48,9 @@ class WebViewActivity : Activity() {
                 finish()
                 return
             }
+        setContentView(webView)
+        //supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        //supportActionBar?.setDisplayShowTitleEnabled(false)
         setDefaultWebSettings(webView)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
@@ -46,7 +60,9 @@ class WebViewActivity : Activity() {
                     if (!isWebScheme) {
                         return try {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            intent.putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, action.toString())
                             startActivity(intent)
+                            finish()
                             true
                         } catch (e: Throwable) {
                             val intent = Intent()
@@ -76,14 +92,6 @@ class WebViewActivity : Activity() {
         intent.data?.apply {
             webView.loadUrl(this.toString())
         }
-
-        layout.addView(
-            webView,
-            ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        )
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -123,7 +131,7 @@ class WebViewActivity : Activity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                setResult(Activity.RESULT_CANCELED)
+                setResult(RESULT_CANCELED)
                 finish()
                 return true
             }
