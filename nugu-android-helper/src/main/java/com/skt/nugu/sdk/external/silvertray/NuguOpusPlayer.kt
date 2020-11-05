@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.external.silvertray
 
+import android.media.AudioAttributes
 import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.silvertray.player.EventListener
 import com.skt.nugu.silvertray.player.Player
@@ -25,8 +26,13 @@ import com.skt.nugu.silvertray.player.DurationListener
 
 /**
  * Porting class silvertray's [Player] to use in NUGU SDK
+ * There are two parameter and must be provided one of them.
+ * If both provided, [audioAttributes] are preferred rather than [streamType].
+ *
+ * @param streamType
+ * @param audioAttributes
  */
-class NuguOpusPlayer(private val streamType: Int) :
+class NuguOpusPlayer(private val streamType: Int?, private val audioAttributes: AudioAttributes? = null) :
     AttachmentPlayablePlayer {
     companion object {
         private const val TAG = "NuguOpusPlayer"
@@ -40,6 +46,10 @@ class NuguOpusPlayer(private val streamType: Int) :
     private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
 
     init {
+        if(streamType == null && audioAttributes == null) {
+            throw ExceptionInInitializerError("Both params are null. You should provide one of them.")
+        }
+
         player.addListener(object : EventListener {
             override fun onError(message: String) {
                 playbackEventListener?.onPlaybackError(currentSourceId, ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR, message)
@@ -92,8 +102,20 @@ class NuguOpusPlayer(private val streamType: Int) :
 
     override fun setSource(attachmentReader: Attachment.Reader): SourceId {
         val source = RawCBRStreamSource(attachmentReader)
-        player.prepare(source, streamType)
-        currentSourceId.id++
+        when {
+            audioAttributes != null -> {
+                player.prepare(source, audioAttributes)
+                currentSourceId.id++
+            }
+            streamType != null -> {
+                player.prepare(source, streamType)
+                currentSourceId.id++
+            }
+            else -> {
+                currentSourceId = SourceId.ERROR()
+            }
+        }
+
         Logger.d(TAG, "[setSource] ${currentSourceId.id}")
         return currentSourceId
     }
