@@ -104,6 +104,12 @@ class DirectiveProcessor(
 
             val preHandled = directiveRouter.preHandleDirective(directive, DirectiveHandlerResult(directive))
 
+            if(!preHandled) {
+                listeners.forEach {
+                    it.onFailed(directive, "no handler for ${directive.getNamespaceAndName()}")
+                }
+            }
+
             lock.withLock {
                 if (directiveBeingPreHandled == null && preHandled) {
                     Logger.d(TAG, "[onDirective] directive handling completed at preHandleDirective().")
