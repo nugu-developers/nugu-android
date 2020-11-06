@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 0.9.36 *(2020-11-06)*
+-----------------------------
+* Fix: Add missing notifications for directive failure (#1355)
+    * If no handler for directive, notify it as onFailed
+* Fix: Improve fallback of customTab (#1360)
+* Improve: Update SilverTary v4.3.0 (#1357)
+    * Support AudioAttributes instead of StreamType
+* Improve: Improve warning notification for failed SDK (#1358)
+* New: Support MediaPlayer v1.1 (#1342)
+
 Version 0.9.35 *(2020-11-04)*
 -----------------------------
 * Fix: Revert issue-1320 (#1352)
