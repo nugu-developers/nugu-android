@@ -75,7 +75,6 @@ class DefaultSystemAgent(
         const val CODE_TTS_SPEAKING_EXCEPTION = "TTS_SPEAKING_EXCEPTION"
 
         /** directives */
-        const val NAME_RESET_USER_INACTIVITY = "ResetUserInactivity"
         const val NAME_HANDOFF_CONNECTION = "HandoffConnection"
         const val NAME_TURN_OFF = "TurnOff"
         const val NAME_UPDATE_STATE = "UpdateState"
@@ -87,14 +86,9 @@ class DefaultSystemAgent(
 
         /** events */
         const val EVENT_NAME_SYNCHRONIZE_STATE = "SynchronizeState"
-        const val EVENT_NAME_USER_INACTIVITY_REPORT = "UserInactivityReport"
         const val EVENT_NAME_DISCONNECT = "Disconnect"
         const val EVENT_NAME_ECHO = "Echo"
 
-        val RESET_USER_INACTIVITY = NamespaceAndName(
-            NAMESPACE,
-            NAME_RESET_USER_INACTIVITY
-        )
         val HANDOFF_CONNECTION = NamespaceAndName(
             NAMESPACE,
             NAME_HANDOFF_CONNECTION
@@ -128,21 +122,12 @@ class DefaultSystemAgent(
             NAME_RESET_CONNECTION
         )
 
-        private const val KEY_INACTIVITY_EVENT_PAYLOAD = "inactiveTimeInSeconds"
-        const val SECONDS = 1000L
-
         private fun buildCompactContext(): JsonObject = JsonObject().apply {
             addProperty("version", VERSION.toString())
         }
 
         private val COMPACT_STATE: String = buildCompactContext().toString()
     }
-
-    private val scheduler = Executors.newSingleThreadScheduledExecutor()
-    private var inActiveFuture: ScheduledFuture<*>? = null
-
-    //private var eventTimer = Timer()
-    private var lastTimeActive = 0L
 
     private val executor = Executors.newSingleThreadExecutor()
     private val observers = HashSet<SystemAgentInterface.Listener>()
@@ -160,8 +145,6 @@ class DefaultSystemAgent(
         contextManager.setStateProvider(namespaceAndName, this)
         provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
         provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
-
-        onUserActive()
     }
 
     internal data class HandoffConnectionPayload(
@@ -191,15 +174,12 @@ class DefaultSystemAgent(
      */
     override fun shutdown() {
         onUserDisconnect()
-        inActiveFuture?.cancel(true)
-        inActiveFuture = null
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val nonBlockingPolicy = BlockingPolicy()
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-        configuration[RESET_USER_INACTIVITY] = nonBlockingPolicy
         configuration[HANDOFF_CONNECTION] = nonBlockingPolicy
         configuration[TURN_OFF] = nonBlockingPolicy
         configuration[UPDATE_STATE] = nonBlockingPolicy
@@ -243,7 +223,6 @@ class DefaultSystemAgent(
         Logger.d(TAG, "[handleDirective] $info")
 
         when (info.directive.getName()) {
-            NAME_RESET_USER_INACTIVITY -> handleResetUserInactivity(info)
             NAME_HANDOFF_CONNECTION -> handleHandoffConnection(info)
             NAME_TURN_OFF -> handleTurnOff(info)
             NAME_UPDATE_STATE -> handleUpdateState(info)
@@ -258,17 +237,6 @@ class DefaultSystemAgent(
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
         info.result.setCompleted()
-    }
-
-    /**
-     * The ResetUserInactivity directive is sent to your client to reset the inactivity timer used by UserInactivityReport.
-     * @param info The directive currently being handled.
-     */
-    private fun handleResetUserInactivity(info: DirectiveInfo) {
-        Logger.d(TAG, "[handleResetUserInactivity] $info")
-        executor.submit {
-            onUserActive()
-        }
     }
 
     /**
@@ -462,33 +430,6 @@ class DefaultSystemAgent(
      */
     private fun handleEcho(info: DirectiveInfo) {
         Logger.d(TAG, "[handleEcho] $info")
-    }
-
-    /**
-     * The function to be called when the user has become active.
-     * If a timeout(1hour) occurs, it is send to the server
-     */
-    override fun onUserActive() {
-        this.inActiveFuture?.cancel(true)
-        this.inActiveFuture = this.scheduler.scheduleAtFixedRate({
-            executor.submit(this@DefaultSystemAgent::executeInactivityReport)
-        }, 1, 1, TimeUnit.HOURS)
-
-        lastTimeActive = System.currentTimeMillis()
-    }
-
-    /**
-     * Execute event in thread for InactivityReport
-     */
-    private fun executeInactivityReport() {
-        val inactiveTimeInSeconds = (System.currentTimeMillis() - lastTimeActive) / SECONDS
-        Logger.d(
-            TAG,
-            "[executeInactivityReport] inactiveTimeInSeconds = $inactiveTimeInSeconds"
-        )
-        sendEvent(EVENT_NAME_USER_INACTIVITY_REPORT, null, JsonObject().apply {
-            addProperty(KEY_INACTIVITY_EVENT_PAYLOAD, inactiveTimeInSeconds)
-        }.toString())
     }
 
     /**
