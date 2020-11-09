@@ -52,11 +52,6 @@ interface SystemAgentInterface {
     }
 
     /**
-     * The function to be called when the user has become active.
-     */
-    fun onUserActive()
-
-    /**
      * @hide
      * internal function
      * **/
