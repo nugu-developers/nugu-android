@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Category
 
@@ -39,7 +40,7 @@ data class Song(
     @SerializedName("issueDate")
     val issueDate: String?,
     @SerializedName("etc")
-    val etc: String?
+    val etc: JsonObject?
 ) {
 
     fun toJson(): JsonElement = Gson().toJsonTree(this)
