@@ -87,7 +87,7 @@ class NextDirectiveHandler(
                                     playlist?.let {
                                         add("playlist", playlist.toJson())
                                     }
-                                    addProperty("issueCode", target)
+                                    addProperty("target", target)
                                     payload.data?.let {
                                         add("data", it)
                                     }
