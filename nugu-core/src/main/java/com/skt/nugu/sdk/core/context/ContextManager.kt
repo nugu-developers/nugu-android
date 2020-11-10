@@ -28,7 +28,6 @@ import kotlin.concurrent.withLock
 class ContextManager : ContextManagerInterface {
     companion object {
         private const val TAG = "ContextManager"
-        private val PROVIDE_STATE_DEFAULT_TIMEOUT = 2000L
     }
 
     private data class GetContextParam(
@@ -173,7 +172,8 @@ class ContextManager : ContextManagerInterface {
     override fun getContext(
         contextRequester: ContextRequester,
         target: NamespaceAndName?,
-        given: HashMap<NamespaceAndName, BaseContextState>?
+        given: HashMap<NamespaceAndName, BaseContextState>?,
+        timeoutInMillis: Long
     ) {
         lock.withLock {
             if (stateRequestToken == 0) {
@@ -212,7 +212,7 @@ class ContextManager : ContextManagerInterface {
                             lock.withLock { buildContextLocked(target, given) }
                         )
                     }
-                }, PROVIDE_STATE_DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                }, timeoutInMillis, TimeUnit.MILLISECONDS)
 
                 HashMap(pendings).forEach {
                     stateProviders[it.key]?.provideState(

@@ -936,7 +936,7 @@ class DefaultASRAgent(
             return
         }
 
-        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+        contextManager.getContext(contextRequester = object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 Logger.d(TAG, "[onContext]")
                 executor.submit {
@@ -952,7 +952,7 @@ class DefaultASRAgent(
                     )
                 }
             }
-        })
+        }, timeoutInMillis = 2000L)
     }
 
     private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
