@@ -78,7 +78,7 @@ class DefaultASRAgent(
         private const val TAG = "DefaultASRAgent"
 
         const val NAMESPACE = "ASR"
-        val VERSION = Version(1,2)
+        val VERSION = Version(1,4)
 
         const val NAME_EXPECT_SPEECH = "ExpectSpeech"
         const val NAME_RECOGNIZE = "Recognize"
@@ -660,13 +660,26 @@ class DefaultASRAgent(
     ) {
         Logger.d(TAG, "[executeInternalStartRecognition]")
         executeSelectSpeechProcessor()
+        val expectSpeechDirectiveEndPointDetectorParam = param.expectSpeechDirectiveParam?.directive?.payload?.epd
+        val endPointDetectorParam: EndPointDetectorParam = if(expectSpeechDirectiveEndPointDetectorParam != null) {
+            with(expectSpeechDirectiveEndPointDetectorParam) {
+                EndPointDetectorParam(
+                    timeoutMilliseconds.div(1000).toInt(),
+                    maxSpeechDurationMilliseconds.div(1000).toInt(),
+                    silenceIntervalInMilliseconds.toInt()
+                )
+            }
+        } else {
+            param.endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt())
+        }
+
         currentRequest = currentSpeechRecognizer.start(
             param.audioInputStream,
             param.audioFormat,
             param.jsonContext,
             param.wakeupInfo,
             param.expectSpeechDirectiveParam,
-            param.endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt()),
+            endPointDetectorParam,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(dialogRequestId: String) {
                     param.expectSpeechDirectiveParam?.let {
