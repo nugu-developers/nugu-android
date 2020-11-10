@@ -23,8 +23,19 @@ data class ExpectSpeechPayload private constructor(
     @SerializedName("domainTypes")
     val domainTypes: Array<String>?,
     @SerializedName("asrContext")
-    val asrContext: AsrContext?
+    val asrContext: AsrContext?,
+    @SerializedName("epd")
+    val epd: EpdParam?
 ) {
+    data class EpdParam(
+        @SerializedName("timeoutMilliseconds")
+        val timeoutMilliseconds: Long,
+        @SerializedName("silenceIntervalInMilliseconds")
+        val silenceIntervalInMilliseconds: Long,
+        @SerializedName("maxSpeechDurationMilliseconds")
+        val maxSpeechDurationMilliseconds: Long
+    )
+
     data class AsrContext(
         @SerializedName("task")
         val task: String?,
@@ -73,6 +84,7 @@ data class ExpectSpeechPayload private constructor(
             if (!domainTypes.contentEquals(other.domainTypes)) return false
         } else if (other.domainTypes != null) return false
         if (asrContext != other.asrContext) return false
+        if (epd != other.epd) return false
 
         return true
     }
@@ -81,6 +93,7 @@ data class ExpectSpeechPayload private constructor(
         var result = playServiceId?.hashCode() ?: 0
         result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
         result = 31 * result + (asrContext?.hashCode() ?: 0)
+        result = 31 * result + (epd?.hashCode() ?: 0)
         return result
     }
 }
