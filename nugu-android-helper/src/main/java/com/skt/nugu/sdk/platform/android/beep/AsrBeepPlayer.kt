@@ -102,7 +102,7 @@ class AsrBeepPlayer(
                             FocusState.FOREGROUND,
                             FocusState.BACKGROUND -> {
                                 isHandled = true
-                                mediaPlayer.setSource(uri).also {
+                                mediaPlayer.setSource(uri, null).also {
                                     if (!it.isError() && mediaPlayer.play(it)) {
                                         Logger.d(TAG, "[tryPlayBeep] sourceId: $it")
                                         channelObserverSourceIdMap[it] = this

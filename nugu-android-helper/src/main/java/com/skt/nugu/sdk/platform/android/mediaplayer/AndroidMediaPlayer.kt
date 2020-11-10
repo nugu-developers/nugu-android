@@ -62,8 +62,8 @@ class AndroidMediaPlayer(
         }
     }
 
-    override fun setSource(uri: URI): SourceId {
-        Logger.d(TAG, "[setSource] $uri")
+    override fun setSource(uri: URI, cacheKey: CacheKey?): SourceId {
+        Logger.d(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey")
         try {
             player.reset()
             playerActivity = AudioPlayerAgentInterface.State.IDLE
@@ -71,7 +71,7 @@ class AndroidMediaPlayer(
             player.prepare()
             playerActivity = AudioPlayerAgentInterface.State.PAUSED
         } catch (e: Exception) {
-            Logger.e(TAG, "[setSource] $uri", e)
+            Logger.e(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey", e)
             return SourceId.ERROR()
         }
 

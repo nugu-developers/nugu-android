@@ -97,6 +97,8 @@ class DefaultAudioPlayerAgent(
         val sourceType: SourceType?,
         @SerializedName("playServiceId")
         val playServiceId: String,
+        @SerializedName("cacheKey")
+        val cacheKey: String?,
         @SerializedName("audioItem")
         val audioItem: AudioItem,
         @SerializedName("playStackControl")
@@ -291,6 +293,10 @@ class DefaultAudioPlayerAgent(
         ) {
             // no-op
         }
+
+        fun getCacheKey(): CacheKey? = payload.cacheKey?.let {
+            CacheKey(playServiceId, it)
+        }
     }
 
     private val pauseDirectiveController = object : PlaybackDirectiveHandler.Controller {
@@ -459,7 +465,7 @@ class DefaultAudioPlayerAgent(
                 } ?: SourceId.ERROR()
                 else -> {
                     try {
-                        mediaPlayer.setSource(URI.create(item.payload.audioItem.stream.url.trim()))
+                        mediaPlayer.setSource(URI.create(item.payload.audioItem.stream.url.trim()), item.getCacheKey())
                     } catch (th: Throwable) {
                         Logger.w(TAG, "[executeFetchSource::$INNER_TAG] failed to create uri", th)
                         SourceId.ERROR()
