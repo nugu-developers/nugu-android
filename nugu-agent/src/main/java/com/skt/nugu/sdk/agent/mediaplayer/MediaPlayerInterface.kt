@@ -62,8 +62,19 @@ interface AttachmentSourcePlayable {
     fun setSource(attachmentReader: Attachment.Reader): SourceId
 }
 
+data class CacheKey(
+    val playServiceId: String,
+    val cacheKey: String
+) {
+    fun getUniqueKey(): String = "$playServiceId-$cacheKey"
+}
+
 interface UriSourcePlayable {
-    fun setSource(uri: URI): SourceId
+    /**
+     * @param uri the source uri for play
+     * @param cacheKey the cache key for cache if available (optional).
+     */
+    fun setSource(uri: URI, cacheKey: CacheKey?): SourceId
 }
 
 interface AttachmentPlayablePlayer : MediaPlayerControlInterface,

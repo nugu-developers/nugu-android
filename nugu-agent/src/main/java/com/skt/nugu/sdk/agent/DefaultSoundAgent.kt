@@ -149,7 +149,7 @@ class DefaultSoundAgent(
                                     )
                                 } else {
                                     val sourceId =
-                                        mediaPlayer.setSource(soundProvider.getContentUri(payload.beepName))
+                                        mediaPlayer.setSource(soundProvider.getContentUri(payload.beepName), null)
                                     !sourceId.isError() && mediaPlayer.play(sourceId)
                                 }
 
