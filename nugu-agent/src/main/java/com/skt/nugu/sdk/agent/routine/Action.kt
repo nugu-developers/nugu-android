@@ -27,7 +27,7 @@ data class Action(
     @SerializedName("data")
     val data: JsonObject?,
     @SerializedName("playServiceId")
-    val playServiceId: String,
+    val playServiceId: String?,
     @SerializedName("token")
     val token: String?
 ) {
@@ -46,7 +46,9 @@ data class Action(
         data?.let {
             add("data", it)
         }
-        addProperty("playServiceId", playServiceId)
+        playServiceId?.let {
+            addProperty("playServiceId", it)
+        }
         token?.let {
             addProperty("token", it)
         }
