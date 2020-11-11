@@ -229,7 +229,7 @@ class RoutineAgent(
             })
         }
 
-        private fun doDataAction(playServiceId: String, data: JsonObject) {
+        private fun doDataAction(playServiceId: String?, data: JsonObject) {
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val request = EventMessageRequest.Builder(
@@ -238,7 +238,9 @@ class RoutineAgent(
                         "ActionTriggered",
                         VERSION.toString()
                     ).payload(JsonObject().apply {
-                        addProperty("playServiceId", playServiceId)
+                        playServiceId?.let {
+                            addProperty("playServiceId", it)
+                        }
                         add("data", data)
                     }.toString())
                         .referrerDialogRequestId(directive.header.referrerDialogRequestId)
