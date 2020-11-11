@@ -381,78 +381,77 @@ class RoutineAgent(
         Logger.d(TAG, "[start] $directive")
         val request = currentRoutineRequest
         if(request != null) {
-            Logger.w(TAG, "[start] failed: already started routine exist")
-            return false
-        } else {
-            textAgent?.let {
-                val countDownLatch = CountDownLatch(1)
-                RoutineRequest(directive,object: RoutineRequestListener {
-                    override fun onCancel() {
-                        Logger.d(TAG, "[start] onCancel()")
-                        state = RoutineAgentInterface.State.STOPPED
-                        currentRoutineRequest?.let {
-                            seamlessFocusManager.cancel(it)
-                        }
-                        currentRoutineRequest = null
-                        sendRoutineStopEvent(directive)
-                    }
-
-                    override fun onFinish() {
-                        Logger.d(TAG, "[start] onFinish()")
-                        state = RoutineAgentInterface.State.FINISHED
-                        currentRoutineRequest?.let {
-                            seamlessFocusManager.cancel(it)
-                        }
-                        currentRoutineRequest = null
-                        sendRoutineFinishEvent(directive)
-                    }
-                }).apply {
-                    currentRoutineRequest = this
-                    val prevState = state
-                    state = RoutineAgentInterface.State.PLAYING
-
-                    contextManager.getContext(object : IgnoreErrorContextRequestor() {
-                        override fun onContext(jsonContext: String) {
-                            messageSender.newCall(
-                                EventMessageRequest.Builder(
-                                    jsonContext,
-                                    NAMESPACE,
-                                    "Started",
-                                    VERSION.toString()
-                                ).payload(JsonObject().apply {
-                                    addProperty("playServiceId", directive.payload.playServiceId)
-                                }.toString())
-                                    .referrerDialogRequestId(directive.header.dialogRequestId)
-                                    .build()
-                            ).enqueue(object : MessageSender.Callback {
-                                override fun onFailure(request: MessageRequest, status: Status) {
-                                    countDownLatch.countDown()
-                                    state = prevState
-                                    currentRoutineRequest = null
-                                }
-
-                                override fun onSuccess(request: MessageRequest) {
-                                    countDownLatch.countDown()
-                                }
-
-                                override fun onResponseStart(request: MessageRequest) {
-                                    countDownLatch.countDown()
-                                    currentRoutineRequest?.let {
-                                        seamlessFocusManager.prepare(it)
-                                    }
-                                    start()
-                                }
-                            })
-                        }
-                    }, namespaceAndName)
-
-                    countDownLatch.await()
-                }
-            }
-
-
-            return currentRoutineRequest != null
+            Logger.d(TAG, "[start] already started routine exist, so try cancel it.")
+            request.cancel()
         }
+
+        textAgent?.let {
+            val countDownLatch = CountDownLatch(1)
+            RoutineRequest(directive,object: RoutineRequestListener {
+                override fun onCancel() {
+                    Logger.d(TAG, "[start] onCancel()")
+                    state = RoutineAgentInterface.State.STOPPED
+                    currentRoutineRequest?.let {
+                        seamlessFocusManager.cancel(it)
+                    }
+                    currentRoutineRequest = null
+                    sendRoutineStopEvent(directive)
+                }
+
+                override fun onFinish() {
+                    Logger.d(TAG, "[start] onFinish()")
+                    state = RoutineAgentInterface.State.FINISHED
+                    currentRoutineRequest?.let {
+                        seamlessFocusManager.cancel(it)
+                    }
+                    currentRoutineRequest = null
+                    sendRoutineFinishEvent(directive)
+                }
+            }).apply {
+                currentRoutineRequest = this
+                val prevState = state
+                state = RoutineAgentInterface.State.PLAYING
+
+                contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                    override fun onContext(jsonContext: String) {
+                        messageSender.newCall(
+                            EventMessageRequest.Builder(
+                                jsonContext,
+                                NAMESPACE,
+                                "Started",
+                                VERSION.toString()
+                            ).payload(JsonObject().apply {
+                                addProperty("playServiceId", directive.payload.playServiceId)
+                            }.toString())
+                                .referrerDialogRequestId(directive.header.dialogRequestId)
+                                .build()
+                        ).enqueue(object : MessageSender.Callback {
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                                countDownLatch.countDown()
+                                state = prevState
+                                currentRoutineRequest = null
+                            }
+
+                            override fun onSuccess(request: MessageRequest) {
+                                countDownLatch.countDown()
+                            }
+
+                            override fun onResponseStart(request: MessageRequest) {
+                                countDownLatch.countDown()
+                                currentRoutineRequest?.let {
+                                    seamlessFocusManager.prepare(it)
+                                }
+                                start()
+                            }
+                        })
+                    }
+                }, namespaceAndName)
+
+                countDownLatch.await()
+            }
+        }
+
+        return currentRoutineRequest != null
     }
 
     private fun sendRoutineStopEvent(directive: StartDirectiveHandler.StartDirective) {
