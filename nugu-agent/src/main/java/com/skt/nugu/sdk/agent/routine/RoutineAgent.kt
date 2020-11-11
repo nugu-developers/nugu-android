@@ -39,6 +39,9 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 class RoutineAgent(
     private val messageSender: MessageSender,
@@ -126,6 +129,8 @@ class RoutineAgent(
         fun onFinish()
     }
 
+    private val executor = Executors.newSingleThreadScheduledExecutor()
+
     private inner class RoutineRequest(
         val directive: StartDirectiveHandler.StartDirective,
         val listener: RoutineRequestListener
@@ -135,6 +140,7 @@ class RoutineAgent(
         private var currentActionDialogRequestId: String? = null
         private var isPaused = false
         private var isCanceled = false
+        private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
 
         fun start() {
             Logger.d(TAG, "[RoutineRequest] start")
@@ -174,6 +180,8 @@ class RoutineAgent(
         fun doContinue() {
             Logger.d(TAG, "[RoutineRequest] doContinue")
             isPaused = false
+            scheduledFutureForTryStartNextAction?.cancel(true)
+            scheduledFutureForTryStartNextAction = null
             tryStartNextAction()
         }
 
@@ -198,7 +206,7 @@ class RoutineAgent(
             if(action.type == Action.Type.TEXT && action.text != null) {
                 doTextAction(action)
             } else if(action.type == Action.Type.DATA && action.data != null){
-                doDataAction(action.playServiceId, action.data)
+                doDataAction(action)
             }
         }
 
@@ -211,7 +219,15 @@ class RoutineAgent(
                     currentActionHandlingListener = DirectiveGroupHandlingListener(dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
                         override fun onFinish() {
                             Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
-                            tryStartNextAction()
+                            scheduledFutureForTryStartNextAction?.cancel(true)
+                            scheduledFutureForTryStartNextAction = null
+                            if(action.postDelayInMilliseconds != null) {
+                                scheduledFutureForTryStartNextAction = executor.schedule({
+                                    tryStartNextAction()
+                                }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
+                            } else {
+                                tryStartNextAction()
+                            }
                         }
                     })
                 }
@@ -229,7 +245,7 @@ class RoutineAgent(
             })
         }
 
-        private fun doDataAction(playServiceId: String?, data: JsonObject) {
+        private fun doDataAction(action: Action) {
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val request = EventMessageRequest.Builder(
@@ -238,10 +254,10 @@ class RoutineAgent(
                         "ActionTriggered",
                         VERSION.toString()
                     ).payload(JsonObject().apply {
-                        playServiceId?.let {
+                        action.playServiceId?.let {
                             addProperty("playServiceId", it)
                         }
-                        add("data", data)
+                        add("data", action.data)
                     }.toString())
                         .referrerDialogRequestId(directive.header.referrerDialogRequestId)
                         .build()
@@ -251,7 +267,15 @@ class RoutineAgent(
                     currentActionHandlingListener = DirectiveGroupHandlingListener(request.dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
                         override fun onFinish() {
                             Logger.d(TAG, "doDataAction - [onFinish] dialogRequestId: ${request.dialogRequestId}")
-                            tryStartNextAction()
+                            scheduledFutureForTryStartNextAction?.cancel(true)
+                            scheduledFutureForTryStartNextAction = null
+                            if(action.postDelayInMilliseconds != null) {
+                                scheduledFutureForTryStartNextAction = executor.schedule({
+                                    tryStartNextAction()
+                                }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
+                            } else {
+                                tryStartNextAction()
+                            }
                         }
                     })
                     messageSender.newCall(request).enqueue(object : MessageSender.Callback {
