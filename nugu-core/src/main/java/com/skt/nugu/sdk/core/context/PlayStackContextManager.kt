@@ -44,6 +44,22 @@ class PlayStackContextManager(
 
     private val executor = Executors.newSingleThreadExecutor()
 
+    private val timeStampDescendingComparator =
+        Comparator<PlayStackProvider.PlayStackContext> { p0, p1 ->
+            val diff = p1.timestamp - p0.timestamp
+            when {
+                diff > 0 -> {
+                    1
+                }
+                diff < 0 -> {
+                    -1
+                }
+                else -> {
+                    0
+                }
+            }
+        }
+
     internal data class StateContext(private val playStack: List<String>): ClientContextState {
         override fun value(): String  = JsonArray().apply {
             playStack.forEach {
@@ -54,6 +70,8 @@ class PlayStackContextManager(
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
+        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
+        provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     override fun provideState(
@@ -74,21 +92,6 @@ class PlayStackContextManager(
         }
     }
 
-    private val timeStampDescendingComparator =
-        Comparator<PlayStackProvider.PlayStackContext> { p0, p1 ->
-            val diff = p1.timestamp - p0.timestamp
-            when {
-                diff > 0 -> {
-                    1
-                }
-                diff < 0 -> {
-                    -1
-                }
-                else -> {
-                    0
-                }
-            }
-        }
     /**
      * build integrated playstack
      *
