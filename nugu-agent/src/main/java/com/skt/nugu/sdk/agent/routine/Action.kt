@@ -29,7 +29,9 @@ data class Action(
     @SerializedName("playServiceId")
     val playServiceId: String?,
     @SerializedName("token")
-    val token: String?
+    val token: String?,
+    @SerializedName("postDelayInMilliseconds")
+    val postDelayInMilliseconds: Long?
 ) {
     enum class Type {
         @SerializedName("TEXT")
@@ -51,6 +53,9 @@ data class Action(
         }
         token?.let {
             addProperty("token", it)
+        }
+        postDelayInMilliseconds?.let {
+            addProperty("postDelayInMilliseconds", it)
         }
     }
 }
