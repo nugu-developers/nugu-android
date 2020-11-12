@@ -71,6 +71,7 @@ class AndroidMediaPlayer(
             player.prepare()
             playerActivity = AudioPlayerAgentInterface.State.PAUSED
         } catch (e: Exception) {
+            player.reset()
             Logger.e(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey", e)
             return SourceId.ERROR()
         }
@@ -111,6 +112,7 @@ class AndroidMediaPlayer(
         Logger.d(TAG, "[stop] $id")
         if (id.id == currentSourceId.id && playerActivity.isActive()) {
             player.stop()
+            player.reset()
             playerActivity = AudioPlayerAgentInterface.State.STOPPED
             playbackEventListener?.onPlaybackStopped(id)
             return true
