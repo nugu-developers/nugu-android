@@ -652,7 +652,10 @@ class DefaultAudioPlayerAgent(
                         // should fetch offset
                         if(duration != null) {
                             currentItem?.let {
-                                executeFetchOffset(it.payload.audioItem.stream.offsetInMilliseconds)
+                                //
+                                if(!it.isCanceled) {
+                                    executeFetchOffset(it.payload.audioItem.stream.offsetInMilliseconds)
+                                }
                             }
                         }
 
