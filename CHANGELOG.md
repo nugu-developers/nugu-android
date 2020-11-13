@@ -1,6 +1,28 @@
 Change Log
 ==========
 
+Version 0.9.37 *(2020-11-13)*
+-----------------------------
+* Fix: Deprecated System.UserInactivityReport (#1366)
+* Fix: Fix wrong SONG spec in MediaPlayerAgent (#1369)
+* Fix: Fix wrong param in MediaPlayerAgent (#1377)
+* Fix: Prevent cancel already released object (#1386)
+* Fix: Prevent cancel already released object #1386 (#1387)
+* Improve: Apply timer when audioplayer's paused by explicitly (#1364)
+* Improve: Update Routine Agent Specification (#1368)
+    * Nullable playServiceId of Action
+    * If receives a new routine, cancels the currently running routine and starts it.
+    * Support Routine Agent v1.1 (apply postDelayInMilliseconds at Action)
+* Improve: Apply cacheKey feature (#1371)
+* Improve: Update context timeout policy (#1375)
+    * Apply 10sec for every timeout for context except ASR.Recognize event. (keep 2sec for ASR.Recognize event)
+* Improve: Pre-cache Playstack context (#1379)
+* Improve: Prevent seekTo for stopped source (#1382)
+* Improve:  Prevent excessive mobile network usage in MediaPlayer (#1384)
+* Improve: Update Keensense v0.2.5 (#1388)
+* New: Support ASR v1.4 (#1372)
+    * Apply epd param of ExpectSpeech
+
 Version 0.9.36 *(2020-11-06)*
 -----------------------------
 * Fix: Add missing notifications for directive failure (#1355)
