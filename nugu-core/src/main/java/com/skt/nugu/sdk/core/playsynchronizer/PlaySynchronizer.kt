@@ -55,19 +55,22 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val preparedRemoved = prepared.remove(syncObj)
             val startedRemoved = started.remove(syncObj)
 
-            prepared.filter {
-                it.getDialogRequestId() == syncObj.getDialogRequestId()
-            }.forEach {
-                it.requestReleaseSync()
-            }
+            return if(preparedRemoved || startedRemoved) {
+                prepared.filter {
+                    it.getDialogRequestId() == syncObj.getDialogRequestId()
+                }.forEach {
+                    it.requestReleaseSync()
+                }
 
-            started.filter {
-                it.getDialogRequestId() == syncObj.getDialogRequestId()
-            }.forEach {
-                it.requestReleaseSync()
+                started.filter {
+                    it.getDialogRequestId() == syncObj.getDialogRequestId()
+                }.forEach {
+                    it.requestReleaseSync()
+                }
+                true
+            } else {
+                false
             }
-
-            return preparedRemoved || startedRemoved
         }
 
         fun finish(syncObj: PlaySynchronizerInterface.SynchronizeObject): Boolean {
