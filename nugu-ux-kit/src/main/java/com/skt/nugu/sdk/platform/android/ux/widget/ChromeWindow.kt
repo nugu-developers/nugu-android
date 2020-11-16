@@ -248,7 +248,7 @@ private fun View.findSuitableParent() : ViewGroup? {
             return view
         }
         if (view is FrameLayout) {
-            if (view.getId() == 16908290) {
+            if (view.getId() == android.R.id.content) {
                 return view
             }
             fallback = view
