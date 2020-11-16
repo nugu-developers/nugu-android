@@ -325,7 +325,7 @@ class DefaultDisplayAgent(
             template.getMessageId(),
             "${template.getNamespace()}.${template.getName()}",
             template.payload,
-            info.getDialogRequestId(),
+            info.directive.header,
             layer
         ) ?: false
         if (!willBeRender) {

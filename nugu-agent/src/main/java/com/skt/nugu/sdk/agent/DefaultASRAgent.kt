@@ -39,10 +39,7 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
-import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
@@ -164,38 +161,38 @@ class DefaultASRAgent(
 
     private val speechToTextConverterEventObserver =
         object : ASRAgentInterface.OnResultListener {
-            override fun onNoneResult(dialogRequestId: String) {
-                Logger.d(TAG, "[onNoneResult] $dialogRequestId")
+            override fun onNoneResult(header: Header) {
+                Logger.d(TAG, "[onNoneResult] $header")
                 onResultListeners.forEach {
-                    it.onNoneResult(dialogRequestId)
+                    it.onNoneResult(header)
                 }
             }
 
-            override fun onPartialResult(result: String, dialogRequestId: String) {
-                Logger.d(TAG, "[onPartialResult] $result, $dialogRequestId")
+            override fun onPartialResult(result: String, header: Header) {
+                Logger.d(TAG, "[onPartialResult] $result, $header")
                 onResultListeners.forEach {
-                    it.onPartialResult(result, dialogRequestId)
+                    it.onPartialResult(result, header)
                 }
             }
 
-            override fun onCompleteResult(result: String, dialogRequestId: String) {
-                Logger.d(TAG, "[onCompleteResult] $result, $dialogRequestId")
+            override fun onCompleteResult(result: String, header: Header) {
+                Logger.d(TAG, "[onCompleteResult] $result, $header")
                 onResultListeners.forEach {
-                    it.onCompleteResult(result, dialogRequestId)
+                    it.onCompleteResult(result, header)
                 }
             }
 
-            override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
-                Logger.w(TAG, "[onError] $type, $dialogRequestId")
+            override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
+                Logger.w(TAG, "[onError] $type, $header")
                 onResultListeners.forEach {
-                    it.onError(type, dialogRequestId)
+                    it.onError(type, header)
                 }
             }
 
-            override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
-                Logger.d(TAG, "[onCancel] $cause, $dialogRequestId")
+            override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
+                Logger.d(TAG, "[onCancel] $cause, $header")
                 onResultListeners.forEach {
-                    it.onCancel(cause, dialogRequestId)
+                    it.onCancel(cause, header)
                 }
             }
         }
@@ -681,48 +678,45 @@ class DefaultASRAgent(
             param.expectSpeechDirectiveParam,
             endPointDetectorParam,
             object : ASRAgentInterface.OnResultListener {
-                override fun onNoneResult(dialogRequestId: String) {
+                override fun onNoneResult(header: Header) {
                     param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
-                    speechToTextConverterEventObserver.onNoneResult(dialogRequestId)
+                    speechToTextConverterEventObserver.onNoneResult(header)
                 }
 
-                override fun onPartialResult(result: String, dialogRequestId: String) {
-                    speechToTextConverterEventObserver.onPartialResult(result, dialogRequestId)
+                override fun onPartialResult(result: String, header: Header) {
+                    speechToTextConverterEventObserver.onPartialResult(result, header)
                 }
 
-                override fun onCompleteResult(result: String, dialogRequestId: String) {
+                override fun onCompleteResult(result: String, header: Header) {
                     param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
-                    speechToTextConverterEventObserver.onCompleteResult(result, dialogRequestId)
+                    speechToTextConverterEventObserver.onCompleteResult(result, header)
                 }
 
-                override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
+                override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
                     param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendResponseTimeout(param.expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
+                        sendResponseTimeout(param.expectSpeechDirectiveParam?.directive?.payload, header.dialogRequestId)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(param.expectSpeechDirectiveParam?.directive?.payload, dialogRequestId)
+                        sendListenTimeout(param.expectSpeechDirectiveParam?.directive?.payload, header.dialogRequestId)
                     }
-                    speechToTextConverterEventObserver.onError(type, dialogRequestId)
+                    speechToTextConverterEventObserver.onError(type, header)
                 }
 
-                override fun onCancel(
-                    cause: ASRAgentInterface.CancelCause,
-                    dialogRequestId: String
-                ) {
+                override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
                     param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
-                    speechToTextConverterEventObserver.onCancel(cause, dialogRequestId)
+                    speechToTextConverterEventObserver.onCancel(cause, header)
                 }
             }
         ).also {

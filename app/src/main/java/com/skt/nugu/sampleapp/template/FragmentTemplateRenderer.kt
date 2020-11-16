@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.deepMerge
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import java.lang.NullPointerException
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
@@ -52,12 +53,12 @@ class FragmentTemplateRenderer(
         templateId: String,
         templateType: String,
         templateContent: String,
-        dialogRequestId: String,
+        header: Header,
         displayType: DisplayAggregatorInterface.Type
     ): Boolean {
         Log.d(
             TAG,
-            "[render] templateType: $templateType, templateId: $templateId, templateContent: $templateContent, dialogRequestId: $dialogRequestId, displayType: $displayType"
+            "[render] templateType: $templateType, templateId: $templateId, templateContent: $templateContent, header: $header, displayType: $displayType"
         )
 
         val countDownLatch = CountDownLatch(1)

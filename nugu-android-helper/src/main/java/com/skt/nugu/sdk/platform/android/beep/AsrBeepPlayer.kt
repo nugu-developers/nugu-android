@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
@@ -38,23 +39,23 @@ class AsrBeepPlayer(
     }
 
     private val asrOnResultListener: ASRAgentInterface.OnResultListener = object: ASRAgentInterface.OnResultListener {
-        override fun onNoneResult(dialogRequestId: String) {
+        override fun onNoneResult(header: Header) {
             beepResourceProvider.getOnNoneResultResource()?.let {
                 tryPlayBeep(it)
             }
         }
 
-        override fun onPartialResult(result: String, dialogRequestId: String) {
+        override fun onPartialResult(result: String, header: Header) {
             // no-op
         }
 
-        override fun onCompleteResult(result: String, dialogRequestId: String) {
+        override fun onCompleteResult(result: String, header: Header) {
             beepResourceProvider.getOnCompleteResultResource()?.let {
                 tryPlayBeep(it)
             }
         }
 
-        override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
+        override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
             when(type) {
                 ASRAgentInterface.ErrorType.ERROR_NETWORK -> beepResourceProvider.getOnErrorNetworkResource()
                 ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT -> beepResourceProvider.getOnErrorAudioInputResource()
@@ -66,7 +67,7 @@ class AsrBeepPlayer(
             }
         }
 
-        override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
+        override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
             // no-op
         }
     }

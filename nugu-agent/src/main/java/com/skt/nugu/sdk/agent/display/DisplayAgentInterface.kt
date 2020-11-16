@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent.display
 
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
  * The public interface for DisplayAgent
@@ -59,11 +60,11 @@ interface DisplayAgentInterface:
          * @param templateId the unique identifier for the template card
          * @param templateType the template type
          * @param templateContent the content of template in structured JSON
-         * @param dialogRequestId the dialog request id
+         * @param header the header for this render
          * @param contextLayer the layer type
          * @return true: if will render, false: otherwise
          */
-        fun render(templateId: String, templateType: String, templateContent: String, dialogRequestId: String, contextLayer: ContextLayer): Boolean
+        fun render(templateId: String, templateType: String, templateContent: String, header: Header, contextLayer: ContextLayer): Boolean
 
         /**
          * Used to notify the renderer when display should be cleared .

@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.display
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -32,7 +33,7 @@ class DisplayAggregator(
             templateId: String,
             templateType: String,
             templateContent: String,
-            dialogRequestId: String,
+            header: Header,
             type: DisplayAggregatorInterface.Type
         ): Boolean {
             lock.withLock {
@@ -42,7 +43,7 @@ class DisplayAggregator(
                 templateId,
                 templateType,
                 templateContent,
-                dialogRequestId,
+                header,
                 type
             ) ?: false
 
@@ -79,14 +80,14 @@ class DisplayAggregator(
                 templateId: String,
                 templateType: String,
                 templateContent: String,
-                dialogRequestId: String,
+                header: Header,
                 contextLayer: DisplayAgentInterface.ContextLayer
             ): Boolean = renderer.render(
                 templateId,
                 templateType,
                 templateContent,
-                dialogRequestId,
-                getAndRemoveTypeForTemplateAgent(dialogRequestId, contextLayer)
+                header,
+                getAndRemoveTypeForTemplateAgent(header, contextLayer)
             )
 
             override fun clear(templateId: String, force: Boolean) =
@@ -106,13 +107,13 @@ class DisplayAggregator(
                 templateId: String,
                 templateType: String,
                 templateContent: String,
-                dialogRequestId: String
+                header: Header
             ): Boolean =
                 renderer.render(
                     templateId,
                     templateType,
                     templateContent,
-                    dialogRequestId,
+                    header,
                     DisplayAggregatorInterface.Type.AUDIO_PLAYER
                 )
 
@@ -125,7 +126,7 @@ class DisplayAggregator(
         })
     }
 
-    private fun getAndRemoveTypeForTemplateAgent(dialogRequestId: String, contextLayer: DisplayAgentInterface.ContextLayer): DisplayAggregatorInterface.Type {
+    private fun getAndRemoveTypeForTemplateAgent(header: Header, contextLayer: DisplayAgentInterface.ContextLayer): DisplayAggregatorInterface.Type {
         val layer = when(contextLayer) {
             DisplayAgentInterface.ContextLayer.MEDIA -> DisplayAggregatorInterface.Type.AUDIO_PLAYER
             DisplayAgentInterface.ContextLayer.ALERT -> DisplayAggregatorInterface.Type.ALERT
@@ -135,7 +136,7 @@ class DisplayAggregator(
 
         // for backward compatibility
         return if(layer == DisplayAggregatorInterface.Type.INFOMATION) {
-            displayTypeMap.remove(dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
+            displayTypeMap.remove(header.dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
         } else {
             layer
         }

@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.display
 
+import com.skt.nugu.sdk.core.interfaces.message.Header
+
 /**
  * There are some displays to be render.
  *
@@ -54,11 +56,11 @@ interface DisplayAggregatorInterface:
          * @param templateId the unique identifier for the template card
          * @param templateType the template type
          * @param templateContent the content of template in structured JSON
-         * @param dialogRequestId the dialog request id
+         * @param header the header for the render
          * @param displayType the display type of display
          * @return true: if will render, false: otherwise
          */
-        fun render(templateId: String, templateType: String, templateContent: String, dialogRequestId: String, displayType: Type): Boolean
+        fun render(templateId: String, templateType: String, templateContent: String, header: Header, displayType: Type): Boolean
 
         /**
          * Used to notify the renderer when display should be cleared .

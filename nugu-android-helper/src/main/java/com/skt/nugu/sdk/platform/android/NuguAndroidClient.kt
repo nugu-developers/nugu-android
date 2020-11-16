@@ -86,6 +86,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterfa
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.preferences.PreferencesInterface
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
@@ -530,34 +531,34 @@ class NuguAndroidClient private constructor(
                                     getAudioPlayStackManager().addPlayContextProvider(this)
 
                                     addASRResultListener(object: ASRAgentInterface.OnResultListener {
-                                        override fun onNoneResult(dialogRequestId: String) {
+                                        override fun onNoneResult(header: Header) {
                                             // fail beep
                                         }
 
                                         override fun onPartialResult(
                                             result: String,
-                                            dialogRequestId: String
+                                            header: Header
                                         ) {
                                             // no-op
                                         }
 
                                         override fun onCompleteResult(
                                             result: String,
-                                            dialogRequestId: String
+                                            header: Header
                                         ) {
                                             // success
                                         }
 
                                         override fun onError(
                                             type: ASRAgentInterface.ErrorType,
-                                            dialogRequestId: String
+                                            header: Header
                                         ) {
 
                                         }
 
                                         override fun onCancel(
                                             cause: ASRAgentInterface.CancelCause,
-                                            dialogRequestId: String
+                                            header: Header
                                         ) {
                                         }
                                     })
