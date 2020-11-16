@@ -22,6 +22,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.skt.nugu.sampleapp.R
+import com.skt.nugu.sampleapp.player.SamplePlayerFactory
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.routine.RoutineAgent
@@ -261,8 +262,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                         null
                     }
                 }
-            })
-            .build()
+            }).playerFactory(SamplePlayerFactory(context, useExoPlayer = true)).build()
 
         client.addAudioPlayerListener(this)
         client.addOnDirectiveHandlingListener(directiveHandlingListener)
