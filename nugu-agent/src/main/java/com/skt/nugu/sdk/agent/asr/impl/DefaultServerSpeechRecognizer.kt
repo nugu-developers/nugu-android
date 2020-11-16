@@ -21,13 +21,9 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.Preferences
 import java.text.DateFormat
@@ -66,6 +62,10 @@ class DefaultServerSpeechRecognizer(
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
         var call: Call? = null
+
+        val eventMessageHeader = with(eventMessage) {
+            Header(dialogRequestId, messageId, name, namespace, version, referrerDialogRequestId)
+        }
     }
 
     override var enablePartialResult: Boolean = true
@@ -157,12 +157,13 @@ class DefaultServerSpeechRecognizer(
             sendPosition,
             eventMessage
         )
-        val request =
+
+        val recognizeRequest =
             RecognizeRequest(
                 thread, eventMessage, expectSpeechDirectiveParam, resultListener
             )
-        request.call = call
-        currentRequest = request
+        recognizeRequest.call = call
+        currentRequest = recognizeRequest
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 Logger.w(TAG, "[startProcessor] failed to send recognize event")
@@ -172,16 +173,16 @@ class DefaultServerSpeechRecognizer(
                     Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
                     else -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
                 }
-                handleError(errorType)
+                handleError(errorType, recognizeRequest.eventMessageHeader)
             }
 
-            override fun onSuccess(messageRequest: MessageRequest) {
+            override fun onSuccess(request : MessageRequest) {
                 thread.start()
 
-                setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
+                setState(SpeechRecognizer.State.EXPECTING_SPEECH, recognizeRequest)
                 timeoutFuture?.cancel(true)
                 timeoutFuture = timeoutScheduler.schedule({
-                    handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
+                    handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT, recognizeRequest.eventMessageHeader)
                 }, epdParam.timeoutInSeconds.toLong(), TimeUnit.SECONDS)
             }
 
@@ -190,7 +191,7 @@ class DefaultServerSpeechRecognizer(
             }
         })
 
-        return request
+        return recognizeRequest
 
        /* if (messageSender.sendMessage(eventMessage)) {
             val thread = createSenderThread(
@@ -246,7 +247,9 @@ class DefaultServerSpeechRecognizer(
                 }
 
                 override fun onError(errorType: ASRAgentInterface.ErrorType) {
-                    handleError(errorType)
+                    handleError(errorType, with(eventMessage) {
+                        Header(dialogRequestId, messageId, name, namespace, version, referrerDialogRequestId)
+                    })
                 }
             },
             audioEncoder,
@@ -286,17 +289,17 @@ class DefaultServerSpeechRecognizer(
 
         when (payload.state) {
             AsrNotifyResultPayload.State.PARTIAL -> {
-                resultListener?.onPartialResult(payload.result ?: "", request.eventMessage.dialogRequestId)
+                resultListener?.onPartialResult(payload.result ?: "", directive.header)
             }
             AsrNotifyResultPayload.State.COMPLETE -> {
-                resultListener?.onCompleteResult(payload.result ?: "", request.eventMessage.dialogRequestId)
+                resultListener?.onCompleteResult(payload.result ?: "", directive.header)
             }
             AsrNotifyResultPayload.State.NONE -> {
-                resultListener?.onNoneResult(request.eventMessage.dialogRequestId)
+                resultListener?.onNoneResult(directive.header)
             }
             AsrNotifyResultPayload.State.ERROR -> {
                 request.senderThread.requestStop()
-                handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+                handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN, directive.header)
             }
             AsrNotifyResultPayload.State.FA -> {
                 // TODO : Impl
@@ -400,7 +403,7 @@ class DefaultServerSpeechRecognizer(
     override fun onResponseTimeout(dialogRequestId: String) {
         currentRequest?.let {
             if(it.eventMessage.messageId == dialogRequestId) {
-                handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+                handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT, it.eventMessageHeader)
             }
         }
     }
@@ -412,9 +415,9 @@ class DefaultServerSpeechRecognizer(
         }
     }
 
-    private fun handleError(errorType: ASRAgentInterface.ErrorType) {
+    private fun handleError(errorType: ASRAgentInterface.ErrorType, header: Header) {
         currentRequest?.let {
-            it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
+            it.resultListener?.onError(errorType, header)
             currentRequest = null
             setState(SpeechRecognizer.State.STOP, it)
         }
@@ -422,7 +425,7 @@ class DefaultServerSpeechRecognizer(
 
     private fun handleCancel() {
         currentRequest?.let {
-            it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
+            it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessageHeader)
             currentRequest = null
             setState(SpeechRecognizer.State.STOP, it)
         }

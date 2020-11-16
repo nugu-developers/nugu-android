@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
@@ -217,11 +218,11 @@ class ChromeWindowController(
         }
     }
 
-    override fun onCancel(cause: ASRAgentInterface.CancelCause, dialogRequestId: String) {
+    override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
         Logger.d(TAG, "[onCancel] $cause")
     }
 
-    override fun onError(type: ASRAgentInterface.ErrorType, dialogRequestId: String) {
+    override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
         bottomSheet.post {
             when(type) {
                 ASRAgentInterface.ErrorType.ERROR_UNKNOWN -> {
@@ -234,11 +235,11 @@ class ChromeWindowController(
         }
     }
 
-    override fun onNoneResult(dialogRequestId: String) {
+    override fun onNoneResult(header: Header) {
 
     }
 
-    override fun onPartialResult(result: String, dialogRequestId: String) {
+    override fun onPartialResult(result: String, header: Header) {
         bottomSheet.post {
             sttTextView.text = result
 
@@ -248,7 +249,7 @@ class ChromeWindowController(
         }
     }
 
-    override fun onCompleteResult(result: String, dialogRequestId: String) {
+    override fun onCompleteResult(result: String, header: Header) {
         bottomSheet.post {
             sttTextView.text = result
 

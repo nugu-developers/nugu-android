@@ -268,7 +268,7 @@ class AudioPlayerTemplateHandler(
             info.sourceTemplateId,
             "$NAMESPACE.${template.getName()}",
             template.payload,
-            info.getDialogRequestId()
+            template.header
         ) ?: false
         if (!willBeRender) {
             // the renderer denied to render

@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.asr
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.common.EventCallback
+import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
  * The public interface for ASRAgent
@@ -132,28 +133,28 @@ interface ASRAgentInterface {
         /**
          * Called when there is no matched result.
          */
-        fun onNoneResult(dialogRequestId: String)
+        fun onNoneResult(header: Header)
         /**
          * Called when received a partial recognized text.
          * @param result recognized text
          */
-        fun onPartialResult(result: String, dialogRequestId: String)
+        fun onPartialResult(result: String, header: Header)
         /**
          * Called when received a complete recognized text.
          *
          * @param result recognized text
          */
-        fun onCompleteResult(result: String, dialogRequestId: String)
+        fun onCompleteResult(result: String, header: Header)
         /**
          * Called when occur error on recognizing.
          * @param type reason for error
          */
-        fun onError(type: ErrorType, dialogRequestId: String)
+        fun onError(type: ErrorType, header: Header)
 
         /**
          * Called when canceled.
          */
-        fun onCancel(cause: CancelCause, dialogRequestId: String)
+        fun onCancel(cause: CancelCause, header: Header)
     }
 
     /**

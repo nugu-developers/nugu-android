@@ -72,6 +72,10 @@ class DefaultClientSpeechRecognizer(
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
         var call: Call? = null
+
+        val eventMessageHeader = with(eventMessage) {
+            Header(dialogRequestId, messageId, name, namespace, version, referrerDialogRequestId)
+        }
     }
 
 
@@ -223,13 +227,13 @@ class DefaultClientSpeechRecognizer(
 
         when (payload.state) {
             AsrNotifyResultPayload.State.PARTIAL -> {
-                resultListener?.onPartialResult(payload.result ?: "", request.eventMessage.dialogRequestId)
+                resultListener?.onPartialResult(payload.result ?: "", directive.header)
             }
             AsrNotifyResultPayload.State.COMPLETE -> {
-                resultListener?.onCompleteResult(payload.result ?: "", request.eventMessage.dialogRequestId)
+                resultListener?.onCompleteResult(payload.result ?: "", directive.header)
             }
             AsrNotifyResultPayload.State.NONE -> {
-                resultListener?.onNoneResult(request.eventMessage.dialogRequestId)
+                resultListener?.onNoneResult(directive.header)
             }
             AsrNotifyResultPayload.State.ERROR -> {
                 if(epdState.isActive()) {
@@ -237,7 +241,7 @@ class DefaultClientSpeechRecognizer(
                     endPointDetector.stopDetector()
                 } else {
                     request.senderThread?.requestStop()
-                    handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN)
+                    handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN, directive.header)
                 }
             }
             AsrNotifyResultPayload.State.FA -> {
@@ -347,7 +351,7 @@ class DefaultClientSpeechRecognizer(
         when(type) {
             AudioEndPointDetector.TimeoutType.LISTENING_TIMEOUT -> {
                 request.senderThread?.requestStop()
-                handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT)
+                handleError(ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT, request.eventMessageHeader)
                 epdState = AudioEndPointDetector.State.TIMEOUT
             }
             AudioEndPointDetector.TimeoutType.SPEECH_TIMEOUT -> {
@@ -378,7 +382,7 @@ class DefaultClientSpeechRecognizer(
 
         if(errorType != null) {
             senderThread?.requestStop()
-            handleError(errorType)
+            handleError(errorType, request.eventMessageHeader)
             return
         } else if(request.stopByCancel == false && prevEpdState == AudioEndPointDetector.State.SPEECH_START){
             senderThread?.requestFinish()
@@ -415,7 +419,7 @@ class DefaultClientSpeechRecognizer(
             AudioEndPointDetector.ErrorType.ERROR_EPD_ENGINE -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
             AudioEndPointDetector.ErrorType.ERROR_AUDIO_INPUT -> ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT
             AudioEndPointDetector.ErrorType.ERROR_EXCEPTION -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
-        })
+        }, request.eventMessageHeader)
     }
 
     private fun startSpeechSenderThread(request: RecognizeRequest, speechStartPosition: Long?) {
@@ -456,7 +460,7 @@ class DefaultClientSpeechRecognizer(
                             errorTypeForCausingEpdStop = errorType
                             endPointDetector.stopDetector()
                         } else {
-                            handleError(errorType)
+                            handleError(errorType, eventMessageHeader)
                         }
                     }
                 },
@@ -471,17 +475,17 @@ class DefaultClientSpeechRecognizer(
     private fun handleCancel() {
         currentRequest?.let {
             Logger.d(TAG, "[handleCancel]")
-            it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessage.dialogRequestId)
+            it.resultListener?.onCancel(it.cancelCause ?: ASRAgentInterface.CancelCause.LOCAL_API, it.eventMessageHeader)
             currentRequest = null
             isEpdRunning = false
             setState(SpeechRecognizer.State.STOP, it)
         }
     }
 
-    private fun handleError(errorType: ASRAgentInterface.ErrorType) {
+    private fun handleError(errorType: ASRAgentInterface.ErrorType, header: Header) {
         currentRequest?.let {
             Logger.d(TAG, "[handleError] errorType: $errorType")
-            it.resultListener?.onError(errorType, it.eventMessage.dialogRequestId)
+            it.resultListener?.onError(errorType, header)
             currentRequest = null
             isEpdRunning = false
             setState(SpeechRecognizer.State.STOP, it)
@@ -579,7 +583,7 @@ class DefaultClientSpeechRecognizer(
     override fun onResponseTimeout(dialogRequestId: String) {
         currentRequest?.let {
             if(it.eventMessage.dialogRequestId == dialogRequestId) {
-                handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT)
+                handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT, it.eventMessageHeader)
             }
         }
     }
