@@ -53,7 +53,7 @@ class SessionAgent(
     override fun getInterfaceName(): String = NAMESPACE
 
     internal data class StateContext(
-        val sessions: Map<String, SessionManagerInterface.Session>
+        val sessions: Set<SessionManagerInterface.Session>
     ): BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -70,9 +70,8 @@ class SessionAgent(
         override fun value(): String = buildCompactContext().apply {
             add("list", JsonArray().apply {
                 // remove duplication
-                val uniqueSessions = HashSet<SessionManagerInterface.Session>(sessions.values)
-
-                uniqueSessions.forEach { session ->
+//                val uniqueSessions = HashSet<SessionManagerInterface.Session>(sessions.values)
+                sessions.forEach { session ->
                     add(JsonObject().apply {
                         addProperty("sessionId", session.sessionId)
                         addProperty("playServiceId", session.playServiceId)
@@ -93,11 +92,20 @@ class SessionAgent(
             "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
         )
         executor.submit {
+            val state = if(contextType == ContextType.COMPACT) {
+                StateContext.CompactContextState
+            } else {
+                val map = HashMap<String, SessionManagerInterface.Session>()
+                // get a session per playServiceId which recent set.
+                sessionManager.getActiveSessions().forEach {
+                    map[it.value.playServiceId] = it.value
+                }
+                StateContext(HashSet(map.values))
+            }
+
             contextSetter.setState(
                 namespaceAndName,
-                if (contextType == ContextType.COMPACT) StateContext.CompactContextState else StateContext(
-                    sessionManager.getActiveSessions()
-                ),
+                state,
                 StateRefreshPolicy.ALWAYS,
                 contextType,
                 stateRequestToken
