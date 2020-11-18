@@ -661,9 +661,9 @@ class DefaultASRAgent(
         val endPointDetectorParam: EndPointDetectorParam = if(expectSpeechDirectiveEndPointDetectorParam != null) {
             with(expectSpeechDirectiveEndPointDetectorParam) {
                 EndPointDetectorParam(
-                    timeoutMilliseconds.div(1000).toInt(),
-                    maxSpeechDurationMilliseconds.div(1000).toInt(),
-                    silenceIntervalInMilliseconds.toInt()
+                    (timeoutMilliseconds ?: defaultEpdTimeoutMillis).div(1000).toInt(),
+                    (maxSpeechDurationMilliseconds?.div(1000))?.toInt() ?: 10,
+                    (silenceIntervalInMilliseconds?.toInt()) ?: 700
                 )
             }
         } else {
