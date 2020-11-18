@@ -34,6 +34,7 @@ class ChromeWindowBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
             child.getGlobalVisibleRect(outRect)
             if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
                 state = STATE_COLLAPSED
+                return true
             }
         }
 
