@@ -29,11 +29,11 @@ data class ExpectSpeechPayload private constructor(
 ) {
     data class EpdParam(
         @SerializedName("timeoutMilliseconds")
-        val timeoutMilliseconds: Long,
+        val timeoutMilliseconds: Long?,
         @SerializedName("silenceIntervalInMilliseconds")
-        val silenceIntervalInMilliseconds: Long,
+        val silenceIntervalInMilliseconds: Long?,
         @SerializedName("maxSpeechDurationMilliseconds")
-        val maxSpeechDurationMilliseconds: Long
+        val maxSpeechDurationMilliseconds: Long?
     )
 
     data class AsrContext(
