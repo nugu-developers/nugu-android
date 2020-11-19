@@ -36,4 +36,5 @@ interface PlaySynchronizerInterface {
     fun startSync(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener? = null)
     fun releaseSync(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener? = null)
     fun releaseSyncImmediately(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener? = null)
+    fun cancelSync(dialogRequestId: String)
 }
