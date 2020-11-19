@@ -26,6 +26,7 @@ interface DirectiveSequencerInterface: DirectiveProcessorInterface {
         fun onCompleted(directive: Directive)
         fun onCanceled(directive: Directive)
         fun onFailed(directive: Directive, description: String)
+        fun onSkipped(directive: Directive){}
     }
 
     fun addOnDirectiveHandlingListener(listener: OnDirectiveHandlingListener)

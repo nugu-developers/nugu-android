@@ -33,7 +33,7 @@ class DirectiveGroupHandlingListener(
     }
 
     interface OnFinishListener {
-        fun onFinish()
+        fun onFinish(isExistCanceledOrFailed: Boolean)
     }
 
     init {
@@ -42,6 +42,7 @@ class DirectiveGroupHandlingListener(
     }
 
     private var directives = CopyOnWriteArrayList<Directive>()
+    private var existCanceledOrFailed = false
 
     override fun onReceiveDirectives(directives: List<Directive>) {
         if(directives.firstOrNull()?.header?.dialogRequestId == dialogRequestId) {
@@ -58,29 +59,38 @@ class DirectiveGroupHandlingListener(
     override fun onCompleted(directive: Directive) {
         Logger.d(TAG, "[onCompleted] ${directive.header}")
         if(directives.remove(directive)) {
-            finishIfEmpty()
+            notifyResultIfEmpty()
         }
     }
 
     override fun onCanceled(directive: Directive) {
         Logger.d(TAG, "[onCanceled] ${directive.header}")
+        existCanceledOrFailed = true
         if(directives.remove(directive)) {
-            finishIfEmpty()
+            notifyResultIfEmpty()
         }
     }
 
     override fun onFailed(directive: Directive, description: String) {
         Logger.d(TAG, "[onFailed] ${directive.header}")
+        existCanceledOrFailed = true
         if(directives.remove(directive)) {
-            finishIfEmpty()
+            notifyResultIfEmpty()
         }
     }
 
-    private fun finishIfEmpty() {
+    override fun onSkipped(directive: Directive) {
+        Logger.d(TAG, "[onSkipped] ${directive.header}")
+        if(directives.remove(directive)) {
+            notifyResultIfEmpty()
+        }
+    }
+
+    private fun notifyResultIfEmpty() {
         if(directives.isEmpty()) {
-            Logger.d(TAG, "[finishIfEmpty] dialogRequestId: $dialogRequestId, finished")
+            Logger.d(TAG, "[notifyResultIfEmpty] dialogRequestId: $dialogRequestId, existCanceledOrFailed: $existCanceledOrFailed")
             directiveSequencer.removeOnDirectiveHandlingListener(this)
-            finishListener.onFinish()
+            finishListener.onFinish(existCanceledOrFailed)
         }
     }
 }

@@ -138,9 +138,10 @@ class RoutineAgent(
         private var currentActionIndex: Int = 0
         private var currentActionHandlingListener : DirectiveGroupHandlingListener? = null
         private var currentActionDialogRequestId: String? = null
-        private var isPaused = false
+        var isPaused = false
         private var isCanceled = false
         private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
+        private var scheduledFutureForCancelByInterrupt: ScheduledFuture<*>? = null
 
         fun start() {
             Logger.d(TAG, "[RoutineRequest] start")
@@ -163,9 +164,12 @@ class RoutineAgent(
 
         fun pause() {
             Logger.d(TAG, "[RoutineRequest] pause")
-//            currentActionDialogRequestId?.let {
-//                directiveProcessor.cancelDialogRequestId(it)
-//            }
+            scheduledFutureForTryStartNextAction?.cancel(true)
+            scheduledFutureForTryStartNextAction = null
+            scheduledFutureForCancelByInterrupt?.cancel(true)
+            scheduledFutureForCancelByInterrupt = executor.schedule({
+                cancel()
+            }, 60, TimeUnit.SECONDS)
             isPaused = true
         }
 
@@ -182,6 +186,8 @@ class RoutineAgent(
             isPaused = false
             scheduledFutureForTryStartNextAction?.cancel(true)
             scheduledFutureForTryStartNextAction = null
+            scheduledFutureForCancelByInterrupt?.cancel(true)
+            scheduledFutureForCancelByInterrupt = null
             tryStartNextAction()
         }
 
@@ -217,16 +223,20 @@ class RoutineAgent(
                     textInputRequests.add(dialogRequestId)
                     currentActionDialogRequestId = dialogRequestId
                     currentActionHandlingListener = DirectiveGroupHandlingListener(dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
-                        override fun onFinish() {
+                        override fun onFinish(isExistCanceledOrFailed: Boolean) {
                             Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
-                            scheduledFutureForTryStartNextAction?.cancel(true)
-                            scheduledFutureForTryStartNextAction = null
-                            if(action.postDelayInMilliseconds != null) {
-                                scheduledFutureForTryStartNextAction = executor.schedule({
-                                    tryStartNextAction()
-                                }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
+                            if(isExistCanceledOrFailed) {
+                                pause()
                             } else {
-                                tryStartNextAction()
+                                scheduledFutureForTryStartNextAction?.cancel(true)
+                                scheduledFutureForTryStartNextAction = null
+                                if (action.postDelayInMilliseconds != null) {
+                                    scheduledFutureForTryStartNextAction = executor.schedule({
+                                        tryStartNextAction()
+                                    }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
+                                } else {
+                                    tryStartNextAction()
+                                }
                             }
                         }
                     })
@@ -265,16 +275,23 @@ class RoutineAgent(
                     Logger.d(TAG, "doDataAction - [onContext] dialogRequestId: ${request.dialogRequestId}")
                     currentActionDialogRequestId = request.dialogRequestId
                     currentActionHandlingListener = DirectiveGroupHandlingListener(request.dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
-                        override fun onFinish() {
-                            Logger.d(TAG, "doDataAction - [onFinish] dialogRequestId: ${request.dialogRequestId}")
-                            scheduledFutureForTryStartNextAction?.cancel(true)
-                            scheduledFutureForTryStartNextAction = null
-                            if(action.postDelayInMilliseconds != null) {
-                                scheduledFutureForTryStartNextAction = executor.schedule({
-                                    tryStartNextAction()
-                                }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
+                        override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                            Logger.d(
+                                TAG,
+                                "doDataAction - [onFinish] dialogRequestId: ${request.dialogRequestId}"
+                            )
+                            if(isExistCanceledOrFailed) {
+                                pause()
                             } else {
-                                tryStartNextAction()
+                                scheduledFutureForTryStartNextAction?.cancel(true)
+                                scheduledFutureForTryStartNextAction = null
+                                if (action.postDelayInMilliseconds != null) {
+                                    scheduledFutureForTryStartNextAction = executor.schedule({
+                                        tryStartNextAction()
+                                    }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
+                                } else {
+                                    tryStartNextAction()
+                                }
                             }
                         }
                     })
@@ -390,13 +407,16 @@ class RoutineAgent(
         )
 
         val request = currentRoutineRequest
-        val context = if(request == null) {
+        val context = if (request == null) {
             StateContext(
                 null, state, null, null
             )
         } else {
             StateContext(
-                request.directive.payload.token, state, request.getCurrentActionIndex() + 1, request.directive.payload.actions
+                request.directive.payload.token,
+                if (!request.isPaused) state else RoutineAgentInterface.State.INTERRUPTED,
+                request.getCurrentActionIndex() + 1,
+                request.directive.payload.actions
             )
         }
 
