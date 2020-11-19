@@ -245,7 +245,6 @@ internal class GrpcTransport private constructor(
     override fun send(call: Call): Boolean {
         if (!state.isConnected()) {
             Logger.d(TAG, "[send], Status : ($state), request : ${call.request()}")
-            return false
         }
         return deviceGatewayClient?.send(call) ?: false
     }

@@ -92,11 +92,9 @@ internal class PingService(
                 return true
             }
         } catch (e: Throwable) {
-            if (!isShutdown.get()) {
-                val status = Status.fromThrowable(e)
-                Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
-                observer.onError(status)
-            }
+            val status = Status.fromThrowable(e)
+            Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
+            notifyOnError(status)
         }
         return false
     }
@@ -128,31 +126,37 @@ internal class PingService(
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                if (!isShutdown.get()) {
-                    val status = Status.fromThrowable(e)
-                    Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $e")
-                    observer.onError(status)
-                }
+                val status = Status.fromThrowable(e)
+                Logger.d(TAG, "[onError] ${status.code}, ${status.description}, $e")
+                notifyOnError(status)
             }
 
             override fun onResponse(call: Call, response: Response) {
                 val code = response.code
                 when (code) {
                     HttpURLConnection.HTTP_OK -> {
-                        observer.onPingRequestAcknowledged()
+                        if (!isShutdown.get()) {
+                            observer.onPingRequestAcknowledged()
+                        }
                     }
-                    HttpURLConnection.HTTP_BAD_REQUEST -> observer.onError(Status.INTERNAL)
+                    HttpURLConnection.HTTP_BAD_REQUEST -> notifyOnError(Status.INTERNAL)
                     HttpURLConnection.HTTP_UNAUTHORIZED,
-                    HttpURLConnection.HTTP_FORBIDDEN -> observer.onError(Status.UNAUTHENTICATED)
+                    HttpURLConnection.HTTP_FORBIDDEN -> notifyOnError(Status.UNAUTHENTICATED)
                     HttpURLConnection.HTTP_BAD_GATEWAY,
                     HttpURLConnection.HTTP_UNAVAILABLE,
-                    HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> observer.onError(Status.UNAVAILABLE)
-                    else -> observer.onError(Status.UNKNOWN)
+                    HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> notifyOnError(Status.UNAVAILABLE)
+                    else -> notifyOnError(Status.UNKNOWN)
                 }
             }
 
         })
         return true
+    }
+
+    private fun notifyOnError(status: Status) {
+        if (!isShutdown.get()) {
+            observer.onError(status)
+        }
     }
 
     fun isStop() = isShutdown.get()

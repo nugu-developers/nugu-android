@@ -82,6 +82,7 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return the ServerPolicy
      */
     private fun nextPolicy(): ServerPolicy? {
+        Logger.d(TAG, "[nextPolicy]")
         backoff.reset()
         currentPolicy = policies.poll()
         currentPolicy?.let {
@@ -95,7 +96,10 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return true is success, otherwise false
      */
     override fun connect(): Boolean {
+        Logger.d(TAG, "[connect] isConnected = ${isConnected()}, keepConnection = $keepConnection")
+
         if (isConnected()) {
+            Logger.w(TAG, "[connect] already connected")
             return false
         }
 
@@ -107,66 +111,80 @@ internal class DeviceGatewayClient(policy: Policy,
             return false
         }
 
-        policy.apply {
-            currentChannel = ChannelBuilderUtils.createChannelBuilderWith(
-                this,
-                authorization,
-                this@DeviceGatewayClient
-            ).build()
-            currentChannel?.apply {
-                eventsService =
-                    EventsService(
-                        this,
-                        this@DeviceGatewayClient,
-                        scheduler
-                    )
-                crashReportService =
-                    CrashReportService(
-                        this
-                    )
-                if(keepConnection) {
-                    directivesService =
-                        DirectivesService(
+        synchronized(this) {
+            policy.apply {
+                currentChannel = ChannelBuilderUtils.createChannelBuilderWith(
+                    this,
+                    authorization,
+                    this@DeviceGatewayClient
+                ).build()
+
+                currentChannel?.apply {
+                    eventsService =
+                        EventsService(
                             this,
-                            this@DeviceGatewayClient
+                            this@DeviceGatewayClient,
+                            scheduler
                         )
-                    pingService =
-                        PingService(
-                            this,
-                            healthCheckPolicy,
-                            this@DeviceGatewayClient
+                    crashReportService =
+                        CrashReportService(
+                            this
                         )
+                    if (keepConnection) {
+                        directivesService =
+                            DirectivesService(
+                                this,
+                                this@DeviceGatewayClient
+                            )
+                        pingService =
+                            PingService(
+                                this,
+                                healthCheckPolicy,
+                                this@DeviceGatewayClient
+                            )
+                    } else {
+                        handleConnectedIfNeeded()
+                    }
+                } ?: run {
+                    Logger.w(TAG, "[connect] Can't create a new channel")
+                    transportObserver?.onError(
+                        ChangedReason.UNRECOVERABLE_ERROR
+                    )
+                    return false
                 }
-                else {
-                    handleConnectedIfNeeded()
-                }
-            } ?: run {
-                Logger.w(TAG, "[connect] Can't create a new channel")
-                transportObserver?.onError(
-                    ChangedReason.UNRECOVERABLE_ERROR
-                )
-                return false
             }
         }
         return true
     }
 
+    private fun stopServerInitiated() {
+        if(!keepConnection) {
+            return
+        }
+        synchronized(this) {
+            pingService?.shutdown()
+            pingService = null
+            directivesService?.shutdown()
+            directivesService = null
+        }
+    }
     /**
      * disconnect from DeviceGateway
      */
     override fun disconnect() {
-        pingService?.shutdown()
-        pingService = null
-        eventsService?.shutdown()
-        eventsService = null
-        directivesService?.shutdown()
-        directivesService = null
-        crashReportService?.shutdown()
-        crashReportService = null
-        ChannelBuilderUtils.shutdown(currentChannel)
-        currentChannel = null
-        eventMessageHeaders = null
-        isConnected.set(false)
+        Logger.d(TAG, "[disconnect]")
+        stopServerInitiated()
+
+        synchronized(this) {
+            eventsService?.shutdown()
+            eventsService = null
+            crashReportService?.shutdown()
+            crashReportService = null
+            ChannelBuilderUtils.shutdown(currentChannel)
+            currentChannel = null
+            eventMessageHeaders = null
+            isConnected.set(false)
+        }
     }
 
     /**
@@ -212,7 +230,6 @@ internal class DeviceGatewayClient(policy: Policy,
         Logger.w(TAG, "[onError] Error : ${status.code}")
 
         when(status.code) {
-            Status.Code.PERMISSION_DENIED,
             Status.Code.UNAUTHENTICATED -> {
                 // nothing to do
             }
@@ -253,6 +270,7 @@ internal class DeviceGatewayClient(policy: Policy,
                     Status.Code.RESOURCE_EXHAUSTED ,
                     Status.Code.FAILED_PRECONDITION ,
                     Status.Code.ABORTED ,
+                    Status.Code.PERMISSION_DENIED,
                     Status.Code.INTERNAL -> ChangedReason.SERVER_INTERNAL_ERROR
                     Status.Code.OUT_OF_RANGE,
                     Status.Code.DATA_LOSS,
@@ -268,13 +286,15 @@ internal class DeviceGatewayClient(policy: Policy,
             }
         }
 
-        disconnect()
+        // Only stop ServerInitiated and wait for events to be sent.
+        stopServerInitiated()
+        isConnected.set(false)
+
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
                 Logger.w(TAG, "[awaitRetry] Error : $error")
 
                 when (status.code) {
-                    Status.Code.PERMISSION_DENIED,
                     Status.Code.UNAUTHENTICATED -> {
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
@@ -287,12 +307,12 @@ internal class DeviceGatewayClient(policy: Policy,
             }
 
             override fun onRetry(retriesAttempted: Int) {
+                Logger.w(TAG, "[awaitRetry] onRetry : $retriesAttempted")
                 if (isConnected()) {
-                    Logger.w(TAG, "[awaitRetry] connected")
-                } else {
-                    disconnect()
-                    connect()
+                    Logger.w(TAG, "[awaitRetry] It is currently connected, but will try again.")
                 }
+                disconnect()
+                connect()
             }
         })
     }
@@ -311,13 +331,17 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return boolean value, true if the connection has changed, false otherwise.
      */
     private fun handleConnectedIfNeeded()  {
-        if(isConnected.compareAndSet(false, true)) {
-            if(isHandOff) {
-                isHandOff = false
-                Logger.d(TAG,"[handleConnectedIfNeeded] Handoff complete")
-            }
+        if (isConnected.compareAndSet(false, true)) {
+            handoffConnectionEnd()
             backoff.reset()
             transportObserver?.onConnected()
+        }
+    }
+
+    private fun handoffConnectionEnd() {
+        if (isHandOff) {
+            Logger.d(TAG, "[handoffConnectionEnd] $isHandOff -> false")
+            isHandOff = false
         }
     }
 
@@ -343,7 +367,6 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param directiveMessage
      */
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
-        handleConnectedIfNeeded()
         messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
     }
 
