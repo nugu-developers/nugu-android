@@ -167,9 +167,11 @@ class RegistryClient(
     }
 
     private fun notifyPolicy(policy: Policy?, observer: Observer) {
-        observer.onCompleted(policy)
-        // cache setting
-        cachedPolicy = policy
+        if (!isShutdown.get()) {
+            observer.onCompleted(policy)
+            // cache setting
+            cachedPolicy = policy
+        }
     }
 
     override fun connect(): Boolean {
