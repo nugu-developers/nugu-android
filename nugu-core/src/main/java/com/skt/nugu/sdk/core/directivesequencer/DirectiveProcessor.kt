@@ -106,7 +106,7 @@ class DirectiveProcessor(
 
             if(!preHandled) {
                 listeners.forEach {
-                    it.onFailed(directive, "no handler for ${directive.getNamespaceAndName()}")
+                    it.onSkipped(directive)
                 }
             }
 

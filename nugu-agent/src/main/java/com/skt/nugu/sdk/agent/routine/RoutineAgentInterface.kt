@@ -18,6 +18,6 @@ package com.skt.nugu.sdk.agent.routine
 
 interface RoutineAgentInterface {
     enum class State {
-        IDLE, PLAYING, STOPPED, FINISHED
+        IDLE, PLAYING, STOPPED, FINISHED, INTERRUPTED
     }
 }
