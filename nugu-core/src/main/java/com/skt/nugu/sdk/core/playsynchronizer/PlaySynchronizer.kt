@@ -56,20 +56,24 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val startedRemoved = started.remove(syncObj)
 
             return if(preparedRemoved || startedRemoved) {
-                prepared.filter {
-                    it.getDialogRequestId() == syncObj.getDialogRequestId()
-                }.forEach {
-                    it.requestReleaseSync()
-                }
-
-                started.filter {
-                    it.getDialogRequestId() == syncObj.getDialogRequestId()
-                }.forEach {
-                    it.requestReleaseSync()
-                }
+                cancel(syncObj.getDialogRequestId())
                 true
             } else {
                 false
+            }
+        }
+
+        fun cancel(dialogRequestId: String) {
+            prepared.filter {
+                it.getDialogRequestId() == dialogRequestId
+            }.forEach {
+                it.requestReleaseSync()
+            }
+
+            started.filter {
+                it.getDialogRequestId() == dialogRequestId
+            }.forEach {
+                it.requestReleaseSync()
             }
         }
 
@@ -195,6 +199,13 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             }
 
             Logger.d(TAG, "[releaseSyncInternal] syncContext: $syncContext")
+        }
+    }
+
+    override fun cancelSync(dialogRequestId: String) {
+        lock.withLock {
+            Logger.d(TAG, "[cancelSync] dialogRequestId: $dialogRequestId")
+            syncContext.cancel(dialogRequestId)
         }
     }
 }
