@@ -91,6 +91,11 @@ class MessageRouter(
      */
     private fun createActiveTransport() {
         lock.withLock {
+            // Shutdown a previous activeTransport
+            if (activeTransport != null) {
+                activeTransport?.shutdown()
+                activeTransport = null
+            }
             transportFactory.createTransport(authDelegate, this, this).apply {
                 activeTransport = this
             }
@@ -243,6 +248,11 @@ class MessageRouter(
         charge: String
     ) {
         lock.withLock {
+            // Canceling a previous handoff in progress
+            if (handoffTransport != null) {
+                handoffTransport?.shutdown()
+                handoffTransport = null
+            }
             transportFactory.createTransport(authDelegate, this, this).apply {
                 handoffTransport = this
             }
