@@ -37,11 +37,11 @@ import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceManager
 import com.skt.nugu.sdk.platform.android.audiosource.audiorecord.AudioRecordSourceFactory
+import com.skt.nugu.sdk.platform.android.beep.AsrBeepResourceProvider
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechProcessorDelegate
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
-import com.skt.nugu.sdk.platform.android.beep.AsrBeepResourceProvider
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URI
@@ -176,9 +176,17 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             NuguOAuth.create(context),
             audioSourceManager
         ).defaultEpdTimeoutMillis(7000L)
-            .addAgentFactory(RoutineAgent.NAMESPACE, object: AgentFactory<RoutineAgent> {
+            .addAgentFactory(RoutineAgent.NAMESPACE, object : AgentFactory<RoutineAgent> {
                 override fun create(container: SdkContainer): RoutineAgent = with(container) {
-                    RoutineAgent(getMessageSender(), getContextManager(), getDirectiveSequencer(), getDirectiveSequencer(), getDirectiveGroupProcessor(), getAudioSeamlessFocusManager())
+                    RoutineAgent(
+                        getMessageSender(),
+                        getContextManager(),
+                        getDirectiveSequencer(),
+                        getDirectiveSequencer(),
+                        getDirectiveGroupProcessor(),
+                        getAudioSeamlessFocusManager(),
+                        getPlaySynchronizer()
+                    )
                 }
             })
             .endPointDetector(

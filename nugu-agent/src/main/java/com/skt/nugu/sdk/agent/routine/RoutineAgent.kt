@@ -37,6 +37,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -49,7 +50,8 @@ class RoutineAgent(
     private val directiveProcessor: DirectiveProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
-    private val seamlessFocusManager: SeamlessFocusManagerInterface
+    private val seamlessFocusManager: SeamlessFocusManagerInterface,
+    private val playSynchronizer: PlaySynchronizerInterface
 ) : CapabilityAgent,
     SupportedInterfaceContextProvider,
     StartDirectiveHandler.Controller,
@@ -158,6 +160,7 @@ class RoutineAgent(
             isCanceled = true
             currentActionDialogRequestId?.let {
                 directiveProcessor.cancelDialogRequestId(it)
+                playSynchronizer.cancelSync(it)
             }
             listener.onCancel()
         }
