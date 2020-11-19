@@ -1079,8 +1079,11 @@ class DefaultAudioPlayerAgent(
         // we have to stop playing player on background or none focus
         // So wait until player stopped.
         // We start playing on foreground, so don't need to wait.
-        if (newFocus != FocusState.FOREGROUND) {
-            wait.get()
+        if (newFocus != FocusState.FOREGROUND
+            // check currentActivity is playing or not to avoid focus deadlock
+            && currentActivity == AudioPlayerAgentInterface.State.PLAYING) {
+            // to avoid deadlock, apply 200ms timeout
+            wait.get(200, TimeUnit.MILLISECONDS)
         }
     }
 
