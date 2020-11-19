@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.skt.nugu.sdk.external.silvertray
 
-import com.skt.nugu.sdk.agent.mediaplayer.*
-import com.skt.nugu.silvertray.player.EventListener
-import com.skt.nugu.silvertray.player.Player
-import com.skt.nugu.silvertray.player.Status
+import android.media.AudioAttributes
+import com.skt.nugu.sdk.agent.mediaplayer.AttachmentPlayablePlayer
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.silvertray.player.DurationListener
+import com.skt.nugu.silvertray.player.EventListener
+import com.skt.nugu.silvertray.player.Player
+import com.skt.nugu.silvertray.player.Status
 
-/**
- * Porting class silvertray's [Player] to use in NUGU SDK
- */
-class NuguOpusPlayer(private val streamType: Int) :
+class NuguOpusPlayer2 (private val audioAttributes: AudioAttributes) :
     AttachmentPlayablePlayer {
     companion object {
-        private const val TAG = "NuguOpusPlayer"
+        private const val TAG = "NuguOpusPlayer2"
     }
 
     private val player = Player()
@@ -92,7 +94,7 @@ class NuguOpusPlayer(private val streamType: Int) :
 
     override fun setSource(attachmentReader: Attachment.Reader): SourceId {
         val source = RawCBRStreamSource(attachmentReader)
-        player.prepare(source, streamType)
+        player.prepare(source, audioAttributes)
         currentSourceId.id++
         Logger.d(TAG, "[setSource] ${currentSourceId.id}")
         return currentSourceId
