@@ -65,7 +65,9 @@ internal class PingService(
                 TimeUnit.MILLISECONDS
             ).ping(PingRequest.newBuilder().setVersion(2).build())
 
-            observer.onPingRequestAcknowledged()
+            if (!isShutdown.get()) {
+                observer.onPingRequestAcknowledged()
+            }
             return true
         } catch (e: Throwable) {
             if (!isShutdown.get()) {

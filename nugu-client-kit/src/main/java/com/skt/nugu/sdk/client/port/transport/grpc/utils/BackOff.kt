@@ -168,6 +168,8 @@ class BackOff private constructor(builder: Builder) {
 
             val duration = duration()
             scheduledFuture = executorService.schedule({
+                // prevent future invocations.
+                scheduledFuture?.cancel(false)
                 // Retry done
                 observer.onRetry(attempts)
             }, duration, TimeUnit.MILLISECONDS)

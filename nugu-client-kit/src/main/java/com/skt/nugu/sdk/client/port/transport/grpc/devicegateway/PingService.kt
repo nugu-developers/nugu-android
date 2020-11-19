@@ -61,7 +61,10 @@ internal class PingService(
                 if (timeout > 0) timeout else defaultTimeout,
                 TimeUnit.MILLISECONDS
             ).ping(PingRequest.newBuilder().build())
-            observer.onPingRequestAcknowledged()
+
+            if (!isShutdown.get()) {
+                observer.onPingRequestAcknowledged()
+            }
             nextInterval()
         } catch (e: Throwable) {
             if (!isShutdown.get()) {

@@ -137,7 +137,6 @@ class BackOff private constructor(builder: Builder) {
     private fun isRetryableServiceException(code: Status.Code): Boolean {
         return when(code) {
             Status.Code.OK,
-            Status.Code.PERMISSION_DENIED,
             Status.Code.UNAUTHENTICATED -> false
             else -> true
         }
@@ -170,6 +169,8 @@ class BackOff private constructor(builder: Builder) {
 
             val duration = duration()
             scheduledFuture = executorService.schedule({
+                // prevent future invocations.
+                scheduledFuture?.cancel(false)
                 // Retry done
                 observer.onRetry(attempts)
             }, duration, TimeUnit.MILLISECONDS)
