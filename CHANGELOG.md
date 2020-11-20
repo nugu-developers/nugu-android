@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+Version 0.9.38 *(2020-11-20)*
+-----------------------------
+* New: Support Routine Interface v1.2 (#1400)
+* Improve: Split NuguOpusPlayer (#1408)
+* Improve: Update backoff for gRPC (#1349) 
+* Fix not to pass outside touch event to child views in ChromeWindow (#1404)
+* Fix audioplayer's deadlock issue (#1406)
+* Fix: Change fields of epd param's as optional (#1401)
+* Improve: Update Session Management (#1398)
+* Fix constant value to android.R.id.content (#1395)
+* New: Add exoplayer example for cache media #1391
+* Improve: Add header field at API (#1393)
+    * Replace dialogRequestId to header
+* New: Add exoplayer example for cache media (#1391)
+
 Version 0.9.37 *(2020-11-13)*
 -----------------------------
 * Fix: Deprecated System.UserInactivityReport (#1366)
