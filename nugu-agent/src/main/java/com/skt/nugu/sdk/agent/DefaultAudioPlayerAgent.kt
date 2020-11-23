@@ -1835,7 +1835,7 @@ class DefaultAudioPlayerAgent(
         fun refreshSchedule() {
             Logger.d(TAG, "[$CLASS_TAG.refreshSchedule]")
             executor.submit {
-                refreshPausedStopFutureIfRunning()
+//                refreshPausedStopFutureIfRunning()
                 refreshFinishDelayFutureIfRunning()
             }
         }
