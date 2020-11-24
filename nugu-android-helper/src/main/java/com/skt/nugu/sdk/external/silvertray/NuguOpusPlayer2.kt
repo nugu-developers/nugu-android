@@ -146,7 +146,7 @@ class NuguOpusPlayer2 (private val audioAttributes: AudioAttributes) :
     }
 
     override fun getOffset(id: SourceId): Long {
-        return player.currentPosition
+        return player.getCurrentPosition()
     }
 
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
