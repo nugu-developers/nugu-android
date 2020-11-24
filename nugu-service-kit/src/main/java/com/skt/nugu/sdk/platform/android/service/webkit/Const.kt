@@ -18,4 +18,5 @@ package com.skt.nugu.sdk.platform.android.service.webkit
 object Const {
     val SERVICE_SETTING_URL = "https://webview.sktnugu.com/3pp/main.html?screenCode=setting_webview"
     val AGREEMENT_URL = "https://webview.sktnugu.com/3pp/agreement/list.html"
+    val PRIVACY_URL = "https://privacy.sktelecom.com/view.do?ctg=policy&name=policy"
 }
