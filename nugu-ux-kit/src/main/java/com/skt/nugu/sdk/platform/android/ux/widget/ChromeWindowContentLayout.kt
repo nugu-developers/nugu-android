@@ -16,9 +16,12 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
+import android.graphics.Point
+import android.graphics.Rect
 import android.support.design.widget.BottomSheetBehavior
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -50,11 +53,16 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         this.callback = callback
     }
 
-    private lateinit var bottomSheet: FrameLayout
+    lateinit var bottomSheet: FrameLayout
 
     private val bottomSheetBehavior: BottomSheetBehavior<FrameLayout> by lazy {
         BottomSheetBehavior.from(bottomSheet)
     }
+
+    override fun getGlobalVisibleRect(r: Rect?, globalOffset: Point?): Boolean {
+        return bottomSheet.getGlobalVisibleRect(r)
+    }
+    fun getChromeWindowHeight() = bottomSheet.height
 
     private lateinit var sttTextView: TextView
 
@@ -107,10 +115,6 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
                 }
             }
         })
-    }
-
-    fun getChromeWindowHeight(): Int {
-        return bottomSheet.height
     }
 
     fun isExpanded(): Boolean {
