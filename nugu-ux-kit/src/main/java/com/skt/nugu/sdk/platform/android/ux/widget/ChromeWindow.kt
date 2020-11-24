@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
+import android.graphics.Rect
 import android.support.design.widget.CoordinatorLayout
 import android.view.View
 import android.view.ViewGroup
@@ -45,7 +46,7 @@ class ChromeWindow(context: Context, val view: View) :
     }
 
     private var callback: OnChromeWindowCallback? = null
-    private lateinit var contentLayout: ChromeWindowContentLayout
+    private var contentLayout: ChromeWindowContentLayout
 
     fun setOnChromeWindowCallback(callback: OnChromeWindowCallback?) {
         this.callback = callback
@@ -196,6 +197,10 @@ class ChromeWindow(context: Context, val view: View) :
         view.post {
             contentLayout.setText(result)
         }
+    }
+
+    fun getGlobalVisibleRect(outRect: Rect){
+        contentLayout.getGlobalVisibleRect(outRect)
     }
 
     private val voiceChromeController =
