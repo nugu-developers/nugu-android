@@ -82,6 +82,9 @@ class SessionManagerTest {
         sessionManager.activate(sessionKey1, requester)
         sessionManager.set(sessionKey2, session1)
         sessionManager.activate(sessionKey2, requester)
-        Assert.assertTrue(sessionManager.getActiveSessions().size == 2)
+        with(sessionManager.getActiveSessions()) {
+            Assert.assertTrue(size == 1)
+            Assert.assertTrue(containsKey(sessionKey2))
+        }
     }
 }

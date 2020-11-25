@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.core.session
 
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -34,6 +35,7 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
     private val lock = ReentrantLock()
 
     private val allSessions = LinkedHashMap<String, SessionManagerInterface.Session>()
+    private val sessionSetTimeMap = HashMap<String, Long>()
     private val activeSessionsMap = HashMap<String, HashSet<SessionManagerInterface.Requester>>()
 
     private val timeoutFutureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
@@ -43,6 +45,7 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
         lock.withLock {
             Logger.d(TAG, "[set] key: $key, session: $session")
             allSessions[key] = session
+            sessionSetTimeMap[key] = System.currentTimeMillis()
 
             // if activate called before set, do not schedule.
             if(!activeSessionsMap.containsKey(key)) {
@@ -58,6 +61,7 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
             lock.withLock {
                 Logger.d(TAG, "[scheduleTimeout] occur timeout key: $key")
                 allSessions.remove(key)
+                sessionSetTimeMap.remove(key)
                 timeoutFutureMap.remove(key)
             }
         }, inactiveTimeoutInMillis, TimeUnit.MILLISECONDS)
@@ -103,13 +107,40 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
 
     override fun getActiveSessions(): Map<String, SessionManagerInterface.Session> {
         return lock.withLock {
-            LinkedHashMap<String, SessionManagerInterface.Session>().apply {
+            val actives = LinkedHashMap<String, SessionManagerInterface.Session>().apply {
                 activeSessionsMap.forEach {
                     allSessions[it.key]?.let { session ->
                         put(it.key, session)
                     }
                 }
             }
+
+            val shouldBeRemoved = HashSet<String>()
+
+            // remove duplicated playServiceId
+            HashMap<String, String>().apply {
+                actives.forEach {
+                    val current = get(it.value.playServiceId)
+                    val currentTime = sessionSetTimeMap[current]
+
+                    val targetTime = sessionSetTimeMap[it.key]
+                    if(current != null && currentTime != null && targetTime != null) {
+                        if(currentTime < targetTime) {
+                            put(it.value.playServiceId, it.key)
+                        } else {
+                            shouldBeRemoved.add(it.key)
+                        }
+                    } else {
+                        put(it.value.playServiceId, it.key)
+                    }
+                }
+            }
+
+            shouldBeRemoved.forEach {
+                actives.remove(it)
+            }
+
+            return actives
         }
     }
 }
