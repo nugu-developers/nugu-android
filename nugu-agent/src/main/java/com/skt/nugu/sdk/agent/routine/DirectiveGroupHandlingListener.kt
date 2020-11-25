@@ -57,31 +57,31 @@ class DirectiveGroupHandlingListener(
     }
 
     override fun onCompleted(directive: Directive) {
-        Logger.d(TAG, "[onCompleted] ${directive.header}")
         if(directives.remove(directive)) {
+            Logger.d(TAG, "[onCompleted] ${directive.header}")
             notifyResultIfEmpty()
         }
     }
 
     override fun onCanceled(directive: Directive) {
-        Logger.d(TAG, "[onCanceled] ${directive.header}")
-        existCanceledOrFailed = true
         if(directives.remove(directive)) {
+            Logger.d(TAG, "[onCanceled] ${directive.header}")
+            existCanceledOrFailed = true
             notifyResultIfEmpty()
         }
     }
 
     override fun onFailed(directive: Directive, description: String) {
-        Logger.d(TAG, "[onFailed] ${directive.header}")
-        existCanceledOrFailed = true
         if(directives.remove(directive)) {
+            Logger.d(TAG, "[onFailed] ${directive.header}")
+            existCanceledOrFailed = true
             notifyResultIfEmpty()
         }
     }
 
     override fun onSkipped(directive: Directive) {
-        Logger.d(TAG, "[onSkipped] ${directive.header}")
         if(directives.remove(directive)) {
+            Logger.d(TAG, "[onSkipped] ${directive.header}")
             notifyResultIfEmpty()
         }
     }
