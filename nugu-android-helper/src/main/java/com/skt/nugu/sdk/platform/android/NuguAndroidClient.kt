@@ -205,6 +205,7 @@ class NuguAndroidClient private constructor(
         internal var defaultDisplayDuration = 7000L
 
         internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
+        internal var textRedirectHandler: TextAgentInterface.TextRedirectHandler? = null
 
         internal var enableDisplay: Boolean = true
         internal var enableLocation: Boolean = true
@@ -337,6 +338,12 @@ class NuguAndroidClient private constructor(
          */
         fun textSourceHandler(handler: TextAgentInterface.TextSourceHandler?) =
             apply { this.textSourceHandler = handler }
+
+        /**
+         * @param handler the handler for text redirect directive. If not provided, default behavior at TextAgent.
+         */
+        fun textRedirectHandler(handler: TextAgentInterface.TextRedirectHandler?) =
+            apply { this.textRedirectHandler = handler }
 
         /**
          * @param enable the flag to enable or disable display.
@@ -676,7 +683,8 @@ class NuguAndroidClient private constructor(
                         getMessageSender(),
                         getContextManager(),
                         getDialogAttributeStorage(),
-                        builder.textSourceHandler
+                        builder.textSourceHandler,
+                        builder.textRedirectHandler
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
                     }

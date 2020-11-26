@@ -41,7 +41,8 @@ class DefaultTextAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val dialogAttributeStorage: DialogAttributeStorageInterface,
-    private val textSourceHandler: TextAgentInterface.TextSourceHandler?
+    private val textSourceHandler: TextAgentInterface.TextSourceHandler?,
+    private val textRedirectHandler: TextAgentInterface.TextRedirectHandler?
 ) : AbstractCapabilityAgent(NAMESPACE)
     , InputProcessor
     , TextAgentInterface{
@@ -71,10 +72,11 @@ class DefaultTextAgent(
         private const val TAG = "TextAgent"
 
         const val NAMESPACE = "Text"
-        private val VERSION = Version(1,4)
+        private val VERSION = Version(1,5)
 
         private const val NAME_TEXT_SOURCE = "TextSource"
         private const val NAME_TEXT_REDIRECT = "TextRedirect"
+        private const val NAME_FAILED = "Failed"
 
         val TEXT_SOURCE = NamespaceAndName(
             NAMESPACE,
@@ -155,8 +157,29 @@ class DefaultTextAgent(
         }
 
         executeSetHandlingCompleted(info)
-        if(textSourceHandler?.handleTextSource(info.directive.payload, info.directive.header) == true) {
-            Logger.d(TAG, "[executeHandleTextSourceDirective] handled at TextSourceHandler($textSourceHandler)")
+        val result = textSourceHandler?.shouldExecuteDirective(info.directive.payload, info.directive.header) ?: TextAgentInterface.TextSourceHandler.Result.OK
+        if(result != TextAgentInterface.TextSourceHandler.Result.OK) {
+            Logger.d(TAG, "[executeHandleTextSourceDirective] result returned: $result")
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
+                    messageSender.newCall(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            "${NAME_TEXT_SOURCE}$NAME_FAILED",
+                            VERSION.toString()
+                        ).referrerDialogRequestId(info.directive.getDialogRequestId())
+                            .payload(JsonObject().apply {
+                                payload.playServiceId?.let {
+                                    addProperty("playServiceId", it)
+                                }
+                                addProperty("token", payload.token)
+                                addProperty("errorCode", result.name)
+                            }.toString())
+                            .build()
+                    ).enqueue(null)
+                }
+            }, namespaceAndName)
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(payload.text,
                 payload.playServiceId == null, payload.playServiceId, payload.token, payload.source, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
@@ -200,30 +223,60 @@ class DefaultTextAgent(
         executeSetHandlingCompleted(info)
 
         val targetPlayServiceId = payload.targetPlayServiceId
-
-        val dialogRequestId = executeSendTextInputEventInternal(payload.text,
-            targetPlayServiceId == null, targetPlayServiceId, payload.token, null, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
-                override fun onRequestCreated(dialogRequestId: String) {
-                    internalTextRedirectHandleListeners.forEach {
-                        it.onRequestCreated(dialogRequestId)
-                    }
+        val result = textRedirectHandler?.shouldExecuteDirective(info.directive.payload, info.directive.header) ?: TextAgentInterface.TextRedirectHandler.Result.OK
+        if(result != TextAgentInterface.TextRedirectHandler.Result.OK) {
+            Logger.d(TAG, "[executeHandleTextRedirectDirective] result returned: $result")
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
+                    messageSender.newCall(
+                        EventMessageRequest.Builder(
+                            jsonContext,
+                            NAMESPACE,
+                            "$NAME_TEXT_REDIRECT$NAME_FAILED",
+                            VERSION.toString()
+                        ).referrerDialogRequestId(info.directive.getDialogRequestId())
+                            .payload(JsonObject().apply {
+                                addProperty("playServiceId", payload.playServiceId)
+                                addProperty("token", payload.token)
+                                addProperty("errorCode", result.name)
+                            }.toString())
+                            .build()
+                    ).enqueue(null)
                 }
-
-                override fun onReceiveResponse(dialogRequestId: String) {
-                    internalTextRedirectHandleListeners.forEach {
-                        it.onReceiveResponse(dialogRequestId)
+            }, namespaceAndName)
+        } else {
+            val dialogRequestId = executeSendTextInputEventInternal(payload.text,
+                targetPlayServiceId == null,
+                targetPlayServiceId,
+                payload.token,
+                null,
+                info.directive.header.dialogRequestId,
+                object : TextAgentInterface.RequestListener {
+                    override fun onRequestCreated(dialogRequestId: String) {
+                        internalTextRedirectHandleListeners.forEach {
+                            it.onRequestCreated(dialogRequestId)
+                        }
                     }
-                }
 
-                override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
-                    internalTextRedirectHandleListeners.forEach {
-                        it.onError(dialogRequestId, type)
+                    override fun onReceiveResponse(dialogRequestId: String) {
+                        internalTextRedirectHandleListeners.forEach {
+                            it.onReceiveResponse(dialogRequestId)
+                        }
                     }
-                }
-            })
-        
-        internalTextRedirectHandleListeners.forEach {
-            it.onRequested(dialogRequestId)
+
+                    override fun onError(
+                        dialogRequestId: String,
+                        type: TextAgentInterface.ErrorType
+                    ) {
+                        internalTextRedirectHandleListeners.forEach {
+                            it.onError(dialogRequestId, type)
+                        }
+                    }
+                })
+
+            internalTextRedirectHandleListeners.forEach {
+                it.onRequested(dialogRequestId)
+            }
         }
     }
 

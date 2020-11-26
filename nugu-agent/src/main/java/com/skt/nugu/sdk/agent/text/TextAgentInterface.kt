@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.text
 
+import com.skt.nugu.sdk.agent.text.TextAgentInterface.TextSourceHandler.Result
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 interface TextAgentInterface {
@@ -34,13 +35,33 @@ interface TextAgentInterface {
      * The handler for text source directive.
      */
     interface TextSourceHandler {
+        enum class Result {
+            OK, NOT_SUPPORTED_STATE
+        }
+
         /**
          * @param payload the payload of directive
          * @param header the header of directive
-         * @return true if handled, otherwise return false
+         * @return [Result.OK] if should execute, otherwise if not.
          */
-        fun handleTextSource(payload: String, header: Header): Boolean
+        fun shouldExecuteDirective(payload: String, header: Header): Result
     }
+
+    /**
+     * The handler for text redirect directive.
+     */
+    interface TextRedirectHandler {
+        enum class Result {
+            OK, NOT_SUPPORTED_STATE
+        }
+        /**
+         * @param payload the payload of directive
+         * @param header the header of directive
+         * @return [Result.OK] if should execute, otherwise if not.
+         */
+        fun shouldExecuteDirective(payload: String, header: Header): Result
+    }
+
 
     /**
      * The listener about textSource directive's internal handling event.
