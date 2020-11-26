@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.core.session
 
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
