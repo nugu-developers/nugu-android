@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.audiosource.audiorecord
 
 import android.media.MediaRecorder
+import android.os.Build
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceFactory
@@ -36,7 +37,15 @@ class AudioRecordSourceFactory(
         private const val TAG = "ARecordSourceFactory"
         //private const val TAG = "AudioRecordSourceFactory"
     }
-    override fun create(): AudioSource =
+    override fun create(): AudioSource = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        AudioRecordSourceAboveQ(
+            audioSource,
+            sampleRate,
+            channelConfig,
+            audioFormat,
+            bufferSize
+        )
+    } else {
         AudioRecordSource(
             audioSource,
             sampleRate,
@@ -44,6 +53,7 @@ class AudioRecordSourceFactory(
             audioFormat,
             bufferSize
         )
+    }
 
     override fun getFormat(): AudioFormat {
         return AudioFormat(
