@@ -121,8 +121,7 @@ class DefaultClientSpeechRecognizer(
 
 //        val sendPositionAndWakeupBoundary =
 //            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
-
-        val payloadWakeup = if(wakeupInfo?.word != null && wakeupInfo.power != null){
+        val payloadWakeup = if(wakeupInfo?.word != null){
             PayloadWakeup(wakeupInfo.word, null, wakeupInfo.power)
         } else {
             null
