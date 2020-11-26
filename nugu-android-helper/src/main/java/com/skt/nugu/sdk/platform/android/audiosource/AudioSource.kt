@@ -25,6 +25,7 @@ import java.nio.ByteBuffer
 interface AudioSource {
     companion object {
         const val SOURCE_CLOSED = -1
+        const val SOURCE_BAD_VALUE = -2
     }
 
     /**
