@@ -24,15 +24,18 @@ import java.util.*
  * @param blocking set mediums which blocking
  */
 class BlockingPolicy(
-    val blockedBy: EnumSet<Medium>? = null,
+    val blockedBy: EnumSet<Medium>? = MEDIUM_ANY_ONLY,
     val blocking: EnumSet<Medium>? = null
 ) {
     enum class Medium {
         AUDIO,
-        VISUAL
+        VISUAL,
+        ANY
     }
 
     companion object {
-        val MEDIUM_AUDIO = EnumSet.of(Medium.AUDIO)
+        val MEDIUM_ANY_ONLY: EnumSet<Medium> = EnumSet.of(Medium.ANY)
+        val MEDIUM_AUDIO: EnumSet<Medium> = EnumSet.of(Medium.ANY, Medium.AUDIO)
+        val MEDIUM_AUDIO_ONLY: EnumSet<Medium> = EnumSet.of(Medium.AUDIO)
     }
 }
