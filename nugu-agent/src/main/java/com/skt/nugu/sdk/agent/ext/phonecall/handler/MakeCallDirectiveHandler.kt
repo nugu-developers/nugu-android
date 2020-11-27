@@ -142,8 +142,7 @@ class MakeCallDirectiveHandler(
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configurations[MAKE_CALL] = BlockingPolicy(
-            BlockingPolicy.MEDIUM_AUDIO,
-            false
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         return configurations

@@ -131,7 +131,7 @@ class StopDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[PAUSE] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false)
+        configuration[PAUSE] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO)
 
         return configuration
     }

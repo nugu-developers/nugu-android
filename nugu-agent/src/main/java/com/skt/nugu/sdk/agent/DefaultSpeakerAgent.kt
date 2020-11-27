@@ -294,7 +294,7 @@ class DefaultSpeakerAgent(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val nonBlockingPolicy = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            true
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()

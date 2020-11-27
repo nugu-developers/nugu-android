@@ -135,7 +135,7 @@ class ReadMessageDirectiveHandler(
 
         configuration[READ_MESSAGE] = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            true
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         return configuration
