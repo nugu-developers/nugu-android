@@ -741,7 +741,7 @@ class DefaultASRAgent(
 
         configuration[EXPECT_SPEECH] = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            BlockingPolicy.MEDIUM_AUDIO
+            BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
         configuration[NOTIFY_RESULT] = BlockingPolicy()
 
