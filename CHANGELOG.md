@@ -1,6 +1,24 @@
 Change Log
 ==========
 
+Version 0.9.39 *(2020-11-27)*
+-----------------------------
+* Fix: Fix wrong directive result handling (#1424)
+* Fix: Fix issue #1398 (#1427)
+    * Send recent session correctly.
+* Fix: Change wakeupInfo power parameter from mandatory to optional (#1430)
+* Fix: Fix issue-1427 (#1437)
+    * Fix wrong duplicated removal check
+* Improve: Update AudioRecordSource for Android Q (#1397)
+* Improve: Do not delay timer on player paused (#1415)
+* Improve: Keep the screen on when ASRAgent is progressing (#1416)
+* Improve: Update SilverTray v4.3.1 (#1419)
+* Improve: Add privacy url to nugu-service-kit (#1421)
+* Improve: Add getGlobalVisibleRect method for control TouchEvent in App #1404 (#1423)
+* Improve: Enable/Disable external lib log (#1432)
+    * Add LogSettings.enable()
+* New: Support Utility Interface v1.0 (#1426)
+
 Version 0.9.38 *(2020-11-20)*
 -----------------------------
 * New: Support Routine Interface v1.2 (#1400)
