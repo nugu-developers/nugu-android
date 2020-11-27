@@ -126,6 +126,7 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
                     if(current != null && currentTime != null && targetTime != null) {
                         if(currentTime < targetTime) {
                             put(it.value.playServiceId, it.key)
+                            shouldBeRemoved.add(current)
                         } else {
                             shouldBeRemoved.add(it.key)
                         }
