@@ -688,7 +688,7 @@ class DefaultTTSAgent(
 
         configuration[SPEAK] = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            true
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         return configuration

@@ -101,7 +101,7 @@ class CloseDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val blockingPolicy = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            true
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()

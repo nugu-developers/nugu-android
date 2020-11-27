@@ -91,8 +91,7 @@ class ContinueDirectiveHandler(
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configurations[CONTINUE] = BlockingPolicy(
-            BlockingPolicy.MEDIUM_AUDIO,
-            false
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         return configurations

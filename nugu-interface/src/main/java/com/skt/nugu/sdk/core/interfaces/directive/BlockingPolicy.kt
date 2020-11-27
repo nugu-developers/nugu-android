@@ -15,36 +15,24 @@
  */
 package com.skt.nugu.sdk.core.interfaces.directive
 
+import java.util.*
+
 /**
  * Defines an BlockingPolicy.
  *
- * @param mediums set mediums which blocked
- * @param isBlocking true: block handling directive which has same [Medium] defined [mediums], false: non-blocking
+ * @param blockedBy set mediums which blocked
+ * @param blocking set mediums which blocking
  */
 class BlockingPolicy(
-    val mediums: Mediums = MEDIUM_NONE,
-    val isBlocking: Boolean = false
+    val blockedBy: EnumSet<Medium>? = null,
+    val blocking: EnumSet<Medium>? = null
 ) {
     enum class Medium {
         AUDIO,
         VISUAL
     }
 
-    data class Mediums(
-        val audio: Boolean,
-        val visual: Boolean
-    )
-
     companion object {
-        val MEDIUM_AUDIO =
-            Mediums(audio = true, visual = false)
-        val MEDIUM_VISUAL =
-            Mediums(audio = false, visual = true)
-        val MEDIUM_AUDIO_AND_VISUAL =
-            Mediums(audio = true, visual = true)
-        val MEDIUM_NONE =
-            Mediums(audio = false, visual = false)
+        val MEDIUM_AUDIO = EnumSet.of(Medium.AUDIO)
     }
-
-    fun isValid(): Boolean = !(MEDIUM_NONE == mediums && isBlocking)
 }

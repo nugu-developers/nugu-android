@@ -59,7 +59,7 @@ class RenderDirectiveHandler(
 
         configuration[RENDER] = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            true
+            BlockingPolicy.MEDIUM_AUDIO
         )
 
         return configuration
