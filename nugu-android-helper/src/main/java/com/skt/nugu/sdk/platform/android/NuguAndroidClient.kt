@@ -67,6 +67,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
+import com.skt.nugu.sdk.agent.utility.UtilityAgent
 import com.skt.nugu.sdk.client.ClientHelperInterface
 import com.skt.nugu.sdk.client.NuguClient
 import com.skt.nugu.sdk.client.NuguClientInterface
@@ -813,6 +814,13 @@ class NuguAndroidClient private constructor(
             builder.clientVersion?.let {
                 clientVersion(it)
             }
+
+            addAgentFactory(UtilityAgent.NAMESPACE, object: AgentFactory<UtilityAgent> {
+                override fun create(container: SdkContainer): UtilityAgent = UtilityAgent(
+                    container.getContextManager(),
+                    container.getDirectiveSequencer()
+                )
+            })
         }
         .build()
 
