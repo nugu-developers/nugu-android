@@ -87,4 +87,24 @@ class SessionManagerTest {
             Assert.assertTrue(containsKey(sessionKey2))
         }
     }
+
+    @Test
+    fun testActivateTwoSessionUsingOneRequester1() {
+        val requester1: SessionManagerInterface.Requester = mock()
+        val requester2: SessionManagerInterface.Requester = mock()
+
+        val key1 = "0e01980a1d01a720bb4c8b7831154d74"
+        val key2 = "0e0198322601a720bb4c8b787b0732b3"
+
+        sessionManager.activate(key1, requester1)
+        sessionManager.set(key1, session1)
+        Thread.sleep(1)
+        sessionManager.activate(key2, requester2)
+        sessionManager.set(key2, session1)
+        with(sessionManager.getActiveSessions()) {
+            Assert.assertTrue(size == 1)
+            Assert.assertTrue(containsKey(key2))
+            Assert.assertFalse(containsKey(key1))
+        }
+    }
 }
