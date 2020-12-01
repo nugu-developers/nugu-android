@@ -29,6 +29,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.R
+import com.skt.nugu.sdk.platform.android.ux.utils.NetworkUtils
 
 class ChromeWindow(context: Context, val view: View) :
     SpeechRecognizerAggregatorInterface.OnStateChangeListener
@@ -183,6 +184,11 @@ class ChromeWindow(context: Context, val view: View) :
     }
 
     private fun handleExpecting(dialogMode: Boolean, payload: RenderDirective.Payload?) {
+        if(!NetworkUtils.isNetworkAvailable(view.context)) {
+            Logger.d(TAG, "Not connected to internet!")
+            return
+        }
+
         if (!dialogMode) {
             contentLayout.setHint(R.string.guide_text)
             contentLayout.showText()
