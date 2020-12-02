@@ -40,8 +40,7 @@
         <activity android:name=".activity.IntroActivity" />
         <activity
             android:name=".activity.SettingsServiceActivity"
-            android:launchMode="singleTop"
-            android:exported="true">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -50,7 +49,7 @@
 
                 <data
                     android:host="oauth_refresh"
-                    android:scheme="nugusdk" />
+                    android:scheme="@string/nugu_redirect_scheme" />
             </intent-filter>
         </activity>
 

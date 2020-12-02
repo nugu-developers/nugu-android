@@ -29,18 +29,21 @@ class SettingsServiceActivity : AppCompatActivity(), NuguWebView.WindowListener 
     companion object {
         private const val TAG = "SettingsServiceActivity"
 
-        /**
-         * Edit your application's AndroidManifest.xml file,
-         * and add the following declaration within the <SettingsServiceActivity> element.
-         * <data android:host="oauth_refresh" android:scheme="nugusdk" />
-         * edit your IntentFilter in manifest
-         */
-        private const val OAUTH_REDIRECT_URI = "nugusdk://oauth_refresh"
-
         fun invokeActivity(context: Context) {
             context.startActivity(Intent(context, SettingsServiceActivity::class.java))
         }
     }
+
+    /**
+     * Edit your application's AndroidManifest.xml file,
+     * and add the following declaration within the <SettingsServiceActivity> element.
+     * <data android:host="oauth_refresh" android:scheme="@string/nugu_redirect_scheme" />
+     * edit your IntentFilter in manifest
+     */
+    private val OAUTH_REDIRECT_URI : String by lazy {
+        getString(R.string.nugu_redirect_scheme) + "://oauth_refresh"
+    }
+
     private val nuguPocId : String by lazy {
         getString(R.string.nugu_poc_id)
     }
