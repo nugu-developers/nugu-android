@@ -150,33 +150,35 @@ class EventsService(
             when (response.code) {
                 HttpURLConnection.HTTP_OK -> {
                     try {
-                        response.handleResponse(call.getRequestBody().call, observer)
+                        if(response.handleResponse(call.getRequestBody().call, observer)) {
+                            call.getRequestBody().call?.onComplete(SDKStatus.OK)
+                        }
                         response.close()
                     } catch (e: Throwable) {
                         Logger.d(TAG, "[responseCallback] : " + e.message.toString())
                     }
                 }
                 HttpURLConnection.HTTP_BAD_REQUEST -> {
-                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.INTERNAL)
+                    call.getRequestBody().call?.onComplete(SDKStatus.INTERNAL)
                     observer.onError(Status.INTERNAL)
                 }
                 HttpURLConnection.HTTP_UNAUTHORIZED,
                 HttpURLConnection.HTTP_FORBIDDEN -> {
-                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNAUTHENTICATED)
+                    call.getRequestBody().call?.onComplete(SDKStatus.UNAUTHENTICATED)
                     observer.onError(Status.UNAUTHENTICATED)
                 }
                 HttpURLConnection.HTTP_BAD_GATEWAY,
                 HttpURLConnection.HTTP_UNAVAILABLE,
                 HttpURLConnection.HTTP_GATEWAY_TIMEOUT -> {
-                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNAVAILABLE)
+                    call.getRequestBody().call?.onComplete(SDKStatus.UNAVAILABLE)
                     observer.onError(Status.UNAVAILABLE)
                 }
                 HttpURLConnection.HTTP_UNSUPPORTED_TYPE -> {
-                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNIMPLEMENTED)
+                    call.getRequestBody().call?.onComplete(SDKStatus.UNIMPLEMENTED)
                     observer.onError(Status.UNIMPLEMENTED)
                 }
                 else -> {
-                    call.getRequestBody().call?.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.UNKNOWN)
+                    call.getRequestBody().call?.onComplete(SDKStatus.UNKNOWN)
                     observer.onError(Status.UNKNOWN)
                 }
             }
