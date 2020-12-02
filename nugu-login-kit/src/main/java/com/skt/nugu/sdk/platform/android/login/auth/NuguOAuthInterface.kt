@@ -16,11 +16,15 @@
 package com.skt.nugu.sdk.platform.android.login.auth
 
 import android.app.Activity
+import android.support.annotation.Keep
 
 /**
  * Authentication interface for the NUGU oauth
  */
 interface NuguOAuthInterface {
+    @Keep
+    enum class THEME { DARK, LIGHT }
+
     /**
      * Checking the authorization status
      * @return true is authorized, otherwise false
@@ -53,7 +57,7 @@ interface NuguOAuthInterface {
      * @param activity The activity making the call.
      * @param listener Listener to receive result.
      */
-    fun loginByInAppBrowser(activity: Activity, listener: OnLoginListener)
+    fun loginByInAppBrowser(activity: Activity, listener: OnLoginListener, theme: THEME = THEME.LIGHT)
 
     /**
      * Start a account info with browser. Only Type1
@@ -68,7 +72,7 @@ interface NuguOAuthInterface {
      * @param activity The activity making the call.
      * @param loginId t-id
      */
-    fun accountByInAppBrowser(activity: Activity, listener: OnAccountListener)
+    fun accountByInAppBrowser(activity: Activity, listener: OnAccountListener, theme: THEME = THEME.LIGHT)
 
     /**
      * Start a login with credentials. Only Type2
