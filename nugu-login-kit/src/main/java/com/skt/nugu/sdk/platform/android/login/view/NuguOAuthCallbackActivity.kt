@@ -45,6 +45,7 @@ class NuguOAuthCallbackActivity : Activity() {
     }
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String? = NuguOAuth.ACTION_LOGIN
+    private var theme: String? = null
     private var handler: Handler = Handler()
     private val finishRunnable = Runnable {
         if(firstRequestCode == nextRequestCode) {
@@ -60,12 +61,14 @@ class NuguOAuthCallbackActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(NuguOAuth.EXTRA_OAUTH_ACTION, action)
+        outState.putString(NuguOAuth.EXTRA_OAUTH_THEME, theme)
         super.onSaveInstanceState(outState)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         action = savedInstanceState.getString(NuguOAuth.EXTRA_OAUTH_ACTION)
+        theme = savedInstanceState.getString(NuguOAuth.EXTRA_OAUTH_THEME)
     }
 
 
@@ -76,7 +79,11 @@ class NuguOAuthCallbackActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
+        intent?.let {
+            action = it.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
+            theme = it.getStringExtra(NuguOAuth.EXTRA_OAUTH_THEME)
+        }
+
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
                 if (auth.isAuthorizationCodeLogin()) {
@@ -91,7 +98,7 @@ class NuguOAuthCallbackActivity : Activity() {
                 }
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(this, intent, auth.getLoginUri(), object :
+                CustomTabActivityHelper.openCustomTab(this, intent, auth.getLoginUri(theme), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         nextRequestCode = WEBVIEW_REQUEST_CODE
@@ -111,7 +118,7 @@ class NuguOAuthCallbackActivity : Activity() {
 
                 val intent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(), object :
+                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(theme), object :
                         CustomTabActivityHelper.CustomTabFallback {
                         override fun openUri(activity: Activity?, uri: Uri?) {
                             Logger.e(TAG, "[onCreate] fallback, action=$action")

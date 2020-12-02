@@ -58,6 +58,8 @@ class NuguOAuth private constructor(
         internal const val KEY_REDIRECT_HOST = "nugu_redirect_host"
 
         val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
+        val EXTRA_OAUTH_THEME = "nugu.intent.extra.oauth.theme"
+
         val ACTION_LOGIN = "nugu.intent.action.oauth.LOGIN"
         val ACTION_ACCOUNT = "nugu.intent.action.oauth.ACCOUNT"
 
@@ -397,48 +399,48 @@ class NuguOAuth private constructor(
     fun verifyState(state: String?) = state == this.clientState
     fun verifyCode(code: String?) = !code.isNullOrBlank()
 
-    private fun makeAuthorizeUri() = String.format(
+    private fun makeAuthorizeUri(theme: String) = String.format(
         authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
         options.clientId,
         options.redirectUri,
-        URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
+        URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\",\"theme\":\"$theme\"}", "UTF-8")
     )
 
     /**
      * Creating a login intent
      */
-    fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
-        data = getLoginUri()
+    fun getLoginIntent(theme : String) = Intent(Intent.ACTION_VIEW).apply {
+        data = getLoginUri(theme)
     }
 
     /**
      * Creating a login uri
      */
-    fun getLoginUri(): Uri {
+    fun getLoginUri(theme : String?): Uri {
         val appendUri = String.format(
             "&state=%s", generateClientState()
         )
-        return Uri.parse(makeAuthorizeUri() + appendUri)
+        return Uri.parse(makeAuthorizeUri(theme?:NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
     }
 
     /**
      * Creating a accountinfo intent
      */
-    fun getAccountInfoIntent() = Intent(Intent.ACTION_VIEW).apply {
-        data = getAccountInfoUri()
+    fun getAccountInfoIntent(theme : String?) = Intent(Intent.ACTION_VIEW).apply {
+        data = getAccountInfoUri(theme)
     }
 
     /**
      * Creating a accountinfo uri
      */
-    fun getAccountInfoUri(): Uri {
+    fun getAccountInfoUri(theme: String?): Uri {
         val appendUri = String.format(
             "&prompt=%s&access_token=%s&state=%s",
             "mypage",
             client.getCredentials().accessToken,
             generateClientState()
         )
-        return Uri.parse(makeAuthorizeUri() + appendUri)
+        return Uri.parse(makeAuthorizeUri(theme?:NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
     }
 
     override fun accountByInAppBrowser(activity: Activity) {
@@ -450,12 +452,14 @@ class NuguOAuth private constructor(
 
     override fun accountByInAppBrowser(
         activity: Activity,
-        listener: NuguOAuthInterface.OnAccountListener
+        listener: NuguOAuthInterface.OnAccountListener,
+        theme: NuguOAuthInterface.THEME
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceLoginListener = OnceLoginListener(listener)
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
+            putExtra(EXTRA_OAUTH_THEME, theme.name)
             activity.startActivityForResult(this, REQUEST_ACCOUNT)
         }
     }
@@ -501,7 +505,8 @@ class NuguOAuth private constructor(
      */
     override fun loginByInAppBrowser(
         activity: Activity,
-        listener: OnLoginListener
+        listener: OnLoginListener,
+        theme: NuguOAuthInterface.THEME
     ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceLoginListener = OnceLoginListener(listener)
@@ -512,6 +517,7 @@ class NuguOAuth private constructor(
 
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
+            putExtra(EXTRA_OAUTH_THEME, theme.name)
             activity.startActivityForResult(this, REQUEST_LOGIN)
         }
     }
