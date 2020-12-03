@@ -70,7 +70,7 @@ class BlockDirectiveHandler: AbstractDirectiveHandler() {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configurations[BLOCK] = BlockingPolicy(
-            BlockingPolicy.MEDIUM_ANY_ONLY,
+            BlockingPolicy.MEDIUM_ALL,
             BlockingPolicy.MEDIUM_ANY_ONLY
         )
 

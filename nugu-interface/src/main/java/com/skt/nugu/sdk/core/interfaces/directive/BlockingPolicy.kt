@@ -34,6 +34,7 @@ class BlockingPolicy(
     }
 
     companion object {
+        val MEDIUM_ALL: EnumSet<Medium> = EnumSet.allOf(Medium::class.java)
         val MEDIUM_ANY_ONLY: EnumSet<Medium> = EnumSet.of(Medium.ANY)
         val MEDIUM_AUDIO: EnumSet<Medium> = EnumSet.of(Medium.ANY, Medium.AUDIO)
         val MEDIUM_AUDIO_ONLY: EnumSet<Medium> = EnumSet.of(Medium.AUDIO)
