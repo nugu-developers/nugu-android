@@ -109,7 +109,7 @@ class DefaultAudioPlayerAgent(
         private const val TAG = "AudioPlayerAgent"
 
         const val NAMESPACE = "AudioPlayer"
-        val VERSION = Version(1,4)
+        val VERSION = Version(1,5)
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
@@ -392,7 +392,15 @@ class DefaultAudioPlayerAgent(
                 if(!executeShouldResumeNextItem(currentAudioInfo, nextAudioInfo)) {
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - play new item: ${directive.getMessageId()}")
                     // stop current if play new item.
-                    if(executeStop(StopReason.PLAY_ANOTHER)) {
+                    val currentPlayServiceId = currentAudioInfo?.getPlayServiceId()
+                    val nextPlayServiceId = nextAudioInfo.getPlayServiceId()
+                    val stopReason = if(currentPlayServiceId == nextPlayServiceId) {
+                        StopReason.PLAY_ANOTHER
+                    } else {
+                        StopReason.STOP
+                    }
+
+                    if(executeStop(stopReason)) {
                         // should wait until stopped (onPlayerStopped will be called)
                     } else {
                         // fetch now
