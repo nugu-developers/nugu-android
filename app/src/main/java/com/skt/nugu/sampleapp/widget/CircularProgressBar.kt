@@ -20,9 +20,8 @@ import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.AttributeSet
-import android.util.TypedValue
-import android.view.ViewGroup
 import android.widget.FrameLayout
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils.Companion.dpToPixel
 import kotlin.math.min
 
 class CircularProgressBar @JvmOverloads constructor(
@@ -47,16 +46,6 @@ class CircularProgressBar @JvmOverloads constructor(
 
     fun getProgressDegrees() = getPointerAngle() - offset * 1.25F
     fun getPointerAngle() = ((180f - offset * 2) * (progress / max)) + offset
-
-    companion object {
-        fun dpToPixel(context: Context, dp: Float): Float {
-            return (TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                dp,
-                context.resources.displayMetrics
-            ) + 0.5f)
-        }
-    }
 
     init {
         init()
