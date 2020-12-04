@@ -18,6 +18,10 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
+<<<<<<< HEAD
+=======
+import android.util.Log
+>>>>>>> Apply template server #1231
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
