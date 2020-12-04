@@ -281,4 +281,5 @@ class TemplateWebView @JvmOverloads constructor(
     override fun getVisibleTokenList(): List<String>? {
         return visibleTokenList
     }
+
 }
