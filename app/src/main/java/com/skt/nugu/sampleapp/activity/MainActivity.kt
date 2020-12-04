@@ -41,7 +41,7 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
-import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
+import com.skt.nugu.sampleapp.template.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -101,12 +101,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val speechRecognizerAggregator: SpeechRecognizerAggregator by lazy {
         ClientManager.speechRecognizerAggregator
     }
-    private val containerIds = mutableMapOf(
-        "Display" to R.id.container,
-        "AudioPlayer" to R.id.sliding_container
-    )
 
-    private val templateRenderer = FragmentTemplateRenderer(supportFragmentManager,containerIds)
+    private val templateRenderer = TemplateRenderer(supportFragmentManager, R.id.template_container)
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {

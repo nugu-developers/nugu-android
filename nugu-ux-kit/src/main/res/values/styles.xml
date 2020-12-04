@@ -61,4 +61,13 @@
     <style name="Nugu.Widget.Chrome.Window.Dark" parent="android:Widget">
         <item name="android:background">@drawable/view_chrome_window_dark_background</item>
     </style>
+
+
+    <!--- template -->
+    <declare-styleable name="LyricsView">
+        <attr name="sizes" format="enum">
+            <enum name="small" value="0" />
+            <enum name="standard" value="1" />
+        </attr>
+    </declare-styleable>
 </resources>

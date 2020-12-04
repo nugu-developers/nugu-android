@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="58dp"
+    android:layout_gravity="bottom"
+    android:orientation="vertical">
+
+    <SeekBar
+        android:id="@+id/sb_bar_progress"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#1A222222"
+        android:enabled="false"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        android:max="100"
+        android:progressTint="#009dff"
+        android:thumb="@null" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
+
+        <ImageView
+            android:id="@+id/iv_bar_image"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp" />
+
+        <LinearLayout
+            android:id="@+id/bar_body"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_bar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="marquee"
+                android:fontFamily="@font/noto_sans_kr_regular_hestia"
+                android:singleLine="true"
+                android:textColor="#222222"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tv_bar_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColor="#b3222222"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btn_bar_prev"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/btn_skip_previous_32" />
+
+        <ImageView
+            android:id="@+id/btn_bar_play"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/btn_play_32" />
+
+        <ImageView
+            android:id="@+id/btn_bar_next"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/btn_skip_next_32" />
+
+        <ImageView
+            android:id="@+id/btn_bar_close"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/btn_close" />
+    </LinearLayout>
+</LinearLayout>
