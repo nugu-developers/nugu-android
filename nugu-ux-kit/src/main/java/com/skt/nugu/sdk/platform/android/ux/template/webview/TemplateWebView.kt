@@ -1,5 +1,6 @@
 package com.skt.nugu.sdk.platform.android.ux.template.webview
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
@@ -8,13 +9,16 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
+import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 
@@ -22,7 +26,7 @@ class TemplateWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0
-) : WebView(context, attrs, defStyle), TemplateView {
+) : WebView(context, attrs, defStyle), TemplateView, TemplateHandler.ClientListener {
 
     companion object {
         private const val TAG = "TemplateWebView"
@@ -39,38 +43,14 @@ class TemplateWebView @JvmOverloads constructor(
         set(value) {
             value?.run {
                 addJavascriptInterface(WebAppInterface(value), "Android")
-
-                value.setClientEventListener(object : TemplateHandler.ClientEventListener {
-                    var durationMs = 1L
-                    override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTime: Long, currentProgress: Float) {
-                        when (activity) {
-                            State.IDLE -> loadUrl(JavaScriptHelper.onPlayStopped())
-                            State.PLAYING -> {
-                                loadUrl(JavaScriptHelper.setCurrentTime(currentTime))
-                                loadUrl(JavaScriptHelper.setProgress(currentProgress))
-                                loadUrl(JavaScriptHelper.onPlayStarted())
-                                loadUrl(JavaScriptHelper.setEndTime(durationMs))
-                            }
-                            State.STOPPED -> loadUrl(JavaScriptHelper.onPlayStopped())
-                            State.PAUSED -> loadUrl(JavaScriptHelper.onPlayPaused())
-                            State.FINISHED -> {
-                                loadUrl(JavaScriptHelper.setCurrentTime(durationMs))
-                                loadUrl(JavaScriptHelper.setProgress(100f))
-                                loadUrl(JavaScriptHelper.onPlayEnd())
-                            }
-                        }
-                    }
-
-                    override fun onMediaDurationRetrieved(durationMs: Long) {
-                        this.durationMs = durationMs
-                    }
-
-                    override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
-                        loadUrl(JavaScriptHelper.setProgress(progress))
-                    }
-                })
+                value.setClientListener(this@TemplateWebView)
             }
         }
+
+    private var mediaDurationMs = 1L
+    private var focusedItemToken: String? = null
+    private var visibleTokenList: List<String>? = null
+    private var lyricsVisible: Boolean = false
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
@@ -149,14 +129,16 @@ class TemplateWebView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         Logger.i(TAG, "onDetachedFromWindow")
-        (templateHandler as? DefaultTemplateHandler)?.clear()
+        templateHandler?.clear()
     }
 
     /**
      * Instantiate the interface and set the context
      */
-    private class WebAppInterface constructor(handler: TemplateHandler) {
+    inner class WebAppInterface constructor(handler: TemplateHandler) {
         private var weakReference = SoftReference(handler)
+
+        private val gson = Gson()
 
         /**
          * Show a toast from the web page
@@ -212,14 +194,22 @@ class TemplateWebView @JvmOverloads constructor(
             Logger.i(TAG, "[onControlResult] action: $action, result: $result")
 
             weakReference.get()?.run {
-                //todo. figure out when this function called and test it
+                onControlResult(action, result)
             }
         }
 
         @JavascriptInterface
         fun onContextChanged(context: String) {
             Logger.i(TAG, "[onContextChanged] context: $context")
-            weakReference.get()?.run { onContextChanged(context) }
+
+            weakReference.get()?.run {
+                onContextChanged(context)
+            }
+
+            val templateContext = gson.fromJson<TemplateContext>(context, TemplateContext::class.java)
+            templateContext.focusedItemToken?.let { focusedItemToken = it }
+            templateContext.visibleTokenList?.let { visibleTokenList = it }
+            templateContext.lyricsVisible?.let { lyricsVisible = it }
         }
 
         @JavascriptInterface
@@ -233,5 +223,50 @@ class TemplateWebView @JvmOverloads constructor(
             Logger.i(TAG, "[onChipSelected] text : $text")
             weakReference.get()?.run { onChipSelected(text) }
         }
+    }
+
+    override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
+        when (activity) {
+            State.IDLE -> loadUrl(JavaScriptHelper.onPlayStopped())
+            State.PLAYING -> {
+                loadUrl(JavaScriptHelper.setCurrentTime(currentTimeMs))
+                loadUrl(JavaScriptHelper.setProgress(currentProgress))
+                loadUrl(JavaScriptHelper.onPlayStarted())
+                loadUrl(JavaScriptHelper.setEndTime(mediaDurationMs))
+            }
+            State.STOPPED -> loadUrl(JavaScriptHelper.onPlayStopped())
+            State.PAUSED -> loadUrl(JavaScriptHelper.onPlayPaused())
+            State.FINISHED -> {
+                loadUrl(JavaScriptHelper.setCurrentTime(mediaDurationMs))
+                loadUrl(JavaScriptHelper.setProgress(100f))
+                loadUrl(JavaScriptHelper.onPlayEnd())
+            }
+        }
+    }
+
+    override fun onMediaDurationRetrieved(durationMs: Long) {
+        mediaDurationMs = durationMs
+    }
+
+    override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
+        loadUrl(JavaScriptHelper.setProgress(progress))
+    }
+
+    override fun controlFocus(direction: Direction): Boolean {
+        loadUrl(JavaScriptHelper.controlFocus(direction))
+        return true
+    }
+
+    override fun controlScroll(direction: Direction): Boolean {
+        loadUrl(JavaScriptHelper.controlScroll(direction))
+        return true
+    }
+
+    override fun getFocusedItemToken(): String? {
+        return focusedItemToken
+    }
+
+    override fun getVisibleTokenList(): List<String>? {
+        return visibleTokenList
     }
 }

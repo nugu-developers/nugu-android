@@ -3,6 +3,8 @@ package com.skt.nugu.sdk.platform.android.ux.template.controller
 import android.util.Log
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
+import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
@@ -23,14 +25,14 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
     private var audioDurationMs = 0L
     private var mediaProgressJob: Timer? = null
     var currentMediaState: AudioPlayerAgentInterface.State = State.IDLE
-    private var eventListener: TemplateHandler.ClientEventListener? = null
+    private var clientListener: TemplateHandler.ClientListener? = null
 
     private val mediaDurationListener = object : AudioPlayerAgentInterface.OnDurationListener {
         override fun onRetrieved(duration: Long?, context: AudioPlayerAgentInterface.Context) {
             Log.d(TAG, "onDurationRetrieved $duration")
             if (context.templateId == templateInfo.templateId) {
                 audioDurationMs = duration ?: 0L
-                eventListener?.onMediaDurationRetrieved(audioDurationMs)
+                clientListener?.onMediaDurationRetrieved(audioDurationMs)
             }
         }
     }
@@ -40,10 +42,36 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
             Log.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
 
             currentMediaState = activity
-            eventListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage())
+            clientListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage())
 
             if (activity == State.PLAYING) startMediaProgressSending()
             else stopMediaProgressSending()
+        }
+    }
+
+    val displayController = object : DisplayAggregatorInterface.Controller {
+        override fun controlFocus(direction: Direction): Boolean {
+            return (clientListener?.controlFocus(direction) ?: false).also {
+                Log.i(TAG, "controlFocus() $direction. return $it")
+            }
+        }
+
+        override fun controlScroll(direction: Direction): Boolean {
+            return (clientListener?.controlScroll(direction) ?: false).also {
+                Log.i(TAG, "controlScroll() $direction. return $it")
+            }
+        }
+
+        override fun getFocusedItemToken(): String? {
+            return clientListener?.getFocusedItemToken().also {
+                Log.i(TAG, "getFocusedItemToken(). return $it")
+            }
+        }
+
+        override fun getVisibleTokenList(): List<String>? {
+            return clientListener?.getVisibleTokenList().also {
+                Log.i(TAG, "getVisibleTokenList(). return $it")
+            }
         }
     }
 
@@ -65,6 +93,14 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
         Log.w(TAG, "onNuguButtonSelected() need to be implemented in application side")
     }
 
+    override fun onContextChanged(context: String) {
+        Log.i(TAG, "onContextChanged() $context")
+    }
+
+    override fun onControlResult(action: String, result: String) {
+        Log.i(TAG, "onControlResult() action: $action, result : $result")
+    }
+
     override fun showToast(text: String) {
         Log.w(TAG, "onToastRequested() need to be implemented in application side")
     }
@@ -78,13 +114,8 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
         androidClientRef.get()?.run { requestTTS(text) }
     }
 
-    override fun onContextChanged(context: String) {
-        Log.i(TAG, "onContextChanged() $context")
-        //todo. figure out when this function called and test it
-    }
-
-    override fun setClientEventListener(listener: TemplateHandler.ClientEventListener) {
-        eventListener = listener
+    override fun setClientListener(listener: TemplateHandler.ClientListener) {
+        clientListener = listener
     }
 
     override fun onPlayerCommand(command: String, param: String) {
@@ -109,7 +140,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
         mediaProgressJob?.cancel()
 
         mediaProgressJob = fixedRateTimer(period = 1000, initialDelay = 1000, action = {
-            eventListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
+            clientListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
         })
     }
 
