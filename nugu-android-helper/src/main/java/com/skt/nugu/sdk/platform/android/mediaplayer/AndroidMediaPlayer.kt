@@ -22,6 +22,9 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.thread
+import kotlin.concurrent.withLock
 
 /**
  * Default Implementation of [MediaPlayerInterface] for android
@@ -40,137 +43,164 @@ class AndroidMediaPlayer(
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
     private var bufferEventListener: MediaPlayerControlInterface.BufferEventListener? = null
     private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
+    private val threadLock = ReentrantLock()
 
     init {
         player.setOnErrorListener { _, what, extra ->
-            playerActivity = AudioPlayerAgentInterface.State.STOPPED
-            playbackEventListener?.onPlaybackError(
-                currentSourceId,
-                ErrorType.MEDIA_ERROR_UNKNOWN,
-                "what  : $what / extra : $extra"
-            )
-            true
+            threadLock.withLock {
+                playerActivity = AudioPlayerAgentInterface.State.STOPPED
+                playbackEventListener?.onPlaybackError(
+                    currentSourceId,
+                    ErrorType.MEDIA_ERROR_UNKNOWN,
+                    "what  : $what / extra : $extra"
+                )
+                true
+            }
         }
         player.setOnBufferingUpdateListener { _, _ ->
-            bufferEventListener?.onBufferRefilled(currentSourceId)
+            threadLock.withLock {
+                bufferEventListener?.onBufferRefilled(currentSourceId)
+            }
         }
 
         player.setOnCompletionListener {
-            Logger.d(TAG, "[onCompletion]")
-            playerActivity = AudioPlayerAgentInterface.State.FINISHED
-            playbackEventListener?.onPlaybackFinished(currentSourceId)
+            threadLock.withLock {
+                Logger.d(TAG, "[onCompletion]")
+                playerActivity = AudioPlayerAgentInterface.State.FINISHED
+                playbackEventListener?.onPlaybackFinished(currentSourceId)
+            }
         }
     }
 
     override fun setSource(uri: URI, cacheKey: CacheKey?): SourceId {
-        Logger.d(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey")
-        try {
-            player.reset()
-            playerActivity = AudioPlayerAgentInterface.State.IDLE
-            player.setDataSource(context, Uri.parse(uri.toString()))
-            player.prepare()
-            playerActivity = AudioPlayerAgentInterface.State.PAUSED
-        } catch (e: Exception) {
-            player.reset()
-            Logger.e(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey", e)
-            return SourceId.ERROR()
-        }
-
-        currentSourceId.id++
-
-        Thread {
-            val duration = player.duration.toLong()
-            if(duration < 0) {
-                durationListener?.onRetrieved(currentSourceId,null)
-            } else {
-                durationListener?.onRetrieved(currentSourceId, duration)
+        threadLock.withLock {
+            Logger.d(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey")
+            try {
+                player.reset()
+                playerActivity = AudioPlayerAgentInterface.State.IDLE
+                player.setDataSource(context, Uri.parse(uri.toString()))
+                player.prepare()
+                playerActivity = AudioPlayerAgentInterface.State.PAUSED
+            } catch (e: Exception) {
+                player.reset()
+                Logger.e(TAG, "[setSource] uri: $uri, cacheKey: $cacheKey", e)
+                return SourceId.ERROR()
             }
-        }.start()
-        
-        return currentSourceId
+
+            currentSourceId.id++
+
+            Thread {
+                val duration = player.duration.toLong()
+                if (duration < 0) {
+                    durationListener?.onRetrieved(currentSourceId, null)
+                } else {
+                    durationListener?.onRetrieved(currentSourceId, duration)
+                }
+            }.start()
+
+            return currentSourceId
+        }
     }
 
     override fun play(id: SourceId): Boolean {
-        Logger.d(TAG, "[play] $id")
-        return if (id.id == currentSourceId.id && playerActivity == AudioPlayerAgentInterface.State.PAUSED) {
-            try {
-                player.start()
-                playerActivity = AudioPlayerAgentInterface.State.PLAYING
-                playbackEventListener?.onPlaybackStarted(id)
-                true
-            } catch (e: IllegalStateException) {
-                // failed
+        threadLock.withLock {
+            Logger.d(TAG, "[play] $id")
+            return if (id.id == currentSourceId.id && playerActivity == AudioPlayerAgentInterface.State.PAUSED) {
+                try {
+                    player.start()
+                    playerActivity = AudioPlayerAgentInterface.State.PLAYING
+                    playbackEventListener?.onPlaybackStarted(id)
+                    true
+                } catch (e: IllegalStateException) {
+                    // failed
+                    false
+                }
+            } else {
+                // invalid id
                 false
             }
-        } else {
-            // invalid id
-            false
         }
     }
 
     override fun stop(id: SourceId): Boolean {
-        Logger.d(TAG, "[stop] $id")
-        if (id.id == currentSourceId.id && playerActivity.isActive()) {
-            player.stop()
-            player.reset()
-            playerActivity = AudioPlayerAgentInterface.State.STOPPED
-            playbackEventListener?.onPlaybackStopped(id)
-            return true
-        }
+        threadLock.withLock {
+            Logger.d(TAG, "[stop] $id")
+            if (id.id == currentSourceId.id && playerActivity.isActive()) {
+                player.stop()
+                player.reset()
+                playerActivity = AudioPlayerAgentInterface.State.STOPPED
+                playbackEventListener?.onPlaybackStopped(id)
+                return true
+            }
 
-        return false
+            return false
+        }
     }
 
     override fun pause(id: SourceId): Boolean {
-        Logger.d(TAG, "[pause] $id, ${player.isPlaying}")
-        if (id.id == currentSourceId.id && player.isPlaying) {
-            player.pause()
-            playerActivity = AudioPlayerAgentInterface.State.PAUSED
-            playbackEventListener?.onPlaybackPaused(id)
-            return true
-        }
+        threadLock.withLock {
+            Logger.d(TAG, "[pause] $id, ${player.isPlaying}")
+            if (id.id == currentSourceId.id && player.isPlaying) {
+                player.pause()
+                playerActivity = AudioPlayerAgentInterface.State.PAUSED
+                playbackEventListener?.onPlaybackPaused(id)
+                return true
+            }
 
-        return false
+            return false
+        }
     }
 
     override fun resume(id: SourceId): Boolean {
-        Logger.d(TAG, "[resume] $id")
-        if (id.id == currentSourceId.id && playerActivity.isActive()) {
-            player.start()
-            playerActivity = AudioPlayerAgentInterface.State.PLAYING
-            playbackEventListener?.onPlaybackResumed(id)
-            return true
-        }
+        threadLock.withLock {
+            Logger.d(TAG, "[resume] $id")
+            if (id.id == currentSourceId.id && playerActivity.isActive()) {
+                player.start()
+                playerActivity = AudioPlayerAgentInterface.State.PLAYING
+                playbackEventListener?.onPlaybackResumed(id)
+                return true
+            }
 
-        return false
+            return false
+        }
     }
 
     override fun seekTo(id: SourceId, offsetInMilliseconds: Long): Boolean {
-        if (id.id == currentSourceId.id && playerActivity.isActive()) {
-            player.seekTo(offsetInMilliseconds.toInt())
-            return true
-        }
+        threadLock.withLock {
+            if (id.id == currentSourceId.id && playerActivity.isActive()) {
+                player.seekTo(offsetInMilliseconds.toInt())
+                return true
+            }
 
-        return false
+            return false
+        }
     }
 
     override fun getOffset(id: SourceId): Long {
-        if (id.id == currentSourceId.id && playerActivity.isActive()) {
-            return player.currentPosition.toLong()
-        }
+        threadLock.withLock {
+            if (id.id == currentSourceId.id && playerActivity.isActive()) {
+                return player.currentPosition.toLong()
+            }
 
-        return MEDIA_PLAYER_INVALID_OFFSET
+            return MEDIA_PLAYER_INVALID_OFFSET
+        }
     }
 
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
-        playbackEventListener = listener
+        threadLock.withLock {
+            playbackEventListener = listener
+        }
     }
 
     override fun setBufferEventListener(listener: MediaPlayerControlInterface.BufferEventListener) {
-        bufferEventListener = listener
+        threadLock.withLock {
+            bufferEventListener = listener
+        }
     }
 
     override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
-        durationListener = listener
+        threadLock.withLock {
+            durationListener = listener
+        }
     }
 }
