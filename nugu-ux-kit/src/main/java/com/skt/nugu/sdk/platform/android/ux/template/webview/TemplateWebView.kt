@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.webview
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet

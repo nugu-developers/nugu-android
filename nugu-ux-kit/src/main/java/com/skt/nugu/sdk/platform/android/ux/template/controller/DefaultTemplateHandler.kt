@@ -114,7 +114,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
 
     override fun onControlResult(action: String, result: String) {
         Logger.i(TAG, "onControlResult() action: $action, result : $result")
-    }
+    }g
 
     override fun showToast(text: String) {
         Logger.w(TAG, "onToastRequested() need to be implemented in application side")
