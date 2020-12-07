@@ -440,6 +440,9 @@ class DefaultASRAgent(
     private fun setHandlingExpectSpeechFailed(param: ExpectSpeechDirectiveParam?, info: DirectiveInfo, msg: String) {
         setHandlingFailed(info, msg)
         clearCurrentAttributeKeyIfMatchWith(param)
+        param?.let {
+            sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+        }
         param?.directive?.payload?.let {
             sendListenFailed(it, info.directive.getDialogRequestId())
         }
