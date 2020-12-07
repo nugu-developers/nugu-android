@@ -340,6 +340,7 @@ class SpeechRecognizerAggregator(
                 "[startListeningInternal] Failed to open AudioInputStream"
             )
             setState(SpeechRecognizerAggregatorInterface.State.ERROR)
+            callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
         }
     }
 

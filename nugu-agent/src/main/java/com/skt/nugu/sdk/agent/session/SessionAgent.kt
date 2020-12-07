@@ -69,8 +69,6 @@ class SessionAgent(
 
         override fun value(): String = buildCompactContext().apply {
             add("list", JsonArray().apply {
-                // remove duplication
-//                val uniqueSessions = HashSet<SessionManagerInterface.Session>(sessions.values)
                 sessions.forEach { session ->
                     add(JsonObject().apply {
                         addProperty("sessionId", session.sessionId)
@@ -95,12 +93,7 @@ class SessionAgent(
             val state = if(contextType == ContextType.COMPACT) {
                 StateContext.CompactContextState
             } else {
-                val map = HashMap<String, SessionManagerInterface.Session>()
-                // get a session per playServiceId which recent set.
-                sessionManager.getActiveSessions().forEach {
-                    map[it.value.playServiceId] = it.value
-                }
-                StateContext(HashSet(map.values))
+                StateContext(HashSet(sessionManager.getActiveSessions().values))
             }
 
             contextSetter.setState(

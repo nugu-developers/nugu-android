@@ -104,7 +104,10 @@ internal class DeviceGatewayClient(
      * @return true is success, otherwise false
      */
     override fun connect(): Boolean {
-        if (isConnected.get()) {
+        Logger.d(TAG, "[connect] isConnected = ${isConnected()}, keepConnection = $keepConnection")
+
+        if (isConnected()) {
+            Logger.w(TAG, "[connect] already connected")
             return false
         }
 
@@ -115,33 +118,35 @@ internal class DeviceGatewayClient(
             )
             return false
         }
-
-        policy.apply {
-            client = createChannelBuilderWith(this,authDelegate)
-            if(keepConnection) {
-                directivesService =
-                    DirectivesService.create(
+        synchronized(this) {
+            policy.apply {
+                client = createChannelBuilderWith(this, authDelegate)
+                eventsService =
+                    EventsService.create(
                         this,
                         client,
                         this@DeviceGatewayClient
                     )
+
+                if (keepConnection) {
+                    directivesService =
+                        DirectivesService.create(
+                            this,
+                            client,
+                            this@DeviceGatewayClient
+                        )
+
+                    pingService =
+                        PingService.create(
+                            this,
+                            client,
+                            healthCheckPolicy,
+                            this@DeviceGatewayClient
+                        )
+                } else {
+                    handleConnectedIfNeeded()
+                }
             }
-
-            pingService =
-                PingService.create(
-                    this,
-                    client,
-                    healthCheckPolicy,
-                    keepConnection,
-                    this@DeviceGatewayClient
-                )
-            eventsService =
-                EventsService.create(
-                    this,
-                    client,
-                    this@DeviceGatewayClient
-                )
-
         }
         return true
     }
@@ -150,15 +155,15 @@ internal class DeviceGatewayClient(
      * disconnect from DeviceGateway
      */
     override fun disconnect() {
-        directivesService?.shutdown()
-        directivesService = null
-        eventsService?.shutdown()
-        eventsService = null
-        pingService?.shutdown()
-        pingService = null
+        stopServerInitiated()
 
-        ChannelBuilderUtils.shutdown(executor, client)
-        isConnected.set(false)
+        synchronized(this) {
+            eventsService?.shutdown()
+            eventsService = null
+
+            ChannelBuilderUtils.shutdown(executor, client)
+            isConnected.set(false)
+        }
     }
 
     /**
@@ -260,13 +265,14 @@ internal class DeviceGatewayClient(
             }
         }
 
-        disconnect()
+        // Only stop ServerInitiated and wait for events to be sent.
+        stopServerInitiated()
+        isConnected.set(false)
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
                 Logger.w(TAG, "[awaitRetry] Error : $error")
 
                 when (status.code) {
-                    Status.Code.PERMISSION_DENIED,
                     Status.Code.UNAUTHENTICATED -> {
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
@@ -279,14 +285,26 @@ internal class DeviceGatewayClient(
             }
 
             override fun onRetry(retriesAttempted: Int) {
-                if (isConnected.get()) {
-                    Logger.w(TAG, "[awaitRetry] connected")
-                } else {
-                    disconnect()
-                    connect()
+                Logger.w(TAG, "[awaitRetry] onRetry : $retriesAttempted")
+                if (isConnected()) {
+                    Logger.w(TAG, "[awaitRetry] It is currently connected, but will try again.")
                 }
+                disconnect()
+                connect()
             }
         })
+    }
+
+    private fun stopServerInitiated() {
+        if(!keepConnection) {
+            return
+        }
+        synchronized(this) {
+            pingService?.shutdown()
+            pingService = null
+            directivesService?.shutdown()
+            directivesService = null
+        }
     }
 
     override fun shutdown() {
@@ -327,7 +345,6 @@ internal class DeviceGatewayClient(
      * @param directiveMessage
      */
     override fun onReceiveDirectives(directiveMessage: List<DirectiveMessage>) {
-        handleConnectedIfNeeded()
         messageConsumer?.consumeDirectives(directiveMessage)
     }
 

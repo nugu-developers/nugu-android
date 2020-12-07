@@ -35,7 +35,6 @@ internal class PingService(
     val policy: ServerPolicy,
     val client: OkHttpClient,
     private val healthCheckPolicy: HealthCheckPolicy,
-    val repeat: Boolean,
     val observer: DeviceGatewayTransport
 ) {
     private var intervalFuture: ScheduledFuture<*>? = null
@@ -51,14 +50,12 @@ internal class PingService(
             policy: ServerPolicy,
             client: OkHttpClient,
             healthCheckPolicy: HealthCheckPolicy,
-            repeat: Boolean,
             observer: DeviceGatewayTransport
         ): PingService {
             return PingService(
                 policy,
                 client,
                 healthCheckPolicy,
-                repeat,
                 observer
             )
         }
@@ -70,7 +67,7 @@ internal class PingService(
         }
 
     init {
-        nextInterval(if(repeat) newDelayMillis() else 0)
+        nextInterval(0)
     }
 
     private fun newDelayMillis() : Long {
@@ -105,8 +102,7 @@ internal class PingService(
         }
         intervalFuture = executorService.schedule({
             if(executePingRequest()) {
-                if(repeat) nextInterval(newDelayMillis())
-                else shutdown()
+                nextInterval(newDelayMillis())
             }
         }, delay, TimeUnit.MILLISECONDS)
     }

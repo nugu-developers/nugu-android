@@ -58,8 +58,7 @@ class RenderDirectiveHandler(
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
         configuration[RENDER] = BlockingPolicy(
-            BlockingPolicy.MEDIUM_AUDIO,
-            true
+            blocking = BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
 
         return configuration

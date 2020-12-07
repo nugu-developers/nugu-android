@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
+import android.graphics.Rect
 import android.support.design.widget.CoordinatorLayout
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.R
+import com.skt.nugu.sdk.platform.android.ux.utils.NetworkUtils
 
 class ChromeWindow(context: Context, val view: View) :
     SpeechRecognizerAggregatorInterface.OnStateChangeListener
@@ -45,24 +47,54 @@ class ChromeWindow(context: Context, val view: View) :
     }
 
     private var callback: OnChromeWindowCallback? = null
-    private lateinit var contentLayout: ChromeWindowContentLayout
+    private var contentLayout: ChromeWindowContentLayout
+    private var screenOnWhileASR = false
 
+    /**
+     * set ChromeWindow callback
+    */
     fun setOnChromeWindowCallback(callback: OnChromeWindowCallback?) {
         this.callback = callback
     }
 
+    /**
+     * Returns the visibility of this view
+     * @return True if the view is expanded
+     */
     fun isShown(): Boolean {
         return contentLayout.isExpanded()
     }
 
+    /**
+     * Dismiss the view
+     */
     fun dismiss() {
         contentLayout.dismiss()
+    }
+
+    /**
+     * If some part of this view is not clipped by any of its parents, then
+     * return that area in r in global (root) coordinates.
+     */
+    fun getGlobalVisibleRect(outRect: Rect){
+        contentLayout.getGlobalVisibleRect(outRect)
+    }
+    /**
+     * Control whether we should use the attached view to keep the
+     * screen on while asr is occurring.
+     * @param screenOn Supply true to keep the screen on, false to allow it to turn off.
+     */
+    fun setScreenOnWhileASR (screenOn: Boolean) {
+        if (screenOnWhileASR != screenOn) {
+            screenOnWhileASR = screenOn
+            updateLayoutScreenOn()
+        }
     }
 
     private var isThinking = false
     private var isSpeaking = false
     private var isDialogMode = false
-
+    private var isIdle = false
 
     init {
         val parent = view.findSuitableParent()
@@ -115,6 +147,7 @@ class ChromeWindow(context: Context, val view: View) :
     ) {
         isDialogMode = dialogMode
         isThinking = newState == DialogUXStateAggregatorInterface.DialogUXState.THINKING
+        isIdle = newState == DialogUXStateAggregatorInterface.DialogUXState.IDLE
 
         view.post {
             Logger.d(
@@ -146,10 +179,16 @@ class ChromeWindow(context: Context, val view: View) :
                     // nothing to do
                 }
             }
+            updateLayoutScreenOn()
         }
     }
 
     private fun handleExpecting(dialogMode: Boolean, payload: RenderDirective.Payload?) {
+        if(!NetworkUtils.isNetworkAvailable(view.context)) {
+            Logger.d(TAG, "Not connected to internet!")
+            return
+        }
+
         if (!dialogMode) {
             contentLayout.setHint(R.string.guide_text)
             contentLayout.showText()
@@ -198,6 +237,13 @@ class ChromeWindow(context: Context, val view: View) :
         }
     }
 
+    private fun updateLayoutScreenOn() {
+        val screenOn = screenOnWhileASR && !isIdle
+        if(view.keepScreenOn != screenOn) {
+            view.keepScreenOn = screenOn
+            Logger.d(TAG, "[updateLayoutScreenOn] ${view.keepScreenOn}")
+        }
+    }
     private val voiceChromeController =
         object : SpeechRecognizerAggregatorInterface.OnStateChangeListener,
             DialogUXStateAggregatorInterface.Listener {

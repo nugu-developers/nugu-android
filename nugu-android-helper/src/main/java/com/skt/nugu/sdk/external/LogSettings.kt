@@ -13,10 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.platform.android.service.webkit
 
-object Const {
-    val SERVICE_SETTING_URL = "https://webview.sktnugu.com/3pp/main.html?screenCode=setting_webview"
-    val AGREEMENT_URL = "https://webview.sktnugu.com/3pp/agreement/list.html"
-    val PRIVACY_URL = "https://privacy.sktelecom.com/view.do?ctg=policy&name=policy"
+package com.skt.nugu.sdk.external
+
+import com.skt.nugu.silvertray.player.Player
+
+object LogSettings {
+    fun enable(enabled: Boolean) {
+        com.skt.nugu.jademarblelib.Logger.enabled = enabled
+        com.skt.nugu.keensense.tyche.Logger.enabled = enabled
+        if(enabled) {
+            Player.logLevel(Player.ASSERT)
+        } else {
+            Player.logLevel(Player.HIDE)
+        }
+    }
 }

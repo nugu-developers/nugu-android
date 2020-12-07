@@ -137,7 +137,6 @@ class BackOff private constructor(builder: Builder) {
     private fun isRetryableServiceException(code: Status.Code): Boolean {
         return when(code) {
             Status.Code.OK,
-            Status.Code.PERMISSION_DENIED,
             Status.Code.UNAUTHENTICATED -> false
             else -> true
         }

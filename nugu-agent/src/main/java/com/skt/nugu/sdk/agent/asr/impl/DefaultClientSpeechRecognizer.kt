@@ -121,8 +121,7 @@ class DefaultClientSpeechRecognizer(
 
 //        val sendPositionAndWakeupBoundary =
 //            computeSendPositionAndWakeupBoundary(audioFormat, wakeupBoundary)
-
-        val payloadWakeup = if(wakeupInfo?.word != null && wakeupInfo.power != null){
+        val payloadWakeup = if(wakeupInfo?.word != null){
             PayloadWakeup(wakeupInfo.word, null, wakeupInfo.power)
         } else {
             null
@@ -279,8 +278,16 @@ class DefaultClientSpeechRecognizer(
         ).apply {
             request.call = this
             if(!this.enqueue(object: MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                        Logger.d(TAG, "[onFailure] request: $request, status: $status")
+                    override fun onFailure(req: MessageRequest, status: Status) {
+                        Logger.d(TAG, "[onFailure] request: $req, status: $status")
+                        request.errorTypeForCausingEpdStop = when (status.error) {
+                            Status.StatusError.OK /** cancel, no error **/,
+                            Status.StatusError.TIMEOUT /** Nothing to do because handle on [onResponseTimeout] **/,
+                            Status.StatusError.UNKNOWN -> /** Same as return false of [enqueue] **/ return
+                            Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                            Status.StatusError.UNAUTHENTICATED -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                        }
+                        endPointDetector.stopDetector()
                     }
 
                     override fun onSuccess(request: MessageRequest) {

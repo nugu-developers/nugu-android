@@ -23,7 +23,7 @@ import java.nio.ByteBuffer
 /**
  * Default implementation of [AudioSource] for [android.media.AudioRecord]
  */
-internal class AudioRecordSource(
+internal open class AudioRecordSource(
     private val audioSource: Int,
     private val sampleRate: Int,
     private val channelConfig: Int,
@@ -31,10 +31,10 @@ internal class AudioRecordSource(
     private val bufferSize: Int
 ) : AudioSource {
     companion object {
-        private const val TAG = "AudioRecordSource"
+        const val TAG = "AudioRecordSource"
     }
 
-    private var audioRecord: AudioRecord? = null
+    protected var audioRecord: AudioRecord? = null
 
     override fun open(): Boolean {
         Logger.d(TAG, "[open]")

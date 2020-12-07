@@ -440,6 +440,9 @@ class DefaultASRAgent(
     private fun setHandlingExpectSpeechFailed(param: ExpectSpeechDirectiveParam?, info: DirectiveInfo, msg: String) {
         setHandlingFailed(info, msg)
         clearCurrentAttributeKeyIfMatchWith(param)
+        param?.let {
+            sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+        }
         param?.directive?.payload?.let {
             sendListenFailed(it, info.directive.getDialogRequestId())
         }
@@ -741,7 +744,7 @@ class DefaultASRAgent(
 
         configuration[EXPECT_SPEECH] = BlockingPolicy(
             BlockingPolicy.MEDIUM_AUDIO,
-            true
+            BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
         configuration[NOTIFY_RESULT] = BlockingPolicy()
 

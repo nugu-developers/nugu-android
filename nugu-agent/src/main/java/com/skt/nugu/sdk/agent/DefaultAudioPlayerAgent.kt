@@ -109,7 +109,7 @@ class DefaultAudioPlayerAgent(
         private const val TAG = "AudioPlayerAgent"
 
         const val NAMESPACE = "AudioPlayer"
-        val VERSION = Version(1,4)
+        val VERSION = Version(1,5)
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
@@ -392,7 +392,15 @@ class DefaultAudioPlayerAgent(
                 if(!executeShouldResumeNextItem(currentAudioInfo, nextAudioInfo)) {
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - play new item: ${directive.getMessageId()}")
                     // stop current if play new item.
-                    if(executeStop(StopReason.PLAY_ANOTHER)) {
+                    val currentPlayServiceId = currentAudioInfo?.getPlayServiceId()
+                    val nextPlayServiceId = nextAudioInfo.getPlayServiceId()
+                    val stopReason = if(currentPlayServiceId == nextPlayServiceId) {
+                        StopReason.PLAY_ANOTHER
+                    } else {
+                        StopReason.STOP
+                    }
+
+                    if(executeStop(stopReason)) {
                         // should wait until stopped (onPlayerStopped will be called)
                     } else {
                         // fetch now
@@ -675,7 +683,7 @@ class DefaultAudioPlayerAgent(
         // pause directive handler
         PlaybackDirectiveHandler(
             pauseDirectiveController,
-            Pair(PAUSE, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false))
+            Pair(PAUSE, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
         ).apply {
             directiveGroupProcessor.addPostProcessedListener(this)
             directiveSequencer.addDirectiveHandler(this)
@@ -684,7 +692,7 @@ class DefaultAudioPlayerAgent(
         // stop directive handler
         PlaybackDirectiveHandler(
             stopDirectiveController,
-            Pair(STOP, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false))
+            Pair(STOP, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
         ).apply {
             directiveGroupProcessor.addPostProcessedListener(this)
             directiveSequencer.addDirectiveHandler(this)
@@ -693,7 +701,7 @@ class DefaultAudioPlayerAgent(
         // play directive handler
         PlaybackDirectiveHandler(
             playDirectiveController,
-            Pair(PLAY, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO, false))
+            Pair(PLAY, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
         ).apply {
             directiveGroupProcessor.addPostProcessedListener(this)
             directiveSequencer.addDirectiveHandler(this)
@@ -1835,7 +1843,7 @@ class DefaultAudioPlayerAgent(
         fun refreshSchedule() {
             Logger.d(TAG, "[$CLASS_TAG.refreshSchedule]")
             executor.submit {
-                refreshPausedStopFutureIfRunning()
+//                refreshPausedStopFutureIfRunning()
                 refreshFinishDelayFutureIfRunning()
             }
         }
