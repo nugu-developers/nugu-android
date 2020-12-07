@@ -29,7 +29,7 @@ import android.webkit.WebViewClient
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
-import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler.TemplateInfo
 import kotlinx.android.synthetic.main.fragment_template.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -105,7 +105,7 @@ class TemplateFragment : Fragment() {
             (this as? WebView)?.webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     if (request?.url.toString() == "nugu://home") {
-                        close()
+                        (activity as? MainActivity)?.clearAllTemplates()
                         return true
                     }
                     return super.shouldOverrideUrlLoading(view, request)
@@ -114,7 +114,7 @@ class TemplateFragment : Fragment() {
 
             templateHandler = SampleTemplateHandler(
                 ClientManager.getClient(),
-                DefaultTemplateHandler.TemplateInfo(getTemplateId()),
+                TemplateInfo(getTemplateId()),
                 this@TemplateFragment)
 
             template_view?.addView(this.asView())
@@ -167,12 +167,19 @@ class TemplateFragment : Fragment() {
         return arguments?.getString(ARG_PLAY_SERVICE_ID, "") ?: ""
     }
 
+    fun isMediaTemplate(): Boolean {
+        return TemplateView.mediaTemplateTypes.contains(getTemplateType())
+    }
+
     fun reload(templateContent: String) {
         GlobalScope.launch(Dispatchers.Main) {
             templateView?.run {
-                (templateHandler as? SampleTemplateHandler)?.templateInfo = DefaultTemplateHandler.TemplateInfo(getTemplateId())
+                (templateHandler as? SampleTemplateHandler)?.templateInfo = TemplateInfo(getTemplateId())
                 GlobalScope.launch(Dispatchers.Main) {
-                    load(templateContent, deviceTypeCode, getDialogRequestedId())
+                    load(templateContent, deviceTypeCode, getDialogRequestedId(), onLoadingComplete = {
+                        ClientManager.getClient().getDisplay()
+                            ?.displayCardRendered(getTemplateId(), (templateHandler as? SampleTemplateHandler)?.displayController)
+                    })
                 }
             }
         }

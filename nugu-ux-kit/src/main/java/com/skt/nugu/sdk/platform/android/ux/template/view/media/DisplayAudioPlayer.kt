@@ -106,13 +106,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             value?.run {
                 (this as? DefaultTemplateHandler)?.run {
                     observeMediaState()
-                    setClientEventListener(mediaListener)
+                    setClientListener(mediaListener)
                     androidClientRef.get()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                 }
             }
         }
 
-    private val mediaListener = object : TemplateHandler.ClientEventListener {
+    private val mediaListener = object : TemplateHandler.ClientListener {
         override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTime: Long, currentProgress: Float) {
             post {
                 if (activity == AudioPlayerAgentInterface.State.PLAYING) {
@@ -208,8 +208,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         favoriteView.setThrottledOnClickListener { _ ->
-            //todo 로그인 후 테스트
-//            templateInterface?.onPlayerCommand(PlayerCommand.FAVORITE.command, it.toString())
+            templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE.command, favoriteView.isSelected.toString())
+        }
+
+        shuffleView.setThrottledOnClickListener { _ ->
+            templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE.command, shuffleView.isSelected.toString())
         }
 
         progressView.post {
@@ -332,14 +335,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
 
             favorite?.let {
-                favoriteView.setImageResource(
-                    if (it) R.drawable.btn_like_inactive_2
-                    else R.drawable.btn_like_inactive
-                )
-
-                repeatView.setThrottledOnClickListener { _ ->
-                    templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE.command, it.toString())
-                }
+                favoriteView.isSelected = it
             }
 
             repeat?.let {
@@ -355,11 +351,6 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             shuffle?.let {
                 shuffleView.isSelected = it
-
-                shuffleView.setThrottledOnClickListener { view ->
-                    val isShuffle = view?.isSelected ?: false
-                    templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE.command, it.toString())
-                }
             }
         }
     }
