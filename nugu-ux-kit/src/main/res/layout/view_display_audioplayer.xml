@@ -78,6 +78,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_marginTop="4dp"
+                        android:src="@drawable/image_favorite"
                         android:visibility="invisible" />
 
                     <TextView
