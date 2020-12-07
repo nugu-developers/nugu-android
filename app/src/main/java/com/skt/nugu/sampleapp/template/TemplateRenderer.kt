@@ -2,6 +2,7 @@ package com.skt.nugu.sampleapp.template
 
 import android.os.Handler
 import android.os.Looper
+import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
 import androidx.annotation.Keep
@@ -43,33 +44,17 @@ class TemplateRenderer(
             "render() templateId:$templateId, \n templateType:$templateType, \n templateContent:$templateContent, \n header:$header, \n displayType$displayType"
         )
 
-        fun insertType(template: String, type: String): String {
-            try {
-                return JSONObject(template).put("type", type).toString()
-            } catch (e: Throwable) {
-            }
-
-            return template
-        }
-
         mainHandler.post {
-            //todo. How long should we use the logic below
-            val templateContentWithType = insertType(
-                templateContent,
-                when (templateType.contains(other = ".", ignoreCase = true)) {
-                    true -> templateType
-                    false -> "Display.$templateType"
-                }
-            )
+            val templateContentWithType = insertType(templateContent, templateType)
 
             val playServiceId = gson.fromJson<TemplatePayload>(templateContent, TemplatePayload::class.java)?.playServiceId ?: ""
-            var update = false
+            var isReload = false
 
             fragmentManagerRef.get()?.fragments
                 ?.find { it is TemplateFragment && it.getDisplayType() == displayType.name && it.getPlayServiceId() == playServiceId }
                 ?.run {
                     (this as TemplateFragment).run {
-                        update = true
+                        isReload = true
 
                         ClientManager.getClient().getDisplay()?.displayCardCleared(getTemplateId())
                         arguments = TemplateFragment.createBundle(templateType,
@@ -80,11 +65,10 @@ class TemplateRenderer(
                             playServiceId)
 
                         reload(templateContentWithType)
-                        ClientManager.getClient().getDisplay()?.displayCardRendered(templateId, null)
                     }
                 }
 
-            if (!update) {
+            if (!isReload) {
                 fragmentManagerRef.get()?.beginTransaction()?.run {
                     setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                         .add(
@@ -96,7 +80,9 @@ class TemplateRenderer(
                                 template = templateContentWithType,
                                 displayType = displayType.name,
                                 playServiceId = playServiceId
-                            ),
+                            ).also { newFragment ->
+                                onNewTemplate(newFragment)
+                            },
                             displayType.name
                         )
                         .commitNowAllowingStateLoss()
@@ -115,8 +101,7 @@ class TemplateRenderer(
         fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getTemplateId() == templateId }
             ?.let { foundFragment ->
                 mainHandler.post {
-                    fragmentManagerRef.get()?.beginTransaction()?.remove(foundFragment)?.commitAllowingStateLoss()
-                    ClientManager.getClient().getDisplay()?.displayCardCleared(templateId)
+                    (foundFragment as TemplateFragment).close()
                 }
             }
     }
@@ -128,6 +113,31 @@ class TemplateRenderer(
             ?.let { foundFragment ->
                 (foundFragment as TemplateFragment).update(templateContent)
             }
+    }
+
+    private fun onNewTemplate(newFragment: Fragment) {
+        if ((newFragment as? TemplateFragment)?.isMediaTemplate() == true) {
+            fragmentManagerRef.get()?.fragments?.find { (it as? TemplateFragment)?.isMediaTemplate() == true }
+                ?.run {
+                    Log.i(TAG, "clear previous media template ${(this as TemplateFragment).getTemplateId()}")
+                    clear((this as TemplateFragment).getTemplateId(), true)
+                }
+        }
+    }
+
+    //todo. How long should we use the logic below
+    private fun insertType(content: String, type: String): String {
+        val newType = when (type.contains(other = ".", ignoreCase = true)) {
+            true -> type
+            false -> "Display.$type"
+        }
+
+        try {
+            return JSONObject(content).put("type", newType).toString()
+        } catch (e: Throwable) {
+        }
+
+        return content
     }
 
 }
