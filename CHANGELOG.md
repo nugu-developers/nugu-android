@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 0.9.40 *(2020-12-07)*
+-----------------------------
+* Fix: Add missing new backoff logic to http2 #1349 (#1442)
+* Fix: Call missing callback (#1452)
+* Fix: Fix threading issue for getOffset() (#1456)
+* Improve: Handling error in network not available (#1440)
+* Improve: Update SampleAPP to set more detailed URL scheme (#1444)
+* New: Support AudioPlayer v1.5 (#1448)
+
 Version 0.9.39 *(2020-11-27)*
 -----------------------------
 * Fix: Fix wrong directive result handling (#1424)
