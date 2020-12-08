@@ -1,4 +1,8 @@
 ext {
+    compileSdkVersion=29
+    minSdkVersion=19
+    targetSdkVersion=29
+
     keensenseVersion="0.2.8"
     jademarbleVersion="0.2.5"
     silvertrayVersion="4.3.1"
