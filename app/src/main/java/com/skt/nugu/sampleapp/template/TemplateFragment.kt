@@ -27,6 +27,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.skt.nugu.sampleapp.R
+import com.skt.nugu.sampleapp.activity.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler.TemplateInfo
