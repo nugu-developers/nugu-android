@@ -1,11 +1,26 @@
+/**
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http:www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
-import android.util.Log
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
 import java.lang.ref.WeakReference
@@ -29,7 +44,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
 
     private val mediaDurationListener = object : AudioPlayerAgentInterface.OnDurationListener {
         override fun onRetrieved(duration: Long?, context: AudioPlayerAgentInterface.Context) {
-            Log.d(TAG, "onDurationRetrieved $duration")
+            Logger.d(TAG, "onDurationRetrieved $duration")
             if (context.templateId == templateInfo.templateId) {
                 audioDurationMs = duration ?: 0L
                 clientListener?.onMediaDurationRetrieved(audioDurationMs)
@@ -39,7 +54,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
 
     private val mediaStateListener = object : AudioPlayerAgentInterface.Listener {
         override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
-            Log.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
+            Logger.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
 
             currentMediaState = activity
             clientListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage())
@@ -52,65 +67,65 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
     val displayController = object : DisplayAggregatorInterface.Controller {
         override fun controlFocus(direction: Direction): Boolean {
             return (clientListener?.controlFocus(direction) ?: false).also {
-                Log.i(TAG, "controlFocus() $direction. return $it")
+                Logger.i(TAG, "controlFocus() $direction. return $it")
             }
         }
 
         override fun controlScroll(direction: Direction): Boolean {
             return (clientListener?.controlScroll(direction) ?: false).also {
-                Log.i(TAG, "controlScroll() $direction. return $it")
+                Logger.i(TAG, "controlScroll() $direction. return $it")
             }
         }
 
         override fun getFocusedItemToken(): String? {
             return clientListener?.getFocusedItemToken().also {
-                Log.i(TAG, "getFocusedItemToken(). return $it")
+                Logger.i(TAG, "getFocusedItemToken(). return $it")
             }
         }
 
         override fun getVisibleTokenList(): List<String>? {
             return clientListener?.getVisibleTokenList().also {
-                Log.i(TAG, "getVisibleTokenList(). return $it")
+                Logger.i(TAG, "getVisibleTokenList(). return $it")
             }
         }
     }
 
     override fun onElementSelected(tokenId: String) {
-        Log.i(TAG, "onElementSelected() $tokenId")
+        Logger.i(TAG, "onElementSelected() $tokenId")
         androidClientRef.get()?.run { getDisplay()?.setElementSelected(templateInfo.templateId, tokenId) }
     }
 
     override fun onChipSelected(text: String) {
-        Log.i(TAG, "ohChipSelected() $text")
+        Logger.i(TAG, "ohChipSelected() $text")
         androidClientRef.get()?.run { requestTextInput(text) }
     }
 
     override fun onCloseClicked() {
-        Log.w(TAG, "onClose() need to be implemented in application side")
+        Logger.w(TAG, "onClose() need to be implemented in application side")
     }
 
     override fun onNuguButtonSelected() {
-        Log.w(TAG, "onNuguButtonSelected() need to be implemented in application side")
+        Logger.w(TAG, "onNuguButtonSelected() need to be implemented in application side")
     }
 
     override fun onContextChanged(context: String) {
-        Log.i(TAG, "onContextChanged() $context")
+        Logger.i(TAG, "onContextChanged() $context")
     }
 
     override fun onControlResult(action: String, result: String) {
-        Log.i(TAG, "onControlResult() action: $action, result : $result")
+        Logger.i(TAG, "onControlResult() action: $action, result : $result")
     }
 
     override fun showToast(text: String) {
-        Log.w(TAG, "onToastRequested() need to be implemented in application side")
+        Logger.w(TAG, "onToastRequested() need to be implemented in application side")
     }
 
     override fun showActivity(className: String) {
-        Log.w(TAG, "onActivityRequested() need to be implemented in application side")
+        Logger.w(TAG, "onActivityRequested() need to be implemented in application side")
     }
 
     override fun playTTS(text: String) {
-        Log.i(TAG, "onTTSRequested() $text")
+        Logger.i(TAG, "onTTSRequested() $text")
         androidClientRef.get()?.run { requestTTS(text) }
     }
 
@@ -119,7 +134,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
     }
 
     override fun onPlayerCommand(command: String, param: String) {
-        Log.i(TAG, "onPlayerCommand() $command, $param ")
+        Logger.i(TAG, "onPlayerCommand() $command, $param ")
         androidClientRef.get()?.run {
             when (PlayerCommand.from(command)) {
                 PlayerCommand.PLAY -> getPlaybackRouter().buttonPressed(PlaybackButton.PLAY)
@@ -136,7 +151,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
     }
 
     private fun startMediaProgressSending() {
-        Log.d(TAG, "startProgressMessageSending")
+        Logger.d(TAG, "startProgressMessageSending")
         mediaProgressJob?.cancel()
 
         mediaProgressJob = fixedRateTimer(period = 1000, initialDelay = 1000, action = {
@@ -145,7 +160,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
     }
 
     private fun stopMediaProgressSending() {
-        Log.d(TAG, "stopProgressMessageSending")
+        Logger.d(TAG, "stopProgressMessageSending")
         mediaProgressJob?.cancel()
     }
 
@@ -160,15 +175,15 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var template
     }
 
     fun observeMediaState() {
-        Log.i(TAG, "observeMediaState")
+        Logger.i(TAG, "observeMediaState")
         androidClientRef.get()?.audioPlayerAgent?.addListener(mediaStateListener)
         androidClientRef.get()?.audioPlayerAgent?.addOnDurationListener(mediaDurationListener)
     }
 
     override fun clear() {
-        Log.i(TAG, "clear")
+        Logger.i(TAG, "clear")
         androidClientRef.get()?.audioPlayerAgent?.run {
-            Log.i(TAG, "mediaStateListener removed successfully")
+            Logger.i(TAG, "mediaStateListener removed successfully")
             removeListener(mediaStateListener)
             removeOnDurationListener(mediaDurationListener)
         }
