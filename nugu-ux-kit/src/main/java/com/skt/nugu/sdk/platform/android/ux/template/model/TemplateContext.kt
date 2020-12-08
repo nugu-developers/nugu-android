@@ -15,6 +15,9 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.model
 
+import android.support.annotation.Keep
+
+@Keep
 data class TemplateContext(
     var focusedItemToken: String?,
     var visibleTokenList: List<String>?,
