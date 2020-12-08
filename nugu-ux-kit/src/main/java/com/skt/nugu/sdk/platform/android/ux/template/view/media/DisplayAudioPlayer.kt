@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -29,6 +28,7 @@ import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.*
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
@@ -219,7 +219,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             progressView.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     if (fromUser) {
-                        Log.i(TAG, "onProgressChanged fromUser $progress")
+                        Logger.i(TAG, "onProgressChanged fromUser $progress")
                         val offset = mediaDurationMs / 100 * progressView.progress
                         playtime.updateText(TemplateUtils.convertToTimeMs(offset.toInt()), true)
                     }
@@ -229,7 +229,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 }
 
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    Log.i(TAG, "onStopTrackingTouch ${progressView.progress}")
+                    Logger.i(TAG, "onStopTrackingTouch ${progressView.progress}")
                     (templateHandler as? DefaultTemplateHandler)?.androidClientRef?.get()?.run {
                         val offset = mediaDurationMs / 100 * progressView.progress
                         audioPlayerAgent?.seek(offset)
@@ -265,7 +265,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
-        Log.i(TAG, "load. $templateContent")
+        Logger.i(TAG, "load. $templateContent")
 
         fromJsonOrNull(templateContent, AudioPlayer::class.java)?.let { item ->
             load(item)
