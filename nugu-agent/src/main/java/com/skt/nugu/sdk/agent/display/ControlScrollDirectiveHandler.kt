@@ -19,11 +19,14 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.agent.common.InteractionControl
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -34,7 +37,8 @@ class ControlScrollDirectiveHandler(
     private val controller: Controller,
     private val contextGetter: ContextGetterInterface,
     private val messageSender: MessageSender,
-    private val namespaceAndName: NamespaceAndName
+    private val namespaceAndName: NamespaceAndName,
+    private val interactionControlManager: InteractionControlManagerInterface
 ) : AbstractDirectiveHandler() {
     companion object {
         private const val TAG = "ControlScrollDirectiveHandler"
@@ -57,7 +61,9 @@ class ControlScrollDirectiveHandler(
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("direction")
-        val direction: Direction
+        val direction: Direction,
+        @SerializedName("interactionControl")
+        val interactionControl: InteractionControl?
     )
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -73,18 +79,52 @@ class ControlScrollDirectiveHandler(
             return
         }
 
+        val interactionControl = if(payload.interactionControl != null) {
+            object : com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl {
+                override fun getMode(): InteractionControlMode = when(payload.interactionControl.mode) {
+                    InteractionControl.Mode.MULTI_TURN -> InteractionControlMode.MULTI_TURN
+                    InteractionControl.Mode.NONE -> InteractionControlMode.NONE
+                }
+            }
+        } else {
+            null
+        }
+
+        interactionControl?.let {
+            interactionControlManager.start(it)
+        }
+
+        val eventCallback = object: MessageSender.Callback {
+            override fun onFailure(request: MessageRequest, status: Status) {
+                interactionControl?.let {
+                    interactionControlManager.finish(it)
+                }
+            }
+
+            override fun onSuccess(request: MessageRequest) {
+                interactionControl?.let {
+                    interactionControlManager.finish(it)
+                }
+            }
+
+            override fun onResponseStart(request: MessageRequest) {
+            }
+
+        }
         val referrerDialogRequestId = info.directive.header.dialogRequestId
         if (controller.controlScroll(payload.playServiceId, payload.direction)) {
             sendControlScrollEvent(
                 info.directive.payload,
                 "${NAME_CONTROL_SCROLL}${NAME_SUCCEEDED}",
-                referrerDialogRequestId
+                referrerDialogRequestId,
+                eventCallback
             )
         } else {
             sendControlScrollEvent(
                 info.directive.payload,
                 "${NAME_CONTROL_SCROLL}${NAME_FAILED}",
-                referrerDialogRequestId
+                referrerDialogRequestId,
+                eventCallback
             )
         }
         setHandlingCompleted(info)
@@ -104,7 +144,8 @@ class ControlScrollDirectiveHandler(
     private fun sendControlScrollEvent(
         payload: String,
         name: String,
-        referrerDialogRequestId: String
+        referrerDialogRequestId: String,
+        callback: MessageSender.Callback?
     ) {
         contextGetter.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
@@ -117,16 +158,7 @@ class ControlScrollDirectiveHandler(
                     ).payload(payload)
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
-                ).enqueue( object : MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                    }
-
-                    override fun onSuccess(request: MessageRequest) {
-                    }
-
-                    override fun onResponseStart(request: MessageRequest) {
-                    }
-                })
+                ).enqueue(callback)
             }
         }, namespaceAndName)
     }
