@@ -41,7 +41,8 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
-import com.skt.nugu.sampleapp.template.FragmentTemplateRenderer
+import com.skt.nugu.sampleapp.template.TemplateFragment
+import com.skt.nugu.sampleapp.template.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -71,7 +72,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     enum class NotificationType {
         TOAST, VOICE
     }
+
     private var notificationType = NotificationType.TOAST
+
     @Volatile
     private var connectionStatus: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
 
@@ -95,18 +98,14 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val onRequestPermissionResultHandler: OnRequestPermissionResultHandler by lazy {
         OnRequestPermissionResultHandler(this)
     }
-    
+
     private lateinit var chromeWindowController: ChromeWindowController
 
     private val speechRecognizerAggregator: SpeechRecognizerAggregator by lazy {
         ClientManager.speechRecognizerAggregator
     }
-    private val containerIds = mutableMapOf(
-        "Display" to R.id.container,
-        "AudioPlayer" to R.id.sliding_container
-    )
 
-    private val templateRenderer = FragmentTemplateRenderer(supportFragmentManager,containerIds)
+    private val templateRenderer = TemplateRenderer(supportFragmentManager, R.id.template_container)
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,17 +124,17 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         chromeWindowController = ChromeWindowController(this, object : ChromeWindowController.OnChromeWindowCallback {
             override fun onExpandStarted() {
-                if(btnStartListening.isFab()) {
+                if (btnStartListening.isFab()) {
                     btnStartListening.visibility = View.INVISIBLE
-                } else /* Type is button */{
+                } else /* Type is button */ {
                     btnStartListening.isActivated = true
                 }
             }
 
             override fun onHiddenFinished() {
-                if(btnStartListening.isFab()) {
+                if (btnStartListening.isFab()) {
                     btnStartListening.visibility = View.VISIBLE
-                }  else /* Type is button */{
+                } else /* Type is button */ {
                     btnStartListening.isActivated = false
                 }
                 speechRecognizerAggregator.stopListening()
@@ -227,12 +226,26 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onBackPressed() {
-        if(chromeWindowController.isShown()) {
+        if (chromeWindowController.isShown()) {
             chromeWindowController.dismiss()
             return
         }
 
+        if (clearAllTemplates()) return
+
         super.onBackPressed()
+    }
+
+    fun clearAllTemplates(): Boolean {
+        supportFragmentManager.fragments.filter { it != null && it is TemplateFragment }.run {
+            this.forEach {
+                (it as TemplateFragment).close()
+            }
+
+            if (this.isNotEmpty()) return true
+        }
+
+        return false
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -302,7 +315,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
         }
 
-        if(state != SpeechRecognizerAggregatorInterface.State.ERROR) {
+        if (state != SpeechRecognizerAggregatorInterface.State.ERROR) {
             tryStartListeningWithTrigger()
         }
         speechRecognizerAggregatorState = state
@@ -320,7 +333,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private fun updateView() {
         // Set the enabled state of this [btnStartListening]
         runOnUiThread {
-            if(!PreferenceHelper.enableNugu(this)) {
+            if (!PreferenceHelper.enableNugu(this)) {
                 btnStartListening.visibility = View.INVISIBLE
                 return@runOnUiThread
             }
@@ -344,8 +357,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             updateView()
         }
 
-        if(status == ConnectionStatusListener.Status.CONNECTING) {
-            when(reason) {
+        if (status == ConnectionStatusListener.Status.CONNECTING) {
+            when (reason) {
                 ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR,
                 ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT,
                 ConnectionStatusListener.ChangedReason.CONNECTION_ERROR,
@@ -356,18 +369,23 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT,
-                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> {
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED
+                -> {
                     /** checking connection status for debugging. **/
                     Log.d(TAG, "reconnecting(reason=$reason)")
                 }
-                else -> { /* nothing to do */ }
+                else -> { /* nothing to do */
+                }
             }
-        } else if(status == ConnectionStatusListener.Status.DISCONNECTED) {
+        } else if (status == ConnectionStatusListener.Status.DISCONNECTED) {
             when (reason) {
                 ConnectionStatusListener.ChangedReason.NONE,
                 ConnectionStatusListener.ChangedReason.SUCCESS,
                 ConnectionStatusListener.ChangedReason.CLIENT_REQUEST,
-                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED -> { /** no error **/ }
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED
+                -> {
+                    /** no error **/
+                }
                 ConnectionStatusListener.ChangedReason.UNRECOVERABLE_ERROR,
                 ConnectionStatusListener.ChangedReason.DNS_TIMEDOUT,
                 ConnectionStatusListener.ChangedReason.CONNECTION_ERROR,
@@ -377,13 +395,14 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.FAILURE_PROTOCOL_ERROR,
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
-                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT -> {
+                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT
+                -> {
                     /**
                      * only server-initiative-directive
                      * If you want to reconnect to the server, run the code below.
                      * But it can be recursive, so you need to manage the count of attempts.
                      **/
-                    if(NuguOAuth.getClient().isSidSupported()) {
+                    if (NuguOAuth.getClient().isSidSupported()) {
                         ExponentialBackOff.awaitConnectedAndRetry(this, object : ExponentialBackOff.Callback {
                             override fun onRetry() {
                                 ClientManager.getClient().disconnect()
@@ -422,7 +441,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                     performRevoke()
                 }
             }
-        } else if(status == ConnectionStatusListener.Status.CONNECTED) {
+        } else if (status == ConnectionStatusListener.Status.CONNECTED) {
             ExponentialBackOff.reset()
         }
     }
@@ -442,7 +461,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
-        when(code) {
+        when (code) {
             SystemAgentInterface.ExceptionCode.PLAY_ROUTER_PROCESSING_EXCEPTION -> {
                 when (notificationType) {
                     NotificationType.TOAST ->
@@ -477,7 +496,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
      * Return {@code true} if the token needs to be refresh_token, Otherwise, it is called 30 seconds again.
      */
     override fun onShouldRefreshToken(): Boolean {
-        if(chromeWindowController.isShown()) {
+        if (chromeWindowController.isShown()) {
             return false
         }
         return true
@@ -495,13 +514,13 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 "Please check the logs for details\n" +
                 "$error")
 
-        if(error.error == NuguOAuthError.NETWORK_ERROR) {
+        if (error.error == NuguOAuthError.NETWORK_ERROR) {
             NuguSnackbar.with(findViewById(R.id.baseLayout))
                 .message(R.string.device_gw_error_006)
                 .show()
             return
         } else {
-            when(error.code) {
+            when (error.code) {
                 NuguOAuthError.USER_ACCOUNT_CLOSED -> {
                     NuguSnackbar.with(findViewById(R.id.baseLayout))
                         .message(R.string.code_user_account_closed)
@@ -523,7 +542,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                         .show()
                 }
                 else -> {
-                    when(error.error) {
+                    when (error.error) {
                         NuguOAuthError.UNAUTHORIZED -> {
                             NuguSnackbar.with(findViewById(R.id.baseLayout))
                                 .message(R.string.error_unauthorized)
@@ -540,7 +559,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                                 .show()
                         }
                         NuguOAuthError.INVALID_CLIENT -> {
-                            if(error.description == NuguOAuthError.FINISHED) {
+                            if (error.description == NuguOAuthError.FINISHED) {
                                 NuguSnackbar.with(findViewById(R.id.baseLayout))
                                     .message(R.string.service_finished)
                                     .show()
