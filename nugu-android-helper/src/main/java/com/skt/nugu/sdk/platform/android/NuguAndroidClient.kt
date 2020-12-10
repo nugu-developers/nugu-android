@@ -728,7 +728,8 @@ class NuguAndroidClient private constructor(
                                         this,
                                         getContextManager(),
                                         getMessageSender(),
-                                        namespaceAndName
+                                        namespaceAndName,
+					getInteractionControlManager()
                                     ).apply {
                                         getDirectiveSequencer().addDirectiveHandler(this)
                                     }

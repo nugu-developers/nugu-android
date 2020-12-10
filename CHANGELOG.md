@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 0.9.41 *(2020-12-09)*
+-----------------------------
+* Improve: Apply sdk version 29 (#1464)
+* Improve: Update SilverTray v4.3.2 (#1466)
+* New: Apply interaction control at Display.ControlScroll (#1460)
+
 Version 0.9.40 *(2020-12-07)*
 -----------------------------
 * Fix: Add missing new backoff logic to http2 #1349 (#1442)
