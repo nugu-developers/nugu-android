@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 0.9.42 *(2020-12-11)*
+-----------------------------
+* Fix: Fix screen orientation in oauth login (#1471)
+* Fix: Fix type mismatch error (#1473)
+* New: Apply template server (#1231)
+
 Version 0.9.41 *(2020-12-09)*
 -----------------------------
 * Improve: Apply sdk version 29 (#1464)
