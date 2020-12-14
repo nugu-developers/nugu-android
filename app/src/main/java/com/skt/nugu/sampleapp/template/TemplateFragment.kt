@@ -30,7 +30,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.activity.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
-import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler.TemplateInfo
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import kotlinx.android.synthetic.main.fragment_template.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
