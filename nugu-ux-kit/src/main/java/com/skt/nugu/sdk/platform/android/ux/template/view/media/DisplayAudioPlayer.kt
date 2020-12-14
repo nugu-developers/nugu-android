@@ -92,6 +92,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     private val thumbTransform = RoundedCorners(dpToPx(10.7f, context))
 
+    private var audioPlayerItem: AudioPlayer? = null
+
     private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
         return try {
             gson.fromJson(json, classOfT)
@@ -126,6 +128,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         override fun onMediaDurationRetrieved(durationMs: Long) {
+            audioPlayerItem?.run {
+                if (content.durationSec == null) {
+                    return
+                }
+            }
+
             fulltime.post {
                 mediaDurationMs = durationMs
                 fulltime.updateText(TemplateUtils.convertToTimeMs(durationMs.toInt()), true)
@@ -133,6 +141,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
+            audioPlayerItem?.run {
+                if (content.durationSec == null) {
+                    return
+                }
+            }
+
             post {
                 progressView.isEnabled = true
                 playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
@@ -280,6 +294,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     private fun load(item: AudioPlayer, isMerge: Boolean = false) {
+        audioPlayerItem = item
+
         item.title?.run {
             titleView.updateText(text, isMerge)
             logoView.updateImage(iconUrl, thumbTransform, isMerge)
