@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import java.lang.ref.WeakReference
 
 class SampleTemplateHandler(androidClient: NuguAndroidClient, templateInfo: TemplateInfo, fragment: TemplateFragment) :

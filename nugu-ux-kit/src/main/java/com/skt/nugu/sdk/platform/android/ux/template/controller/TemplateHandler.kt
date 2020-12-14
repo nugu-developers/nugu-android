@@ -25,6 +25,10 @@ import com.skt.nugu.sdk.agent.common.Direction
  */
 interface TemplateHandler {
 
+    data class TemplateInfo(val templateId: String)
+
+    var templateInfo: TemplateInfo
+
     // template -> client side
     fun onElementSelected(tokenId: String)
 

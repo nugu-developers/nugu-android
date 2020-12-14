@@ -27,9 +27,7 @@ import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-open class DefaultTemplateHandler(androidClient: NuguAndroidClient, var templateInfo: TemplateInfo) : TemplateHandler {
-
-    data class TemplateInfo(val templateId: String)
+open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var templateInfo: TemplateHandler.TemplateInfo) : TemplateHandler {
 
     companion object {
         private const val TAG = "DefaultTemplateHandler"

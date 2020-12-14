@@ -15,9 +15,11 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.webview
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -31,9 +33,14 @@ import com.skt.nugu.sdk.platform.android.BuildConfig
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
+import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
+import java.util.*
+import kotlin.concurrent.fixedRateTimer
+import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 
+@SuppressLint("ClickableViewAccessibility")
 class TemplateWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -57,12 +64,15 @@ class TemplateWebView @JvmOverloads constructor(
                 addJavascriptInterface(WebAppInterface(value), "Android")
                 value.setClientListener(this@TemplateWebView)
             }
+            field = value
         }
 
     private var mediaDurationMs = 1L
     private var focusedItemToken: String? = null
     private var visibleTokenList: List<String>? = null
     private var lyricsVisible: Boolean = false
+
+    private var notifyUserInteractionTimer: Timer? = null
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
@@ -78,7 +88,7 @@ class TemplateWebView @JvmOverloads constructor(
             saveFormData = false
             setSupportZoom(false)
             builtInZoomControls = false
-            useWideViewPort = false
+            useWideViewPort = true
             loadWithOverviewMode = false
             allowFileAccess = true
             allowContentAccess = true
@@ -96,6 +106,15 @@ class TemplateWebView @JvmOverloads constructor(
 //        settings.setAppCachePath(activity?.cacheDir?.absolutePath)
 //        settings.setAppCacheEnabled(true)
 //        settings.cacheMode = WebSettings.LOAD_DEFAULT
+
+
+        setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> startNotifyDisplayInteraction()
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> stopNotifyDisplayInteraction()
+            }
+            false
+        }
     }
 
     override fun setServerUrl(url: String) {
@@ -280,5 +299,26 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun getVisibleTokenList(): List<String>? {
         return visibleTokenList
+    }
+
+    private fun startNotifyDisplayInteraction() {
+        fun notifyDisplayInteraction(): String? {
+            val handler = templateHandler ?: return "templateHandler is null"
+            val androidClient = (handler as? DefaultTemplateHandler)?.androidClientRef?.get()
+                ?: return "androidClient is null"
+            androidClient.displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
+            return null
+        }
+
+        notifyUserInteractionTimer?.cancel()
+        notifyUserInteractionTimer = fixedRateTimer(initialDelay = 0, period = 1000, action = {
+            notifyDisplayInteraction()?.run {
+                Logger.w(TAG, "notifyDisplayInteraction() not handled. reason: $this")
+            }
+        })
+    }
+
+    private fun stopNotifyDisplayInteraction() {
+        notifyUserInteractionTimer?.cancel()
     }
 }
