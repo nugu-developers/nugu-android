@@ -565,9 +565,7 @@ class RoutineAgent(
         Logger.d(TAG, "[stop] $directive")
         val request = currentRoutineRequest
         if(request != null) {
-            if (request.directive.payload.playServiceId == directive.payload.playServiceId &&
-                request.directive.payload.token == directive.payload.token
-            ) {
+            if (request.directive.payload.token == directive.payload.token) {
                 request.cancel()
                 return true
             }
@@ -580,9 +578,7 @@ class RoutineAgent(
         Logger.d(TAG, "[doContinue] $directive")
         val request = currentRoutineRequest
         if(request != null) {
-            if (request.directive.payload.playServiceId == directive.payload.playServiceId &&
-                request.directive.payload.token == directive.payload.token
-            ) {
+            if (request.directive.payload.token == directive.payload.token) {
                 request.doContinue()
                 return true
             }
