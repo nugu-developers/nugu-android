@@ -11,7 +11,7 @@
         <activity
                 android:name="com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity"
                 android:launchMode="singleTask"
-                android:screenOrientation="portrait"
+                android:configChanges="keyboardHidden|orientation|uiMode|fontScale|screenSize"
                 android:theme="@style/Nugu.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
