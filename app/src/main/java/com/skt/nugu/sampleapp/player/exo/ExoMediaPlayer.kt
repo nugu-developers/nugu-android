@@ -147,7 +147,7 @@ class ExoMediaPlayer(
                 Player.STATE_BUFFERING -> eventNotifier.notifyBufferUnderRun(sourceId)
                 Player.STATE_READY -> {
                     if (durationCallSourceId.id < sourceId.id) {
-                        durationCallSourceId = sourceId
+                        durationCallSourceId.id = sourceId.id
                         durationListener?.onRetrieved(sourceId, getDuration(sourceId))
                     }
                     eventNotifier.notifyBufferRefilled(sourceId)
