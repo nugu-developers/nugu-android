@@ -45,13 +45,13 @@ class PackageUtils {
          * Gets the meta-data of the component.
          * @return the value associated with the given key
          */
-        fun getMetaData(context: Context, key: String) = try {
+        fun getMetaData(context: Context, key: String): String = try {
             val metadata =
                 getApplicationInfo(context).metaData
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
                 metadata.getString(key, "")
             } else {
-                metadata.getString(key)
+                metadata.getString(key) ?: ""
             }
         } catch (e: PackageManager.NameNotFoundException) {
             ""
