@@ -288,8 +288,27 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     override fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)?) {
+        Logger.i(TAG, "update. $templateContent")
+
+        var audioPlayer: AudioPlayer? = null
+
         fromJsonOrNull(templateContent, AudioPlayerUpdate::class.java)?.let { item ->
-            load(item.player, true)
+            audioPlayer = item.player
+        }
+
+        // templateContent model be expected as AudioPlayerUpdate. but other case have found. try parsing as AudioPlayer
+        if (audioPlayer == null) {
+            fromJsonOrNull(templateContent, AudioPlayer::class.java)?.let { item ->
+                audioPlayer = item
+            }
+        }
+
+        audioPlayer.run {
+            if (this != null) {
+                load(this, true)
+            } else {
+                Logger.e(TAG, "update. fail. audioPlayer info not exists")
+            }
         }
     }
 
