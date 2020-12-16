@@ -15,20 +15,22 @@
  */
 package com.skt.nugu.sdk.agent.display
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.util.MessageFactory
-import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
 
 class AudioPlayerTemplateHandler(
@@ -224,7 +226,10 @@ class AudioPlayerTemplateHandler(
                 templateInfo.playContext = templateInfo.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
-                renderer?.update(templateInfo.sourceTemplateId, templateInfo.directive.payload)
+
+                renderer?.update(templateInfo.sourceTemplateId, JsonObject().apply {
+                    add("template", JsonParser.parseString(templateInfo.directive.payload))
+                }.toString())
                 setHandlingCompleted(info)
                 templateDirectiveInfoMap.remove(info.directive.getMessageId())
                 templateDirectiveInfoMap[current.sourceTemplateId] = templateInfo
