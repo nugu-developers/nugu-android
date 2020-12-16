@@ -17,10 +17,7 @@ package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
-import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
-import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
-import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
+import com.skt.nugu.sdk.core.interfaces.transport.*
 
 /**
  * TransportFactory to create [GrpcTransport].
@@ -29,7 +26,8 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 
 class GrpcTransportFactory(
     private val serverInfo: NuguServerInfo = NuguServerInfo.Default(),
-    private val dnsLookup: DnsLookup? = null
+    private val dnsLookup: DnsLookup? = null,
+    private val callOptions: CallOptions? = null
 ) : TransportFactory {
 
     /**
@@ -43,6 +41,7 @@ class GrpcTransportFactory(
         return GrpcTransport.create(
             serverInfo,
             dnsLookup,
+            callOptions,
             authDelegate,
             messageConsumer,
             transportObserver

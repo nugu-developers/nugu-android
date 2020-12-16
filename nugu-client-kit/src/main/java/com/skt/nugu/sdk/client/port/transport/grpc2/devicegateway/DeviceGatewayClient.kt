@@ -31,6 +31,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
@@ -52,6 +53,7 @@ internal class DeviceGatewayClient(policy: Policy,
                                    private var messageConsumer: MessageConsumer?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
                                    private val authorization: String?,
+                                   private val callOptions: CallOptions?,
                                    var isHandOff: Boolean)
     :
     DeviceGatewayTransport, HeaderClientInterceptor.Delegate {
@@ -124,7 +126,8 @@ internal class DeviceGatewayClient(policy: Policy,
                         EventsService(
                             this,
                             this@DeviceGatewayClient,
-                            scheduler
+                            scheduler,
+                            callOptions
                         )
                     crashReportService =
                         CrashReportService(
