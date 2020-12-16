@@ -286,7 +286,8 @@ class ExoMediaPlayer(
 
         lastPreparedCacheKey = cacheKey
 
-        return (SourceId(++sourceId.id)).also {
+        return SourceId(sourceId.id + 1).also {
+            sourceId = it
             offsetCalculator.sourceId = it
         }
     }
