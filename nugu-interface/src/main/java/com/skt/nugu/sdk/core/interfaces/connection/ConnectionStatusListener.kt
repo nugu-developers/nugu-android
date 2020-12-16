@@ -34,7 +34,7 @@ interface ConnectionStatusListener {
     /**
      * This enum expresses the reasons a connection status may change.
      */
-    enum class ChangedReason {
+    enum class ChangedReason  {
         /** The non-reason, to be used when no reason is specified. */
         NONE,
 
@@ -78,7 +78,9 @@ interface ConnectionStatusListener {
         SERVER_SIDE_DISCONNECT,
 
         /** The server endpoint has changed. */
-        SERVER_ENDPOINT_CHANGED
+        SERVER_ENDPOINT_CHANGED;
+
+        var cause: Throwable? = null
     }
 
     /**

@@ -44,6 +44,7 @@ import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.net.ssl.SSLHandshakeException
 
 /**
  *  Implementation of DeviceGateway
@@ -244,12 +245,13 @@ internal class DeviceGatewayClient(policy: Policy,
                         var reason =
                             if (isConnected()) ChangedReason.SERVER_SIDE_DISCONNECT
                             else ChangedReason.CONNECTION_ERROR
+                        reason.cause = cause
                         while (cause != null) {
                             if (cause is UnknownHostException) {
                                 reason = ChangedReason.DNS_TIMEDOUT
                             }  else if(cause is SocketTimeoutException) {
                                 reason = ChangedReason.CONNECTION_TIMEDOUT
-                            } else if( cause is ConnectException) {
+                            } else if( cause is ConnectException || cause is SSLHandshakeException) {
                                 reason = ChangedReason.CONNECTION_ERROR
                             }
                             cause = cause.cause
