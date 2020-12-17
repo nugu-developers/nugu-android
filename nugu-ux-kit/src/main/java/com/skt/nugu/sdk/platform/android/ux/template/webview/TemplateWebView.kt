@@ -33,7 +33,6 @@ import com.skt.nugu.sdk.platform.android.BuildConfig
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
-import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 import java.util.*
@@ -304,7 +303,7 @@ class TemplateWebView @JvmOverloads constructor(
     private fun startNotifyDisplayInteraction() {
         fun notifyDisplayInteraction(): String? {
             val handler = templateHandler ?: return "templateHandler is null"
-            val androidClient = (handler as? DefaultTemplateHandler)?.androidClientRef?.get()
+            val androidClient = (handler as? DefaultTemplateHandler)?.getNuguClient()
                 ?: return "androidClient is null"
             androidClient.displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
             return null

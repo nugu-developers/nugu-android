@@ -14,34 +14,26 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sampleapp.template
+package com.skt.nugu.sdk.platform.android.ux.template.presenter
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.support.v4.app.Fragment
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import com.skt.nugu.sampleapp.R
-import com.skt.nugu.sampleapp.activity.MainActivity
-import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
+import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
-import kotlinx.android.synthetic.main.fragment_template.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import java.lang.ref.SoftReference
 
-class TemplateFragment : Fragment() {
+class TemplateFragment() : Fragment() {
     companion object {
         private const val TAG = "TemplateFragment"
-
-        private const val layoutId = R.layout.fragment_template
-
         private const val ARG_DIALOG_REQUEST_ID = "dialog_request_id"
         private const val ARG_NAME = "name"
         private const val ARG_TEMPLATE_ID = "template_id"
@@ -49,9 +41,8 @@ class TemplateFragment : Fragment() {
         private const val ARG_DISPLAY_TYPE = "display_type"
         private const val ARG_PLAY_SERVICE_ID = "play_service_id"
 
-        private const val deviceTypeCode = "YOUR_DEVICE_TYPE_CODE"
-
         fun newInstance(
+            nuguClient: NuguAndroidClient?,
             name: String,
             dialogRequestId: String,
             templateId: String,
@@ -61,6 +52,7 @@ class TemplateFragment : Fragment() {
         ): TemplateFragment {
             return TemplateFragment().apply {
                 arguments = createBundle(name, dialogRequestId, templateId, template, displayType, playServiceId)
+                androidClientRef = SoftReference(nuguClient ?: return@apply)
             }
         }
 
@@ -82,7 +74,10 @@ class TemplateFragment : Fragment() {
             }
     }
 
+    private val layoutId = R.layout.fragment_template
     private var templateView: TemplateView? = null
+    private var androidClientRef: SoftReference<NuguAndroidClient>? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -102,26 +97,21 @@ class TemplateFragment : Fragment() {
     private fun initView() {
         templateView = TemplateView.createView(getTemplateType(), requireContext().applicationContext)
 
-        with(templateView!!) {
-            (this as? WebView)?.webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                    if (request?.url.toString() == "nugu://home") {
-                        (activity as? MainActivity)?.clearAllTemplates()
-                        return true
-                    }
-                    return super.shouldOverrideUrlLoading(view, request)
+        val parent = this.view?.findViewById<ViewGroup>(R.id.template_view)
+
+        parent?.run {
+            with(templateView!!) {
+
+                templateHandler = BasicTemplateHandler(
+                    getNuguClient(),
+                    TemplateInfo(getTemplateId()),
+                    this@TemplateFragment)
+
+                addView(this.asView())
+                setOnTouchListener { _, _ ->
+                    getNuguClient()?.localStopTTS()
+                    false
                 }
-            }
-
-            templateHandler = SampleTemplateHandler(
-                ClientManager.getClient(),
-                TemplateInfo(getTemplateId()),
-                this@TemplateFragment)
-
-            template_view?.addView(this.asView())
-            template_view?.setOnTouchListener { _, _ ->
-                ClientManager.getClient().localStopTTS()
-                false
             }
         }
     }
@@ -135,15 +125,17 @@ class TemplateFragment : Fragment() {
         val dialogRequestId = arguments?.getString(ARG_DIALOG_REQUEST_ID, "") ?: ""
         val template = arguments?.getString(ARG_TEMPLATE, "") ?: ""
 
-        Log.i(TAG, "[load] dialogRequestId: $dialogRequestId, template: $template")
+        Logger.i(TAG, "[load] dialogRequestId: $dialogRequestId, template: $template")
 
         if (template.isBlank()) {
             return
         }
 
         templateView?.run {
-            GlobalScope.launch(Dispatchers.Main) {
-                load(template, deviceTypeCode, dialogRequestId)
+            if (TemplateRenderer.USE_STG_SERVER) setServerUrl("http://stg-template.aicloud.kr/view")
+
+            mainHandler.post {
+                load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId)
             }
         }
     }
@@ -173,21 +165,19 @@ class TemplateFragment : Fragment() {
     }
 
     fun reload(templateContent: String) {
-        GlobalScope.launch(Dispatchers.Main) {
+        mainHandler.post {
             templateView?.run {
-                (templateHandler as? SampleTemplateHandler)?.templateInfo = TemplateInfo(getTemplateId())
-                GlobalScope.launch(Dispatchers.Main) {
-                    load(templateContent, deviceTypeCode, getDialogRequestedId(), onLoadingComplete = {
-                        ClientManager.getClient().getDisplay()
-                            ?.displayCardRendered(getTemplateId(), (templateHandler as? SampleTemplateHandler)?.displayController)
-                    })
-                }
+                (templateHandler as? BasicTemplateHandler)?.templateInfo = TemplateInfo(getTemplateId())
+                load(templateContent, TemplateRenderer.DEVICE_TYPE_CODE, getDialogRequestedId(), onLoadingComplete = {
+                    getNuguClient()?.getDisplay()
+                        ?.displayCardRendered(getTemplateId(), (templateHandler as? BasicTemplateHandler)?.displayController)
+                })
             }
         }
     }
 
     fun update(templateContent: String) {
-        GlobalScope.launch(Dispatchers.Main) {
+        mainHandler.post {
             templateView?.update(templateContent, getDialogRequestedId())
         }
     }
@@ -195,11 +185,19 @@ class TemplateFragment : Fragment() {
     fun close() {
         activity?.run {
             supportFragmentManager.beginTransaction().remove(this@TemplateFragment).commitAllowingStateLoss()
-            ClientManager.getClient().getDisplay()?.displayCardCleared(getTemplateId())
+            getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
         }
     }
 
     fun startListening() {
-        ClientManager.speechRecognizerAggregator.startListening()
+        getNuguClient()?.asrAgent?.startRecognition()
+    }
+
+    private fun getNuguClient(): NuguAndroidClient? {
+        return androidClientRef?.get().also {
+            if (it == null) {
+                Logger.e(TAG, "NuguAndroidClient doesn't exist!! Something will go wrong")
+            }
+        }
     }
 }
