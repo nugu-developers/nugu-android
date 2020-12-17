@@ -1,40 +1,40 @@
-package com.skt.nugu.sampleapp.template
+package com.skt.nugu.sdk.platform.android.ux.template.presenter
 
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import java.lang.ref.WeakReference
 
-class SampleTemplateHandler(androidClient: NuguAndroidClient, templateInfo: TemplateInfo, fragment: TemplateFragment) :
-    DefaultTemplateHandler(androidClient, templateInfo) {
+class BasicTemplateHandler(nuguClient: NuguAndroidClient?, templateInfo: TemplateInfo, fragment: TemplateFragment) :
+    DefaultTemplateHandler(nuguClient, templateInfo) {
     companion object {
-        private const val TAG = "SampleTemplateHandler"
+        private const val TAG = "BasicTemplateHandler"
     }
 
     private val fragmentRef = WeakReference(fragment)
 
     override fun onCloseClicked() {
-        Log.i(TAG, "onClose()")
+        Logger.i(TAG, "onClose()")
         fragmentRef.get()?.run { close() }
     }
 
     override fun onNuguButtonSelected() {
-        Log.i(TAG, "onNuguButtonSelected()")
+        Logger.i(TAG, "onNuguButtonSelected()")
         fragmentRef.get()?.run { startListening() }
     }
 
     override fun showToast(text: String) {
-        Log.i(TAG, "showToast() $text")
+        Logger.i(TAG, "showToast() $text")
         fragmentRef.get()?.run {
             Toast.makeText(requireContext(), text, Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun showActivity(className: String) {
-        Log.i(TAG, "showActivity() $className")
+        Logger.i(TAG, "showActivity() $className")
         fragmentRef.get()?.run {
             try {
                 startActivity(Intent(context, Class.forName(className)).apply {

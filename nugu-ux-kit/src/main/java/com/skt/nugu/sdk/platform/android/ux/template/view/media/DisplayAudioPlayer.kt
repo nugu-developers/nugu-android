@@ -109,7 +109,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 (this as? DefaultTemplateHandler)?.run {
                     observeMediaState()
                     setClientListener(mediaListener)
-                    androidClientRef.get()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
+                    getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                 }
             }
         }
@@ -244,7 +244,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
                     Logger.i(TAG, "onStopTrackingTouch ${progressView.progress}")
-                    (templateHandler as? DefaultTemplateHandler)?.androidClientRef?.get()?.run {
+                    (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
                         val offset = mediaDurationMs / 100 * progressView.progress
                         audioPlayerAgent?.seek(offset)
                     }
@@ -265,7 +265,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
                         MotionEvent.ACTION_UP -> {
                             if (System.currentTimeMillis() - touchDownTime < ViewConfiguration.getTapTimeout()) {
-                                (templateHandler as? DefaultTemplateHandler)?.androidClientRef?.get()?.run {
+                                (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
                                     val offset = event.x / progressView.width.toFloat() * mediaDurationMs
                                     audioPlayerAgent?.seek(offset.toLong())
                                 }

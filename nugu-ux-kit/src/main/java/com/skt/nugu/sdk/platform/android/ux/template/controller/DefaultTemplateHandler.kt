@@ -27,13 +27,13 @@ import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var templateInfo: TemplateHandler.TemplateInfo) : TemplateHandler {
+open class DefaultTemplateHandler(nuguClient: NuguAndroidClient?, override var templateInfo: TemplateHandler.TemplateInfo) : TemplateHandler {
 
     companion object {
         private const val TAG = "DefaultTemplateHandler"
     }
 
-    val androidClientRef = WeakReference(androidClient)
+    private val nuguClientRef = WeakReference(nuguClient)
 
     private var audioDurationMs = 0L
     private var mediaProgressJob: Timer? = null
@@ -90,12 +90,12 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var
 
     override fun onElementSelected(tokenId: String) {
         Logger.i(TAG, "onElementSelected() $tokenId")
-        androidClientRef.get()?.run { getDisplay()?.setElementSelected(templateInfo.templateId, tokenId) }
+        getNuguClient()?.run { getDisplay()?.setElementSelected(templateInfo.templateId, tokenId) }
     }
 
     override fun onChipSelected(text: String) {
         Logger.i(TAG, "ohChipSelected() $text")
-        androidClientRef.get()?.run { requestTextInput(text) }
+        getNuguClient()?.run { requestTextInput(text) }
     }
 
     override fun onCloseClicked() {
@@ -124,7 +124,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var
 
     override fun playTTS(text: String) {
         Logger.i(TAG, "onTTSRequested() $text")
-        androidClientRef.get()?.run { requestTTS(text) }
+        getNuguClient()?.run { requestTTS(text) }
     }
 
     override fun setClientListener(listener: TemplateHandler.ClientListener) {
@@ -133,7 +133,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var
 
     override fun onPlayerCommand(command: String, param: String) {
         Logger.i(TAG, "onPlayerCommand() $command, $param ")
-        androidClientRef.get()?.run {
+        getNuguClient()?.run {
             when (PlayerCommand.from(command)) {
                 PlayerCommand.PLAY -> getPlaybackRouter().buttonPressed(PlaybackButton.PLAY)
                 PlayerCommand.STOP -> getPlaybackRouter().buttonPressed(PlaybackButton.STOP)
@@ -163,7 +163,7 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var
     }
 
     private fun getMediaCurrentTimeMs(): Long {
-        return androidClientRef.get()?.audioPlayerAgent?.getOffset()?.times(1000L) ?: 0L
+        return getNuguClient()?.audioPlayerAgent?.getOffset()?.times(1000L) ?: 0L
     }
 
     private fun getMediaProgressPercentage(): Float {
@@ -174,18 +174,26 @@ open class DefaultTemplateHandler(androidClient: NuguAndroidClient, override var
 
     fun observeMediaState() {
         Logger.i(TAG, "observeMediaState")
-        androidClientRef.get()?.audioPlayerAgent?.addListener(mediaStateListener)
-        androidClientRef.get()?.audioPlayerAgent?.addOnDurationListener(mediaDurationListener)
+        getNuguClient()?.audioPlayerAgent?.addListener(mediaStateListener)
+        getNuguClient()?.audioPlayerAgent?.addOnDurationListener(mediaDurationListener)
     }
 
     override fun clear() {
         Logger.i(TAG, "clear")
-        androidClientRef.get()?.audioPlayerAgent?.run {
+        getNuguClient()?.audioPlayerAgent?.run {
             Logger.i(TAG, "mediaStateListener removed successfully")
             removeListener(mediaStateListener)
             removeOnDurationListener(mediaDurationListener)
         }
 
         stopMediaProgressSending()
+    }
+
+    fun getNuguClient(): NuguAndroidClient? {
+        return nuguClientRef.get().also {
+            if (it == null) {
+                Logger.e(TAG, "NuguAndroidClient doesn't exist!! Something will go wrong")
+            }
+        }
     }
 }

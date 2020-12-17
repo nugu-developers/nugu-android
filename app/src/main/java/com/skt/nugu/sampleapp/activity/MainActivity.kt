@@ -41,8 +41,8 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
-import com.skt.nugu.sampleapp.template.TemplateFragment
-import com.skt.nugu.sampleapp.template.TemplateRenderer
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -52,11 +52,8 @@ import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
-    NavigationView.OnNavigationItemSelectedListener
-    , ConnectionStatusListener
-    , AudioPlayerAgentInterface.Listener
-    , SystemAgentInterfaceListener
-    , TokenRefresher.Listener {
+    NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, AudioPlayerAgentInterface.Listener, SystemAgentInterfaceListener,
+    TokenRefresher.Listener {
     companion object {
         private const val TAG = "MainActivity"
         private val permissions = arrayOf(
@@ -105,7 +102,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.speechRecognizerAggregator
     }
 
-    private val templateRenderer = TemplateRenderer(supportFragmentManager, R.id.template_container)
+    private val templateRenderer =
+        TemplateRenderer(ClientManager.getClient(), "your_device_type_code", supportFragmentManager, R.id.template_container)
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,7 +116,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         // add observer for audioplayer
         ClientManager.getClient().addAudioPlayerListener(this)
         // Set a renderer for display agent.
-        ClientManager.getClient().setDisplayRenderer(templateRenderer)
+        ClientManager.getClient().setDisplayRenderer(templateRenderer.also {
+            // if you need.
+            // it.useStageServer(true)
+        })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
 

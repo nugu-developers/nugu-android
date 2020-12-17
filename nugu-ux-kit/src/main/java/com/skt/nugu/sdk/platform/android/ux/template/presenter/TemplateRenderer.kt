@@ -1,31 +1,42 @@
-package com.skt.nugu.sampleapp.template
+package com.skt.nugu.sdk.platform.android.ux.template.presenter
 
 import android.os.Handler
 import android.os.Looper
+import android.support.annotation.Keep
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
-import android.util.Log
-import androidx.annotation.Keep
 import com.google.gson.Gson
-import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import org.json.JSONObject
+import java.lang.ref.SoftReference
 import java.lang.ref.WeakReference
 
 class TemplateRenderer(
+    nuguAndroidClient: NuguAndroidClient,
+    deviceTypeCode : String,
     fragmentManager: FragmentManager,
     private val containerId: Int
 ) : DisplayAggregatorInterface.Renderer {
 
     companion object {
         private const val TAG = "TemplateRenderer"
+        internal var USE_STG_SERVER = false
+        internal var DEVICE_TYPE_CODE = "device_type_code"
     }
+
+    private val androidClientRef = SoftReference(nuguAndroidClient)
 
     private val fragmentManagerRef = WeakReference(fragmentManager)
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val gson = Gson()
+
+    init {
+        DEVICE_TYPE_CODE = deviceTypeCode
+    }
 
     @Keep
     private class TemplatePayload(
@@ -39,7 +50,7 @@ class TemplateRenderer(
         header: Header,
         displayType: DisplayAggregatorInterface.Type
     ): Boolean {
-        Log.i(
+        Logger.i(
             TAG,
             "render() templateId:$templateId, \n templateType:$templateType, \n templateContent:$templateContent, \n header:$header, \n displayType$displayType"
         )
@@ -56,7 +67,7 @@ class TemplateRenderer(
                     (this as TemplateFragment).run {
                         isReload = true
 
-                        ClientManager.getClient().getDisplay()?.displayCardCleared(getTemplateId())
+                        getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
                         arguments = TemplateFragment.createBundle(templateType,
                             header.dialogRequestId,
                             templateId,
@@ -74,6 +85,7 @@ class TemplateRenderer(
                         .add(
                             containerId,
                             TemplateFragment.newInstance(
+                                nuguClient = getNuguClient(),
                                 name = templateType,
                                 dialogRequestId = header.dialogRequestId,
                                 templateId = templateId,
@@ -87,7 +99,7 @@ class TemplateRenderer(
                         )
                         .commitNowAllowingStateLoss()
 
-                    ClientManager.getClient().getDisplay()?.displayCardRendered(templateId, null)
+                    getNuguClient()?.getDisplay()?.displayCardRendered(templateId, null)
                 }
             }
         }
@@ -96,7 +108,7 @@ class TemplateRenderer(
     }
 
     override fun clear(templateId: String, force: Boolean) {
-        Log.i(TAG, "clear() $templateId, $force")
+        Logger.i(TAG, "clear() $templateId, $force")
 
         fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getTemplateId() == templateId }
             ?.let { foundFragment ->
@@ -107,7 +119,7 @@ class TemplateRenderer(
     }
 
     override fun update(templateId: String, templateContent: String) {
-        Log.i(TAG, "update() $templateId, $templateContent")
+        Logger.i(TAG, "update() $templateId, $templateContent")
 
         fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getTemplateId() == templateId }
             ?.let { foundFragment ->
@@ -119,7 +131,7 @@ class TemplateRenderer(
         if ((newFragment as? TemplateFragment)?.isMediaTemplate() == true) {
             fragmentManagerRef.get()?.fragments?.find { (it as? TemplateFragment)?.isMediaTemplate() == true }
                 ?.run {
-                    Log.i(TAG, "clear previous media template ${(this as TemplateFragment).getTemplateId()}")
+                    Logger.i(TAG, "clear previous media template ${(this as TemplateFragment).getTemplateId()}")
                     clear((this as TemplateFragment).getTemplateId(), true)
                 }
         }
@@ -138,5 +150,17 @@ class TemplateRenderer(
         }
 
         return content
+    }
+
+    private fun getNuguClient(): NuguAndroidClient? {
+        return androidClientRef.get().also {
+            if (it == null) {
+                Logger.e(TAG, "NuguAndroidClient doesn't exist!! Something will go wrong")
+            }
+        }
+    }
+
+    fun useStageServer(use: Boolean = true) {
+        USE_STG_SERVER = true
     }
 }
