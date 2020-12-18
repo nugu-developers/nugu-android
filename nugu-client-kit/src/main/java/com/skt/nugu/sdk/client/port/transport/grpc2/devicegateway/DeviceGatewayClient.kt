@@ -207,7 +207,13 @@ internal class DeviceGatewayClient(policy: Policy,
 
         val request = call.request()
         val result = when(request) {
-            is AttachmentMessageRequest -> event?.sendAttachmentMessage(call)
+            is AttachmentMessageRequest -> {
+                event?.sendAttachmentMessage(call)?.also { result ->
+                    if(result) {
+                        call.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.OK)
+                    }
+                }
+            }
             is EventMessageRequest -> {
                 call.headers()?.let {
                     eventMessageHeaders = it
