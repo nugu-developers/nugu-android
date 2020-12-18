@@ -239,6 +239,11 @@ internal class EventsService(
         } catch (e: IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
             Logger.w(TAG, "[sendAttachmentMessage] Exception : ${e.cause} ${e.message}")
+            val status = Status.fromThrowable(e)
+            call.onComplete(SDKStatus.fromCode(status.code.value()).apply {
+                description = status.description ?: status.cause?.message
+                cause = status.cause
+            })
             return false
         }
         return true
@@ -269,6 +274,11 @@ internal class EventsService(
         } catch (e: IllegalStateException) {
             // Perhaps, Stream is already completed, no further calls are allowed
             Logger.w(TAG, "[sendEventMessage] Exception : ${e.cause} ${e.message}")
+            val status = Status.fromThrowable(e)
+            call.onComplete(SDKStatus.fromCode(status.code.value()).apply {
+                description = status.description ?: status.cause?.message
+                cause = status.cause
+            })
             return false
         }
         return true
