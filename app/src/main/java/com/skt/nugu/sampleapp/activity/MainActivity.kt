@@ -41,7 +41,6 @@ import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
-import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
@@ -232,21 +231,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             return
         }
 
-        if (clearAllTemplates()) return
+        if (templateRenderer.clearAll()) return
 
         super.onBackPressed()
-    }
-
-    fun clearAllTemplates(): Boolean {
-        supportFragmentManager.fragments.filter { it != null && it is TemplateFragment }.run {
-            this.forEach {
-                (it as TemplateFragment).close()
-            }
-
-            if (this.isNotEmpty()) return true
-        }
-
-        return false
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

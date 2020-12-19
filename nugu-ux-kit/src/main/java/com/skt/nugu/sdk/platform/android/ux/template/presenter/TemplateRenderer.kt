@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference
 
 class TemplateRenderer(
     nuguAndroidClient: NuguAndroidClient,
-    deviceTypeCode : String,
+    deviceTypeCode: String,
     fragmentManager: FragmentManager,
     private val containerId: Int
 ) : DisplayAggregatorInterface.Renderer {
@@ -125,6 +125,20 @@ class TemplateRenderer(
             ?.let { foundFragment ->
                 (foundFragment as TemplateFragment).update(templateContent)
             }
+    }
+
+    fun clearAll(): Boolean {
+        var clearCnt = 0
+
+        fragmentManagerRef.get()?.fragments?.filter { it != null && it is TemplateFragment }.run {
+            clearCnt = this!!.size
+
+            this.forEach {
+                (it as TemplateFragment).close()
+            }
+        }
+
+        return ( clearCnt > 0).also { Logger.i(TAG, "clearAll(). $clearCnt template cleared ") }
     }
 
     private fun onNewTemplate(newFragment: Fragment) {
