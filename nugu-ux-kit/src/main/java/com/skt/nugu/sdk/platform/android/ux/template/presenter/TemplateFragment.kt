@@ -78,6 +78,7 @@ class TemplateFragment() : Fragment() {
     private var templateView: TemplateView? = null
     private var androidClientRef: SoftReference<NuguAndroidClient>? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var renderNotified = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -135,7 +136,9 @@ class TemplateFragment() : Fragment() {
             if (TemplateRenderer.USE_STG_SERVER) setServerUrl("http://stg-template.aicloud.kr/view")
 
             mainHandler.post {
-                load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId)
+                load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId, onLoadingComplete = {
+                    notifyRendered()
+                })
             }
         }
     }
@@ -169,8 +172,7 @@ class TemplateFragment() : Fragment() {
             templateView?.run {
                 (templateHandler as? BasicTemplateHandler)?.templateInfo = TemplateInfo(getTemplateId())
                 load(templateContent, TemplateRenderer.DEVICE_TYPE_CODE, getDialogRequestedId(), onLoadingComplete = {
-                    getNuguClient()?.getDisplay()
-                        ?.displayCardRendered(getTemplateId(), (templateHandler as? BasicTemplateHandler)?.displayController)
+                    notifyRendered()
                 })
             }
         }
@@ -185,12 +187,22 @@ class TemplateFragment() : Fragment() {
     fun close() {
         activity?.run {
             supportFragmentManager.beginTransaction().remove(this@TemplateFragment).commitAllowingStateLoss()
-            getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
+            if (renderNotified) {
+                getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
+            } else {
+                getNuguClient()?.getDisplay()?.displayCardRenderFailed(getTemplateId())
+            }
         }
     }
 
     fun startListening() {
         getNuguClient()?.asrAgent?.startRecognition()
+    }
+
+    private fun notifyRendered() {
+        getNuguClient()?.getDisplay()
+            ?.displayCardRendered(getTemplateId(), (templateView?.templateHandler as? BasicTemplateHandler)?.displayController)
+        renderNotified = true
     }
 
     private fun getNuguClient(): NuguAndroidClient? {

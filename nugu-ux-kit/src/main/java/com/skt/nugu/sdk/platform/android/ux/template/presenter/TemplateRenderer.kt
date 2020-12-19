@@ -98,8 +98,6 @@ class TemplateRenderer(
                             displayType.name
                         )
                         .commitNowAllowingStateLoss()
-
-                    getNuguClient()?.getDisplay()?.displayCardRendered(templateId, null)
                 }
             }
         }
@@ -146,7 +144,7 @@ class TemplateRenderer(
             fragmentManagerRef.get()?.fragments?.find { (it as? TemplateFragment)?.isMediaTemplate() == true }
                 ?.run {
                     Logger.i(TAG, "clear previous media template ${(this as TemplateFragment).getTemplateId()}")
-                    clear((this as TemplateFragment).getTemplateId(), true)
+                    this.close()
                 }
         }
     }
