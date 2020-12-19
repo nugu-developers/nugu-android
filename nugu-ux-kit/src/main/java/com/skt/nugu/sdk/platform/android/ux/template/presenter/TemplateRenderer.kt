@@ -61,23 +61,24 @@ class TemplateRenderer(
             val playServiceId = gson.fromJson<TemplatePayload>(templateContent, TemplatePayload::class.java)?.playServiceId ?: ""
             var isReload = false
 
-            fragmentManagerRef.get()?.fragments
-                ?.find { it is TemplateFragment && it.getDisplayType() == displayType.name && it.getPlayServiceId() == playServiceId }
-                ?.run {
-                    (this as TemplateFragment).run {
-                        isReload = true
-
-                        getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
-                        arguments = TemplateFragment.createBundle(templateType,
-                            header.dialogRequestId,
-                            templateId,
-                            templateContentWithType,
-                            displayType.name,
-                            playServiceId)
-
-                        reload(templateContentWithType)
-                    }
-                }
+            // Reload logic is for performance. It seems not need in case of mobile poc.
+//            fragmentManagerRef.get()?.fragments
+//                ?.find { it is TemplateFragment && it.getDisplayType() == displayType.name && it.getPlayServiceId() == playServiceId }
+//                ?.run {
+//                    (this as TemplateFragment).run {
+//                        isReload = true
+//
+//                        getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
+//                        arguments = TemplateFragment.createBundle(templateType,
+//                            header.dialogRequestId,
+//                            templateId,
+//                            templateContentWithType,
+//                            displayType.name,
+//                            playServiceId)
+//
+//                        reload(templateContentWithType)
+//                    }
+//                }
 
             if (!isReload) {
                 fragmentManagerRef.get()?.beginTransaction()?.run {
@@ -121,7 +122,9 @@ class TemplateRenderer(
 
         fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getTemplateId() == templateId }
             ?.let { foundFragment ->
-                (foundFragment as TemplateFragment).update(templateContent)
+                mainHandler.post {
+                    (foundFragment as TemplateFragment).update(templateContent)
+                }
             }
     }
 
@@ -136,7 +139,7 @@ class TemplateRenderer(
             }
         }
 
-        return ( clearCnt > 0).also { Logger.i(TAG, "clearAll(). $clearCnt template cleared ") }
+        return (clearCnt > 0).also { Logger.i(TAG, "clearAll(). $clearCnt template cleared ") }
     }
 
     private fun onNewTemplate(newFragment: Fragment) {

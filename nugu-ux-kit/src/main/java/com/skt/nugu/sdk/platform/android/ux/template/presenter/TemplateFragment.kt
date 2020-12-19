@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import java.lang.ref.SoftReference
 
-class TemplateFragment() : Fragment() {
+class TemplateFragment : Fragment() {
     companion object {
         private const val TAG = "TemplateFragment"
         private const val ARG_DIALOG_REQUEST_ID = "dialog_request_id"
@@ -56,7 +56,7 @@ class TemplateFragment() : Fragment() {
             }
         }
 
-        fun createBundle(
+        private fun createBundle(
             name: String,
             dialogRequestId: String,
             templateId: String,
@@ -74,11 +74,13 @@ class TemplateFragment() : Fragment() {
             }
     }
 
+    private enum class RenderNotifyState { NONE, RENDERED, RENDER_FAILED, RENDER_CLEARED }
+
     private val layoutId = R.layout.fragment_template
     private var templateView: TemplateView? = null
     private var androidClientRef: SoftReference<NuguAndroidClient>? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var renderNotified = false
+    private var renderNotified = RenderNotifyState.NONE
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -117,16 +119,17 @@ class TemplateFragment() : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    override fun onDestroy() {
         templateView?.templateHandler?.clear()
+        onClose()
+        super.onDestroy()
     }
 
     private fun loadTemplate() {
         val dialogRequestId = arguments?.getString(ARG_DIALOG_REQUEST_ID, "") ?: ""
         val template = arguments?.getString(ARG_TEMPLATE, "") ?: ""
 
-        Logger.i(TAG, "[load] dialogRequestId: $dialogRequestId, template: $template")
+        Logger.i(TAG, "[load] templateId: ${getTemplateId()}")
 
         if (template.isBlank()) {
             return
@@ -179,6 +182,7 @@ class TemplateFragment() : Fragment() {
     }
 
     fun update(templateContent: String) {
+        Logger.d(TAG, "update template : $templateContent")
         mainHandler.post {
             templateView?.update(templateContent, getDialogRequestedId())
         }
@@ -187,11 +191,15 @@ class TemplateFragment() : Fragment() {
     fun close() {
         activity?.run {
             supportFragmentManager.beginTransaction().remove(this@TemplateFragment).commitAllowingStateLoss()
-            if (renderNotified) {
-                getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
-            } else {
-                getNuguClient()?.getDisplay()?.displayCardRenderFailed(getTemplateId())
-            }
+            onClose()
+        }
+    }
+
+    private fun onClose() {
+        if (renderNotified == RenderNotifyState.RENDERED) {
+            notifyCleared()
+        } else if (renderNotified == RenderNotifyState.NONE) {
+            notifyRenderFailed()
         }
     }
 
@@ -200,9 +208,22 @@ class TemplateFragment() : Fragment() {
     }
 
     private fun notifyRendered() {
+        Logger.d(TAG, "notifyRendered ${getTemplateId()}")
         getNuguClient()?.getDisplay()
             ?.displayCardRendered(getTemplateId(), (templateView?.templateHandler as? BasicTemplateHandler)?.displayController)
-        renderNotified = true
+        renderNotified = RenderNotifyState.RENDERED
+    }
+
+    private fun notifyRenderFailed() {
+        Logger.d(TAG, "notifyRenderFailed ${getTemplateId()}")
+        getNuguClient()?.getDisplay()?.displayCardRenderFailed(getTemplateId())
+        renderNotified = RenderNotifyState.RENDER_FAILED
+    }
+
+    private fun notifyCleared() {
+        Logger.d(TAG, "notifyRenderCleared ${getTemplateId()}")
+        getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
+        renderNotified = RenderNotifyState.RENDER_CLEARED
     }
 
     private fun getNuguClient(): NuguAndroidClient? {
