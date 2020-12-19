@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
@@ -72,6 +73,8 @@ class TemplateWebView @JvmOverloads constructor(
     private var lyricsVisible: Boolean = false
 
     private var notifyUserInteractionTimer: Timer? = null
+    private var onLoadingComplete: (() -> Unit)? = null
+    private var isSupportVisibleOrFocusedToken: Boolean = false
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
@@ -120,14 +123,19 @@ class TemplateWebView @JvmOverloads constructor(
         templateUrl = url
     }
 
-    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
-        Logger.i(TAG, "load() $templateContent")
+    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingCallback: (() -> Unit)?) {
+        Logger.d(TAG, "load() $templateContent")
 
-        onLoadingComplete?.let {
-            webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    Logger.i(TAG, "progressChanged() $newProgress")
-                    if (newProgress == 100) it.invoke()
+        onLoadingComplete = onLoadingCallback
+        isSupportVisibleOrFocusedToken =
+            TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
+
+        webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
+                if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
+                    onLoadingComplete?.invoke()
+                    onLoadingComplete = null
                 }
             }
         }
@@ -151,14 +159,29 @@ class TemplateWebView @JvmOverloads constructor(
         }.toByteArray())
     }
 
-    override fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)?) {
+    override fun update(templateContent: String, dialogRequestedId: String, onLoadingCallback: (() -> Unit)?) {
+        Logger.d(TAG, "update() $templateContent")
+
+        onLoadingComplete = onLoadingCallback
+        isSupportVisibleOrFocusedToken =
+            TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
+
+        webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
+                if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
+                    onLoadingComplete?.invoke()
+                    onLoadingComplete = null
+                }
+            }
+        }
+
         loadUrl(JavaScriptHelper.onDuxReceived(dialogRequestedId, templateContent))
-        onLoadingComplete?.invoke()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        Logger.i(TAG, "onDetachedFromWindow")
+        Logger.d(TAG, "onDetachedFromWindow")
         templateHandler?.clear()
     }
 
@@ -221,7 +244,7 @@ class TemplateWebView @JvmOverloads constructor(
 
         @JavascriptInterface
         fun onControlResult(action: String, result: String) {
-            Logger.i(TAG, "[onControlResult] action: $action, result: $result")
+            Logger.d(TAG, "[onControlResult] action: $action, result: $result")
 
             weakReference.get()?.run {
                 onControlResult(action, result)
@@ -230,7 +253,12 @@ class TemplateWebView @JvmOverloads constructor(
 
         @JavascriptInterface
         fun onContextChanged(context: String) {
-            Logger.i(TAG, "[onContextChanged] context: $context")
+            Logger.d(TAG, "[onContextChanged] isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken \n context: $context")
+
+            if (isSupportVisibleOrFocusedToken) {
+                onLoadingComplete?.invoke()
+                onLoadingComplete = null
+            }
 
             weakReference.get()?.run {
                 onContextChanged(context)

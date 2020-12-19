@@ -18,14 +18,18 @@ package com.skt.nugu.sdk.platform.android.ux.template
 import android.content.Context
 import android.graphics.Color
 import android.os.Build
+import android.os.Bundle
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.util.TypedValue
+import org.json.JSONObject
 import java.util.*
 
 class TemplateUtils {
     companion object {
+        private const val SUPPORT_FOCUSED_ITEM_TOKEN = "supportFocusedItemToken"
+        private const val SUPPORT_VISIBLE_TOKEN_LIST = "supportVisibleTokenList"
 
         fun dpToPixel(context: Context, dp: Float): Float {
             return (TypedValue.applyDimension(
@@ -103,5 +107,16 @@ class TemplateUtils {
                 requestLayout()
             }
         }
+
+        fun isSupportFocusedItemToken(template: String): Boolean =
+            runCatching {
+                JSONObject(template).getBoolean(SUPPORT_FOCUSED_ITEM_TOKEN)
+            }.getOrDefault(false)
+
+        fun isSupportVisibleTokenList(template: String): Boolean =
+            runCatching {
+                JSONObject(template).getBoolean(SUPPORT_VISIBLE_TOKEN_LIST)
+            }.getOrDefault(false)
+
     }
 }
