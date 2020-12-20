@@ -177,7 +177,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             expand()
         }
 
-        smallLyricsView.setOnClickListener {
+        smallLyricsView.setThrottledOnClickListener {
             lyricPresenter.show()
         }
 
@@ -279,7 +279,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
-        Logger.i(TAG, "load. $templateContent")
+        Logger.i(TAG, "load. dialogRequestId: $dialogRequestId")
 
         fromJsonOrNull(templateContent, AudioPlayer::class.java)?.let { item ->
             load(item)
@@ -288,7 +288,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     override fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)?) {
-        Logger.i(TAG, "update. $templateContent")
+        Logger.i(TAG, "update. dialogRequestId $dialogRequestedId")
 
         var audioPlayer: AudioPlayer? = null
 
@@ -420,7 +420,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         override fun controlPage(direction: Direction): Boolean {
-            return false
+            Logger.d(TAG, "controlPage $direction")
+            lyricsView.post {
+                lyricsView.controlPage(direction)
+            }
+            return true
         }
     }
 

@@ -6,6 +6,8 @@ import android.support.annotation.Keep
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import com.google.gson.Gson
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
@@ -36,6 +38,24 @@ class TemplateRenderer(
 
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
+        //Empty lyrics presenter for receiving lyrics. Actual lyrics control works in each TemplateView.
+        getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(object : LyricsPresenter{
+            override fun getVisibility(): Boolean {
+                return false
+            }
+
+            override fun show(): Boolean {
+                return false
+            }
+
+            override fun hide(): Boolean {
+                return false
+            }
+
+            override fun controlPage(direction: Direction): Boolean {
+                return false
+            }
+        })
     }
 
     @Keep

@@ -20,6 +20,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -27,6 +28,7 @@ import android.webkit.WebView
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
+import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
@@ -60,12 +62,34 @@ class TemplateWebView @JvmOverloads constructor(
 
     override var templateHandler: TemplateHandler? = null
         set(value) {
+            field = value
             value?.run {
                 addJavascriptInterface(WebAppInterface(value), "Android")
                 value.setClientListener(this@TemplateWebView)
+                (this as? DefaultTemplateHandler)?.getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
             }
-            field = value
         }
+
+    private val lyricPresenter = object : LyricsPresenter {
+        override fun getVisibility(): Boolean {
+            return lyricsVisible
+        }
+
+        override fun show(): Boolean {
+            callJSFunction(JavaScriptHelper.showLyrics())
+            return true
+        }
+
+        override fun hide(): Boolean {
+            callJSFunction(JavaScriptHelper.hideLyrics())
+            return true
+        }
+
+        override fun controlPage(direction: Direction): Boolean {
+            callJSFunction(JavaScriptHelper.controlScroll(direction))
+            return true
+        }
+    }
 
     private var mediaDurationMs = 1L
     private var focusedItemToken: String? = null
@@ -176,7 +200,7 @@ class TemplateWebView @JvmOverloads constructor(
             }
         }
 
-        loadUrl(JavaScriptHelper.onDuxReceived(dialogRequestedId, templateContent))
+        callJSFunction(JavaScriptHelper.onDuxReceived(dialogRequestedId, templateContent))
     }
 
     override fun onDetachedFromWindow() {
@@ -285,19 +309,19 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
         when (activity) {
-            State.IDLE -> loadUrl(JavaScriptHelper.onPlayStopped())
+            State.IDLE -> callJSFunction(JavaScriptHelper.onPlayStopped())
             State.PLAYING -> {
-                loadUrl(JavaScriptHelper.setCurrentTime(currentTimeMs))
-                loadUrl(JavaScriptHelper.setProgress(currentProgress))
-                loadUrl(JavaScriptHelper.onPlayStarted())
-                loadUrl(JavaScriptHelper.setEndTime(mediaDurationMs))
+                callJSFunction(JavaScriptHelper.setCurrentTime(currentTimeMs))
+                callJSFunction(JavaScriptHelper.setProgress(currentProgress))
+                callJSFunction(JavaScriptHelper.onPlayStarted())
+                callJSFunction(JavaScriptHelper.setEndTime(mediaDurationMs))
             }
-            State.STOPPED -> loadUrl(JavaScriptHelper.onPlayStopped())
-            State.PAUSED -> loadUrl(JavaScriptHelper.onPlayPaused())
+            State.STOPPED -> callJSFunction(JavaScriptHelper.onPlayStopped())
+            State.PAUSED -> callJSFunction(JavaScriptHelper.onPlayPaused())
             State.FINISHED -> {
-                loadUrl(JavaScriptHelper.setCurrentTime(mediaDurationMs))
-                loadUrl(JavaScriptHelper.setProgress(100f))
-                loadUrl(JavaScriptHelper.onPlayEnd())
+                callJSFunction(JavaScriptHelper.setCurrentTime(mediaDurationMs))
+                callJSFunction(JavaScriptHelper.setProgress(100f))
+                callJSFunction(JavaScriptHelper.onPlayEnd())
             }
         }
     }
@@ -307,16 +331,16 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
-        loadUrl(JavaScriptHelper.setProgress(progress))
+        callJSFunction(JavaScriptHelper.setProgress(progress))
     }
 
     override fun controlFocus(direction: Direction): Boolean {
-        loadUrl(JavaScriptHelper.controlFocus(direction))
+        callJSFunction(JavaScriptHelper.controlFocus(direction))
         return true
     }
 
     override fun controlScroll(direction: Direction): Boolean {
-        loadUrl(JavaScriptHelper.controlScroll(direction))
+        callJSFunction(JavaScriptHelper.controlScroll(direction))
         return true
     }
 
@@ -347,5 +371,11 @@ class TemplateWebView @JvmOverloads constructor(
 
     private fun stopNotifyDisplayInteraction() {
         notifyUserInteractionTimer?.cancel()
+    }
+
+    private fun callJSFunction(script: String) {
+        if (isAttachedToWindow) {
+            post { loadUrl(script) }
+        }
     }
 }
