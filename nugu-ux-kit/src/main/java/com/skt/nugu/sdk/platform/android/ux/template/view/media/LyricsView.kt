@@ -27,6 +27,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils.Companion.dpToPixel
@@ -83,8 +84,12 @@ class LyricsView @JvmOverloads constructor(
         recyclerView.addOnScrollListener(object : OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (viewSize == SIZE_STANDARD) {
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                        enableAutoScroll = false
+                    enableAutoScroll = when (newState) {
+                        RecyclerView.SCROLL_STATE_DRAGGING,
+                        RecyclerView.SCROLL_STATE_SETTLING
+                        -> false
+                        RecyclerView.SCROLL_STATE_IDLE -> true
+                        else -> enableAutoScroll
                     }
                 }
                 super.onScrollStateChanged(recyclerView, newState)
@@ -172,6 +177,22 @@ class LyricsView @JvmOverloads constructor(
 
         val layoutManager = recyclerView.layoutManager as LinearLayoutManager
         layoutManager.scrollToPositionWithOffset(index, scrollPositionOffset)
+    }
+
+    fun controlPage(direction: Direction) {
+        if (!enableAutoScroll || (viewSize != SIZE_STANDARD)) {
+            return
+        }
+
+        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+
+        val targetPosition =
+            if (direction == Direction.NEXT) layoutManager.findLastVisibleItemPosition()
+            else {
+                (layoutManager.findFirstCompletelyVisibleItemPosition() - layoutManager.childCount + 1).coerceAtLeast(0)
+            }
+
+        layoutManager.scrollToPositionWithOffset(targetPosition, 0)
     }
 
     private fun update() {
