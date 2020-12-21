@@ -199,6 +199,8 @@ class NuguAndroidClient private constructor(
 
         internal var bluetoothProvider: BluetoothProvider? = null
 
+        internal var bluetoothFocusChangeHandler: DefaultBluetoothAgent.OnFocusChangeHandler? = null
+
         internal var dialogUXStateTransitionDelay: Long = 200L
 
         internal var enableDisplayLifeCycleManagement = true
@@ -314,6 +316,14 @@ class NuguAndroidClient private constructor(
          */
         fun bluetoothProvider(bluetoothProvider: BluetoothProvider?) =
             apply { this.bluetoothProvider = bluetoothProvider }
+
+        /**
+         * If null or not provided, then the default implementation is applied.
+         * The default control a BT's audio playback according to focus and streaming state.
+         * @param handler the focus handler for bluetooth.
+         */
+        fun bluetoothFocusChangeHandler(handler: DefaultBluetoothAgent.OnFocusChangeHandler?) =
+            apply { this.bluetoothFocusChangeHandler = handler }
 
         /**
          * @param delay (milliseconds) the transition delay for idle state of DialogUXState
@@ -761,7 +771,8 @@ class NuguAndroidClient private constructor(
                                     getContextManager(),
                                     getAudioFocusManager(),
                                     DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                                    it
+                                    it,
+                                    builder.bluetoothFocusChangeHandler
                                 ).apply {
                                     getDirectiveSequencer().addDirectiveHandler(this)
                                 }
