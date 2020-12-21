@@ -430,6 +430,7 @@ class DefaultTTSAgent(
             return
         }
 
+        lastImplicitStoppedInfo = null
         nextSpeakInfo.isHandled = true
 
         if (currentInfo == null) {
@@ -576,7 +577,6 @@ class DefaultTTSAgent(
     }
 
     private fun executePrepareSpeakInfo(speakInfo: SpeakDirectiveInfo) {
-        lastImplicitStoppedInfo = null
         executeCancelPreparedSpeakInfo()
         executeCancelCurrentSpeakInfo(false)
 

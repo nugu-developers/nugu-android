@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.TransportState.*
 import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayTransport
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.*
 import java.util.concurrent.Executors
@@ -38,6 +39,7 @@ import java.util.concurrent.Executors
 internal class GrpcTransport private constructor(
     private val serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup?,
+    private val callOptions: CallOptions?,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?
@@ -51,6 +53,7 @@ internal class GrpcTransport private constructor(
         fun create(
             serverInfo: NuguServerInfo,
             dnsLookup: DnsLookup?,
+            callOptions: CallOptions?,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener
@@ -58,6 +61,7 @@ internal class GrpcTransport private constructor(
             return GrpcTransport(
                 serverInfo,
                 dnsLookup,
+                callOptions,
                 authDelegate,
                 messageConsumer,
                 transportObserver
@@ -192,6 +196,7 @@ internal class GrpcTransport private constructor(
             messageConsumer,
             deviceGatewayObserver,
             getAuthorization(),
+            callOptions,
             isHandOff
         ).let {
             deviceGatewayClient = it

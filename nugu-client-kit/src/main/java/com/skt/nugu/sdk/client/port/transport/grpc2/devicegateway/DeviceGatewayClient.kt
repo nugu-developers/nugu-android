@@ -31,6 +31,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
@@ -43,6 +44,7 @@ import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.net.ssl.SSLHandshakeException
 
 /**
  *  Implementation of DeviceGateway
@@ -52,6 +54,7 @@ internal class DeviceGatewayClient(policy: Policy,
                                    private var messageConsumer: MessageConsumer?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
                                    private val authorization: String?,
+                                   private val callOptions: CallOptions?,
                                    var isHandOff: Boolean)
     :
     DeviceGatewayTransport, HeaderClientInterceptor.Delegate {
@@ -124,7 +127,8 @@ internal class DeviceGatewayClient(policy: Policy,
                         EventsService(
                             this,
                             this@DeviceGatewayClient,
-                            scheduler
+                            scheduler,
+                            callOptions
                         )
                     crashReportService =
                         CrashReportService(
@@ -241,12 +245,13 @@ internal class DeviceGatewayClient(policy: Policy,
                         var reason =
                             if (isConnected()) ChangedReason.SERVER_SIDE_DISCONNECT
                             else ChangedReason.CONNECTION_ERROR
+                        reason.cause = cause
                         while (cause != null) {
                             if (cause is UnknownHostException) {
                                 reason = ChangedReason.DNS_TIMEDOUT
                             }  else if(cause is SocketTimeoutException) {
                                 reason = ChangedReason.CONNECTION_TIMEDOUT
-                            } else if( cause is ConnectException) {
+                            } else if( cause is ConnectException || cause is SSLHandshakeException) {
                                 reason = ChangedReason.CONNECTION_ERROR
                             }
                             cause = cause.cause
