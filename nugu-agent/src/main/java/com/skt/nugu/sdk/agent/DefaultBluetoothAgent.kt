@@ -29,7 +29,6 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -45,7 +44,8 @@ class DefaultBluetoothAgent(
     private val contextManager: ContextManagerInterface,
     focusManager: FocusManagerInterface,
     focusChannelName: String,
-    private val bluetoothProvider : BluetoothProvider?
+    private val bluetoothProvider : BluetoothProvider?,
+    focusChangeHandler: OnFocusChangeHandler?
 ) : AbstractCapabilityAgent(NAMESPACE),
     BluetoothAgentInterface {
     /**
@@ -238,45 +238,54 @@ class DefaultBluetoothAgent(
          */
         contextManager.setStateProvider(namespaceAndName, this)
 
-        if(bluetoothProvider == null) {
+        if (bluetoothProvider == null) {
             provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
             provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
         } else {
-            bluetoothProvider.setOnStreamStateChangeListener(StreamingChangeHandler(focusManager, focusChannelName, executor, object: OnFocusChangeHandler {
-                private var focusState = FocusState.NONE
+            bluetoothProvider.setOnStreamStateChangeListener(
+                StreamingChangeHandler(
+                    focusManager,
+                    focusChannelName,
+                    executor,
+                    focusChangeHandler ?: object : OnFocusChangeHandler {
+                        private var focusState = FocusState.NONE
 
-                override fun onFocusChanged(focus: FocusState, streamingState: StreamingState) {
-                    Logger.d(TAG, "[onFocusChanged] $focusState , $focus")
-                    if(focusState == focus) {
-                        return
-                    }
+                        override fun onFocusChanged(
+                            focus: FocusState,
+                            streamingState: StreamingState
+                        ) {
+                            Logger.d(TAG, "[onFocusChanged] $focusState , $focus")
+                            if (focusState == focus) {
+                                return
+                            }
 
-                    when(focus) {
-                        FocusState.FOREGROUND -> {
-                            val shouldResume = playbackHandlingDirectiveQueue.isEmpty()
-                                    && streamingState == StreamingState.PAUSED
-                            if (shouldResume) {
-                                // resume
-                                executePlay()
+                            when (focus) {
+                                FocusState.FOREGROUND -> {
+                                    val shouldResume = playbackHandlingDirectiveQueue.isEmpty()
+                                            && streamingState == StreamingState.PAUSED
+                                    if (shouldResume) {
+                                        // resume
+                                        executePlay()
+                                    }
+                                }
+                                FocusState.BACKGROUND -> {
+                                    if (streamingState == StreamingState.ACTIVE) {
+                                        // pause
+                                        executePause()
+                                    }
+                                }
+                                FocusState.NONE -> {
+                                    if (streamingState == StreamingState.ACTIVE || streamingState == StreamingState.PAUSED) {
+                                        // stop
+                                        executeStop()
+                                    }
+                                }
                             }
-                        }
-                        FocusState.BACKGROUND -> {
-                            if(streamingState == StreamingState.ACTIVE) {
-                                // pause
-                                executePause()
-                            }
-                        }
-                        FocusState.NONE -> {
-                            if(streamingState == StreamingState.ACTIVE || streamingState == StreamingState.PAUSED) {
-                                // stop
-                                executeStop()
-                            }
-                        }
-                    }
 
-                    focusState = focus
-                }
-            }))
+                            focusState = focus
+                        }
+                    })
+            )
         }
     }
 
