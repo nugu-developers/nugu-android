@@ -181,10 +181,10 @@ class DefaultBluetoothAgent(
     ) : BluetoothProvider.OnStreamStateChangeListener
         ,ChannelObserver {
         private var focusState = FocusState.NONE
-        private var streamingState: BluetoothAgentInterface.StreamingState =
-            BluetoothAgentInterface.StreamingState.INACTIVE
+        private var streamingState: StreamingState =
+            StreamingState.INACTIVE
 
-        override fun onStreamStateChanged(state: BluetoothAgentInterface.StreamingState) {
+        override fun onStreamStateChanged(state: StreamingState) {
             executor.submit {
                 Logger.d(TAG, "[onStreamStateChanged] $streamingState , $state")
                 if (streamingState == state) {
@@ -192,24 +192,24 @@ class DefaultBluetoothAgent(
                 }
 
                 when (state) {
-                    BluetoothAgentInterface.StreamingState.ACTIVE -> {
-                        if (streamingState == BluetoothAgentInterface.StreamingState.INACTIVE || streamingState == BluetoothAgentInterface.StreamingState.UNUSABLE) {
+                    StreamingState.ACTIVE -> {
+                        if (streamingState == StreamingState.INACTIVE || streamingState == StreamingState.UNUSABLE) {
                             // request focus
                             focusManager.acquireChannel(focusChannelName, this, NAMESPACE)
-                        } else if (streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                        } else if (streamingState == StreamingState.PAUSED) {
                             // ignore
                         }
                     }
-                    BluetoothAgentInterface.StreamingState.UNUSABLE,
-                    BluetoothAgentInterface.StreamingState.INACTIVE -> {
-                        if (streamingState == BluetoothAgentInterface.StreamingState.ACTIVE || streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                    StreamingState.UNUSABLE,
+                    StreamingState.INACTIVE -> {
+                        if (streamingState == StreamingState.ACTIVE || streamingState == StreamingState.PAUSED) {
                             // release focus
                             focusManager.releaseChannel(focusChannelName, this)
-                        } else if (streamingState == BluetoothAgentInterface.StreamingState.UNUSABLE) {
+                        } else if (streamingState == StreamingState.UNUSABLE) {
                             // ignore
                         }
                     }
-                    BluetoothAgentInterface.StreamingState.PAUSED -> {
+                    StreamingState.PAUSED -> {
                         // no-op
                     }
                 }
@@ -228,20 +228,20 @@ class DefaultBluetoothAgent(
                 when(newFocus) {
                     FocusState.FOREGROUND -> {
                         val shouldResume = playbackHandlingDirectiveQueue.isEmpty()
-                                && streamingState == BluetoothAgentInterface.StreamingState.PAUSED
+                                && streamingState == StreamingState.PAUSED
                         if (shouldResume) {
                             // resume
                             executePlay()
                         }
                     }
                     FocusState.BACKGROUND -> {
-                        if(streamingState == BluetoothAgentInterface.StreamingState.ACTIVE) {
+                        if(streamingState == StreamingState.ACTIVE) {
                             // pause
                             executePause()
                         }
                     }
                     FocusState.NONE -> {
-                        if(streamingState == BluetoothAgentInterface.StreamingState.ACTIVE || streamingState == BluetoothAgentInterface.StreamingState.PAUSED) {
+                        if(streamingState == StreamingState.ACTIVE || streamingState == StreamingState.PAUSED) {
                             // stop
                             executeStop()
                         }
