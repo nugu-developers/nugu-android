@@ -26,14 +26,16 @@ class DirectiveGroupHandlingListener(
     private val dialogRequestId: String,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
-    private val finishListener: OnFinishListener
+    private val directiveResultListener: OnDirectiveResultListener
 ) : DirectiveGroupProcessorInterface.Listener, DirectiveSequencerInterface.OnDirectiveHandlingListener {
     companion object {
         private const val TAG = "DirectiveGroupHandlingListener"
     }
 
-    interface OnFinishListener {
+    interface OnDirectiveResultListener {
         fun onFinish(isExistCanceledOrFailed: Boolean)
+        fun onCanceled(directive: Directive)
+        fun onFailed(directive: Directive)
     }
 
     init {
@@ -67,6 +69,7 @@ class DirectiveGroupHandlingListener(
         if(directives.remove(directive)) {
             Logger.d(TAG, "[onCanceled] ${directive.header}")
             existCanceledOrFailed = true
+            directiveResultListener.onCanceled(directive)
             notifyResultIfEmpty()
         }
     }
@@ -75,6 +78,7 @@ class DirectiveGroupHandlingListener(
         if(directives.remove(directive)) {
             Logger.d(TAG, "[onFailed] ${directive.header}")
             existCanceledOrFailed = true
+            directiveResultListener.onFailed(directive)
             notifyResultIfEmpty()
         }
     }
@@ -90,7 +94,7 @@ class DirectiveGroupHandlingListener(
         if(directives.isEmpty()) {
             Logger.d(TAG, "[notifyResultIfEmpty] dialogRequestId: $dialogRequestId, existCanceledOrFailed: $existCanceledOrFailed")
             directiveSequencer.removeOnDirectiveHandlingListener(this)
-            finishListener.onFinish(existCanceledOrFailed)
+            directiveResultListener.onFinish(existCanceledOrFailed)
         }
     }
 }
