@@ -158,15 +158,20 @@ class RoutineAgent(
                 return
             }
             isCanceled = true
+            cancelCurrentAction()
+            listener.onCancel()
+        }
+
+        private fun cancelCurrentAction() {
             currentActionDialogRequestId?.let {
                 directiveProcessor.cancelDialogRequestId(it)
                 playSynchronizer.cancelSync(it)
             }
-            listener.onCancel()
         }
 
         fun pause() {
             Logger.d(TAG, "[RoutineRequest] pause")
+            cancelCurrentAction()
             scheduledFutureForTryStartNextAction?.cancel(true)
             scheduledFutureForTryStartNextAction = null
             scheduledFutureForCancelByInterrupt?.cancel(true)
@@ -225,7 +230,7 @@ class RoutineAgent(
                     Logger.d(TAG, "[onRequestCreated] dialogRequestId: $dialogRequestId")
                     textInputRequests.add(dialogRequestId)
                     currentActionDialogRequestId = dialogRequestId
-                    currentActionHandlingListener = DirectiveGroupHandlingListener(dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
+                    currentActionHandlingListener = DirectiveGroupHandlingListener(dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnDirectiveResultListener {
                         override fun onFinish(isExistCanceledOrFailed: Boolean) {
                             Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
                             if(isExistCanceledOrFailed) {
@@ -241,6 +246,14 @@ class RoutineAgent(
                                     tryStartNextAction()
                                 }
                             }
+                        }
+
+                        override fun onCanceled(directive: Directive) {
+                            pause()
+                        }
+
+                        override fun onFailed(directive: Directive) {
+                            pause()
                         }
                     })
                 }
@@ -277,7 +290,7 @@ class RoutineAgent(
 
                     Logger.d(TAG, "doDataAction - [onContext] dialogRequestId: ${request.dialogRequestId}")
                     currentActionDialogRequestId = request.dialogRequestId
-                    currentActionHandlingListener = DirectiveGroupHandlingListener(request.dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnFinishListener {
+                    currentActionHandlingListener = DirectiveGroupHandlingListener(request.dialogRequestId, directiveGroupProcessor,directiveSequencer, object:  DirectiveGroupHandlingListener.OnDirectiveResultListener {
                         override fun onFinish(isExistCanceledOrFailed: Boolean) {
                             Logger.d(
                                 TAG,
@@ -296,6 +309,14 @@ class RoutineAgent(
                                     tryStartNextAction()
                                 }
                             }
+                        }
+
+                        override fun onCanceled(directive: Directive) {
+                            pause()
+                        }
+
+                        override fun onFailed(directive: Directive) {
+                            pause()
                         }
                     })
                     messageSender.newCall(request).enqueue(object : MessageSender.Callback {
