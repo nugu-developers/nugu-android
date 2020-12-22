@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.core.utils
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
-import java.util.Date
 
 /**
  * A class that represents an immutable universally unique identifier.
@@ -136,7 +135,7 @@ class UUIDGeneration {
             val uuidBytes = ByteArray(16)
 
             /* time : 5 byte  */
-            var time = Date().time - BASE_TIME
+            var time = System.currentTimeMillis() - BASE_TIME
             for (i in 4 downTo 0) {
                 uuidBytes[i] = (time and 0xFF).toByte()
                 time = time shr 8
