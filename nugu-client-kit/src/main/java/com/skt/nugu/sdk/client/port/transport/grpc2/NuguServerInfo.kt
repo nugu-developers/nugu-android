@@ -17,29 +17,39 @@ package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.Address
 import com.skt.nugu.sdk.core.utils.Logger
+import java.net.URL
 
 data class NuguServerInfo(
     var keepConnection: Boolean,
     val registry: Address,
     val deviceGW: Address
 ) {
+    constructor(delegate: Delegate) : this(false, defaultRegistry, defaultServer) {
+        this.delegate = delegate
+    }
+    private var delegate: Delegate? = null
+    fun delegate(): Delegate? = delegate
+
     companion object {
         const val TAG = "NuguServerInfo"
         const val DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST = "reg-http.sktnugu.com"
         const val DEFAULT_DEVICE_GATEWAY_SERVER_HOST = "dggrpc.sktnugu.com"
         const val HTTPS_PORT = 443
+        const val HTTP_PORT = 80
+        val defaultRegistry = Address(
+            DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST,
+            HTTPS_PORT
+        )
+        val defaultServer = Address(
+            DEFAULT_DEVICE_GATEWAY_SERVER_HOST,
+            HTTPS_PORT
+        )
 
         fun Default(): NuguServerInfo {
             return NuguServerInfo(
                 keepConnection = false,
-                registry = Address(
-                    DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST,
-                    HTTPS_PORT
-                ),
-                deviceGW = Address(
-                    DEFAULT_DEVICE_GATEWAY_SERVER_HOST,
-                    HTTPS_PORT
-                )
+                registry = defaultRegistry,
+                deviceGW = defaultServer
             )
         }
     }
@@ -107,12 +117,51 @@ data class NuguServerInfo(
             return this
         }
 
+        fun registry(url: String?): Builder {
+            try {
+                val url = URL(url)
+                val host = url.host.toString()
+                var port = url.port
+                if (port == -1) {
+                    port = if (url.protocol == "https")
+                        HTTPS_PORT else HTTP_PORT
+                }
+                registry =
+                    Address(
+                        host,
+                        port
+                    )
+            } catch ( e: Throwable) {
+                Logger.e(TAG, "[registry] Invalid URL=${url}, exception:$e")
+            }
+            return this
+        }
         fun deviceGW(host: String, port: Int = HTTPS_PORT): Builder {
             deviceGW =
                 Address(
                     host,
                     port
                 )
+            return this
+        }
+
+        fun deviceGW(url: String?): Builder {
+            try {
+                val url = URL(url)
+                val host = url.host.toString()
+                var port = url.port
+                if (port == -1) {
+                    port = if (url.protocol == "https")
+                        HTTPS_PORT else HTTP_PORT
+                }
+                deviceGW =
+                    Address(
+                        host,
+                        port
+                    )
+            } catch ( e: Throwable) {
+                Logger.e(TAG, "[deviceGW] Invalid URL=${url}, exception:$e")
+            }
             return this
         }
 
@@ -127,5 +176,9 @@ data class NuguServerInfo(
                 registry,
                 deviceGW
             )
+    }
+
+    interface Delegate {
+        fun getNuguServerInfo() : NuguServerInfo?
     }
 }

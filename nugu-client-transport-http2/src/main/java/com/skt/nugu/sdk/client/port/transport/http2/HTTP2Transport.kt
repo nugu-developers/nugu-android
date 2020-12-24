@@ -67,7 +67,7 @@ internal class HTTP2Transport(
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayTransport? = null
     private var isHandOff = false
-    private var registryClient = RegistryClient(serverInfo, dnsLookup)
+    private var registryClient = RegistryClient(dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
@@ -104,32 +104,35 @@ internal class HTTP2Transport(
         }
         setState(DetailedState.CONNECTING_REGISTRY)
 
-        if(!serverInfo.keepConnection) {
-            Logger.d(TAG,"[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
-            return tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(serverInfo))
-        }
-
-        registryClient.getPolicy(authDelegate, object :
-            RegistryClient.Observer {
-            override fun onCompleted(policy: Policy?) {
-                // succeeded, then it should be connection to DeviceGateway
-                policy?.let {
-                    tryConnectToDeviceGateway(it)
-                } ?: setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
+        executor.submit {
+            val serverInfo = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
+            if(!serverInfo.keepConnection) {
+                Logger.d(TAG,"[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
+                tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(serverInfo))
+                return@submit
             }
 
-            override fun onError(reason: ChangedReason) {
-                when (reason) {
-                    ChangedReason.INVALID_AUTH -> {
-                        setState(DetailedState.FAILED, ChangedReason.INVALID_AUTH)
-                    }
-                    else -> {
-                        setState(DetailedState.FAILED, reason)
+            registryClient.getPolicy(serverInfo, authDelegate, object :
+                RegistryClient.Observer {
+                override fun onCompleted(policy: Policy?) {
+                    // succeeded, then it should be connection to DeviceGateway
+                    policy?.let {
+                        tryConnectToDeviceGateway(it)
+                    } ?: setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
+                }
+
+                override fun onError(reason: ChangedReason) {
+                    when (reason) {
+                        ChangedReason.INVALID_AUTH -> {
+                            setState(DetailedState.FAILED, ChangedReason.INVALID_AUTH)
+                        }
+                        else -> {
+                            setState(DetailedState.FAILED, reason)
+                        }
                     }
                 }
-            }
-        })
-
+            })
+        }
         return true
     }
 

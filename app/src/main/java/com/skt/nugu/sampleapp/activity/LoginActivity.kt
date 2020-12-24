@@ -55,7 +55,6 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     private val authClient by lazy {
         // Configure Nugu OAuth Options
         val options = NuguOAuthOptions.Builder()
-            .clientSecret("YOUR_CLIENT_SECRET_HERE")
             .deviceUniqueId(getDeviceUniqueId())
             .build()
         NuguOAuth.getClient(options)
@@ -282,7 +281,7 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     **/
     private fun startIntroActivity() {
         runOnUiThread {
-            IntroActivity.invokeActivity(this@LoginActivity, getString(R.string.nugu_poc_id), getDeviceUniqueId())
+            IntroActivity.invokeActivity(this@LoginActivity, getDeviceUniqueId())
         }
     }
 

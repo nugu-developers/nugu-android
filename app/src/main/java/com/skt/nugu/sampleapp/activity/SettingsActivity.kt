@@ -28,6 +28,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
@@ -206,9 +207,16 @@ class SettingsActivity : AppCompatActivity() {
 
         buttonPrivacy.setOnClickListener {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("https://privacy.sktelecom.com/view.do?ctg=policy&name=policy")
-                })
+                ConfigurationStore.privacyUrl { url, error ->
+                    error?.apply {
+                        Log.e(TAG, "[onCreate] error=$this")
+                        return@privacyUrl
+                    }
+                    startActivity(Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(url)
+                    })
+                }
+
             } catch (e: SecurityException) {
                 Log.d(TAG, "[buttonPrivacy] $e")
             } catch (e: ActivityNotFoundException) {
