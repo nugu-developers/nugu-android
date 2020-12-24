@@ -23,25 +23,25 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.RelativeLayout
+import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 
 /**
  * Demonstrate using nugu with webview.
  */
 class IntroActivity : AppCompatActivity() {
     companion object {
+        private const val TAG = "IntroActivity"
         const val requestCode = 101
-        const val EXTRA_KEY_POCID = "key_poc_id"
         const val EXTRA_KEY_DEVICE_UNIQUEID = "key_device_unique_id"
-        private const val BASE_USING_URL = "https://webview.sktnugu.com/v2/3pp/confirm.html?poc_id=%s&device_unique_id=%s"
 
-        fun invokeActivity(activity: Activity, pocId: String, deviceUniqueId: String) {
+        fun invokeActivity(activity: Activity, deviceUniqueId: String) {
             activity.startActivityForResult(
                 Intent(activity, IntroActivity::class.java)
-                    .putExtra(EXTRA_KEY_POCID, pocId)
                     .putExtra(EXTRA_KEY_DEVICE_UNIQUEID, deviceUniqueId)
             , requestCode)
         }
@@ -80,7 +80,13 @@ class IntroActivity : AppCompatActivity() {
             }
         }
         intent.extras?.apply {
-            webView.loadUrl(String.format(BASE_USING_URL, getString(EXTRA_KEY_POCID), getString(EXTRA_KEY_DEVICE_UNIQUEID)))
+            ConfigurationStore.usageGuideUrl(getString(EXTRA_KEY_DEVICE_UNIQUEID).toString()) { url, error ->
+                error?.apply {
+                    Log.e(TAG, "[onCreate] error=$this")
+                    return@usageGuideUrl
+                }
+                webView.loadUrl(url)
+            }
         }
 
         layout.addView( webView,

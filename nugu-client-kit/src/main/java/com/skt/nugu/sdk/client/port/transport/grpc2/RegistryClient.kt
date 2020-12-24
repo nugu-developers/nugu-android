@@ -36,7 +36,6 @@ import java.net.UnknownHostException
  *  Implementation of registry
  **/
 internal class RegistryClient(
-    private var serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup?
 ) : Transport {
     companion object {
@@ -78,7 +77,7 @@ internal class RegistryClient(
         fun onError(reason: ChangedReason)
     }
 
-    fun getPolicy(token: String?, observer: Observer) {
+    fun getPolicy(serverInfo: NuguServerInfo, token: String?, observer: Observer) {
         if (isShutdown.get()) {
             Logger.w(TAG, "[getPolicy] already shutdown")
             return

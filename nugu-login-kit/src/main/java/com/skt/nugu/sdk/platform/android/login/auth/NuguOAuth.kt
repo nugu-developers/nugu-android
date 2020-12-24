@@ -19,6 +19,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
@@ -37,10 +38,10 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnDeviceA
  * authorization process.
  */
 class NuguOAuth private constructor(
-    private val context: Context,
-    private val authServerBaseUrl: String
-) : NuguOAuthInterface,
-    AuthDelegate {
+    context: Context,
+    authServerBaseUrl: String?
+) : NuguOAuthInterface, AuthDelegate {
+
     /**
      * Companion objects
      */
@@ -69,10 +70,10 @@ class NuguOAuth private constructor(
          */
         fun create(
             context: Context,
-            authServerBaseUrl: String = BASE_AUTH_URL
+            authServerBaseUrl: String? = null
         ): NuguOAuth {
             Logger.d(TAG, "[create]")
-            if(instance == null) {
+            if (instance == null) {
                 instance = NuguOAuth(context, authServerBaseUrl)
             }
             return instance as NuguOAuth
@@ -82,14 +83,14 @@ class NuguOAuth private constructor(
          * Returns a NuguOAuth instance.
          * @param Set [NuguOAuthOptions]
          */
-        fun getClient(options: NuguOAuthOptions? = null): NuguOAuth {
+        fun getClient(newOptions: NuguOAuthOptions? = null): NuguOAuth {
             if (instance == null) {
                 throw ExceptionInInitializerError(
                     "Failed to create NuguOAuth," +
                             "Using after calling NuguOAuth.create(context)"
                 )
             }
-            options?.let {
+            newOptions?.let {
                 instance!!.setOptions(it)
             }
             return instance as NuguOAuth
@@ -99,39 +100,61 @@ class NuguOAuth private constructor(
     private var authError: NuguOAuthError = NuguOAuthError(Throwable("An unexpected error"))
 
     private val executor = Executors.newSingleThreadExecutor()
+
     // current state
     private var state = AuthStateListener.State.UNINITIALIZED
     private var code: String? = null
     private var refreshToken: String? = null
+
+    private val baseUrl: String by lazy {
+        var url = authServerBaseUrl
+        if (url.isNullOrBlank()) {
+            url = ConfigurationStore.configuration.OAuthServerUrl
+        }
+        url ?: BASE_AUTH_URL
+    }
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
-        NuguOAuthClient(authServerBaseUrl)
+        NuguOAuthClient(baseUrl)
+    }
+    private val authorizeUrl: String by lazy {
+        String.format("${baseUrl}/v1/auth/oauth/authorize")
     }
     /// Authorization state change listeners.
     private val listeners = ConcurrentLinkedQueue<AuthStateListener>()
+
     /** Oauth default options @see [NuguOAuthOptions] **/
     lateinit var options: NuguOAuthOptions
 
     private var onceLoginListener: OnceLoginListener? = null
 
-    private val authorizeUrl = "${authServerBaseUrl}/v1/auth/oauth/authorize"
+    private val clientIdFromManifest by lazy {
+        PackageUtils.getMetaData(context, KEY_CLIENT_ID)
+    }
+    private val redirectUriFromStringResource by lazy {
+        PackageUtils.getString(
+            context,
+            KEY_REDIRECT_SCHEME
+        ) + "://" + PackageUtils.getString(context, KEY_REDIRECT_HOST)
+    }
     // CSRF protection
     private var clientState: String = ""
 
-    inner class OnceLoginListener(val realListener : OnLoginListener) : OnLoginListener {
+    inner class OnceLoginListener(val realListener: OnLoginListener) : OnLoginListener {
         private var called = false
         override fun onSuccess(credentials: Credentials) {
-            if(called) return
+            if (called) return
             called = true
             realListener.onSuccess(credentials)
         }
 
         override fun onError(error: NuguOAuthError) {
-            if(called) return
+            if (called) return
             called = true
             realListener.onError(error)
         }
     }
+
     /**
      * addAuthStateListener adds an AuthStateListener on the given was changed
      */
@@ -238,27 +261,30 @@ class NuguOAuth private constructor(
      * Sets a auth token and update to the devicegateway
      * @param token The auth token
      */
-    fun setAuthorization(tokenType : String, accessToken: String) {
+    fun setAuthorization(tokenType: String, accessToken: String) {
         Logger.d(TAG, "[setAuthorization]")
         client.getCredentials().accessToken = accessToken
         client.getCredentials().tokenType = tokenType
         setAuthState(AuthStateListener.State.REFRESHED)
     }
+
     /**
      * Set a [Credentials]
      */
-    fun setCredentials(credential : String) = setCredentials(Credentials.parse(credential))
-    fun setCredentials(credential : Credentials) = client.setCredentials(credential)
+    fun setCredentials(credential: String) = setCredentials(Credentials.parse(credential))
+    fun setCredentials(credential: Credentials) = client.setCredentials(credential)
 
     fun getRefreshToken() = client.getCredentials().refreshToken
-    fun getIssuedTime() : Long {
+    fun getIssuedTime(): Long {
         val credential = client.getCredentials()
         return credential.issuedTime
     }
-    fun getExpiresInMillis() : Long {
+
+    fun getExpiresInMillis(): Long {
         val credential = client.getCredentials()
         return credential.expiresIn * 1000
     }
+
     /**
      * Check if the token is expired
      **/
@@ -297,12 +323,14 @@ class NuguOAuth private constructor(
     fun getScope(): String? {
         return client.getCredentials().scope
     }
+
     /**
      * Returns true if server-initiative-directive is supported.
      **/
-    fun isSidSupported() : Boolean {
+    fun isSidSupported(): Boolean {
         return getScope()?.contains("device:S.I.D.") ?: false
     }
+
     /**
      * Gets an auth status
      * @returns the current state
@@ -341,52 +369,72 @@ class NuguOAuth private constructor(
         }
 
         this.options.apply {
-            if (clientId.isNullOrEmpty()) {
-                clientId = PackageUtils.getMetaData(context, KEY_CLIENT_ID)
+            ConfigurationStore.configuration.let {
+                if (clientId.isBlank()) {
+                    clientId = it.clientId
+                }
+                if (redirectUri.isNullOrEmpty()) {
+                    redirectUri = it.redirectUri
+                }
+                if (clientSecret.isBlank()) {
+                    clientSecret = it.clientSecret
+                }
+            }
+            /**
+             * @deprecated
+             */
+            if (clientId.isBlank()) {
+                clientId = clientIdFromManifest
             }
             if (redirectUri.isNullOrEmpty()) {
-                redirectUri = PackageUtils.getString(context, KEY_REDIRECT_SCHEME) + "://" + PackageUtils.getString(context, KEY_REDIRECT_HOST)
+                redirectUri = redirectUriFromStringResource
             }
         }
         client.setOptions(this.options)
     }
+
     fun generateClientState() = UUID.randomUUID().toString().apply {
         clientState = this
     }
-    fun verifyState(state : String?) = state == this.clientState
-    fun verifyCode(code : String?) = !code.isNullOrBlank()
+
+    fun verifyState(state: String?) = state == this.clientState
+    fun verifyCode(code: String?) = !code.isNullOrBlank()
 
     private fun makeAuthorizeUri() = String.format(
-            authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
-            options.clientId,
-            options.redirectUri,
-            URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
+        authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
+        options.clientId,
+        options.redirectUri,
+        URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}", "UTF-8")
     )
+
     /**
      * Creating a login intent
      */
     fun getLoginIntent() = Intent(Intent.ACTION_VIEW).apply {
         data = getLoginUri()
     }
+
     /**
      * Creating a login uri
      */
-    fun getLoginUri() : Uri {
+    fun getLoginUri(): Uri {
         val appendUri = String.format(
             "&state=%s", generateClientState()
         )
         return Uri.parse(makeAuthorizeUri() + appendUri)
     }
+
     /**
      * Creating a accountinfo intent
      */
     fun getAccountInfoIntent() = Intent(Intent.ACTION_VIEW).apply {
         data = getAccountInfoUri()
     }
+
     /**
      * Creating a accountinfo uri
      */
-    fun getAccountInfoUri() : Uri {
+    fun getAccountInfoUri(): Uri {
         val appendUri = String.format(
             "&prompt=%s&access_token=%s&state=%s",
             "mypage",
@@ -403,7 +451,10 @@ class NuguOAuth private constructor(
         }
     }
 
-    override fun accountByInAppBrowser(activity: Activity, listener: NuguOAuthInterface.OnAccountListener) {
+    override fun accountByInAppBrowser(
+        activity: Activity,
+        listener: NuguOAuthInterface.OnAccountListener
+    ) {
         this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
         this.onceLoginListener = OnceLoginListener(listener)
         Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
@@ -421,8 +472,8 @@ class NuguOAuth private constructor(
      * @return true is successful extract of authCode, otherwise false
      */
     fun setCodeFromIntent(intent: Any): Boolean {
-        var state : String? = null
-        var code : String? = null
+        var state: String? = null
+        var code: String? = null
         when (intent) {
             is Intent -> intent.dataString?.let {
                 Uri.parse(URLDecoder.decode(it, "UTF-8")).let {
@@ -432,11 +483,11 @@ class NuguOAuth private constructor(
             }
         }
 
-        if(!verifyState(state)) {
+        if (!verifyState(state)) {
             Logger.d(TAG, "[setCodeFromIntent] Csrf failed. state=$state")
             return false
         }
-        if(!verifyCode(code)) {
+        if (!verifyCode(code)) {
             Logger.d(TAG, "[setCodeFromIntent] code is null or blank. code=$code")
             return false
         }
@@ -475,6 +526,7 @@ class NuguOAuth private constructor(
     fun setResult(result: Boolean) {
         setResult(result, authError)
     }
+
     /**
      * Determine success.
      * @param true is success, otherwise false
@@ -541,10 +593,14 @@ class NuguOAuth private constructor(
         })
     }
 
-    private fun handleAuthState(newState: AuthStateListener.State, listener: OnceLoginListener) : Boolean {
-        when(newState) {
+    private fun handleAuthState(
+        newState: AuthStateListener.State,
+        listener: OnceLoginListener
+    ): Boolean {
+        when (newState) {
             AuthStateListener.State.EXPIRED,
-            AuthStateListener.State.UNINITIALIZED -> { /* noop */}
+            AuthStateListener.State.UNINITIALIZED -> { /* noop */
+            }
             AuthStateListener.State.REFRESHED -> {
                 /* Authentication successful */
                 listener.onSuccess(client.getCredentials())

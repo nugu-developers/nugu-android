@@ -39,7 +39,6 @@ import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
  *  Implementation of registry
  **/
 class RegistryClient(
-    private val serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup?
     ) : Transport {
     companion object {
@@ -81,7 +80,7 @@ class RegistryClient(
         fun onError(reason: ChangedReason)
     }
 
-    fun getPolicy(authDelegate: AuthDelegate, observer: Observer) {
+    fun getPolicy(serverInfo: NuguServerInfo,authDelegate: AuthDelegate, observer: Observer) {
         if (isShutdown.get()) {
             Logger.w(TAG, "[getPolicy] already shutdown")
             return

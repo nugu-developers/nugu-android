@@ -17,10 +17,6 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:replace="android:allowBackup">
-        <!-- NUGU Configuration -->
-        <meta-data
-            android:name="com.skt.nugu.CLIENT_ID"
-            android:value="YOUR_CLIENT_ID_HERE" />
 
         <activity android:name=".activity.LoginActivity" android:screenOrientation="portrait"
                   android:configChanges="orientation|keyboardHidden">

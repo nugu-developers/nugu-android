@@ -46,6 +46,7 @@ import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
+import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
@@ -105,7 +106,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val templateRenderer =
         TemplateRenderer(object : TemplateRenderer.NuguClientProvider {
             override fun getNuguClient(): NuguAndroidClient = ClientManager.getClient()
-        }, "your_device_type_code", supportFragmentManager, R.id.template_container)
+        }, ConfigurationStore.configuration.deviceTypeCode, supportFragmentManager, R.id.template_container)
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,8 +120,13 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.getClient().addAudioPlayerListener(this)
         // Set a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(templateRenderer.also {
-            // if you need.
-            // it.setServerUrl("template_server_url")
+            ConfigurationStore.templateServerUri { url, error ->
+                error?.apply {
+                    Log.e(TAG, "[onCreate] error=$this")
+                    return@templateServerUri
+                }
+                it.setServerUrl(url)
+            }
         })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)

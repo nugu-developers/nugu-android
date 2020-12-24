@@ -3,7 +3,6 @@
 
     <string name="nugu_redirect_scheme">YOUR REDIRECT URI SCHEME</string>
     <string name="nugu_redirect_host">YOUR REDIRECT URI HOST</string>
-    <string name="nugu_poc_id">YOUR_POC_ID_HERE</string>
 
     <string name="guide_text">말씀해주세요</string>
 
