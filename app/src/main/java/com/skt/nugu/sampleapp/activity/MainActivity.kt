@@ -45,6 +45,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
@@ -102,7 +103,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     private val templateRenderer =
-        TemplateRenderer(ClientManager.getClient(), "your_device_type_code", supportFragmentManager, R.id.template_container)
+        TemplateRenderer(object : TemplateRenderer.NuguClientProvider {
+            override fun getNuguClient(): NuguAndroidClient = ClientManager.getClient()
+        }, "your_device_type_code", supportFragmentManager, R.id.template_container)
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
