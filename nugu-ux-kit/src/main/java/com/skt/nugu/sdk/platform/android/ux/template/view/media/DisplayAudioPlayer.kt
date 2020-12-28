@@ -109,13 +109,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 (this as? DefaultTemplateHandler)?.run {
                     observeMediaState()
                     setClientListener(mediaListener)
-                    getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
+                    getNuguClient().audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                 }
             }
         }
 
     private val mediaListener = object : TemplateHandler.ClientListener {
-        override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTime: Long, currentProgress: Float) {
+        override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
             post {
                 if (activity == AudioPlayerAgentInterface.State.PLAYING) {
                     play.setImageResource(R.drawable.btn_pause_48)
@@ -431,5 +431,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         templateHandler?.clear()
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.localStopTTS()
+        return super.onInterceptTouchEvent(ev)
     }
 }

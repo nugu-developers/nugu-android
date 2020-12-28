@@ -3,13 +3,12 @@ package com.skt.nugu.sdk.platform.android.ux.template.presenter
 import android.content.Intent
 import android.widget.Toast
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import java.lang.ref.WeakReference
 
-class BasicTemplateHandler(nuguClient: NuguAndroidClient?, templateInfo: TemplateInfo, fragment: TemplateFragment) :
-    DefaultTemplateHandler(nuguClient, templateInfo) {
+class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: TemplateFragment) :
+    DefaultTemplateHandler(nuguProvider, templateInfo) {
     companion object {
         private const val TAG = "BasicTemplateHandler"
     }

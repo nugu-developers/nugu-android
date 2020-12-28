@@ -3,37 +3,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tool="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#f8f8f8">
 
     <include layout="@layout/view_music_bar_player" />
 
     <FrameLayout
         android:id="@+id/view_music_player"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#f8f8f8"
-        android:orientation="vertical"
-        android:paddingBottom="60dp">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginBottom="119dp"
-            android:orientation="vertical">
+            android:background="#f8f8f8"
+            android:paddingTop="@dimen/media_player_title_height"
+            android:paddingBottom="@dimen/media_player_controller_height">
 
-            <include layout="@layout/title_view" />
-
-            <FrameLayout
+            <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_marginBottom="45dp"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="12dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="20dp"
-                    android:paddingTop="12dp">
+                    android:orientation="vertical">
 
                     <FrameLayout
                         android:id="@+id/album_cover"
@@ -77,7 +75,7 @@
                         android:id="@+id/iv_favorite"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="10dp"
                         android:src="@drawable/image_favorite"
                         android:visibility="invisible" />
 
@@ -85,20 +83,23 @@
                         android:id="@+id/tv_header"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="-5dp"
                         android:focusable="true"
-                        android:gravity="center"
                         android:fontFamily="@font/noto_sans_kr_bold_hestia"
+                        android:gravity="center"
                         android:textColor="#000000"
                         android:textSize="20sp" />
 
                     <TextView
                         android:id="@+id/tv_body"
                         android:layout_width="match_parent"
-                        android:layout_height="22dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:fontFamily="@font/noto_sans_kr_regular_hestia"
-                        android:gravity="center_horizontal"
+                        android:gravity="center"
                         android:maxLines="1"
+                        android:minHeight="18dp"
+                        android:padding="0dp"
                         android:textColor="#444444"
                         android:textSize="15sp"
                         android:visibility="gone" />
@@ -106,10 +107,12 @@
                     <TextView
                         android:id="@+id/tv_footer"
                         android:layout_width="match_parent"
-                        android:layout_height="22dp"
+                        android:layout_height="wrap_content"
                         android:fontFamily="@font/noto_sans_kr_regular_hestia"
-                        android:gravity="center_horizontal"
+                        android:gravity="center"
                         android:maxLines="1"
+                        android:minHeight="18dp"
+                        android:padding="0dp"
                         android:textColor="#888888"
                         android:textSize="12sp"
                         android:visibility="gone"
@@ -126,7 +129,7 @@
                     <TextView
                         android:id="@+id/tv_show_lyrics"
                         android:layout_width="wrap_content"
-                        android:layout_height="36dp"
+                        android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="전체 가사보기"
                         android:textColor="#009dff"
@@ -134,21 +137,25 @@
                         android:visibility="gone" />
 
                 </LinearLayout>
+            </ScrollView>
 
-                <com.skt.nugu.sdk.platform.android.ux.template.view.media.LyricsView
-                    android:id="@+id/cv_lyrics"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#f8f8f8"
-                    android:visibility="gone" />
+            <com.skt.nugu.sdk.platform.android.ux.template.view.media.LyricsView
+                android:id="@+id/cv_lyrics"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="45dp"
+                android:background="#f8f8f8"
+                android:visibility="gone" />
 
-            </FrameLayout>
-        </LinearLayout>
+        </FrameLayout>
+
+        <include layout="@layout/title_view" />
 
         <LinearLayout
             android:id="@+id/controller_area"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/media_player_controller_height"
             android:layout_gravity="bottom"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
@@ -161,16 +168,17 @@
                 android:layout_height="3dp"
                 android:background="#1A222222"
                 android:enabled="false"
+                android:max="100"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp"
-                android:max="100"
                 android:progressTint="#009dff"
                 android:thumb="@null" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="24dp"
-                android:gravity="center"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="22dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -196,9 +204,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:gravity="center"
+                android:layout_gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageView
