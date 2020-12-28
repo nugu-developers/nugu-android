@@ -142,7 +142,7 @@ class TemplateFragment : Fragment() {
         }
 
         templateView?.run {
-            if (TemplateRenderer.USE_STG_SERVER) setServerUrl("http://stg-template.aicloud.kr/view")
+            TemplateRenderer.SERVER_URL?.run { setServerUrl(this) }
 
             mainHandler.post {
                 load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId, onLoadingComplete = {

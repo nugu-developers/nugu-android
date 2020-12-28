@@ -120,7 +120,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         // Set a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(templateRenderer.also {
             // if you need.
-            // it.useStageServer(true)
+            // it.setServerUrl("template_server_url")
         })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)

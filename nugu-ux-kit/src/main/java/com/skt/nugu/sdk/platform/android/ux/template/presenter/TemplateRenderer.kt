@@ -24,12 +24,12 @@ class TemplateRenderer(
 
     companion object {
         private const val TAG = "TemplateRenderer"
-        internal var USE_STG_SERVER = false
+        internal var SERVER_URL: String? = null
         internal var DEVICE_TYPE_CODE = "device_type_code"
     }
 
     interface NuguClientProvider {
-        fun getNuguClient() : NuguAndroidClient
+        fun getNuguClient(): NuguAndroidClient
     }
 
     private val fragmentManagerRef = WeakReference(fragmentManager)
@@ -40,7 +40,7 @@ class TemplateRenderer(
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
         //Empty lyrics presenter for receiving lyrics. Actual lyrics control works in each TemplateView.
-        nuguClientProvider.getNuguClient().audioPlayerAgent?.setLyricsPresenter(object : LyricsPresenter{
+        nuguClientProvider.getNuguClient().audioPlayerAgent?.setLyricsPresenter(object : LyricsPresenter {
             override fun getVisibility(): Boolean {
                 return false
             }
@@ -188,7 +188,7 @@ class TemplateRenderer(
         return content
     }
 
-    fun useStageServer(use: Boolean = true) {
-        USE_STG_SERVER = true
+    fun setServerUrl(url: String? = null) {
+        SERVER_URL = url
     }
 }
