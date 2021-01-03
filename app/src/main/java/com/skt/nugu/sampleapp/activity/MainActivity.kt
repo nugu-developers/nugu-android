@@ -223,6 +223,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.getClient().removeSystemAgentListener(this)
         // shutdown a server
         ClientManager.getClient().shutdown()
+        // remove observer for audioplayer
+        ClientManager.getClient().removeAudioPlayerListener(this)
 
         tokenRefresher.stop()
         super.onDestroy()

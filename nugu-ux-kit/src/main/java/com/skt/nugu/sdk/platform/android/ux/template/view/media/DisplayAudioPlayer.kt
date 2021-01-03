@@ -431,6 +431,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         templateHandler?.clear()
+
+        (templateHandler as? DefaultTemplateHandler)?.run {
+            if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
+                getNuguClient().audioPlayerAgent?.setLyricsPresenter(null)
+            }
+        }
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
