@@ -1768,7 +1768,8 @@ class DefaultAudioPlayerAgent(
         this.displayDelegate = display
     }
 
-    private var lyricsPresenter: LyricsPresenter? = null
+    var lyricsPresenter: LyricsPresenter? = null
+        private set
 
     override fun setLyricsPresenter(presenter: LyricsPresenter?) {
         lyricsPresenter = presenter
