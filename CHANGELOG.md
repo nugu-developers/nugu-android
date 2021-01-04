@@ -1,6 +1,23 @@
 Change Log
 ==========
 
+Version 0.9.43 *(2021-01-04)*
+-----------------------------
+* Bug: Fix ExoMediaPlayer doesn't call onRetrieved callback (#1483)
+* Bug: Improve TemplateView (#1484)
+* Fix: Only compare token for Routine.Stop, Routine,Continue (#1475)
+* Fix: fix "Only fullscreen opaque activities can request orientation" issue (#1480)
+* Fix: Fix ExoMediaPlayer doesn't calling onRetrieved callback (#1482)
+* Fix: Missing call to onPostSendMessage when sending AttachmentMessage  (#1490)
+* Improve: Update SilverTray v4.3.3 (#1477)
+* Improve: Disables 'wait for ready' feature for the call (#1481)
+* Improve: Deliver template json on update for AudioPlayer (#1485)
+* Improve: Clear lastStoppedTts directive when a new directive handled (#1488)
+* Improve: Custom management for BT's audio focus  (#1492)
+* Improve: Cancel all directives immediately if routine's directive failed (#1495)
+* Improve: Update grpc v1.34.0 (#1500)
+* New: Support nugu configuration (#1330)
+
 Version 0.9.42 *(2020-12-11)*
 -----------------------------
 * Fix: Fix screen orientation in oauth login (#1471)
