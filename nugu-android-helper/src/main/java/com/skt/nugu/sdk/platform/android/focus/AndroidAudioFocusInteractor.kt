@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.CountDownLatch
 
 /**
  * This class manage an external audio player (such as music or video player apps) focus changes.
@@ -38,7 +39,9 @@ object AndroidAudioFocusInteractor {
      * @param audioManager android audio manager to manage AAFM
      */
     class Factory(private val audioManager: AudioManager): AudioFocusInteractorFactory {
-        override fun create(focusManager: FocusManagerInterface): AudioFocusInteractor = Impl(audioManager, focusManager)
+        override fun create(focusManager: FocusManagerInterface): AudioFocusInteractor = Impl(audioManager, focusManager).apply {
+            focusManager.setExternalFocusInteractor(this)
+        }
     }
 
     /**
@@ -49,30 +52,66 @@ object AndroidAudioFocusInteractor {
         private val audioManager: AudioManager,
         private val audioFocusManager: FocusManagerInterface
     ) : AudioFocusInteractor,
-        FocusManagerInterface.OnFocusChangedListener, ChannelObserver {
+        FocusManagerInterface.ExternalFocusInteractor, ChannelObserver {
 
         private val channelName = DefaultFocusChannel.INTERACTION_CHANNEL_NAME
         private val releaseCallbackMap = HashMap<String, Runnable>()
 
-        init {
-            audioFocusManager.addListener(this)
+        override fun acquire(channelName: String, requesterName: String): Boolean {
+            if(requesterName == TAG) {
+                // do not acquire/release AAFM when ExternalAudioPlayer focus changed.
+                return true
+            }
+
+            Logger.d(TAG, "[acquire] requesterName: $requesterName")
+            releaseCallbackMap.remove(requesterName)?.let {
+                handler.removeCallbacks(it)
+            }
+            var result = false
+            val latch = CountDownLatch(1)
+
+            handler.post {
+                // whenever acquired, request audio focus
+                result = if(requestAudioFocus(audioFocusChangeListener)) {
+                    audioFocusManager.releaseChannel(channelName, this)
+                    focusOwnerReferences.add(requesterName)
+                    true
+                } else {
+                    false
+                }
+
+                Logger.d(TAG, "[acquire] requestAudioFocus - result $result")
+                latch.countDown()
+            }
+
+            latch.await()
+
+            return result
         }
 
-        override fun onFocusChanged(
-            channelConfiguration: FocusManagerInterface.ChannelConfiguration,
-            newFocus: FocusState,
-            interfaceName: String
-        ) {
-            if (interfaceName == TAG) {
+        override fun release(channelName: String, requesterName: String) {
+            if(requesterName == TAG) {
                 // do not acquire/release AAFM when ExternalAudioPlayer focus changed.
                 return
             }
 
-            when (newFocus) {
-                FocusState.FOREGROUND -> acquire(interfaceName)
-                FocusState.BACKGROUND -> {
+            Logger.d(TAG, "[release] focusOwner: $requesterName")
+            releaseCallbackMap.remove(requesterName)?.let {
+                handler.removeCallbacks(it)
+            }
+
+            Runnable {
+                focusOwnerReferences.remove(requesterName)
+                if (focusOwnerReferences.isEmpty()) {
+                    abandonAudioFocus(audioFocusChangeListener)
+
+                    // Since the change of the audio focus is no longer known and don't care about anymore, we need to release the focus here.
+                    audioFocusManager.releaseChannel(channelName, this)
+                    Logger.d(TAG, "[release] abandonAudioFocus")
                 }
-                FocusState.NONE -> release(interfaceName)
+            }.apply {
+                releaseCallbackMap[requesterName] = this
+                handler.postDelayed(this, 500)
             }
         }
 
@@ -105,42 +144,6 @@ object AndroidAudioFocusInteractor {
             }
         private var focusOwnerReferences = HashSet<String>()
         private val handler = Handler(Looper.getMainLooper())
-
-        private fun acquire(focusOwner: String) {
-            Logger.d(TAG, "[acquire] focusOwner: $focusOwner")
-            releaseCallbackMap.remove(focusOwner)?.let {
-                handler.removeCallbacks(it)
-            }
-            handler.post {
-                // whenever acquired, request audio focus
-                if(requestAudioFocus(audioFocusChangeListener)) {
-                    audioFocusManager.releaseChannel(channelName, this)
-                }
-                Logger.d(TAG, "[acquire] requestAudioFocus")
-                focusOwnerReferences.add(focusOwner)
-            }
-        }
-
-        private fun release(focusOwner: String) {
-            Logger.d(TAG, "[release] focusOwner: $focusOwner")
-            releaseCallbackMap.remove(focusOwner)?.let {
-                handler.removeCallbacks(it)
-            }
-
-            Runnable {
-                focusOwnerReferences.remove(focusOwner)
-                if (focusOwnerReferences.isEmpty()) {
-                    abandonAudioFocus(audioFocusChangeListener)
-
-                    // Since the change of the audio focus is no longer known and don't care about anymore, we need to release the focus here.
-                    audioFocusManager.releaseChannel(channelName, this)
-                    Logger.d(TAG, "[release] abandonAudioFocus")
-                }
-            }.apply {
-                releaseCallbackMap[focusOwner] = this
-                handler.postDelayed(this, 500)
-            }
-        }
 
         private fun requestAudioFocus(listener: AudioManager.OnAudioFocusChangeListener): Boolean {
             val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
