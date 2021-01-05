@@ -29,8 +29,7 @@ import java.util.concurrent.Future
 class FocusManager(
     channelConfigurations: List<FocusManagerInterface.ChannelConfiguration>,
     tagHint: String? = null
-) : FocusManagerInterface {
-
+    ) : FocusManagerInterface {
 
     private val TAG = if (tagHint.isNullOrBlank()) {
         "FocusManager"
@@ -40,6 +39,8 @@ class FocusManager(
 
     private val allChannelConfigurations: MutableMap<String, FocusManagerInterface.ChannelConfiguration> = HashMap()
     private val allChannels: MutableMap<String, Channel> = HashMap()
+
+    private var externalFocusInteractor: FocusManagerInterface.ExternalFocusInteractor? = null
 
     private data class ActiveChannel(
         val channel: Channel,
@@ -230,6 +231,14 @@ class FocusManager(
     }
 
     private fun setChannelFocus(channel: Channel, focus: FocusState) {
+        // if foreground focus requested, then acquire external focus if need.
+        // if failed, return
+        if(focus == FocusState.FOREGROUND) {
+            if(externalFocusInteractor?.acquire(channel.name, channel.getInterfaceName()) != true) {
+                return
+            }
+        }
+
         if (!channel.setFocus(focus)) {
             Logger.d(TAG, "[setChannelFocus] $channel, $focus")
             return
@@ -237,6 +246,11 @@ class FocusManager(
 
         if(focus == FocusState.FOREGROUND) {
             foregroundChannel = channel
+        }
+
+        // if loss focus, then release external focus also.
+        if(focus == FocusState.NONE) {
+            externalFocusInteractor?.release(channel.name, channel.getInterfaceName())
         }
 
         listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName) }
@@ -263,5 +277,9 @@ class FocusManager(
 
     override fun removeListener(listener: FocusManagerInterface.OnFocusChangedListener) {
         listeners.remove(listener)
+    }
+
+    override fun setExternalFocusInteractor(focusInteractor: FocusManagerInterface.ExternalFocusInteractor) {
+        externalFocusInteractor = focusInteractor
     }
 }
