@@ -37,4 +37,11 @@ interface FocusManagerInterface {
 
     fun addListener(listener: OnFocusChangedListener)
     fun removeListener(listener: OnFocusChangedListener)
+
+    interface ExternalFocusInteractor {
+        fun acquire(channelName: String, requesterName: String): Boolean
+        fun release(channelName: String, requesterName: String)
+    }
+
+    fun setExternalFocusInteractor(focusInteractor: ExternalFocusInteractor)
 }
