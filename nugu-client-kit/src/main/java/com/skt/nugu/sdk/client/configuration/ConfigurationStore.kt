@@ -151,6 +151,11 @@ object ConfigurationStore {
         })
     }
 
+    fun configuration() = try {
+        configuration
+    } catch (e: UninitializedPropertyAccessException) {
+        null
+    }
     fun configurationMetadataSync() : ConfigurationMetadata? {
         var result : ConfigurationMetadata? = null
         val latch = CountDownLatch(1)

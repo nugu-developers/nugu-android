@@ -107,10 +107,7 @@ class NuguOAuth private constructor(
     private var refreshToken: String? = null
 
     private val baseUrl: String by lazy {
-        var url = authServerBaseUrl
-        if (url.isNullOrBlank()) {
-            url = ConfigurationStore.configuration.OAuthServerUrl
-        }
+        val url = authServerBaseUrl ?: ConfigurationStore.configuration()?.OAuthServerUrl
         url ?: BASE_AUTH_URL
     }
     // authentication Implementation
@@ -369,7 +366,7 @@ class NuguOAuth private constructor(
         }
 
         this.options.apply {
-            ConfigurationStore.configuration.let {
+            ConfigurationStore.configuration()?.let {
                 if (clientId.isBlank()) {
                     clientId = it.clientId
                 }
