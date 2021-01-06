@@ -43,12 +43,17 @@ object ConfigurationStore {
     private val discoveryUrl by lazy {
         "${configuration.OAuthServerUrl}/.well-known/oauth-authorization-server/${configuration.clientId}"
     }
-
+    /**
+     * Callback for [ConfigurationMetadata] results.
+     */
     interface ConfigurationCallback {
         fun onConfigurationCompleted(metadata: ConfigurationMetadata)
         fun onConfigurationFailed(error: Throwable)
     }
-
+    /**
+     * Set the [Configuration]
+     * start AuthorizationServiceConfiguration
+     */
     fun configure(configuration: Configuration) {
         this.configuration = configuration
         obtainAuthorizationServiceConfiguration()
@@ -65,7 +70,7 @@ object ConfigurationStore {
             configure(this)
         } ?: throw IOException("[configure] Failed parsing JSON source: $json to Json")
     }
-
+    // InputStream to string
     private fun readInputStream(inputStream: InputStream) : String {
         val stringBuilder = StringBuilder()
         BufferedReader(InputStreamReader(inputStream)).forEachLine {
@@ -74,7 +79,7 @@ object ConfigurationStore {
         inputStream.close()
         return stringBuilder.toString()
     }
-
+    // Parse the string.
     private fun parseConfiguration(json: String) : Configuration? {
         return try {
             Gson().fromJson(JsonParser.parseString(json).asJsonObject, Configuration::class.java)
@@ -83,7 +88,11 @@ object ConfigurationStore {
         }
     }
 
-   // * @param onResult is called after the value is computed
+    /**
+     * Gets the value of [ConfigurationMetadata.policyUri]
+     * @param onResult is called after the value is computed
+     * @error Throwable on get errors.
+     */
     fun privacyUrl(onResult:(url : String, error: Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
@@ -95,7 +104,11 @@ object ConfigurationStore {
             }
         })
     }
-
+    /**
+     * Gets the value of [ConfigurationMetadata.templateServerUri]
+     * @param onResult is called after the value is computed
+     * @error Throwable on get errors.
+     */
     fun templateServerUri(onResult:(url : String, error: Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
@@ -107,7 +120,11 @@ object ConfigurationStore {
             }
         })
     }
-
+    /**
+     * Gets the value of usageGuideUrl
+     * @param onResult is called after the value is computed
+     * @error Throwable on get errors.
+     */
     fun usageGuideUrl(deviceUniqueId: String, onResult:(String, Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
@@ -126,7 +143,11 @@ object ConfigurationStore {
             }
         })
     }
-
+    /**
+     * Gets the value of [ConfigurationMetadata.serviceSetting]
+     * @param onResult is called after the value is computed
+     * @error Throwable on get errors.
+     */
     fun serviceSettingUrl(onResult:(url : String, error: Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
@@ -138,7 +159,11 @@ object ConfigurationStore {
             }
         })
     }
-
+    /**
+     * Gets the value of [ConfigurationMetadata.termOfServiceUri]
+     * @param onResult is called after the value is computed
+     * @error Throwable on get errors.
+     */
     fun agreementUrl(onResult:(String, Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
@@ -151,11 +176,18 @@ object ConfigurationStore {
         })
     }
 
+    /**
+     * Returns the [Configuration]
+     */
     fun configuration() = try {
         configuration
     } catch (e: UninitializedPropertyAccessException) {
         null
     }
+
+    /**
+     * Returns the [ConfigurationMetadata] by synchronously, Fetching from cache or network
+     */
     fun configurationMetadataSync() : ConfigurationMetadata? {
         var result : ConfigurationMetadata? = null
         val latch = CountDownLatch(1)
@@ -173,6 +205,9 @@ object ConfigurationStore {
         return result
     }
 
+    /**
+     * Gets the value of [ConfigurationMetadata]
+     */
     fun configurationMetadata(onResult:(ConfigurationMetadata?, Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
@@ -185,6 +220,9 @@ object ConfigurationStore {
         })
     }
 
+    /**
+     * Obtaining authorization Service Configuration. Fetching from cache or network
+     */
     private fun obtainAuthorizationServiceConfiguration(callback: ConfigurationCallback? = null) {
         addObserver(callback)
 
@@ -213,6 +251,10 @@ object ConfigurationStore {
         }
     }
 
+    /**
+     * Request the discovery api.
+     * @return the [ConfigurationMetadata]
+     */
     private fun requestDiscovery(): ConfigurationMetadata {
         val client = OkHttpClient().apply {
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
@@ -234,18 +276,25 @@ object ConfigurationStore {
         throw Throwable("An unexpected error has occurred (code=$code)")
     }
 
+    /**
+     * Adds a ConfigurationCallback
+     */
     private fun addObserver(callback: ConfigurationCallback?) {
         if(callback == null) {
             return
         }
         listeners.add(callback)
     }
+    /**
+     * Removes the given observer from the observers list.
+     */
     private fun removeObserver(callback: ConfigurationCallback?) {
         if(callback == null) {
             return
         }
         listeners.remove(callback)
     }
+
     private fun notifySuccessListeners(metadata: ConfigurationMetadata) {
         val listenersCopy: MutableList<ConfigurationCallback> = ArrayList(listeners)
         listenersCopy.forEach {
