@@ -22,6 +22,8 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.skt.nugu.sampleapp.client.ClientManager
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
 class SampleApplication : Application() {
     companion object {
@@ -34,6 +36,10 @@ class SampleApplication : Application() {
         super.onCreate()
         initializeClientManager()
         createNotificationChannel()
+
+        startKoin {
+            androidContext(this@SampleApplication)
+        }
     }
 
     /**

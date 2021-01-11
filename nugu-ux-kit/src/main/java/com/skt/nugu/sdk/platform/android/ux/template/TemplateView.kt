@@ -29,7 +29,7 @@ interface TemplateView {
 
         const val AUDIO_PLAYER_TEMPLATE_1 = "AudioPlayer.Template1"
         const val AUDIO_PLAYER_TEMPLATE_2 = "AudioPlayer.Template2"
-        val mediaTemplateTypes = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
+        val MEDIA_TEMPLATE_TYPES = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
 
         /**
          * @param forceToWebView : If it is true, WebView always be returned.
@@ -38,8 +38,8 @@ interface TemplateView {
          * @return appropriate TemplateView object which is determined by templateType
          */
         fun createView(templateType: String, context: Context, forceToWebView: Boolean = false): TemplateView {
-            Logger.i(TAG, "createView(). templateType: $templateType, native? ${mediaTemplateTypes.contains(templateType)}")
-            return if (!forceToWebView && mediaTemplateTypes.contains(templateType)) {
+            Logger.i(TAG, "createView(). templateType: $templateType, native? ${MEDIA_TEMPLATE_TYPES.contains(templateType)}")
+            return if (!forceToWebView && MEDIA_TEMPLATE_TYPES.contains(templateType)) {
                 DisplayAudioPlayer(templateType, context)
             } else {
                 TemplateWebView(context)
