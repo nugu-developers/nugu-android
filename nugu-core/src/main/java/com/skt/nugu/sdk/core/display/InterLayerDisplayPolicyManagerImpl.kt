@@ -19,10 +19,7 @@ package com.skt.nugu.sdk.core.display
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -58,6 +55,10 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
             }
 
             displayLayers.add(layer)
+
+            listeners.forEach {
+                it.onDisplayLayerRendered(layer)
+            }
             Logger.d(TAG, "[onDisplayLayerRendered] rendered: $layer")
         }
     }
@@ -65,6 +66,12 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
     override fun onDisplayLayerCleared(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
         lock.withLock {
             val removed = displayLayers.remove(layer)
+
+            if(removed) {
+                listeners.forEach {
+                    it.onDisplayLayerCleared(layer)
+                }
+            }
             Logger.d(TAG, "[onDisplayLayerCleared] clear: $layer, removed: $removed")
         }
     }
@@ -126,5 +133,15 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
             }
             Logger.d(TAG, "[onPlayFinished] $layer")
         }
+    }
+
+    private val listeners = CopyOnWriteArraySet<InterLayerDisplayPolicyManager.Listener>()
+
+    override fun addListener(listener: InterLayerDisplayPolicyManager.Listener) {
+        listeners.add(listener)
+    }
+
+    override fun removeListener(listener: InterLayerDisplayPolicyManager.Listener) {
+        listeners.remove(listener)
     }
 }
