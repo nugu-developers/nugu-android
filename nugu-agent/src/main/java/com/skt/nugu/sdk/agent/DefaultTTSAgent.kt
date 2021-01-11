@@ -71,7 +71,9 @@ class DefaultTTSAgent(
     , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
     , PlayStackManagerInterface.PlayContextProvider
-    , StopDirectiveHandler.Controller {
+    , StopDirectiveHandler.Controller
+    , InterLayerDisplayPolicyManager.Listener
+{
 
     internal data class SpeakPayload(
         @SerializedName("playServiceId")
@@ -1095,5 +1097,16 @@ class DefaultTTSAgent(
         val playContext = playContextManager.getPlayContext()
         Logger.d(TAG, "[getPlayContext] $playContext")
         return playContext
+    }
+
+    override fun onDisplayLayerRendered(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
+        // no-op
+    }
+
+    override fun onDisplayLayerCleared(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
+        if(currentState == TTSAgentInterface.State.FINISHED && playContextManager.getPlayContext() != null) {
+            Logger.d(TAG, "[onDisplayLayerCleared] $layer")
+            playContextManager.onPlaybackStopped()
+        }
     }
 }
