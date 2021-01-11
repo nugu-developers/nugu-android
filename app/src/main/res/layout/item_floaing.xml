@@ -36,5 +36,4 @@
         android:textSize="13sp"
         android:visibility="invisible"
         />
-
 </com.skt.nugu.sampleapp.service.floating.FloatingView>
