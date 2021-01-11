@@ -56,6 +56,8 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
         private const val ACTION_PREV = "ACTION_PREV"
         private const val ACTION_NEXT = "ACTION_NEXT"
         private const val ACTION_STOP = "ACTION_STOP"
+        private const val ACTION_CLOSE_NOTI = "ACTION_CLOSE_NOTI"
+
 
         fun startService(context: Context, audioItemContext: AudioPlayerAgentInterface.Context) {
             val intent = Intent(context.applicationContext, MusicPlayerService::class.java).apply {
@@ -72,7 +74,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
 
         fun stopService(context: Context) {
             val intent = Intent(context.applicationContext, MusicPlayerService::class.java)
-            intent.action = ACTION_STOP
+            intent.action = ACTION_CLOSE_NOTI
             context.startService(intent)
         }
     }
@@ -102,6 +104,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
             ACTION_PREV -> onActionPrev()
             ACTION_NEXT -> onActionNext()
             ACTION_STOP -> onActionStop()
+            ACTION_CLOSE_NOTI -> stopServiceSelf()
         }
 
         return super.onStartCommand(intent, flags, startId)
