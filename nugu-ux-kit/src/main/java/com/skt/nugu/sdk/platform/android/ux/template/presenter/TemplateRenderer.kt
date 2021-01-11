@@ -6,19 +6,18 @@ import android.support.annotation.Keep
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import com.google.gson.Gson
-import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
-import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import org.json.JSONObject
+import java.lang.RuntimeException
 import java.lang.ref.WeakReference
 
 class TemplateRenderer(
     private val nuguClientProvider: NuguClientProvider,
     deviceTypeCode: String,
-    fragmentManager: FragmentManager,
+    fragmentManager: FragmentManager? = null,
     private val containerId: Int
 ) : DisplayAggregatorInterface.Renderer {
 
@@ -32,31 +31,29 @@ class TemplateRenderer(
         fun getNuguClient(): NuguAndroidClient
     }
 
-    private val fragmentManagerRef = WeakReference(fragmentManager)
+    interface ExternalViewRenderer {
+        class ViewInfo(val templateId: String)
+
+        fun getVisibleList(): List<ViewInfo>?
+    }
+
+    private var fragmentManagerRef = WeakReference(fragmentManager)
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val gson = Gson()
 
+    fun setFragmentManager(fragmentManager: FragmentManager?) {
+        fragmentManagerRef.clear()
+        fragmentManagerRef = WeakReference(fragmentManager)
+    }
+
+    var externalViewRenderer: ExternalViewRenderer? = null
+
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
+
         //Empty lyrics presenter for receiving lyrics. Actual lyrics control works in each TemplateView.
-        nuguClientProvider.getNuguClient().audioPlayerAgent?.setLyricsPresenter(object : LyricsPresenter {
-            override fun getVisibility(): Boolean {
-                return false
-            }
-
-            override fun show(): Boolean {
-                return false
-            }
-
-            override fun hide(): Boolean {
-                return false
-            }
-
-            override fun controlPage(direction: Direction): Boolean {
-                return false
-            }
-        })
+        nuguClientProvider.getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
     }
 
     @Keep
@@ -75,6 +72,11 @@ class TemplateRenderer(
             TAG,
             "render() templateId:$templateId, \n templateType:$templateType, \n templateContent:$templateContent, \n header:$header, \n displayType$displayType"
         )
+
+        if (fragmentManagerRef.get() == null) {
+            Logger.d(TAG, "render() return false; fragmentManager is null")
+            return false
+        }
 
         mainHandler.post {
             val templateContentWithType = insertType(templateContent, templateType)
@@ -108,6 +110,7 @@ class TemplateRenderer(
                             containerId,
                             TemplateFragment.newInstance(
                                 nuguProvider = nuguClientProvider,
+                                externalRenderer = externalViewRenderer,
                                 name = templateType,
                                 dialogRequestId = header.dialogRequestId,
                                 templateId = templateId,
