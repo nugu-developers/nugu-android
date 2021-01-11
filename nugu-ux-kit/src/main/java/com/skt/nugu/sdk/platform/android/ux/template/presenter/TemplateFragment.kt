@@ -42,6 +42,7 @@ class TemplateFragment : Fragment() {
 
         fun newInstance(
             nuguProvider: TemplateRenderer.NuguClientProvider,
+            externalRenderer: TemplateRenderer.ExternalViewRenderer? = null,
             name: String,
             dialogRequestId: String,
             templateId: String,
@@ -52,6 +53,7 @@ class TemplateFragment : Fragment() {
             return TemplateFragment().apply {
                 arguments = createBundle(name, dialogRequestId, templateId, template, displayType, playServiceId)
                 pendingNuguProvider = nuguProvider
+                pendingExternalViewRenderer = externalRenderer
             }
         }
 
@@ -78,6 +80,7 @@ class TemplateFragment : Fragment() {
     private val layoutId = R.layout.fragment_template
     private var templateView: TemplateView? = null
     private var pendingNuguProvider: TemplateRenderer.NuguClientProvider? = null
+    private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val viewModel: TemplateViewModel by lazy {
@@ -90,7 +93,11 @@ class TemplateFragment : Fragment() {
             viewModel.nuguClientProvider = this
         }
 
-        viewModel.onClose = { onClose() }
+        pendingExternalViewRenderer?.run {
+            viewModel.externalRenderer = this
+        }
+
+        viewModel.onClose = { onClose(false) }
     }
 
     override fun onCreateView(
@@ -173,7 +180,7 @@ class TemplateFragment : Fragment() {
     }
 
     fun isMediaTemplate(): Boolean {
-        return TemplateView.mediaTemplateTypes.contains(getTemplateType())
+        return TemplateView.MEDIA_TEMPLATE_TYPES.contains(getTemplateType())
     }
 
     fun reload(templateContent: String) {
@@ -201,10 +208,23 @@ class TemplateFragment : Fragment() {
         }
     }
 
-    private fun onClose() {
+    /**
+     * @param isUserIntention : If it is true, User wanted to close template intentionally.
+     * For example user could click close button or request as uttering.
+     * Also It could be done by SDK's request.
+     * If is is false, this means the fragment is destroyed by unknown reason.
+     */
+    private fun onClose(isUserIntention: Boolean = true) {
         Logger.d(TAG, "onClose.. current notifyRenderedState. ${viewModel.renderNotified}")
         if (viewModel.renderNotified == RenderNotifyState.RENDERED) {
-            notifyCleared()
+            if (!isUserIntention
+                && viewModel.externalRenderer.getVisibleList()?.any { it.templateId == getTemplateId() } == true
+            ) {
+                // do not invoke notifyCleared()
+            } else {
+                notifyCleared()
+            }
+
         } else if (viewModel.renderNotified == RenderNotifyState.NONE) {
             notifyRenderFailed()
         }
