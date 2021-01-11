@@ -1,137 +1,182 @@
+/**
+ * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http:www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.skt.nugu.sampleapp.service.floating
 
-import android.animation.Animator
-import android.animation.ObjectAnimator
-import android.animation.PropertyValuesHolder
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.graphics.Point
-import android.graphics.Rect
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.view.animation.DecelerateInterpolator
+import android.widget.TextView
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.activity.MainActivity
+import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.RenderDirective
+import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
 
 class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
 
-    private var mWindowManager: WindowManager =
-        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private lateinit var mLayoutParams: WindowManager.LayoutParams
-    private lateinit var mView: View
-    private var mViewAdded = false
-    private lateinit var rect: Rect
-    private lateinit var mAnimator: ObjectAnimator
+    private var windowManager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private lateinit var layoutParams: WindowManager.LayoutParams
+    private lateinit var view: View
+    private lateinit var sttView: TextView
+    private lateinit var nuguBtn: View
+    private lateinit var voiceChrome: NuguVoiceChromeView
+    private val mainHandler = Handler(Looper.getMainLooper())
 
+    private val dialogStateListener = object : DialogUXStateAggregatorInterface.Listener {
+        override fun onDialogUXStateChanged(
+            newState: DialogUXStateAggregatorInterface.DialogUXState,
+            dialogMode: Boolean,
+            chips: RenderDirective.Payload?,
+            sessionActivated: Boolean
+        ) {
+
+            mainHandler.post {
+                when (newState) {
+                    DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
+                        showViewAndHideOthers(voiceChrome)
+                        voiceChrome.startAnimation(NuguVoiceChromeView.Animation.WAITING)
+                    }
+                    DialogUXStateAggregatorInterface.DialogUXState.LISTENING -> {
+                        if (sttView.text.isNullOrBlank()) {
+                            showViewAndHideOthers(voiceChrome)
+                            voiceChrome.startAnimation(NuguVoiceChromeView.Animation.LISTENING)
+                        }
+                    }
+                    DialogUXStateAggregatorInterface.DialogUXState.THINKING -> {
+//                        showViewAndHideOthers(voiceChrome)
+//                        voiceChrome.startAnimation(NuguVoiceChromeView.Animation.THINKING)
+                    }
+                    DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
+                        showViewAndHideOthers(voiceChrome)
+                        voiceChrome.startAnimation(NuguVoiceChromeView.Animation.SPEAKING)
+                    }
+                    DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
+                        showViewAndHideOthers(nuguBtn)
+                    }
+                }
+            }
+        }
+    }
+
+    private val asrResultListener = object : ASRAgentInterface.OnResultListener {
+        override fun onNoneResult(header: Header) {
+        }
+
+        override fun onPartialResult(result: String, header: Header) {
+            mainHandler.post {
+                showViewAndHideOthers(sttView)
+                sttView.text = result
+            }
+        }
+
+        override fun onCompleteResult(result: String, header: Header) {
+            mainHandler.post {
+                showViewAndHideOthers(sttView)
+                sttView.text = result
+            }
+        }
+
+        override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
+            mainHandler.post {
+                sttView.visibility = View.GONE
+                sttView.text = ""
+            }
+        }
+
+        override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
+            mainHandler.post {
+                sttView.visibility = View.GONE
+                sttView.text = ""
+            }
+        }
+    }
+
+    private fun showViewAndHideOthers(view: View) {
+        view.visibility = View.VISIBLE
+        val hideTargets = arrayListOf<View>()
+        when (view) {
+            nuguBtn -> {
+                sttView.text = null
+                hideTargets.add(sttView)
+                hideTargets.add(voiceChrome)
+            }
+            voiceChrome -> {
+                sttView.text = null
+                hideTargets.add(sttView)
+                hideTargets.add(nuguBtn)
+            }
+            sttView -> {
+                hideTargets.add(voiceChrome)
+                hideTargets.add(nuguBtn)
+            }
+        }
+
+        hideTargets.forEach { it.visibility = View.INVISIBLE }
+    }
+
+    private var isViewAdded = false
 
     fun show() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Settings.canDrawOverlays(context)) {
-                mWindowManager.addView(mView, mLayoutParams)
+                windowManager.addView(view, layoutParams)
             }
         } else {
-            mWindowManager.addView(mView, mLayoutParams)
+            windowManager.addView(view, layoutParams)
         }
-        mViewAdded = true
+        isViewAdded = true
+
+        ClientManager.getClient().addDialogUXStateListener(dialogStateListener)
+        ClientManager.getClient().addASRResultListener(asrResultListener)
     }
 
     fun hide() {
-        mWindowManager.removeView(mView)
-        mViewAdded = false
-    }
+        windowManager.removeView(view)
+        isViewAdded = false
 
+        ClientManager.getClient().removeDialogUXStateListener(dialogStateListener)
+        ClientManager.getClient().removeASRResultListener(asrResultListener)
+    }
 
     fun create() {
-        if (!mViewAdded) {
-            mView = LayoutInflater.from(context).inflate(R.layout.item_floaing, null, false)
-            (mView as FloatingView).setCallbacks(this)
-            rect = Rect()
-            updateScreenLimit(rect)
-            mAnimator = ObjectAnimator.ofPropertyValuesHolder(this)
-            mAnimator.interpolator = DecelerateInterpolator(1.0f)
+        if (!isViewAdded) {
+            view = LayoutInflater.from(context).inflate(R.layout.item_floaing, null, false)
+            (view as FloatingView).setCallbacks(this)
+
+            nuguBtn = view.findViewById(R.id.floating_nugu_button)
+            voiceChrome = view.findViewById(R.id.floating_voice_chrome)
+            sttView = view.findViewById(R.id.floating_stt)
         }
     }
-
-    fun updateScreenLimit(rect: Rect) {
-        val dm = context.resources.displayMetrics
-        rect.left = -30
-        rect.right = dm.widthPixels - getWidth()
-        rect.top = 30
-        rect.bottom = dm.heightPixels - getHeight()
-    }
-
-    fun magHorizontal(x: Int): Int {
-        var x = x
-        val dm = context.resources.displayMetrics
-        if (x + 78 < 0) {
-            x = rect.left
-        } else if (x + getWidth() - 78 > dm.widthPixels) {
-            x = rect.right
-        }
-        return x
-    }
-
-    fun magVertical(y: Int): Int {
-        var y = y
-        if (y < rect.top) {
-            y = rect.top
-        } else if (y > rect.bottom) {
-            y = rect.bottom
-        }
-        return y
-    }
-
-    fun getX(): Int = mLayoutParams.x
-    fun getY(): Int = mLayoutParams.y
-
-
-    fun settle() {
-        Log.e("settle", "before X ${getX()}")
-        Log.e("settle", "before Y ${getY()}")
-        val x = magHorizontal(getX())
-        val y = magVertical(getY())
-        Log.e("settle", "" + x)
-        Log.e("settle", "" + y)
-        animateTo(x, y)
-    }
-
-    fun animateTo(x: Int, y: Int) {
-        val xHolder = PropertyValuesHolder.ofInt("x", x)
-        val yHolder = PropertyValuesHolder.ofInt("y", y)
-        Log.e("animateTo", "x holder $xHolder")
-        Log.e("animateTo", "y holder $yHolder")
-        mAnimator.setValues(xHolder, yHolder)
-        mAnimator.duration = 200
-        mAnimator.start()
-        mAnimator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationRepeat(animation: Animator?) {
-            }
-
-            override fun onAnimationEnd(animation: Animator?) {
-                Log.e("AnimatorListener", "onAnimationEnd")
-            }
-
-            override fun onAnimationCancel(animation: Animator?) {
-                Log.e("AnimatorListener", "onAnimationCancel")
-            }
-
-            override fun onAnimationStart(animation: Animator?) {
-                Log.e("AnimatorListener", "onAnimationStart")
-            }
-        })
-    }
-
 
     fun createLayoutParams() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mLayoutParams = WindowManager.LayoutParams(
+            layoutParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -142,7 +187,7 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
                 PixelFormat.TRANSLUCENT
             )
         } else {
-            mLayoutParams = WindowManager.LayoutParams(
+            layoutParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
@@ -153,54 +198,43 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
                 PixelFormat.TRANSLUCENT
             )
         }
-        mLayoutParams.gravity = Gravity.CENTER
-        mLayoutParams.x = -mView.width
-        mLayoutParams.y = -mView.height
+        layoutParams.gravity = Gravity.CENTER
     }
 
-    fun moveTo(pos: Point) {
-        moveTo(pos.x, pos.y)
-    }
+    private fun moveBy(dx: Int, dy: Int) {
+        if (isViewAdded) {
 
-    fun moveTo(x: Int, y: Int) {
-        if ((mView != null) and (mViewAdded)) {
-            Log.e("test Int", "x : $x y : $y")
-            mLayoutParams.x = x
-            mLayoutParams.y = y
-            mWindowManager.updateViewLayout(mView, mLayoutParams)
+            layoutParams.x += dx
+            layoutParams.y += dy
+
+            val dm = context.resources.displayMetrics
+
+            layoutParams.x = layoutParams.x.coerceAtLeast(-dm.widthPixels / 2 + getWidth() / 2)
+                .coerceAtMost(dm.widthPixels / 2 - getWidth() / 2)
+            layoutParams.y = layoutParams.y.coerceAtLeast(-dm.heightPixels / 2 + getHeight() / 2)
+                .coerceAtMost(dm.heightPixels / 2 - getHeight() / 2)
+            windowManager.updateViewLayout(view, layoutParams)
         }
     }
 
-    fun moveBy(dx: Int, dy: Int) {
-        if (mView != null && mViewAdded) {
-            Log.e("test Int", "dx : $dx dy : $dy")
+    private fun getWidth(): Int = view.measuredWidth
 
-            mLayoutParams.x += dx
-            mLayoutParams.y += dy
-            mWindowManager.updateViewLayout(mView, mLayoutParams)
-        }
-    }
-
-
-    fun getWidth(): Int = mView.measuredWidth
-
-
-    fun getHeight(): Int = mView.measuredHeight
+    private fun getHeight(): Int = view.measuredHeight
 
     override fun onDrag(dx: Int, dy: Int) {
-        Log.e("test Float", "dx : $dx dy : $dy")
         moveBy(dx, dy)
     }
 
-    override fun onDragEnd(dx: Int, dy: Int) {
-        settle()
-    }
-
-    override fun onDragStart(dx: Int, dy: Int) {
-    }
-
     override fun onClick() {
-        startActivity()
+        if (nuguBtn.visibility == View.VISIBLE) {
+            ClientManager.getClient().asrAgent?.startRecognition()
+        } else if (ClientManager.speechRecognizerAggregator.isActive()) {
+            ClientManager.speechRecognizerAggregator.stopListening()
+        } else {
+            ClientManager.getClient().localStopTTS()
+        }
+
+//        startActivity()
     }
 
     private fun startActivity() {
