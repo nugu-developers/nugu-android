@@ -34,4 +34,12 @@ interface InterLayerDisplayPolicyManager {
     fun onDisplayLayerCleared(layer: DisplayLayer)
     fun onPlayStarted(layer: PlayLayer)
     fun onPlayFinished(layer: PlayLayer)
+
+    interface Listener {
+        fun onDisplayLayerRendered(layer: DisplayLayer)
+        fun onDisplayLayerCleared(layer: DisplayLayer)
+    }
+
+    fun addListener(listener: Listener)
+    fun removeListener(listener: Listener)
 }
