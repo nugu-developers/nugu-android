@@ -29,7 +29,7 @@ interface TemplateView {
 
         const val AUDIO_PLAYER_TEMPLATE_1 = "AudioPlayer.Template1"
         const val AUDIO_PLAYER_TEMPLATE_2 = "AudioPlayer.Template2"
-        val mediaTemplateTypes = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
+        val MEDIA_TEMPLATE_TYPES = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
 
         /**
          * key : TemplateType list
@@ -37,7 +37,7 @@ interface TemplateView {
          */
         val templateConstructor: HashMap<List<String>, (String, Context) -> TemplateView> by lazy {
             HashMap<List<String>, (String, Context) -> TemplateView>().also {
-                it[mediaTemplateTypes] = { templateType, context ->
+                it[MEDIA_TEMPLATE_TYPES] = { templateType, context ->
                     DisplayAudioPlayer(templateType, context)
                 }
             }
@@ -50,7 +50,7 @@ interface TemplateView {
          * @return appropriate TemplateView object which is determined by templateType
          */
         fun createView(templateType: String, context: Context, forceToWebView: Boolean = false): TemplateView {
-            Logger.i(TAG, "createView(). templateType: $templateType, native? ${mediaTemplateTypes.contains(templateType)}")
+            Logger.i(TAG, "createView(). templateType: $templateType, native? ${MEDIA_TEMPLATE_TYPES.contains(templateType)}")
 
             if (!forceToWebView) {
                 templateConstructor.keys.find { it.contains(templateType) }?.let { key ->
