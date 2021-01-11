@@ -36,6 +36,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.model.*
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
@@ -434,7 +435,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         (templateHandler as? DefaultTemplateHandler)?.run {
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
-                getNuguClient().audioPlayerAgent?.setLyricsPresenter(null)
+                getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
         }
     }
