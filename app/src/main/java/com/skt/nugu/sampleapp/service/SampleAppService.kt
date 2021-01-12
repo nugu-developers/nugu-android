@@ -3,6 +3,7 @@ package com.skt.nugu.sampleapp.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Binder
 import android.os.IBinder
 import com.skt.nugu.sampleapp.activity.MainActivity
@@ -23,8 +24,9 @@ class SampleAppService : Service() {
         const val ACTION_SERVICE_START = "ACTION_START"
         const val ACTION_SERVICE_STOP = "ACTION_STOP"
 
-        fun start(appContext: Context) {
-            appContext.startService(Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_SERVICE_START })
+        fun start(appContext: Context, serviceConnection: ServiceConnection) {
+            appContext.bindService(Intent(appContext, SampleAppService::class.java), serviceConnection, BIND_AUTO_CREATE)
+//            appContext.startService(Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_SERVICE_START })
         }
     }
 
@@ -71,9 +73,16 @@ class SampleAppService : Service() {
             floatingHeadWindow = FloatingHeadWindow(applicationContext).apply {
                 create()
                 createLayoutParams()
-                show()
             }
         }
+    }
+
+    fun show(){
+        floatingHeadWindow.show()
+    }
+
+    fun hide(){
+        floatingHeadWindow.hide()
     }
 
     override fun onCreate() {
