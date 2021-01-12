@@ -1016,11 +1016,11 @@ class DefaultASRAgent(
                 addProperty(PAYLOAD_PLAY_SERVICE_ID, it.playServiceId)
             }
         }.apply {
-            sendEvent(NAME_LISTEN_TIMEOUT, this, referrerDialogRequestId)
+            sendEvent(NAME_LISTEN_TIMEOUT, this, referrerDialogRequestId, true)
         }
     }
 
-    private fun sendEvent(name: String, payload: JsonObject, referrerDialogRequestId: String?) {
+    private fun sendEvent(name: String, payload: JsonObject, referrerDialogRequestId: String?, includeFullContext: Boolean = false) {
         contextManager.getContext(object: IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 messageSender.newCall(
@@ -1038,7 +1038,7 @@ class DefaultASRAgent(
                     }
                 })
             }
-        }, namespaceAndName)
+        }, if(includeFullContext) null else namespaceAndName)
     }
 
     private var currentAttributeKey: String? = null
