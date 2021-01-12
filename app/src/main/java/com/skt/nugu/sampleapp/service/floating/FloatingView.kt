@@ -20,7 +20,6 @@ import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewConfiguration
 import android.widget.FrameLayout
 
 class FloatingView @JvmOverloads constructor(
@@ -30,16 +29,12 @@ class FloatingView @JvmOverloads constructor(
 ) :
     FrameLayout(context, attributeSet, def), View.OnTouchListener {
 
-    private val CLICK_DRAG_TOLERANCE =
-        10f // Often, there will be a slight, unintentional, drag when the user taps the FAB, so we need to account for this.
-
     private var downRawX: Int = 0
     private var downRawY: Int = 0
     private var lastX: Int = 0
     private var lastY: Int = 0
     private lateinit var callbacks: Callbacks
     private val gestureDetector = GestureDetector(context, GestureListener())
-    private val touchSlo = ViewConfiguration.get(context).scaledTouchSlop
 
     init {
         setOnTouchListener(this)
@@ -75,7 +70,6 @@ class FloatingView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_UP -> {
-                callbacks.onDragEnd(x, y)
                 return true
             }
             else -> {
@@ -89,13 +83,16 @@ class FloatingView @JvmOverloads constructor(
             callbacks.onClick()
             return true
         }
+
+        override fun onLongPress(e: MotionEvent?) {
+            callbacks.onLongPress()
+        }
     }
 
     interface Callbacks {
         fun onDrag(dx: Int, dy: Int){}
-        fun onDragEnd(dx: Int, dy: Int){}
-        fun onDragStart(dx: Int, dy: Int){}
         fun onClick(){}
+        fun onLongPress(){}
     }
 }
 

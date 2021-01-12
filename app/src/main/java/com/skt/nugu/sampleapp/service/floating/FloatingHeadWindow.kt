@@ -46,6 +46,7 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
     private lateinit var nuguBtn: View
     private lateinit var voiceChrome: NuguVoiceChromeView
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var isViewAdded = false
 
     private val dialogStateListener = object : DialogUXStateAggregatorInterface.Listener {
         override fun onDialogUXStateChanged(
@@ -116,31 +117,6 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
         }
     }
 
-    private fun showViewAndHideOthers(view: View) {
-        view.visibility = View.VISIBLE
-        val hideTargets = arrayListOf<View>()
-        when (view) {
-            nuguBtn -> {
-                sttView.text = null
-                hideTargets.add(sttView)
-                hideTargets.add(voiceChrome)
-            }
-            voiceChrome -> {
-                sttView.text = null
-                hideTargets.add(sttView)
-                hideTargets.add(nuguBtn)
-            }
-            sttView -> {
-                hideTargets.add(voiceChrome)
-                hideTargets.add(nuguBtn)
-            }
-        }
-
-        hideTargets.forEach { it.visibility = View.INVISIBLE }
-    }
-
-    private var isViewAdded = false
-
     fun show() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Settings.canDrawOverlays(context)) {
@@ -172,6 +148,29 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
             voiceChrome = view.findViewById(R.id.floating_voice_chrome)
             sttView = view.findViewById(R.id.floating_stt)
         }
+    }
+
+    private fun showViewAndHideOthers(view: View) {
+        view.visibility = View.VISIBLE
+        val hideTargets = arrayListOf<View>()
+        when (view) {
+            nuguBtn -> {
+                sttView.text = null
+                hideTargets.add(sttView)
+                hideTargets.add(voiceChrome)
+            }
+            voiceChrome -> {
+                sttView.text = null
+                hideTargets.add(sttView)
+                hideTargets.add(nuguBtn)
+            }
+            sttView -> {
+                hideTargets.add(voiceChrome)
+                hideTargets.add(nuguBtn)
+            }
+        }
+
+        hideTargets.forEach { it.visibility = View.INVISIBLE }
     }
 
     fun createLayoutParams() {
@@ -208,11 +207,11 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
             layoutParams.y += dy
 
             val dm = context.resources.displayMetrics
-
             layoutParams.x = layoutParams.x.coerceAtLeast(-dm.widthPixels / 2 + getWidth() / 2)
                 .coerceAtMost(dm.widthPixels / 2 - getWidth() / 2)
             layoutParams.y = layoutParams.y.coerceAtLeast(-dm.heightPixels / 2 + getHeight() / 2)
                 .coerceAtMost(dm.heightPixels / 2 - getHeight() / 2)
+
             windowManager.updateViewLayout(view, layoutParams)
         }
     }
@@ -233,8 +232,10 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
         } else {
             ClientManager.getClient().localStopTTS()
         }
+    }
 
-//        startActivity()
+    override fun onLongPress() {
+        startActivity()
     }
 
     private fun startActivity() {
