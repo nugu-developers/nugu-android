@@ -29,7 +29,6 @@ import android.support.design.widget.CoordinatorLayout
 import android.os.IBinder
 import android.provider.Settings
 import android.support.design.widget.NavigationView
-import android.support.v4.content.ContextCompat
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
@@ -48,14 +47,14 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
-import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sampleapp.service.SampleAppService
-import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
-import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.ux.widget.*
 
@@ -177,7 +176,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         tokenRefresher.setListener(this)
         tokenRefresher.start()
 
-        checkPermission()
+        checkPermissionForOverlay()
 
     }
 
@@ -611,7 +610,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         return activeNetworkInfo?.isConnected ?: false
     }
 
-    private fun checkPermission() {
+    private fun checkPermissionForOverlay() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 val intent = Intent(
@@ -620,7 +619,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 )
                 startActivityForResult(intent, 1)
             } else {
-                Log.e("myLog", "startService")
                 startService()
             }
         } else {
