@@ -73,10 +73,11 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             context.startActivity(Intent(context, MainActivity::class.java))
         }
 
-        val templateRenderer =
+        val templateRenderer: TemplateRenderer by lazy {
             TemplateRenderer(object : TemplateRenderer.NuguClientProvider {
                 override fun getNuguClient(): NuguAndroidClient = ClientManager.getClient()
             }, ConfigurationStore.configuration.deviceTypeCode, null, R.id.template_container)
+        }
 
         private var sampleAppService: SampleAppService? = null
     }
