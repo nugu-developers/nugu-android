@@ -31,6 +31,11 @@ class TemplateRenderer(
         fun getNuguClient(): NuguAndroidClient
     }
 
+    /**
+     * The other Renderer that show any view associated with template.
+     * For example if you show media notification by play status independently, it needs to be inform to TemplateRenderer.
+     * Implement this interface and return templateId list being shown.
+     */
     interface ExternalViewRenderer {
         class ViewInfo(val templateId: String)
 
