@@ -20,6 +20,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.os.Bundle
+import android.support.design.widget.CoordinatorLayout
 import android.support.design.widget.NavigationView
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
@@ -31,7 +32,6 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.platform.android.ux.widget.NuguSnackbar
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
@@ -43,14 +43,12 @@ import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.service.MusicPlayerService
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sampleapp.utils.*
-import com.skt.nugu.sampleapp.widget.ChromeWindowController
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
-import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
-import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
+import com.skt.nugu.sdk.platform.android.ux.widget.*
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, AudioPlayerAgentInterface.Listener, SystemAgentInterfaceListener,
@@ -85,19 +83,19 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val navView: NavigationView by lazy {
         findViewById<NavigationView>(R.id.nav_view)
     }
-
     private val version: TextView by lazy {
         findViewById<TextView>(R.id.tv_version)
     }
-
     private val toolBar: android.support.v7.widget.Toolbar by lazy {
         findViewById<android.support.v7.widget.Toolbar>(R.id.toolbar)
     }
+    private val chromeWindow: ChromeWindow by lazy {
+        ChromeWindow(this, findViewById<CoordinatorLayout>(R.id.coordinator))
+    }
+
     private val onRequestPermissionResultHandler: OnRequestPermissionResultHandler by lazy {
         OnRequestPermissionResultHandler(this)
     }
-
-    private lateinit var chromeWindowController: ChromeWindowController
 
     private val speechRecognizerAggregator: SpeechRecognizerAggregator by lazy {
         ClientManager.speechRecognizerAggregator
@@ -131,7 +129,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
 
-        chromeWindowController = ChromeWindowController(this, object : ChromeWindowController.OnChromeWindowCallback {
+        chromeWindow.setOnChromeWindowCallback(object : ChromeWindow.OnChromeWindowCallback {
             override fun onExpandStarted() {
                 if (btnStartListening.isFab()) {
                     btnStartListening.visibility = View.INVISIBLE
@@ -148,7 +146,13 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 }
                 speechRecognizerAggregator.stopListening()
             }
-        }).apply {
+
+            override fun onChipsClicked(item: NuguChipsView.Item) {
+                ClientManager.getClient().requestTextInput(item.text)
+            }
+        })
+
+        chromeWindow.apply {
             speechRecognizerAggregator.addListener(this)
             ClientManager.getClient().addDialogUXStateListener(this)
             ClientManager.getClient().addASRResultListener(this)
@@ -211,7 +215,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onDestroy() {
-        chromeWindowController.apply {
+        chromeWindow.apply {
             speechRecognizerAggregator.removeListener(this)
             ClientManager.getClient().removeDialogUXStateListener(this)
             ClientManager.getClient().removeASRResultListener(this)
@@ -237,8 +241,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onBackPressed() {
-        if (chromeWindowController.isShown()) {
-            chromeWindowController.dismiss()
+        if (chromeWindow.isShown()) {
+            chromeWindow.dismiss()
             return
         }
 
@@ -338,7 +342,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
 
             btnStartListening.isEnabled = isConnected()
-            if (!chromeWindowController.isShown()) {
+            if (!chromeWindow.isShown()) {
                 btnStartListening.visibility = View.VISIBLE
             } else {
                 btnStartListening.visibility = View.INVISIBLE
@@ -495,7 +499,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
      * Return {@code true} if the token needs to be refresh_token, Otherwise, it is called 30 seconds again.
      */
     override fun onShouldRefreshToken(): Boolean {
-        if (chromeWindowController.isShown()) {
+        if (chromeWindow.isShown()) {
             return false
         }
         return true
