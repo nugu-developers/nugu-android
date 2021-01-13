@@ -32,6 +32,18 @@ interface TemplateView {
         val mediaTemplateTypes = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
 
         /**
+         * key : TemplateType list
+         * value : TemplateView Constructor
+         */
+        val templateConstructor: HashMap<List<String>, (String, Context) -> TemplateView> by lazy {
+            HashMap<List<String>, (String, Context) -> TemplateView>().also {
+                it[mediaTemplateTypes] = { templateType, context ->
+                    DisplayAudioPlayer(templateType, context)
+                }
+            }
+        }
+
+        /**
          * @param forceToWebView : If it is true, WebView always be returned.
          * Set this 'true' if you want template as a webView.
          *
@@ -39,11 +51,16 @@ interface TemplateView {
          */
         fun createView(templateType: String, context: Context, forceToWebView: Boolean = false): TemplateView {
             Logger.i(TAG, "createView(). templateType: $templateType, native? ${mediaTemplateTypes.contains(templateType)}")
-            return if (!forceToWebView && mediaTemplateTypes.contains(templateType)) {
-                DisplayAudioPlayer(templateType, context)
-            } else {
-                TemplateWebView(context)
+
+            if (!forceToWebView) {
+                templateConstructor.keys.find { it.contains(templateType) }?.let { key ->
+                    templateConstructor[key]?.invoke(templateType, context)?.run {
+                        return this
+                    }
+                }
             }
+
+            return TemplateWebView(context)
         }
     }
 
