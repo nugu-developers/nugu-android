@@ -42,7 +42,6 @@ class FlowTextView @JvmOverloads constructor(context: Context, attrs: AttributeS
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        // textView 의 with 가 wrap_content 라서 onLayout 에서 업데이트 진행
 //        updateText()
     }
 }

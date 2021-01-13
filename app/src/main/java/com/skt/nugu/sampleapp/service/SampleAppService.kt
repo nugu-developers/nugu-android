@@ -21,12 +21,8 @@ class SampleAppService : Service() {
     companion object {
         private const val TAG = "SampleAppService"
 
-        const val ACTION_SERVICE_START = "ACTION_START"
-        const val ACTION_SERVICE_STOP = "ACTION_STOP"
-
         fun start(appContext: Context, serviceConnection: ServiceConnection) {
             appContext.bindService(Intent(appContext, SampleAppService::class.java), serviceConnection, BIND_AUTO_CREATE)
-//            appContext.startService(Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_SERVICE_START })
         }
     }
 
@@ -77,11 +73,11 @@ class SampleAppService : Service() {
         }
     }
 
-    fun show(){
+    fun show() {
         floatingHeadWindow.show()
     }
 
-    fun hide(){
+    fun hide() {
         floatingHeadWindow.hide()
     }
 
