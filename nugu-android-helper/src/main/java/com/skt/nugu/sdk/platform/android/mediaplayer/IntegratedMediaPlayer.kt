@@ -218,4 +218,9 @@ class IntegratedMediaPlayer(
     override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
         durationListener = listener
     }
+
+    override fun setVolume(volume: Float) {
+        ttsPlayer.setVolume(volume)
+        audioPlayer.setVolume(volume)
+    }
 }

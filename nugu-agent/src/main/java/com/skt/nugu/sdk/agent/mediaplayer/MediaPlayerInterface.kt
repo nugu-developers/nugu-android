@@ -34,6 +34,7 @@ interface MediaPlayerControlInterface {
     fun setPlaybackEventListener(listener: PlaybackEventListener)
     fun setBufferEventListener(listener: BufferEventListener)
     fun setOnDurationListener(listener: OnDurationListener)
+    fun setVolume(volume: Float)
 
     interface OnDurationListener {
         /**
