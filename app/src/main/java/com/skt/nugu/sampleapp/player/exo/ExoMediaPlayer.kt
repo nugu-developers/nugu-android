@@ -535,7 +535,7 @@ class ExoMediaPlayer(
         player.release()
     }
 
-    fun setVolume(volume: Float) {
+    override fun setVolume(volume: Float) {
         player.volume = volume
     }
 

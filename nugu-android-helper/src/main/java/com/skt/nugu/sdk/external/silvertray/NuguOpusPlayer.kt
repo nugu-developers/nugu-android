@@ -158,4 +158,8 @@ class NuguOpusPlayer(private val streamType: Int) :
     override fun setOnDurationListener(listener: MediaPlayerControlInterface.OnDurationListener) {
         this.durationListener = listener
     }
+
+    override fun setVolume(volume: Float) {
+        player.volume =  volume
+    }
 }

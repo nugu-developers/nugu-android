@@ -203,4 +203,10 @@ class AndroidMediaPlayer(
             durationListener = listener
         }
     }
+
+    override fun setVolume(volume: Float) {
+        threadLock.withLock {
+            player.setVolume(volume, volume)
+        }
+    }
 }
