@@ -173,7 +173,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
         val builder: NotificationCompat.Builder = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             NotificationCompat.Builder(this)
         } else {
-            NotificationCompat.Builder(this, SampleApplication.NOTIFICATION_CHANNEL_MUSIC_PLAYER)
+            NotificationCompat.Builder(this, SampleNotificationChannel.MUSIC.channelId)
         }.apply {
             setSmallIcon(R.drawable.nugu_logo_72)
             setContent(remoteViews)

@@ -16,16 +16,13 @@
 package com.skt.nugu.sampleapp.activity
 
 import android.annotation.TargetApi
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.provider.Settings
 import android.support.design.widget.NavigationView
 import android.support.v4.widget.DrawerLayout
@@ -77,8 +74,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 override fun getNuguClient(): NuguAndroidClient = ClientManager.getClient()
             }, ConfigurationStore.configuration.deviceTypeCode, null, R.id.template_container)
         }
-
-        private var sampleAppService: SampleAppService? = null
     }
 
     enum class NotificationType {
@@ -633,29 +628,17 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as SampleAppService.LocalBinder
-            sampleAppService = binder.getService()
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-        }
-    }
-
     override fun onStop() {
-        sampleAppService?.show()
+        SampleAppService.showFloating(applicationContext)
         super.onStop()
     }
 
     override fun onStart() {
-        sampleAppService?.hide()
+        SampleAppService.hideFloating(applicationContext)
         super.onStart()
     }
 
     private fun startService() {
-        if (sampleAppService == null) {
-            SampleAppService.start(applicationContext, serviceConnection)
-        }
+        SampleAppService.start(applicationContext)
     }
 }

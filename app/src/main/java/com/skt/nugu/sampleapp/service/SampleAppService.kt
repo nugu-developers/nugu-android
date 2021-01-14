@@ -1,11 +1,13 @@
 package com.skt.nugu.sampleapp.service
 
+import android.app.Notification
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.os.Binder
 import android.os.IBinder
+import android.support.v4.app.NotificationCompat
+import android.support.v4.content.ContextCompat
+import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.activity.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.service.floating.FloatingHeadWindow
@@ -21,20 +23,34 @@ class SampleAppService : Service() {
     companion object {
         private const val TAG = "SampleAppService"
 
-        fun start(appContext: Context, serviceConnection: ServiceConnection) {
-            appContext.bindService(Intent(appContext, SampleAppService::class.java), serviceConnection, BIND_AUTO_CREATE)
-        }
-    }
+        private const val ACTION_SERVICE_START = "ACTION_START"
+        private const val ACTION_SERVICE_STOP = "ACTION_STOP"
+        private const val ACTION_SHOW_FLOATING = "ACTION_SHOW_FLOATING"
+        private const val ACTION_HIDE_FLOATING = "ACTION_HIDE_FLOATING"
 
-    inner class LocalBinder : Binder() {
-        fun getService(): SampleAppService {
-            return this@SampleAppService
+        fun start(appContext: Context) {
+            ContextCompat.startForegroundService(appContext,
+                Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_SERVICE_START })
+        }
+
+        fun stop(appContext: Context) {
+            ContextCompat.startForegroundService(appContext,
+                Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_SERVICE_STOP })
+        }
+
+        fun showFloating(appContext: Context) {
+            ContextCompat.startForegroundService(appContext,
+                Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_SHOW_FLOATING })
+        }
+
+        fun hideFloating(appContext: Context) {
+            ContextCompat.startForegroundService(appContext,
+                Intent(appContext, SampleAppService::class.java).also { it.action = ACTION_HIDE_FLOATING })
         }
     }
 
     private val appContext: Context by inject()
     lateinit var floatingHeadWindow: FloatingHeadWindow
-    private val mBinder = LocalBinder()
     private var medianNotiCancleJob: Job? = null
     private var notifyingTemplateId: String? = null
 
@@ -64,26 +80,11 @@ class SampleAppService : Service() {
         }
     }
 
-    fun init() {
-        if (!::floatingHeadWindow.isInitialized) {
-            floatingHeadWindow = FloatingHeadWindow(applicationContext).apply {
-                create()
-                createLayoutParams()
-            }
-        }
-    }
-
-    fun show() {
-        floatingHeadWindow.show()
-    }
-
-    fun hide() {
-        floatingHeadWindow.hide()
-    }
-
     override fun onCreate() {
         super.onCreate()
-        init()
+        startForeground()
+
+        initFloatingButton()
         ClientManager.getClient().addAudioPlayerListener(audioStateListener)
         MainActivity.templateRenderer.externalViewRenderer = notiRenderer
     }
@@ -92,13 +93,51 @@ class SampleAppService : Service() {
         super.onDestroy()
         floatingHeadWindow.hide()
         ClientManager.getClient().removeAudioPlayerListener(audioStateListener)
+        stopForeGround()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
+        when (intent?.action) {
+            ACTION_SHOW_FLOATING -> floatingHeadWindow.show()
+            ACTION_HIDE_FLOATING -> floatingHeadWindow.hide()
+            ACTION_SERVICE_STOP -> stopForeGround()
+        }
+
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? = mBinder
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun initFloatingButton() {
+        if (!::floatingHeadWindow.isInitialized) {
+            floatingHeadWindow = FloatingHeadWindow(applicationContext).apply {
+                create()
+                createLayoutParams()
+            }
+        }
+    }
+
+    private fun startForeground() {
+        startForeground(123, SampleNoti(appContext).builder.build())
+    }
+
+    private fun stopForeGround() {
+        stopForeground(true)
+        stopSelf()
+    }
+
+    class SampleNoti(val context: Context) {
+        val builder: NotificationCompat.Builder by lazy {
+            NotificationCompat.Builder(context, SampleNotificationChannel.SAMPLE.channelId)
+                .setSmallIcon(R.drawable.nugu_logo_72)  // the status icon
+                .setOnlyAlertOnce(true)
+                .setOngoing(true)
+                .setSound(null)
+                .setPriority(Notification.PRIORITY_MAX)
+                .setContentText("nugu is running")
+                .setStyle(NotificationCompat.BigTextStyle().bigText(""))
+        }
+    }
 }
