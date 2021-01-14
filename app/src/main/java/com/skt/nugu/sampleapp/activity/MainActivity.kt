@@ -23,6 +23,7 @@ import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.support.design.widget.CoordinatorLayout
 import android.os.IBinder
 import android.provider.Settings
@@ -35,11 +36,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
@@ -54,6 +50,9 @@ import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
+import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
+import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.widget.*
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
@@ -173,7 +172,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         tokenRefresher.start()
 
         checkPermissionForOverlay()
-
     }
 
     override fun onResume() {
