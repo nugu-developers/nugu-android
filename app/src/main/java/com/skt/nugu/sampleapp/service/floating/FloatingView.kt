@@ -94,6 +94,5 @@ class FloatingView @JvmOverloads constructor(
         fun onClick() {}
         fun onLongPress() {}
     }
-
 }
 
