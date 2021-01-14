@@ -63,6 +63,16 @@
         <Switch android:id="@+id/switch_enable_recognition_beep" android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
     </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
+
+    <LinearLayout  style="@style/Nugu.Widget.Setting" >
+        <TextView android:text="@string/setting_floating_button" android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+        <Switch android:id="@+id/switch_enable_floating" android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/colorPrimaryDark"/>
 
     <LinearLayout android:id="@+id/layout_hidden" android:visibility="gone"  style="@style/Nugu.Widget.Setting" >

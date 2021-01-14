@@ -16,24 +16,28 @@
 package com.skt.nugu.sampleapp.application
 
 import android.app.Application
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.service.SampleNotificationChannel
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
 class SampleApplication : Application() {
     companion object {
         private const val TAG = "SampleApplication"
-
-        val NOTIFICATION_CHANNEL_MUSIC_PLAYER = "channel_0"
     }
 
     override fun onCreate() {
         super.onCreate()
         initializeClientManager()
         createNotificationChannel()
+
+        startKoin {
+            androidContext(this@SampleApplication)
+        }
     }
 
     /**
@@ -57,11 +61,8 @@ class SampleApplication : Application() {
         }
         Log.d(TAG, "[createNotificationChannel]")
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationChannel = NotificationChannel(
-            NOTIFICATION_CHANNEL_MUSIC_PLAYER,
-            "Music Player Channel",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        notificationManager.createNotificationChannel(notificationChannel)
+        SampleNotificationChannel.values().forEach {
+            notificationManager.createNotificationChannel(it.createChannel())
+        }
     }
 }
