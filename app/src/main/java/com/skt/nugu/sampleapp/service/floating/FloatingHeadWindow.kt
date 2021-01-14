@@ -132,11 +132,13 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
     }
 
     fun hide() {
-        windowManager.removeView(view)
-        isViewAdded = false
+        if(view.isAttachedToWindow) {
+            windowManager.removeView(view)
+            isViewAdded = false
 
-        ClientManager.getClient().removeDialogUXStateListener(dialogStateListener)
-        ClientManager.getClient().removeASRResultListener(asrResultListener)
+            ClientManager.getClient().removeDialogUXStateListener(dialogStateListener)
+            ClientManager.getClient().removeASRResultListener(asrResultListener)
+        }
     }
 
     fun create() {
