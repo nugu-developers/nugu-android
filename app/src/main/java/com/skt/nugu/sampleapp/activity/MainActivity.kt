@@ -55,6 +55,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.ux.widget.*
+import java.lang.ref.PhantomReference
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, SystemAgentInterfaceListener,
@@ -636,7 +637,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onStop() {
-        SampleAppService.showFloating(applicationContext)
+        if (PreferenceHelper.enableFloating(this)) {
+            SampleAppService.showFloating(applicationContext)
+        }
         super.onStop()
     }
 

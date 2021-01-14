@@ -26,6 +26,7 @@ import android.view.View
 import android.widget.*
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
@@ -57,11 +58,15 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<Switch>(R.id.switch_enable_wakeup_beep)
     }
 
-    private val switchEnableRecognitionBeep :Switch by lazy {
+    private val switchEnableRecognitionBeep: Switch by lazy {
         findViewById<Switch>(R.id.switch_enable_recognition_beep)
     }
 
-    private val buttonRevoke : Button by lazy {
+    private val switchEnableFloating: Switch by lazy {
+        findViewById<Switch>(R.id.switch_enable_floating)
+    }
+
+    private val buttonRevoke: Button by lazy {
         findViewById<Button>(R.id.btn_revoke)
     }
 
@@ -93,6 +98,7 @@ class SettingsActivity : AppCompatActivity() {
         switchEnableTrigger.isChecked = PreferenceHelper.enableTrigger(this)
         switchEnableWakeupBeep.isChecked = PreferenceHelper.enableWakeupBeep(this)
         switchEnableRecognitionBeep.isChecked = PreferenceHelper.enableRecognitionBeep(this)
+        switchEnableFloating.isChecked = PreferenceHelper.enableFloating(this)
 
         spinnerWakeupWord.adapter = ArrayAdapter<String>(this, android.R.layout.simple_spinner_item).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -110,11 +116,11 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun updateAccountInfo() {
-        NuguOAuth.getClient().introspect(object : NuguOAuthInterface.OnIntrospectResponseListener{
+        NuguOAuth.getClient().introspect(object : NuguOAuthInterface.OnIntrospectResponseListener {
             override fun onSuccess(response: IntrospectResponse) {
                 runOnUiThread {
-                    if(response.active) {
-                        if(response.username.isEmpty()) {
+                    if (response.active) {
+                        if (response.username.isEmpty()) {
                             Log.d(TAG, "Anonymous logined")
                         } else {
                             textLoginId.text = response.username
@@ -142,11 +148,11 @@ class SettingsActivity : AppCompatActivity() {
 
     fun initBtnListeners() {
         switchEnableNugu.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableNugu(this,isChecked)
+            PreferenceHelper.enableNugu(this, isChecked)
         }
 
         switchEnableTrigger.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableTrigger(this,isChecked)
+            PreferenceHelper.enableTrigger(this, isChecked)
         }
 
         spinnerWakeupWord.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -155,9 +161,9 @@ class SettingsActivity : AppCompatActivity() {
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (id == 0L) {
-                    PreferenceHelper.triggerId(this@SettingsActivity,0)
+                    PreferenceHelper.triggerId(this@SettingsActivity, 0)
                 } else {
-                    PreferenceHelper.triggerId(this@SettingsActivity,4)
+                    PreferenceHelper.triggerId(this@SettingsActivity, 4)
                 }
             }
         }
@@ -170,16 +176,23 @@ class SettingsActivity : AppCompatActivity() {
             PreferenceHelper.enableRecognitionBeep(this, isChecked)
         }
 
+        switchEnableFloating.setOnCheckedChangeListener { _, isChecked ->
+            PreferenceHelper.enableFloating(this, isChecked)
+            if (!isChecked) {
+                SampleAppService.hideFloating(applicationContext)
+            }
+        }
+
         buttonRevoke.setOnClickListener {
-            NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener{
+            NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener {
                 override fun onSuccess() {
                     ClientManager.getClient().disconnect()
                     NuguOAuth.getClient().clearAuthorization()
-                    PreferenceHelper.credentials(this@SettingsActivity,"")
+                    PreferenceHelper.credentials(this@SettingsActivity, "")
                     LoginActivity.invokeActivity(this@SettingsActivity)
                     finishAffinity()
                 }
-                
+
                 override fun onError(error: NuguOAuthError) {
                     /** See more details in [LoginActivity.handleOAuthError] **/
                     NuguToast.with(this@SettingsActivity)
@@ -189,9 +202,9 @@ class SettingsActivity : AppCompatActivity() {
                 }
             })
         }
-        
+
         textLoginId.setOnClickListener {
-            NuguOAuth.getClient().accountByInAppBrowser(this, object : NuguOAuthInterface.OnAccountListener{
+            NuguOAuth.getClient().accountByInAppBrowser(this, object : NuguOAuthInterface.OnAccountListener {
                 override fun onSuccess(credentials: Credentials) {
                     PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
                     ClientManager.getClient().disconnect()
