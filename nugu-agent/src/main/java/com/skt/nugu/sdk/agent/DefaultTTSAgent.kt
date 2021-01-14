@@ -1082,6 +1082,8 @@ class DefaultTTSAgent(
         return dialogRequestId
     }
 
+    override fun setVolume(volume: Float) = speechPlayer.setVolume(volume)
+
     override fun onSendEventFinished(dialogRequestId: String) {
     }
 
