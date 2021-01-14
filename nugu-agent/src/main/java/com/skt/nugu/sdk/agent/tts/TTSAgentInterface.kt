@@ -95,4 +95,10 @@ interface TTSAgentInterface {
      * @return the dialog request id for the request
      */
     fun requestTTS(text: String, playServiceId: String?, listener: OnPlaybackListener?): String
+
+    /**
+     * Sets the player's volume for tts.
+     * @param volume the volume to set in range 0.0 to 1.0.
+     */
+    fun setVolume(volume: Float)
 }
