@@ -28,6 +28,7 @@ class PreferenceHelper {
         private val KEY_TRIGGER_ID = "triggerId"
         private val KEY_ENABLE_WAKEUP_BEEP = "enableWakeupBeep"
         private val KEY_ENABLE_RECOGNITION_BEEP = "enableRecognitionBeep"
+        private val KEY_ENABLE_FLOATING = "enableFloating"
         private val KEY_AUTH_ID = "authId"
         private val KEY_DEVICE_UNIQUE_ID = "deviceUniqueId"
 
@@ -169,6 +170,23 @@ class PreferenceHelper {
             this(context)[KEY_ENABLE_RECOGNITION_BEEP] = value
         }
 
+        /***
+         * Returns enabled floating button when app is in background
+         * @param context a context
+         * @return true is enable, otherwise false
+         */
+        fun enableFloating(context: Context): Boolean {
+            return this(context)[KEY_ENABLE_FLOATING, true]
+        }
+
+        /***
+         * Sets enabled floating button when app is in background
+         * @param context a context
+         * @param value true is enable, otherwise false
+         */
+        fun enableFloating(context: Context, value: Boolean) {
+            this(context)[KEY_ENABLE_FLOATING] = value
+        }
 
         /***
          * Returns the auth index

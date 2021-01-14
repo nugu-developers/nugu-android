@@ -15,12 +15,17 @@
  */
 package com.skt.nugu.sampleapp.activity
 
+import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.support.design.widget.CoordinatorLayout
+import android.os.IBinder
+import android.provider.Settings
 import android.support.design.widget.NavigationView
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
@@ -40,18 +45,20 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
-import com.skt.nugu.sampleapp.service.MusicPlayerService
-import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
+import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
-import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.ux.widget.*
+import java.lang.ref.PhantomReference
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
-    NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, AudioPlayerAgentInterface.Listener, SystemAgentInterfaceListener,
+    NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, SystemAgentInterfaceListener,
     TokenRefresher.Listener {
     companion object {
         private const val TAG = "MainActivity"
@@ -62,6 +69,12 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         fun invokeActivity(context: Context) {
             context.startActivity(Intent(context, MainActivity::class.java))
+        }
+
+        val templateRenderer: TemplateRenderer by lazy {
+            TemplateRenderer(object : TemplateRenderer.NuguClientProvider {
+                override fun getNuguClient(): NuguAndroidClient = ClientManager.getClient()
+            }, ConfigurationStore.configuration.deviceTypeCode, null, R.id.template_container)
         }
     }
 
@@ -101,10 +114,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.speechRecognizerAggregator
     }
 
-    private val templateRenderer =
-        TemplateRenderer(object : TemplateRenderer.NuguClientProvider {
-            override fun getNuguClient(): NuguAndroidClient = ClientManager.getClient()
-        }, ConfigurationStore.configuration.deviceTypeCode, supportFragmentManager, R.id.template_container)
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,10 +123,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         SoundPoolCompat.load(this)
         // add observer for connection
         ClientManager.getClient().addConnectionListener(this)
-        // add observer for audioplayer
-        ClientManager.getClient().addAudioPlayerListener(this)
         // Set a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(templateRenderer.also {
+            it.setFragmentManager(supportFragmentManager)
+
             ConfigurationStore.templateServerUri { url, error ->
                 error?.apply {
                     Log.e(TAG, "[onCreate] error=$this")
@@ -163,6 +172,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         tokenRefresher.setListener(this)
         tokenRefresher.start()
+
+        checkPermissionForOverlay()
+
     }
 
     override fun onResume() {
@@ -223,18 +235,17 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
 
         SoundPoolCompat.release()
-        MusicPlayerService.stopService(this)
 
         // clear a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(null)
+        templateRenderer.setFragmentManager(null)
+
         // remove observer for connection
         ClientManager.getClient().removeConnectionListener(this)
         // remove listener for systemagent
         ClientManager.getClient().removeSystemAgentListener(this)
         // shutdown a server
-        ClientManager.getClient().shutdown()
-        // remove observer for audioplayer
-        ClientManager.getClient().removeAudioPlayerListener(this)
+//        ClientManager.getClient().shutdown()
 
         tokenRefresher.stop()
         super.onDestroy()
@@ -449,15 +460,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
-    override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
-        runOnUiThread {
-            Log.d(TAG, "[onStateChanged-AudioPlayer] activity: $activity, context: $context")
-            if (activity == AudioPlayerAgentInterface.State.PLAYING) {
-                MusicPlayerService.startService(this, context)
-            }
-        }
-    }
-
     override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
         Log.d(TAG, "[onRevoke] The device has been revoked ($reason)")
         performRevoke()
@@ -603,5 +605,50 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         val connMgr = this@MainActivity.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetworkInfo: NetworkInfo? = connMgr.activeNetworkInfo
         return activeNetworkInfo?.isConnected ?: false
+    }
+
+    private fun checkPermissionForOverlay() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivityForResult(intent, 1)
+            } else {
+                startService()
+            }
+        } else {
+            startService()
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1) {
+            if (!Settings.canDrawOverlays(this)) {
+                // todo. when disagree
+//                finish()
+            } else {
+                startService()
+            }
+        }
+    }
+
+    override fun onStop() {
+        if (PreferenceHelper.enableFloating(this)) {
+            SampleAppService.showFloating(applicationContext)
+        }
+        super.onStop()
+    }
+
+    override fun onStart() {
+        SampleAppService.hideFloating(applicationContext)
+        super.onStart()
+    }
+
+    private fun startService() {
+        SampleAppService.start(applicationContext)
     }
 }

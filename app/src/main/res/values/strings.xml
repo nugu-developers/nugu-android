@@ -36,6 +36,7 @@
     <string name="setting_wakeup_word">부르는 이름</string>
     <string name="setting_recognition_beep">대화 시작 효과음</string>
     <string name="setting_enable_recognition_beep">인식 성공 효과음</string>
+    <string name="setting_floating_button">플로팅 버튼 사용</string>
     <string name="setting_auth_type">계정선택</string>
     <string name="setting_privacy">개인정보 처리방침</string>
     <string name="setting_terms">이용약관</string>

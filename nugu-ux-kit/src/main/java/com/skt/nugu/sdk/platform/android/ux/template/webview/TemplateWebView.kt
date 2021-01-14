@@ -20,7 +20,6 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -41,6 +40,7 @@ import java.net.URLEncoder
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
 
 @SuppressLint("ClickableViewAccessibility")
 class TemplateWebView @JvmOverloads constructor(
@@ -207,6 +207,12 @@ class TemplateWebView @JvmOverloads constructor(
         super.onDetachedFromWindow()
         Logger.d(TAG, "onDetachedFromWindow")
         templateHandler?.clear()
+
+        (templateHandler as? DefaultTemplateHandler)?.run {
+            if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
+                getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
+            }
+        }
     }
 
     /**

@@ -94,4 +94,9 @@ dependencies {
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1'
+
+    // Koin for Kotlin
+    implementation "org.koin:koin-core:2.0.1"
+    implementation "org.koin:koin-android:2.0.1"
+    implementation "org.koin:koin-android-viewmodel:2.0.1"
 }
