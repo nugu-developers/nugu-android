@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+Version 0.9.44 *(2021-01-15)*
+ -----------------------------
+* Fix: Finish tts's playcontext when related display cleared (#1509)
+* Fix: Add ExternalViewRenderer Interface to support thing like MediaNotification (#1513)
+* Improve: Apply External Focus Interactor (#1505)
+* Improve: Add configuration method (#1508)
+* Improve: Add Custom TemplateView Constructor (#1514)
+* Improve: Apply ChromeWindow in SampleApp (#1516)
+* New: Send full context for ASR.ListenTimeout event (#1511)
+* New: Add setVolume API at MediaPlayer (#1515)
+* New: Send full context at Request***CommandIssued (#1522)
+
 Version 0.9.43 *(2021-01-04)*
 -----------------------------
 * Bug: Fix ExoMediaPlayer doesn't call onRetrieved callback (#1483)
