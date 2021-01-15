@@ -206,9 +206,25 @@ object ConfigurationStore {
     }
 
     /**
-     * Gets the value of [ConfigurationMetadata]
+     * Set the value of [ConfigurationMetadata]
      */
-    fun configurationMetadata(onResult:(ConfigurationMetadata?, Throwable?) -> Unit) {
+    fun configurationMetadata(configurationMetadata: ConfigurationMetadata?) {
+        synchronized(this) {
+            serviceConfigurationMetadata = configurationMetadata
+        }
+    }
+
+    /**
+     * Get the value of [ConfigurationMetadata]
+     */
+    fun configurationMetadata() = synchronized(this) {
+        serviceConfigurationMetadata
+    }
+
+    /**
+     * Returns the [ConfigurationMetadata] by asynchronous, Fetching from cache or network
+     */
+    fun configurationMetadataAsync(onResult:(ConfigurationMetadata?, Throwable?) -> Unit) {
         obtainAuthorizationServiceConfiguration(object : ConfigurationCallback {
             override fun onConfigurationCompleted(metadata: ConfigurationMetadata) {
                 onResult(metadata, null)
@@ -226,7 +242,7 @@ object ConfigurationStore {
     private fun obtainAuthorizationServiceConfiguration(callback: ConfigurationCallback? = null) {
         addObserver(callback)
 
-        serviceConfigurationMetadata?.apply {
+        configurationMetadata()?.apply {
             notifySuccessListeners(this)
             removeObserver(callback)
             return
@@ -239,7 +255,7 @@ object ConfigurationStore {
         executor.submit {
             runCatching {
                 requestDiscovery().apply {
-                    serviceConfigurationMetadata = this
+                    configurationMetadata(this)
                 }
             }.onSuccess {
                 notifySuccessListeners(it)
@@ -285,6 +301,7 @@ object ConfigurationStore {
         }
         listeners.add(callback)
     }
+
     /**
      * Removes the given observer from the observers list.
      */
