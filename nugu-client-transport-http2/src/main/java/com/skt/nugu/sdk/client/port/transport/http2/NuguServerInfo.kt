@@ -110,6 +110,7 @@ data class NuguServerInfo(
                     )
             } catch ( e: Throwable) {
                 Logger.e(TAG, "[registry] Invalid URL=${url}, exception:$e")
+                registry = Address("", -1)
             }
             return this
         }
@@ -129,6 +130,7 @@ data class NuguServerInfo(
                     )
             } catch ( e: Throwable) {
                 Logger.e(TAG, "[deviceGW] Invalid URL=${url}, exception:$e")
+                deviceGW = Address("", -1)
             }
             return this
         }

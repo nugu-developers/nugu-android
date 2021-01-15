@@ -93,14 +93,21 @@ internal class RegistryClient(
         dnsLookup?.let { customDns ->
             client.setDns { hostname -> customDns.lookup(hostname.toString()).toMutableList() }
         }
-        val httpUrl = HttpUrl.Builder()
-            .scheme(HTTPS_SCHEME)
-            .host(serverInfo.registry.host)
-            .port(serverInfo.registry.port)
-            .addPathSegment("v1")
-            .addPathSegment("policies")
-            .addQueryParameter("protocol", GRPC_PROTOCOL)
-            .build()
+        val httpUrl = try {
+            HttpUrl.Builder()
+                .scheme(HTTPS_SCHEME)
+                .host(serverInfo.registry.host)
+                .port(serverInfo.registry.port)
+                .addPathSegment("v1")
+                .addPathSegment("policies")
+                .addQueryParameter("protocol", GRPC_PROTOCOL)
+                .build()
+        } catch (th : Throwable) {
+            val reason = ChangedReason.UNRECOVERABLE_ERROR
+            reason.cause = th
+            observer.onError(reason)
+            return
+        }
 
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")

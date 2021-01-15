@@ -198,7 +198,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             })
             .transportFactory(
                 GrpcTransportFactory(NuguServerInfo(object : NuguServerInfo.Delegate {
-                    override fun getNuguServerInfo() : NuguServerInfo? {
+                    override fun getNuguServerInfo() : NuguServerInfo {
                         val metadata = ConfigurationStore.configurationMetadataSync()
                         return NuguServerInfo.Builder().deviceGW(metadata?.deviceGatewayServerGrpcUri)
                             .registry(metadata?.deviceGatewayRegistryUri)

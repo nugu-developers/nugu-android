@@ -52,6 +52,7 @@ import javax.net.ssl.SSLHandshakeException
 internal class DeviceGatewayClient(policy: Policy,
                                    private val keepConnection : Boolean,
                                    private var messageConsumer: MessageConsumer?,
+                                   private var transportDelegate: DeviceGatewayTransport.TransportDelegate?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
                                    private val authorization: String?,
                                    private val callOptions: CallOptions?,
@@ -69,7 +70,6 @@ internal class DeviceGatewayClient(policy: Policy,
 
     private var pingService: PingService? = null
     private var eventsService: EventsService? = null
-    private var crashReportService: CrashReportService? = null
     private var directivesService: DirectivesService? = null
 
     private var currentPolicy : ServerPolicy? = nextPolicy()
@@ -94,6 +94,50 @@ internal class DeviceGatewayClient(policy: Policy,
         return currentPolicy
     }
 
+    private fun createChannel(policy: ServerPolicy?, onError: ((Throwable) -> Unit)? = null) : Boolean {
+        synchronized(this) {
+            if(policy == null) {
+                onError?.invoke(Throwable("no more policy"))
+                return false
+            }
+
+            val channel = try {
+                ChannelBuilderUtils.createChannelBuilderWith(
+                    policy,
+                    authorization,
+                    this@DeviceGatewayClient
+                ).build()
+            } catch (th: Throwable) {
+                onError?.invoke(th)
+                return false
+            }
+
+            channel.apply {
+                eventsService =
+                    EventsService(
+                        this,
+                        this@DeviceGatewayClient,
+                        scheduler,
+                        callOptions
+                    )
+                if (keepConnection) {
+                    directivesService =
+                        DirectivesService(
+                            this,
+                            this@DeviceGatewayClient
+                        )
+                    pingService =
+                        PingService(
+                            this,
+                            healthCheckPolicy,
+                            this@DeviceGatewayClient
+                        )
+                }
+                currentChannel = this
+            }
+        }
+        return true
+    }
     /**
      * Connect to DeviceGateway.
      * @return true is success, otherwise false
@@ -105,6 +149,10 @@ internal class DeviceGatewayClient(policy: Policy,
             Logger.w(TAG, "[connect] already connected")
             return false
         }
+        if (!keepConnection) {
+            handleConnectedIfNeeded()
+            return true
+        }
 
         val policy = currentPolicy ?: run {
             Logger.w(TAG, "[connect] no more policy")
@@ -114,54 +162,12 @@ internal class DeviceGatewayClient(policy: Policy,
             return false
         }
 
-        synchronized(this) {
-            policy.apply {
-                val reason = ChangedReason.UNRECOVERABLE_ERROR
-                try {
-                    currentChannel = ChannelBuilderUtils.createChannelBuilderWith(
-                        this,
-                        authorization,
-                        this@DeviceGatewayClient
-                    ).build()
-                } catch (th: Throwable) {
-                    reason.cause = th
-                }
-
-                currentChannel?.apply {
-                    eventsService =
-                        EventsService(
-                            this,
-                            this@DeviceGatewayClient,
-                            scheduler,
-                            callOptions
-                        )
-                    crashReportService =
-                        CrashReportService(
-                            this
-                        )
-                    if (keepConnection) {
-                        directivesService =
-                            DirectivesService(
-                                this,
-                                this@DeviceGatewayClient
-                            )
-                        pingService =
-                            PingService(
-                                this,
-                                healthCheckPolicy,
-                                this@DeviceGatewayClient
-                            )
-                    } else {
-                        handleConnectedIfNeeded()
-                    }
-                } ?: run {
-                    Logger.w(TAG, "[connect] Can't create a new channel")
-                    transportObserver?.onError(reason)
-                    return false
-                }
-            }
+        return createChannel(policy) {
+            Logger.w(TAG, "[connect] Can't create a new channel. Exception: $it")
+            val reason = ChangedReason.CONNECTION_ERROR
+            reason.cause = it
+            transportObserver?.onError(reason)
         }
-        return true
     }
 
     private fun stopServerInitiated() {
@@ -185,8 +191,6 @@ internal class DeviceGatewayClient(policy: Policy,
         synchronized(this) {
             eventsService?.shutdown()
             eventsService = null
-            crashReportService?.shutdown()
-            crashReportService = null
             ChannelBuilderUtils.shutdown(currentChannel)
             currentChannel = null
             eventMessageHeaders = null
@@ -209,9 +213,13 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return true is success, otherwise false
      */
     override fun send(call: Call): Boolean {
-        val event = eventsService
-        val crash = crashReportService
+        if(!keepConnection && currentChannel == null) {
+            createChannel(transportDelegate?.newServerPolicy()) {
+                Logger.w(TAG, "[send] Can't create a new channel. Exception: $it")
+            }
+        }
 
+        val event = eventsService
         val request = call.request()
         val result = when(request) {
             is AttachmentMessageRequest -> {
@@ -227,7 +235,7 @@ internal class DeviceGatewayClient(policy: Policy,
                 }
                 event?.sendEventMessage(call)
             }
-            is CrashReportMessageRequest -> crash?.sendCrashReport(request)
+            is CrashReportMessageRequest -> true /* Deprecated */
             else -> false
         } ?: false
 

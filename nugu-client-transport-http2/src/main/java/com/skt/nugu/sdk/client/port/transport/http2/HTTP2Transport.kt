@@ -106,12 +106,6 @@ internal class HTTP2Transport(
 
         executor.submit {
             val serverInfo = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
-            if(!serverInfo.keepConnection) {
-                Logger.d(TAG,"[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
-                tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(serverInfo))
-                return@submit
-            }
-
             registryClient.getPolicy(serverInfo, authDelegate, object :
                 RegistryClient.Observer {
                 override fun onCompleted(policy: Policy?) {

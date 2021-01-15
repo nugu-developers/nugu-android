@@ -181,6 +181,6 @@ data class NuguServerInfo(
     }
 
     interface Delegate {
-        fun getNuguServerInfo() : NuguServerInfo?
+        fun getNuguServerInfo() : NuguServerInfo
     }
 }

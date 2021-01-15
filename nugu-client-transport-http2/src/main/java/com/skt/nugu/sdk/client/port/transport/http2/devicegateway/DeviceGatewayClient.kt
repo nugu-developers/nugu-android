@@ -198,7 +198,7 @@ internal class DeviceGatewayClient(
                 asyncCalls[request.messageId] = call
                 event.sendEventMessage(call)
             }
-            is CrashReportMessageRequest ->  true /* Deprecated */
+            is CrashReportMessageRequest -> true /* Deprecated */
             else -> false
         }
         Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
