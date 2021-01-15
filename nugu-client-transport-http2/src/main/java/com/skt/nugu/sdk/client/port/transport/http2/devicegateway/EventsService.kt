@@ -108,19 +108,25 @@ class EventsService(
     }
 
     fun sendEventMessage(call: MessageCall): Boolean {
-        val messageRequest = call.request() as EventMessageRequest
+        val httpUrl = try {
+            HttpUrl.Builder()
+                .scheme(HTTPS_SCHEME)
+                .port(policy.port)
+                .host(policy.hostname)
+                .addPathSegment("v2")
+                .addPathSegment("events")
+                .build()
+        } catch (th : Throwable) {
+            Logger.d(TAG, "[sendEventMessage] " + th.message.toString())
+            return false
+        }
 
         if(!handleRequestStreamingCall(call)) {
             return true
         }
+
+        val messageRequest = call.request() as EventMessageRequest
         val message = messageRequest.toJson()
-        val httpUrl = HttpUrl.Builder()
-            .scheme(HTTPS_SCHEME)
-            .port(policy.port)
-            .host(policy.hostname)
-            .addPathSegment("v2")
-            .addPathSegment("events")
-            .build()
         val headers = Headers.Builder()
         call.headers()?.forEach {
             headers[it.key] = it.value

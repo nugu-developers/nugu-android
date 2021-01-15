@@ -27,13 +27,11 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import okhttp3.*
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.InetAddress
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
+import java.net.*
+import javax.net.ssl.SSLHandshakeException
 
 /**
  *  Implementation of registry
@@ -85,6 +83,11 @@ class RegistryClient(
             Logger.w(TAG, "[getPolicy] already shutdown")
             return
         }
+        if(!serverInfo.keepConnection) {
+            Logger.d(TAG,"[getPolicy] Skip getPolicy call because keepConnection is false.")
+            notifyPolicy(DefaultPolicy(serverInfo), observer)
+            return
+        }
 
         val client = OkHttpClient().newBuilder()
             .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
@@ -99,14 +102,21 @@ class RegistryClient(
                 }
             }.build()
 
-        val httpUrl = HttpUrl.Builder()
-            .scheme(HTTPS_SCHEME)
-            .host(serverInfo.registry.host)
-            .port(serverInfo.registry.port)
-            .addPathSegment("v1")
-            .addPathSegment("policies")
-            .addQueryParameter("protocol", HTTP2_PROTOCOL)
-            .build()
+        val httpUrl = try {
+            HttpUrl.Builder()
+                .scheme(HTTPS_SCHEME)
+                .host(serverInfo.registry.host)
+                .port(serverInfo.registry.port)
+                .addPathSegment("v1")
+                .addPathSegment("policies")
+                .addQueryParameter("protocol", HTTP2_PROTOCOL)
+                .build()
+        } catch (th: Throwable) {
+            val reason = ChangedReason.UNRECOVERABLE_ERROR
+            reason.cause = th
+            observer.onError(reason)
+            return
+        }
 
         val request = Request.Builder().url(httpUrl)
             .header("Accept", APPLICATION_JSON)
@@ -117,13 +127,17 @@ class RegistryClient(
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     Logger.e(TAG, "A failure occurred during getPolicy", e)
-                    if(e is UnknownHostException) {
-                        observer.onError(ChangedReason.DNS_TIMEDOUT)
+                    val reason = if(e is UnknownHostException) {
+                        ChangedReason.DNS_TIMEDOUT
                     } else if(e is SocketTimeoutException) {
-                        observer.onError(ChangedReason.CONNECTION_TIMEDOUT)
+                        ChangedReason.CONNECTION_TIMEDOUT
+                    } else if(e is ConnectException || e is SSLHandshakeException) {
+                        ChangedReason.CONNECTION_ERROR
                     } else {
-                        observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
+                        ChangedReason.UNRECOVERABLE_ERROR
                     }
+                    reason.cause = e
+                    observer.onError(reason)
                 }
 
                 override fun onResponse(call: Call, response: Response) {

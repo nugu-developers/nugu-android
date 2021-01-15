@@ -206,7 +206,7 @@ internal class EventsService(
                 requestStreamMap[streamId]?.apply {
                     this.clientCall.onCompleted()
                 }
-            } catch (e: IllegalStateException) {
+            } catch (e: Throwable) {
                 Logger.w(TAG, "[close] cause:${e.cause}, message:${e.message}")
             }
         }
@@ -236,7 +236,7 @@ internal class EventsService(
             if(attachment.isEnd) {
                 halfClose(attachment.parentMessageId)
             }
-        } catch (e: IllegalStateException) {
+        } catch (e: Throwable) {
             // Perhaps, Stream is already completed, no further calls are allowed
             Logger.w(TAG, "[sendAttachmentMessage] Exception : ${e.cause} ${e.message}")
             val status = Status.fromThrowable(e)
@@ -271,7 +271,7 @@ internal class EventsService(
             if(!expectedAttachment) {
                 halfClose(event.messageId)
             }
-        } catch (e: IllegalStateException) {
+        } catch (e: Throwable) {
             // Perhaps, Stream is already completed, no further calls are allowed
             Logger.w(TAG, "[sendEventMessage] Exception : ${e.cause} ${e.message}")
             val status = Status.fromThrowable(e)

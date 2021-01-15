@@ -73,6 +73,13 @@ internal class GrpcTransport private constructor(
     private var deviceGatewayClient: DeviceGatewayClient? = null
     private var registryClient = RegistryClient(dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
+    private fun currentServerInfo() : NuguServerInfo {
+        val info = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
+        return info.also {
+            it.checkServerSettings()
+        }
+    }
+
 
     /** @return the bearer token **/
     private fun getAuthorization() = authDelegate.getAuthorization()?:""
@@ -106,14 +113,13 @@ internal class GrpcTransport private constructor(
         setState(DetailedState.CONNECTING_REGISTRY)
 
         executor.submit {
-            val serverInfo = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
-            serverInfo.checkServerSettings()
-            registryClient.getPolicy(serverInfo, getAuthorization(), object :
+            val currentServerInfo = currentServerInfo()
+            registryClient.getPolicy(currentServerInfo, getAuthorization(), object :
                 RegistryClient.Observer {
                 override fun onCompleted(policy: Policy?) {
                     // succeeded, then it should be connection to DeviceGateway
                     policy?.let {
-                        tryConnectToDeviceGateway(it)
+                        tryConnectToDeviceGateway(it, currentServerInfo.keepConnection)
                     } ?: setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
                 }
 
@@ -130,6 +136,14 @@ internal class GrpcTransport private constructor(
             })
         }
         return true
+    }
+
+    private val deviceGatewayDelegate = object : DeviceGatewayTransport.TransportDelegate {
+        override fun newServerPolicy(): ServerPolicy? {
+            val newServerInfo = currentServerInfo()
+            newServerInfo.checkServerSettings()
+            return RegistryClient.DefaultPolicy(newServerInfo).serverPolicy.first()
+        }
     }
 
     private val deviceGatewayObserver = object : DeviceGatewayTransport.TransportObserver {
@@ -164,7 +178,7 @@ internal class GrpcTransport private constructor(
      * @param policy Policy received from the registry server
      * @return true is success, otherwise false
      */
-    private fun tryConnectToDeviceGateway(policy: Policy): Boolean {
+    private fun tryConnectToDeviceGateway(policy: Policy, keepConnection: Boolean): Boolean {
         checkAuthorizationIfEmpty {
             setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
@@ -180,8 +194,9 @@ internal class GrpcTransport private constructor(
 
         DeviceGatewayClient(
             policy,
-            serverInfo.keepConnection,
+            keepConnection,
             messageConsumer,
+            deviceGatewayDelegate,
             deviceGatewayObserver,
             getAuthorization(),
             callOptions,
@@ -297,7 +312,7 @@ internal class GrpcTransport private constructor(
                         )
                     )
                 )
-            tryConnectToDeviceGateway(policy)
+            tryConnectToDeviceGateway(policy, currentServerInfo().keepConnection)
         }
     }
 

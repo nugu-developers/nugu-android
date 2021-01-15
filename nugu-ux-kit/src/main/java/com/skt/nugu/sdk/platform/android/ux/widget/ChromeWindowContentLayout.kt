@@ -21,7 +21,6 @@ import android.graphics.Rect
 import android.support.design.widget.BottomSheetBehavior
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -30,6 +29,8 @@ import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
+import java.lang.IllegalStateException
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class ChromeWindowContentLayout @JvmOverloads constructor(
     context: Context,
@@ -70,6 +71,8 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     private lateinit var chipsView: NuguChipsView
 
+    private val statusQueue = ConcurrentLinkedQueue<Int>()
+
     init {
         val inflater = LayoutInflater.from(context)
         val content = inflater.inflate(
@@ -105,13 +108,22 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 Logger.d(TAG, "[onStateChanged] $newState")
+                if(statusQueue.peek() == newState) {
+                    statusQueue.remove()
+                }
                 when (newState) {
                     BottomSheetBehavior.STATE_COLLAPSED -> {
                         if (callback?.shouldCollapsed() == true) {
-                            dismiss()
+                            addState(BottomSheetBehavior.STATE_HIDDEN)
                         }
                     }
-                    BottomSheetBehavior.STATE_HIDDEN -> callback?.onHidden()
+                    BottomSheetBehavior.STATE_EXPANDED -> {
+                        bottomSheetBehavior.state = statusQueue.poll() ?: return
+                    }
+                    BottomSheetBehavior.STATE_HIDDEN -> {
+                        callback?.onHidden()
+                        bottomSheetBehavior.state = statusQueue.poll() ?: return
+                    }
                 }
             }
         })
@@ -121,12 +133,33 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         return bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
     }
 
+    @Throws(IllegalStateException::class)
+    private fun addState(newState : Int?) {
+        if(newState == null) {
+            return
+        }
+        when(newState) {
+            BottomSheetBehavior.STATE_EXPANDED,
+            BottomSheetBehavior.STATE_HIDDEN -> {/* no op */}
+            else -> throw IllegalStateException("unsupported state: $newState")
+        }
+
+        if(statusQueue.isEmpty() && bottomSheetBehavior.state == newState) {
+            return
+        }
+        statusQueue.add(newState)
+
+        if(statusQueue.size == 1) {
+            bottomSheetBehavior.state = newState
+        }
+    }
+
     fun dismiss() {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        addState(BottomSheetBehavior.STATE_HIDDEN)
     }
 
     fun expand() {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        addState(BottomSheetBehavior.STATE_EXPANDED)
     }
 
     fun hideChips() {
