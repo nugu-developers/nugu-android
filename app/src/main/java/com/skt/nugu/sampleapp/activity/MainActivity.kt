@@ -409,42 +409,39 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT
                 -> {
                     /**
-                     * only server-initiative-directive
                      * If you want to reconnect to the server, run the code below.
                      * But it can be recursive, so you need to manage the count of attempts.
                      **/
-                    if (NuguOAuth.getClient().isSidSupported()) {
-                        ExponentialBackOff.awaitConnectedAndRetry(this, object : ExponentialBackOff.Callback {
-                            override fun onRetry() {
-                                ClientManager.getClient().disconnect()
-                                ClientManager.getClient().connect()
-                            }
+                    ExponentialBackOff.awaitConnectedAndRetry(this, object : ExponentialBackOff.Callback {
+                        override fun onRetry() {
+                            ClientManager.getClient().disconnect()
+                            ClientManager.getClient().connect()
+                        }
 
-                            override fun onError(reason: ExponentialBackOff.ErrorCode) {
-                                if (isNetworkConnected()) {
-                                    when (notificationType) {
-                                        NotificationType.TOAST ->
-                                            NuguSnackbar.with(findViewById(R.id.drawer_layout))
-                                                .message(R.string.device_gw_error_002)
-                                                .duration(NuguSnackbar.LENGTH_LONG)
-                                                .show()
-                                        NotificationType.VOICE ->
-                                            SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
-                                    }
-                                } else {
-                                    when (notificationType) {
-                                        NotificationType.TOAST ->
-                                            NuguSnackbar.with(findViewById(R.id.drawer_layout))
-                                                .message(R.string.device_gw_error_001)
-                                                .duration(NuguSnackbar.LENGTH_LONG)
-                                                .show()
-                                        NotificationType.VOICE ->
-                                            SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
-                                    }
+                        override fun onError(reason: ExponentialBackOff.ErrorCode) {
+                            if (isNetworkConnected()) {
+                                when (notificationType) {
+                                    NotificationType.TOAST ->
+                                        NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                                            .message(R.string.device_gw_error_002)
+                                            .duration(NuguSnackbar.LENGTH_LONG)
+                                            .show()
+                                    NotificationType.VOICE ->
+                                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_SERVER_ERROR_TRY_AGAIN)
+                                }
+                            } else {
+                                when (notificationType) {
+                                    NotificationType.TOAST ->
+                                        NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                                            .message(R.string.device_gw_error_001)
+                                            .duration(NuguSnackbar.LENGTH_LONG)
+                                            .show()
+                                    NotificationType.VOICE ->
+                                        SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
                                 }
                             }
-                        })
-                    }
+                        }
+                    })
 
                 }
                 ConnectionStatusListener.ChangedReason.INVALID_AUTH -> {

@@ -25,12 +25,10 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import com.squareup.okhttp.*
-import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicBoolean
 import java.io.IOException
-import java.net.InetAddress
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+import java.net.*
+import javax.net.ssl.SSLHandshakeException
 
 /**
  *  Implementation of registry
@@ -82,6 +80,11 @@ internal class RegistryClient(
             Logger.w(TAG, "[getPolicy] already shutdown")
             return
         }
+        if(!serverInfo.keepConnection) {
+            Logger.d(TAG,"[getPolicy] Skip getPolicy call because keepConnection is false.")
+            notifyPolicy(DefaultPolicy(serverInfo), observer)
+            return
+        }
 
         val client = OkHttpClient().apply {
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
@@ -96,9 +99,7 @@ internal class RegistryClient(
             .port(serverInfo.registry.port)
             .addPathSegment("v1")
             .addPathSegment("policies")
-            .addQueryParameter("protocol",
-                GRPC_PROTOCOL
-            )
+            .addQueryParameter("protocol", GRPC_PROTOCOL)
             .build()
 
         val request = Request.Builder().url(httpUrl)
@@ -109,13 +110,17 @@ internal class RegistryClient(
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(request: Request?, e: IOException?) {
                 Logger.e(TAG, "A failure occurred during getPolicy", e)
-                if(e is UnknownHostException) {
-                    observer.onError(ChangedReason.DNS_TIMEDOUT)
+                val reason = if(e is UnknownHostException) {
+                    ChangedReason.DNS_TIMEDOUT
                 } else if(e is SocketTimeoutException) {
-                    observer.onError(ChangedReason.CONNECTION_TIMEDOUT)
+                    ChangedReason.CONNECTION_TIMEDOUT
+                } else if(e is ConnectException || e is SSLHandshakeException) {
+                    ChangedReason.CONNECTION_ERROR
                 } else {
-                    observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
+                    ChangedReason.UNRECOVERABLE_ERROR
                 }
+                reason.cause = e
+                observer.onError(reason)
             }
 
             override fun onResponse(response: Response?) {

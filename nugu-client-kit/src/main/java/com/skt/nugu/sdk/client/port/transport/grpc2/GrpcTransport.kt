@@ -69,8 +69,7 @@ internal class GrpcTransport private constructor(
         }
     }
 
-    private var state: TransportState =
-        TransportState()
+    private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayClient? = null
     private var registryClient = RegistryClient(dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
@@ -109,15 +108,6 @@ internal class GrpcTransport private constructor(
         executor.submit {
             val serverInfo = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
             serverInfo.checkServerSettings()
-            if(!serverInfo.keepConnection) {
-                Logger.d(TAG,"[tryGetPolicy] Skip getPolicy call because keepConnection is false.")
-                tryConnectToDeviceGateway(
-                    RegistryClient.DefaultPolicy(
-                        serverInfo
-                    )
-                )
-                return@submit
-            }
             registryClient.getPolicy(serverInfo, getAuthorization(), object :
                 RegistryClient.Observer {
                 override fun onCompleted(policy: Policy?) {

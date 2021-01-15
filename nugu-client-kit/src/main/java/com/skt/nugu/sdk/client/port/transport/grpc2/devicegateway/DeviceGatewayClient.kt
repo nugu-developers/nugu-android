@@ -108,19 +108,24 @@ internal class DeviceGatewayClient(policy: Policy,
 
         val policy = currentPolicy ?: run {
             Logger.w(TAG, "[connect] no more policy")
-            transportObserver?.onError(
-                ChangedReason.UNRECOVERABLE_ERROR
-            )
+            val reason = ChangedReason.UNRECOVERABLE_ERROR
+            reason.cause = Throwable("no more policy")
+            transportObserver?.onError(reason)
             return false
         }
 
         synchronized(this) {
             policy.apply {
-                currentChannel = ChannelBuilderUtils.createChannelBuilderWith(
-                    this,
-                    authorization,
-                    this@DeviceGatewayClient
-                ).build()
+                val reason = ChangedReason.UNRECOVERABLE_ERROR
+                try {
+                    currentChannel = ChannelBuilderUtils.createChannelBuilderWith(
+                        this,
+                        authorization,
+                        this@DeviceGatewayClient
+                    ).build()
+                } catch (th: Throwable) {
+                    reason.cause = th
+                }
 
                 currentChannel?.apply {
                     eventsService =
@@ -151,9 +156,7 @@ internal class DeviceGatewayClient(policy: Policy,
                     }
                 } ?: run {
                     Logger.w(TAG, "[connect] Can't create a new channel")
-                    transportObserver?.onError(
-                        ChangedReason.UNRECOVERABLE_ERROR
-                    )
+                    transportObserver?.onError(reason)
                     return false
                 }
             }
