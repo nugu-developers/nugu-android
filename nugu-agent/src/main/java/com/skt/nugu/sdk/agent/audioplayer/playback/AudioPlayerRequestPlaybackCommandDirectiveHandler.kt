@@ -152,7 +152,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                     })
                 }
             }
-        }, NamespaceAndName("supportedInterfaces", NAMESPACE))
+        })
     }
 
     private fun setHandlingCompleted(info: DirectiveInfo) {
