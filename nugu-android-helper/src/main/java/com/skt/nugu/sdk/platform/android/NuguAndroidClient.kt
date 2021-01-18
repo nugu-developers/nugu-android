@@ -92,6 +92,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.preferences.PreferencesInterface
 import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.external.jademarble.EndPointDetector
 import com.skt.nugu.sdk.external.jademarble.SpeexEncoder
 import com.skt.nugu.sdk.external.silvertray.NuguOpusPlayer
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient.Builder
@@ -187,6 +188,7 @@ class NuguAndroidClient private constructor(
         }
         internal var defaultEpdTimeoutMillis: Long = 10000L
         internal var transportFactory: TransportFactory = DefaultTransportFactory()
+        internal var endPointDetectorModelFilePath: String? = null
         internal var endPointDetector: AudioEndPointDetector? = null
         internal var batteryStatusProvider: BatteryStatusProvider? =
             AndroidBatteryStatusProvider(context)
@@ -269,6 +271,12 @@ class NuguAndroidClient private constructor(
          */
         fun endPointDetector(endPointDetector: AudioEndPointDetector?) =
             apply { this.endPointDetector = endPointDetector }
+
+        /**
+         * @param endPointDetectorModelFilePath the model file path for the end point detector(EPD)
+         */
+        fun endPointDetectorFilePath(endPointDetectorModelFilePath: String?) =
+            apply { this.endPointDetectorModelFilePath = endPointDetectorModelFilePath }
 
         /**
          * @param batteryStatusProvider the batter status provider
@@ -448,6 +456,13 @@ class NuguAndroidClient private constructor(
             addAgentFactory(DefaultASRAgent.NAMESPACE, object : AgentFactory<DefaultASRAgent> {
                 override fun create(container: SdkContainer): DefaultASRAgent {
                     return with(container) {
+                        val model = builder.endPointDetectorModelFilePath
+                        val endpointDetector = if (model != null) {
+                            EndPointDetector(model)
+                        } else {
+                            builder.endPointDetector
+                        }
+
                         DefaultASRAgent(
                             getInputManagerProcessor(),
                             getAudioSeamlessFocusManager(),
@@ -457,7 +472,7 @@ class NuguAndroidClient private constructor(
                             getDialogAttributeStorage(),
                             builder.defaultAudioProvider,
                             SpeexEncoder(),
-                            builder.endPointDetector,
+                            endpointDetector,
                             builder.defaultEpdTimeoutMillis,
                             DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
                             DefaultFocusChannel.INTERNAL_DIALOG_CHANNEL_NAME,

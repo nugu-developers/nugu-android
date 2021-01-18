@@ -207,14 +207,11 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                     }
                 }))
             )
-            .endPointDetector(
-                EndPointDetector(
-                    context.getDir(
-                        "skt_nugu_assets",
-                        Context.MODE_PRIVATE
-                    ).absolutePath + File.separator + "skt_epd_model.raw"
-                )
-            ).soundProvider(object : SoundProvider {
+            .endPointDetectorFilePath(context.getDir(
+                "skt_nugu_assets",
+                Context.MODE_PRIVATE
+            ).absolutePath + File.separator + "skt_epd_model.raw")
+            .soundProvider(object : SoundProvider {
                 override fun getContentUri(name: SoundProvider.BeepName): URI {
                     return URI.create(
                         Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsefail_800ms)
