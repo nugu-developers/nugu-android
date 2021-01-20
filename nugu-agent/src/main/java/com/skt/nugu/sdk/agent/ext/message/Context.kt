@@ -31,7 +31,9 @@ data class Context(
         @SerializedName("candidates")
         val candidates: List<Contact>?,
         @SerializedName("searchScene")
-        val searchScene: String?
+        val searchScene: String?,
+        @SerializedName("messageToSend")
+        val messageToSend: MessageToSend?
     ) {
         fun toJson(): JsonElement = Gson().toJsonTree(this)
     }
