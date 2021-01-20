@@ -1089,9 +1089,14 @@ class DefaultAudioPlayerAgent(
         // We start playing on foreground, so don't need to wait.
         if (newFocus != FocusState.FOREGROUND
             // check currentActivity is playing or not to avoid focus deadlock
-            && currentActivity == AudioPlayerAgentInterface.State.PLAYING) {
+            && currentActivity == AudioPlayerAgentInterface.State.PLAYING
+        ) {
             // to avoid deadlock, apply 200ms timeout
-            wait.get(200, TimeUnit.MILLISECONDS)
+            try {
+                wait.get(200, TimeUnit.MILLISECONDS)
+            } catch (e: Exception) {
+                Logger.w(TAG, "[onFocusChanged] occur exception ", e)
+            }
         }
     }
 
