@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent.ext.message.payload
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.InteractionControl
 import com.skt.nugu.sdk.agent.ext.message.Contact
+import com.skt.nugu.sdk.agent.ext.message.MessageToSend
 import com.skt.nugu.sdk.agent.ext.message.RecipientIntended
 
 data class SendCandidatesPayload(
@@ -31,7 +32,9 @@ data class SendCandidatesPayload(
     @SerializedName("interactionControl")
     val interactionControl: InteractionControl?,
     @SerializedName("searchScene")
-    val searchScene: String?
+    val searchScene: String?,
+    @SerializedName("messageToSend")
+    val messageToSend: MessageToSend?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -47,6 +50,7 @@ data class SendCandidatesPayload(
         } else if (other.candidates != null) return false
         if (interactionControl != other.interactionControl) return false
         if (searchScene != other.searchScene) return false
+        if (messageToSend != other.messageToSend) return false
 
         return true
     }
@@ -57,7 +61,7 @@ data class SendCandidatesPayload(
         result = 31 * result + (candidates?.contentHashCode() ?: 0)
         result = 31 * result + (interactionControl?.hashCode() ?: 0)
         result = 31 * result + (searchScene?.hashCode() ?: 0)
+        result = 31 * result + (messageToSend?.hashCode() ?: 0)
         return result
     }
-
 }
