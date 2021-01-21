@@ -160,8 +160,8 @@ class TokenRefresher(val authClient: NuguOAuth) {
     private fun refreshToken() {
         val refreshToken = authClient.getRefreshToken()
         if (refreshToken.isEmpty()) {
-            /** Type2 : client_credentials **/
-            authClient.login(object : NuguOAuthInterface.OnLoginListener {
+            /** anonymous **/
+            authClient.loginAnonymously(object : NuguOAuthInterface.OnLoginListener {
                 override fun onSuccess(credentials: Credentials) {
                     listener?.onCredentialsChanged(credentials)
                     scheduleRefresh(nextRefreshInterval())
@@ -172,8 +172,8 @@ class TokenRefresher(val authClient: NuguOAuth) {
                 }
             })
         } else {
-            /** Type1 : authorization_code **/
-            authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
+            /** tid  **/
+            authClient.loginSilentlyWithTid(refreshToken, object : NuguOAuthInterface.OnLoginListener {
                 override fun onSuccess(credentials: Credentials) {
                     listener?.onCredentialsChanged(credentials)
                     scheduleRefresh(nextRefreshInterval())

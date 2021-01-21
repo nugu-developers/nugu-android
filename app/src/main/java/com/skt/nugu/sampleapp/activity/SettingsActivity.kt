@@ -28,7 +28,6 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
-import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
@@ -204,7 +203,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         textLoginId.setOnClickListener {
-            NuguOAuth.getClient().accountByInAppBrowser(this, object : NuguOAuthInterface.OnAccountListener {
+            NuguOAuth.getClient().accountWithTid(this, object : NuguOAuthInterface.OnAccountListener {
                 override fun onSuccess(credentials: Credentials) {
                     PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
                     ClientManager.getClient().disconnect()

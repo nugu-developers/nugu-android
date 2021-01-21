@@ -35,12 +35,14 @@ interface NuguOAuthInterface {
      * Checking the authorization status
      * @return true is authorized, otherwise false
      */
-    fun isAuthorizationCodeLogin(): Boolean
+    fun isTidLogin(): Boolean
+
     /**
      * Checking the authorization status
      * @return true is authorized, otherwise false
      */
-    fun isClientCredentialsLogin(): Boolean
+    fun isAnonymouslyLogin(): Boolean
+
     /**
      * Set the authorization options
      * @param options is [NuguOAuthOptions]
@@ -53,52 +55,46 @@ interface NuguOAuthInterface {
     fun revoke(listener: OnRevokeListener)
 
     /**
-     * Start a login with browser. Only Type1
+     * Start the login with tid
      * @param activity The activity making the call.
      * @param listener Listener to receive result.
+     * @param theme Optional custom theme.
      */
-    fun loginByInAppBrowser(activity: Activity, listener: OnLoginListener, theme: THEME = THEME.LIGHT)
+    fun loginWithTid(activity: Activity, listener: OnLoginListener, theme: THEME = THEME.LIGHT)
 
     /**
-     * Start a account info with browser. Only Type1
+     * Start the account info with Tid.
      * @param activity The activity making the call.
-     * @param loginId t-id
+     * @param listener Listener to receive result.
+     * @param theme Optional custom theme.
      */
-    @Deprecated("Use accountByInAppBrowser(activity: Activity, listener: OnAccountListener)")
-    fun accountByInAppBrowser(activity: Activity)
+    fun accountWithTid(activity: Activity, listener: OnAccountListener, theme: THEME = THEME.LIGHT)
 
     /**
-     * Start a account info with browser. Only Type1
-     * @param activity The activity making the call.
-     * @param loginId t-id
-     */
-    fun accountByInAppBrowser(activity: Activity, listener: OnAccountListener, theme: THEME = THEME.LIGHT)
-
-    /**
-     * Start a login with credentials. Only Type2
+     * Start anonymous login.
      * @param listener Listener to receive result.
      */
-    fun login(listener: OnLoginListener)
+    fun loginAnonymously(listener: OnLoginListener)
 
     /**
-     * Refresh Token from Type1.
+     * Refresh Token with tid.
      * @param refreshToken refresh Token
      * @param listener Listener to receive result.
      * providers will return a "Refresh Token" when you sign-in initially.
      * When our session expires, we can exchange the refresh token to get new auth tokens.
      * > Auth tokens are not the same as a Refresh token
      */
-    fun loginSilently(refreshToken: String, listener: OnLoginListener)
+    fun loginSilentlyWithTid(refreshToken: String, listener: OnLoginListener)
 
     /**
-     * Start a login without browser. Only Type1
+     * Start a login without browser. Only tid
      * @param code authCode
      * @param listener Listener to receive result.
      */
     fun loginWithAuthenticationCode(code: String, listener: OnLoginListener)
 
     /**
-     * request me api
+     * Request me api
      * @param listener Listener to receive result.
      */
     fun requestMe(listener: OnMeResponseListener)

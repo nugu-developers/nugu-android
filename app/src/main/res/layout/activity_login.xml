@@ -6,16 +6,16 @@
     android:orientation="vertical">
 
     <Button
-        android:id="@+id/btn_client_credentials_login"
+        android:id="@+id/btn_anonymous_login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_authorization_code_login"
-        android:text="CLIENT_CREDENTIALS LOGIN >" />
+        android:layout_above="@+id/btn_tid_login"
+        android:text="ANONYMOUS LOGIN >" />
 
     <Button
-        android:id="@+id/btn_authorization_code_login"
+        android:id="@+id/btn_tid_login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="AUTHORIZATION_CODE LOGIN >" />
+        android:text="TID LOGIN >" />
 </RelativeLayout>
