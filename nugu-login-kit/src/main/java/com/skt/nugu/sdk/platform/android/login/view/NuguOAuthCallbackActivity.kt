@@ -17,13 +17,10 @@ package com.skt.nugu.sdk.platform.android.login.view
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.os.PersistableBundle
 import android.support.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
@@ -86,7 +83,7 @@ class NuguOAuthCallbackActivity : Activity() {
 
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
-                if (auth.isAuthorizationCodeLogin()) {
+                if (auth.isTidLogin()) {
                     auth.setResult(true)
                     finish()
                     return
@@ -172,7 +169,7 @@ class NuguOAuthCallbackActivity : Activity() {
      * Perform a login.
      */
     private fun performLogin() {
-        auth.login(object : AuthStateListener {
+        auth.loginInternal(object : AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     auth.setResult(true)

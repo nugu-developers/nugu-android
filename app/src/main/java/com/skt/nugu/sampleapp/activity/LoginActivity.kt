@@ -42,11 +42,11 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     }
     private var isSdkInitialized = false
 
-    private val btnLoginAuthorizationCode: Button by lazy {
-        findViewById<Button>(R.id.btn_authorization_code_login)
+    private val btnLoginTid: Button by lazy {
+        findViewById<Button>(R.id.btn_tid_login)
     }
-    private val btnLoginClientCredentials: Button by lazy {
-        findViewById<Button>(R.id.btn_client_credentials_login)
+    private val btnLoginAnonymous: Button by lazy {
+        findViewById<Button>(R.id.btn_anonymous_login)
     }
 
     /**
@@ -66,11 +66,11 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
         /** Add observer When initialized, [onInitialized] is called **/
         ClientManager.observer = this
 
-        btnLoginAuthorizationCode.setOnClickListener {
-            startAuthorizationCodeLogin()
+        btnLoginTid.setOnClickListener {
+            startTidLogin()
         }
-        btnLoginClientCredentials.setOnClickListener {
-            startClientCredentialsLogin()
+        btnLoginAnonymous.setOnClickListener {
+            startAnonymouslyLogin()
         }
     }
 
@@ -84,69 +84,79 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
         isSdkInitialized = true
     }
 
-    /** Type1 : authorization_code **/
-    fun startAuthorizationCodeLogin() {
+    /**
+     * Start the login with tid
+     **/
+    private fun startTidLogin() {
         if (!isSdkInitialized) {
             Toast.makeText(this, R.string.sdk_not_initialized, Toast.LENGTH_LONG).show()
             return
         }
+        // Restore credentials from local storage
+        // Important : Inside NuguOAuth, credentials only exist in memory.
         val storedCredentials = PreferenceHelper.credentials(this@LoginActivity)
-        // serialized a credential
         authClient.setCredentials(storedCredentials)
 
-        when {
-            !authClient.isAuthorizationCodeLogin() ->
-                authClient.loginByInAppBrowser(
-                    activity = this,
-                    listener = object : NuguOAuthInterface.OnLoginListener {
-                        override fun onSuccess(credentials: Credentials) {
-                            // save credentials
-                            PreferenceHelper.credentials(this@LoginActivity, credentials.toString())
-                            // successful, calls IntroActivity.
-                            startIntroActivity()
-                        }
-
-                        override fun onError(error: NuguOAuthError) {
-                            handleOAuthError(error)
-                        }
-                    })
-            else -> {
-                if(!authClient.isExpired()) {
-                    startMainActivity()
-                    return
-                }
-                val refreshToken = authClient.getRefreshToken()
-                authClient.loginSilently(refreshToken, object : NuguOAuthInterface.OnLoginListener {
+        if(!authClient.isTidLogin()) {
+            authClient.loginWithTid(
+                activity = this,
+                listener = object : NuguOAuthInterface.OnLoginListener {
+                    // Successfully login
                     override fun onSuccess(credentials: Credentials) {
-                        // save credentials
+                        // Save the [credentials] to local storage.
+                        // Important : Inside NuguOAuth, credentials only exist in memory.
                         PreferenceHelper.credentials(this@LoginActivity, credentials.toString())
-                        // successful, calls MainActivity.
-                        startMainActivity()
+                        // successful, calls IntroActivity.
+                        startIntroActivity()
                     }
 
+                    //  Login failed
                     override fun onError(error: NuguOAuthError) {
                         handleOAuthError(error)
                     }
                 })
-            }
+            return
         }
+
+        if(!authClient.isExpired()) {
+            startMainActivity()
+            return
+        }
+        val refreshToken = authClient.getRefreshToken()
+        authClient.loginSilentlyWithTid(refreshToken, object : NuguOAuthInterface.OnLoginListener {
+            override fun onSuccess(credentials: Credentials) {
+                // save credentials
+                PreferenceHelper.credentials(this@LoginActivity, credentials.toString())
+                // successful, calls MainActivity.
+                startMainActivity()
+            }
+
+            override fun onError(error: NuguOAuthError) {
+                handleOAuthError(error)
+            }
+        })
     }
 
-    /** Type2 : client_credentials **/
-    fun startClientCredentialsLogin() {
+    /**
+     * Start anonymous login.
+     **/
+    fun startAnonymouslyLogin() {
         if(!isSdkInitialized) {
             Toast.makeText(this, R.string.sdk_not_initialized, Toast.LENGTH_LONG).show()
             return
         }
+
+        // Restore credentials from local storage
+        // Important : Inside NuguOAuth, credentials only exist in memory.
         val storedCredentials = PreferenceHelper.credentials(this@LoginActivity)
-        // serialized a credential
         authClient.setCredentials(storedCredentials)
-        if(authClient.isClientCredentialsLogin() && !authClient.isExpired()) {
+
+        if(authClient.isAnonymouslyLogin() && !authClient.isExpired()) {
             startMainActivity()
             return
         }
 
-        authClient.login(object : NuguOAuthInterface.OnLoginListener {
+        authClient.loginAnonymously(object : NuguOAuthInterface.OnLoginListener {
             override fun onSuccess(credentials: Credentials) {
                 // save credentials
                 PreferenceHelper.credentials(this@LoginActivity, credentials.toString())

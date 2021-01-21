@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
 import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity
+import java.lang.IllegalStateException
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.*
@@ -41,10 +42,10 @@ class NuguOAuth private constructor(
     context: Context,
     authServerBaseUrl: String?
 ) : NuguOAuthInterface, AuthDelegate {
-
     /**
      * Companion objects
      */
+
     companion object {
         private const val TAG = "NuguOAuth"
         private const val REQUEST_LOGIN = 2019
@@ -85,9 +86,10 @@ class NuguOAuth private constructor(
          * Returns a NuguOAuth instance.
          * @param Set [NuguOAuthOptions]
          */
+        @Throws(IllegalStateException::class)
         fun getClient(newOptions: NuguOAuthOptions? = null): NuguOAuth {
             if (instance == null) {
-                throw ExceptionInInitializerError(
+                throw IllegalStateException(
                     "Failed to create NuguOAuth," +
                             "Using after calling NuguOAuth.create(context)"
                 )
@@ -178,7 +180,7 @@ class NuguOAuth private constructor(
     /**
      * Request an authentication with auth code
      */
-    fun login(stateListener: AuthStateListener?) {
+    fun loginInternal(stateListener: AuthStateListener?) {
         Logger.d(TAG, "[login]")
 
         setAuthState(AuthStateListener.State.UNINITIALIZED)
@@ -291,7 +293,7 @@ class NuguOAuth private constructor(
 
     /**
      * Check whether a user is authenticated or not
-     * @return trus is authorized, otherwise not authorized
+     * @return true is authorized, otherwise not authorized
      */
     override fun isLogin(): Boolean {
         val result = client.getCredentials().accessToken != ""
@@ -302,16 +304,22 @@ class NuguOAuth private constructor(
         }
         return result
     }
-
-    override fun isClientCredentialsLogin(): Boolean {
-        val hasAccessToken = client.getCredentials().accessToken != ""
-        val hasRefreshToken = client.getCredentials().refreshToken != ""
+    /**
+     * Check whether a anonymous user is authenticated or not.
+     * @return true is authorized, otherwise not authorized
+     */
+    override fun isAnonymouslyLogin(): Boolean {
+        val hasAccessToken = client.getCredentials().accessToken.isNotBlank()
+        val hasRefreshToken = client.getCredentials().refreshToken.isNotBlank()
         return hasAccessToken && !hasRefreshToken
     }
-
-    override fun isAuthorizationCodeLogin(): Boolean {
-        val hasAccessToken = client.getCredentials().accessToken != ""
-        val hasRefreshToken = client.getCredentials().refreshToken != ""
+    /**
+     * Check whether a tid user is authenticated or not
+     * @return true is authorized, otherwise not authorized
+     */
+    override fun isTidLogin(): Boolean {
+        val hasAccessToken = client.getCredentials().accessToken.isNotBlank()
+        val hasRefreshToken = client.getCredentials().refreshToken.isNotBlank()
         return hasAccessToken && hasRefreshToken
     }
 
@@ -443,14 +451,7 @@ class NuguOAuth private constructor(
         return Uri.parse(makeAuthorizeUri(theme?:NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
     }
 
-    override fun accountByInAppBrowser(activity: Activity) {
-        Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
-            putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
-            activity.startActivityForResult(this, REQUEST_ACCOUNT)
-        }
-    }
-
-    override fun accountByInAppBrowser(
+    override fun accountWithTid(
         activity: Activity,
         listener: NuguOAuthInterface.OnAccountListener,
         theme: NuguOAuthInterface.THEME
@@ -497,13 +498,12 @@ class NuguOAuth private constructor(
     }
 
     /**
-     * Start the login with activity
-     * supported type1
+     * Start the login with tid
      * @param activity The activity making the call.
      * @param requestCode If >= 0, this code will be returned in
      *                    onActivityResult() when the activity exits
      */
-    override fun loginByInAppBrowser(
+    override fun loginWithTid(
         activity: Activity,
         listener: OnLoginListener,
         theme: NuguOAuthInterface.THEME
@@ -544,15 +544,15 @@ class NuguOAuth private constructor(
     }
 
     /**
-     * Only Type2
+     * Start anonymous login.
      */
-    override fun login(listener: OnLoginListener) {
+    override fun loginAnonymously(listener: OnLoginListener) {
         this.options.grantType = NuguOAuthOptions.CLIENT_CREDENTIALS
 
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.loginInternal(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
             ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -560,7 +560,7 @@ class NuguOAuth private constructor(
     }
 
     /**
-     * Only Type1
+     * Start a login without browser.
      */
     override fun loginWithAuthenticationCode(
         code: String,
@@ -572,7 +572,7 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.loginInternal(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
             ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -580,16 +580,16 @@ class NuguOAuth private constructor(
     }
 
     /**
-     * Only Type1
+     * Refresh Token with tid.
      */
-    override fun loginSilently(refreshToken: String, listener: OnLoginListener) {
+    override fun loginSilentlyWithTid(refreshToken: String, listener: OnLoginListener) {
         this.options.grantType = NuguOAuthOptions.REFRESH_TOKEN
         this.refreshToken = refreshToken
 
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.loginInternal(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
             ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -628,7 +628,7 @@ class NuguOAuth private constructor(
         checkClientId()
         checkClientSecret()
 
-        this.login(object : AuthStateListener {
+        this.loginInternal(object : AuthStateListener {
             override fun onAuthStateChanged(
                 newState: AuthStateListener.State
             ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -713,5 +713,67 @@ class NuguOAuth private constructor(
                         "                android:value=\"YOUR_CLIENT_ID_HERE\" />"
             )
         }
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("isTidLogin()"),
+        message = "This feature is no longer supported."
+    )
+    fun isAuthorizationCodeLogin(): Boolean {
+        throw NotImplementedError()
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("isAnonymouslyLogin()"),
+        message = "This feature is no longer supported."
+    )
+    fun isClientCredentialsLogin(): Boolean {
+        throw NotImplementedError()
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("loginWithTid(activity, listener)"),
+        message = "This feature is no longer supported."
+    )
+    fun loginByInAppBrowser(
+        activity: Activity,
+        listener: OnLoginListener,
+        theme: NuguOAuthInterface.THEME = NuguOAuthInterface.THEME.LIGHT
+    ) {
+        throw NotImplementedError()
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("accountWithTid(activity, listener)"),
+        message = "This feature is no longer supported."
+    )
+    fun accountByInAppBrowser(
+        activity: Activity,
+        listener: NuguOAuthInterface.OnAccountListener,
+        theme: NuguOAuthInterface.THEME = NuguOAuthInterface.THEME.LIGHT
+    ) {
+        throw NotImplementedError()
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("loginAnonymously(listener)"),
+        message = "This feature is no longer supported."
+    )
+    fun login(listener: OnLoginListener) {
+        throw NotImplementedError()
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("loginSilentlyWithTid(refreshToken, listener)"),
+        message = "This feature is no longer supported."
+    )
+    fun loginSilently(refreshToken: String, listener: OnLoginListener) {
+        throw NotImplementedError()
     }
 }

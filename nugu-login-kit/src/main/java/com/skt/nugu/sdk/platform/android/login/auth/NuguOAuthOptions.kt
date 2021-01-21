@@ -34,9 +34,9 @@ data class NuguOAuthOptions(
      * Companion objects
      */
     companion object {
-        /** type1 **/
+        /** Tid **/
         const val AUTHORIZATION_CODE = "authorization_code"
-        /** type2 **/
+        /** anonymous **/
         const val CLIENT_CREDENTIALS = "client_credentials"
         /** device_authorization **/
         const val DEVICE_CODE = "device_code"
