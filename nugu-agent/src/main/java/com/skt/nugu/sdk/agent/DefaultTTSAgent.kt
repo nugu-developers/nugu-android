@@ -341,6 +341,7 @@ class DefaultTTSAgent(
         Logger.d(TAG, "[init]")
         speechPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
+        interLayerDisplayPolicyManager.addListener(this)
     }
 
     override fun addListener(listener: TTSAgentInterface.Listener) {
