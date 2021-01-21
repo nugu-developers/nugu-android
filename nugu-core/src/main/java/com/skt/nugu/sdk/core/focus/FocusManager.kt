@@ -233,9 +233,11 @@ class FocusManager(
     private fun setChannelFocus(channel: Channel, focus: FocusState) {
         // if foreground focus requested, then acquire external focus if need.
         // if failed, return
-        if(focus == FocusState.FOREGROUND) {
-            if(externalFocusInteractor?.acquire(channel.name, channel.getInterfaceName()) != true) {
-                return
+        externalFocusInteractor?.let {
+            if(focus == FocusState.FOREGROUND) {
+                if(!it.acquire(channel.name, channel.getInterfaceName())) {
+                    return
+                }
             }
         }
 
@@ -249,8 +251,10 @@ class FocusManager(
         }
 
         // if loss focus, then release external focus also.
-        if(focus == FocusState.NONE) {
-            externalFocusInteractor?.release(channel.name, channel.getInterfaceName())
+        externalFocusInteractor?.let {
+            if(focus == FocusState.NONE) {
+                it.release(channel.name, channel.getInterfaceName())
+            }
         }
 
         listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName) }
