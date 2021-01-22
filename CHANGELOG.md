@@ -1,8 +1,18 @@
 Change Log
 ==========
 
+Version 0.9.45 *(2021-01-22)*
+-----------------------------
+* Fix: Fix to fail grpc connection when configuration fails (#1526)
+* Fix: Fix timeout exception handling (#1531)
+* Fix: Fix not working focus manager (#1535)
+* Fix: Add missing listener registration (#1537)
+    * register tts agent at InterLayerDisplayPolicyManager as listener
+* Improve: Pass EPD model file path instead of EPD (#1528)
+* New: Support Message Interface v1.4 (#1533)
+
 Version 0.9.44 *(2021-01-15)*
- -----------------------------
+-----------------------------
 * Fix: Finish tts's playcontext when related display cleared (#1509)
 * Fix: Add ExternalViewRenderer Interface to support thing like MediaNotification (#1513)
 * Improve: Apply External Focus Interactor (#1505)
