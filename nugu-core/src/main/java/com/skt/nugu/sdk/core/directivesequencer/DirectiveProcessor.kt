@@ -31,7 +31,7 @@ import kotlin.concurrent.withLock
 
 class DirectiveProcessor(
     private val directiveRouter: DirectiveRouter
-): DirectiveProcessorInterface {
+) : DirectiveProcessorInterface {
     companion object {
         private const val TAG = "DirectiveProcessor"
     }
@@ -104,7 +104,7 @@ class DirectiveProcessor(
 
             val preHandled = directiveRouter.preHandleDirective(directive, DirectiveHandlerResult(directive))
 
-            if(!preHandled) {
+            if (!preHandled) {
                 listeners.forEach {
                     it.onSkipped(directive)
                 }
@@ -129,11 +129,25 @@ class DirectiveProcessor(
         }
     }
 
-    private fun scrubWithConditionLocked(shouldClear: (Directive) -> Boolean) {
-        Logger.d(TAG, "[scrubWithConditionLocked]")
+    override fun cancelDialogRequestId(dialogRequestId: String) {
+        lock.withLock {
+            scrub(dialogRequestId)
+        }
+    }
 
+    private fun scrub(dialogRequestId: String, targets: Set<NamespaceAndName>? = null) {
+        Logger.d(TAG, "[scrub] dialogRequestId $dialogRequestId, target ${targets.toString()}")
+        if (dialogRequestId.isEmpty()) {
+            return
+        }
+
+        scrub { directive: Directive ->
+            directive.getDialogRequestId() == dialogRequestId && targets?.contains(directive.getNamespaceAndName()) ?: true
+        }
+    }
+
+    private fun scrub(shouldClear: (Directive) -> Boolean) {
         var changed = cancelDirectiveBeingPreHandledLocked(shouldClear)
-
         val freed = clearDirectiveBeingHandledLocked(shouldClear)
 
         if (freed.isNotEmpty()) {
@@ -141,10 +155,10 @@ class DirectiveProcessor(
             changed = true
         }
 
-        // Filter matching directives from m_handlingQueue and put them in m_cancelingQueue.
+        // Filter matching directives from handlingQueue and put them in cancelingQueue.
         val temp = ArrayDeque<DirectiveAndPolicy>()
         for (directiveAndPolicy in handlingQueue) {
-            if(shouldClear(directiveAndPolicy.directive)) {
+            if (shouldClear(directiveAndPolicy.directive)) {
                 cancelingQueue.offer(directiveAndPolicy.directive)
                 changed = true
             } else {
@@ -152,48 +166,12 @@ class DirectiveProcessor(
             }
         }
         handlingQueue = temp
-    }
-
-    private fun scrubDialogRequestIdLocked(dialogRequestId: String) {
-        if (dialogRequestId.isEmpty()) {
-            Logger.d(TAG, "[scrubDialogRequestIdLocked] emptyDialogRequestId")
-            return
-        }
-
-        Logger.d(TAG, "[scrubDialogRequestIdLocked] dialogRequestId : $dialogRequestId")
-
-        scrubWithConditionLocked{ directive: Directive ->
-            directive.getDialogRequestId() == dialogRequestId
-        }
-    }
-
-    override fun cancelDialogRequestId(dialogRequestId: String) {
-        lock.withLock {
-            scrubDialogRequestIdLocked(dialogRequestId)
-        }
-    }
-
-    private fun scrubDialogRequestIdWithTargetsLocked(dialogRequestId: String, scrubTargets: Set<NamespaceAndName>) {
-        if (dialogRequestId.isEmpty()) {
-            Logger.d(TAG, "[scrubDialogRequestIdWithTargetsLocked] emptyDialogRequestId")
-            return
-        }
-
-        if(scrubTargets.isEmpty()) {
-            Logger.d(TAG, "[scrubDialogRequestIdWithTargetsLocked] empty targets")
-            return
-        }
-
-        Logger.d(TAG, "[scrubDialogRequestIdWithTargetsLocked] dialogRequestId : $dialogRequestId")
-
-        scrubWithConditionLocked{ directive: Directive ->
-            directive.getDialogRequestId() == dialogRequestId && scrubTargets.contains(directive.getNamespaceAndName())
-        }
+        if (changed) processingLoop.wakeAll()
     }
 
     private fun cancelDirectiveBeingPreHandledLocked(shouldClear: (Directive) -> Boolean): Boolean {
         directiveBeingPreHandled?.let {
-            if(shouldClear(it)){
+            if (shouldClear(it)) {
                 cancelingQueue.offer(it)
                 directiveBeingPreHandled = null
                 return true
@@ -206,12 +184,12 @@ class DirectiveProcessor(
     private fun clearDirectiveBeingHandledLocked(dialogRequestId: String, policy: BlockingPolicy) {
         directivesBeingHandled[dialogRequestId]?.let {
             EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-                if(policy.blocking?.contains(medium)==true && it[medium] != null) {
+                if (policy.blocking?.contains(medium) == true && it[medium] != null) {
                     it.remove(medium)
                 }
             }
 
-            if(it.isEmpty()) {
+            if (it.isEmpty()) {
                 directivesBeingHandled.remove(dialogRequestId)
             }
         }
@@ -220,12 +198,17 @@ class DirectiveProcessor(
     private fun clearDirectiveBeingHandledLocked(shouldClear: (Directive) -> Boolean): Set<Directive> {
         val freed = HashSet<Directive>()
 
-        directivesBeingHandled.forEach {
+        directivesBeingHandled.values.forEach {
             EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-                val directive = it.value[medium]
-                if (directive != null && shouldClear(directive)) {
-                    freed.add(directive)
-                    it.value.remove(medium)
+                it[medium]?.let { directive ->
+                    if (shouldClear(directive)) {
+                        freed.add(directive)
+                        it.remove(medium)
+                    }
+
+                    if (it.isEmpty()) {
+                        directivesBeingHandled.remove(directive.getDialogRequestId())
+                    }
                 }
             }
         }
@@ -235,10 +218,8 @@ class DirectiveProcessor(
 
     fun disable() {
         lock.withLock {
-            scrubDialogRequestIdLocked("")
             isEnabled = false
-            queueAllDirectivesForCancellationLocked()
-            processingLoop.wakeAll()
+            scrub { true }
         }
     }
 
@@ -256,16 +237,19 @@ class DirectiveProcessor(
         }
     }
 
-    private fun onHandlingFailed(directive: Directive, description: String, cancelPolicy: com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult.CancelPolicy) {
+    private fun onHandlingFailed(
+        directive: Directive,
+        description: String,
+        cancelPolicy: com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult.CancelPolicy
+    ) {
         Logger.d(TAG, "[onHandlingFailed] messageId: ${directive.getMessageId()} ,description : $description, cancelPolicy: $cancelPolicy")
         lock.withLock {
             removeDirectiveLocked(directive)
-
-            if(cancelPolicy.cancelAll) {
-                scrubDialogRequestIdLocked(directive.getDialogRequestId())
+            if (cancelPolicy.cancelAll) {
+                scrub(directive.getDialogRequestId())
             } else {
-                cancelPolicy.partialTargets?.let {
-                    scrubDialogRequestIdWithTargetsLocked(directive.getDialogRequestId(), it)
+                if (!cancelPolicy.partialTargets.isNullOrEmpty()) {
+                    scrub(directive.getDialogRequestId(), cancelPolicy.partialTargets)
                 }
             }
         }
@@ -293,7 +277,7 @@ class DirectiveProcessor(
                 }
             }
 
-            if(it.isEmpty()) {
+            if (it.isEmpty()) {
                 directivesBeingHandled.remove(directive.getDialogRequestId())
             }
         }
@@ -304,30 +288,31 @@ class DirectiveProcessor(
     }
 
     private fun processCancelingQueue(): Boolean {
-        val copyCancelingQueue = lock.withLock {
-            Logger.d(
-                TAG,
-                "[processCancelingQueueLocked] cancelingQueue size : ${cancelingQueue.size}"
-            )
-            if (cancelingQueue.isEmpty()) {
-                return false
-            }
+        Logger.d(
+            TAG,
+            "[processCancelingQueueLocked] cancelingQueue size : ${cancelingQueue.size}"
+        )
 
-            val copyCancelingQueue = cancelingQueue
-            cancelingQueue = ArrayDeque()
-            copyCancelingQueue
-        }
+        if (cancelingQueue.isEmpty()) return false
+
+        val copyCancelingQueue = cancelingQueue.clone()
+        cancelingQueue = ArrayDeque()
 
         for (directive in copyCancelingQueue) {
             directiveRouter.cancelDirective(directive)
+            // todo. what if cancelDirective() return false
             listeners.forEach {
                 it.onCanceled(directive)
             }
         }
+
+        // todo. what if cancelDirective() return false
         return true
     }
 
     private fun handleQueuedDirectives(): Boolean {
+        Logger.d(TAG, "[handleQueuedDirectivesLocked] handlingQueue size : ${handlingQueue.size}")
+
         lock.lock()
 
         if (handlingQueue.isEmpty()) {
@@ -336,8 +321,6 @@ class DirectiveProcessor(
         }
 
         var handleDirectiveCalled = false
-
-        Logger.d(TAG, "[handleQueuedDirectivesLocked] handlingQueue size : ${handlingQueue.size}")
 
         while (handlingQueue.isNotEmpty()) {
             val it = getNextUnblockedDirectiveLocked()
@@ -360,7 +343,7 @@ class DirectiveProcessor(
                 it.onRequested(directive)
             }
             val handleDirectiveSucceeded = directiveRouter.handleDirective(directive)
-            if(!handleDirectiveSucceeded) {
+            if (!handleDirectiveSucceeded) {
                 listeners.forEach {
                     it.onFailed(directive, "no handler for directive")
                 }
@@ -377,7 +360,7 @@ class DirectiveProcessor(
                     TAG,
                     "[handleQueuedDirectivesLocked] handleDirectiveFailed message id : ${directive.getMessageId()}"
                 )
-                scrubDialogRequestIdLocked(directive.getDialogRequestId())
+                scrub(directive.getDialogRequestId())
             }
         }
 
@@ -389,9 +372,9 @@ class DirectiveProcessor(
         val key = directive.getDialogRequestId()
 
         EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-            if(policy.blocking?.contains(medium) == true) {
+            if (policy.blocking?.contains(medium) == true) {
                 var map = directivesBeingHandled[key]
-                if(map == null) {
+                if (map == null) {
                     map = HashMap()
                     directivesBeingHandled[key] = map
                 }
@@ -405,8 +388,8 @@ class DirectiveProcessor(
         val blockedMediumsMap: MutableMap<String, MutableMap<BlockingPolicy.Medium, Boolean>> = HashMap()
 
         // Mark mediums used by blocking directives being handled as blocked.
-        directivesBeingHandled.forEach {src ->
-            blockedMediumsMap[src.key] = HashMap<BlockingPolicy.Medium, Boolean>().also { dst->
+        directivesBeingHandled.forEach { src ->
+            blockedMediumsMap[src.key] = HashMap<BlockingPolicy.Medium, Boolean>().also { dst ->
                 src.value.forEach {
                     dst[it.key] = true
                 }
@@ -429,35 +412,11 @@ class DirectiveProcessor(
                 blockedMediums[it] = true
             }
 
-            if(!blocked) {
+            if (!blocked) {
                 return directiveAndPolicy
             }
         }
 
         return null
-    }
-
-    private fun queueAllDirectivesForCancellationLocked() {
-        var changed = false
-        val freed = clearDirectiveBeingHandledLocked { true }
-
-        if(freed.isNotEmpty()) {
-            changed = true
-            cancelingQueue.addAll(freed)
-        }
-
-        if(handlingQueue.isNotEmpty()) {
-            handlingQueue.forEach {
-                cancelingQueue.add(it.directive)
-            }
-
-            changed = true
-            handlingQueue.clear()
-        }
-
-        if(changed) {
-            // 처리가 필요한 내용이 있으면 processingLoop을 wake
-            processingLoop.wakeAll()
-        }
     }
 }
