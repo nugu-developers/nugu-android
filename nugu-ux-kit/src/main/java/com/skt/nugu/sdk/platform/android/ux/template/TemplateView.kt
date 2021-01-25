@@ -81,4 +81,6 @@ interface TemplateView {
     fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)? = null)
 
     fun asView(): View = this as View
+
+    fun isNuguButtonVisible(): Boolean = false
 }

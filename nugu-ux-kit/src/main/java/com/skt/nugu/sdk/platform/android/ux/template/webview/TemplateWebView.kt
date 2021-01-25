@@ -389,4 +389,7 @@ class TemplateWebView @JvmOverloads constructor(
         (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.localStopTTS()
         return super.onInterceptTouchEvent(ev)
     }
+
+    override fun isNuguButtonVisible(): Boolean = true
+
 }

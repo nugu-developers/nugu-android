@@ -26,6 +26,8 @@ import android.os.Bundle
 import android.support.design.widget.CoordinatorLayout
 import android.provider.Settings
 import android.support.design.widget.NavigationView
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
@@ -50,9 +52,9 @@ import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.widget.*
-import java.lang.ref.PhantomReference
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, SystemAgentInterfaceListener,
@@ -113,6 +115,18 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     private val tokenRefresher = TokenRefresher(NuguOAuth.getClient())
 
+    private val fragmentLifecycleCallback = object : FragmentManager.FragmentLifecycleCallbacks() {
+        override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
+            super.onFragmentStarted(fm, f)
+            updateNuguButton()
+        }
+
+        override fun onFragmentStopped(fm: FragmentManager, f: Fragment) {
+            super.onFragmentStopped(fm, f)
+            updateNuguButton()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -123,6 +137,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         // Set a renderer for display agent.
         ClientManager.getClient().setDisplayRenderer(templateRenderer.also {
             it.setFragmentManager(supportFragmentManager)
+            supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallback, false)
 
             ConfigurationStore.templateServerUri { url, error ->
                 error?.apply {
@@ -137,19 +152,11 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         chromeWindow.setOnChromeWindowCallback(object : ChromeWindow.OnChromeWindowCallback {
             override fun onExpandStarted() {
-                if (btnStartListening.isFab()) {
-                    btnStartListening.visibility = View.INVISIBLE
-                } else /* Type is button */ {
-                    btnStartListening.isActivated = true
-                }
+                updateNuguButton(voiceChromeExpandStarted = true)
             }
 
             override fun onHiddenFinished() {
-                if (btnStartListening.isFab()) {
-                    btnStartListening.visibility = View.VISIBLE
-                } else /* Type is button */ {
-                    btnStartListening.isActivated = false
-                }
+                updateNuguButton()
                 speechRecognizerAggregator.stopListening()
             }
 
@@ -171,7 +178,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         tokenRefresher.start()
 
         checkPermissionForOverlay()
-
     }
 
     override fun onResume() {
@@ -207,7 +213,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         // connect to server
         ClientManager.getClient().connect()
         // update view
-        updateView()
+        updateNuguButton()
     }
 
     private fun tryStartListeningWithTrigger() {
@@ -245,6 +251,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 //        ClientManager.getClient().shutdown()
 
         tokenRefresher.stop()
+
+        supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallback)
         super.onDestroy()
     }
 
@@ -341,19 +349,41 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         return true
     }
 
-    private fun updateView() {
-        // Set the enabled state of this [btnStartListening]
+    private fun updateNuguButton(voiceChromeExpandStarted: Boolean = false) {
+        fun isNuguButtonVisibleByTemplate(): Boolean {
+            return supportFragmentManager.fragments.filter {
+                !it.isRemoving && it.isVisible && (it as? TemplateFragment)?.isNuguButtonVisible() == true
+            }.any()
+        }
+
+        fun show() {
+            btnStartListening.visibility = View.VISIBLE
+        }
+
+        fun hide() {
+            btnStartListening.visibility = View.INVISIBLE
+        }
+
+        val isVoiceChromeVisible = chromeWindow.isShown() || voiceChromeExpandStarted
+
         runOnUiThread {
             if (!PreferenceHelper.enableNugu(this)) {
-                btnStartListening.visibility = View.INVISIBLE
+                hide()
                 return@runOnUiThread
             }
 
             btnStartListening.isEnabled = isConnected()
-            if (!chromeWindow.isShown()) {
-                btnStartListening.visibility = View.VISIBLE
-            } else {
-                btnStartListening.visibility = View.INVISIBLE
+
+            when (btnStartListening.isFab()) {
+                true -> {
+                    if (!isVoiceChromeVisible && !isNuguButtonVisibleByTemplate()) show()
+                    else hide()
+                }
+
+                false -> {
+                    if (!isNuguButtonVisibleByTemplate()) show().also { btnStartListening.isActivated = isVoiceChromeVisible }
+                    else hide()
+                }
             }
         }
     }
@@ -365,7 +395,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     override fun onConnectionStatusChanged(status: ConnectionStatusListener.Status, reason: ConnectionStatusListener.ChangedReason) {
         if (connectionStatus != status) {
             connectionStatus = status
-            updateView()
+            updateNuguButton()
         }
 
         if (status == ConnectionStatusListener.Status.CONNECTING) {
