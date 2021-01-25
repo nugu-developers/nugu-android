@@ -402,6 +402,11 @@ class DefaultAudioPlayerAgent(
 
                     if(executeStop(stopReason)) {
                         // should wait until stopped (onPlayerStopped will be called)
+                        if (currentAudioInfo == waitPlayExecuteInfo) {
+                            // If currentItem == waitPlayExecuteInfo, clear waitPlayExecuteInfo
+                            // currentItem will be released soon.
+                            waitPlayExecuteInfo = null
+                        }
                     } else {
                         // fetch now
                         if(executeFetchItem(nextAudioInfo)) {
@@ -607,13 +612,20 @@ class DefaultAudioPlayerAgent(
             executor.submit {
                 Logger.d(TAG, "[onPlayerStopped] waitFinishPreExecuteInfo: $waitFinishPreExecuteInfo, waitPlayExecuteInfo: $waitPlayExecuteInfo")
                 waitFinishPreExecuteInfo?.let {
+
+                    // remove waitPlayExecuteInfo if exist
+                    waitPlayExecuteInfo?.let { info->
+                        willBeHandleDirectives.remove(info.directive.getMessageId())
+                        waitPlayExecuteInfo = null
+                    }
+
                     waitFinishPreExecuteInfo = null
                     if(executeFetchItem(it)) {
                         waitPlayExecuteInfo = it
                     }
                 }
                 waitPlayExecuteInfo?.let {
-                    Logger.d(TAG, "$willBeHandleDirectives, ${it.directive.getMessageId()}")
+                    Logger.d(TAG, "[onPlayerStopped] $willBeHandleDirectives, ${it.directive.getMessageId()}")
                     if(willBeHandleDirectives.containsKey(it.directive.getMessageId())) {
                         Logger.d(TAG, "[onPlayerStopped] waitPlayExecuteInfo is not handled yet, handled at onExecute()")
                     } else {
