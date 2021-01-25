@@ -208,6 +208,8 @@ class TemplateFragment : Fragment() {
         }
     }
 
+    fun isNuguButtonVisible(): Boolean = templateView?.isNuguButtonVisible() == true
+
     /**
      * @param isUserIntention : If it is true, User wanted to close template intentionally.
      * For example user could click close button or request as uttering.
