@@ -288,15 +288,19 @@ class DirectiveProcessor(
     }
 
     private fun processCancelingQueue(): Boolean {
-        Logger.d(
-            TAG,
-            "[processCancelingQueueLocked] cancelingQueue size : ${cancelingQueue.size}"
-        )
+        lateinit var copyCancelingQueue: ArrayDeque<Directive>
 
-        if (cancelingQueue.isEmpty()) return false
+        lock.withLock {
+            Logger.d(
+                TAG,
+                "[processCancelingQueueLocked] cancelingQueue size : ${cancelingQueue.size}"
+            )
 
-        val copyCancelingQueue = cancelingQueue.clone()
-        cancelingQueue = ArrayDeque()
+            if (cancelingQueue.isEmpty()) return false
+
+            copyCancelingQueue = cancelingQueue.clone()
+            cancelingQueue.clear()
+        }
 
         for (directive in copyCancelingQueue) {
             directiveRouter.cancelDirective(directive)
