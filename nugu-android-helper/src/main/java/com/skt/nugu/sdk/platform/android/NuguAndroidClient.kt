@@ -710,7 +710,8 @@ class NuguAndroidClient private constructor(
                         getContextManager(),
                         getDialogAttributeStorage(),
                         builder.textSourceHandler,
-                        builder.textRedirectHandler
+                        builder.textRedirectHandler,
+                        getInteractionControlManager()
                     ).apply {
                         getDirectiveSequencer().addDirectiveHandler(this)
                     }
