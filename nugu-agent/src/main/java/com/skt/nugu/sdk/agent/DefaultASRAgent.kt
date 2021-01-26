@@ -380,6 +380,11 @@ class DefaultASRAgent(
                 } else {
                     setHandlingCompleted(info)
                 }
+
+                if(state == ASRAgentInterface.State.IDLE) {
+                    currentAudioProvider?.releaseAudioInputStream(this@DefaultASRAgent)
+                    currentAudioProvider = null
+                }
             }
         }, false)
     }
