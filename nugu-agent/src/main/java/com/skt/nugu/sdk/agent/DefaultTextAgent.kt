@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.common.InteractionControl
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -27,6 +28,8 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -42,7 +45,8 @@ class DefaultTextAgent(
     private val contextManager: ContextManagerInterface,
     private val dialogAttributeStorage: DialogAttributeStorageInterface,
     private val textSourceHandler: TextAgentInterface.TextSourceHandler?,
-    private val textRedirectHandler: TextAgentInterface.TextRedirectHandler?
+    private val textRedirectHandler: TextAgentInterface.TextRedirectHandler?,
+    private val interactionControlManager: InteractionControlManagerInterface
 ) : AbstractCapabilityAgent(NAMESPACE)
     , InputProcessor
     , TextAgentInterface{
@@ -65,7 +69,9 @@ class DefaultTextAgent(
         @SerializedName("token")
         val token: String,
         @SerializedName("targetPlayServiceId")
-        val targetPlayServiceId: String?
+        val targetPlayServiceId: String?,
+        @SerializedName("interactionControl")
+        val interactionControl: InteractionControl?
     )
 
     companion object {
@@ -222,13 +228,29 @@ class DefaultTextAgent(
 
         executeSetHandlingCompleted(info)
 
+
+        val interactionControl = if(payload.interactionControl != null) {
+            object : com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl {
+                override fun getMode(): InteractionControlMode = when(payload.interactionControl.mode) {
+                    InteractionControl.Mode.MULTI_TURN -> InteractionControlMode.MULTI_TURN
+                    InteractionControl.Mode.NONE -> InteractionControlMode.NONE
+                }
+            }
+        } else {
+            null
+        }
+
+        interactionControl?.let {
+            interactionControlManager.start(it)
+        }
+
         val targetPlayServiceId = payload.targetPlayServiceId
         val result = textRedirectHandler?.shouldExecuteDirective(info.directive.payload, info.directive.header) ?: TextAgentInterface.TextRedirectHandler.Result.OK
         if(result != TextAgentInterface.TextRedirectHandler.Result.OK) {
             Logger.d(TAG, "[executeHandleTextRedirectDirective] result returned: $result")
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
-                    messageSender.newCall(
+                    if(!messageSender.newCall(
                         EventMessageRequest.Builder(
                             jsonContext,
                             NAMESPACE,
@@ -241,7 +263,26 @@ class DefaultTextAgent(
                                 addProperty("errorCode", result.name)
                             }.toString())
                             .build()
-                    ).enqueue(null)
+                    ).enqueue(object : MessageSender.Callback{
+                            override fun onFailure(request: MessageRequest, status: Status) {
+                                interactionControl?.let {
+                                    interactionControlManager.finish(it)
+                                }
+                            }
+
+                            override fun onSuccess(request: MessageRequest) {
+                            }
+
+                            override fun onResponseStart(request: MessageRequest) {
+                                interactionControl?.let {
+                                    interactionControlManager.finish(it)
+                                }
+                            }
+                        })) {
+                        interactionControl?.let {
+                            interactionControlManager.finish(it)
+                        }
+                    }
                 }
             }, namespaceAndName)
         } else {
@@ -259,6 +300,10 @@ class DefaultTextAgent(
                     }
 
                     override fun onReceiveResponse(dialogRequestId: String) {
+                        interactionControl?.let {
+                            interactionControlManager.finish(it)
+                        }
+
                         internalTextRedirectHandleListeners.forEach {
                             it.onReceiveResponse(dialogRequestId)
                         }
@@ -268,6 +313,10 @@ class DefaultTextAgent(
                         dialogRequestId: String,
                         type: TextAgentInterface.ErrorType
                     ) {
+                        interactionControl?.let {
+                            interactionControlManager.finish(it)
+                        }
+
                         internalTextRedirectHandleListeners.forEach {
                             it.onError(dialogRequestId, type)
                         }
