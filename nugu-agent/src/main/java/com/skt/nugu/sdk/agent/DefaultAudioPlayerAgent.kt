@@ -384,7 +384,8 @@ class DefaultAudioPlayerAgent(
 
             executor.submit {
                 waitFinishPreExecuteInfo?.let {
-                    notifyOnReleaseAudioInfo(it, true)
+                    Logger.d(TAG, "[onPreExecute::$INNER_TAG] cancel waitFinishPreExecuteInfo($it)")
+                    executeOnCancel(it.directive)
                 }
                 waitFinishPreExecuteInfo = nextAudioInfo
 
@@ -402,10 +403,13 @@ class DefaultAudioPlayerAgent(
 
                     if(executeStop(stopReason)) {
                         // should wait until stopped (onPlayerStopped will be called)
-                        if (currentAudioInfo == waitPlayExecuteInfo) {
-                            // If currentItem == waitPlayExecuteInfo, clear waitPlayExecuteInfo
-                            // currentItem will be released soon.
-                            waitPlayExecuteInfo = null
+                        waitPlayExecuteInfo?.let {
+                            if (currentAudioInfo == it) {
+                                // If currentItem == waitPlayExecuteInfo, clear waitPlayExecuteInfo
+                                // currentItem will be released soon.
+                                willBeHandleDirectives.remove(it.directive.getMessageId())
+                                waitPlayExecuteInfo = null
+                            }
                         }
                     } else {
                         // fetch now
@@ -611,6 +615,13 @@ class DefaultAudioPlayerAgent(
         fun onPlayerStopped() {
             executor.submit {
                 Logger.d(TAG, "[onPlayerStopped] waitFinishPreExecuteInfo: $waitFinishPreExecuteInfo, waitPlayExecuteInfo: $waitPlayExecuteInfo")
+                waitPlayExecuteInfo?.let {
+                    if(it.isCanceled) {
+                        willBeHandleDirectives.remove(it.directive.getMessageId())
+                        waitPlayExecuteInfo = null
+                    }
+                }
+
                 waitFinishPreExecuteInfo?.let {
 
                     // remove waitPlayExecuteInfo if exist
