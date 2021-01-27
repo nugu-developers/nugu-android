@@ -9,8 +9,12 @@ publishing {
 
     def userName = properties['maven.userName']
     def passWord = properties['maven.password']
-    def mavenTarget = "maven-releases"
-//    def mavenTarget = "maven-snapshots"
+    def mavenTarget = ""
+    if(project.rootProject.publishSnapshot) {
+        mavenTarget = "maven-snapshots"
+    } else {
+        mavenTarget = "maven-releases"
+    }
 
     repositories {
         maven {

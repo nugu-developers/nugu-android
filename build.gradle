@@ -39,12 +39,16 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-apply from: 'versions.gradle'
-
 ext {
     isReleaseMode=false
+    publishSnapshot=true
 }
+
+apply from: 'versions.gradle'
 
 subprojects {
     version = nuguVersionName
 }
+
+println("version code: $nuguVersionCode")
+println("version name: $nuguVersionName")
