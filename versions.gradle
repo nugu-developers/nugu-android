@@ -1,3 +1,16 @@
+def getTimestamp() {
+    def date = new Date()
+    return date.format('yyyyMMdd.HHmm.ss.SSS')
+}
+
+def getVersionNameFromCode(code) {
+    Integer major = code / 10000
+    Integer minor = (code % 10000) / 100
+    Integer patch = code % 100
+
+    return "$major.$minor.$patch"
+}
+
 ext {
     compileSdkVersion=29
     minSdkVersion=19
@@ -8,6 +21,15 @@ ext {
     silvertrayVersion="4.3.3"
 
 
-    nuguVersionCode=945
-    nuguVersionName="0.9.45"
+    baseNuguVersionCode=945
+    baseNuguVersionName = "0.9.45"
+
+    if(rootProject.publishSnapshot) {
+        // snapshot version is higher than current version.
+        nuguVersionCode=baseNuguVersionCode+1
+        nuguVersionName="${getVersionNameFromCode(nuguVersionCode)}-${getTimestamp()}-SNAPSHOT"
+    } else {
+        nuguVersionCode=baseNuguVersionCode
+        nuguVersionName=getVersionNameFromCode(nuguVersionCode)
+    }
 }
