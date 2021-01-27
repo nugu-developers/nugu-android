@@ -1232,17 +1232,10 @@ class DefaultAudioPlayerAgent(
                     sendPlaybackStoppedEvent(stopReason ?: StopReason.STOP)
                 }
                 changeActivity(AudioPlayerAgentInterface.State.STOPPED)
-                handlePlaybackCompleted(true)
-            }
-            AudioPlayerAgentInterface.State.IDLE,
-            AudioPlayerAgentInterface.State.STOPPED,
-            AudioPlayerAgentInterface.State.FINISHED -> {
-                if (currentFocus != FocusState.NONE) {
-                    handlePlaybackCompleted(true)
-                }
             }
         }
 
+        handlePlaybackCompleted(true)
         stopReason = null
         playDirectiveController.onPlayerStopped()
     }
