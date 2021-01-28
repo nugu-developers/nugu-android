@@ -19,15 +19,14 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 interface DirectiveGroupProcessorInterface {
     interface Listener {
-        fun onReceiveDirectives(directives: List<Directive>)
+        fun onPreProcessed(directives: List<Directive>) {}
+
+        fun onPostProcessed(directives: List<Directive>) {}
     }
 
-    fun addPreProcessedListener(listener: Listener)
-    fun removePreProcessedListener(listener: Listener)
+    fun addListener(listener: Listener)
+    fun removeListener(listener: Listener)
 
-    fun addPostProcessedListener(listener: Listener)
-    fun removePostProcessedListener(listener: Listener)
-
-    fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
-    fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor)
+    fun addDirectiveGroupPreprocessor(directiveGroupPreProcessor: DirectiveGroupPreProcessor)
+    fun removeDirectiveGroupPreprocessor(directiveGroupPreProcessor: DirectiveGroupPreProcessor)
 }

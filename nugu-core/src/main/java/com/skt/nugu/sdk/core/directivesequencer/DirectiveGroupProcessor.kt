@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
-import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreProcessor
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -25,51 +25,42 @@ class DirectiveGroupProcessor(
     private val directiveSequencer: DirectiveSequencerInterface
 ) : DirectiveGroupHandler,
     DirectiveGroupProcessorInterface {
-    private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreprocessor>()
-    private val prePreprocessedListeners = HashSet<DirectiveGroupProcessorInterface.Listener>()
-    private val postPreprocessedListeners = CopyOnWriteArraySet<DirectiveGroupProcessorInterface.Listener>()
+    private val directiveGroupPreprocessors = HashSet<DirectiveGroupPreProcessor>()
+    private val listeners = CopyOnWriteArraySet<DirectiveGroupProcessorInterface.Listener>()
 
     override fun onReceiveDirectives(directives: List<Directive>) {
-        prePreprocessedListeners.forEach {
-            it.onReceiveDirectives(directives)
+        listeners.forEach {
+            it.onPreProcessed(directives)
         }
 
         var processedDirectives = directives
 
         directiveGroupPreprocessors.forEach {
-            processedDirectives = it.preprocess(processedDirectives)
+            processedDirectives = it.preProcess(processedDirectives)
         }
 
-        postPreprocessedListeners.forEach {
-            it.onReceiveDirectives(processedDirectives)
+        listeners.forEach {
+            it.onPostProcessed(processedDirectives)
         }
-        
+
         processedDirectives.forEach {
             directiveSequencer.onDirective(it)
         }
     }
 
-    override fun addPreProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        prePreprocessedListeners.add(listener)
+    override fun addListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        listeners.add(listener)
     }
 
-    override fun removePreProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        prePreprocessedListeners.remove(listener)
+    override fun removeListener(listener: DirectiveGroupProcessorInterface.Listener) {
+        listeners.remove(listener)
     }
 
-    override fun addPostProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        postPreprocessedListeners.add(listener)
+    override fun addDirectiveGroupPreprocessor(directiveGroupPreProcessor: DirectiveGroupPreProcessor) {
+        directiveGroupPreprocessors.add(directiveGroupPreProcessor)
     }
 
-    override fun removePostProcessedListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        postPreprocessedListeners.remove(listener)
-    }
-
-    override fun addDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
-        directiveGroupPreprocessors.add(directiveGroupPreprocessor)
-    }
-
-    override fun removeDirectiveGroupPreprocessor(directiveGroupPreprocessor: DirectiveGroupPreprocessor) {
-        directiveGroupPreprocessors.remove(directiveGroupPreprocessor)
+    override fun removeDirectiveGroupPreprocessor(directiveGroupPreProcessor: DirectiveGroupPreProcessor) {
+        directiveGroupPreprocessors.remove(directiveGroupPreProcessor)
     }
 }

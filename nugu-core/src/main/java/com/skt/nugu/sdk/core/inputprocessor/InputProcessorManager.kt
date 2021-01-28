@@ -32,7 +32,7 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProc
     private val timeoutFutureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
     private val timeoutScheduler = Executors.newSingleThreadScheduledExecutor()
 
-    override fun onReceiveDirectives(directives: List<Directive>) {
+    override fun onPostProcessed(directives: List<Directive>) {
         val dialogRequestId = directives.firstOrNull()?.header?.dialogRequestId ?: return
 
         val receiveResponse = requests[dialogRequestId]?.onReceiveDirectives(dialogRequestId, directives) ?: false

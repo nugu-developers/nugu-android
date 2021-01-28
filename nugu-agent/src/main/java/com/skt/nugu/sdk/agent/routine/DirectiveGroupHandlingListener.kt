@@ -40,16 +40,16 @@ class DirectiveGroupHandlingListener(
 
     init {
         directiveSequencer.addOnDirectiveHandlingListener(this)
-        directiveGroupProcessor.addPostProcessedListener(this)
+        directiveGroupProcessor.addListener(this)
     }
 
     private var directives = CopyOnWriteArrayList<Directive>()
     private var existCanceledOrFailed = false
 
-    override fun onReceiveDirectives(directives: List<Directive>) {
-        if(directives.firstOrNull()?.header?.dialogRequestId == dialogRequestId) {
+    override fun onPostProcessed(directives: List<Directive>) {
+        if (directives.firstOrNull()?.header?.dialogRequestId == dialogRequestId) {
             Logger.d(TAG, "[onReceiveDirectives] dialogRequestId: $dialogRequestId")
-            directiveGroupProcessor.removePostProcessedListener(this)
+            directiveGroupProcessor.removeListener(this)
             this.directives.addAll(directives)
         }
     }

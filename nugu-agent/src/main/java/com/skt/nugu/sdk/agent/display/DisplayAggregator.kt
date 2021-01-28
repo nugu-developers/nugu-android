@@ -192,7 +192,7 @@ class DisplayAggregator(
         this.observer = renderer
     }
 
-    override fun onReceiveDirectives(directives: List<Directive>) {
+    override fun onPostProcessed(directives: List<Directive>) {
         val audioPlayerDirective = directives.filter {
             (it.getNamespaceAndName() == DefaultAudioPlayerAgent.PLAY)
         }

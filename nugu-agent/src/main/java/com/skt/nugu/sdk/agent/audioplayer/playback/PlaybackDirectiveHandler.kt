@@ -52,7 +52,7 @@ class PlaybackDirectiveHandler(
         put(configuration.first, configuration.second)
     }
 
-    override fun onReceiveDirectives(directives: List<Directive>) {
+    override fun onPostProcessed(directives: List<Directive>) {
         val directive = directives.firstOrNull() {
             it.getNamespaceAndName() == configuration.first
         }
