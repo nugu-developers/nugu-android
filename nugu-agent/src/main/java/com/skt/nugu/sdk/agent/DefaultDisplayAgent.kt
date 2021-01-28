@@ -347,6 +347,11 @@ class DefaultDisplayAgent(
     ) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
+                if(renderedInfo.contains(it)) {
+                    Logger.w(TAG, "[onRendered] already called for ${it.getTemplateId()}, so ignore this call.")
+                    return@submit
+                }
+
                 Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
                 renderedInfo.add(it)
                 playSynchronizer.let {synchronizer ->
