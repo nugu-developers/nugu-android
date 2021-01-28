@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
-import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
@@ -25,11 +25,13 @@ import kotlin.concurrent.withLock
 /**
  * This class drop directives which received after timeout
  */
-class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterface) : DirectiveGroupPreprocessor, InputProcessorManagerInterface.OnResponseTimeoutListener {
+class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterface) : DirectiveGroupPreProcessor,
+    InputProcessorManagerInterface.OnResponseTimeoutListener {
     companion object {
         private const val TAG = "TimeoutResponseHandler"
         private const val MAX_CAPACITY = 100
     }
+
     private val lock = ReentrantLock()
     private val responseTimeoutDialogRequestIds = LinkedHashSet<String>()
 
@@ -37,21 +39,17 @@ class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterfa
         inputProcessorManager.addResponseTimeoutListener(this)
     }
 
-    override fun preprocess(directives: List<Directive>): MutableList<Directive> {
+    override fun preProcess(directives: List<Directive>): MutableList<Directive> {
         val processedDirectives = ArrayList(directives)
 
-        val handledDialogRequestIds = HashSet<String>()
         lock.withLock {
             processedDirectives.removeAll {
-                if(responseTimeoutDialogRequestIds.contains(it.getDialogRequestId())){
-                    handledDialogRequestIds.add(it.getDialogRequestId())
-                    true
-                } else {
-                    false
-                }
+                responseTimeoutDialogRequestIds.contains(it.getDialogRequestId())
             }
 
-            responseTimeoutDialogRequestIds.removeAll(handledDialogRequestIds)
+            responseTimeoutDialogRequestIds.removeAll { dialogRequestId ->
+                directives.any { it.getDialogRequestId() == dialogRequestId }
+            }
         }
 
         return processedDirectives

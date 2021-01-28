@@ -937,7 +937,7 @@ class NuguAndroidClient private constructor(
                 tempDisplayAgent,
                 tempAudioPlayerAgent
             ).apply {
-                client.getSdkContainer().getDirectiveGroupProcessor().addPostProcessedListener(this)
+                client.getSdkContainer().getDirectiveGroupProcessor().addListener(this)
             }
         } else {
             null
@@ -1133,11 +1133,11 @@ class NuguAndroidClient private constructor(
     }
 
     override fun addReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        client.getSdkContainer().getDirectiveGroupProcessor().addPreProcessedListener(listener)
+        client.getSdkContainer().getDirectiveGroupProcessor().addListener(listener)
     }
 
     override fun removeReceiveDirectivesListener(listener: DirectiveGroupProcessorInterface.Listener) {
-        client.getSdkContainer().getDirectiveGroupProcessor().removePreProcessedListener(listener)
+        client.getSdkContainer().getDirectiveGroupProcessor().removeListener(listener)
     }
 
     override fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {

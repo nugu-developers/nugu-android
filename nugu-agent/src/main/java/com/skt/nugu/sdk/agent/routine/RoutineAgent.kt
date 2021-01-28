@@ -406,8 +406,8 @@ class RoutineAgent(
             }
         })
 
-        directiveGroupProcessor.addPostProcessedListener(object : DirectiveGroupProcessorInterface.Listener {
-            override fun onReceiveDirectives(directives: List<Directive>) {
+        directiveGroupProcessor.addListener(object : DirectiveGroupProcessorInterface.Listener {
+            override fun onPostProcessed(directives: List<Directive>) {
                 directives.firstOrNull()?.getDialogRequestId()?.let {dialogRequestId ->
                     if(causingPauseRequests.remove(dialogRequestId) != null) {
                         if(!directives.any { it.getNamespaceAndName() ==  ContinueDirectiveHandler.CONTINUE || (it.getNamespace() == "ASR" && it.getName() == "NotifyResult")}) {

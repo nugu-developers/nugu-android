@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
-import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreprocessor
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -26,12 +26,12 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
 class AudioPlayerDirectivePreProcessor :
-    DirectiveGroupPreprocessor {
+    DirectiveGroupPreProcessor {
     companion object {
         private const val TAG = "AudioPlayerDirectivePreProcessor"
     }
 
-    override fun preprocess(directives: List<Directive>): MutableList<Directive> {
+    override fun preProcess(directives: List<Directive>): MutableList<Directive> {
         val processedDirectives = ArrayList(directives)
         val audioPlayerPlayDirective =
             processedDirectives.find { it.getNamespaceAndName() == DefaultAudioPlayerAgent.PLAY }

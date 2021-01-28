@@ -155,17 +155,15 @@ class DirectiveProcessor(
             changed = true
         }
 
-        // Filter matching directives from handlingQueue and put them in cancelingQueue.
-        val temp = ArrayDeque<DirectiveAndPolicy>()
-        for (directiveAndPolicy in handlingQueue) {
-            if (shouldClear(directiveAndPolicy.directive)) {
-                cancelingQueue.offer(directiveAndPolicy.directive)
+        handlingQueue.filter { shouldClear(it.directive) }.let { cancelTargets ->
+            cancelTargets.forEach {
+                cancelingQueue.offer(it.directive)
                 changed = true
-            } else {
-                temp.offer(directiveAndPolicy)
             }
+
+            handlingQueue.removeAll(cancelTargets)
         }
-        handlingQueue = temp
+
         if (changed) processingLoop.wakeAll()
     }
 
@@ -262,12 +260,7 @@ class DirectiveProcessor(
             directiveBeingPreHandled = null
         }
 
-        for (directiveAndPolicy in handlingQueue) {
-            if (directiveAndPolicy.directive == directive) {
-                handlingQueue.remove(directiveAndPolicy)
-                break
-            }
-        }
+        handlingQueue.find { it.directive == directive }?.run { handlingQueue.remove(this) }
 
         directivesBeingHandled[directive.getDialogRequestId()]?.let {
             EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
@@ -377,12 +370,9 @@ class DirectiveProcessor(
 
         EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
             if (policy.blocking?.contains(medium) == true) {
-                var map = directivesBeingHandled[key]
-                if (map == null) {
-                    map = HashMap()
-                    directivesBeingHandled[key] = map
-                }
+                val map = directivesBeingHandled[key] ?: HashMap()
                 map[medium] = directive
+                directivesBeingHandled[key] = map
             }
         }
     }
