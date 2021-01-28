@@ -1,8 +1,3 @@
-def getTimestamp() {
-    def date = new Date()
-    return date.format('yyyyMMdd.HHmm.ss.SSS')
-}
-
 def getVersionNameFromCode(code) {
     Integer major = code / 10000
     Integer minor = (code % 10000) / 100
@@ -25,9 +20,13 @@ ext {
     baseNuguVersionName = "0.9.45"
 
     if(rootProject.publishSnapshot) {
+        // type current timestamp
+        // timestamp='yyyyMMdd.HHmm'
+        // ex) timestamp='20210128.1643'
+
         // snapshot version is higher than current version.
         nuguVersionCode=baseNuguVersionCode+1
-        nuguVersionName="${getVersionNameFromCode(nuguVersionCode)}-${getTimestamp()}-SNAPSHOT"
+        nuguVersionName="${getVersionNameFromCode(nuguVersionCode)}-${timestamp}-SNAPSHOT"
     } else {
         nuguVersionCode=baseNuguVersionCode
         nuguVersionName=getVersionNameFromCode(nuguVersionCode)

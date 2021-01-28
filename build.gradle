@@ -41,7 +41,7 @@ task clean(type: Delete) {
 
 ext {
     isReleaseMode=false
-    publishSnapshot=true
+    publishSnapshot=false
 }
 
 apply from: 'versions.gradle'
