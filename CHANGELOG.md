@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 0.9.46 *(2021-01-29)*
+-----------------------------
+* Fix: Fix not playing audio player sometimes (#1544)
+* Fix: Fix not release audio stream when DM canceled by focus (#1548)
+* Fix: Fix not release playSync (#1553)
+* Improve: Change method naming of NuguOAuth (#1539)
+* Improve: Handle multiple onRendered call (#1557)
+* New: Apply interaction control at Text.TextRedirect (#1546)
+
 Version 0.9.45 *(2021-01-22)*
 -----------------------------
 * Fix: Fix to fail grpc connection when configuration fails (#1526)
