@@ -21,8 +21,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import android.support.annotation.RequiresPermission
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import java.net.InetAddress
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor

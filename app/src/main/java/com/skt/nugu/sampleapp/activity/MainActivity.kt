@@ -23,19 +23,20 @@ import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.support.design.widget.CoordinatorLayout
 import android.provider.Settings
-import android.support.design.widget.NavigationView
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.ActionBarDrawerToggle
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import com.google.android.material.navigation.NavigationView
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
@@ -98,8 +99,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val version: TextView by lazy {
         findViewById<TextView>(R.id.tv_version)
     }
-    private val toolBar: android.support.v7.widget.Toolbar by lazy {
-        findViewById<android.support.v7.widget.Toolbar>(R.id.toolbar)
+    private val toolBar: Toolbar by lazy {
+        findViewById<Toolbar>(R.id.toolbar)
     }
     private val chromeWindow: ChromeWindow by lazy {
         ChromeWindow(this, findViewById<CoordinatorLayout>(R.id.coordinator))

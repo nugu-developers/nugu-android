@@ -17,14 +17,14 @@
 package com.skt.nugu.sdk.platform.android.ux.template.presenter
 
 import android.annotation.SuppressLint
-import android.arch.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView

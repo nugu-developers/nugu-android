@@ -5,8 +5,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.app.NotificationCompat
-import android.support.v4.content.ContextCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.activity.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager

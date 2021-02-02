@@ -22,14 +22,14 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
-import android.support.annotation.Keep
-import android.support.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsIntent
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
 import android.widget.FrameLayout
+import androidx.annotation.Keep
 import com.skt.nugu.sdk.platform.android.service.BuildConfig
 
 class NuguWebView @JvmOverloads constructor(

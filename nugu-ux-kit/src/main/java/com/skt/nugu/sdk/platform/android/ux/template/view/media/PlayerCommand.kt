@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
-import android.support.annotation.Keep
+import androidx.annotation.Keep
 
 @Keep
 enum class PlayerCommand(val command: String) {

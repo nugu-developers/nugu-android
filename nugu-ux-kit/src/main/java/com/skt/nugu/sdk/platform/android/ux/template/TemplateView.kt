@@ -16,8 +16,8 @@
 package com.skt.nugu.sdk.platform.android.ux.template
 
 import android.content.Context
-import android.support.annotation.MainThread
 import android.view.View
+import androidx.annotation.MainThread
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer

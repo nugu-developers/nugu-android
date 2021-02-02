@@ -2,16 +2,15 @@ package com.skt.nugu.sdk.platform.android.ux.template.presenter
 
 import android.os.Handler
 import android.os.Looper
-import android.support.annotation.Keep
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
+import androidx.annotation.Keep
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import org.json.JSONObject
-import java.lang.RuntimeException
 import java.lang.ref.WeakReference
 
 class TemplateRenderer(

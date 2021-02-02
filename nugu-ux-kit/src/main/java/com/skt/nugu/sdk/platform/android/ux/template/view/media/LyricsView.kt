@@ -18,15 +18,14 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 import android.content.Context
 import android.graphics.Color
 import android.os.Build
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.OnScrollListener
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
@@ -81,7 +80,7 @@ class LyricsView @JvmOverloads constructor(
                 }
             }
         recyclerView.adapter = adapter
-        recyclerView.addOnScrollListener(object : OnScrollListener() {
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (viewSize == SIZE_STANDARD) {
                     enableAutoScroll = when (newState) {

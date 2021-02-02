@@ -1,6 +1,6 @@
 package com.skt.nugu.sdk.platform.android.ux.template.presenter
 
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.ViewModel
 import com.skt.nugu.sdk.core.utils.Logger
 
 class TemplateViewModel : ViewModel() {

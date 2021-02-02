@@ -15,8 +15,8 @@
  */
 package com.skt.nugu.sdk.platform.android.service.webkit
 
-import android.support.annotation.Keep
 import android.webkit.JavascriptInterface
+import androidx.annotation.Keep
 import com.google.gson.JsonObject
 
 internal class JavascriptObjectReceiver(val listener: Listener) {

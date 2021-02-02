@@ -17,9 +17,9 @@ package com.skt.nugu.sampleapp.utils
 
 import android.app.Activity
 import android.content.Context
-import android.support.annotation.UiThread
-import android.support.v4.app.ActivityCompat
+import androidx.core.app.ActivityCompat
 import android.util.Log
+import androidx.annotation.UiThread
 
 class OnRequestPermissionResultHandler(
     private val context: Context

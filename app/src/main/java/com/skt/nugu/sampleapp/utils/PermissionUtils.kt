@@ -19,9 +19,9 @@ import android.Manifest
 import android.os.Build
 import android.content.pm.PackageManager
 import android.app.Activity
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.content.Context
-import android.support.annotation.NonNull
+import androidx.annotation.NonNull
 
 /**
  * PermissionUtils is a wrapper library to simplify basic system permissions logic when targeting Android M+

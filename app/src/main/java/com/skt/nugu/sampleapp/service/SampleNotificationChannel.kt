@@ -3,7 +3,7 @@ package com.skt.nugu.sampleapp.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import android.support.annotation.RequiresApi
+import androidx.annotation.RequiresApi
 
 
 enum class SampleNotificationChannel(

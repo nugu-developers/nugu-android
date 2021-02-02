@@ -16,14 +16,13 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.res.Resources
-import android.support.design.widget.CoordinatorLayout
-import android.support.v4.content.ContextCompat
-import android.support.v4.content.res.ResourcesCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.skt.nugu.sdk.platform.android.ux.R
-import android.support.design.widget.Snackbar
+import com.google.android.material.snackbar.Snackbar
 import android.view.ViewGroup
 
 
@@ -138,7 +137,7 @@ class NuguSnackbar(val parentView: View) {
             width = FrameLayout.LayoutParams.MATCH_PARENT
         }
         view.background = ContextCompat.getDrawable(view.context, R.drawable.round_snackbar_corners)
-        val textView = view.findViewById<TextView>(android.support.design.R.id.snackbar_text)
+        val textView = view.findViewById<TextView>(R.id.snackbar_text)
         ResourcesCompat.getFont(view.context, R.font.noto_sans_kr_regular_hestia)?.apply {
             textView?.typeface = this
         }
