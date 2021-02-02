@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
@@ -99,4 +100,8 @@ dependencies {
     implementation "org.koin:koin-core:2.0.1"
     implementation "org.koin:koin-android:2.0.1"
     implementation "org.koin:koin-android-viewmodel:2.0.1"
+
+    // firebase distribution
+    implementation platform('com.google.firebase:firebase-bom:26.4.0')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 }
