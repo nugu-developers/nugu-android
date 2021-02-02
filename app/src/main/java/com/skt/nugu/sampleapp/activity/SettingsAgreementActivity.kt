@@ -16,9 +16,9 @@
 package com.skt.nugu.sampleapp.activity
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.content.Intent
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
@@ -30,7 +30,7 @@ import com.skt.nugu.sdk.platform.android.service.webkit.Const
 
 class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListener, NuguWebView.DocumentListener {
     companion object {
-        private const val TAG = "SettingsAgreementActivity"
+        private const val TAG = "SettingsAgreementAct"
         private val REASON_WITHDRAWN_USER = "WITHDRAWN_USER"
     }
 

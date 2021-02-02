@@ -17,10 +17,10 @@ package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
 import android.graphics.Rect
-import android.support.design.widget.CoordinatorLayout
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface

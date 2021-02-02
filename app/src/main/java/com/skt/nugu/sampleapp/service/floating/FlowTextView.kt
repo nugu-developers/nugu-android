@@ -17,6 +17,7 @@ package com.skt.nugu.sampleapp.service.floating
 
 import android.content.Context
 import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatTextView
 
 /**
  * Usage.
@@ -26,7 +27,7 @@ import android.util.AttributeSet
  */
 
 class FlowTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyle: Int = 0) :
-    android.support.v7.widget.AppCompatTextView(context, attrs, defStyle) {
+    AppCompatTextView(context, attrs, defStyle) {
     private fun updateText() {
         if (lineCount > maxLines && !text.isNullOrBlank()) {
             val enableLength = layout.getLineEnd(maxLines - 1)

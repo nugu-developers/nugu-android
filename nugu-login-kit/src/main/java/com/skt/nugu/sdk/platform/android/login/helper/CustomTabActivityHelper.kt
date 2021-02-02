@@ -3,8 +3,8 @@ package com.skt.nugu.sdk.platform.android.login.helper
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.net.Uri
-import android.support.customtabs.CustomTabsIntent
-import android.support.v4.app.ActivityCompat.startActivityForResult
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.app.ActivityCompat.startActivityForResult
 
 /**
  * This is a helper class to manage the connection to the Custom Tabs Service.

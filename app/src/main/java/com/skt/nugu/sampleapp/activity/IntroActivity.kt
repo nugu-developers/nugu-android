@@ -18,16 +18,15 @@ package com.skt.nugu.sampleapp.activity
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.RelativeLayout
+import androidx.appcompat.app.AppCompatActivity
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 
 /**

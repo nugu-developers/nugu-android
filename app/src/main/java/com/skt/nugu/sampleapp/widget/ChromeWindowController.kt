@@ -16,14 +16,13 @@
 package com.skt.nugu.sampleapp.widget
 
 import android.app.Activity
-import android.support.design.widget.BottomSheetBehavior
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
-import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sampleapp.utils.SoundPoolCompat
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip

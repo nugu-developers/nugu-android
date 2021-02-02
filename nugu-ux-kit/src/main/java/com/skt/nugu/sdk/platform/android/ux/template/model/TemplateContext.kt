@@ -15,7 +15,8 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.model
 
-import android.support.annotation.Keep
+import androidx.annotation.Keep
+
 
 @Keep
 data class TemplateContext(

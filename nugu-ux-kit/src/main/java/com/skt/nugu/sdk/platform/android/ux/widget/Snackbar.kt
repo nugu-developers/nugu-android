@@ -16,11 +16,11 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.res.Resources
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.view.View
 import android.widget.FrameLayout
 import com.skt.nugu.sdk.platform.android.ux.R
-import android.support.design.widget.Snackbar as AndroidSnackbar
+import com.google.android.material.snackbar.Snackbar as AndroidSnackbar
 
 /**
  * Wrapper class to customise android.support.design.widget.Snackbar
@@ -114,7 +114,7 @@ class Snackbar(val fab: View) {
         ).apply {
             setContentView(this.view)
             addCallback(object : AndroidSnackbar.Callback() {
-                override fun onDismissed(snackbar: android.support.design.widget.Snackbar?, event: Int) {
+                override fun onDismissed(snackbar: com.google.android.material.snackbar.Snackbar?, event: Int) {
                     callback?.onDismissed()
                 }
             })

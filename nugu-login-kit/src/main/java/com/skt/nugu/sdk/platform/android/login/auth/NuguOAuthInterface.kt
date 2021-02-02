@@ -16,7 +16,7 @@
 package com.skt.nugu.sdk.platform.android.login.auth
 
 import android.app.Activity
-import android.support.annotation.Keep
+import androidx.annotation.Keep
 
 /**
  * Authentication interface for the NUGU oauth

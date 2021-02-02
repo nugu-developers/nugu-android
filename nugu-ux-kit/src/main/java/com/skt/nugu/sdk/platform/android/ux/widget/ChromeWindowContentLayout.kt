@@ -18,13 +18,13 @@ package com.skt.nugu.sdk.platform.android.ux.widget
 import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
-import android.support.design.widget.BottomSheetBehavior
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.core.utils.Logger

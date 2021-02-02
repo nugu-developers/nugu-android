@@ -16,10 +16,10 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
-import android.support.v7.widget.AppCompatTextView
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatTextView
 
 class EllipsizedTextView @JvmOverloads constructor(
     context: Context,
