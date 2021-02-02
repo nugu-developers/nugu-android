@@ -21,6 +21,7 @@ buildscript {
         // in the individual module build.gradle files
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath 'digital.wup:android-maven-publish:3.6.2'
+        classpath 'com.google.gms:google-services:4.3.5'
     }
 }
 

@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1080317249687",
+    "project_id": "nugu-sdk-sample",
+    "storage_bucket": "nugu-sdk-sample.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080317249687:android:5fb01737d91ce8e401c1d2",
+        "android_client_info": {
+          "package_name": "com.skt.nugu.sampleapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1080317249687-d58em70ac4v10p2l1kosfut1i4ecuci9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2iK3xTr2B0_lH8PyBbObeUlBAxebveUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1080317249687-d58em70ac4v10p2l1kosfut1i4ecuci9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1080317249687-s2c1v39oh8c3076vcgmls28khniaia5m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sktelecom.romaine.qa"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
