@@ -135,6 +135,9 @@ class DefaultSoundAgent(
                     executor.submit {
                         Logger.d(TAG, "[onFocusChanged] focus: $newFocus, name: $focusInterfaceName")
                         when (newFocus) {
+                            FocusState.BACKGROUND -> {
+                                // no-op
+                            }
                             FocusState.FOREGROUND -> {
                                 if(isHandled) {
                                     return@submit
