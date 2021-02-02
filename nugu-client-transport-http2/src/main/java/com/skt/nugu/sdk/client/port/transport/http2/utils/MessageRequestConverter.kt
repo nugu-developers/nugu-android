@@ -25,7 +25,7 @@ object MessageRequestConverter {
     fun EventMessageRequest.toJson(): String {
         return with(this) {
             JsonObject().apply {
-                this.add("context", JsonParser().parse(context).asJsonObject)
+                this.add("context", JsonParser.parseString(context).asJsonObject)
                 this.add("event", JsonObject().apply {
                     this.add("header", JsonObject().apply {
                         this.addProperty("dialogRequestId", dialogRequestId)
@@ -35,7 +35,7 @@ object MessageRequestConverter {
                         this.addProperty("version", version)
                         this.addProperty("referrerDialogRequestId", referrerDialogRequestId)
                     })
-                    this.add("payload", JsonParser().parse(payload).asJsonObject)
+                    this.add("payload", JsonParser.parseString(payload).asJsonObject)
                 })
             }
         }.toString()

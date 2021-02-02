@@ -134,8 +134,7 @@ internal class RegistryClient(
                 val code = response?.code()
                 when (code) {
                     HttpURLConnection.HTTP_OK -> {
-                        val jsonObject =
-                            JsonParser().parse(response.body().string()).asJsonObject
+                        val jsonObject = JsonParser.parseString(response.body().string()).asJsonObject
                         if (!(jsonObject.has("healthCheckPolicy") && jsonObject.has("serverPolicies"))) {
                             observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
                             return

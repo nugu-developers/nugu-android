@@ -103,7 +103,7 @@ class ResponseHandler {
 
         private fun handleDirectives(body: Buffer) : List<DirectiveMessage> {
             val directives = ArrayList<DirectiveMessage>()
-            val json = JsonParser().parse(body.readString(Charset.defaultCharset())).asJsonObject
+            val json = JsonParser.parseString(body.readString(Charset.defaultCharset())).asJsonObject
             json.getAsJsonArray("directives").forEach {
                 val header = gson.fromJson(it.asJsonObject["header"], Header::class.java)
                 directives.add(DirectiveMessage(header, it.asJsonObject["payload"].toString()))
