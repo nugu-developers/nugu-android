@@ -29,7 +29,4 @@ data class Chip(
     enum class Type {
         ACTION, GENERAL
     }
-    fun isValid(): Boolean {
-        return  text != null && type != null
-    }
 }

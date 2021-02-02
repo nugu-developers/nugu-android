@@ -64,7 +64,6 @@ class DefaultASRAgent(
     private val defaultEpdTimeoutMillis: Long,
     userInteractionDialogChannelName: String,
     internalDialogChannelName: String,
-    dummyChannelName: String,
     private val playSynchronizer: PlaySynchronizerInterface,
     private val interactionControlManager: InteractionControlManagerInterface
 ) : AbstractCapabilityAgent(NAMESPACE)

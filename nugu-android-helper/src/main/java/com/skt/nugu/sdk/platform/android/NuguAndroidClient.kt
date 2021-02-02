@@ -476,7 +476,6 @@ class NuguAndroidClient private constructor(
                             builder.defaultEpdTimeoutMillis,
                             DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
                             DefaultFocusChannel.INTERNAL_DIALOG_CHANNEL_NAME,
-                            DefaultFocusChannel.INTERACTION_CHANNEL_NAME,
                             getPlaySynchronizer(),
                             getInteractionControlManager()
                         ).apply {
