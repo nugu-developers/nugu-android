@@ -140,7 +140,7 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
                 actives.remove(it)
             }
 
-            return actives
+            actives
         }
     }
 }
