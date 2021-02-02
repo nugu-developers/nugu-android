@@ -15,13 +15,11 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
-import com.google.protobuf.ByteString
-import com.google.protobuf.UnsafeByteOperations
+import com.google.protobuf.unsafeWrap
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import devicegateway.grpc.*
-import java.nio.ByteBuffer
 
 object MessageRequestConverter {
     fun AttachmentMessageRequest.toProtobufMessage(): AttachmentMessage {
@@ -41,13 +39,7 @@ object MessageRequestConverter {
                 .setSeq(seq)
                 .setIsEnd(isEnd)
                 .setMediaType(mediaType)
-                .setContent(
-                    if (byteArray != null) {
-                        UnsafeByteOperations.unsafeWrap(byteArray)
-                    } else {
-                        ByteString.EMPTY
-                    }
-                )
+                .setContent(byteArray.unsafeWrap())
                 .build()
 
             return AttachmentMessage.newBuilder()

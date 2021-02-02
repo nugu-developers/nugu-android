@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc.devicegateway
 
-import com.google.protobuf.ByteString
+import com.google.protobuf.unsafeWrap
 import com.skt.nugu.sdk.client.port.transport.grpc.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc.ServerPolicy
 import com.skt.nugu.sdk.client.port.transport.grpc.utils.BackOff
@@ -36,7 +36,6 @@ import io.grpc.ManagedChannel
 import io.grpc.Status
 import java.net.ConnectException
 import java.net.UnknownHostException
-import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -381,13 +380,7 @@ internal class DeviceGatewayClient(policy: Policy,
                 .setSeq(seq)
                 .setIsEnd(isEnd)
                 .setMediaType(mediaType)
-                .setContent(
-                    if (byteArray != null) {
-                        ByteString.copyFrom(ByteBuffer.wrap(byteArray))
-                    } else {
-                        ByteString.EMPTY
-                    }
-                )
+                .setContent(byteArray.unsafeWrap())
                 .build()
 
             return AttachmentMessage.newBuilder()
