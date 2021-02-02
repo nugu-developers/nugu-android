@@ -42,7 +42,7 @@ platform :android do
 
     firebase_app_distribution(
         app: "1:1080317249687:android:5fb01737d91ce8e401c1d2",
-        firebase_cli_token: "your firebase refresh token",
+        service_credentials_file: "credential.json",
         groups: "and-dev",
         release_notes: "release note generation will be done later.."
     )
