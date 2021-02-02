@@ -1233,6 +1233,9 @@ class DefaultAudioPlayerAgent(
                 }
                 changeActivity(AudioPlayerAgentInterface.State.STOPPED)
             }
+            else -> {
+                // no-op
+            }
         }
 
         handlePlaybackCompleted(true)
