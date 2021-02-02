@@ -176,12 +176,14 @@ class AudioPlayerTemplateHandler(
         } else if (info.directive.getMessageId() == pendingInfo?.directive?.getMessageId()) {
             executeCancelPendingInfo()
         } else {
-            templateDirectiveInfoMap[info.directive.getMessageId()]?.let {
-                if(it.directive.getMessageId() == info.directive.getMessageId()) {
+            val keys = templateDirectiveInfoMap.filterValues {
+                it.directive.header.messageId == it.directive.header.messageId
+            }
+
+            keys.forEach {
+                templateDirectiveInfoMap[it.key]?.let {
                     Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated")
                     executeCancelInfoInternal(it)
-                } else {
-                    Logger.d(TAG, "[executeCancelUnknownInfo] skip outdated (maybe updated)")
                 }
             }
         }
@@ -203,7 +205,7 @@ class AudioPlayerTemplateHandler(
         Logger.d(TAG, "[executeCancelInfoInternal] cancel pendingInfo : $info")
 
         setHandlingFailed(info, "Canceled by the other display info")
-        templateDirectiveInfoMap.remove(info.directive.getMessageId())
+        templateDirectiveInfoMap.remove(info.sourceTemplateId)
         sessionManager.deactivate(info.directive.getDialogRequestId(), info)
         releaseSyncForce(info)
     }
@@ -222,6 +224,7 @@ class AudioPlayerTemplateHandler(
             if(current != null && shouldUpdate(current, templateInfo)) {
                 // just update
                 Logger.d(TAG, "[handleDirective] update directive")
+                templateDirectiveInfoMap.remove(templateInfo.sourceTemplateId)
                 templateInfo.sourceTemplateId = current.sourceTemplateId
                 templateInfo.playContext = templateInfo.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
@@ -231,7 +234,6 @@ class AudioPlayerTemplateHandler(
                     add("template", JsonParser.parseString(templateInfo.directive.payload))
                 }.toString())
                 setHandlingCompleted(info)
-                templateDirectiveInfoMap.remove(info.directive.getMessageId())
                 templateDirectiveInfoMap[current.sourceTemplateId] = templateInfo
                 releaseSyncForce(current)
             } else {

@@ -220,7 +220,11 @@ class DefaultDisplayAgent(
         }
     }
 
+    /**
+     * prepared, but not yet render requested.
+     */
     private val pendingInfo = HashMap<String, TemplateDirectiveInfo>()
+
     private val currentInfo = HashMap<String, TemplateDirectiveInfo>()
     private val renderedInfo = ArrayList<TemplateDirectiveInfo>()
     private val contextLayerTimer: MutableMap<DisplayAgentInterface.ContextLayer, DisplayTimer>? =
