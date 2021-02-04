@@ -30,14 +30,12 @@ class DirectiveRouter {
 
     private val handlers = Collections.synchronizedSet(HashSet<DirectiveHandler>())
 
-    fun addDirectiveHandler(handler: DirectiveHandler): Boolean {
+    fun addDirectiveHandler(handler: DirectiveHandler) {
         handlers.add(handler)
-        return true
     }
 
-    fun removeDirectiveHandler(handler: DirectiveHandler): Boolean {
+    fun removeDirectiveHandler(handler: DirectiveHandler) {
         handlers.remove(handler)
-        return true
     }
 
     fun preHandleDirective(directive: Directive, result: DirectiveHandlerResult): Boolean {
