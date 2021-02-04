@@ -15,28 +15,26 @@
  */
 package com.skt.nugu.sdk.core.directivesequencer
 
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.concurrent.ConcurrentHashMap
 
 class DirectiveRouter {
     companion object {
         private const val TAG = "DirectiveRouter"
     }
 
-    private val handlerAndConfigurationMap = ConcurrentHashMap<DirectiveHandler, Map<NamespaceAndName, BlockingPolicy>>()
+    private val handlers = HashSet<DirectiveHandler>()
 
     fun addDirectiveHandler(handler: DirectiveHandler): Boolean {
-        handlerAndConfigurationMap[handler] = handler.getConfiguration()
+        handlers.add(handler)
         return true
     }
 
     fun removeDirectiveHandler(handler: DirectiveHandler): Boolean {
-        handlerAndConfigurationMap.remove(handler)
+        handlers.remove(handler)
         return true
     }
 
@@ -72,13 +70,7 @@ class DirectiveRouter {
     }
 
     private fun getDirectiveHandler(directive: Directive): DirectiveHandler? {
-        handlerAndConfigurationMap.forEach {
-            if(it.value.containsKey(directive.getNamespaceAndName())) {
-                return it.key
-            }
-        }
-
-        return null
+        return handlers.find { it.getConfiguration().containsKey(directive.getNamespaceAndName()) }
     }
 
     fun getPolicy(directive: Directive): BlockingPolicy {
