@@ -16,17 +16,19 @@
 package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.*
+import kotlin.collections.HashSet
 
 class DirectiveRouter {
     companion object {
         private const val TAG = "DirectiveRouter"
     }
 
-    private val handlers = HashSet<DirectiveHandler>()
+    private val handlers = Collections.synchronizedSet(HashSet<DirectiveHandler>())
 
     fun addDirectiveHandler(handler: DirectiveHandler): Boolean {
         handlers.add(handler)
