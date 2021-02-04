@@ -82,12 +82,12 @@ class DirectiveSequencer :
         directiveProcessor.removeOnDirectiveHandlingListener(listener)
     }
 
-    override fun addDirectiveHandler(handler: DirectiveHandler): Boolean {
-        return directiveRouter.addDirectiveHandler(handler)
+    override fun addDirectiveHandler(handler: DirectiveHandler) {
+        directiveRouter.addDirectiveHandler(handler)
     }
 
-    override fun removeDirectiveHandler(handler: DirectiveHandler): Boolean {
-        return directiveRouter.removeDirectiveHandler(handler)
+    override fun removeDirectiveHandler(handler: DirectiveHandler) {
+        directiveRouter.removeDirectiveHandler(handler)
     }
 
     override fun onDirective(directive: Directive): Boolean {
