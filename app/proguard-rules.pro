@@ -22,9 +22,7 @@
 -keepclassmembers enum com.skt.nugu.** { *; }
 -keep class com.sktelecom.tyche.** { *; }
 -keep class com.skt.nugu.silvertray.codec.CBROpusDecoder { *; }
--keep class com.skt.aidev.** { *; }
--keep class * extends com.google.protobuf.** { *; }
-
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 # Prevent R8 from leaving Data object members always null
 -keepclassmembers,allowobfuscation class * {
   @com.google.gson.annotations.SerializedName <fields>;
