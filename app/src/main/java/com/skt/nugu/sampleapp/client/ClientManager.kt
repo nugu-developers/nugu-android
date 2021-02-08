@@ -36,20 +36,21 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.NuguServerInfo
 import com.skt.nugu.sdk.core.interfaces.context.WakeupWordContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.external.jademarble.EndPointDetector
 import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceManager
 import com.skt.nugu.sdk.platform.android.audiosource.audiorecord.AudioRecordSourceFactory
 import com.skt.nugu.sdk.platform.android.beep.AsrBeepResourceProvider
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechProcessorDelegate
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
 import java.io.File
 import java.io.FileOutputStream
+import java.math.BigInteger
 import java.net.URI
-import java.net.URL
+import java.security.SecureRandom
 import java.util.concurrent.Executors
 
 /**
@@ -180,7 +181,11 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         // Create NuguAndroidClient
         client = NuguAndroidClient.Builder(
             context,
-            NuguOAuth.create(context),
+            NuguOAuth.create(
+                options = NuguOAuthOptions.Builder()
+                    .deviceUniqueId(deviceUniqueId(context))
+                    .build()
+            ),
             audioSourceManager
         ).defaultEpdTimeoutMillis(7000L)
             .addAgentFactory(RoutineAgent.NAMESPACE, object : AgentFactory<RoutineAgent> {
@@ -327,4 +332,26 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
     ) {
         playerActivity = activity
     }
+
+    /**
+     * Generate random unique ID
+     * This function is a sample. Change the unique ID you can identify
+     *
+     * example :
+     * fun deviceUniqueId(): String = "{deviceSerialNumber} or {userId}"
+     * reference :
+     * https://developers-doc.nugu.co.kr/nugu-sdk/authentication
+     */
+    fun deviceUniqueId(context: Context): String {
+        // load deviceUniqueId
+        var deviceUniqueId = PreferenceHelper.deviceUniqueId(context)
+        if (deviceUniqueId.isBlank()) {
+            // Generate random
+            deviceUniqueId += BigInteger(130, SecureRandom()).toString(32) // Fix your device policy
+            // save deviceUniqueId
+            PreferenceHelper.deviceUniqueId(context, deviceUniqueId)
+        }
+        return deviceUniqueId
+    }
+
 }

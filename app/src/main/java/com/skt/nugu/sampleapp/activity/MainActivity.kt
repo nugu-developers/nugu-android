@@ -46,6 +46,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
+import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
@@ -546,79 +547,13 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         Log.e(TAG, "An unexpected error has occurred. " +
                 "Please check the logs for details\n" +
                 "$error")
-
-        if (error.error == NuguOAuthError.NETWORK_ERROR) {
-            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                .message(R.string.device_gw_error_006)
-                .show()
-            return
-        } else {
-            when (error.code) {
-                NuguOAuthError.USER_ACCOUNT_CLOSED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_account_closed)
-                        .show()
-                }
-                NuguOAuthError.USER_ACCOUNT_PAUSED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_account_paused)
-                        .show()
-                }
-                NuguOAuthError.USER_DEVICE_DISCONNECTED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_device_disconnected)
-                        .show()
-                }
-                NuguOAuthError.USER_DEVICE_UNEXPECTED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_device_unexpected)
-                        .show()
-                }
-                else -> {
-                    when (error.error) {
-                        NuguOAuthError.UNAUTHORIZED -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_unauthorized)
-                                .show()
-                        }
-                        NuguOAuthError.UNAUTHORIZED_CLIENT -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_unauthorized_client)
-                                .show()
-                        }
-                        NuguOAuthError.INVALID_TOKEN -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_invalid_token)
-                                .show()
-                        }
-                        NuguOAuthError.INVALID_CLIENT -> {
-                            if (error.description == NuguOAuthError.FINISHED) {
-                                NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                    .message(R.string.service_finished)
-                                    .show()
-                            } else {
-                                NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                    .message(R.string.error_invalid_client)
-                                    .show()
-                            }
-                        }
-                        NuguOAuthError.ACCESS_DENIED -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_access_denied)
-                                .show()
-                        }
-                        else -> {
-                            // check detail
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.device_gw_error_003)
-                                .show()
-                        }
-                    }
-                }
-            }
+        if(error.error != NuguOAuthError.NETWORK_ERROR &&
+            error.error != NuguOAuthError.INITIALIZE_ERROR) {
+            performRevoke()
         }
-
-        performRevoke()
+        NuguSnackbar.with(findViewById(R.id.baseLayout))
+            .message(error.toResId())
+            .show()
     }
 
     private fun performRevoke() {

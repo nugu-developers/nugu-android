@@ -24,7 +24,7 @@ sealed class BaseException(val error: String, val description: String, val code:
     /**
      * HttpErrorException denotes errors that occur in HTTP call
      */
-    class HttpErrorException(code: Int, description: String) : BaseException(NETWORK_ERROR, description)
+    class HttpErrorException(val httpCode: Int, description: String) : BaseException(NETWORK_ERROR, description)
     /**
      * Thrown when authentication fails.
      */

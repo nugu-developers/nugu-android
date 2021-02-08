@@ -24,11 +24,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguSnackbar
-import java.math.BigInteger
-import java.security.SecureRandom
 
 /**
  * Activity to demonstrate nugu authentication using a nugu-login-kit
@@ -50,14 +49,10 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     }
 
     /**
-     * Initializes, Creates a new authClient
+     * Get the authClient.
      */
     private val authClient by lazy {
-        // Configure Nugu OAuth Options
-        val options = NuguOAuthOptions.Builder()
-            .deviceUniqueId(getDeviceUniqueId())
-            .build()
-        NuguOAuth.getClient(options)
+        NuguOAuth.getClient()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +67,13 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
         btnLoginAnonymous.setOnClickListener {
             startAnonymouslyLogin()
         }
+
+        /* If you need to update deviceUniqueId again, see sample code below.
+        *     val newOptions = NuguOAuthOptions.Builder()
+        *         .deviceUniqueId("{deviceSerialNumber} or {userId}")
+        *         .build()
+        *     NuguOAuth.getClient().setOptions(newOptions)
+        */
     }
 
     override fun onDestroy() {
@@ -178,99 +180,14 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
         Log.e(TAG, "An unexpected error has occurred. " +
                 "Please check the logs for details\n" +
                 "$error")
-        if(error.error == NuguOAuthError.NETWORK_ERROR) {
-            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                .message(R.string.device_gw_error_006)
-                .show()
-        } else {
+        if(error.error != NuguOAuthError.NETWORK_ERROR &&
+            error.error != NuguOAuthError.INITIALIZE_ERROR) {
             // After removing the credentials, it is recommended to renew the token via loginByWebbrowser
             PreferenceHelper.credentials(this@LoginActivity, "")
-
-            when(error.code) {
-                NuguOAuthError.USER_ACCOUNT_CLOSED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_account_closed)
-                        .show()
-                }
-                NuguOAuthError.USER_ACCOUNT_PAUSED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_account_paused)
-                        .show()
-                }
-                NuguOAuthError.USER_DEVICE_DISCONNECTED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_device_disconnected)
-                        .show()
-                }
-                NuguOAuthError.USER_DEVICE_UNEXPECTED -> {
-                    NuguSnackbar.with(findViewById(R.id.baseLayout))
-                        .message(R.string.code_user_device_unexpected)
-                        .show()
-                }
-                else -> {
-                    when(error.error) {
-                        NuguOAuthError.UNAUTHORIZED -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_unauthorized)
-                                .show()
-                        }
-                        NuguOAuthError.UNAUTHORIZED_CLIENT -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_unauthorized_client)
-                                .show()
-                        }
-                        NuguOAuthError.INVALID_TOKEN -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_invalid_token)
-                                .show()
-                        }
-                        NuguOAuthError.INVALID_CLIENT -> {
-                            if(error.description == NuguOAuthError.FINISHED) {
-                                NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                    .message(R.string.service_finished)
-                                    .show()
-                            } else {
-                                NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                    .message(R.string.error_invalid_client)
-                                    .show()
-                            }
-                        }
-                        NuguOAuthError.ACCESS_DENIED -> {
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.error_access_denied)
-                                .show()
-                        }
-                        else -> {
-                            // check detail
-                            NuguSnackbar.with(findViewById(R.id.baseLayout))
-                                .message(R.string.device_gw_error_003)
-                                .show()
-                        }
-                    }
-                }
-            }
         }
-    }
-
-    /**
-     * Generate random unique ID
-     * Change the unique ID you can identify
-     *
-     * example :
-     * private fun getDeviceUniqueId(): String = "{deviceSerialNumber}"
-     * reference :
-     * https://developers-doc.nugu.co.kr/nugu-sdk/authentication
-     */
-    private fun getDeviceUniqueId(): String {
-        // load deviceUniqueId
-        var deviceUniqueId = PreferenceHelper.deviceUniqueId(this)
-        if (deviceUniqueId.isBlank()) {
-            // Generate random
-            deviceUniqueId += BigInteger(130, SecureRandom()).toString(32) // Fix your device policy
-            // save deviceUniqueId
-            PreferenceHelper.deviceUniqueId(this, deviceUniqueId)
-        }
-        return deviceUniqueId
+        NuguSnackbar.with(findViewById(R.id.baseLayout))
+            .message(error.toResId())
+            .show()
     }
 
     /**
@@ -291,7 +208,7 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     **/
     private fun startIntroActivity() {
         runOnUiThread {
-            IntroActivity.invokeActivity(this@LoginActivity, getDeviceUniqueId())
+            IntroActivity.invokeActivity(this@LoginActivity, ClientManager.deviceUniqueId(this))
         }
     }
 

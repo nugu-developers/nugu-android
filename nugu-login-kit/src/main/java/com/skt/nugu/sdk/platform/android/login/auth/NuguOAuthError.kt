@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.login.auth
 
 import android.content.ActivityNotFoundException
 import com.skt.nugu.sdk.platform.android.login.exception.BaseException
+import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -26,21 +27,18 @@ import java.net.UnknownHostException
  * The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
  */
 class NuguOAuthError(val throwable: Throwable) {
-    var error: String =
-        if (throwable is BaseException) throwable.error
-        else if (throwable is UnknownHostException) NETWORK_ERROR
-        else if (throwable is SocketTimeoutException) NETWORK_ERROR
-        else if (throwable is SocketException) NETWORK_ERROR
-        else if (throwable is ActivityNotFoundException) ACTIVITY_NOT_FOUND_ERROR
-        else if (throwable is SecurityException) SECURITY_ERROR
-        else UNKNOWN_ERROR
+    var error: String = when(throwable) {
+        is BaseException -> throwable.error
+        is UnknownHostException,is SocketTimeoutException,is SocketException -> NETWORK_ERROR
+        is ActivityNotFoundException -> ACTIVITY_NOT_FOUND_ERROR
+        is SecurityException -> SECURITY_ERROR
+        is ClientUnspecifiedException, is UninitializedPropertyAccessException -> INITIALIZE_ERROR
+        else -> UNKNOWN_ERROR
+    }
     var description: String = throwable.message ?: "unspecified"
     var code: String? =  (throwable as? BaseException.UnAuthenticatedException)?.code
+    var httpCode: Int? =  (throwable as? BaseException.HttpErrorException)?.httpCode
 
-
-    /**
-     *
-     */
     companion object {
         /** oauth errors **/
         val INVALID_REQUEST = "invalid_request"
@@ -72,6 +70,9 @@ class NuguOAuthError(val throwable: Throwable) {
 
         /** SecurityException **/
         val SECURITY_ERROR = "security_error"
+
+        /** ClientUnspecifiedException, UninitializedPropertyAccessException **/
+        val INITIALIZE_ERROR = "initialize_error"
 
         /** poc status **/
         val FINISHED = "FINISHED"

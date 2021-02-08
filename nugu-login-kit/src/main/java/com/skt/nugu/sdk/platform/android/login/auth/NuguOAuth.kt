@@ -16,14 +16,12 @@
 package com.skt.nugu.sdk.platform.android.login.auth
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
-import com.skt.nugu.sdk.platform.android.login.utils.PackageUtils
 import com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity
 import java.lang.IllegalStateException
 import java.net.URLDecoder
@@ -38,25 +36,14 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnDeviceA
  * NuguOAuth provides an implementation of the NuguOAuthInterface
  * authorization process.
  */
-class NuguOAuth private constructor(
-    context: Context,
-    authServerBaseUrl: String?
-) : NuguOAuthInterface, AuthDelegate {
+class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
     /**
      * Companion objects
      */
-
     companion object {
         private const val TAG = "NuguOAuth"
-        private const val REQUEST_LOGIN = 2019
-        private const val REQUEST_ACCOUNT = 2020
-
-        private const val BASE_AUTH_URL = "https://api.sktnugu.com"
-
-        internal const val KEY_CLIENT_ID = "com.skt.nugu.CLIENT_ID"
-        internal const val KEY_CLIENT_SECRET = "com.skt.nugu.CLIENT_SECRET"
-        internal const val KEY_REDIRECT_SCHEME = "nugu_redirect_scheme"
-        internal const val KEY_REDIRECT_HOST = "nugu_redirect_host"
+        private const val REQUEST_CODE_LOGIN = 10000
+        private const val REQUEST_CODE_ACCOUNT = 10001
 
         val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
         val EXTRA_OAUTH_THEME = "nugu.intent.extra.oauth.theme"
@@ -66,36 +53,40 @@ class NuguOAuth private constructor(
 
         private var instance: NuguOAuth? = null
 
-
         /**
          * Create a [NuguOAuth]
          * @return a [NuguOAuth] instance
          */
         fun create(
-            context: Context,
-            authServerBaseUrl: String? = null
+            options: NuguOAuthOptions,
+            OAuthServerUrl: String? = null
         ): NuguOAuth {
             Logger.d(TAG, "[create]")
-            if (instance == null) {
-                instance = NuguOAuth(context, authServerBaseUrl)
+            if(instance == null) {
+                instance = NuguOAuth(OAuthServerUrl)
             }
+            instance?.setOptions(options)
             return instance as NuguOAuth
         }
 
+        @Deprecated(
+            level = DeprecationLevel.ERROR,
+            replaceWith = ReplaceWith("NuguOAuth.getClient().setOptions(newOptions)"),
+            message = "This feature is no longer supported. Using NuguOAuth.getClient() instead."
+        )
+        fun getClient(newOptions: NuguOAuthOptions? = null): NuguOAuth {
+            throw NotImplementedError()
+        }
         /**
          * Returns a NuguOAuth instance.
-         * @param Set [NuguOAuthOptions]
          */
         @Throws(IllegalStateException::class)
-        fun getClient(newOptions: NuguOAuthOptions? = null): NuguOAuth {
+        fun getClient(): NuguOAuth {
             if (instance == null) {
                 throw IllegalStateException(
                     "Failed to create NuguOAuth," +
                             "Using after calling NuguOAuth.create(context)"
                 )
-            }
-            newOptions?.let {
-                instance!!.setOptions(it)
             }
             return instance as NuguOAuth
         }
@@ -111,8 +102,8 @@ class NuguOAuth private constructor(
     private var refreshToken: String? = null
 
     private val baseUrl: String by lazy {
-        val url = authServerBaseUrl ?: ConfigurationStore.configuration()?.OAuthServerUrl
-        url ?: BASE_AUTH_URL
+        val url = OAuthServerUrl ?: ConfigurationStore.configuration()?.OAuthServerUrl
+        url ?: throw IllegalStateException("Invalid server URL address")
     }
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
@@ -125,19 +116,10 @@ class NuguOAuth private constructor(
     private val listeners = ConcurrentLinkedQueue<AuthStateListener>()
 
     /** Oauth default options @see [NuguOAuthOptions] **/
-    lateinit var options: NuguOAuthOptions
+    private lateinit var options: NuguOAuthOptions
 
     private var onceLoginListener: OnceLoginListener? = null
 
-    private val clientIdFromManifest by lazy {
-        PackageUtils.getMetaData(context, KEY_CLIENT_ID)
-    }
-    private val redirectUriFromStringResource by lazy {
-        PackageUtils.getString(
-            context,
-            KEY_REDIRECT_SCHEME
-        ) + "://" + PackageUtils.getString(context, KEY_REDIRECT_HOST)
-    }
     // CSRF protection
     private var clientState: String = ""
 
@@ -199,28 +181,14 @@ class NuguOAuth private constructor(
     override fun revoke(listener: NuguOAuthInterface.OnRevokeListener) {
         Logger.d(TAG, "[revoke]")
 
-        checkClientId()
-        checkClientSecret()
-
         executor.submit {
             runCatching {
+                checkClientId()
+                checkClientSecret()
                 client.handleRevoke()
             }.onSuccess {
                 clearAuthorization()
                 listener.onSuccess()
-            }.onFailure {
-                listener.onError(NuguOAuthError(it))
-            }
-        }
-    }
-
-    override fun requestMe(listener: NuguOAuthInterface.OnMeResponseListener) {
-        Logger.d(TAG, "[requestMe]")
-        executor.submit {
-            runCatching {
-                client.handleMe()
-            }.onSuccess {
-                listener.onSuccess(it)
             }.onFailure {
                 listener.onError(NuguOAuthError(it))
             }
@@ -368,14 +336,8 @@ class NuguOAuth private constructor(
      * Set the [NuguOAuthOptions]
      * @returns the current state
      * */
-    override fun setOptions(options: Any) {
-        when (options) {
-            is NuguOAuthOptions -> {
-                this.options = options
-            }
-        }
-
-        this.options.apply {
+    override fun setOptions(newOptions: NuguOAuthOptions) {
+        this.options = newOptions.apply {
             ConfigurationStore.configuration()?.let {
                 if (clientId.isBlank()) {
                     clientId = it.clientId
@@ -387,25 +349,15 @@ class NuguOAuth private constructor(
                     clientSecret = it.clientSecret
                 }
             }
-            /**
-             * @deprecated
-             */
-            if (clientId.isBlank()) {
-                clientId = clientIdFromManifest
-            }
-            if (redirectUri.isNullOrEmpty()) {
-                redirectUri = redirectUriFromStringResource
-            }
         }
         client.setOptions(this.options)
     }
 
-    fun generateClientState() = UUID.randomUUID().toString().apply {
+    private fun generateClientState() = UUID.randomUUID().toString().apply {
         clientState = this
     }
-
-    fun verifyState(state: String?) = state == this.clientState
-    fun verifyCode(code: String?) = !code.isNullOrBlank()
+    private fun verifyState(state: String?) = state == this.clientState
+    private fun verifyCode(code: String?) = !code.isNullOrBlank()
 
     private fun makeAuthorizeUri(theme: String) = String.format(
         authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
@@ -456,12 +408,16 @@ class NuguOAuth private constructor(
         listener: NuguOAuthInterface.OnAccountListener,
         theme: NuguOAuthInterface.THEME
     ) {
-        this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.onceLoginListener = OnceLoginListener(listener)
-        Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
-            putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
-            putExtra(EXTRA_OAUTH_THEME, theme.name)
-            activity.startActivityForResult(this, REQUEST_ACCOUNT)
+        runCatching {
+            this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
+            this.onceLoginListener = OnceLoginListener(listener)
+            Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+                putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
+                putExtra(EXTRA_OAUTH_THEME, theme.name)
+                activity.startActivityForResult(this, REQUEST_CODE_ACCOUNT)
+            }
+        }.onFailure {
+            listener.onError(NuguOAuthError(it))
         }
     }
 
@@ -508,17 +464,21 @@ class NuguOAuth private constructor(
         listener: OnLoginListener,
         theme: NuguOAuthInterface.THEME
     ) {
-        this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.onceLoginListener = OnceLoginListener(listener)
+        runCatching {
+            this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
+            this.onceLoginListener = OnceLoginListener(listener)
 
-        checkClientId()
-        checkClientSecret()
-        checkRedirectUri()
+            checkClientId()
+            checkClientSecret()
+            checkRedirectUri()
 
-        Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
-            putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
-            putExtra(EXTRA_OAUTH_THEME, theme.name)
-            activity.startActivityForResult(this, REQUEST_LOGIN)
+            Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+                putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
+                putExtra(EXTRA_OAUTH_THEME, theme.name)
+                activity.startActivityForResult(this, REQUEST_CODE_LOGIN)
+            }
+        }.onFailure {
+            listener.onError(NuguOAuthError(it))
         }
     }
 
@@ -547,16 +507,19 @@ class NuguOAuth private constructor(
      * Start anonymous login.
      */
     override fun loginAnonymously(listener: OnLoginListener) {
-        this.options.grantType = NuguOAuthOptions.CLIENT_CREDENTIALS
-
-        checkClientId()
-        checkClientSecret()
-
-        this.loginInternal(object : AuthStateListener {
-            override fun onAuthStateChanged(
-                newState: AuthStateListener.State
-            ) = handleAuthState(newState, OnceLoginListener(listener))
-        })
+        runCatching {
+            this.options.grantType = NuguOAuthOptions.CLIENT_CREDENTIALS
+            checkClientId()
+            checkClientSecret()
+        }.onFailure {
+            listener.onError(NuguOAuthError(it))
+        }.onSuccess {
+            loginInternal(object : AuthStateListener {
+                override fun onAuthStateChanged(
+                    newState: AuthStateListener.State
+                ) = handleAuthState(newState, OnceLoginListener(listener))
+            })
+        }
     }
 
     /**
@@ -566,34 +529,41 @@ class NuguOAuth private constructor(
         code: String,
         listener: OnLoginListener
     ) {
-        this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-        this.code = code
-
-        checkClientId()
-        checkClientSecret()
-
-        this.loginInternal(object : AuthStateListener {
-            override fun onAuthStateChanged(
-                newState: AuthStateListener.State
-            ) = handleAuthState(newState, OnceLoginListener(listener))
-        })
+        runCatching {
+            this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
+            this.code = code
+            checkClientId()
+            checkClientSecret()
+        }.onFailure {
+            listener.onError(NuguOAuthError(it))
+        }.onSuccess {
+            loginInternal(object : AuthStateListener {
+                override fun onAuthStateChanged(
+                    newState: AuthStateListener.State
+                ) = handleAuthState(newState, OnceLoginListener(listener))
+            })
+        }
     }
 
     /**
      * Refresh Token with tid.
      */
     override fun loginSilentlyWithTid(refreshToken: String, listener: OnLoginListener) {
-        this.options.grantType = NuguOAuthOptions.REFRESH_TOKEN
-        this.refreshToken = refreshToken
+        runCatching {
+            this.options.grantType = NuguOAuthOptions.REFRESH_TOKEN
+            this.refreshToken = refreshToken
 
-        checkClientId()
-        checkClientSecret()
-
-        this.loginInternal(object : AuthStateListener {
-            override fun onAuthStateChanged(
-                newState: AuthStateListener.State
-            ) = handleAuthState(newState, OnceLoginListener(listener))
-        })
+            checkClientId()
+            checkClientSecret()
+        }.onFailure {
+            listener.onError(NuguOAuthError(it))
+        }.onSuccess {
+            loginInternal(object : AuthStateListener {
+                override fun onAuthStateChanged(
+                    newState: AuthStateListener.State
+                ) = handleAuthState(newState, OnceLoginListener(listener))
+            })
+        }
     }
 
     private fun handleAuthState(
@@ -622,59 +592,44 @@ class NuguOAuth private constructor(
         code: String,
         listener: OnLoginListener
     ) {
-        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
-        this.code = code
+        runCatching {
+            this.options.grantType = NuguOAuthOptions.DEVICE_CODE
+            this.code = code
 
-        checkClientId()
-        checkClientSecret()
-
-        this.loginInternal(object : AuthStateListener {
-            override fun onAuthStateChanged(
-                newState: AuthStateListener.State
-            ) = handleAuthState(newState, OnceLoginListener(listener))
-        })
-    }
-
-    override fun startDeviceAuthorization(data: String, listener: OnDeviceAuthorizationListener) {
-        this.options.grantType = NuguOAuthOptions.DEVICE_CODE
-
-        checkClientId()
-        checkClientSecret()
-
-        executor.submit {
-            runCatching {
-                client.handleStartDeviceAuthorization(data)
-            }.onSuccess {
-                listener.onSuccess(it)
-            }.onFailure {
-                listener.onError(NuguOAuthError(it))
-            }
+            checkClientId()
+            checkClientSecret()
+        }.onFailure {
+            listener.onError(NuguOAuthError(it))
+        }.onSuccess {
+            loginInternal(object : AuthStateListener {
+                override fun onAuthStateChanged(
+                    newState: AuthStateListener.State
+                ) = handleAuthState(newState, OnceLoginListener(listener))
+            })
         }
     }
 
-    @Deprecated("Use introspect")
-    fun getMe(data: String, listener: OnDeviceAuthorizationListener) {
-
-        checkClientId()
-        checkClientSecret()
-
+    override fun startDeviceAuthorization(data: String, listener: OnDeviceAuthorizationListener) {
         executor.submit {
             runCatching {
+                this.options.grantType = NuguOAuthOptions.DEVICE_CODE
+
+                checkClientId()
+                checkClientSecret()
                 client.handleStartDeviceAuthorization(data)
-            }.onSuccess {
-                listener.onSuccess(it)
             }.onFailure {
                 listener.onError(NuguOAuthError(it))
+            }.onSuccess {
+                listener.onSuccess(it)
             }
         }
     }
 
     override fun introspect(listener: NuguOAuthInterface.OnIntrospectResponseListener) {
-        checkClientId()
-        checkClientSecret()
-
         executor.submit {
             runCatching {
+                checkClientId()
+                checkClientSecret()
                 client.handleIntrospect()
             }.onSuccess {
                 listener.onSuccess(it)
@@ -776,4 +731,23 @@ class NuguOAuth private constructor(
     fun loginSilently(refreshToken: String, listener: OnLoginListener) {
         throw NotImplementedError()
     }
+
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("introspect(listener)"),
+        message = "This feature is deprecated."
+    )
+    override fun requestMe(listener: NuguOAuthInterface.OnMeResponseListener) {
+        Logger.d(TAG, "[requestMe]")
+        executor.submit {
+            runCatching {
+                client.handleMe()
+            }.onSuccess {
+                listener.onSuccess(it)
+            }.onFailure {
+                listener.onError(NuguOAuthError(it))
+            }
+        }
+    }
+
 }
