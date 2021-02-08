@@ -1043,7 +1043,7 @@ class DefaultAudioPlayerAgent(
             current.sourceAudioInfo?.let { source ->
                 return AudioPlayerAgentInterface.Context(
                     source.payload.playServiceId+";"+source.payload.audioItem.stream.token,
-                    source.payload.playServiceId+";"+source.payload.audioItem.stream.token,
+                    source.getDialogRequestId(),
                     current.payload.audioItem.metaData?.template?.toString(),
                     getOffsetInMilliseconds(),
                     current.getDialogRequestId()

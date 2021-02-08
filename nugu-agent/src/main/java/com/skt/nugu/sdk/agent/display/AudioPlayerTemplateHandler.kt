@@ -92,7 +92,7 @@ class AudioPlayerTemplateHandler(
     ) : PlaySynchronizerInterface.SynchronizeObject
         , SessionManagerInterface.Requester
         , DirectiveInfo by info {
-        var sourceTemplateId: String = payload.playServiceId + ";" + payload.token
+        var sourceTemplateId: String = getDialogRequestId()
 
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
