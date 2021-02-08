@@ -47,7 +47,7 @@ interface NuguOAuthInterface {
      * Set the authorization options
      * @param options is [NuguOAuthOptions]
      */
-    fun setOptions(options: Any)
+    fun setOptions(options: NuguOAuthOptions)
 
     /**
      * Immediately revoke the authorization.

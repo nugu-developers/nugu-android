@@ -26,10 +26,12 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
+import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.*
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguSnackbar
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
 class SettingsActivity : AppCompatActivity() {
@@ -117,15 +119,16 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateAccountInfo() {
         NuguOAuth.getClient().introspect(object : NuguOAuthInterface.OnIntrospectResponseListener {
             override fun onSuccess(response: IntrospectResponse) {
-                runOnUiThread {
-                    if (response.active) {
-                        if (response.username.isEmpty()) {
-                            Log.d(TAG, "Anonymous logined")
-                        } else {
-                            textLoginId.text = response.username
-                        }
-                    } else {
-                        Log.d(TAG, "the token is inactive. response=$response")
+                if (response.active) {
+                    if (response.username.isEmpty()) {
+                        Log.i(TAG, "Anonymous logined")
+                    }
+                    runOnUiThread {
+                        textLoginId.text = response.username
+                    }
+                } else {
+                    Log.e(TAG, "the token is inactive. response=$response")
+                    runOnUiThread {
                         NuguToast.with(this@SettingsActivity)
                             .message(R.string.device_gw_error_003)
                             .duration(NuguToast.LENGTH_SHORT)
@@ -135,12 +138,7 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             override fun onError(error: NuguOAuthError) {
-                /** See more details in [LoginActivity.handleOAuthError] **/
-                Log.d(TAG, error.toString())
-                NuguToast.with(this@SettingsActivity)
-                    .message(R.string.device_gw_error_003)
-                    .duration(NuguToast.LENGTH_SHORT)
-                    .show()
+                handleOAuthError(error)
             }
         })
     }
@@ -185,19 +183,11 @@ class SettingsActivity : AppCompatActivity() {
         buttonRevoke.setOnClickListener {
             NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener {
                 override fun onSuccess() {
-                    ClientManager.getClient().disconnect()
-                    NuguOAuth.getClient().clearAuthorization()
-                    PreferenceHelper.credentials(this@SettingsActivity, "")
-                    LoginActivity.invokeActivity(this@SettingsActivity)
-                    finishAffinity()
+                    performRevoke()
                 }
 
                 override fun onError(error: NuguOAuthError) {
-                    /** See more details in [LoginActivity.handleOAuthError] **/
-                    NuguToast.with(this@SettingsActivity)
-                        .message(R.string.device_gw_error_003)
-                        .duration(NuguToast.LENGTH_SHORT)
-                        .show()
+                    handleOAuthError(error)
                 }
             })
         }
@@ -205,6 +195,7 @@ class SettingsActivity : AppCompatActivity() {
         textLoginId.setOnClickListener {
             NuguOAuth.getClient().accountWithTid(this, object : NuguOAuthInterface.OnAccountListener {
                 override fun onSuccess(credentials: Credentials) {
+                    // Update token
                     PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
                     ClientManager.getClient().disconnect()
                     ClientManager.getClient().connect()
@@ -212,7 +203,7 @@ class SettingsActivity : AppCompatActivity() {
                 }
 
                 override fun onError(error: NuguOAuthError) {
-                    Log.d(TAG, error.toString())
+                    handleOAuthError(error)
                 }
             })
         }
@@ -241,6 +232,33 @@ class SettingsActivity : AppCompatActivity() {
         }
         buttonAgreement.setOnClickListener {
             startActivityForResult(Intent(this, SettingsAgreementActivity::class.java), settingsAgreementActivityRequestCode)
+        }
+    }
+    private fun performRevoke() {
+        ClientManager.getClient().disconnect()
+        NuguOAuth.getClient().clearAuthorization()
+        PreferenceHelper.credentials(this@SettingsActivity, "")
+        LoginActivity.invokeActivity(this@SettingsActivity)
+        finishAffinity()
+    }
+
+    /**
+     * Handles failed OAuth attempts.
+     * The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
+     */
+    private fun handleOAuthError(error: NuguOAuthError) {
+        Log.e(TAG, "An unexpected error has occurred. " +
+                "Please check the logs for details\n" +
+                "$error")
+        if(error.error != NuguOAuthError.NETWORK_ERROR &&
+            error.error != NuguOAuthError.INITIALIZE_ERROR) {
+            performRevoke()
+        }
+        runOnUiThread {
+            NuguToast.with(this@SettingsActivity)
+                .message(error.toResId())
+                .duration(NuguToast.LENGTH_SHORT)
+                .show()
         }
     }
 }
