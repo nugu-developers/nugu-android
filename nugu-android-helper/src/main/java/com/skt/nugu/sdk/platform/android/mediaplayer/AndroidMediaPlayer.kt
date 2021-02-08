@@ -89,8 +89,8 @@ class AndroidMediaPlayer(
 
             currentSourceId.id++
 
+            val duration = player.duration.toLong()
             Thread {
-                val duration = player.duration.toLong()
                 if (duration < 0) {
                     durationListener?.onRetrieved(currentSourceId, null)
                 } else {
