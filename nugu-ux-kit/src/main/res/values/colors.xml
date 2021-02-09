@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="rounded_button_light_shape_background">#eff0f2</color>
-    <color name="rounded_button_dark_shape_background">#37444e</color>
-    <color name="rounded_button_shape_border_color">#0a000000</color>
+    <color name="nugu_rounded_button_light_shape_background">#eff0f2</color>
+    <color name="nugu_rounded_button_dark_shape_background">#37444e</color>
+    <color name="nugu_rounded_button_shape_border_color">#0a000000</color>
 
-    <color name="snackbar_background">#323232</color>
-    <color name="snackbar_border_color">#33000000</color>
+    <color name="nugu_snackbar_background">#323232</color>
+    <color name="nugu_snackbar_border_color">#33000000</color>
 </resources>

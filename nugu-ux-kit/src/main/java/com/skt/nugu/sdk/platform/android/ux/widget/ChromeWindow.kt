@@ -190,7 +190,7 @@ class ChromeWindow(context: Context, val view: View) :
         }
 
         if (!dialogMode) {
-            contentLayout.setHint(R.string.guide_text)
+            contentLayout.setHint(R.string.nugu_guide_text)
             contentLayout.showText()
         } else {
             contentLayout.hideText()

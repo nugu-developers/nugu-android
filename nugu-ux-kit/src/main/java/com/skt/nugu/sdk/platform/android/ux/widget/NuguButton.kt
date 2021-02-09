@@ -163,30 +163,30 @@ class NuguButton @JvmOverloads constructor(
     }
 
     private fun loadDrawableRes() {
-        drawableRes["btn_blue"] = R.drawable.btn_blue
-        drawableRes["btn_blue_pressed"] = R.drawable.btn_blue_pressed
-        drawableRes["btn_white"] = R.drawable.btn_white
-        drawableRes["btn_white_pressed"] = R.drawable.btn_white_pressed
-        drawableRes["btn_disabled"] = R.drawable.btn_disabled
-        drawableRes["fab_blue"] = R.drawable.fab_blue
-        drawableRes["fab_blue_pressed"] = R.drawable.fab_blue_pressed
-        drawableRes["fab_white"] = R.drawable.fab_white
-        drawableRes["fab_white_pressed"] = R.drawable.fab_white_pressed
-        drawableRes["fab_disabled"] = R.drawable.fab_disabled
-        drawableRes["btn_blue_activated"] = R.drawable.btn_toggle_blue
-        drawableRes["btn_white_activated"] = R.drawable.btn_toggle_white
-        drawableRes["fab_blue_activated"] = R.drawable.btn_blue_activated
-        drawableRes["fab_white_activated"] = R.drawable.btn_white_activated
-        drawableRes["btn_white_micicon"] = R.drawable.btn_white_micicon
-        drawableRes["btn_blue_micicon"] = R.drawable.btn_blue_micicon
-        drawableRes["fab_blue_micicon"] = R.drawable.fab_blue_micicon
-        drawableRes["fab_white_micicon"] = R.drawable.fab_white_micicon
-        drawableRes["fab_blue_nugulogo"] = R.drawable.fab_blue_nugulogo
-        drawableRes["fab_white_nugulogo"] = R.drawable.fab_white_nugulogo
-        drawableRes["btn_blue_nugulogo"] = R.drawable.btn_blue_nugulogo
-        drawableRes["btn_white_nugulogo"] = R.drawable.btn_white_nugulogo
-        drawableRes["fab_disabled_micicon"] = R.drawable.fab_disabled_micicon
-        drawableRes["btn_disabled_micicon"] = R.drawable.btn_disabled_micicon
+        drawableRes["btn_blue"] = R.drawable.nugu_btn_blue
+        drawableRes["btn_blue_pressed"] = R.drawable.nugu_btn_blue_pressed
+        drawableRes["btn_white"] = R.drawable.nugu_btn_white
+        drawableRes["btn_white_pressed"] = R.drawable.nugu_btn_white_pressed
+        drawableRes["btn_disabled"] = R.drawable.nugu_btn_disabled
+        drawableRes["fab_blue"] = R.drawable.nugu_fab_blue
+        drawableRes["fab_blue_pressed"] = R.drawable.nugu_fab_blue_pressed
+        drawableRes["fab_white"] = R.drawable.nugu_fab_white
+        drawableRes["fab_white_pressed"] = R.drawable.nugu_fab_white_pressed
+        drawableRes["fab_disabled"] = R.drawable.nugu_fab_disabled
+        drawableRes["btn_blue_activated"] = R.drawable.nugu_btn_toggle_blue
+        drawableRes["btn_white_activated"] = R.drawable.nugu_btn_toggle_white
+        drawableRes["fab_blue_activated"] = R.drawable.nugu_btn_blue_activated
+        drawableRes["fab_white_activated"] = R.drawable.nugu_btn_white_activated
+        drawableRes["btn_white_micicon"] = R.drawable.nugu_btn_white_micicon
+        drawableRes["btn_blue_micicon"] = R.drawable.nugu_btn_blue_micicon
+        drawableRes["fab_blue_micicon"] = R.drawable.nugu_fab_blue_micicon
+        drawableRes["fab_white_micicon"] = R.drawable.nugu_fab_white_micicon
+        drawableRes["fab_blue_nugulogo"] = R.drawable.nugu_fab_blue_nugulogo
+        drawableRes["fab_white_nugulogo"] = R.drawable.nugu_fab_white_nugulogo
+        drawableRes["btn_blue_nugulogo"] = R.drawable.nugu_btn_blue_nugulogo
+        drawableRes["btn_white_nugulogo"] = R.drawable.nugu_btn_white_nugulogo
+        drawableRes["fab_disabled_micicon"] = R.drawable.nugu_fab_disabled_micicon
+        drawableRes["btn_disabled_micicon"] = R.drawable.nugu_btn_disabled_micicon
     }
 
     /**

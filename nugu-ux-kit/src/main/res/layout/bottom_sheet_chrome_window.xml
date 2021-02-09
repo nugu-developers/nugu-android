@@ -33,7 +33,7 @@
             android:layout_marginEnd="14dp"
             android:ellipsize="start"
             android:gravity="start|center_vertical"
-            android:hint="@string/guide_text"
+            android:hint="@string/nugu_guide_text"
             android:singleLine="true"
             android:textAlignment="textStart"
             android:textSize="17sp"

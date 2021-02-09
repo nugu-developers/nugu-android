@@ -98,26 +98,26 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginEnd="4dp"
-            android:src="@drawable/btn_skip_previous_32" />
+            android:src="@drawable/nugu_btn_skip_previous_32" />
 
         <ImageView
             android:id="@+id/iv_btn_noti_play"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginEnd="4dp"
-            android:src="@drawable/btn_play_32" />
+            android:src="@drawable/nugu_btn_play_32" />
 
         <ImageView
             android:id="@+id/iv_btn_noti_skip_next"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginEnd="4dp"
-            android:src="@drawable/btn_skip_next_32" />
+            android:src="@drawable/nugu_btn_skip_next_32" />
 
         <ImageView
             android:id="@+id/iv_btn_noti_close"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/btn_close" />
+            android:src="@drawable/nugu_btn_close" />
     </LinearLayout>
 </LinearLayout>

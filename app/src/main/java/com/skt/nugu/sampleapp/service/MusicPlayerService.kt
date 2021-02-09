@@ -34,7 +34,6 @@ import com.bumptech.glide.request.target.NotificationTarget
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sampleapp.R
-import com.skt.nugu.sampleapp.application.SampleApplication
 import com.skt.nugu.sampleapp.client.ClientManager
 import org.json.JSONObject
 import java.util.WeakHashMap
@@ -232,11 +231,11 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                     handler.postDelayed(stopServiceRunnable, 10000L)
                 }
                 AudioPlayerAgentInterface.State.PAUSED -> {
-                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.btn_play_32)
+                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.nugu_btn_play_32)
                 }
 
                 AudioPlayerAgentInterface.State.PLAYING -> {
-                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.btn_pause_32)
+                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.nugu_btn_pause_32)
                 }
             }
 

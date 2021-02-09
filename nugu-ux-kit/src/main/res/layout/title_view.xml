@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|start"
         android:layout_marginStart="20dp"
-        android:src="@drawable/btn_down" />
+        android:src="@drawable/nugu_btn_down" />
 
     <ImageView
         android:id="@+id/btn_close"
@@ -42,5 +42,5 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|end"
         android:layout_marginEnd="20dp"
-        android:src="@drawable/btn_close_2" />
+        android:src="@drawable/nugu_btn_close_2" />
 </FrameLayout>

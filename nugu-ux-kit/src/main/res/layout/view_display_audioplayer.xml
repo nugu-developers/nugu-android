@@ -37,14 +37,14 @@
                         android:id="@+id/album_cover"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/album_cover_bg">
+                        android:background="@drawable/nugu_album_cover_bg">
 
                         <ImageView
                             android:id="@+id/iv_image"
                             android:layout_width="300dp"
                             android:layout_height="300dp"
                             android:layout_gravity="center_horizontal"
-                            android:background="@drawable/image_border"
+                            android:background="@drawable/nugu_image_border"
                             android:scaleType="centerCrop" />
 
                         <ImageView
@@ -61,7 +61,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom|end"
-                            android:background="@drawable/album_badge_bg"
+                            android:background="@drawable/nugu_album_badge_bg"
                             android:fontFamily="@font/noto_sans_kr_regular_hestia"
                             android:gravity="center"
                             android:paddingHorizontal="8dp"
@@ -76,7 +76,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_marginTop="10dp"
-                        android:src="@drawable/image_favorite"
+                        android:src="@drawable/nugu_image_favorite"
                         android:visibility="invisible" />
 
                     <TextView
@@ -211,7 +211,7 @@
                     android:id="@+id/iv_repeat"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:src="@drawable/btn_repeat_inactive"
+                    android:src="@drawable/nugu_btn_repeat_inactive"
                     android:visibility="invisible" />
 
                 <Space
@@ -223,7 +223,7 @@
                     android:id="@+id/btn_prev"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:src="@drawable/btn_skip_previous_48" />
+                    android:src="@drawable/nugu_btn_skip_previous_48" />
 
                 <ImageView
                     android:id="@+id/btn_play"
@@ -231,13 +231,13 @@
                     android:layout_height="48dp"
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
-                    android:src="@drawable/btn_play_48" />
+                    android:src="@drawable/nugu_btn_play_48" />
 
                 <ImageView
                     android:id="@+id/btn_next"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:src="@drawable/btn_skip_next_48" />
+                    android:src="@drawable/nugu_btn_skip_next_48" />
 
                 <Space
                     android:layout_width="0dp"
@@ -248,7 +248,7 @@
                     android:id="@+id/iv_shuffle"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:src="@drawable/image_shuffle"
+                    android:src="@drawable/nugu_image_shuffle"
                     android:visibility="invisible" />
             </LinearLayout>
         </LinearLayout>
