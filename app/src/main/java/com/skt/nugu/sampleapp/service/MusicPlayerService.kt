@@ -231,11 +231,11 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                     handler.postDelayed(stopServiceRunnable, 10000L)
                 }
                 AudioPlayerAgentInterface.State.PAUSED -> {
-                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.nugu_btn_play_32)
+                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.btn_play_32)
                 }
 
                 AudioPlayerAgentInterface.State.PLAYING -> {
-                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.nugu_btn_pause_32)
+                    setImageViewResource(R.id.iv_btn_noti_play, R.drawable.btn_pause_32)
                 }
             }
 

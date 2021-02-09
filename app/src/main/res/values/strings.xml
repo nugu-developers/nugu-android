@@ -4,8 +4,6 @@
     <string name="nugu_redirect_scheme">YOUR REDIRECT URI SCHEME</string>
     <string name="nugu_redirect_host">YOUR REDIRECT URI HOST</string>
 
-    <string name="guide_text">말씀해주세요</string>
-
     <string name="service_finished">{sampleapp}의 누구 서비스가 종료되었습니다.</string>
     <string name="sdk_not_initialized">SDK not initialized, please try again</string>
     <string name="button_fab_description">start listening</string>
