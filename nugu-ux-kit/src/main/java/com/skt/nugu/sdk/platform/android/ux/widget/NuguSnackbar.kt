@@ -136,7 +136,7 @@ class NuguSnackbar(val parentView: View) {
             setMargins(margin8, 0, margin8, margin20)
             width = FrameLayout.LayoutParams.MATCH_PARENT
         }
-        view.background = ContextCompat.getDrawable(view.context, R.drawable.round_snackbar_corners)
+        view.background = ContextCompat.getDrawable(view.context, R.drawable.nugu_rounded_snackbar_corners)
         val textView = view.findViewById<TextView>(R.id.snackbar_text)
         ResourcesCompat.getFont(view.context, R.font.noto_sans_kr_regular_hestia)?.apply {
             textView?.typeface = this

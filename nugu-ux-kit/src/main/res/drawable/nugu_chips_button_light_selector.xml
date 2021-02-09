@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/rounded_button_dark_shape"
+    <item android:drawable="@drawable/nugu_rounded_button_light_shape"
         android:state_pressed="false"/>
-    <item android:drawable="@drawable/rounded_button_pressed_dark_shape"
+    <item android:drawable="@drawable/nugu_rounded_button_pressed_light_shape"
         android:state_pressed="true" />
 </selector>

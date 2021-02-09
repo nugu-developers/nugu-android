@@ -119,11 +119,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
             post {
                 if (activity == AudioPlayerAgentInterface.State.PLAYING) {
-                    play.setImageResource(R.drawable.btn_pause_48)
-                    bar_play.setImageResource(R.drawable.btn_pause_32)
+                    play.setImageResource(R.drawable.nugu_btn_pause_48)
+                    bar_play.setImageResource(R.drawable.nugu_btn_pause_32)
                 } else {
-                    play.setImageResource(R.drawable.btn_play_48)
-                    bar_play.setImageResource(R.drawable.btn_play_32)
+                    play.setImageResource(R.drawable.nugu_btn_play_48)
+                    bar_play.setImageResource(R.drawable.nugu_btn_play_32)
                 }
             }
         }
@@ -376,9 +376,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             repeat?.let {
                 when (it) {
-                    Repeat.ALL -> repeatView.setImageResource(R.drawable.btn_repeat)
-                    Repeat.ONE -> repeatView.setImageResource(R.drawable.btn_repeat_1)
-                    Repeat.NONE -> repeatView.setImageResource(R.drawable.btn_repeat_inactive)
+                    Repeat.ALL -> repeatView.setImageResource(R.drawable.nugu_btn_repeat)
+                    Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
+                    Repeat.NONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
                 }
                 repeatView.setThrottledOnClickListener { _ ->
                     templateHandler?.onPlayerCommand(PlayerCommand.REPEAT.command, it.name)

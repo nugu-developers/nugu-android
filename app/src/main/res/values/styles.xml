@@ -36,10 +36,10 @@
     </style>
 
     <style name="Nugu.Widget.Chrome.Window.Light" parent="android:Widget">
-        <item name="android:background">@drawable/view_chrome_window_light_background</item>
+        <item name="android:background">@drawable/nugu_view_chrome_window_light_background</item>
     </style>
     <style name="Nugu.Widget.Chrome.Window.Dark" parent="android:Widget">
-        <item name="android:background">@drawable/view_chrome_window_dark_background</item>
+        <item name="android:background">@drawable/nugu_view_chrome_window_dark_background</item>
     </style>
 
     <style name="Nugu.Widget.Guide.Text.Dark" parent="android:Widget">

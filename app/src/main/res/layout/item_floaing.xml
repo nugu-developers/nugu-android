@@ -9,9 +9,9 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="center"
-        android:background="@drawable/btn_blue_pressed"
+        android:background="@drawable/nugu_btn_blue_pressed"
         android:padding="10dp"
-        android:src="@drawable/btn_blue_micicon" />
+        android:src="@drawable/nugu_btn_blue_micicon" />
 
     <com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
         android:id="@+id/floating_voice_chrome"

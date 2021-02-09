@@ -133,7 +133,7 @@ class Snackbar(val fab: View) {
             width = FrameLayout.LayoutParams.MATCH_PARENT
         }
         view.context.resources.apply {
-            view.background = ContextCompat.getDrawable(view.context, R.drawable.round_snackbar_corners)
+            view.background = ContextCompat.getDrawable(view.context, R.drawable.nugu_rounded_snackbar_corners)
         }
     }
 

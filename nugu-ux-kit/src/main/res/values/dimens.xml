@@ -5,11 +5,11 @@
     <dimen name="chips_height">40dp</dimen>
 
     <!-- @res rounded_button_selector.xml -->
-    <dimen name="rounded_button_shape_border_radius">20dp</dimen>
-    <dimen name="rounded_button_shape_border_width">0.5dp</dimen>
+    <dimen name="nugu_rounded_button_shape_border_radius">20dp</dimen>
+    <dimen name="nugu_rounded_button_shape_border_width">0.5dp</dimen>
 
     <!-- snackbar -->
-    <dimen name="snackbar_radius">4dp</dimen>
+    <dimen name="nugu_snackbar_radius">4dp</dimen>
 
     <!-- fab button -->
     <dimen name="fab_size_large">64dp</dimen>
