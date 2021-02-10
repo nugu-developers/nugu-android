@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 0.9.47 *(2021-02-10)*
+-----------------------------
+* Fix: Fix wrong access at AudioPlayerTemplateHandler's templateDirectiveInfoMap (#1562)
+* Fix: Update proguard-rules (#1570)
+* Fix: Replace templateId for audioplayer's display  (#1572)
+* Fix: Replace templateId for audioplayer's display #1572 (#1573)
+* Fix: Fix call getDuration at wrong state (#1574)
+* Fix: Prefix nugu-ux-kit resource to avoid naming conflicts  (#1576)
+* Fix: Improve oauth error handling #1568 (#1577)
+* Improve: Change UnsafeByteOperations to ProtobufExtensions with protobuf-javalite dependency issue (#1567)
+
 Version 0.9.46 *(2021-01-29)*
 -----------------------------
 * Fix: Fix not playing audio player sometimes (#1544)
