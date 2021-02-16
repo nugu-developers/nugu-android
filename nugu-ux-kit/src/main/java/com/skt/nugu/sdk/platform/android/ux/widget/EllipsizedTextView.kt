@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
-import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
@@ -26,8 +25,8 @@ class EllipsizedTextView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
+    private val ELLIPSIS_NORMAL = "\u2026" // HORIZONTAL ELLIPSIS (…)
 
-    private val builder = SpannableStringBuilder()
     init {
         setSingleLine()
     }
@@ -36,15 +35,14 @@ class EllipsizedTextView @JvmOverloads constructor(
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
         val screenWidth = measuredWidth.toFloat() - compoundPaddingLeft.toFloat() - compoundPaddingRight.toFloat()
-        var textWidth = screenWidth
-        var ellipsizedText = TextUtils.ellipsize(text, paint, textWidth, ellipsize)
+        var ellipsizedText = TextUtils.ellipsize(text, paint, screenWidth, ellipsize)
 
         if (ellipsizedText != text) {
-            textWidth = screenWidth
-            ellipsizedText = TextUtils.ellipsize(text, paint, textWidth, ellipsize)
-
-            builder.clear()
-            text = builder.append(ellipsizedText).replace(0, 1, "")
+            val index = ellipsizedText.indexOf(ELLIPSIS_NORMAL)
+            if(index >= 0) {
+                ellipsizedText = ellipsizedText.substring(index + ELLIPSIS_NORMAL.length)
+            }
+            text = ellipsizedText
         }
     }
 }
