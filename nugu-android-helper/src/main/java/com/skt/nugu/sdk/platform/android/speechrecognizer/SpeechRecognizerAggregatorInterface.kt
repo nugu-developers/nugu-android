@@ -97,8 +97,9 @@ interface SpeechRecognizerAggregatorInterface {
      * Start keyword detector.
      * @param wakeupInfo the wakeup info of wakeup word for input
      * @param epdParam the epd params
+     * @param initiator the initiator
      */
-    fun startListening(wakeupInfo: WakeupInfo? = null, epdParam: EndPointDetectorParam? = null, callback: ASRAgentInterface.StartRecognitionCallback? = null)
+    fun startListening(wakeupInfo: WakeupInfo? = null, epdParam: EndPointDetectorParam? = null, callback: ASRAgentInterface.StartRecognitionCallback? = null, initiator: ASRAgentInterface.Initiator)
 
     /**
      * Stop Recognizing

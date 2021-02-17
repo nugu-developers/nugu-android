@@ -42,9 +42,9 @@ class SpeechProcessorDelegate(
     /**
      * Request starting epd to [ASRAgentInterface]
      */
-    fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?) {
+    fun start(audioInputStream: SharedDataStream?, audioFormat: AudioFormat?, wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?, initiator: ASRAgentInterface.Initiator) {
         Logger.d(TAG, "[startDetector]")
-        asrAgent.startRecognition(audioInputStream, audioFormat, wakeupInfo, epdParam, callback)
+        asrAgent.startRecognition(audioInputStream, audioFormat, wakeupInfo, epdParam, callback, initiator)
     }
 
     /**

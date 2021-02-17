@@ -49,6 +49,7 @@ import com.skt.nugu.sampleapp.client.TokenRefresher
 import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
@@ -283,7 +284,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                     requestCode,
                     object : OnRequestPermissionResultHandler.OnPermissionListener {
                         override fun onGranted() {
-                            speechRecognizerAggregator.startListening()
+                            speechRecognizerAggregator.startListening(initiator = ASRAgentInterface.Initiator.TAP)
                         }
 
                         override fun onDenied() {
@@ -295,7 +296,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                         }
                     })
             } else {
-                speechRecognizerAggregator.startListening()
+                speechRecognizerAggregator.startListening(initiator = ASRAgentInterface.Initiator.TAP)
             }
         }
 

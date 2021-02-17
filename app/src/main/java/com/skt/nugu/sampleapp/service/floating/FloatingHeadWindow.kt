@@ -228,7 +228,7 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
 
     override fun onClick() {
         if (nuguBtn.visibility == View.VISIBLE) {
-            ClientManager.getClient().asrAgent?.startRecognition()
+            ClientManager.getClient().asrAgent?.startRecognition(initiator = ASRAgentInterface.Initiator.TAP)
         } else if (ClientManager.speechRecognizerAggregator.isActive()) {
             ClientManager.speechRecognizerAggregator.stopListening()
         } else {

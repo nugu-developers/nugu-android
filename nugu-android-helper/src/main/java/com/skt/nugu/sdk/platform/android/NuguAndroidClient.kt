@@ -1052,7 +1052,8 @@ class NuguAndroidClient private constructor(
         audioFormat: AudioFormat?,
         wakeupInfo: WakeupInfo?,
         param: EndPointDetectorParam?,
-        callback: ASRAgentInterface.StartRecognitionCallback?
+        callback: ASRAgentInterface.StartRecognitionCallback?,
+        initiator: ASRAgentInterface.Initiator
     ) {
         Logger.d(
             TAG,
@@ -1064,7 +1065,8 @@ class NuguAndroidClient private constructor(
             audioFormat,
             wakeupInfo,
             param,
-            callback
+            callback,
+            initiator
         )
     }
 

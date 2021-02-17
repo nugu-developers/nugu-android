@@ -53,10 +53,19 @@ class SpeechRecognizerAggregator(
 
     private var isTriggerStoppingByStartListening = false
 
-    private var audioFormat: AudioFormat? = null
-    private var wakeupInfo: WakeupInfo? = null
-    private var epdParam: EndPointDetectorParam? = null
-    private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
+    private data class StartListeningParam(
+        var wakeupInfo: WakeupInfo? = null,
+        var epdParam: EndPointDetectorParam? = null,
+        var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null,
+        var initiator: ASRAgentInterface.Initiator
+    )
+
+    private var pendingStartListeningParam: StartListeningParam? = null
+
+//    private var wakeupInfo: WakeupInfo? = null
+//    private var epdParam: EndPointDetectorParam? = null
+//    private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
+
     private var keywordDetectorState = KeywordDetector.State.INACTIVE
     private var speechProcessorState = AudioEndPointDetector.State.STOP
 
@@ -197,7 +206,8 @@ class SpeechRecognizerAggregator(
                             audioProvider.getFormat(),
                             wakeupInfo,
                             epdParam,
-                            listeningCallback
+                            listeningCallback,
+                            ASRAgentInterface.Initiator.WAKE_UP_WORD
                         )
 
                         // To prevent releasing audio input resources, release after startListening.
@@ -214,10 +224,12 @@ class SpeechRecognizerAggregator(
 
                             executeStartListeningInternal(
                                 audioFormat,
-                                this@SpeechRecognizerAggregator.wakeupInfo,
-                                this@SpeechRecognizerAggregator.epdParam,
-                                this@SpeechRecognizerAggregator.startListeningCallback
+                                pendingStartListeningParam?.wakeupInfo,
+                                pendingStartListeningParam?.epdParam,
+                                pendingStartListeningParam?.startListeningCallback,
+                                pendingStartListeningParam?.initiator ?: ASRAgentInterface.Initiator.TAP
                             )
+                            pendingStartListeningParam = null
                             isTriggerStoppingByStartListening = false
 
                             // To prevent releasing audio input resources, release after startListening.
@@ -255,7 +267,7 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?) {
+    override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?, initiator: ASRAgentInterface.Initiator) {
         Logger.d(
             TAG,
             "[startListening]"
@@ -274,10 +286,7 @@ class SpeechRecognizerAggregator(
                     }
 
                     Logger.d(TAG, "[startListening] will be started after trigger stopped.")
-                    this.audioFormat = audioProvider.getFormat()
-                    this.wakeupInfo = wakeupInfo
-                    this.epdParam = epdParam
-                    this.startListeningCallback = callback
+                    this.pendingStartListeningParam = StartListeningParam(wakeupInfo, epdParam, callback, initiator)
                     isTriggerStoppingByStartListening = true
                     keywordDetector?.stopDetect()
                 }
@@ -290,7 +299,8 @@ class SpeechRecognizerAggregator(
                         audioProvider.getFormat(),
                         wakeupInfo,
                         epdParam,
-                        callback
+                        callback,
+                        initiator
                     )
                 }
             }
@@ -301,7 +311,8 @@ class SpeechRecognizerAggregator(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
         epdParam : EndPointDetectorParam?,
-        callback: ASRAgentInterface.StartRecognitionCallback?
+        callback: ASRAgentInterface.StartRecognitionCallback?,
+        initiator: ASRAgentInterface.Initiator
     ) {
 //        if (speechProcessor.useSelfSource()) {
 //            audioProvider.reset()
@@ -331,7 +342,8 @@ class SpeechRecognizerAggregator(
                         countDownLatch.countDown()
                         callback?.onError(dialogRequestId, errorType)
                     }
-                }
+                },
+                initiator
             )
             countDownLatch.await()
         } else {
