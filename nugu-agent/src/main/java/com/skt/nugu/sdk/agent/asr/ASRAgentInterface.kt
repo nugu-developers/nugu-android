@@ -62,6 +62,13 @@ interface ASRAgentInterface {
         }
     }
 
+    enum class Initiator {
+        WAKE_UP_WORD,
+        PRESS_AND_HOLD,
+        TAP,
+        EXPECT_SPEECH
+    }
+
     /**
      * The error type for ASR result
      * @see [OnResultListener.onError]
@@ -185,13 +192,15 @@ interface ASRAgentInterface {
      * If the recognition was not invoked by wakeup, set to null.
      * @param param the params for EPD
      * @param callback the callback for request
+     * @param initiator the initiator causing recognition
      */
     fun startRecognition(
         audioInputStream: SharedDataStream? = null,
         audioFormat: AudioFormat? = null,
         wakeupInfo: WakeupInfo? = null,
         param: EndPointDetectorParam? = null,
-        callback: StartRecognitionCallback? = null
+        callback: StartRecognitionCallback? = null,
+        initiator: Initiator
     )
 
     /**
