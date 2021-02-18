@@ -22,7 +22,6 @@ import com.skt.nugu.sdk.agent.delegation.DelegationAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.NetworkManagerInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
@@ -38,7 +37,6 @@ interface NuguClientInterface {
     val extensionAgent: ExtensionAgentInterface?
     val asrAgent: ASRAgentInterface?
     val textAgent: TextAgentInterface?
-    val locationAgent: LocationAgentInterface?
     val delegationAgent: DelegationAgentInterface?
     val systemAgent: SystemAgentInterface
     val networkManager: NetworkManagerInterface

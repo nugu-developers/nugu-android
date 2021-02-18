@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.location.Location
-import com.skt.nugu.sdk.agent.location.LocationAgentInterface
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -28,8 +27,9 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DefaultLocationAgent(
-    contextManager: ContextManagerInterface
-) : CapabilityAgent, LocationAgentInterface,
+    contextManager: ContextManagerInterface,
+    private val locationProvider: LocationProvider
+) : CapabilityAgent,
     SupportedInterfaceContextProvider {
     companion object {
         private const val TAG = "DefaultLocationAgent"
@@ -39,8 +39,6 @@ class DefaultLocationAgent(
         private val VERSION = Version(1, 0)
     }
 
-    private var locationProvider: LocationProvider? = null
-
     private var contextUpdateLock = ReentrantLock()
 
     init {
@@ -48,10 +46,6 @@ class DefaultLocationAgent(
     }
 
     override fun getInterfaceName(): String = NAMESPACE
-
-    override fun setLocationProvider(provider: LocationProvider) {
-        locationProvider = provider
-    }
 
     internal data class StateContext(private val location: Location?) : BaseContextState {
         companion object {
