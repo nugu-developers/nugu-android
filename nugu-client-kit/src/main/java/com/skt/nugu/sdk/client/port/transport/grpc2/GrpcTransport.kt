@@ -198,7 +198,7 @@ internal class GrpcTransport private constructor(
             messageConsumer,
             deviceGatewayDelegate,
             deviceGatewayObserver,
-            getAuthorization(),
+            authDelegate,
             callOptions,
             isHandOff
         ).let {

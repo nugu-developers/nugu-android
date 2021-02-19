@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.utils.ChannelBuilderUtils
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toAttachmentMessage
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toDirectives
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toStringMessage
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
@@ -54,7 +55,7 @@ internal class DeviceGatewayClient(policy: Policy,
                                    private var messageConsumer: MessageConsumer?,
                                    private var transportDelegate: DeviceGatewayTransport.TransportDelegate?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
-                                   private val authorization: String?,
+                                   private val authDelegate: AuthDelegate,
                                    private val callOptions: CallOptions?,
                                    var isHandOff: Boolean)
     :
@@ -104,7 +105,7 @@ internal class DeviceGatewayClient(policy: Policy,
             val channel = try {
                 ChannelBuilderUtils.createChannelBuilderWith(
                     policy,
-                    authorization,
+                    authDelegate,
                     this@DeviceGatewayClient
                 ).build()
             } catch (th: Throwable) {
