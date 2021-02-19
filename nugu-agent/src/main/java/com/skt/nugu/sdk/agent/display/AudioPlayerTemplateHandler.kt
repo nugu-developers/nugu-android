@@ -70,6 +70,7 @@ class AudioPlayerTemplateHandler(
 
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, AudioPlayerDisplayInterface.Controller>()
+    private val renderedTemplateDirectiveInfoMap = HashMap<String, TemplateDirectiveInfo>()
 
     private data class TemplatePayload(
         @SerializedName("playServiceId")
@@ -106,6 +107,7 @@ class AudioPlayerTemplateHandler(
         val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
             override fun clear() {
                 executor.submit {
+                    Logger.d(TAG, "[clear] $this")
                     executeCancelUnknownInfo(this@TemplateDirectiveInfo, true)
                 }
             }
@@ -125,6 +127,7 @@ class AudioPlayerTemplateHandler(
         override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
         override fun requestReleaseSync() {
+            Logger.d(TAG, "[requestReleaseSync] $this")
             executor.submit {
                 executeCancelUnknownInfo(this, true)
             }
@@ -171,19 +174,22 @@ class AudioPlayerTemplateHandler(
         Logger.d(TAG, "[executeCancelUnknownInfo] force: $force")
         val current = currentInfo
         if (info.directive.getMessageId() == current?.directive?.getMessageId()) {
-            Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info")
+            Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info: $info")
             renderer?.clear(current.sourceTemplateId, force)
         } else if (info.directive.getMessageId() == pendingInfo?.directive?.getMessageId()) {
             executeCancelPendingInfo()
         } else {
-            val keys = templateDirectiveInfoMap.filterValues {
-                it.directive.header.messageId == it.directive.header.messageId
-            }
-
-            keys.forEach {
+            templateDirectiveInfoMap.filterValues {
+                it.directive.header.messageId == info.directive.header.messageId
+            }.forEach {
                 templateDirectiveInfoMap[it.key]?.let {
-                    Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated")
-                    executeCancelInfoInternal(it)
+                    if(renderedTemplateDirectiveInfoMap.containsKey(it.sourceTemplateId)) {
+                        Logger.d(TAG, "[executeCancelUnknownInfo] cancel rendered template: $info")
+                        renderer?.clear(it.sourceTemplateId, force)
+                    } else {
+                        Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated: $info")
+                        executeCancelInfoInternal(it)
+                    }
                 }
             }
         }
@@ -271,6 +277,7 @@ class AudioPlayerTemplateHandler(
 
     private fun executeRender(info: TemplateDirectiveInfo) {
         val template = info.directive
+        Logger.d(TAG, "[executeRender] $info")
         val willBeRender = renderer?.render(
             info.sourceTemplateId,
             "$NAMESPACE.${template.getName()}",
@@ -300,6 +307,7 @@ class AudioPlayerTemplateHandler(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onRendered] $templateId")
+                renderedTemplateDirectiveInfoMap[templateId] = it
                 playSynchronizer.startSync(it)
                 interLayerDisplayPolicyManager.onDisplayLayerRendered(it.layerForInterLayerDisplayPolicy)
 
@@ -330,6 +338,7 @@ class AudioPlayerTemplateHandler(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] $templateId")
+                renderedTemplateDirectiveInfoMap.remove(templateId)
                 cleanupInfo(templateId, it)
                 interLayerDisplayPolicyManager.onDisplayLayerCleared(it.layerForInterLayerDisplayPolicy)
             }
