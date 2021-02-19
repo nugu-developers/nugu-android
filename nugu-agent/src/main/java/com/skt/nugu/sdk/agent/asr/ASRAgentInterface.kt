@@ -63,9 +63,24 @@ interface ASRAgentInterface {
     }
 
     enum class Initiator {
+        /**
+         * recognition initiated by wakeup
+         */
         WAKE_UP_WORD,
+
+        /**
+         * recognition initiated by button press and hold
+         */
         PRESS_AND_HOLD,
+
+        /**
+         * recognition initiated by button tap
+         */
         TAP,
+
+        /**
+         * recognition initiated by ASR.EXPECT_SPEECH directive
+         */
         EXPECT_SPEECH
     }
 

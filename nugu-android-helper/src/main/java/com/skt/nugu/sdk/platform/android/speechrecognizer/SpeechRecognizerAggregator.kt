@@ -62,10 +62,6 @@ class SpeechRecognizerAggregator(
 
     private var pendingStartListeningParam: StartListeningParam? = null
 
-//    private var wakeupInfo: WakeupInfo? = null
-//    private var epdParam: EndPointDetectorParam? = null
-//    private var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
-
     private var keywordDetectorState = KeywordDetector.State.INACTIVE
     private var speechProcessorState = AudioEndPointDetector.State.STOP
 
