@@ -15,13 +15,14 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import io.grpc.*
 
 /**
  *  Implementation of ClientInterceptor
  **/
-class HeaderClientInterceptor(val authorization: String, val delegate: Delegate) : ClientInterceptor {
+class HeaderClientInterceptor(val authDelegate: AuthDelegate, val delegate: Delegate) : ClientInterceptor {
     interface Delegate {
         fun getHeaders() : Map<String, String>?
     }
@@ -40,7 +41,7 @@ class HeaderClientInterceptor(val authorization: String, val delegate: Delegate)
             ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
 
             override fun start(responseListener: Listener<RespT>, headers: Metadata) {
-                headers.put(AUTH_TOKEN_KEY, authorization)
+                headers.put(AUTH_TOKEN_KEY, authDelegate.getAuthorization().toString())
                 delegate.getHeaders()?.forEach {
                     headers.put(Metadata.Key.of(it.key, Metadata.ASCII_STRING_MARSHALLER), it.value)
                 }
