@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -95,6 +96,10 @@ class AudioPlayerTemplateHandler(
         , DirectiveInfo by info {
         var sourceTemplateId: String = getDialogRequestId()
 
+        var shouldBeRenderDirective: Directive? = null
+        var shouldBeUpdateDirective: Directive? = null
+        var handleDirectiveCalled = false
+
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 Logger.d(TAG, "[onReleaseCallback] granted : $this")
@@ -145,6 +150,10 @@ class AudioPlayerTemplateHandler(
         }
 
         var playContext: PlayStackManagerInterface.PlayContext? = null
+
+        override fun toString(): String {
+            return super.toString() + " / sourceTemplateId: $sourceTemplateId"
+        }
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -182,7 +191,7 @@ class AudioPlayerTemplateHandler(
             templateDirectiveInfoMap.filterValues {
                 it.directive.header.messageId == info.directive.header.messageId
             }.forEach {
-                if(renderedTemplateDirectiveInfoMap.containsKey(it.value.sourceTemplateId)) {
+                if (renderedTemplateDirectiveInfoMap.containsKey(it.value.sourceTemplateId)) {
                     Logger.d(TAG, "[executeCancelUnknownInfo] cancel rendered template: $info")
                     renderer?.clear(it.value.sourceTemplateId, force)
                 } else {
@@ -223,50 +232,23 @@ class AudioPlayerTemplateHandler(
             }
             pendingInfo = null
 
-            val current = currentInfo
-            currentInfo = templateInfo
-            if(current != null && shouldUpdate(current, templateInfo)) {
-                // just update
-                Logger.d(TAG, "[handleDirective] update directive")
-                templateDirectiveInfoMap.remove(templateInfo.sourceTemplateId)
-                templateInfo.sourceTemplateId = current.sourceTemplateId
-                templateInfo.playContext = templateInfo.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
-                    PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
-                }
 
-                renderer?.update(templateInfo.sourceTemplateId, JsonObject().apply {
-                    add("template", JsonParser.parseString(templateInfo.directive.payload))
-                }.toString())
-                setHandlingCompleted(info)
-                templateDirectiveInfoMap[current.sourceTemplateId] = templateInfo
-                releaseSyncForce(current)
-            } else {
-                executeRender(templateInfo)
+            templateInfo.handleDirectiveCalled = true
+
+            when {
+                templateInfo.shouldBeRenderDirective != null -> {
+                    Logger.d(TAG, "[handleDirective] render: $info")
+                    executeRender(templateInfo)
+                }
+                templateInfo.shouldBeUpdateDirective != null -> {
+                    Logger.d(TAG, "[handleDirective] update: $info")
+                    executeUpdate(templateInfo)
+                }
+                else -> {
+                    // wait...
+                }
             }
         }
-    }
-
-    private fun shouldUpdate(
-        prev: TemplateDirectiveInfo,
-        next: TemplateDirectiveInfo
-    ): Boolean {
-        if(prev.payload.playServiceId != next.payload.playServiceId) {
-            return false
-        }
-
-        if(prev.payload.sourceType != next.payload.sourceType) {
-            return false
-        }
-
-        if(next.payload.sourceType == DefaultAudioPlayerAgent.SourceType.URL) {
-            return prev.payload.url == next.payload.url
-        }
-
-        if(next.payload.sourceType == DefaultAudioPlayerAgent.SourceType.ATTACHMENT) {
-            return prev.payload.token == next.payload.token
-        }
-
-        return false
     }
 
     private fun releaseSyncForce(info: TemplateDirectiveInfo) {
@@ -274,6 +256,9 @@ class AudioPlayerTemplateHandler(
     }
 
     private fun executeRender(info: TemplateDirectiveInfo) {
+        Logger.d(TAG, "[executeRender] $info")
+        currentInfo = info
+
         val template = info.directive
         Logger.d(TAG, "[executeRender] $info")
         val willBeRender = renderer?.render(
@@ -288,6 +273,33 @@ class AudioPlayerTemplateHandler(
             templateDirectiveInfoMap.remove(info.sourceTemplateId)
             playSynchronizer.releaseSync(info, null)
             clearInfoIfCurrent(info)
+        }
+    }
+
+    private fun executeUpdate(info: TemplateDirectiveInfo) {
+        val current = currentInfo
+        currentInfo = info
+
+        if(current != null) {
+            templateDirectiveInfoMap.remove(info.sourceTemplateId)
+            info.sourceTemplateId = current.sourceTemplateId
+            info.playContext =
+                info.payload.playStackControl?.getPushPlayServiceId()
+                    ?.let { pushPlayServiceId ->
+                        PlayStackManagerInterface.PlayContext(
+                            pushPlayServiceId,
+                            System.currentTimeMillis()
+                        )
+                    }
+
+            renderer?.update(info.sourceTemplateId, JsonObject().apply {
+                add("template", JsonParser.parseString(info.directive.payload))
+            }.toString())
+            setHandlingCompleted(info)
+            templateDirectiveInfoMap[current.sourceTemplateId] = info
+            releaseSyncForce(current)
+
+            Logger.d(TAG, "[executeUpdate] $info")
         }
     }
 
@@ -373,6 +385,7 @@ class AudioPlayerTemplateHandler(
         return false
     }
 
+    @Throws(UnsupportedOperationException::class)
     override fun setElementSelected(
         templateId: String,
         token: String,
@@ -430,4 +443,34 @@ class AudioPlayerTemplateHandler(
     }
 
     override fun getPlayContext(): PlayStackManagerInterface.PlayContext? = currentInfo?.playContext
+
+    fun shouldBeRender(directive: Directive) {
+        executor.submit {
+            templateDirectiveInfoMap.filterValues {
+                it.directive.getDialogRequestId() == directive.getDialogRequestId()
+            }.forEach {
+                it.value.shouldBeRenderDirective = directive
+                if(it.value.handleDirectiveCalled) {
+                    // should handle directive
+                    executeRender(it.value)
+                }
+            }
+        }
+    }
+
+    fun shouldBeUpdate(directive: Directive) {
+        executor.submit {
+            executor.submit {
+                templateDirectiveInfoMap.filterValues {
+                    it.directive.getDialogRequestId() == directive.getDialogRequestId()
+                }.forEach {
+                    it.value.shouldBeUpdateDirective = directive
+                    if(it.value.handleDirectiveCalled) {
+                        // should handle directive
+                        executeUpdate(it.value)
+                    }
+                }
+            }
+        }
+    }
 }

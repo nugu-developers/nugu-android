@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCom
 import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
+import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
 import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
@@ -68,7 +69,8 @@ class DefaultAudioPlayerAgent(
     private val directiveSequencer: DirectiveSequencerInterface,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val channelName: String,
-    enableDisplayLifeCycleManagement: Boolean
+    enableDisplayLifeCycleManagement: Boolean,
+    private val audioPlayerTemplateHandler: AudioPlayerTemplateHandler?
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , ChannelObserver
@@ -392,6 +394,7 @@ class DefaultAudioPlayerAgent(
                 val currentAudioInfo = currentItem
                 if(!executeShouldResumeNextItem(currentAudioInfo, nextAudioInfo)) {
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - play new item: ${directive.getMessageId()}")
+                    audioPlayerTemplateHandler?.shouldBeRender(nextAudioInfo.directive)
                     // stop current if play new item.
                     val currentPlayServiceId = currentAudioInfo?.getPlayServiceId()
                     val nextPlayServiceId = nextAudioInfo.getPlayServiceId()
@@ -420,6 +423,7 @@ class DefaultAudioPlayerAgent(
                     }
                 } else {
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - will be resume: ${directive.getMessageId()}")
+                    audioPlayerTemplateHandler?.shouldBeUpdate(nextAudioInfo.directive)
                     currentItem = nextAudioInfo
                     currentAudioInfo?.let {
                         playSynchronizer.releaseSync(it, null)
@@ -1755,14 +1759,13 @@ class DefaultAudioPlayerAgent(
 //        Logger.w(TAG, "[onTogglePressed] not supported - $toggle, $action")
 //    }
 
-    private var displayDelegate: AudioPlayerDisplayInterface? = null
-
+    @Throws(IllegalStateException::class)
     override fun setElementSelected(
         templateId: String,
         token: String,
         postback: String?,
         callback: DisplayInterface.OnElementSelectedCallback?
-    ): String = displayDelegate?.setElementSelected(templateId, token, postback, callback)
+    ): String = audioPlayerTemplateHandler?.setElementSelected(templateId, token, postback, callback)
         ?: throw IllegalStateException("Not allowed call for audio player's setElementSelected")
 
     override fun notifyUserInteractionOnDisplay(templateId: String) {
@@ -1773,23 +1776,19 @@ class DefaultAudioPlayerAgent(
         templateId: String,
         controller: AudioPlayerDisplayInterface.Controller?
     ) {
-        displayDelegate?.displayCardRendered(templateId, controller)
+        audioPlayerTemplateHandler?.displayCardRendered(templateId, controller)
     }
 
     override fun displayCardRenderFailed(templateId: String) {
-        displayDelegate?.displayCardRenderFailed(templateId)
+        audioPlayerTemplateHandler?.displayCardRenderFailed(templateId)
     }
 
     override fun displayCardCleared(templateId: String) {
-        displayDelegate?.displayCardCleared(templateId)
+        audioPlayerTemplateHandler?.displayCardCleared(templateId)
     }
 
     override fun setRenderer(renderer: AudioPlayerDisplayInterface.Renderer?) {
-        displayDelegate?.setRenderer(renderer)
-    }
-
-    fun setDisplay(display: AudioPlayerDisplayInterface?) {
-        this.displayDelegate = display
+        audioPlayerTemplateHandler?.setRenderer(renderer)
     }
 
     var lyricsPresenter: LyricsPresenter? = null
