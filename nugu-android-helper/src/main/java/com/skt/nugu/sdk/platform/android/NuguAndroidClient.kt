@@ -516,6 +516,26 @@ class NuguAndroidClient private constructor(
                     object : AgentFactory<DefaultAudioPlayerAgent> {
                         override fun create(container: SdkContainer): DefaultAudioPlayerAgent =
                             with(container) {
+                                val audioPlayerTemplateHandler = if (builder.enableDisplay) {
+                                    AudioPlayerTemplateHandler(
+                                        getPlaySynchronizer(),
+                                        getSessionManager(),
+                                        getInterLayerDisplayPolicyManager()
+                                    ).apply {
+                                        getDisplayPlayStackManager().addPlayContextProvider(this)
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                        getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
+                                            AudioPlayerDirectivePreProcessor()
+                                        )
+                                        AudioPlayerMetadataDirectiveHandler()
+                                            .apply {
+                                                getDirectiveSequencer().addDirectiveHandler(this)
+                                            }.addListener(this)
+                                    }
+                                } else {
+                                    null
+                                }
+
                                 DefaultAudioPlayerAgent(
                                     builder.playerFactory.createAudioPlayer(),
                                     getMessageSender(),
@@ -526,13 +546,10 @@ class NuguAndroidClient private constructor(
                                     getDirectiveSequencer(),
                                     getDirectiveGroupProcessor(),
                                     DefaultFocusChannel.CONTENT_CHANNEL_NAME,
-                                    builder.enableDisplayLifeCycleManagement
+                                    builder.enableDisplayLifeCycleManagement,
+                                    audioPlayerTemplateHandler
                                 ).apply {
                                     val audioPlayerMetadataDirectiveHandler =
-                                        AudioPlayerMetadataDirectiveHandler()
-                                            .apply {
-                                                getDirectiveSequencer().addDirectiveHandler(this)
-                                            }
 
                                     AudioPlayerLyricsDirectiveHandler(
                                         getContextManager(),
@@ -542,22 +559,6 @@ class NuguAndroidClient private constructor(
                                         getInterLayerDisplayPolicyManager()
                                     ).apply {
                                         getDirectiveSequencer().addDirectiveHandler(this)
-                                    }
-
-                                    if (builder.enableDisplay) {
-                                        AudioPlayerTemplateHandler(
-                                            getPlaySynchronizer(),
-                                            getSessionManager(),
-                                            getInterLayerDisplayPolicyManager()
-                                        ).apply {
-                                            getDisplayPlayStackManager().addPlayContextProvider(this)
-                                            setDisplay(this)
-                                            getDirectiveSequencer().addDirectiveHandler(this)
-                                            getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
-                                                AudioPlayerDirectivePreProcessor()
-                                            )
-                                            audioPlayerMetadataDirectiveHandler.addListener(this)
-                                        }
                                     }
 
                                     getAudioPlayStackManager().addPlayContextProvider(this)
