@@ -182,14 +182,12 @@ class AudioPlayerTemplateHandler(
             templateDirectiveInfoMap.filterValues {
                 it.directive.header.messageId == info.directive.header.messageId
             }.forEach {
-                templateDirectiveInfoMap[it.key]?.let {
-                    if(renderedTemplateDirectiveInfoMap.containsKey(it.sourceTemplateId)) {
-                        Logger.d(TAG, "[executeCancelUnknownInfo] cancel rendered template: $info")
-                        renderer?.clear(it.sourceTemplateId, force)
-                    } else {
-                        Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated: $info")
-                        executeCancelInfoInternal(it)
-                    }
+                if(renderedTemplateDirectiveInfoMap.containsKey(it.value.sourceTemplateId)) {
+                    Logger.d(TAG, "[executeCancelUnknownInfo] cancel rendered template: $info")
+                    renderer?.clear(it.value.sourceTemplateId, force)
+                } else {
+                    Logger.d(TAG, "[executeCancelUnknownInfo] cancel outdated: $info")
+                    executeCancelInfoInternal(it.value)
                 }
             }
         }
