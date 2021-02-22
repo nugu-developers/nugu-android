@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.9.48 *(2021-02-22)*
+-----------------------------
+* Fix: Fix IndexOutOfBoundsException issue #1584 (#1585)
+* Fix: Fix wrong cancel for AudioPlayerTemplate (#1588)
+* Fix: Fix sync for displays's update and player's resume (#1592)
+* Improve: Fix update authorization without reconnect in grpc (#1590)
+
 Version 0.9.47 *(2021-02-10)*
 -----------------------------
 * Fix: Fix wrong access at AudioPlayerTemplateHandler's templateDirectiveInfoMap (#1562)
