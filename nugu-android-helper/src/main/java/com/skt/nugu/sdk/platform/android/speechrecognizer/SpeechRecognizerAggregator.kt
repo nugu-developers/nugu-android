@@ -282,8 +282,10 @@ class SpeechRecognizerAggregator(
                     keywordDetector?.stopDetect()
                 }
                 SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
-                SpeechRecognizerAggregatorInterface.State.SPEECH_START -> {
-                    Logger.w(TAG, "[startListening] Not allowed at $state")
+                SpeechRecognizerAggregatorInterface.State.SPEECH_START,
+                SpeechRecognizerAggregatorInterface.State.SPEECH_END -> {
+                    Logger.w(TAG, "[startListening] Not allowed at $state, stop(cancel) current listening and try start.")
+                    callback?.onError(UUIDGeneration.toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_ALREADY_RECOGNIZING)
                 }
                 else -> {
                     executeStartListeningInternal(
@@ -303,10 +305,6 @@ class SpeechRecognizerAggregator(
         epdParam : EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?
     ) {
-//        if (speechProcessor.useSelfSource()) {
-//            audioProvider.reset()
-//        }
-
         val inputStream = audioProvider.acquireAudioInputStream(speechProcessor)
         if (inputStream != null) {
             val countDownLatch = CountDownLatch(1)
@@ -392,7 +390,8 @@ class SpeechRecognizerAggregator(
         SpeechRecognizerAggregatorInterface.State.WAITING,
         SpeechRecognizerAggregatorInterface.State.WAKEUP,
         SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH,
-        SpeechRecognizerAggregatorInterface.State.SPEECH_START -> true
+        SpeechRecognizerAggregatorInterface.State.SPEECH_START,
+        SpeechRecognizerAggregatorInterface.State.SPEECH_END -> true
         else -> false
     }
 
