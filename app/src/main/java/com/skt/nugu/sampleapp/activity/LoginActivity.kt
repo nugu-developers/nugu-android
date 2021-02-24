@@ -192,10 +192,11 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
 
     /**
      * Start main activity
+     * @param wakeupAction true indicate wakeup start, otherwise false
      **/
-    private fun startMainActivity() {
+    private fun startMainActivity(wakeupAction: Boolean = false) {
         runOnUiThread {
-            MainActivity.invokeActivity(this@LoginActivity)
+            MainActivity.invokeActivity(this@LoginActivity, wakeupAction)
             finishAffinity()
         }
     }
@@ -215,7 +216,7 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == IntroActivity.requestCode) {
-            startMainActivity()
+            startMainActivity(resultCode == RESULT_FIRST_USER)
         }
     }
 }

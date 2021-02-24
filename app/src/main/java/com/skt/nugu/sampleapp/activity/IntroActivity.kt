@@ -27,15 +27,18 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
+import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
+import com.skt.nugu.sdk.platform.android.service.webkit.NuguWebView
 
 /**
  * Demonstrate using nugu with webview.
  */
-class IntroActivity : AppCompatActivity() {
+class IntroActivity : AppCompatActivity(), NuguWebView.WindowListener {
     companion object {
         private const val TAG = "IntroActivity"
         const val requestCode = 101
+        const val REASON_WAKE_UP = "WAKE_UP"
         const val EXTRA_KEY_DEVICE_UNIQUEID = "key_device_unique_id"
 
         fun invokeActivity(activity: Activity, deviceUniqueId: String) {
@@ -57,35 +60,18 @@ class IntroActivity : AppCompatActivity() {
         )
         setContentView(layout)
 
-        val webView = WebView(this)
-        webView.settings?.run {
-            domStorageEnabled = true
-            javaScriptEnabled = true
+        val webView = NuguWebView(this)
+        with(webView) {
+            appVersion = BuildConfig.VERSION_NAME
+            theme = NuguWebView.THEME.LIGHT
+            windowListener = this@IntroActivity
         }
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                url?.apply {
-                    // Otherwise, the link is not for a page on my site, so launch
-                    // another Activity that handles URLs
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        startActivity(intent)
-                    } catch ( e : ActivityNotFoundException) {
-                        return false
-                    }
-                    return true
-                }
-                return false
+        ConfigurationStore.usageGuideUrl(intent.extras?.getString(EXTRA_KEY_DEVICE_UNIQUEID).toString()) { url, error ->
+            error?.apply {
+                Log.e(TAG, "[onCreate] error=$this")
+                return@usageGuideUrl
             }
-        }
-        intent.extras?.apply {
-            ConfigurationStore.usageGuideUrl(getString(EXTRA_KEY_DEVICE_UNIQUEID).toString()) { url, error ->
-                error?.apply {
-                    Log.e(TAG, "[onCreate] error=$this")
-                    return@usageGuideUrl
-                }
-                webView.loadUrl(url)
-            }
+            webView.loadUrl(url)
         }
 
         layout.addView( webView,
@@ -94,5 +80,12 @@ class IntroActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
+    }
+
+    override fun onCloseWindow(reason: String?) {
+        if (reason == REASON_WAKE_UP) {
+            setResult(Activity.RESULT_FIRST_USER)
+        }
+        finish()
     }
 }
