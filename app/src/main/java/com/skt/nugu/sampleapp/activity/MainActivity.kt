@@ -68,9 +68,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             android.Manifest.permission.RECORD_AUDIO
         )
         private const val requestCode = 100
+        private const val EXTRA_WAKEUP_ACTION = "wakeupAction"
 
-        fun invokeActivity(context: Context) {
-            context.startActivity(Intent(context, MainActivity::class.java))
+        fun invokeActivity(context: Context, wakeupAction : Boolean = false) {
+            context.startActivity(Intent(context, MainActivity::class.java).putExtra(EXTRA_WAKEUP_ACTION, wakeupAction))
         }
 
         val templateRenderer: TemplateRenderer by lazy {
@@ -217,6 +218,15 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         ClientManager.getClient().connect()
         // update view
         updateNuguButton()
+
+        handleExtras(intent.extras)
+    }
+
+    private fun handleExtras(extras: Bundle?) {
+        if(extras?.getBoolean(EXTRA_WAKEUP_ACTION) == true) {
+            intent.removeExtra(EXTRA_WAKEUP_ACTION)
+            speechRecognizerAggregator.startListening(initiator = ASRAgentInterface.Initiator.TAP)
+        }
     }
 
     private fun tryStartListeningWithTrigger() {
