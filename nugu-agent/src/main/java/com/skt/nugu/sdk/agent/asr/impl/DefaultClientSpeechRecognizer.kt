@@ -280,14 +280,21 @@ class DefaultClientSpeechRecognizer(
             if(!this.enqueue(object: MessageSender.Callback {
                     override fun onFailure(req: MessageRequest, status: Status) {
                         Logger.d(TAG, "[onFailure] request: $req, status: $status")
-                        request.errorTypeForCausingEpdStop = when (status.error) {
-                            Status.StatusError.OK /** cancel, no error **/,
-                            Status.StatusError.TIMEOUT /** Nothing to do because handle on [onResponseTimeout] **/,
-                            Status.StatusError.UNKNOWN -> /** Same as return false of [enqueue] **/ return
-                            Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
-                            Status.StatusError.UNAUTHENTICATED -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                        if(request == currentRequest && status.error == Status.StatusError.TIMEOUT && request.senderThread != null) {
+                            // if sender thread is working, we handle a timeout error as unknown error.
+                            // this occur when some attachment sent too late(after timeout).
+                            request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                            endPointDetector.stopDetector()
+                        } else {
+                            request.errorTypeForCausingEpdStop = when (status.error) {
+                                Status.StatusError.OK /** cancel, no error **/ ,
+                                Status.StatusError.TIMEOUT /** Nothing to do because handle on [onResponseTimeout] **/ ,
+                                Status.StatusError.UNKNOWN -> /** Same as return false of [enqueue] **/ return
+                                Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                                Status.StatusError.UNAUTHENTICATED -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                            }
+                            endPointDetector.stopDetector()
                         }
-                        endPointDetector.stopDetector()
                     }
 
                     override fun onSuccess(request: MessageRequest) {
