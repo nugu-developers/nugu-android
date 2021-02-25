@@ -38,6 +38,10 @@ interface SpeechRecognizerAggregatorInterface {
      */
     enum class State {
         /**
+         * initial or when receive response for asr request.
+         */
+        IDLE,
+        /**
          * Keyword detection started
          */
         WAITING,

@@ -45,7 +45,7 @@ class SpeechRecognizerAggregator(
     private val executor = Executors.newSingleThreadExecutor(threadFactory)
     private val listeners = HashSet<SpeechRecognizerAggregatorInterface.OnStateChangeListener>()
 
-    private var state = SpeechRecognizerAggregatorInterface.State.STOP
+    private var state = SpeechRecognizerAggregatorInterface.State.IDLE
 
     // should be run in executor.
     private var keywordDetectorResultRunnable: Runnable? = null
@@ -92,11 +92,15 @@ class SpeechRecognizerAggregator(
             }
         })
 
-        speechProcessor.addListener(object : AudioEndPointDetector.OnStateChangedListener {
+        speechProcessor.addListener(object : SpeechProcessorDelegate.Listener {
+            override fun onIdle() {
+                executor.submit {
+                    updateState(AudioEndPointDetector.State.SPEECH_END , SpeechRecognizerAggregatorInterface.State.IDLE)
+                }
+            }
+
             override fun onExpectingSpeech() {
                 executor.submit {
-                    speechProcessorState = AudioEndPointDetector.State.EXPECTING_SPEECH
-
                     if (keywordDetector?.getDetectorState() == KeywordDetector.State.ACTIVE) {
                         keywordDetector.stopDetect()
                     }
@@ -108,35 +112,30 @@ class SpeechRecognizerAggregator(
 
             override fun onSpeechStart(eventPosition: Long?) {
                 executor.submit {
-                    speechProcessorState = AudioEndPointDetector.State.SPEECH_START
                     updateState(AudioEndPointDetector.State.SPEECH_START , SpeechRecognizerAggregatorInterface.State.SPEECH_START)
                 }
             }
 
             override fun onSpeechEnd(eventPosition: Long?) {
                 executor.submit {
-                    speechProcessorState = AudioEndPointDetector.State.SPEECH_END
                     updateState(AudioEndPointDetector.State.SPEECH_END , SpeechRecognizerAggregatorInterface.State.SPEECH_END)
                 }
             }
 
             override fun onTimeout(type: AudioEndPointDetector.TimeoutType) {
                 executor.submit {
-                    speechProcessorState = AudioEndPointDetector.State.TIMEOUT
                     updateState(AudioEndPointDetector.State.TIMEOUT , SpeechRecognizerAggregatorInterface.State.TIMEOUT)
                 }
             }
 
             override fun onStop() {
                 executor.submit {
-                    speechProcessorState = AudioEndPointDetector.State.STOP
                     updateState(AudioEndPointDetector.State.STOP , SpeechRecognizerAggregatorInterface.State.STOP)
                 }
             }
 
             override fun onError(type: AudioEndPointDetector.ErrorType, e: Exception?) {
                 executor.submit {
-                    speechProcessorState = AudioEndPointDetector.State.ERROR
                     updateState(AudioEndPointDetector.State.ERROR , SpeechRecognizerAggregatorInterface.State.ERROR)
                 }
             }
@@ -260,6 +259,8 @@ class SpeechRecognizerAggregator(
             } else {
                 triggerCallback?.onTriggerFinished(null)
             }
+
+            Logger.d(TAG, "[startListeningWithTrigger] isStarted: $isStarted")
         }
     }
 
