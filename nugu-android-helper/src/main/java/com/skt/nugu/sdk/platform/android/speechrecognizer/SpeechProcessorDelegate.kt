@@ -36,8 +36,12 @@ class SpeechProcessorDelegate(
         private const val TAG = "SpeechProcessorD"
     }
 
+    interface Listener: AudioEndPointDetector.OnStateChangedListener {
+        fun onIdle()
+    }
+
     private var epdState = AudioEndPointDetector.State.STOP
-    private val listeners = HashMap<AudioEndPointDetector.OnStateChangedListener, ASRAgentInterface.OnStateChangeListener>()
+    private val listeners = HashMap<Listener, ASRAgentInterface.OnStateChangeListener>()
 
     /**
      * Request starting epd to [ASRAgentInterface]
@@ -57,14 +61,18 @@ class SpeechProcessorDelegate(
     /** Add a listener to be called when a state changed.
      * @param listener the listener that added
      */
-    fun addListener(listener: AudioEndPointDetector.OnStateChangedListener) {
+    fun addListener(listener: Listener) {
         object : ASRAgentInterface.OnStateChangeListener {
             override fun onStateChanged(state: ASRAgentInterface.State) {
                 if(!epdState.isActive() && !state.isRecognizing()) {
-                    Logger.d(
-                        TAG,
-                        "[AudioEndPointDetectorStateObserverInterface] invalid state change : $epdState / $state"
-                    )
+                    if(epdState == AudioEndPointDetector.State.SPEECH_END && state == ASRAgentInterface.State.IDLE) {
+                        listener.onIdle()
+                    } else {
+                        Logger.d(
+                            TAG,
+                            "[AudioEndPointDetectorStateObserverInterface] invalid state change : $epdState / $state"
+                        )
+                    }
                     return
                 }
 
@@ -96,7 +104,7 @@ class SpeechProcessorDelegate(
      * Remove a listener
      * @param listener the listener that removed
      */
-    fun removeListener(listener: AudioEndPointDetector.OnStateChangedListener) {
+    fun removeListener(listener: Listener) {
         listeners.remove(listener)?.apply {
             asrAgent.removeOnStateChangeListener(this)
         }
