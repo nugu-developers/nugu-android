@@ -59,7 +59,7 @@ internal class EventsService(
     private val waitForReady = callOptions?.waitForReady ?: true
 
     internal data class ClientChannel (
-        val clientCall : StreamObserver<Upstream>,
+        var clientCall : StreamObserver<Upstream>?,
         var scheduledFuture: ScheduledFuture<*>?,
         val responseObserver : ClientCallStreamObserver
     )
@@ -204,7 +204,8 @@ internal class EventsService(
         streamLock.withLock {
             try {
                 requestStreamMap[streamId]?.apply {
-                    this.clientCall.onCompleted()
+                    this.clientCall?.onCompleted()
+                    this.clientCall = null
                 }
             } catch (e: Throwable) {
                 Logger.w(TAG, "[close] cause:${e.cause}, message:${e.message}")
@@ -225,7 +226,7 @@ internal class EventsService(
                     this.responseObserver.isSendingAttachmentMessage = true
                     cancelScheduledTimeout(attachment.parentMessageId)
                     this.scheduledFuture = scheduleTimeout(attachment.parentMessageId, call)
-                    this.clientCall.onNext(
+                    this.clientCall?.onNext(
                         Upstream.newBuilder()
                             .setAttachmentMessage(attachment.toProtobufMessage())
                             .build()
@@ -261,7 +262,7 @@ internal class EventsService(
                 buildChannel(event.messageId, call, expectedAttachment)?.apply {
                     requestStreamMap[event.messageId] = this
                     Logger.d(TAG, "[onNext] event=${event.namespace}.${event.name}, messageId=${event.messageId}")
-                    this.clientCall.onNext(
+                    this.clientCall?.onNext(
                         Upstream.newBuilder()
                             .setEventMessage(event.toProtobufMessage())
                             .build()
