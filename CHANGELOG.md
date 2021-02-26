@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 0.9.49 *(2021-02-26)*
+-----------------------------
+* Fix: Prevent start listening at SPEECH_END state (#1595)
+* Fix: Add Idle state at SpeechRecognizerAggregator (#1601)
+    * To distinguish SPEECH_END and a completion for ASR, add Idle state.
+* Fix: Handle timeout issue for ASR.Recognize event (#1603)
+* Fix: Prevent duplicate half-closed calls #1597 (#1605)
+* Improve: Update grpc v1.36.0 (#1599)
+* New: Add initiator info at startRecogition #1581 (#1586)
+
 Version 0.9.48 *(2021-02-22)*
 -----------------------------
 * Fix: Fix IndexOutOfBoundsException issue #1584 (#1585)
