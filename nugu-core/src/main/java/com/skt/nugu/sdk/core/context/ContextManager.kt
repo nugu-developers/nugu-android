@@ -71,7 +71,8 @@ class ContextManager : ContextManagerInterface {
 
     private val stringBuilderForContext = StringBuilder(8192)
 
-    private val executor = Executors.newSingleThreadScheduledExecutor()
+    private val callbackExecutor = Executors.newSingleThreadScheduledExecutor()
+    private val provideStateExecutor = Executors.newFixedThreadPool(3)
 
     override fun setState(
         namespaceAndName: NamespaceAndName,
@@ -123,7 +124,7 @@ class ContextManager : ContextManagerInterface {
 
             if (request.pendings.isEmpty()) {
                 request.outdateFuture?.cancel(true)
-                executor.submit {
+                callbackExecutor.submit {
                     Logger.d(TAG, "[setState] onContextAvailable token: $stateRequestToken")
                     val tempRequest = getContextRequestMap.remove(stateRequestToken)
                     tempRequest?.contextRequester?.onContextAvailable(
@@ -144,6 +145,8 @@ class ContextManager : ContextManagerInterface {
         refreshPolicy: StateRefreshPolicy,
         type: ContextType
     ) {
+        Logger.d(TAG, "[updateStateLocked] $namespaceAndName, $state, $refreshPolicy, $type")
+
         var stateInfo = namespaceNameToStateInfo[namespaceAndName]
         if(stateInfo == null) {
             stateInfo = if(type == ContextType.FULL) {
@@ -203,7 +206,7 @@ class ContextManager : ContextManagerInterface {
                     }
                 }
 
-                outdateFuture = executor.schedule({
+                outdateFuture = callbackExecutor.schedule({
                     Logger.d(TAG, "[getContext] outdated token: $token")
                     val request = lock.withLock { getContextRequestMap.remove(token) }
                     if (request != null) {
@@ -215,12 +218,16 @@ class ContextManager : ContextManagerInterface {
                 }, timeoutInMillis, TimeUnit.MILLISECONDS)
 
                 HashMap(pendings).forEach {
-                    stateProviders[it.key]?.provideState(
-                        this@ContextManager,
-                        it.key,
-                        it.value,
-                        token
-                    )
+                    stateProviders[it.key]?.let { provider->
+                        provideStateExecutor.submit {
+                            provider.provideState(
+                                this@ContextManager,
+                                it.key,
+                                it.value,
+                                token
+                            )
+                        }
+                    }
                 }
             }
         }
