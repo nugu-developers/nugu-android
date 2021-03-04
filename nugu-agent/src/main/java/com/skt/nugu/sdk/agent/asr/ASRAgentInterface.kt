@@ -81,7 +81,12 @@ interface ASRAgentInterface {
         /**
          * recognition initiated by ASR.EXPECT_SPEECH directive
          */
-        EXPECT_SPEECH
+        EXPECT_SPEECH,
+
+        /**
+         * recognition initiated by EARSET
+         */
+        EARSET
     }
 
     /**
