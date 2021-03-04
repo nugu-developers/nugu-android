@@ -70,4 +70,16 @@
             <enum name="standard" value="1" />
         </attr>
     </declare-styleable>
+
+    <style name="LyricsButton.Default" parent="@android:style/Widget.TextView">
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#009dff</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="LyricsButton.RoundRect" parent="LyricsButton.Default">
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#444444</item>
+        <item name="android:textSize">15sp</item>
+    </style>
 </resources>

@@ -31,11 +31,15 @@ import com.skt.nugu.sdk.platform.android.ux.template.model.Image
 import com.skt.nugu.sdk.platform.android.ux.template.model.Size
 import com.skt.nugu.sdk.platform.android.ux.template.model.Source
 
-fun TextView.updateText(text: String?, isMerge: Boolean = false) {
+fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout: Boolean = false) {
     if (isMerge && text.isNullOrBlank()) return
 
     this.text = TemplateUtils.getSpannable(text)
-    visibility = if (text != null) View.VISIBLE else View.GONE
+    visibility = if (text != null) {
+        View.VISIBLE
+    } else {
+        if (maintainLayout) View.INVISIBLE else View.GONE
+    }
 }
 
 fun ImageView.updateImage(url: String?, transformation: Transformation<Bitmap>?, isMerge: Boolean = false) {
