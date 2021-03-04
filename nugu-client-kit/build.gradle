@@ -38,7 +38,7 @@ dependencies {
     implementation("io.grpc:grpc-stub:${grpc_version}")
     implementation("io.grpc:grpc-okhttp:${grpc_version}")
     implementation("com.google.code.gson:gson:${gson_version}")
-    //compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
 }
 
 protobuf {
