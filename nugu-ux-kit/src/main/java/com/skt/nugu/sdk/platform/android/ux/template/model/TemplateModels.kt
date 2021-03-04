@@ -197,9 +197,14 @@ data class Settings(
 data class Lyrics(
     @SerializedName("title") val title: String?,
     @SerializedName("lyricsType") val lyricsType: LyricsType?,
-    @SerializedName("lyricsInfoList") val lyricsInfoList: List<LyricsInfo>?
-
+    @SerializedName("lyricsInfoList") val lyricsInfoList: List<LyricsInfo>?,
+    @SerializedName("showButton") val showButton : ShowButtonText?
 )
+
+data class ShowButtonText(
+    @SerializedName("text") val text : String
+)
+
 data class LyricsInfo(
     @SerializedName("time") val time: Int?,
     @SerializedName("text") val text: String?

@@ -17,12 +17,15 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.*
+import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.TextView
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -33,12 +36,15 @@ import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.*
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
-import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
-import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
-import com.skt.nugu.sdk.platform.android.ux.template.model.*
+import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayer
+import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayerUpdate
+import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsType
+import com.skt.nugu.sdk.platform.android.ux.template.model.Repeat
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
+import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
+
 
 @SuppressLint("ClickableViewAccessibility", "ViewConstructor")
 class DisplayAudioPlayer @JvmOverloads
@@ -165,9 +171,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         if (templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_1) {
+            header.maxLines = 1
             header.enableMarquee()
         } else if (templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_2) {
-            header.maxLines = 4
+            header.maxLines = 2
+            header.ellipsize = TextUtils.TruncateAt.END
         }
 
         collapsed.setThrottledOnClickListener {
@@ -325,7 +333,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             imageView.updateImage(imageUrl, thumbTransform, isMerge)
             header.updateText(title, isMerge)
             body.updateText(subtitle1, isMerge)
-            footer.updateText(subtitle2, isMerge)
+            footer.updateText(subtitle2, isMerge, true)
             badgeImage.updateImage(badgeImageUrl, thumbTransform, isMerge)
             badgeTextView.updateText(badgeMessage, isMerge)
 
@@ -338,19 +346,32 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 fulltime.visibility = View.INVISIBLE
             }
 
-            if (lyrics != null) {
+            if (lyrics != null && lyrics.lyricsType != LyricsType.NONE) {
                 lyricsView.setTitle(lyrics.title, templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_1)
                 lyricsView.setItems(lyrics.lyricsInfoList)
                 smallLyricsView.setItems(lyrics.lyricsInfoList)
 
-                if (lyrics.lyricsType == LyricsType.SYNC) {
-                    smallLyricsView.visibility = View.VISIBLE
-                    showLyrics.visibility = View.GONE
-                } else if (lyrics.lyricsType == LyricsType.NON_SYNC) {
-                    showLyrics.visibility = View.VISIBLE
-                    smallLyricsView.visibility = View.GONE
-                } else {
-                    smallLyricsView.visibility = View.GONE
+                when (lyrics.lyricsType) {
+                    LyricsType.SYNC -> {
+                        smallLyricsView.visibility = View.VISIBLE
+                        showLyrics.visibility = View.GONE
+                    }
+                    LyricsType.NON_SYNC -> {
+                        with(showLyrics) {
+                            visibility = View.VISIBLE
+
+                            lyrics.showButton?.text.also { buttonString ->
+                                text = buttonString ?: resources.getString(R.string.lyrics_button_default_text)
+                                setTextAppearance(context, if (buttonString != null) R.style.LyricsButton_RoundRect else R.style.LyricsButton_Default)
+                                setBackgroundResource(if (buttonString != null) R.drawable.nugu_lyrics_button_bg else 0)
+                                val paddingVertical = if (buttonString != null) dpToPx(10f, context) else 0
+                                val paddingHorizontal = if (buttonString != null) dpToPx(16f, context) else 0
+                                setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
+                            }
+                        }
+                        smallLyricsView.visibility = View.GONE
+                    }
+                    else -> Unit
                 }
             } else if (!isMerge) {
                 lyricPresenter.hide()
