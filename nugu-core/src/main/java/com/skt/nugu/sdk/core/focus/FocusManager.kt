@@ -231,18 +231,17 @@ class FocusManager(
     }
 
     private fun setChannelFocus(channel: Channel, focus: FocusState) {
+        Logger.d(TAG, "[setChannelFocus] $channel, $focus")
         // if foreground focus requested, then acquire external focus if need.
-        // if failed, return
         externalFocusInteractor?.let {
             if(focus == FocusState.FOREGROUND) {
                 if(!it.acquire(channel.name, channel.getInterfaceName())) {
-                    return
+                    // TODO: ignore currently. later, have to handle this case.
                 }
             }
         }
 
         if (!channel.setFocus(focus)) {
-            Logger.d(TAG, "[setChannelFocus] $channel, $focus")
             return
         }
 
