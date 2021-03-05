@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 0.9.50 *(2021-03-05)*
+-----------------------------
+* Fix: Ignore external audio focus result (#1617)
+* Improve: Improve getContext performance (#1611)
+    * Call getContext from another thread
+    * Apply multi-thread
+* Improve: Add annotations-api for Java 9+. (#1615)
+* New: Support Display Interface v1.7 (#1607)
+* New: Support AudioPlayer v1.6 (#1609)
+* New: Add EARSET type at initiator (#1613)
+
 Version 0.9.49 *(2021-02-26)*
 -----------------------------
 * Fix: Prevent start listening at SPEECH_END state (#1595)
