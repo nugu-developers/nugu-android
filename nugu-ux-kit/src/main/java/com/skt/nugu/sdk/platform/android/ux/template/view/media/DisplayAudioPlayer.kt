@@ -359,15 +359,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                     LyricsType.NON_SYNC -> {
                         with(showLyrics) {
                             visibility = View.VISIBLE
-
-                            lyrics.showButton?.text.also { buttonString ->
-                                text = buttonString ?: resources.getString(R.string.lyrics_button_default_text)
-                                setTextAppearance(context, if (buttonString != null) R.style.LyricsButton_RoundRect else R.style.LyricsButton_Default)
-                                setBackgroundResource(if (buttonString != null) R.drawable.nugu_lyrics_button_bg else 0)
-                                val paddingVertical = if (buttonString != null) dpToPx(10f, context) else 0
-                                val paddingHorizontal = if (buttonString != null) dpToPx(16f, context) else 0
-                                setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
-                            }
+                            text = lyrics.showButton?.text ?: resources.getString(R.string.lyrics_button_default_text)
                         }
                         smallLyricsView.visibility = View.GONE
                     }
