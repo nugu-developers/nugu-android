@@ -22,16 +22,7 @@ interface PlayStackManagerInterface {
         val isBackground: Boolean = false,
         val persistent: Boolean = true,
         val affectPersistent: Boolean = true
-    ): Comparable<PlayContext> {
-        override fun compareTo(other: PlayContext): Int {
-            val diff = other.timestamp - timestamp
-            return when {
-                diff > 0 -> 1
-                diff < 0 -> -1
-                else -> 0
-            }
-        }
-    }
+    )
 
     interface PlayContextProvider {
         fun getPlayContext(): PlayContext?

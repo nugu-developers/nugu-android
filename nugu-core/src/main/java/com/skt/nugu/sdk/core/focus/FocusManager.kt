@@ -95,21 +95,18 @@ class FocusManager(
     }
 
     override fun releaseChannel(channelName: String, channelObserver: ChannelObserver): Future<Boolean> {
-        Logger.d(TAG, "[releaseChannel] ${channelName}")
-        val channelToRelease = getChannel(channelName)
+        return getChannel(channelName).let { releaseTarget ->
+            Logger.d(TAG, "[releaseChannel] $channelName, releaseTarget $releaseTarget")
 
-        if (channelToRelease == null) {
-            return ImmediateBooleanFuture(false)
+            if (releaseTarget == null) {
+                ImmediateBooleanFuture(false)
+            } else {
+                executor.submit(Callable<Boolean> {
+                    releaseChannelHelper(releaseTarget, channelObserver)
+                })
+            }
         }
-
-        return executor.submit(Callable<Boolean> {
-            releaseChannelHelper(
-                channelToRelease,
-                channelObserver
-            )
-        })
     }
-
 
     private fun acquireChannelHelper(
         channelToAcquire: Channel,
