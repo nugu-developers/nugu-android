@@ -27,7 +27,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 class FocusManager(
-    channelConfigurations: List<FocusManagerInterface.ChannelConfiguration>,
+    private val channelConfigurations: List<FocusManagerInterface.ChannelConfiguration>,
     tagHint: String? = null
     ) : FocusManagerInterface {
 
@@ -37,7 +37,6 @@ class FocusManager(
         "FocusManager_$tagHint"
     }
 
-    private val allChannelConfigurations: MutableMap<String, FocusManagerInterface.ChannelConfiguration> = HashMap()
     private val allChannels: MutableMap<String, Channel> = HashMap()
 
     private var externalFocusInteractor: FocusManagerInterface.ExternalFocusInteractor? = null
@@ -70,10 +69,8 @@ class FocusManager(
     private val listeners = CopyOnWriteArraySet<FocusManagerInterface.OnFocusChangedListener>()
 
     init {
-        for (channelConfiguration in channelConfigurations) {
-            allChannels[channelConfiguration.name] =
-                Channel(channelConfiguration.name, Channel.Priority(channelConfiguration.acquirePriority, channelConfiguration.releasePriority))
-            allChannelConfigurations[channelConfiguration.name] = channelConfiguration
+        for ( (name, acquirePriority, releasePriority) in channelConfigurations){
+            allChannels[name] = Channel(name, Channel.Priority(acquirePriority, releasePriority))
         }
     }
 
@@ -256,7 +253,9 @@ class FocusManager(
             }
         }
 
-        listeners.forEach { it.onFocusChanged(allChannelConfigurations[channel.name]!!, focus, channel.state.interfaceName) }
+        channelConfigurations.find { it.name == channel.name }?.let { config ->
+            listeners.forEach { it.onFocusChanged(config, focus, channel.state.interfaceName) }
+        }
     }
 
     private fun getChannel(channelName: String): Channel? = allChannels[channelName]
