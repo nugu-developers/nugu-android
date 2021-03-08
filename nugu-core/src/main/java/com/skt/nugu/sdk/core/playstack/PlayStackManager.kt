@@ -35,35 +35,21 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
     }
 
     override fun getPlayStack(): List<PlayStackProvider.PlayStackContext> {
-        val playStack = TreeSet<PlayStackManagerInterface.PlayContext>()
-        var oldestTimestampOfPlayContextAffectPersistent: Long = Long.MAX_VALUE
+        val playStack = arrayListOf<PlayStackManagerInterface.PlayContext>().apply {
+            providers.forEach { add(it.getPlayContext() ?: return@forEach) }
+        }
 
-        providers.forEach {
-            it.getPlayContext()?.let { playContext ->
-                playStack.add(playContext)
-                if(playContext.affectPersistent) {
-                    if (playContext.timestamp < oldestTimestampOfPlayContextAffectPersistent) {
-                        oldestTimestampOfPlayContextAffectPersistent = playContext.timestamp
-                    }
+        val oldestTimestamp = playStack.filter { it.affectPersistent }.minBy { it.timestamp }?.timestamp ?: Long.MAX_VALUE
+
+        Logger.d(TAG, "[getPlayStack] provided : $playStack, oldestTimestamp: $oldestTimestamp")
+
+        playStack.removeAll { it.timestamp > oldestTimestamp && !it.persistent }
+
+        return ArrayList<PlayStackProvider.PlayStackContext>()
+            .apply {
+                playStack.forEach {
+                    add(PlayStackProvider.PlayStackContext(it.playServiceId, it.timestamp, it.isBackground))
                 }
-            }
-        }
-        Logger.d(TAG, "[getPlayStack] provided : $playStack, oldestTimestampOfPlayContext: $oldestTimestampOfPlayContextAffectPersistent")
-
-        val shouldBeExcluded:List<PlayStackManagerInterface.PlayContext> = playStack.filter {
-            it.timestamp > oldestTimestampOfPlayContextAffectPersistent && !it.persistent
-        }
-        Logger.d(TAG, "[getPlayStack] shouldBeExcluded : $shouldBeExcluded")
-
-        playStack.removeAll(shouldBeExcluded)
-        val playStackContext = ArrayList<PlayStackProvider.PlayStackContext>()
-
-        playStack.forEach {
-            playStackContext.add(PlayStackProvider.PlayStackContext(it.playServiceId, it.timestamp, it.isBackground))
-        }
-
-        Logger.d(TAG, "[getPlayStack] $playStackContext")
-
-        return playStackContext
+            }.also { Logger.d(TAG, "[getPlayStack] $it") }
     }
 }
