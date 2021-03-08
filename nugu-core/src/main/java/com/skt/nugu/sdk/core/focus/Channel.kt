@@ -33,12 +33,11 @@ data class Channel(
     )
 
     data class State(
-        val name: String,
         var focusState: FocusState = FocusState.NONE,
         var interfaceName: String = ""
     )
 
-    val state = State(name)
+    val state = State()
     private var observer: ChannelObserver? = null
 
     fun setFocus(focus: FocusState): Boolean {
