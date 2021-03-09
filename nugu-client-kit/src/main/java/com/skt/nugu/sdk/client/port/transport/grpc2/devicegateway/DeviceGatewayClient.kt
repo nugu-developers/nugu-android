@@ -77,17 +77,17 @@ internal class DeviceGatewayClient(policy: Policy,
     private var healthCheckPolicy = policy.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
+    private var firstResponseReceived = AtomicBoolean(false)
 
     private val scheduler  = Executors.newSingleThreadScheduledExecutor()
 
-    private var eventMessageHeaders: Map<String, String>? = null
+    private var pendingHeaders: Map<String, String>? = null
     /**
      * Set a policy.
      * @return the ServerPolicy
      */
     private fun nextPolicy(): ServerPolicy? {
         Logger.d(TAG, "[nextPolicy]")
-        backoff.reset()
         currentPolicy = policies.poll()
         currentPolicy?.let {
             backoff = BackOff.Builder(maxAttempts = it.retryCountLimit).build()
@@ -151,7 +151,8 @@ internal class DeviceGatewayClient(policy: Policy,
             return false
         }
         if (!keepConnection) {
-            handleConnectedIfNeeded()
+            /** Channel creation([createChannel]) is done when sending([send]) a message for the first time. **/
+            handleOnConnected()
             return true
         }
 
@@ -171,31 +172,25 @@ internal class DeviceGatewayClient(policy: Policy,
         }
     }
 
-    private fun stopServerInitiated() {
-        if(!keepConnection) {
-            return
-        }
-        synchronized(this) {
-            pingService?.shutdown()
-            pingService = null
-            directivesService?.shutdown()
-            directivesService = null
-        }
-    }
     /**
      * disconnect from DeviceGateway
      */
     override fun disconnect() {
         Logger.d(TAG, "[disconnect]")
-        stopServerInitiated()
+        backoff.shutdown()
+        isConnected.set(false)
+        firstResponseReceived.set(false)
 
         synchronized(this) {
+            pingService?.shutdown()
+            pingService = null
+            directivesService?.shutdown()
+            directivesService = null
             eventsService?.shutdown()
             eventsService = null
             ChannelBuilderUtils.shutdown(currentChannel)
             currentChannel = null
-            eventMessageHeaders = null
-            isConnected.set(false)
+            pendingHeaders = null
         }
     }
 
@@ -232,7 +227,7 @@ internal class DeviceGatewayClient(policy: Policy,
             }
             is EventMessageRequest -> {
                 call.headers()?.let {
-                    eventMessageHeaders = it
+                    pendingHeaders = it
                 }
                 event?.sendEventMessage(call)
             }
@@ -248,7 +243,7 @@ internal class DeviceGatewayClient(policy: Policy,
      * Receive an error.
      * @param the status of grpc
      */
-    override fun onError(status: Status) {
+    override fun onError(status: Status, who: String) {
         Logger.w(TAG, "[onError] Error : ${status.code}")
 
         when(status.code) {
@@ -279,7 +274,7 @@ internal class DeviceGatewayClient(policy: Policy,
                     Status.Code.UNKNOWN -> ChangedReason.SERVER_SIDE_DISCONNECT
                     Status.Code.DEADLINE_EXCEEDED -> {
                         if (isConnected()) {
-                            if(pingService?.isStop() == false) {
+                            if(PingService.name == who) {
                                 ChangedReason.PING_TIMEDOUT
                             } else {
                                 ChangedReason.REQUEST_TIMEDOUT
@@ -309,61 +304,57 @@ internal class DeviceGatewayClient(policy: Policy,
             }
         }
 
-        // Only stop ServerInitiated and wait for events to be sent.
-        stopServerInitiated()
         isConnected.set(false)
+        firstResponseReceived.set(false)
 
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
-                Logger.w(TAG, "[awaitRetry] Error : $error")
+                Logger.w(TAG, "[awaitRetry] error=$error, code=${status.code}")
 
                 when (status.code) {
                     Status.Code.UNAUTHENTICATED -> {
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
                     else -> {
-                        nextPolicy()
                         disconnect()
+                        nextPolicy()
                         connect()
                     }
                 }
             }
 
             override fun onRetry(retriesAttempted: Int) {
-                Logger.w(TAG, "[awaitRetry] onRetry : $retriesAttempted")
-                if (isConnected()) {
-                    Logger.w(TAG, "[awaitRetry] It is currently connected, but will try again.")
-                }
-                disconnect()
-                connect()
+                Logger.w(TAG, "[awaitRetry] onRetry count=$retriesAttempted, connected=${isConnected()}, tid=${Thread.currentThread().id}")
+                currentChannel?.enterIdle()
+                pingService?.newPing() ?: connect() /* keepConnection == false */
             }
         })
     }
 
     override fun shutdown() {
-        Logger.d(TAG, "[shutdown]")
         messageConsumer = null
         transportObserver = null
         disconnect()
-        backoff.reset()
         scheduler.shutdown()
+        Logger.d(TAG, "[shutdown]")
     }
 
     /**
-     * Connected event received
-     * @return boolean value, true if the connection has changed, false otherwise.
+     * Handler for connection completed
      */
-    private fun handleConnectedIfNeeded()  {
+    private fun handleOnConnected()  {
         if (isConnected.compareAndSet(false, true)) {
-            handoffConnectionEnd()
-            backoff.reset()
             transportObserver?.onConnected()
+            directivesService?.start()
         }
     }
 
-    private fun handoffConnectionEnd() {
+    /**
+     * Handler for handoff changes
+     */
+    private fun handleHandoffConnection() {
         if (isHandOff) {
-            Logger.d(TAG, "[handoffConnectionEnd] $isHandOff -> false")
+            Logger.d(TAG, "[handleHandoffConnection] The handoff is completed")
             isHandOff = false
         }
     }
@@ -373,11 +364,11 @@ internal class DeviceGatewayClient(policy: Policy,
      */
     override fun onPingRequestAcknowledged() {
         Logger.d(TAG, "onPingRequestAcknowledged, isConnected:${isConnected()}")
-        handleConnectedIfNeeded()
+        handleHandoffConnection()
+        handleOnConnected()
     }
 
     /**
-
      * attachment received
      * @param attachmentMessage
      */
@@ -390,6 +381,10 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param directiveMessage
      */
     override fun onReceiveDirectives(directiveMessage: DirectiveMessage) {
+        // The backoff reset is at the point of receiving the first directive from the server.
+        if(firstResponseReceived.compareAndSet(false, true)) {
+            backoff.reset()
+        }
         messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
     }
 
@@ -402,7 +397,5 @@ internal class DeviceGatewayClient(policy: Policy,
         throw NotImplementedError()
     }
 
-    override fun getHeaders(): Map<String, String>? {
-        return eventMessageHeaders
-    }
+    override fun getHeaders() = pendingHeaders
 }

@@ -34,6 +34,6 @@ interface DeviceGatewayTransport : Transport {
 
     fun onReceiveDirectives(directiveMessage: DirectiveMessage)
     fun onReceiveAttachment(attachmentMessage: AttachmentMessage)
-    fun onError(status: Status)
+    fun onError(status: Status, who: String)
     fun onPingRequestAcknowledged()
 }
