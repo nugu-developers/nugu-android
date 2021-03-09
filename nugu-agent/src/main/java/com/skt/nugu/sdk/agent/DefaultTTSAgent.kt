@@ -223,21 +223,14 @@ class DefaultTTSAgent(
         }
 
         val playSyncObject = object: PlaySynchronizerInterface.SynchronizeObject {
-            override fun getPlayServiceId(): String? = payload.playServiceId
-            override fun getDialogRequestId(): String = directive.getDialogRequestId()
+            override val playServiceId: String? = payload.playServiceId
+            override val dialogRequestId: String = directive.getDialogRequestId()
 
             override fun requestReleaseSync() {
                 Logger.d(TAG, "[requestReleaseSync]")
                 executor.submit {
                     executeCancel(this@SpeakDirectiveInfo)
                 }
-            }
-
-            override fun onSyncStateChanged(
-                prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-                started: List<PlaySynchronizerInterface.SynchronizeObject>
-            ) {
-                // no-op
             }
         }
 
@@ -466,31 +459,11 @@ class DefaultTTSAgent(
                     Logger.d(TAG, "[stop] stop lastStopped")
                     lastImplicitStoppedInfo = null
                     object : PlaySynchronizerInterface.SynchronizeObject {
-                        override fun getPlayServiceId(): String?  = lastStopped.payload.playServiceId
-
-                        override fun getDialogRequestId(): String = lastStopped.directive.getDialogRequestId()
-
-                        override fun requestReleaseSync() {
-                            // ignore.
-                        }
-
-                        override fun onSyncStateChanged(
-                            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-                            started: List<PlaySynchronizerInterface.SynchronizeObject>
-                        ) {
-                            // ignore.
-                        }
+                        override val playServiceId: String? = lastStopped.payload.playServiceId
+                        override val dialogRequestId: String = lastStopped.directive.getDialogRequestId()
                     }.apply {
                         playSynchronizer.prepareSync(this)
-                        playSynchronizer.releaseSyncImmediately(this, object: PlaySynchronizerInterface.OnRequestSyncListener{
-                            override fun onGranted() {
-                                // ignore
-                            }
-
-                            override fun onDenied() {
-                                // ignore
-                            }
-                        })
+                        playSynchronizer.releaseSyncImmediately(this)
                     }
                     /*
                     if (lastStopped.payload.token == payload.token) {

@@ -34,19 +34,19 @@ class PlaySynchronizerTest {
     fun testSimpleReleaseSync() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj1.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
 
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseSync(syncObj1, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
+        synchronizer.releaseSync(syncObj1)
 
         verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
@@ -55,18 +55,18 @@ class PlaySynchronizerTest {
     fun testSimpleReleaseSyncImmediately() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj1.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseSyncImmediately(syncObj1, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
+        synchronizer.releaseSyncImmediately(syncObj1)
 
         verify(syncObj2, times(1)).requestReleaseSync()
     }
@@ -75,19 +75,19 @@ class PlaySynchronizerTest {
     fun testDifferentDialogRequestIdReleaseSync() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId2)
+        whenever(syncObj1.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId2)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
 
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseSync(syncObj1, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
+        synchronizer.releaseSync(syncObj1)
 
         verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
@@ -96,19 +96,19 @@ class PlaySynchronizerTest {
     fun testEmptyPlayServiceIdReleaseSync() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(emptyPlayServiceId)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj1.playServiceId).thenReturn(emptyPlayServiceId)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
 
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseSync(syncObj1, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
+        synchronizer.releaseSync(syncObj1)
 
         verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
@@ -117,19 +117,19 @@ class PlaySynchronizerTest {
     fun testNullPlayServiceIdReleaseSync() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(nullPlayServiceId)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj1.playServiceId).thenReturn(nullPlayServiceId)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
 
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseSync(syncObj1, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
+        synchronizer.releaseSync(syncObj1)
 
         verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
     }
@@ -138,18 +138,18 @@ class PlaySynchronizerTest {
     fun testUnrelatedTwoPlaySync() {
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj1.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId2)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId2)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId2)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId2)
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
-        synchronizer.releaseSync(syncObj1, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
+        synchronizer.releaseSync(syncObj1)
 
         verify(syncObj2, never()).requestReleaseSync()
     }
@@ -159,17 +159,17 @@ class PlaySynchronizerTest {
         // never happen case (undefined case)
         val synchronizer = PlaySynchronizer()
         val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj1.getPlayServiceId()).thenReturn(playServiceId1)
-        whenever(syncObj1.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj1.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
 
         val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
-        whenever(syncObj2.getPlayServiceId()).thenReturn(playServiceId2)
-        whenever(syncObj2.getDialogRequestId()).thenReturn(dialogRequestId1)
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId2)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
 
         synchronizer.prepareSync(syncObj1)
         synchronizer.prepareSync(syncObj2)
-        synchronizer.startSync(syncObj1, null)
-        synchronizer.startSync(syncObj2, null)
+        synchronizer.startSync(syncObj1)
+        synchronizer.startSync(syncObj2)
         synchronizer.releaseSync(syncObj1, null)
 
         verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
