@@ -37,6 +37,7 @@ internal class DirectivesService(
 ) {
     companion object {
         private const val TAG = "DirectivesService"
+        val name = DirectivesService::class.java.simpleName
     }
 
     private val isShutdown = AtomicBoolean(false)
@@ -47,34 +48,39 @@ internal class DirectivesService(
         }
     private var deadlineCancellationFuture : ScheduledFuture<*>? = null
 
-    init {
-        deadlineCancellationFuture = startDeadlineTimer()
-        startDownStream()
-    }
+    private val isStarted = AtomicBoolean(false)
 
-    private fun stopDeadlineTimer() {
+    private fun cancelDeadlineTimer() {
         if(deadlineCancellationFuture?.isCancelled == false) {
             deadlineCancellationFuture?.cancel(true)
             deadlineCancellationFuture = null
         }
     }
 
-    private fun startDeadlineTimer() : ScheduledFuture<*> {
-        return deadlineCancellationExecutor.schedule( {
+    private fun startDeadlineTimer() {
+        deadlineCancellationFuture = deadlineCancellationExecutor.schedule( {
             if (!isShutdown.get()) {
-                observer.onError(Status.DEADLINE_EXCEEDED)
+                observer.onError(Status.DEADLINE_EXCEEDED, name)
             }
         }, 10, TimeUnit.SECONDS)
     }
 
-    private fun startDownStream() {
-        Logger.d(TAG, "[startDownStream] directives called")
+
+    fun start() {
+        Logger.d(TAG, "[start] directives called. isStarted=${isStarted.get()}")
+
+        if(!isStarted.compareAndSet(false, true)) {
+            Logger.d(TAG, "[start] skip already started")
+            return
+        }
+
+        startDeadlineTimer()
         VoiceServiceGrpc.newStub(channel).withWaitForReady().directives(
                 DirectivesRequest.newBuilder().build(),
                 object : StreamObserver<Downstream> {
                     override fun onNext(downstream: Downstream) {
                         Logger.d(TAG, "[DirectivesService] onNext : ${downstream.messageCase}")
-                        stopDeadlineTimer()
+                        cancelDeadlineTimer()
                         when (downstream.messageCase) {
                             Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                                 downstream.directiveMessage?.let {
@@ -82,7 +88,7 @@ internal class DirectivesService(
                                         observer.onReceiveDirectives(downstream.directiveMessage)
                                     }
                                     if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
-                                        observer.onError(Status.UNAUTHENTICATED)
+                                        observer.onError(Status.UNAUTHENTICATED, name)
                                     }
                                 }
                             }
@@ -101,18 +107,20 @@ internal class DirectivesService(
 
                     override fun onError(t: Throwable) {
                         if (!isShutdown.get()) {
-                            stopDeadlineTimer()
+                            isStarted.set(false)
+                            cancelDeadlineTimer()
                             val status = Status.fromThrowable(t)
                             Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
-                            observer.onError(status)
+                            observer.onError(status, name)
                         }
                     }
 
                     override fun onCompleted() {
                         if (!isShutdown.get()) {
-                            stopDeadlineTimer()
+                            isStarted.set(false)
+                            cancelDeadlineTimer()
                             Logger.d(TAG, "[onCompleted] Stream is completed")
-                            observer.onError(Status.UNKNOWN)
+                            observer.onError(Status.UNKNOWN, name)
                         }
                     }
                 })

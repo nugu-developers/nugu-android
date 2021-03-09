@@ -41,6 +41,7 @@ internal class PingService(
     private var blockingStub: VoiceServiceGrpc.VoiceServiceBlockingStub? = null
 
     companion object {
+        val name : String = PingService::class.java.simpleName
         private const val TAG = "PingService"
         private const val defaultInterval: Long = 1000 * 60L
         private const val defaultTimeout: Long = 1000 * 10L
@@ -55,7 +56,7 @@ internal class PingService(
         nextInterval(0)
     }
 
-    private fun executePingRequest() : Boolean{
+    private fun executePingRequest() : Boolean {
         try {
             if(blockingStub == null) {
                 blockingStub = VoiceServiceGrpc.newBlockingStub(channel)
@@ -73,7 +74,7 @@ internal class PingService(
             if (!isShutdown.get()) {
                 val status = Status.fromThrowable(e)
                 Logger.d(TAG, "[onError] ${status.code}, ${status.description}")
-                observer.onError(status)
+                observer.onError(status, name)
             }
         }
         return false
@@ -111,5 +112,10 @@ internal class PingService(
         } else {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
+    }
+
+    fun newPing() {
+        intervalFuture?.cancel(true)
+        nextInterval(0)
     }
 }

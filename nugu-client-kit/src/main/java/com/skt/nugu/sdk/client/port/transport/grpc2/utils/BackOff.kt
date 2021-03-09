@@ -150,7 +150,12 @@ class BackOff private constructor(builder: Builder) {
      */
     fun awaitRetry(code: Status.Code, observer: Observer) {
         synchronized(this) {
+            if (executorService.isShutdown) {
+                Logger.w(TAG, "BackOff is shutdown")
+                return
+            }
             if (scheduledFuture?.isDone == false) {
+                Logger.w(TAG, "BackOff is not done")
                 return
             }
 
@@ -167,18 +172,25 @@ class BackOff private constructor(builder: Builder) {
                 return
             }
 
-            val duration = duration()
             scheduledFuture = executorService.schedule({
                 // prevent future invocations.
                 scheduledFuture?.cancel(false)
                 // Retry done
                 observer.onRetry(attempts)
-            }, duration, TimeUnit.MILLISECONDS)
+            }, duration(), TimeUnit.MILLISECONDS)
 
             Logger.w(
                 TAG,
                 String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}")
             )
+        }
+    }
+
+    fun shutdown() {
+        synchronized(this) {
+            scheduledFuture?.cancel(true)
+            scheduledFuture = null
+            executorService.shutdown()
         }
     }
 

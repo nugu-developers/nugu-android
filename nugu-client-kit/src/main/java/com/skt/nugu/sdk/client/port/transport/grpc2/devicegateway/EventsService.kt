@@ -50,6 +50,7 @@ internal class EventsService(
 ) {
     companion object {
         private const val TAG = "EventsService"
+        val name = EventsService::class.java.simpleName
     }
 
     private val isShutdown = AtomicBoolean(false)
@@ -140,7 +141,7 @@ internal class EventsService(
                         }
                         if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
                             call.onComplete(SDKStatus.UNAUTHENTICATED)
-                            observer.onError(Status.UNAUTHENTICATED)
+                            observer.onError(Status.UNAUTHENTICATED, name)
                         }
                     }
                 }
@@ -188,7 +189,7 @@ internal class EventsService(
                     }
                 }
                 Logger.e(TAG, log.toString())
-                observer.onError(status)
+                observer.onError(status, name)
             }
         }
 
