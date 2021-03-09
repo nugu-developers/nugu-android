@@ -39,8 +39,6 @@ class TTSScenarioPlayer(
     , ChannelObserver {
     companion object {
         private const val TAG = "TTSScenarioPlayer"
-        private val DUMMY_PLAY_SYNC_CALLBACK =
-            object : PlaySynchronizerInterface.OnRequestSyncListener {}
     }
 
     interface Listener {
@@ -107,7 +105,7 @@ class TTSScenarioPlayer(
             // cancel prepared
             preparedSource?.let {
                 it.onCanceled()
-                playSynchronizer.releaseSyncImmediately(it, DUMMY_PLAY_SYNC_CALLBACK)
+                playSynchronizer.releaseSyncImmediately(it)
             }
             // update prepared source
             preparedSource = source
@@ -171,10 +169,10 @@ class TTSScenarioPlayer(
 
         preparedSource = null
         currentSource = source
-        playSynchronizer.startSync(source, DUMMY_PLAY_SYNC_CALLBACK)
+        playSynchronizer.startSync(source)
 
         return if(!startPlayer(source)) {
-            playSynchronizer.releaseSync(source, DUMMY_PLAY_SYNC_CALLBACK)
+            playSynchronizer.releaseSync(source)
             false
         } else {
             true
@@ -217,7 +215,7 @@ class TTSScenarioPlayer(
             if (preparedSource == source) {
                 preparedSource?.let {
                     it.onCanceled()
-                    playSynchronizer.releaseSyncImmediately(it, DUMMY_PLAY_SYNC_CALLBACK)
+                    playSynchronizer.releaseSyncImmediately(it)
                 }
                 preparedSource = null
             }
@@ -293,7 +291,7 @@ class TTSScenarioPlayer(
                     listeners.forEach { listener ->
                         listener.onPlaybackFinished(it)
                     }
-                    playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
+                    playSynchronizer.releaseSync(it)
                 }
                 if(executeStartPreparedSourceIfExist()) {
                     releaseFocus()
@@ -317,7 +315,7 @@ class TTSScenarioPlayer(
                     listeners.forEach { listener ->
                         listener.onPlaybackError(it, type, error)
                     }
-                    playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
+                    playSynchronizer.releaseSync(it)
                 }
                 if(executeStartPreparedSourceIfExist()) {
                     releaseFocus()
@@ -350,9 +348,9 @@ class TTSScenarioPlayer(
                         listener.onPlaybackStopped(it)
                     }
                     if (it.isCancelRequested) {
-                        playSynchronizer.releaseSyncImmediately(it, DUMMY_PLAY_SYNC_CALLBACK)
+                        playSynchronizer.releaseSyncImmediately(it)
                     } else {
-                        playSynchronizer.releaseSync(it, DUMMY_PLAY_SYNC_CALLBACK)
+                        playSynchronizer.releaseSync(it)
                     }
                 }
 
