@@ -37,14 +37,14 @@ class PlaySynchronizer : PlaySynchronizerInterface {
     ) {
         fun prepare(obj: PlaySynchronizerInterface.SynchronizeObject) {
             if(prepared.add(obj)) {
-                notifyOnStateChanged(obj.getDialogRequestId(), obj.getPlayServiceId())
+                notifyOnStateChanged(obj.dialogRequestId, obj.playServiceId)
             }
         }
 
         fun start(syncObj: PlaySynchronizerInterface.SynchronizeObject): Boolean {
             return if(prepared.remove(syncObj)) {
                 started.add(syncObj)
-                notifyOnStateChanged(syncObj.getDialogRequestId(), syncObj.getPlayServiceId())
+                notifyOnStateChanged(syncObj.dialogRequestId, syncObj.playServiceId)
                 true
             } else {
                 false
@@ -56,7 +56,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val startedRemoved = started.remove(syncObj)
 
             return if(preparedRemoved || startedRemoved) {
-                cancel(syncObj.getDialogRequestId())
+                cancel(syncObj.dialogRequestId)
                 true
             } else {
                 false
@@ -65,13 +65,13 @@ class PlaySynchronizer : PlaySynchronizerInterface {
 
         fun cancel(dialogRequestId: String) {
             prepared.filter {
-                it.getDialogRequestId() == dialogRequestId
+                it.dialogRequestId == dialogRequestId
             }.forEach {
                 it.requestReleaseSync()
             }
 
             started.filter {
-                it.getDialogRequestId() == dialogRequestId
+                it.dialogRequestId == dialogRequestId
             }.forEach {
                 it.requestReleaseSync()
             }
@@ -82,7 +82,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             val startedRemoved = started.remove(syncObj)
 
             if(preparedRemoved || startedRemoved) {
-                notifyOnStateChanged(syncObj.getDialogRequestId(), syncObj.getPlayServiceId())
+                notifyOnStateChanged(syncObj.dialogRequestId, syncObj.playServiceId)
             }
 
             return preparedRemoved || startedRemoved
@@ -103,17 +103,17 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         private fun filterContext(dialogRequestId: String, playServiceId: String?): Pair<List<PlaySynchronizerInterface.SynchronizeObject>, List<PlaySynchronizerInterface.SynchronizeObject>> {
             val filteredPrepared = prepared.filter() {
                 if(playServiceId.isNullOrBlank()) {
-                    it.getDialogRequestId() == dialogRequestId
+                    it.dialogRequestId == dialogRequestId
                 } else {
-                    it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
+                    it.playServiceId == playServiceId || it.dialogRequestId == dialogRequestId
                 }
             }
 
             val filteredStarted = started.filter {
                 if(playServiceId.isNullOrBlank()) {
-                    it.getDialogRequestId() == dialogRequestId
+                    it.dialogRequestId == dialogRequestId
                 } else {
-                    it.getPlayServiceId() == playServiceId || it.getDialogRequestId() == dialogRequestId
+                    it.playServiceId == playServiceId || it.dialogRequestId == dialogRequestId
                 }
             }
 
@@ -127,7 +127,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         lock.withLock {
             Logger.d(
                 TAG,
-                "[prepareSync] dialogRequestId: ${synchronizeObject.getDialogRequestId()}, synchronizeObject: $synchronizeObject"
+                "[prepareSync] dialogRequestId: ${synchronizeObject.dialogRequestId}, synchronizeObject: $synchronizeObject"
             )
 
             syncContext.prepare(synchronizeObject)
@@ -141,7 +141,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         listener: PlaySynchronizerInterface.OnRequestSyncListener?
     ) {
         lock.withLock {
-            val dialogRequestId = synchronizeObject.getDialogRequestId()
+            val dialogRequestId = synchronizeObject.dialogRequestId
             Logger.d(TAG, "[startSync] dialogRequestId: $dialogRequestId, listener: $listener")
 
             if(syncContext.start(synchronizeObject)) {
@@ -183,7 +183,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         lock.withLock {
             Logger.d(
                 TAG,
-                "[releaseSyncInternal] dialogRequestId: ${synchronizeObject.getDialogRequestId()} ,object: $synchronizeObject, listener: $listener, immediate: $immediate"
+                "[releaseSyncInternal] dialogRequestId: ${synchronizeObject.dialogRequestId} ,object: $synchronizeObject, listener: $listener, immediate: $immediate"
             )
 
             val released = if(immediate) {

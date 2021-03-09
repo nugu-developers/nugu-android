@@ -94,7 +94,10 @@ class AudioPlayerTemplateHandler(
     ) : PlaySynchronizerInterface.SynchronizeObject
         , SessionManagerInterface.Requester
         , DirectiveInfo by info {
-        var sourceTemplateId: String = getDialogRequestId()
+        override val playServiceId: String? = payload.playServiceId
+        override val dialogRequestId: String = directive.getDialogRequestId()
+
+        var sourceTemplateId: String = dialogRequestId
 
         var shouldBeRenderDirective: Directive? = null
         var shouldBeUpdateDirective: Directive? = null
@@ -103,9 +106,6 @@ class AudioPlayerTemplateHandler(
         val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
             override fun onGranted() {
                 Logger.d(TAG, "[onReleaseCallback] granted : $this")
-            }
-
-            override fun onDenied() {
             }
         }
 
@@ -126,10 +126,6 @@ class AudioPlayerTemplateHandler(
             override fun getDialogRequestId(): String = info.directive.getDialogRequestId()
             override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
         }
-
-        override fun getPlayServiceId(): String? = payload.playServiceId
-
-        override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
         override fun requestReleaseSync() {
             Logger.d(TAG, "[requestReleaseSync] $this")
@@ -327,7 +323,7 @@ class AudioPlayerTemplateHandler(
 
                 setHandlingCompleted(it)
 
-                sessionManager.activate(it.getDialogRequestId(), it)
+                sessionManager.activate(it.dialogRequestId, it)
                 it.playContext = it.payload.playStackControl?.getPushPlayServiceId()?.let {pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
@@ -359,7 +355,7 @@ class AudioPlayerTemplateHandler(
         setHandlingCompleted(info)
         templateDirectiveInfoMap.remove(templateId)
         templateControllerMap.remove(templateId)
-        sessionManager.deactivate(info.getDialogRequestId(), info)
+        sessionManager.deactivate(info.dialogRequestId, info)
         releaseSyncForce(info)
 
         if (clearInfoIfCurrent(info)) {

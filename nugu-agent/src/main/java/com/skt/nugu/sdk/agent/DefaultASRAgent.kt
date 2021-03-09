@@ -264,9 +264,8 @@ class DefaultASRAgent(
                 )
             } else {
                 executePreHandleExpectSpeechInternal(ExpectSpeechDirectiveParam(ExpectSpeechDirective(info.directive.header, payload), object: PlaySynchronizerInterface.SynchronizeObject {
-                    override fun getPlayServiceId(): String? = payload.playServiceId
-
-                    override fun getDialogRequestId(): String = info.directive.header.dialogRequestId
+                    override val playServiceId: String? = payload.playServiceId
+                    override val dialogRequestId: String = info.directive.header.dialogRequestId
 
                     override fun requestReleaseSync() {
                         executor.submit {
@@ -274,14 +273,6 @@ class DefaultASRAgent(
                             executeCancelExpectSpeechDirective(info.directive.header.messageId)
                         }
                     }
-
-                    override fun onSyncStateChanged(
-                        prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-                        started: List<PlaySynchronizerInterface.SynchronizeObject>
-                    ) {
-                        // ignore
-                    }
-
                 }))
             }
         }

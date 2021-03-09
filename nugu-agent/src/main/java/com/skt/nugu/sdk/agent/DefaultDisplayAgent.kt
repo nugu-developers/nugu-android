@@ -84,21 +84,8 @@ class DefaultDisplayAgent(
         var clearRequested: Boolean = false
         var renderResultListener: RenderDirectiveHandler.Controller.OnResultListener? = null
         val dummyPlaySyncForTimer = object : PlaySynchronizerInterface.SynchronizeObject {
-            override fun getPlayServiceId(): String? = payload.playServiceId
-
-            override fun getDialogRequestId(): String = directive.getDialogRequestId()
-            override fun requestReleaseSync() {
-                // TemplateDirectiveInfo.requestReleaseSync also called.
-                // so we skip this.
-            }
-
-            override fun onSyncStateChanged(
-                prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-                started: List<PlaySynchronizerInterface.SynchronizeObject>
-            ) {
-                // TemplateDirectiveInfo.requestReleaseSync also called.
-                // so we skip this.
-            }
+            override val playServiceId: String? = payload.playServiceId
+            override val dialogRequestId: String = directive.getDialogRequestId()
         }
 
         val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
@@ -127,14 +114,10 @@ class DefaultDisplayAgent(
             override fun onGranted() {
                 Logger.d(TAG, "[onReleaseCallback] granted : $this")
             }
-
-            override fun onDenied() {
-            }
         }
 
-        override fun getPlayServiceId(): String? = payload.playServiceId
-
-        override fun getDialogRequestId(): String = directive.getDialogRequestId()
+        override val playServiceId: String? = payload.playServiceId
+        override val dialogRequestId: String = directive.getDialogRequestId()
 
         override fun requestReleaseSync() {
             executor.submit {
@@ -186,20 +169,8 @@ class DefaultDisplayAgent(
             sessionManager.activate(header.dialogRequestId, this)
 
             lastUpdateDirectivePlaySyncObject = object : PlaySynchronizerInterface.SynchronizeObject {
-                override fun getPlayServiceId(): String? = payload.playServiceId
-
-                override fun getDialogRequestId(): String = header.dialogRequestId
-
-                override fun requestReleaseSync() {
-                    // nothing.
-                }
-
-                override fun onSyncStateChanged(
-                    prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-                    started: List<PlaySynchronizerInterface.SynchronizeObject>
-                ) {
-                    // nothing.
-                }
+                override val playServiceId: String? = payload.playServiceId
+                override val dialogRequestId: String = header.dialogRequestId
             }.apply {
                 playSynchronizer.prepareSync(this)
                 playSynchronizer.startSync(this)
@@ -364,11 +335,8 @@ class DefaultDisplayAgent(
                         override fun onGranted() {
                             playSynchronizer.releaseSync(it.dummyPlaySyncForTimer, it.onReleaseCallback)
                         }
-
-                        override fun onDenied() {
-                        }
                     })
-                    synchronizer.startSync(it, null)
+                    synchronizer.startSync(it)
                 }
                 interLayerDisplayPolicyManager.onDisplayLayerRendered(it.layerForInterLayerDisplayPolicy)
 
@@ -378,13 +346,13 @@ class DefaultDisplayAgent(
 
                 it.renderResultListener?.onSuccess()
                 it.renderResultListener = null
-                sessionManager.activate(it.getDialogRequestId(), it)
+                sessionManager.activate(it.dialogRequestId, it)
                 it.playContext =  it.payload.playStackControl?.getPushPlayServiceId()?.let { pushPlayServiceId ->
                     PlayStackManagerInterface.PlayContext(pushPlayServiceId, System.currentTimeMillis())
                 }
 
                 listeners.forEach { listener ->
-                    listener.onRendered(templateId, it.getDialogRequestId())
+                    listener.onRendered(templateId, it.dialogRequestId)
                 }
             }
         }
@@ -409,7 +377,7 @@ class DefaultDisplayAgent(
                 interLayerDisplayPolicyManager.onDisplayLayerCleared(it.layerForInterLayerDisplayPolicy)
 
                 listeners.forEach { listener ->
-                    listener.onCleared(templateId, it.getDialogRequestId(), !it.clearRequested)
+                    listener.onCleared(templateId, it.dialogRequestId, !it.clearRequested)
                 }
             }
         }
@@ -420,7 +388,7 @@ class DefaultDisplayAgent(
         contextLayerTimer?.get(info.payload.getContextLayerInternal())?.stop(templateId)
         templateDirectiveInfoMap.remove(templateId)
         templateControllerMap.remove(templateId)
-        sessionManager.deactivate(info.getDialogRequestId(), info)
+        sessionManager.deactivate(info.dialogRequestId, info)
         info.lastUpdateDirectiveHeader?.let {
             sessionManager.deactivate(it.dialogRequestId, info)
         }

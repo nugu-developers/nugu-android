@@ -40,13 +40,7 @@ class TTSScenarioPlayer(
     companion object {
         private const val TAG = "TTSScenarioPlayer"
         private val DUMMY_PLAY_SYNC_CALLBACK =
-            object : PlaySynchronizerInterface.OnRequestSyncListener {
-                override fun onGranted() {
-                }
-
-                override fun onDenied() {
-                }
-            }
+            object : PlaySynchronizerInterface.OnRequestSyncListener {}
     }
 
     interface Listener {

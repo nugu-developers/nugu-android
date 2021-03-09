@@ -90,19 +90,11 @@ class MessageAgent(
                 override fun getPushPlayServiceId(): String? =
                     directive.payload.playStackControl?.getPushPlayServiceId()
 
-                override fun getPlayServiceId(): String? = directive.payload.playServiceId
-
-                override fun getDialogRequestId(): String = directive.header.dialogRequestId
+                override val playServiceId: String? = directive.payload.playServiceId
+                override val dialogRequestId: String = directive.header.dialogRequestId
 
                 override fun requestReleaseSync() {
                     cancel(directive.header.messageId)
-                }
-
-                override fun onSyncStateChanged(
-                    prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-                    started: List<PlaySynchronizerInterface.SynchronizeObject>
-                ) {
-                    // no-op
                 }
             }
 
@@ -132,7 +124,7 @@ class MessageAgent(
             override fun onPlaybackStarted(source: TTSScenarioPlayer.Source) {
                 // no-op
                 state = TTSAgentInterface.State.PLAYING
-                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
 
                 readSource?.let { source->
                     token = source.directive.payload.token
@@ -147,7 +139,7 @@ class MessageAgent(
 
             override fun onPlaybackFinished(source: TTSScenarioPlayer.Source) {
                 state = TTSAgentInterface.State.FINISHED
-                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
 
                 readSource?.let {source->
                     source.callback.onFinish()
@@ -163,7 +155,7 @@ class MessageAgent(
 
             override fun onPlaybackStopped(source: TTSScenarioPlayer.Source) {
                 state = TTSAgentInterface.State.STOPPED
-                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
 
                 readSource?.let {source->
                     source.callback.onStop(true)
@@ -183,7 +175,7 @@ class MessageAgent(
                 error: String
             ) {
                 state = TTSAgentInterface.State.STOPPED
-                val readSource = directives.filter { it.value.getDialogRequestId() == source.getDialogRequestId() }.map { it.value }.firstOrNull()
+                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
 
                 readSource?.let {source->
                     source.callback.onError("type: $type, error: $error")

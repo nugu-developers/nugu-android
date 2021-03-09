@@ -17,19 +17,19 @@ package com.skt.nugu.sdk.core.interfaces.playsynchronizer
 
 interface PlaySynchronizerInterface {
     interface OnRequestSyncListener {
-        fun onGranted()
-        fun onDenied()
+        fun onGranted(){}
+        fun onDenied(){}
     }
 
     interface SynchronizeObject {
-        fun getPlayServiceId(): String?
-        fun getDialogRequestId(): String
+        val playServiceId : String?
+        val dialogRequestId : String
 
-        fun requestReleaseSync()
+        fun requestReleaseSync(){}
         fun onSyncStateChanged(
             prepared: List<SynchronizeObject>,
             started: List<SynchronizeObject>
-        )
+        ){}
     }
 
     fun prepareSync(synchronizeObject: SynchronizeObject)

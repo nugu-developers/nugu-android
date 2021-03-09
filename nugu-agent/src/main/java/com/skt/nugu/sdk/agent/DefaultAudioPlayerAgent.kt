@@ -212,7 +212,7 @@ class DefaultAudioPlayerAgent(
         override fun getOffsetInMilliseconds(): Long? =
             this@DefaultAudioPlayerAgent.getOffsetInMilliseconds()
 
-        override fun getPlayServiceId(): String? = currentItem?.getPlayServiceId()
+        override fun getPlayServiceId(): String? = currentItem?.playServiceId
     }
 
     private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
@@ -229,9 +229,10 @@ class DefaultAudioPlayerAgent(
     inner class AudioInfo(
         val payload: PlayPayload,
         val directive: Directive,
-        private val playServiceId: String
+        override val playServiceId: String
     ) : PlaySynchronizerInterface.SynchronizeObject {
-        var referrerDialogRequestId: String = getDialogRequestId()
+        override val dialogRequestId: String =  directive.getDialogRequestId()
+        var referrerDialogRequestId: String = dialogRequestId
         var sourceAudioInfo:AudioInfo? = this
         var isFetched = false
         var isCanceled = false
@@ -251,16 +252,9 @@ class DefaultAudioPlayerAgent(
                     directive.destroy()
                 }
             }
-
-            override fun onDenied() {
-            }
         }
 
         var playContext: PlayStackManagerInterface.PlayContext? = null
-
-        override fun getPlayServiceId(): String? = playServiceId
-
-        override fun getDialogRequestId(): String = directive.getDialogRequestId()
 
         override fun requestReleaseSync() {
             executor.submit {
@@ -287,13 +281,6 @@ class DefaultAudioPlayerAgent(
                     }
                 }
             }
-        }
-
-        override fun onSyncStateChanged(
-            prepared: List<PlaySynchronizerInterface.SynchronizeObject>,
-            started: List<PlaySynchronizerInterface.SynchronizeObject>
-        ) {
-            // no-op
         }
 
         fun getCacheKey(): CacheKey? = payload.cacheKey?.let {
@@ -396,8 +383,8 @@ class DefaultAudioPlayerAgent(
                     Logger.d(TAG, "[onPreExecute::$INNER_TAG] in executor - play new item: ${directive.getMessageId()}")
                     audioPlayerTemplateHandler?.shouldBeRender(nextAudioInfo.directive)
                     // stop current if play new item.
-                    val currentPlayServiceId = currentAudioInfo?.getPlayServiceId()
-                    val nextPlayServiceId = nextAudioInfo.getPlayServiceId()
+                    val currentPlayServiceId = currentAudioInfo?.playServiceId
+                    val nextPlayServiceId = nextAudioInfo.playServiceId
                     val stopReason = if(currentPlayServiceId == nextPlayServiceId) {
                         StopReason.PLAY_ANOTHER
                     } else {
@@ -458,7 +445,7 @@ class DefaultAudioPlayerAgent(
             Logger.d(TAG, "[executeFetchItem::$INNER_TAG] item: $item")
             progressTimer.stop()
             currentItem = item
-            playServiceId = item.getPlayServiceId()
+            playServiceId = item.playServiceId
             token = item.payload.audioItem.stream.token
             item.playContext = item.payload.playStackControl?.getPushPlayServiceId()?.let {
                 PlayStackManagerInterface.PlayContext(it, System.currentTimeMillis(), true)
@@ -596,7 +583,7 @@ class DefaultAudioPlayerAgent(
             if(prev == null || !currentActivity.isActive() || sourceId.isError()) {
                 return false
             } else {
-                if(prev.getPlayServiceId() != next.getPlayServiceId()) {
+                if(prev.playServiceId != next.playServiceId) {
                     return false
                 }
 
@@ -1047,10 +1034,10 @@ class DefaultAudioPlayerAgent(
             current.sourceAudioInfo?.let { source ->
                 return AudioPlayerAgentInterface.Context(
                     source.payload.playServiceId+";"+source.payload.audioItem.stream.token,
-                    source.getDialogRequestId(),
+                    source.dialogRequestId,
                     current.payload.audioItem.metaData?.template?.toString(),
                     getOffsetInMilliseconds(),
-                    current.getDialogRequestId()
+                    current.dialogRequestId
                 )
             }
         }
@@ -1434,15 +1421,7 @@ class DefaultAudioPlayerAgent(
 
         playCalled = true
 
-        playSynchronizer.startSync(
-            item,
-            object : PlaySynchronizerInterface.OnRequestSyncListener {
-                override fun onGranted() {
-                }
-
-                override fun onDenied() {
-                }
-            })
+        playSynchronizer.startSync(item)
     }
 
     override fun provideState(
@@ -1799,7 +1778,7 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun show(playServiceId: String): Boolean {
-        return if (currentItem?.getPlayServiceId() == playServiceId) {
+        return if (currentItem?.playServiceId == playServiceId) {
             lyricsPresenter?.show() ?: false
         } else {
             false
@@ -1807,7 +1786,7 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun hide(playServiceId: String): Boolean {
-        return if (currentItem?.getPlayServiceId() == playServiceId) {
+        return if (currentItem?.playServiceId == playServiceId) {
             lyricsPresenter?.hide() ?: false
         } else {
             false
@@ -1818,7 +1797,7 @@ class DefaultAudioPlayerAgent(
         playServiceId: String,
         direction: Direction
     ): Boolean {
-        return if (currentItem?.getPlayServiceId() == playServiceId) {
+        return if (currentItem?.playServiceId == playServiceId) {
             lyricsPresenter?.controlPage(direction) ?: false
         } else {
             false
