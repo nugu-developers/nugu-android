@@ -103,12 +103,6 @@ class AudioPlayerTemplateHandler(
         var shouldBeUpdateDirective: Directive? = null
         var handleDirectiveCalled = false
 
-        val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
-            override fun onGranted() {
-                Logger.d(TAG, "[onReleaseCallback] granted : $this")
-            }
-        }
-
         val layerForInterLayerDisplayPolicy = object : InterLayerDisplayPolicyManager.DisplayLayer {
             override fun clear() {
                 executor.submit {
@@ -248,7 +242,7 @@ class AudioPlayerTemplateHandler(
     }
 
     private fun releaseSyncForce(info: TemplateDirectiveInfo) {
-        playSynchronizer.releaseSyncImmediately(info, info.onReleaseCallback)
+        playSynchronizer.releaseSyncImmediately(info)
     }
 
     private fun executeRender(info: TemplateDirectiveInfo) {
