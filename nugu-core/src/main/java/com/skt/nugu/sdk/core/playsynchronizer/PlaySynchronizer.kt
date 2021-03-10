@@ -168,13 +168,6 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         releaseSyncInternal(synchronizeObject, listener, true)
     }
 
-//    override fun releaseWithoutSync(synchronizeObject: PlaySynchronizerInterface.SynchronizeObject) {
-//        lock.withLock {
-//            syncContext.finish(synchronizeObject, false)
-//            Logger.d(TAG, "[releaseWithoutSync] syncContext: $syncContext")
-//        }
-//    }
-
     private fun releaseSyncInternal(
         synchronizeObject: PlaySynchronizerInterface.SynchronizeObject,
         listener: PlaySynchronizerInterface.OnRequestSyncListener?,
