@@ -110,12 +110,6 @@ class DefaultDisplayAgent(
             override fun getPushPlayServiceId(): String? = payload.playStackControl?.getPushPlayServiceId()
         }
 
-        val onReleaseCallback = object : PlaySynchronizerInterface.OnRequestSyncListener {
-            override fun onGranted() {
-                Logger.d(TAG, "[onReleaseCallback] granted : $this")
-            }
-        }
-
         override val playServiceId: String? = payload.playServiceId
         override val dialogRequestId: String = directive.getDialogRequestId()
 
@@ -285,8 +279,8 @@ class DefaultDisplayAgent(
 
     private fun releaseSyncImmediately(info: TemplateDirectiveInfo) {
         playSynchronizer.let {
-            it.releaseSyncImmediately(info, info.onReleaseCallback)
-            it.releaseSyncImmediately(info.dummyPlaySyncForTimer, info.onReleaseCallback)
+            it.releaseSyncImmediately(info)
+            it.releaseSyncImmediately(info.dummyPlaySyncForTimer)
             info.lastUpdateDirectivePlaySyncObject?.let {playSyncObject ->
                 it.releaseSyncImmediately(playSyncObject)
             }
@@ -333,7 +327,7 @@ class DefaultDisplayAgent(
                     contextLayerTimer?.get(it.payload.getContextLayerInternal())?.stop(templateId)
                     synchronizer.startSync(it.dummyPlaySyncForTimer, object: PlaySynchronizerInterface.OnRequestSyncListener{
                         override fun onGranted() {
-                            playSynchronizer.releaseSync(it.dummyPlaySyncForTimer, it.onReleaseCallback)
+                            playSynchronizer.releaseSync(it.dummyPlaySyncForTimer)
                         }
                     })
                     synchronizer.startSync(it)
