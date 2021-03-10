@@ -56,6 +56,7 @@ class SettingsServiceActivity : AppCompatActivity(), NuguWebView.WindowListener 
 
         with(webView) {
             authorization = NuguOAuth.getClient().getAuthorization()
+            deviceUniqueId = NuguOAuth.getClient().deviceUniqueId()
             pocId = ConfigurationStore.configuration.pocId
             redirectUri = OAUTH_REDIRECT_URI
             appVersion = BuildConfig.VERSION_NAME

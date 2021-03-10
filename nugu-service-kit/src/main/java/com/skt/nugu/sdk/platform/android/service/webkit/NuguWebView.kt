@@ -80,7 +80,8 @@ class NuguWebView @JvmOverloads constructor(
             "Phone-Model-Name" to Build.MODEL,
             "Oauth-Redirect-Uri" to redirectUri.toString(),
             "Client-Id" to clientId.toString(),
-            "Grant-Type" to grantType.toString()
+            "Grant-Type" to grantType.toString(),
+            "Device-Unique-Id" to deviceUniqueId.toString()
         )
     }
 
@@ -95,6 +96,7 @@ class NuguWebView @JvmOverloads constructor(
     var redirectUri : String? = null
     var clientId : String? = null
     var grantType : String? = null
+    var deviceUniqueId: String? = null
 
     init {
         addView(
