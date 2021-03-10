@@ -750,4 +750,10 @@ class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
         }
     }
 
+    fun deviceUniqueId() = try {
+        options.deviceUniqueId
+    } catch (e : UninitializedPropertyAccessException ) {
+        Logger.w(TAG, "[deviceUniqueId] : $e")
+        null
+    }
 }
