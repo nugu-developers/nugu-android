@@ -15,26 +15,83 @@
  */
 package com.skt.nugu.sdk.core.interfaces.playsynchronizer
 
+/**
+ * Synchronize of the start, end and cancellation between associated plays.
+ * (Associated plays means that have equal dialogRequestId)
+ */
 interface PlaySynchronizerInterface {
     interface OnRequestSyncListener {
         fun onGranted(){}
         fun onDenied(){}
     }
 
+    /**
+     * The synchronize object to interact with [PlaySynchronizerInterface]
+     */
     interface SynchronizeObject {
+        /**
+         * A playServiceId if exist.
+         */
         val playServiceId : String?
+
+        /**
+         * A dialogRequestId
+         */
         val dialogRequestId : String
 
+        /**
+         * Called when a synchronize object should be released.
+         *
+         * Implementer should cancel or stop the play associated with the synchronizeObject
+         */
         fun requestReleaseSync(){}
+
+        /**
+         * Called when a sync state changed.
+         * The sync state changed at [prepareSync], [startSync], [releaseSync], [releaseSyncImmediately], [cancelSync] called for assocated synchronizeObject.
+         * @param prepared prepared synchronizeObjects associated with the synchronizeObject
+         * @param started prepared synchronizeObjects associated with the synchronizeObject
+         */
         fun onSyncStateChanged(
             prepared: List<SynchronizeObject>,
             started: List<SynchronizeObject>
         ){}
     }
 
+    /**
+     * Notify that a [synchronizeObject] is preparing to start.
+     *
+     * @param synchronizeObject the synchronizeObject
+     */
     fun prepareSync(synchronizeObject: SynchronizeObject)
+
+    /**
+     * Notify that a [synchronizeObject] has been started.
+     *
+     * @param synchronizeObject the synchronizeObject
+     * @param listener the listener. If [synchronizeObject] is not prepared or release, [OnRequestSyncListener.onDenied] will be called.
+     */
     fun startSync(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener? = null)
+
+    /**
+     * Notify that a [synchronizeObject] was finished.
+     *
+     * @param synchronizeObject the synchronizeObject
+     * @param listener the listener. If [synchronizeObject] is not prepared or started, [OnRequestSyncListener.onDenied] will be called.
+     */
     fun releaseSync(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener? = null)
+
+    /**
+     * Notify that a [synchronizeObject] was stopped or canceled.
+     *
+     * @param synchronizeObject the synchronizeObject
+     * @param listener the listener. If [synchronizeObject] is not prepared or started, [OnRequestSyncListener.onDenied] will be called.
+     */
     fun releaseSyncImmediately(synchronizeObject: SynchronizeObject, listener: OnRequestSyncListener? = null)
+
+    /**
+     * Cancel plays(synchronizeObject) with matching [dialogRequestId]
+     * @param dialogRequestId the dialogRequestId
+     */
     fun cancelSync(dialogRequestId: String)
 }
