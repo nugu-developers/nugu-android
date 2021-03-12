@@ -302,7 +302,7 @@ class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
     /**
      * Returns true if server-initiative-directive is supported.
      **/
-    fun isSidSupported(): Boolean {
+    override fun isSidSupported(): Boolean {
         return getScope()?.contains("device:S.I.D.") ?: false
     }
 

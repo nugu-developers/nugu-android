@@ -31,8 +31,6 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.AgentFactory
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.client.configuration.configure
-import com.skt.nugu.sdk.client.port.transport.grpc2.GrpcTransportFactory
-import com.skt.nugu.sdk.client.port.transport.grpc2.NuguServerInfo
 import com.skt.nugu.sdk.core.interfaces.context.WakeupWordContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -201,17 +199,6 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                     )
                 }
             })
-            .transportFactory(
-                GrpcTransportFactory(NuguServerInfo(object : NuguServerInfo.Delegate {
-                    override fun getNuguServerInfo() : NuguServerInfo {
-                        val metadata = ConfigurationStore.configurationMetadataSync()
-                        return NuguServerInfo.Builder().deviceGW(metadata?.deviceGatewayServerGrpcUri)
-                            .registry(metadata?.deviceGatewayRegistryUri)
-                            .keepConnection(NuguOAuth.getClient().isSidSupported())
-                            .build()
-                    }
-                }))
-            )
             .endPointDetectorFilePath(context.getDir(
                 "skt_nugu_assets",
                 Context.MODE_PRIVATE

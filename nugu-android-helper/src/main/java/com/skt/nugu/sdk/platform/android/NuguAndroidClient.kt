@@ -188,7 +188,7 @@ class NuguAndroidClient private constructor(
         }
 
         internal var dialogUXStateTransitionDelay: Long = 200L
-        internal var transportFactory: TransportFactory = DefaultTransportFactory()
+        internal var transportFactory: TransportFactory = DefaultTransportFactory.buildTransportFactory(authDelegate)
         internal var systemExceptionDirectiveDelegate: ExceptionDirectiveDelegate? = null
         internal var asrBeepResourceProvider: AsrBeepResourceProvider? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
@@ -457,11 +457,11 @@ class NuguAndroidClient private constructor(
     private val audioFocusInteractor: AudioFocusInteractor?
 
     private val client: NuguClient = NuguClient.Builder(
-        builder.authDelegate
+        builder.authDelegate,
+        builder.transportFactory
     ).logger(builder.logger)
         .systemExceptionDirectiveDelegate(builder.systemExceptionDirectiveDelegate)
         .preferences(builder.preferences)
-        .transportFactory(builder.transportFactory)
         .sdkVersion(BuildConfig.VERSION_NAME)
         .apply {
             fun addCustomAgent() {

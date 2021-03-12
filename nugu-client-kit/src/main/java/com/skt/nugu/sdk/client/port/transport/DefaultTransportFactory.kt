@@ -14,9 +14,26 @@
  * limitations under the License.
  */
 package com.skt.nugu.sdk.client.port.transport
-import com.skt.nugu.sdk.client.port.transport.grpc.GrpcTransportFactory
+
+import com.skt.nugu.sdk.client.configuration.ConfigurationStore
+import com.skt.nugu.sdk.client.port.transport.grpc2.GrpcTransportFactory
+import com.skt.nugu.sdk.client.port.transport.grpc2.NuguServerInfo
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 
 /**
  * Creates the default transport.
  */
-typealias DefaultTransportFactory = GrpcTransportFactory
+class DefaultTransportFactory {
+    companion object {
+        fun buildTransportFactory(authDelegate: AuthDelegate) =
+            GrpcTransportFactory(NuguServerInfo(object : NuguServerInfo.Delegate {
+                override fun getNuguServerInfo(): NuguServerInfo {
+                    val metadata = ConfigurationStore.configurationMetadataSync()
+                    return NuguServerInfo.Builder().deviceGW(metadata?.deviceGatewayServerGrpcUri)
+                        .registry(metadata?.deviceGatewayRegistryUri)
+                        .keepConnection(authDelegate.isSidSupported())
+                        .build()
+                }
+            }))
+    }
+}
