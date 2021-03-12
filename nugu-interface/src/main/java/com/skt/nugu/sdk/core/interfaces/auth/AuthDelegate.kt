@@ -27,7 +27,6 @@ interface AuthDelegate {
 
     /**
      * Returns true if server-initiative-directive is supported.
-     * For lower version, false is returned by default.
      **/
-    fun isSidSupported(): Boolean = false
+    fun isSidSupported(): Boolean
 }

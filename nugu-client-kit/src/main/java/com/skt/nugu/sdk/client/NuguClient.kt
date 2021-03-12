@@ -37,7 +37,6 @@ import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
-import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
@@ -74,10 +73,9 @@ class NuguClient private constructor(
     }
 
     data class Builder(
-        internal val authDelegate: AuthDelegate
+        internal val authDelegate: AuthDelegate,
+        internal val transportFactory: TransportFactory
     ) {
-        internal var transportFactory: TransportFactory = DefaultTransportFactory()
-
         // Log
         internal var logger: LogInterface? = null
 
@@ -97,8 +95,6 @@ class NuguClient private constructor(
          * @param delegate the delegate which handle System.Exception directive.
          */
         fun systemExceptionDirectiveDelegate(delegate: ExceptionDirectiveDelegate?) = apply { this.systemExceptionDelegate = delegate }
-
-        fun transportFactory(factory: TransportFactory) = apply { transportFactory = factory }
 
         fun addAgentFactory(namespace: String, factory: AgentFactory<*>) =
             apply { agentFactoryMap[namespace] = factory }
