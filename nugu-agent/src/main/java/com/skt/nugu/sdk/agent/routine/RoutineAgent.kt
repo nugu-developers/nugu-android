@@ -139,7 +139,7 @@ class RoutineAgent(
     ): SeamlessFocusManagerInterface.Requester {
         private var currentActionIndex: Int = 0
         private var currentActionHandlingListener : DirectiveGroupHandlingListener? = null
-        private var currentActionDialogRequestId: String? = null
+        var currentActionDialogRequestId: String? = null
         var isPaused = false
         private var isCanceled = false
         private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
@@ -152,13 +152,15 @@ class RoutineAgent(
             }
         }
 
-        fun cancel() {
-            Logger.d(TAG, "[RoutineRequest] cancel: $isCanceled")
+        fun cancel(cancelCurrentAction: Boolean = true) {
+            Logger.d(TAG, "[RoutineRequest] cancel: $isCanceled, cancelCurrentAction: $cancelCurrentAction")
             if(isCanceled) {
                 return
             }
             isCanceled = true
-            cancelCurrentAction()
+            if(cancelCurrentAction) {
+                cancelCurrentAction()
+            }
             listener.onCancel()
         }
 
@@ -169,14 +171,16 @@ class RoutineAgent(
             }
         }
 
-        fun pause() {
-            Logger.d(TAG, "[RoutineRequest] pause")
-            cancelCurrentAction()
+        fun pause(cancelCurrentAction: Boolean = true) {
+            Logger.d(TAG, "[RoutineRequest] pause - cancelCurrentAction: $cancelCurrentAction")
+            if(cancelCurrentAction) {
+                cancelCurrentAction()
+            }
             scheduledFutureForTryStartNextAction?.cancel(true)
             scheduledFutureForTryStartNextAction = null
             scheduledFutureForCancelByInterrupt?.cancel(true)
             scheduledFutureForCancelByInterrupt = executor.schedule({
-                cancel()
+                cancel(cancelCurrentAction)
             }, 60, TimeUnit.SECONDS)
             isPaused = true
         }
@@ -361,7 +365,8 @@ class RoutineAgent(
                         causingPauseRequests[request.dialogRequestId] = request
                         currentRoutineRequest?.let {
                             Logger.d(TAG, "[onPreSendMessage] pause routine by: $request")
-                            it.pause()
+                            // If the request is caused by the current action, do not cancel current action.
+                            it.pause(request.referrerDialogRequestId != it.currentActionDialogRequestId)
                         }
                     }
                 }
@@ -394,7 +399,8 @@ class RoutineAgent(
                 if(directive.getNamespace() == "ASR" && directive.getName() == "ExpectSpeech") {
                     currentRoutineRequest?.let {
                         Logger.d(TAG, "pause routine by ASR.ExpectSpeech directive")
-                        it.pause()
+                        // If the request is caused by the current action, do not cancel current action.
+                        it.pause(directive.getDialogRequestId() != currentRoutineRequest?.currentActionDialogRequestId)
                     }
                 }
             }
