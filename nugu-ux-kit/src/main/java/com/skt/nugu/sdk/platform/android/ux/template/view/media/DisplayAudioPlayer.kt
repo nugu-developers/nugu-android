@@ -97,7 +97,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val transitionDuration = 400L
     private var mediaDurationMs = 0L
 
-    private val thumbTransform = RoundedCorners(dpToPx(10.7f, context))
+    private val thumbTransform = RoundedCorners(dpToPx(2f, context))
 
     private var audioPlayerItem: AudioPlayer? = null
 
