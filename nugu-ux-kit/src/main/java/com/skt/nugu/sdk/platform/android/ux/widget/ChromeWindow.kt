@@ -201,6 +201,10 @@ class ChromeWindow(context: Context, val view: View) :
         callback?.onExpandStarted()
     }
 
+    fun updateChips(payload: RenderDirective.Payload) {
+        contentLayout.updateChips(payload)
+    }
+
     private fun handleListening() {
         contentLayout.hideText()
         contentLayout.hideChips()
