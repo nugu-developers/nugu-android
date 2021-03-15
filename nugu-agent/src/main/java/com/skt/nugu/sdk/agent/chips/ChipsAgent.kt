@@ -38,7 +38,7 @@ class ChipsAgent(
     companion object {
         private const val TAG = "ChipsAgent"
         const val NAMESPACE = "Chips"
-        private val VERSION = Version(1, 1)
+        private val VERSION = Version(1, 2)
 
         private fun buildCompactContext(): JsonObject = JsonObject().apply {
             addProperty("version", VERSION.toString())
