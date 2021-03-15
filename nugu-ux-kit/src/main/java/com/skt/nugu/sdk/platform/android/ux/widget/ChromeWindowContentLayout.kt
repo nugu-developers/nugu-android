@@ -199,6 +199,8 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         }
     }
 
+    fun isChipsEmpty() = chipsView.size() == 0
+
     fun startAnimation(animation: NuguVoiceChromeView.Animation) {
         voiceChrome.startAnimation(animation)
     }

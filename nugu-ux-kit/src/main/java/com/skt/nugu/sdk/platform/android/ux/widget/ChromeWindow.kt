@@ -205,6 +205,8 @@ class ChromeWindow(context: Context, val view: View) :
         contentLayout.updateChips(payload)
     }
 
+    fun isChipsEmpty() = contentLayout.isChipsEmpty()
+
     private fun handleListening() {
         contentLayout.hideText()
         contentLayout.hideChips()
