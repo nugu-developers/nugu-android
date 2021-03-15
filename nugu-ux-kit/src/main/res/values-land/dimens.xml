@@ -1,0 +1,4 @@
+<resources>
+    <!-- media player -->
+    <dimen name="media_player_controller_margin">24dp</dimen>
+</resources>

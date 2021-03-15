@@ -67,21 +67,21 @@
             android:id="@+id/btn_bar_prev"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="@dimen/media_player_controller_margin"
             android:src="@drawable/nugu_btn_skip_previous_32" />
 
         <ImageView
             android:id="@+id/btn_bar_play"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="@dimen/media_player_controller_margin"
             android:src="@drawable/nugu_btn_play_32" />
 
         <ImageView
             android:id="@+id/btn_bar_next"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="@dimen/media_player_controller_margin"
             android:src="@drawable/nugu_btn_skip_next_32" />
 
         <ImageView
