@@ -147,7 +147,7 @@ open class DefaultTemplateHandler(val nuguProvider: TemplateRenderer.NuguClientP
         }
     }
 
-    private fun startMediaProgressSending() {
+    fun startMediaProgressSending() {
         Logger.d(TAG, "startProgressMessageSending")
         mediaProgressJob?.cancel()
 
@@ -173,8 +173,12 @@ open class DefaultTemplateHandler(val nuguProvider: TemplateRenderer.NuguClientP
 
     fun observeMediaState() {
         Logger.i(TAG, "observeMediaState")
-        getNuguClient().audioPlayerAgent?.addListener(mediaStateListener)
-        getNuguClient().audioPlayerAgent?.addOnDurationListener(mediaDurationListener)
+        getNuguClient().audioPlayerAgent?.run {
+            removeListener(mediaStateListener)
+            addListener(mediaStateListener)
+            removeOnDurationListener(mediaDurationListener)
+            addOnDurationListener(mediaDurationListener)
+        }
     }
 
     override fun clear() {

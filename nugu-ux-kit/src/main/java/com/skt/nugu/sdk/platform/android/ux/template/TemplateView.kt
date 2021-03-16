@@ -19,6 +19,7 @@ import android.content.Context
 import android.view.View
 import androidx.annotation.MainThread
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
@@ -38,7 +39,7 @@ interface TemplateView {
         val templateConstructor: HashMap<List<String>, (String, Context) -> TemplateView> by lazy {
             HashMap<List<String>, (String, Context) -> TemplateView>().also {
                 it[MEDIA_TEMPLATE_TYPES] = { templateType, context ->
-                    DisplayAudioPlayer(templateType, context)
+                    DisplayAudioPlayer(templateType, context).apply { id = R.id.template_view }
                 }
             }
         }
