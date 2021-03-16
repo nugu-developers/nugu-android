@@ -59,5 +59,8 @@ class TemplateViewModel : ViewModel() {
         onClose?.invoke()
         Logger.d(TAG, "cleared")
         templateHandler?.clear()
+
+        onClose = null
+        templateHandler = null
     }
 }
