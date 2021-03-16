@@ -124,19 +124,19 @@ class TemplateFragment : Fragment() {
         parent?.run {
             with(templateView!!) {
 
-                templateHandler = BasicTemplateHandler(
-                    viewModel.nuguClientProvider,
-                    TemplateInfo(getTemplateId()),
-                    this@TemplateFragment)
+                if (viewModel.templateHandler != null) {
+                    templateHandler = viewModel.templateHandler
+                } else {
+                    templateHandler = BasicTemplateHandler(
+                        viewModel.nuguClientProvider,
+                        TemplateInfo(getTemplateId()),
+                        this@TemplateFragment)
+                    viewModel.templateHandler = templateHandler
+                }
 
                 addView(this.asView())
             }
         }
-    }
-
-    override fun onDestroy() {
-        templateView?.templateHandler?.clear()
-        super.onDestroy()
     }
 
     private fun loadTemplate() {
@@ -184,21 +184,15 @@ class TemplateFragment : Fragment() {
         return TemplateView.MEDIA_TEMPLATE_TYPES.contains(getTemplateType())
     }
 
-    fun reload(templateContent: String) {
-        mainHandler.post {
-            templateView?.run {
-                (templateHandler as? BasicTemplateHandler)?.templateInfo = TemplateInfo(getTemplateId())
-                load(templateContent, TemplateRenderer.DEVICE_TYPE_CODE, getDialogRequestedId(), onLoadingComplete = {
-                    notifyRendered()
-                })
-            }
-        }
-    }
-
     fun update(templateContent: String) {
         Logger.d(TAG, "update template : $templateContent")
+
         mainHandler.post {
             templateView?.update(templateContent, getDialogRequestedId())
+        }
+
+        arguments?.run {
+            putString(ARG_TEMPLATE, viewModel.mergeTemplate(getString(ARG_TEMPLATE, ""), templateContent))
         }
     }
 

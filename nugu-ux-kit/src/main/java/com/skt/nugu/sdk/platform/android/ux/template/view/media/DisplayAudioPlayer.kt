@@ -17,8 +17,12 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.text.TextUtils
 import android.util.AttributeSet
+import android.view.AbsSavedState
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -96,6 +100,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val interpolator = AccelerateDecelerateInterpolator()
     private val transitionDuration = 400L
     private var mediaDurationMs = 0L
+    private var mediaPlaying = false
 
     private val thumbTransform = RoundedCorners(dpToPx(2f, context))
 
@@ -124,7 +129,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val mediaListener = object : TemplateHandler.ClientListener {
         override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
             post {
-                if (activity == AudioPlayerAgentInterface.State.PLAYING) {
+                mediaPlaying = activity == AudioPlayerAgentInterface.State.PLAYING
+                if (mediaPlaying) {
                     play.setImageResource(R.drawable.nugu_btn_pause_48)
                     bar_play.setImageResource(R.drawable.nugu_btn_pause_32)
                 } else {
@@ -165,7 +171,50 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
+    internal class SavedStates(
+        superState: Parcelable,
+        var durationMs: Long,
+        var mediaPlaying: Boolean
+    ) :
+        AbsSavedState(superState) {
+
+        override fun writeToParcel(dest: Parcel?, flags: Int) {
+            super.writeToParcel(dest, flags)
+            dest?.writeLong(durationMs)
+            dest?.writeBoolean(mediaPlaying)
+        }
+    }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        super.onSaveInstanceState()
+        return SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
+            mediaDurationMs,
+            mediaPlaying)
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
+
+        (state as? SavedStates)?.let { savedState ->
+            mediaDurationMs = savedState.durationMs
+            mediaPlaying = savedState.mediaPlaying
+
+            fulltime.post {
+                fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
+            }
+
+            if (mediaPlaying) {
+                play.post {
+                    play.setImageResource(R.drawable.nugu_btn_pause_48)
+                    bar_play.setImageResource(R.drawable.nugu_btn_pause_32)
+                }
+            }
+        }
+    }
+
     init {
+        isSaveEnabled = true
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             findViewById<View>(R.id.album_cover)?.elevation = dpToPx(11f, context).toFloat()
         }
@@ -444,7 +493,6 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        templateHandler?.clear()
 
         (templateHandler as? DefaultTemplateHandler)?.run {
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
