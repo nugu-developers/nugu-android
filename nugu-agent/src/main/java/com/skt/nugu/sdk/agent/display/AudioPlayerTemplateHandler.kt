@@ -250,7 +250,6 @@ class AudioPlayerTemplateHandler(
         currentInfo = info
 
         val template = info.directive
-        Logger.d(TAG, "[executeRender] $info")
         val willBeRender = renderer?.render(
             info.sourceTemplateId,
             "$NAMESPACE.${template.getName()}",
@@ -398,11 +397,15 @@ class AudioPlayerTemplateHandler(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy()
+        val blockingPolicy = BlockingPolicy(
+            BlockingPolicy.MEDIUM_AUDIO,
+            BlockingPolicy.MEDIUM_AUDIO_ONLY
+        )
+
         val configuration = java.util.HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[AUDIOPLAYER_TEMPLATE1] = nonBlockingPolicy
-        configuration[AUDIOPLAYER_TEMPLATE2] = nonBlockingPolicy
+        configuration[AUDIOPLAYER_TEMPLATE1] = blockingPolicy
+        configuration[AUDIOPLAYER_TEMPLATE2] = blockingPolicy
 
         return configuration
     }
