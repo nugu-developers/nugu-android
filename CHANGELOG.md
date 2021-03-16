@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+Version 0.9.51 *(2021-03-16)*
+-----------------------------
+* Fix: Remove unused dependencies (#1621)
+* Fix: Fixed a case where the action of the current routine was incorrectly canceled (#1635)
+    * If the occurred event is triggered by the current action, do not cancel it.
+* Improve: Update IntroActivity (#1598)
+* Improve: Improve gRPC connection for backoff and reconnect (#1627)
+* Improve: Update NuguWebView (#1628)
+* Improve: Move default transportFactory from ClientManager to NuguAndroidClient #1632 (#1637)
+* Improve: Update ChromeWindow (#1641)
+* New: Support Chips Interface v1.2 #1583 (#1640)
+
 Version 0.9.50 *(2021-03-05)*
 -----------------------------
 * Fix: Ignore external audio focus result (#1617)
