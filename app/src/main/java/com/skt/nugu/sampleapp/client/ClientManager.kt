@@ -203,7 +203,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 "skt_nugu_assets",
                 Context.MODE_PRIVATE
             ).absolutePath + File.separator + "skt_epd_model.raw")
-            .soundProvider(object : SoundProvider {
+            .enableSound(object : SoundProvider {
                 override fun getContentUri(name: SoundProvider.BeepName): URI {
                     return URI.create(
                         Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsefail_800ms)
