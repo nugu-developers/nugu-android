@@ -267,7 +267,7 @@ class NuguAndroidClient private constructor(
         internal var messageClient: MessageClient? = null
 
         // location agent (optional)
-        internal var enableLocation: Boolean = true
+        internal var enableLocation: Boolean = false
         internal var locationProvider: LocationProvider? = null
 
         // chips agent (optional)
