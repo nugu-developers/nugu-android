@@ -374,7 +374,7 @@ class NuguAndroidClient private constructor(
         /**
          * @param provider the battery status provider. If it is null, battery agent not added.
          */
-        fun enableBattery(provider: BatteryStatusProvider) = apply { this.batteryStatusProvider = provider }
+        fun enableBattery(provider: BatteryStatusProvider?) = apply { this.batteryStatusProvider = provider }
 
         /**
          * @param microphone the default microphone which controlled by NUGU. If it is null, microphone agent not added.
@@ -409,7 +409,7 @@ class NuguAndroidClient private constructor(
         /**
          * @param locationProvider the provider for LocationAgent. If it is null, location agent not added.
          */
-        fun enableLocation(locationProvider: LocationProvider) = apply { this.locationProvider = locationProvider }
+        fun enableLocation(locationProvider: LocationProvider?) = apply { this.locationProvider = locationProvider }
 
         /**
          * @param policy the cancel policy on stop tts

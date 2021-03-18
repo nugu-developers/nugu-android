@@ -208,7 +208,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                     return URI.create(
                         Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.responsefail_800ms)
                             .toString()
-                    );
+                    )
                 }
             })
             .asrBeepResourceProvider(object : AsrBeepResourceProvider {
