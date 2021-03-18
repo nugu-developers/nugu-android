@@ -100,6 +100,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val interpolator = AccelerateDecelerateInterpolator()
     private val transitionDuration = 400L
     private var mediaDurationMs = 0L
+    private var mediaCurrentTimeMs = 0L
     private var mediaPlaying = false
 
     private val thumbTransform = RoundedCorners(dpToPx(2f, context))
@@ -154,6 +155,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
+            mediaCurrentTimeMs = currentTimeMs
+
             audioPlayerItem?.run {
                 if (content.durationSec == null) {
                     return
@@ -174,6 +177,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     internal class SavedStates(
         superState: Parcelable,
         var durationMs: Long,
+        var currentTimeMs: Long,
         var mediaPlaying: Boolean
     ) :
         AbsSavedState(superState) {
@@ -181,6 +185,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         override fun writeToParcel(dest: Parcel?, flags: Int) {
             super.writeToParcel(dest, flags)
             dest?.writeLong(durationMs)
+            dest?.writeLong(currentTimeMs)
             dest?.writeBoolean(mediaPlaying)
         }
     }
@@ -189,6 +194,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         super.onSaveInstanceState()
         return SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
             mediaDurationMs,
+            mediaCurrentTimeMs,
             mediaPlaying)
     }
 
@@ -197,10 +203,14 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         (state as? SavedStates)?.let { savedState ->
             mediaDurationMs = savedState.durationMs
+            mediaCurrentTimeMs = savedState.currentTimeMs
             mediaPlaying = savedState.mediaPlaying
 
             fulltime.post {
                 fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
+                playtime.updateText(TemplateUtils.convertToTimeMs(mediaCurrentTimeMs.toInt()), true)
+                lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
+                smallLyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
             }
 
             if (mediaPlaying) {
@@ -337,7 +347,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
-        Logger.i(TAG, "load. dialogRequestId: $dialogRequestId")
+        Logger.i(TAG, "load. dialogRequestId: $dialogRequestId/*, \n template $templateContent*/")
 
         fromJsonOrNull(templateContent, AudioPlayer::class.java)?.let { item ->
             load(item)
@@ -469,6 +479,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         override fun show(): Boolean {
             lyricsView.post {
                 lyricsView.visibility = View.VISIBLE
+                lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
             }
 
             return true
