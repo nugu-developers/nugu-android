@@ -101,10 +101,10 @@ class TemplateRenderer(
                             displayType = displayType.name,
                             playServiceId = playServiceId
                         ).apply {
-                            showLyricAtFirst =
-                                fragmentManagerRef.get()?.fragments?.any {
-                                    it is TemplateFragment && it.getPlayServiceId() == playServiceId && it.isLyricsShowing()
-                                } ?: false
+                            previousRenderInfo =
+                                (fragmentManagerRef.get()?.fragments?.find {
+                                    it is TemplateFragment && it.getPlayServiceId() == playServiceId && it.getRenderInfo() != null
+                                } as? TemplateFragment)?.getRenderInfo()
                         }.also { newFragment ->
                             onNewTemplate(newFragment)
                         },

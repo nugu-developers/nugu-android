@@ -227,11 +227,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 }
             }
 
-            if (savedState.isBarType) {
-                player.post { collapse(true) }
+            if (!savedState.isBarType) {
+                player.post { expand(true) }
             }
         }
     }
+
+    data class RenderInfo(val lyricShowing: Boolean, val barType: Boolean)
 
     init {
         isSaveEnabled = true
@@ -473,18 +475,32 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 shuffleView.isSelected = it
             }
         }
+
+        if (player.visibility != View.VISIBLE) {
+            collapse(true)
+        }
+
     }
 
-    private fun collapse(immediatly: Boolean = false) {
-        if (immediatly) {
-            player.y = player.height.toFloat()
-        } else {
-            player.animate().y(player.height.toFloat()).setDuration(transitionDuration).interpolator = interpolator
+    private fun collapse(immediately: Boolean = false) {
+        player.post {
+            if (immediately) {
+                player.y = player.height.toFloat()
+            } else {
+                player.animate().y(player.height.toFloat()).setDuration(transitionDuration).interpolator = interpolator
+            }
         }
     }
 
-    private fun expand() {
-        player.animate().y(0f).setDuration(transitionDuration).interpolator = interpolator
+    private fun expand(immediately: Boolean = false) {
+        player.visibility = View.VISIBLE
+        player.post {
+            if (immediately) {
+                player.y = 0f
+            } else {
+                player.animate().y(0f).setDuration(transitionDuration).interpolator = interpolator
+            }
+        }
     }
 
     private val lyricPresenter = object : LyricsPresenter {
@@ -518,16 +534,20 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    fun showLyrics() {
-        if (audioPlayerItem?.content?.lyrics != null) {
+    fun applyPreviousRenderInfo(previousRenderInfo: RenderInfo) {
+        if (previousRenderInfo.lyricShowing && audioPlayerItem?.content?.lyrics != null) {
             lyricsView.post {
                 lyricsView.visibility = View.VISIBLE
                 lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
             }
         }
+
+        if (!previousRenderInfo.barType) {
+            expand(true)
+        }
     }
 
-    fun isLyricShowing() = lyricsView.visibility == View.VISIBLE
+    fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, player.y != 0f)
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
