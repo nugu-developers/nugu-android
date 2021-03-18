@@ -45,6 +45,7 @@ fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout:
 fun ImageView.updateImage(url: String?, transformation: Transformation<Bitmap>?, isMerge: Boolean = false) {
     if (isMerge && url.isNullOrBlank()) return
 
+    visibility = if (url != null) View.VISIBLE else View.GONE
     Glide.with(context).load(url).apply {
         if (transformation != null) transform(transformation)
     }.into(this)
