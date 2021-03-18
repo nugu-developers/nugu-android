@@ -84,7 +84,7 @@ class TemplateFragment : Fragment() {
     private var pendingNuguProvider: TemplateRenderer.NuguClientProvider? = null
     private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    var showLyricAtFirst = false
+    var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)
@@ -164,8 +164,8 @@ class TemplateFragment : Fragment() {
                     notifyRendered()
                 })
 
-                if (showLyricAtFirst) {
-                    (templateView as? DisplayAudioPlayer)?.showLyrics()
+                previousRenderInfo?.run {
+                    (templateView as? DisplayAudioPlayer)?.applyPreviousRenderInfo(this)
                 }
             }
         }
@@ -195,8 +195,8 @@ class TemplateFragment : Fragment() {
         return TemplateView.MEDIA_TEMPLATE_TYPES.contains(getTemplateType())
     }
 
-    fun isLyricsShowing(): Boolean {
-        return (templateView as? DisplayAudioPlayer)?.isLyricShowing() ?: false
+    fun getRenderInfo(): DisplayAudioPlayer.RenderInfo? {
+        return (templateView as? DisplayAudioPlayer)?.getRenderInfo()
     }
 
     fun update(templateContent: String) {
