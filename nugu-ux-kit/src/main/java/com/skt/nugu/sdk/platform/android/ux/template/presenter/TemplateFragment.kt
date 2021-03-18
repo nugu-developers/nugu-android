@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 
 class TemplateFragment : Fragment() {
     companion object {
@@ -83,6 +84,7 @@ class TemplateFragment : Fragment() {
     private var pendingNuguProvider: TemplateRenderer.NuguClientProvider? = null
     private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    var showLyricAtFirst = false
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)
@@ -161,6 +163,10 @@ class TemplateFragment : Fragment() {
                 load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId, onLoadingComplete = {
                     notifyRendered()
                 })
+
+                if (showLyricAtFirst) {
+                    (templateView as? DisplayAudioPlayer)?.showLyrics()
+                }
             }
         }
     }
@@ -187,6 +193,10 @@ class TemplateFragment : Fragment() {
 
     fun isMediaTemplate(): Boolean {
         return TemplateView.MEDIA_TEMPLATE_TYPES.contains(getTemplateType())
+    }
+
+    fun isLyricsShowing(): Boolean {
+        return (templateView as? DisplayAudioPlayer)?.isLyricShowing() ?: false
     }
 
     fun update(templateContent: String) {
