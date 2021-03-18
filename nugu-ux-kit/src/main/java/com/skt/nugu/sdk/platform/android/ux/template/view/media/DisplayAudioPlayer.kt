@@ -178,7 +178,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         superState: Parcelable,
         var durationMs: Long,
         var currentTimeMs: Long,
-        var mediaPlaying: Boolean
+        var mediaPlaying: Boolean,
+        var isBarType: Boolean,
+        var isLyricShowing: Boolean
     ) :
         AbsSavedState(superState) {
 
@@ -187,6 +189,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             dest?.writeLong(durationMs)
             dest?.writeLong(currentTimeMs)
             dest?.writeBoolean(mediaPlaying)
+            dest?.writeBoolean(isBarType)
+            dest?.writeBoolean(isLyricShowing)
         }
     }
 
@@ -195,7 +199,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         return SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
             mediaDurationMs,
             mediaCurrentTimeMs,
-            mediaPlaying)
+            mediaPlaying,
+            player.y != 0f,
+            lyricsView.visibility == View.VISIBLE)
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
@@ -209,6 +215,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             fulltime.post {
                 fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
                 playtime.updateText(TemplateUtils.convertToTimeMs(mediaCurrentTimeMs.toInt()), true)
+                if (savedState.isLyricShowing) lyricsView.visibility = View.VISIBLE
                 lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
                 smallLyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
             }
@@ -218,6 +225,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                     play.setImageResource(R.drawable.nugu_btn_pause_48)
                     bar_play.setImageResource(R.drawable.nugu_btn_pause_32)
                 }
+            }
+
+            if (savedState.isBarType) {
+                player.post { collapse(true) }
             }
         }
     }
@@ -381,7 +392,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     private fun load(item: AudioPlayer, isMerge: Boolean = false) {
-        if(!isMerge) audioPlayerItem = item
+        if (!isMerge) audioPlayerItem = item
 
         item.title?.run {
             titleView.updateText(text, isMerge)
@@ -464,8 +475,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    private fun collapse() {
-        player.animate().y(player.height.toFloat()).setDuration(transitionDuration).interpolator = interpolator
+    private fun collapse(immediatly: Boolean = false) {
+        if (immediatly) {
+            player.y = player.height.toFloat()
+        } else {
+            player.animate().y(player.height.toFloat()).setDuration(transitionDuration).interpolator = interpolator
+        }
     }
 
     private fun expand() {
@@ -502,6 +517,17 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             return true
         }
     }
+
+    fun showLyrics() {
+        if (audioPlayerItem?.content?.lyrics != null) {
+            lyricsView.post {
+                lyricsView.visibility = View.VISIBLE
+                lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
+            }
+        }
+    }
+
+    fun isLyricShowing() = lyricsView.visibility == View.VISIBLE
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()

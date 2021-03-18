@@ -86,48 +86,31 @@ class TemplateRenderer(
             val templateContentWithType = insertType(templateContent, templateType)
 
             val playServiceId = gson.fromJson<TemplatePayload>(templateContent, TemplatePayload::class.java)?.playServiceId ?: ""
-            var isReload = false
 
-            // Reload logic is for performance. It seems not need in case of mobile poc.
-//            fragmentManagerRef.get()?.fragments
-//                ?.find { it is TemplateFragment && it.getDisplayType() == displayType.name && it.getPlayServiceId() == playServiceId }
-//                ?.run {
-//                    (this as TemplateFragment).run {
-//                        isReload = true
-//
-//                        getNuguClient()?.getDisplay()?.displayCardCleared(getTemplateId())
-//                        arguments = TemplateFragment.createBundle(templateType,
-//                            header.dialogRequestId,
-//                            templateId,
-//                            templateContentWithType,
-//                            displayType.name,
-//                            playServiceId)
-//
-//                        reload(templateContentWithType)
-//                    }
-//                }
-
-            if (!isReload) {
-                fragmentManagerRef.get()?.beginTransaction()?.run {
-                    setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-                        .add(
-                            containerId,
-                            TemplateFragment.newInstance(
-                                nuguProvider = nuguClientProvider,
-                                externalRenderer = externalViewRenderer,
-                                name = templateType,
-                                dialogRequestId = header.dialogRequestId,
-                                templateId = templateId,
-                                template = templateContentWithType,
-                                displayType = displayType.name,
-                                playServiceId = playServiceId
-                            ).also { newFragment ->
-                                onNewTemplate(newFragment)
-                            },
-                            displayType.name
-                        )
-                        .commitNowAllowingStateLoss()
-                }
+            fragmentManagerRef.get()?.beginTransaction()?.run {
+                setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(
+                        containerId,
+                        TemplateFragment.newInstance(
+                            nuguProvider = nuguClientProvider,
+                            externalRenderer = externalViewRenderer,
+                            name = templateType,
+                            dialogRequestId = header.dialogRequestId,
+                            templateId = templateId,
+                            template = templateContentWithType,
+                            displayType = displayType.name,
+                            playServiceId = playServiceId
+                        ).apply {
+                            showLyricAtFirst =
+                                fragmentManagerRef.get()?.fragments?.any {
+                                    it is TemplateFragment && it.getPlayServiceId() == playServiceId && it.isLyricsShowing()
+                                } ?: false
+                        }.also { newFragment ->
+                            onNewTemplate(newFragment)
+                        },
+                        displayType.name
+                    )
+                    .commitNowAllowingStateLoss()
             }
         }
 
