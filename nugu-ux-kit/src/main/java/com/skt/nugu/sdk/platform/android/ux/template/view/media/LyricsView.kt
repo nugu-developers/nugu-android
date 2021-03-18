@@ -28,9 +28,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.platform.android.ux.R
-import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils.Companion.dpToPixel
 import com.skt.nugu.sdk.platform.android.ux.template.enableMarquee
+import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
 
 class LyricsView @JvmOverloads constructor(
     context: Context,
@@ -169,13 +169,16 @@ class LyricsView @JvmOverloads constructor(
         if (!enableAutoScroll) {
             return
         }
-        val temp = dpToPixel(context, 31f)
-        val scrollPositionOffset =
-            if (viewSize == SIZE_STANDARD) recyclerView.height / 2 - temp.toInt()
-            else 0
 
-        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-        layoutManager.scrollToPositionWithOffset(index, scrollPositionOffset)
+        recyclerView.post {
+            val temp = dpToPixel(context, 31f)
+            val scrollPositionOffset =
+                if (viewSize == SIZE_STANDARD) recyclerView.measuredHeight / 2 - temp.toInt()
+                else 0
+
+            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+            layoutManager.scrollToPositionWithOffset(index, scrollPositionOffset)
+        }
     }
 
     fun controlPage(direction: Direction) {
