@@ -371,7 +371,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     private fun load(item: AudioPlayer, isMerge: Boolean = false) {
-        audioPlayerItem = item
+        if(!isMerge) audioPlayerItem = item
 
         item.title?.run {
             titleView.updateText(text, isMerge)
