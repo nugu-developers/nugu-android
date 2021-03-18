@@ -50,6 +50,11 @@ interface NuguOAuthInterface {
     fun setOptions(options: NuguOAuthOptions)
 
     /**
+     * Get the authorization options
+     */
+    fun getOptions() : NuguOAuthOptions?
+
+    /**
      * Immediately revoke the authorization.
      */
     fun revoke(listener: OnRevokeListener)

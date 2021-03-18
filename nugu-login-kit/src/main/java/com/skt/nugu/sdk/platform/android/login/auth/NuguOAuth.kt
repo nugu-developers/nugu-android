@@ -331,11 +331,9 @@ class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
         }
     }
 
-
     /**
      * Set the [NuguOAuthOptions]
-     * @returns the current state
-     * */
+     */
     override fun setOptions(newOptions: NuguOAuthOptions) {
         this.options = newOptions.apply {
             ConfigurationStore.configuration()?.let {
@@ -351,6 +349,16 @@ class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
             }
         }
         client.setOptions(this.options)
+    }
+
+    /**
+     * Get the [NuguOAuthOptions]
+     * @return the [options]
+     */
+    override fun getOptions() = try {
+        this.options
+    } catch (e: UninitializedPropertyAccessException) {
+        null
     }
 
     private fun generateClientState() = UUID.randomUUID().toString().apply {
