@@ -401,6 +401,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 playtime.updateText(TemplateUtils.convertToTime(0), isMerge)
             } else if (!isMerge) {
                 progressView.isEnabled = false
+                progressView.visibility = View.INVISIBLE
                 playtime.visibility = View.INVISIBLE
                 fulltime.visibility = View.INVISIBLE
             }
