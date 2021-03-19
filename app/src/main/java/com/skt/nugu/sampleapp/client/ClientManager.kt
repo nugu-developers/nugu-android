@@ -25,6 +25,9 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.player.SamplePlayerFactory
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.permission.PermissionDelegate
+import com.skt.nugu.sdk.agent.permission.PermissionState
+import com.skt.nugu.sdk.agent.permission.PermissionType
 import com.skt.nugu.sdk.agent.routine.RoutineAgent
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.client.SdkContainer
@@ -50,7 +53,9 @@ import java.io.FileOutputStream
 import java.math.BigInteger
 import java.net.URI
 import java.security.SecureRandom
+import java.util.*
 import java.util.concurrent.Executors
+import kotlin.collections.HashSet
 
 /**
  * This class manage everything related to NUGU.
@@ -281,7 +286,20 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                         null
                     }
                 }
-            }).playerFactory(SamplePlayerFactory(context, useExoPlayer = true)).build()
+            }).playerFactory(SamplePlayerFactory(context, useExoPlayer = true))
+            .enablePermission(object: PermissionDelegate {
+                override val supportedPermissions: Array<PermissionType>
+                    get() = arrayOf(PermissionType.LOCATION)
+
+                override fun getPermissionState(type: PermissionType): PermissionState {
+                    return PermissionState.DENIED
+                }
+
+                override fun requestPermissions(types: Array<PermissionType>) {
+                    Logger.d(TAG, "[requestPermissions] $types")
+                }
+            })
+            .build()
 
         client.addAudioPlayerListener(this)
         client.addOnDirectiveHandlingListener(directiveHandlingListener)

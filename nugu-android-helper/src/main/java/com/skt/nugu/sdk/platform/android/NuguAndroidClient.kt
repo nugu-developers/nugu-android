@@ -19,7 +19,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.util.Log
 import com.skt.nugu.sdk.agent.*
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.CancelRecognizeDirectiveHandler
@@ -52,6 +51,9 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.Microphone
+import com.skt.nugu.sdk.agent.permission.PermissionAgent
+import com.skt.nugu.sdk.agent.permission.PermissionDelegate
+import com.skt.nugu.sdk.agent.permission.RequestPermissionDirectiveHandler
 import com.skt.nugu.sdk.agent.playback.PlaybackRouter
 import com.skt.nugu.sdk.agent.routine.RoutineAgent
 import com.skt.nugu.sdk.agent.screen.Screen
@@ -267,6 +269,9 @@ class NuguAndroidClient private constructor(
         // audio player agent (optional)
         internal var enableAudioPlayer: Boolean = true
 
+        // permission agent (optional)
+        internal var permissionDelegate: PermissionDelegate? = null
+
         /**
          * @param factory the player factory to create players used at NUGU
          */
@@ -410,6 +415,11 @@ class NuguAndroidClient private constructor(
          * @param locationProvider the provider for LocationAgent. If it is null, location agent not added.
          */
         fun enableLocation(locationProvider: LocationProvider?) = apply { this.locationProvider = locationProvider }
+
+        /**
+         * @param permissionDelegate the delegate for PermissionAgent. If it is null, permission agent not added.
+         */
+        fun enablePermission(permissionDelegate: PermissionDelegate?) = apply { this.permissionDelegate = permissionDelegate }
 
         /**
          * @param policy the cancel policy on stop tts
@@ -867,6 +877,19 @@ class NuguAndroidClient private constructor(
                             container.getContextManager()
                         )
                     })
+                }
+
+                builder.permissionDelegate?.let { delegate ->
+                    addAgentFactory(
+                        PermissionAgent.NAMESPACE,
+                        object : AgentFactory<PermissionAgent> {
+                            override fun create(container: SdkContainer): PermissionAgent =
+                                PermissionAgent(container.getContextManager(), delegate).apply {
+                                    RequestPermissionDirectiveHandler(this).apply {
+                                        container.getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
+                                }
+                        })
                 }
             }
 
