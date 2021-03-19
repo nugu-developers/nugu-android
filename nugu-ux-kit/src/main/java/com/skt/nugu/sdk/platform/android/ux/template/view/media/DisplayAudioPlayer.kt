@@ -535,7 +535,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     fun applyPreviousRenderInfo(previousRenderInfo: RenderInfo) {
-        if (previousRenderInfo.lyricShowing && audioPlayerItem?.content?.lyrics != null) {
+        if (previousRenderInfo.lyricShowing && audioPlayerItem?.content?.lyrics?.lyricsType != LyricsType.NONE) {
             lyricsView.post {
                 lyricsView.visibility = View.VISIBLE
                 lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
