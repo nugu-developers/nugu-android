@@ -311,51 +311,53 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         progressView.post {
-            progressView.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    if (fromUser) {
-                        Logger.i(TAG, "onProgressChanged fromUser $progress")
-                        val offset = mediaDurationMs / 100 * progressView.progress
-                        playtime.updateText(TemplateUtils.convertToTimeMs(offset.toInt()), true)
-                    }
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                }
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    Logger.i(TAG, "onStopTrackingTouch ${progressView.progress}")
-                    (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
-                        val offset = mediaDurationMs / 100 * progressView.progress
-                        audioPlayerAgent?.seek(offset)
-                    }
-                }
-            })
-
-
-            progressView.setOnTouchListener(object : OnTouchListener {
-                var touchDownTime = 0L
-
-                override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                    event ?: return false
-
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> {
-                            touchDownTime = System.currentTimeMillis()
-                        }
-
-                        MotionEvent.ACTION_UP -> {
-                            if (System.currentTimeMillis() - touchDownTime < ViewConfiguration.getTapTimeout()) {
-                                (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
-                                    val offset = event.x / progressView.width.toFloat() * mediaDurationMs
-                                    audioPlayerAgent?.seek(offset.toLong())
-                                }
-                            }
-                        }
-                    }
-                    return false
-                }
-            })
+            //todo. determine provide seek function optionally
+//            progressView.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+//                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+//                    if (fromUser) {
+//                        Logger.i(TAG, "onProgressChanged fromUser $progress")
+//                        val offset = mediaDurationMs / 100 * progressView.progress
+//                        playtime.updateText(TemplateUtils.convertToTimeMs(offset.toInt()), true)
+//                    }
+//                }
+//
+//                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+//                }
+//
+//                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+//                    Logger.i(TAG, "onStopTrackingTouch ${progressView.progress}")
+//                    (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
+//                        val offset = mediaDurationMs / 100 * progressView.progress
+//                        audioPlayerAgent?.seek(offset)
+//                    }
+//                }
+//            })
+//
+//
+//            progressView.setOnTouchListener(object : OnTouchListener {
+//                var touchDownTime = 0L
+//
+//                override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+//                    event ?: return false
+//
+//                    when (event.actionMasked) {
+//                        MotionEvent.ACTION_DOWN -> {
+//                            touchDownTime = System.currentTimeMillis()
+//                        }
+//
+//                        MotionEvent.ACTION_UP -> {
+//                            if (System.currentTimeMillis() - touchDownTime < ViewConfiguration.getTapTimeout()) {
+//                                (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
+//                                    val offset = event.x / progressView.width.toFloat() * mediaDurationMs
+//                                    audioPlayerAgent?.seek(offset.toLong())
+//                                }
+//                            }
+//                        }
+//                    }
+//                    return false
+//                }
+//            })
+            progressView.setOnTouchListener { _, _ -> true }
         }
     }
 
