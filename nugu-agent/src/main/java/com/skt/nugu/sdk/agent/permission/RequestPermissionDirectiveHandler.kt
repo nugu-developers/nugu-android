@@ -36,7 +36,7 @@ class RequestPermissionDirectiveHandler(
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("permissions")
-        val permissions: Array<String>
+        val permissions: Array<PermissionType>
     )
 
     interface Controller {
