@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 0.9.52 *(2021-03-19)*
+-----------------------------
+* Fix: Apply blocking policy for AudioPlayerHandler (#1648)
+* Improve: Update NuguOAuth (#1653)
+* New: Support Permission Interface v1.0 (#1657)
+* Improve: Way to add agent - change setProvider() method name to enable**()
+* Improve: Support landscape on template
+
 Version 0.9.51 *(2021-03-16)*
 -----------------------------
 * Fix: Remove unused dependencies (#1621)
