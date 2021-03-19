@@ -101,6 +101,8 @@ class TemplateFragment : Fragment() {
         }
 
         viewModel.onClose = { onClose(false) }
+
+        retainInstance = true
     }
 
     override fun onCreateView(
