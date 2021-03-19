@@ -22,13 +22,16 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import java.util.*
 import java.util.concurrent.Executors
 
 class PermissionAgent(
     contextManager: ContextManagerInterface,
     private val delegate: PermissionDelegate
-) : CapabilityAgent, SupportedInterfaceContextProvider {
+) : CapabilityAgent,
+    SupportedInterfaceContextProvider,
+    RequestPermissionDirectiveHandler.Controller {
     companion object {
         private const val TAG = "PermissionAgent"
         const val NAMESPACE = "Permission"
@@ -103,6 +106,15 @@ class PermissionAgent(
                     stateRequestToken
                 )
             }
+        }
+    }
+
+    override fun requestPermission(
+        header: Header,
+        payload: RequestPermissionDirectiveHandler.Payload
+    ) {
+        executor.submit {
+            delegate.requestPermissions(payload.permissions)
         }
     }
 }

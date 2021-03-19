@@ -24,8 +24,16 @@ interface PermissionDelegate {
 
     /**
      * Get a permission state for type
+     *
      * @param type the type for permission
      * @return the state for permission
      */
     fun getPermissionState(type: PermissionType): PermissionState
+
+    /**
+     * Request permissions for types
+     *
+     * @param types the types
+     */
+    fun requestPermissions(types: Array<PermissionType>)
 }
