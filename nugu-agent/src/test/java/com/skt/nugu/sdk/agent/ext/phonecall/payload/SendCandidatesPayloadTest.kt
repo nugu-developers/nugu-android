@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.nugu.sdk.agent.ext.phonecall.payload
+package com.skt.nugu.sdk.agent.ext.phonecall.payload
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
 import org.junit.Assert
 import org.junit.Test
 

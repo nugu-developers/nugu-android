@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.nugu.sdk.agent.sound
+package com.skt.nugu.sdk.agent.sound
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.sound.BeepDirective
 import org.junit.Assert
 import org.junit.Test
 
