@@ -1,8 +1,7 @@
 package com.skt.nugu.sdk.platform.android.login
 
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
-
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
 
