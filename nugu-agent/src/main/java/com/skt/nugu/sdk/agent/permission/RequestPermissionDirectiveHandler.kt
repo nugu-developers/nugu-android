@@ -16,12 +16,15 @@
 
 package com.skt.nugu.sdk.agent.permission
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
+import java.lang.Exception
 
 class RequestPermissionDirectiveHandler(
     private val controller: Controller
@@ -29,13 +32,11 @@ class RequestPermissionDirectiveHandler(
     companion object {
         private const val NAME_DIRECTIVE = "RequestPermission"
 
-        private val DIRECTIVE = NamespaceAndName(PermissionAgent.NAMESPACE, NAME_DIRECTIVE)
+        internal val DIRECTIVE = NamespaceAndName(PermissionAgent.NAMESPACE, NAME_DIRECTIVE)
     }
 
     data class Payload(
-        @SerializedName("playServiceId")
         val playServiceId: String,
-        @SerializedName("permissions")
         val permissions: Array<PermissionType>
     )
 
@@ -48,13 +49,30 @@ class RequestPermissionDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, Payload::class.java)
+        val payload: Payload? = parsePayload(info.directive.payload)
+
         if(payload == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
             controller.requestPermission(info.directive.header, payload)
         }
+    }
+
+    private fun parsePayload(payload: String): Payload? = try {
+        val jsonPayload = JsonParser.parseString(payload).asJsonObject
+        val playServiceId: String = jsonPayload.getAsJsonPrimitive("playServiceId").asString
+        val permissions = ArrayList<PermissionType>()
+        jsonPayload.getAsJsonArray("permissions").forEach {
+            permissions.add(PermissionType.valueOf(it.asString))
+        }
+        if(permissions.isEmpty()) {
+            null
+        } else {
+            Payload(playServiceId, permissions.toTypedArray())
+        }
+    } catch (e: Exception) {
+        null
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
