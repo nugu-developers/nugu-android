@@ -1,4 +1,4 @@
-package com.nugu.sdk.agent.playbackcontrol
+package com.skt.nugu.sdk.agent.playbackcontrol
 
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.mock
