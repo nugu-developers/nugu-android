@@ -752,11 +752,11 @@ class NuguAndroidClient private constructor(
 
                 if (builder.enableDisplay) {
                     addAgentFactory(
-                        DefaultDisplayAgent.NAMESPACE,
-                        object : AgentFactory<DefaultDisplayAgent> {
-                            override fun create(container: SdkContainer): DefaultDisplayAgent =
+                        DisplayAgent.NAMESPACE,
+                        object : AgentFactory<DisplayAgent> {
+                            override fun create(container: SdkContainer): DisplayAgent =
                                 with(container) {
-                                    DefaultDisplayAgent(
+                                    DisplayAgent(
                                         getPlaySynchronizer(),
                                         ElementSelectedEventHandler(
                                             getContextManager(),
@@ -1149,7 +1149,7 @@ class NuguAndroidClient private constructor(
         }
     override val displayAgent: DisplayAgentInterface?
         get() = try {
-            client.getAgent(DefaultDisplayAgent.NAMESPACE) as DisplayAgentInterface
+            client.getAgent(DisplayAgent.NAMESPACE) as DisplayAgentInterface
         } catch (th: Throwable) {
             null
         }

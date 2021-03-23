@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent.display
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -44,7 +43,7 @@ class ControlFocusDirectiveHandler(
         private const val NAME_FAILED = "Failed"
 
         private val CONTROL_FOCUS = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CONTROL_FOCUS
         )
     }
@@ -112,7 +111,7 @@ class ControlFocusDirectiveHandler(
                         jsonContext,
                         namespaceAndName.name,
                         name,
-                        DefaultDisplayAgent.VERSION.toString()
+                        DisplayAgent.VERSION.toString()
                     ).payload(payload)
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()

@@ -17,7 +17,6 @@
 package com.skt.nugu.sdk.agent.display
 
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -32,7 +31,7 @@ class UpdateDirectiveHandler(
         private const val NAME_UPDATE = "Update"
 
         private val UPDATE = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_UPDATE
         )
     }
@@ -51,7 +50,7 @@ class UpdateDirectiveHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, DefaultDisplayAgent.TemplatePayload::class.java)
+        val payload = MessageFactory.create(info.directive.payload, DisplayAgent.TemplatePayload::class.java)
         if (payload?.token == null) {
             setHandlingFailed(info, "[handleDirective] invalid payload: $payload")
             return

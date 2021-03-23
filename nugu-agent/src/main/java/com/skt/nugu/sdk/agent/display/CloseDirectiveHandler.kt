@@ -19,7 +19,6 @@ package com.skt.nugu.sdk.agent.display
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -45,7 +44,7 @@ class CloseDirectiveHandler(
         private const val NAME_FAILED = "Failed"
 
         private val CLOSE = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CLOSE
         )
     }
@@ -117,9 +116,9 @@ class CloseDirectiveHandler(
                 messageSender.newCall(
                     EventMessageRequest.Builder(
                         jsonContext,
-                        DefaultDisplayAgent.NAMESPACE,
+                        DisplayAgent.NAMESPACE,
                         eventName,
-                        DefaultDisplayAgent.VERSION.toString()
+                        DisplayAgent.VERSION.toString()
                     ).payload(JsonObject().apply {
                         addProperty("playServiceId", playServiceId)
                     }.toString())
@@ -137,7 +136,7 @@ class CloseDirectiveHandler(
             }
         }, NamespaceAndName(
             "supportedInterfaces",
-            DefaultDisplayAgent.NAMESPACE
+            DisplayAgent.NAMESPACE
         ))
     }
 
