@@ -29,7 +29,7 @@ import java.lang.StringBuilder
 data class Directive (
     private val attachmentManager: AttachmentManagerInterface?,
     val header: Header,
-    var payload: String
+    val payload: String
 ) {
     private var attachmentReader: Attachment.Reader? = null
 
