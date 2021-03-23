@@ -56,6 +56,11 @@ interface PlaySynchronizerInterface {
             prepared: List<SynchronizeObject>,
             started: List<SynchronizeObject>
         ){}
+
+        /**
+         * Returns whether it is for display or not
+         */
+        fun isDisplay(): Boolean = false
     }
 
     /**
