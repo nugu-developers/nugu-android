@@ -24,7 +24,6 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler.Companion.isAppendDirective
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
-import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -91,24 +90,22 @@ class NudgeAgent(
     ) {
 
         executor.submit {
-            nudgeData?.nudgeInfo.let { nudgeInfo ->
-                if (contextType == ContextType.COMPACT || nudgeInfo == null) {
-                    contextSetter.setState(
-                        namespaceAndName,
-                        StateContext.CompactContextState,
-                        StateRefreshPolicy.NEVER,
-                        contextType,
-                        stateRequestToken
-                    )
-                } else {
-                    contextSetter.setState(
-                        namespaceAndName,
-                        StateContext(nudgeInfo.toString()),
-                        StateRefreshPolicy.ALWAYS,
-                        contextType,
-                        stateRequestToken
-                    )
-                }
+            if (contextType == ContextType.COMPACT) {
+                contextSetter.setState(
+                    namespaceAndName,
+                    StateContext.CompactContextState,
+                    StateRefreshPolicy.NEVER,
+                    contextType,
+                    stateRequestToken
+                )
+            } else {
+                contextSetter.setState(
+                    namespaceAndName,
+                    StateContext(nudgeData?.nudgeInfo?.toString() ?: ""),
+                    StateRefreshPolicy.ALWAYS,
+                    contextType,
+                    stateRequestToken
+                )
             }
         }
     }
