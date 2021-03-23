@@ -139,6 +139,8 @@ class AudioPlayerTemplateHandler(
             }
         }
 
+        override fun isDisplay(): Boolean = true
+
         var playContext: PlayStackManagerInterface.PlayContext? = null
 
         override fun toString(): String {

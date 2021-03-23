@@ -125,8 +125,16 @@ class DefaultDisplayAgent(
         ) {
             executor.submit {
                 val copyStarted = ArrayList(started)
+                // remove self objects
                 copyStarted.remove(this)
                 copyStarted.remove(lastUpdateDirectivePlaySyncObject)
+                // If other play and display exist and no plays equals dialogRequestIds, remove All
+                val existDisplay = copyStarted.any { it.isDisplay() }
+                val existEqualDialogRequestIdPlay =
+                    copyStarted.any { it.dialogRequestId == this.dialogRequestId }
+                if (existDisplay && !existEqualDialogRequestIdPlay) {
+                    copyStarted.clear()
+                }
 
                 if(prepared.isEmpty() && copyStarted.isEmpty()) {
                     executeCancelUnknownInfo(getTemplateId(), false)
@@ -136,6 +144,8 @@ class DefaultDisplayAgent(
                 }
             }
         }
+
+        override fun isDisplay(): Boolean = true
 
         fun getTemplateId(): String = directive.getMessageId()
 
