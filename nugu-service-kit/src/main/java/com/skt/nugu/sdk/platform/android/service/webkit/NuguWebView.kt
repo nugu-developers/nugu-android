@@ -185,7 +185,16 @@ class NuguWebView @JvmOverloads constructor(
         webView.destroy()
     }
 
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("addCookie(key, value)"),
+        message = "This feature is deprecated. Using addCookie instead."
+    )
     fun setCookie(key: String, value: String) {
+        addCookie(key, value)
+    }
+
+    fun addCookie(key: String, value: String) {
         cookies[key] = value
     }
 
