@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.agent.display
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.common.InteractionControl
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
@@ -48,7 +47,7 @@ class ControlScrollDirectiveHandler(
         private const val NAME_FAILED = "Failed"
 
         private val CONTROL_SCROLL = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CONTROL_SCROLL
         )
     }
@@ -154,7 +153,7 @@ class ControlScrollDirectiveHandler(
                         jsonContext,
                         namespaceAndName.name,
                         name,
-                        DefaultDisplayAgent.VERSION.toString()
+                        DisplayAgent.VERSION.toString()
                     ).payload(payload)
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()

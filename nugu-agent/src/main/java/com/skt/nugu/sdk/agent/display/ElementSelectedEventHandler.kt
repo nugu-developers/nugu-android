@@ -18,11 +18,9 @@ package com.skt.nugu.sdk.agent.display
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -48,9 +46,9 @@ class ElementSelectedEventHandler(
                 messageSender.newCall(
                     EventMessageRequest.Builder(
                         jsonContext,
-                        DefaultDisplayAgent.NAMESPACE,
+                        DisplayAgent.NAMESPACE,
                         EVENT_NAME_ELEMENT_SELECTED,
-                        DefaultDisplayAgent.VERSION.toString()
+                        DisplayAgent.VERSION.toString()
                     ).dialogRequestId(dialogRequestId).payload(
                         JsonObject().apply {
                             addProperty(KEY_TOKEN, token)

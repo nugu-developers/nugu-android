@@ -17,7 +17,6 @@
 package com.skt.nugu.sdk.agent.display
 
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -80,168 +79,168 @@ class RenderDirectiveHandler(
         private const val NAME_UNIFIED_SEARCH1 = "UnifiedSearch1"
 
         private val FULLTEXT1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_FULLTEXT1
         )
         private val FULLTEXT2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_FULLTEXT2
         )
         private val FULLTEXT3 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_FULLTEXT3
         )
 
         private val IMAGETEXT1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGETEXT1
         )
         private val IMAGETEXT2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGETEXT2
         )
         private val IMAGETEXT3 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGETEXT3
         )
         private val IMAGETEXT4 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGETEXT4
         )
         private val TEXTLIST1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_TEXTLIST1
         )
         private val TEXTLIST2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_TEXTLIST2
         )
 
         private val TEXTLIST3 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_TEXTLIST3
         )
 
         private val TEXTLIST4 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_TEXTLIST4
         )
 
         private val IMAGELIST1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGELIST1
         )
         private val IMAGELIST2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGELIST2
         )
         private val IMAGELIST3 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_IMAGELIST3
         )
         private val CUSTOM_TEMPLATE = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CUSTOM_TEMPLATE
         )
 
         private val WEATHER1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_WEATHER_1
         )
 
         private val WEATHER2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_WEATHER_2
         )
 
         private val WEATHER3 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_WEATHER_3
         )
 
         private val WEATHER4 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_WEATHER_4
         )
 
         private val WEATHER5 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_WEATHER_5
         )
 
         private val FULLIMAGE = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_FULLIMAGE
         )
 
         private val SCORE_1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_SCORE_1
         )
 
         private val SCORE_2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_SCORE_2
         )
 
         private val SEARCH_LIST_1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_SEARCH_LIST_1
         )
 
         private val SEARCH_LIST_2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_SEARCH_LIST_2
         )
 
         private val COMMERCE_LIST = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_COMMERCE_LIST
         )
 
         private val COMMERCE_OPTION = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_COMMERCE_OPTION
         )
 
         private val COMMERCE_PRICE = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_COMMERCE_PRICE
         )
 
         private val COMMERCE_INFO = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_COMMERCE_INFO
         )
 
         private val CALL_1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CALL_1
         )
 
         private val CALL_2 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CALL_2
         )
 
         private val CALL_3 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_CALL_3
         )
 
         private val TIMER = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_TIMER
         )
 
         private val DUMMY = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_DUMMY
         )
 
         // v1.6
         private val UNIFIED_SEARCH1 = NamespaceAndName(
-            DefaultDisplayAgent.NAMESPACE,
+            DisplayAgent.NAMESPACE,
             NAME_UNIFIED_SEARCH1
         )
     }
@@ -259,11 +258,11 @@ class RenderDirectiveHandler(
 
     data class RenderDirectiveInfo(
         val info: DirectiveInfo,
-        val payload: DefaultDisplayAgent.TemplatePayload
+        val payload: DisplayAgent.TemplatePayload
     )
 
     override fun preHandleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, DefaultDisplayAgent.TemplatePayload::class.java)
+        val payload = MessageFactory.create(info.directive.payload, DisplayAgent.TemplatePayload::class.java)
         if (payload == null) {
             setHandlingFailed(info, "[preHandleDirective] invalid Payload")
             return

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent
+
+package com.skt.nugu.sdk.agent.display
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
@@ -37,7 +39,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashSet
 
-class DefaultDisplayAgent(
+class DisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
     private val sessionManager: SessionManagerInterface,
