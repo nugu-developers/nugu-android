@@ -51,6 +51,9 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.Microphone
+import com.skt.nugu.sdk.agent.nudge.NudgeAgent
+import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler
+import com.skt.nugu.sdk.agent.nudge.NudgeDirectivePreProcessor
 import com.skt.nugu.sdk.agent.permission.PermissionAgent
 import com.skt.nugu.sdk.agent.permission.PermissionDelegate
 import com.skt.nugu.sdk.agent.permission.RequestPermissionDirectiveHandler
@@ -272,6 +275,9 @@ class NuguAndroidClient private constructor(
         // permission agent (optional)
         internal var permissionDelegate: PermissionDelegate? = null
 
+        // nudge agent (optional)
+        internal var enableNudge: Boolean = false
+
         /**
          * @param factory the player factory to create players used at NUGU
          */
@@ -370,6 +376,7 @@ class NuguAndroidClient private constructor(
         fun enableAudioPlayer(enable: Boolean) = apply { this.enableAudioPlayer = enable }
         fun enableDisplay(enable: Boolean) = apply { this.enableDisplay = enable }
         fun enableChips(enable: Boolean) = apply { this.enableChips = enable }
+        fun enableNudge(enable: Boolean) = apply { this.enableNudge = enable }
 
         /**
          * @param provider the provider for content URIs for sounds. If it is null, sound agent not added.
@@ -404,7 +411,7 @@ class NuguAndroidClient private constructor(
         /**
          * @param bluetoothProvider the bluetooth to be controlled by NUGU. If it is null, bluetooth agent not added.
          */
-        fun enableBluetooth(bluetoothProvider: BluetoothProvider?) = apply { this.bluetoothProvider = bluetoothProvider  }
+        fun enableBluetooth(bluetoothProvider: BluetoothProvider?) = apply { this.bluetoothProvider = bluetoothProvider }
 
         /**
          * @param client the provider for MessageAgent. If it is null, message agent not added.
@@ -613,15 +620,15 @@ class NuguAndroidClient private constructor(
                                     ).apply {
                                         val audioPlayerMetadataDirectiveHandler =
 
-                                        AudioPlayerLyricsDirectiveHandler(
-                                            getContextManager(),
-                                            getMessageSender(),
-                                            this,
-                                            this,
-                                            getInterLayerDisplayPolicyManager()
-                                        ).apply {
-                                            getDirectiveSequencer().addDirectiveHandler(this)
-                                        }
+                                            AudioPlayerLyricsDirectiveHandler(
+                                                getContextManager(),
+                                                getMessageSender(),
+                                                this,
+                                                this,
+                                                getInterLayerDisplayPolicyManager()
+                                            ).apply {
+                                                getDirectiveSequencer().addDirectiveHandler(this)
+                                            }
 
                                         getAudioPlayStackManager().addPlayContextProvider(this)
 
@@ -891,6 +898,17 @@ class NuguAndroidClient private constructor(
                                 }
                         })
                 }
+
+                if (builder.enableNudge) {
+                    addAgentFactory(NudgeAgent.NAMESPACE, object : AgentFactory<NudgeAgent> {
+                        override fun create(container: SdkContainer): NudgeAgent {
+                            container.getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(NudgeDirectivePreProcessor())
+                            return NudgeAgent(container.getContextManager()).apply {
+                                container.getDirectiveSequencer().addDirectiveHandler(NudgeDirectiveHandler(this))
+                            }
+                        }
+                    })
+                }
             }
 
             addCustomAgent()
@@ -955,6 +973,14 @@ class NuguAndroidClient private constructor(
         }
 
         initOsContextProvider()
+
+        if (builder.enableNudge) {
+            (client.getAgent(NudgeAgent.NAMESPACE) as? NudgeAgent)?.apply {
+                ttsAgent?.addListener(this)
+                asrAgent?.addOnStateChangeListener(this)
+                displayAgent?.addListener(this)
+            }
+        }
     }
 
     private fun initOsContextProvider() {

@@ -56,12 +56,12 @@ interface TTSAgentInterface {
          * @param text the text will be playing soon
          * @param dialogRequestId the dialog request id
          */
-        fun onReceiveTTSText(text: String?, dialogRequestId: String)
+        fun onReceiveTTSText(text: String?, dialogRequestId: String){}
 
         /**
          * Called when occur error after onReceiveTTSText
          */
-        fun onError(dialogRequestId: String)
+        fun onError(dialogRequestId: String){}
     }
 
     /** Add a listener to be called when a state changed.

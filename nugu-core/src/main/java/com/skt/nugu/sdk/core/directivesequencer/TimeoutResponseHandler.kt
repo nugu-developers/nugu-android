@@ -39,27 +39,23 @@ class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterfa
         inputProcessorManager.addResponseTimeoutListener(this)
     }
 
-    override fun preProcess(directives: List<Directive>): MutableList<Directive> {
-        val processedDirectives = ArrayList(directives)
-
+    override fun preProcess(directives: List<Directive>): List<Directive> {
         lock.withLock {
-            processedDirectives.removeAll {
-                responseTimeoutDialogRequestIds.contains(it.getDialogRequestId())
-            }
-
-            responseTimeoutDialogRequestIds.removeAll { dialogRequestId ->
-                directives.any { it.getDialogRequestId() == dialogRequestId }
+            return directives.filter {
+                !responseTimeoutDialogRequestIds.contains(it.getDialogRequestId())
+            }.also {
+                responseTimeoutDialogRequestIds.removeAll { dialogRequestId ->
+                    directives.any { it.getDialogRequestId() == dialogRequestId }
+                }
             }
         }
-
-        return processedDirectives
     }
 
     override fun onResponseTimeout(dialogRequestId: String) {
         lock.withLock {
             Logger.d(TAG, "[onResponseTimeout] added dialogRequestId: $dialogRequestId")
             responseTimeoutDialogRequestIds.add(dialogRequestId)
-            if(responseTimeoutDialogRequestIds.size > MAX_CAPACITY) {
+            if (responseTimeoutDialogRequestIds.size > MAX_CAPACITY) {
                 Logger.w(TAG, "[onResponseTimeout] responseTimeoutDialogRequestIds's capacity exceeded!!!")
                 responseTimeoutDialogRequestIds.remove(responseTimeoutDialogRequestIds.first())
             }
