@@ -17,13 +17,20 @@
 package com.skt.nugu.sdk.agent.nudge
 
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.DefaultASRAgent
+import com.skt.nugu.sdk.agent.DefaultDisplayAgent
+import com.skt.nugu.sdk.agent.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
@@ -31,15 +38,18 @@ class NudgeAgent(
     private val contextManager: ContextManagerInterface
 ) : CapabilityAgent,
     SupportedInterfaceContextProvider,
-    NudgeInfoObserver,
+    DirectiveGroupProcessorInterface.Listener,
     TTSAgentInterface.Listener,
     ASRAgentInterface.OnStateChangeListener, DisplayAgentInterface.Listener {
 
     companion object {
         private const val TAG = "NudgeAgent"
         const val NAMESPACE = "Nudge"
+        private const val NAME_APPEND = "Append"
 
         val VERSION = Version(1, 0)
+
+        fun isAppendDirective(namespace: String, name: String) = namespace == NAMESPACE && name == NAME_APPEND
     }
 
     internal data class StateContext(private val nudgeInfo: String) : BaseContextState {
@@ -58,9 +68,21 @@ class NudgeAgent(
         }.toString()
     }
 
+    internal data class NudgeData(
+        val nudgeInfo: JsonObject,
+        var expectSpeechExist: Boolean,
+        var speakTTSExist: Boolean,
+        var displayTemplateExist: Boolean
+    )
+
+    internal data class Payload(
+        @SerializedName("nudgeInfo")
+        val nudgeInfo: JsonObject
+    )
+
     private val executor = Executors.newSingleThreadExecutor()
     private var dialogRequestId: String? = null
-    private var nudgeInfo: NudgeDirectiveHandler.Payload? = null
+    private var nudgeData: NudgeData? = null
 
     override fun getInterfaceName(): String = NAMESPACE
 
@@ -72,11 +94,11 @@ class NudgeAgent(
     ) {
 
         executor.submit {
-            if (nudgeInfo == null) {
-                Logger.e(TAG, "provideState(). nudgeInfo null")
+            if (nudgeData == null) {
+                Logger.e(TAG, "provideState(). nudgeData null")
             }
 
-            if (contextType == ContextType.COMPACT || nudgeInfo == null) {
+            if (contextType == ContextType.COMPACT || nudgeData == null) {
                 contextSetter.setState(
                     namespaceAndName,
                     StateContext.CompactContextState,
@@ -87,7 +109,7 @@ class NudgeAgent(
             } else {
                 contextSetter.setState(
                     namespaceAndName,
-                    StateContext(nudgeInfo!!.toString()),
+                    StateContext(nudgeData!!.nudgeInfo.toString()),
                     StateRefreshPolicy.ALWAYS,
                     contextType,
                     stateRequestToken
@@ -97,20 +119,40 @@ class NudgeAgent(
     }
 
     private fun setStateProvider() {
-        contextManager.setStateProvider(namespaceAndName, this)
+        executor.submit {
+            contextManager.setStateProvider(namespaceAndName, this)
+        }
     }
 
     private fun releaseStateProvider() {
-        contextManager.setStateProvider(namespaceAndName, null)
-        nudgeInfo = null
-        dialogRequestId = null
+        executor.submit {
+            contextManager.setStateProvider(namespaceAndName, null)
+            nudgeData = null
+            dialogRequestId = null
+        }
     }
 
-    override fun onNudgeAppendDirective(dialogRequestId: String, nudgeInfo: NudgeDirectiveHandler.Payload) {
-        this.nudgeInfo = nudgeInfo
-        this.dialogRequestId = dialogRequestId
+    override fun onPreProcessed(directives: List<Directive>) {
+        val nudgeDirective = directives.find { isAppendDirective(it.header.namespace, it.header.name) }
 
-        setStateProvider()
+        fun isExpectSpeechDirectiveExist() =
+            directives.any { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_EXPECT_SPEECH }
+
+        fun isSpeakTTSDirectiveExist() =
+            directives.any { it.header.namespace == DefaultTTSAgent.SPEAK.namespace && it.header.name == DefaultTTSAgent.SPEAK.name }
+
+        fun isDisplayDirectiveExist() = directives.any { it.header.namespace == DefaultDisplayAgent.NAMESPACE }
+
+        Logger.d(TAG, "onDirectiveGroupPreProcessed(). nudgeDirective :  $nudgeDirective")
+
+        nudgeDirective?.let { nudgeDirective ->
+            val payload = MessageFactory.create(nudgeDirective.payload, Payload::class.java)
+            payload?.let { payload ->
+                nudgeData = NudgeData(payload.nudgeInfo, isExpectSpeechDirectiveExist(), isSpeakTTSDirectiveExist(), isDisplayDirectiveExist())
+                dialogRequestId = nudgeDirective.getDialogRequestId()
+                setStateProvider()
+            }
+        }
     }
 
     override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
@@ -122,9 +164,9 @@ class NudgeAgent(
                     TTSAgentInterface.State.IDLE,
                     TTSAgentInterface.State.FINISHED
                     -> {
-                        if (nudgeInfo?.speakTTSExist == true &&
-                            nudgeInfo?.displayTemplateExist != true &&
-                            nudgeInfo?.expectSpeechExist != true
+                        if (nudgeData?.speakTTSExist == true &&
+                            nudgeData?.displayTemplateExist != true &&
+                            nudgeData?.expectSpeechExist != true
                         ) {
                             releaseStateProvider()
                         }
@@ -143,8 +185,8 @@ class NudgeAgent(
             ASRAgentInterface.State.BUSY,
             ASRAgentInterface.State.IDLE
             -> {
-                if (nudgeInfo?.expectSpeechExist == true &&
-                    nudgeInfo?.displayTemplateExist != true
+                if (nudgeData?.expectSpeechExist == true &&
+                    nudgeData?.displayTemplateExist != true
                 ) {
                     releaseStateProvider()
                 }
