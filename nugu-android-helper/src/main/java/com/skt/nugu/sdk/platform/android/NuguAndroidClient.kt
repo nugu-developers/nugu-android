@@ -52,6 +52,7 @@ import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.microphone.Microphone
 import com.skt.nugu.sdk.agent.nudge.NudgeAgent
+import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler
 import com.skt.nugu.sdk.agent.permission.PermissionAgent
 import com.skt.nugu.sdk.agent.permission.PermissionDelegate
 import com.skt.nugu.sdk.agent.permission.RequestPermissionDirectiveHandler
@@ -901,6 +902,7 @@ class NuguAndroidClient private constructor(
                     addAgentFactory(NudgeAgent.NAMESPACE, object : AgentFactory<NudgeAgent> {
                         override fun create(container: SdkContainer): NudgeAgent {
                             return NudgeAgent(container.getContextManager()).apply {
+                                container.getDirectiveSequencer().addDirectiveHandler(NudgeDirectiveHandler(this))
                                 container.getDirectiveGroupProcessor().addListener(this)
                             }
                         }
