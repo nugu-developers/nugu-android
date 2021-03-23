@@ -18,10 +18,10 @@ package com.skt.nugu.sdk.agent.audioplayer
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
+import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreProcessor
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
-import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
@@ -31,13 +31,12 @@ class AudioPlayerDirectivePreProcessor :
         private const val TAG = "AudioPlayerDirectivePreProcessor"
     }
 
-    override fun preProcess(directives: List<Directive>): MutableList<Directive> {
-        val processedDirectives = ArrayList(directives)
+    override fun preProcess(directives: List<Directive>): List<Directive> {
         val audioPlayerPlayDirective =
-            processedDirectives.find { it.getNamespaceAndName() == DefaultAudioPlayerAgent.PLAY }
+            directives.find { it.getNamespaceAndName() == DefaultAudioPlayerAgent.PLAY }
 
         if (audioPlayerPlayDirective == null) {
-            return processedDirectives
+            return directives
         }
 
         val displayDirective =
@@ -45,42 +44,42 @@ class AudioPlayerDirectivePreProcessor :
 
         if (displayDirective != null) {
             Logger.d(TAG, "[preprocess] do not display audio player template display")
-            return processedDirectives
+            return directives
         }
 
         val playPayload = MessageFactory.create(audioPlayerPlayDirective.payload, DefaultAudioPlayerAgent.PlayPayload::class.java)
         if (playPayload == null) {
             Logger.d(TAG, "[preprocess] no payload for audio player play")
-            return processedDirectives
+            return directives
         }
 
         val metaData = playPayload.audioItem.metaData
         if (metaData == null) {
             Logger.d(TAG, "[preprocess] no metaData.")
-            return processedDirectives
+            return directives
         }
 
         if (metaData.disableTemplate != null && metaData.disableTemplate) {
             Logger.d(TAG, "[preprocess] metaData template disabled.")
-            return processedDirectives
+            return directives
         }
 
-        if(metaData.template == null) {
+        if (metaData.template == null) {
             Logger.d(TAG, "[preprocess] metaData template is null.")
-            return processedDirectives
+            return directives
         }
 
         val audioDisplayDirective = createAudioDisplayDirective(metaData.template, audioPlayerPlayDirective.header, playPayload)
 
         if (audioDisplayDirective == null) {
             Logger.d(TAG, "[preprocess] metaData template is null.")
-            return processedDirectives
+            return directives
         }
 
-        Logger.d(TAG, "[preprocess] create audio player template directive to display")
-        processedDirectives.add(0, audioDisplayDirective)
-
-        return processedDirectives
+        return ArrayList(directives).apply {
+            add(0, audioDisplayDirective)
+            Logger.d(TAG, "[preprocess] create audio player template directive to display")
+        }
     }
 
     private fun createAudioDisplayDirective(
@@ -106,7 +105,7 @@ class AudioPlayerDirectivePreProcessor :
             }
             template.addProperty("token", playPayload.audioItem.stream.token)
             template.addProperty("url", playPayload.audioItem.stream.url)
-   
+
             MessageFactory.createDirective(
                 null, Header(
                     header.dialogRequestId,
