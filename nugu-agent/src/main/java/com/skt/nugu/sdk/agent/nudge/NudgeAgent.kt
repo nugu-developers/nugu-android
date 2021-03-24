@@ -101,7 +101,13 @@ class NudgeAgent(
             } else {
                 contextSetter.setState(
                     namespaceAndName,
-                    StateContext(nudgeData?.nudgeInfo?.toString() ?: ""),
+                    nudgeData?.nudgeInfo.let {
+                        if (it == null) {
+                            StateContext.CompactContextState
+                        } else {
+                            StateContext(it.toString())
+                        }
+                    },
                     StateRefreshPolicy.ALWAYS,
                     contextType,
                     stateRequestToken
