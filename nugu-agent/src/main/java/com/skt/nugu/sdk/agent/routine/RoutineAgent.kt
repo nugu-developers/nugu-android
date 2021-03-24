@@ -361,9 +361,9 @@ class RoutineAgent(
                         return
                     }
 
-                    if(shouldPauseRoutine(request)) {
-                        causingPauseRequests[request.dialogRequestId] = request
-                        currentRoutineRequest?.let {
+                    currentRoutineRequest?.let {
+                        if(shouldPauseRoutine(request)) {
+                            causingPauseRequests[request.dialogRequestId] = request
                             Logger.d(TAG, "[onPreSendMessage] pause routine by: $request")
                             // If the request is caused by the current action, do not cancel current action.
                             it.pause(request.referrerDialogRequestId != it.currentActionDialogRequestId)
