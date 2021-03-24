@@ -20,6 +20,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.nhaarman.mockito_kotlin.*
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
+import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
@@ -78,6 +79,13 @@ class RequestPermissionDirectiveHandlerTest {
     @Test
     fun testGetConfiguration() {
         val handler = RequestPermissionDirectiveHandler(mock())
-        Assert.assertTrue(handler.getConfiguration().containsKey(RequestPermissionDirectiveHandler.DIRECTIVE))
+        handler.getConfiguration().let {
+            val requestPermission = it[RequestPermissionDirectiveHandler.DIRECTIVE]
+            Assert.assertTrue(requestPermission != null)
+            requestPermission?.let { blockingPolicy ->
+                Assert.assertTrue(blockingPolicy.blockedBy == BlockingPolicy.MEDIUM_AUDIO)
+                Assert.assertTrue(blockingPolicy.blocking == null)
+            }
+        }
     }
 }
