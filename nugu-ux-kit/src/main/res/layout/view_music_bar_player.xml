@@ -5,17 +5,30 @@
     android:layout_gravity="bottom"
     android:orientation="vertical">
 
-    <SeekBar
-        android:id="@+id/sb_bar_progress"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="#1A222222"
-        android:enabled="false"
-        android:paddingStart="0dp"
-        android:paddingEnd="0dp"
-        android:max="100"
-        android:progressTint="#009dff"
-        android:thumb="@null" />
+        android:layout_height="wrap_content">
+
+        <View
+            android:id="@+id/bar_divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="top"
+            android:background="#eaeaea" />
+
+        <SeekBar
+            android:id="@+id/sb_bar_progress"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_gravity="top"
+            android:background="#1A222222"
+            android:enabled="false"
+            android:max="100"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:progressTint="#009dff"
+            android:thumb="@null" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
