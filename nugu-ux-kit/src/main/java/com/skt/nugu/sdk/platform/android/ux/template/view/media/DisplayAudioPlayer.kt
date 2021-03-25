@@ -251,6 +251,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             header.ellipsize = TextUtils.TruncateAt.END
         }
 
+        bar_title.enableMarquee()
+
         collapsed.setThrottledOnClickListener {
             collapse()
         }
