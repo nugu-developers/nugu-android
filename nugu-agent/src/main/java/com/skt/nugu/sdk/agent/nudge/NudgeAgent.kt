@@ -18,9 +18,9 @@ package com.skt.nugu.sdk.agent.nudge
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultASRAgent
-import com.skt.nugu.sdk.agent.DefaultDisplayAgent
 import com.skt.nugu.sdk.agent.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.display.DisplayAgent
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler.Companion.isAppendDirective
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
@@ -131,7 +131,7 @@ class NudgeAgent(
         fun isSpeakTTSDirectiveExist() =
             directives.any { it.header.namespace == DefaultTTSAgent.SPEAK.namespace && it.header.name == DefaultTTSAgent.SPEAK.name }
 
-        fun isDisplayDirectiveExist() = directives.any { it.header.namespace == DefaultDisplayAgent.NAMESPACE }
+        fun isDisplayDirectiveExist() = directives.any { it.header.namespace == DisplayAgent.NAMESPACE }
 
         Logger.d(TAG, "onDirectiveGroupPreProcessed(). nudgeDirective :  $nudgeDirective")
 
