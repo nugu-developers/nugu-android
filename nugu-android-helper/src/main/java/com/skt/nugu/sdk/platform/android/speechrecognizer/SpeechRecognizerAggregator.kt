@@ -195,18 +195,21 @@ class SpeechRecognizerAggregator(
 
                     keywordDetectorResultRunnable = Runnable {
                         setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
-                        triggerCallback?.onTriggerFinished(wakeupInfo)
+                        if(triggerCallback?.onTriggerDetected(wakeupInfo) != false) {
+                            executeStartListeningInternal(
+                                audioProvider.getFormat(),
+                                wakeupInfo,
+                                epdParam,
+                                listeningCallback,
+                                ASRAgentInterface.Initiator.WAKE_UP_WORD
+                            )
 
-                        executeStartListeningInternal(
-                            audioProvider.getFormat(),
-                            wakeupInfo,
-                            epdParam,
-                            listeningCallback,
-                            ASRAgentInterface.Initiator.WAKE_UP_WORD
-                        )
-
-                        // To prevent releasing audio input resources, release after startListening.
-                        releaseInputResources()
+                            // To prevent releasing audio input resources, release after startListening.
+                            releaseInputResources()
+                        } else {
+                            setState(SpeechRecognizerAggregatorInterface.State.IDLE)
+                            releaseInputResources()
+                        }
                     }
                 }
 
@@ -215,7 +218,7 @@ class SpeechRecognizerAggregator(
                     keywordDetectorResultRunnable = Runnable {
 
                         if (isTriggerStoppingByStartListening) {
-                            triggerCallback?.onTriggerFinished(null)
+                            triggerCallback?.onTriggerStopped()
 
                             executeStartListeningInternal(
                                 audioFormat,
@@ -232,10 +235,10 @@ class SpeechRecognizerAggregator(
                         } else if (state == SpeechRecognizerAggregatorInterface.State.WAITING) {
                             releaseInputResources()
                             setState(SpeechRecognizerAggregatorInterface.State.STOP)
-                            triggerCallback?.onTriggerFinished(null)
+                            triggerCallback?.onTriggerStopped()
                         } else {
                             releaseInputResources()
-                            triggerCallback?.onTriggerFinished(null)
+                            triggerCallback?.onTriggerStopped()
                         }
                     }
                 }
@@ -244,7 +247,7 @@ class SpeechRecognizerAggregator(
                     Logger.d(TAG, "[onError] errorType: $errorType")
                     keywordDetectorResultRunnable = Runnable {
                         setState(SpeechRecognizerAggregatorInterface.State.ERROR)
-                        triggerCallback?.onTriggerFinished(null)
+                        triggerCallback?.onTriggerError(errorType)
                         releaseInputResources()
                     }
                 }
@@ -257,7 +260,7 @@ class SpeechRecognizerAggregator(
             if(isStarted) {
                 triggerCallback?.onTriggerStarted(inputStream, audioFormat)
             } else {
-                triggerCallback?.onTriggerFinished(null)
+                triggerCallback?.onTriggerError(KeywordDetector.DetectorResultObserver.ErrorType.ERROR_UNKNOWN)
             }
 
             Logger.d(TAG, "[startListeningWithTrigger] isStarted: $isStarted")
