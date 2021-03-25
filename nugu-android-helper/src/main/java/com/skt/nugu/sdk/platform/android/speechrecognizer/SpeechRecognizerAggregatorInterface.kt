@@ -85,8 +85,33 @@ interface SpeechRecognizerAggregatorInterface {
     }
 
     interface TriggerCallback {
+        /**
+         * Called when triggered
+         *
+         * @param inputStream the input stream for trigger
+         * @param format the format for [inputStream]
+         */
         fun onTriggerStarted(inputStream: SharedDataStream, format: AudioFormat)
-        fun onTriggerFinished(wakeupInfo: WakeupInfo?)
+
+        /**
+         * Called  when keyword detected
+         *
+         * @param wakeupInfo the wakeupInfo
+         * @return true: continue listening, false: not start listening
+         */
+        fun onTriggerDetected(wakeupInfo: WakeupInfo?): Boolean
+
+        /**
+         * Called when stopped
+         */
+        fun onTriggerStopped()
+
+        /**
+         * Called when occur error
+         *
+         * @param errorType the error type
+         */
+        fun onTriggerError(errorType: KeywordDetector.DetectorResultObserver.ErrorType)
     }
 
     /**
