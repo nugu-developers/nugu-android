@@ -165,6 +165,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             post {
                 progressView.isEnabled = true
+                bar_progress.isEnabled = true
                 playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
                 progressView.progress = progress.toInt()
                 bar_progress.progress = progress.toInt()
@@ -413,10 +414,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             if (durationSec != null) {
                 progressView.isEnabled = true
+                bar_progress.isEnabled = true
                 playtime.updateText(TemplateUtils.convertToTime(0), isMerge)
             } else if (!isMerge) {
                 progressView.isEnabled = false
                 progressView.visibility = View.INVISIBLE
+                bar_progress.isEnabled = false
+                bar_progress.visibility = View.INVISIBLE
                 playtime.visibility = View.INVISIBLE
                 fulltime.visibility = View.INVISIBLE
             }
