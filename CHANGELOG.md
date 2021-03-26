@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 0.9.53 *(2021-03-26)*
+-----------------------------
+* Enhancement: Support NudgeInterface (#1664)
+* Fix: Rename setCookie to addCookie in NuguWebView (#1665)
+* Fix: Clear a display at specific case (#1666)
+* Fix: Fix routine canceled incorrectly (#1668)
+* Improve: Apply blocking policy for RequestPermission (#1670)
+* Improve: Improve TriggerCallback (#1674)
+* New: Support Nudge Interface v1.0 (#1582)
+
 Version 0.9.52 *(2021-03-19)*
 -----------------------------
 * Fix: Apply blocking policy for AudioPlayerHandler (#1648)
