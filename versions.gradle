@@ -16,8 +16,8 @@ ext {
     silvertrayVersion="4.3.3"
 
 
-    baseNuguVersionCode=953
-    baseNuguVersionName = "0.9.53"
+    baseNuguVersionCode=10000
+    baseNuguVersionName = "1.0.0"
 
     if(rootProject.publishSnapshot) {
         // type current timestamp
