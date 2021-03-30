@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
 
 class SpeechRecognizerAggregator(
     private val keywordDetector: KeywordDetector?,
@@ -171,6 +172,11 @@ class SpeechRecognizerAggregator(
         executor.submit {
             if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
                 Logger.w(TAG, "[startListeningWithTrigger] failed - already executing")
+                return@submit
+            }
+
+            if (speechProcessor.getState().isActive()) {
+                Logger.w(TAG, "[startListeningWithTrigger] failed - speech processor is working")
                 return@submit
             }
 
@@ -319,6 +325,28 @@ class SpeechRecognizerAggregator(
         val inputStream = audioProvider.acquireAudioInputStream(speechProcessor)
         if (inputStream != null) {
             val countDownLatch = CountDownLatch(1)
+            val speechProcessorListener = object: SpeechProcessorDelegate.Listener {
+                override fun onIdle() {}
+
+                override fun onExpectingSpeech() {
+                    countDownLatch.countDown()
+                    speechProcessor.removeListener(this)
+                }
+
+                override fun onSpeechStart(eventPosition: Long?) {}
+
+                override fun onSpeechEnd(eventPosition: Long?) {}
+
+                override fun onTimeout(type: AudioEndPointDetector.TimeoutType) {}
+
+                override fun onStop() {}
+
+                override fun onError(type: AudioEndPointDetector.ErrorType, e: Exception?) {
+                    countDownLatch.countDown()
+                    speechProcessor.removeListener(this)
+                }
+            }
+            speechProcessor.addListener(speechProcessorListener)
             speechProcessor.start(
                 inputStream,
                 audioFormat,
@@ -327,7 +355,6 @@ class SpeechRecognizerAggregator(
                 object: ASRAgentInterface.StartRecognitionCallback {
                     override fun onSuccess(dialogRequestId: String) {
                         Logger.d(TAG, "[executeStartListeningInternal] onSuccess")
-                        countDownLatch.countDown()
                         callback?.onSuccess(dialogRequestId)
                     }
 
@@ -335,6 +362,7 @@ class SpeechRecognizerAggregator(
                         dialogRequestId: String,
                         errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
                     ) {
+                        speechProcessor.removeListener(speechProcessorListener)
                         Logger.d(TAG, "[executeStartListeningInternal] onError: $errorType")
                         setState(SpeechRecognizerAggregatorInterface.State.ERROR)
                         countDownLatch.countDown()
@@ -343,11 +371,16 @@ class SpeechRecognizerAggregator(
                 },
                 initiator
             )
-            countDownLatch.await()
+            try {
+                countDownLatch.await(1, TimeUnit.MINUTES)
+                Logger.d(TAG, "[executeStartListeningInternal] executeStartListeningInternal finished")
+            } catch (e: InterruptedException) {
+                Logger.w(TAG, "[executeStartListeningInternal] executeStartListeningInternal wait timeout", e)
+            }
         } else {
             Logger.e(
                 TAG,
-                "[startListeningInternal] Failed to open AudioInputStream"
+                "[executeStartListeningInternal] Failed to open AudioInputStream"
             )
             setState(SpeechRecognizerAggregatorInterface.State.ERROR)
             callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
