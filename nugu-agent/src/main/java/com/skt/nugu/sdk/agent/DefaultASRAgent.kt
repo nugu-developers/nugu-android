@@ -694,7 +694,7 @@ class DefaultASRAgent(
             param.endPointDetectorParam ?: EndPointDetectorParam(defaultEpdTimeoutMillis.div(1000).toInt())
         }
 
-        val request = currentSpeechRecognizer.start(
+        currentSpeechRecognizer.start(
             param.audioInputStream,
             param.audioFormat,
             param.jsonContext,

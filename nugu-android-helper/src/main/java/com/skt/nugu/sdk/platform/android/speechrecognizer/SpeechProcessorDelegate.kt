@@ -109,4 +109,6 @@ class SpeechProcessorDelegate(
             asrAgent.removeOnStateChangeListener(this)
         }
     }
+
+    fun getState() = epdState
 }
