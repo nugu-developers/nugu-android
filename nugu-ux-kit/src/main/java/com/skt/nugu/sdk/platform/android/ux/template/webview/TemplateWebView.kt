@@ -20,10 +20,13 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.ViewGroup.LayoutParams
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.widget.ImageView
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
@@ -31,16 +34,19 @@ import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
+import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
+import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
+import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
-import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
-import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
 
 @SuppressLint("ClickableViewAccessibility")
 class TemplateWebView @JvmOverloads constructor(
@@ -133,7 +139,6 @@ class TemplateWebView @JvmOverloads constructor(
 //        settings.setAppCacheEnabled(true)
 //        settings.cacheMode = WebSettings.LOAD_DEFAULT
 
-
         setOnTouchListener { _, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> startNotifyDisplayInteraction()
@@ -141,6 +146,8 @@ class TemplateWebView @JvmOverloads constructor(
             }
             false
         }
+
+        addCloseButton()
     }
 
     override fun setServerUrl(url: String) {
@@ -382,6 +389,28 @@ class TemplateWebView @JvmOverloads constructor(
     private fun callJSFunction(script: String) {
         if (isAttachedToWindow) {
             post { loadUrl(script) }
+        }
+    }
+
+    private fun addCloseButton() {
+        post {
+            val webViewWidth = measuredWidth
+            val margin = dpToPx(20f, context)
+            addView(
+                ImageView(context).apply {
+                    setImageResource(R.drawable.nugu_btn_close_2)
+                    layoutParams = LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
+
+                    post {
+                        x = (webViewWidth - measuredWidth - margin).toFloat()
+                        y = margin.toFloat()
+                    }
+
+                    setThrottledOnClickListener {
+                        templateHandler?.onCloseClicked()
+                    }
+                }
+            )
         }
     }
 
