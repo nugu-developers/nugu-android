@@ -3,6 +3,10 @@ Change Log
 
 Version 1.0.1 *(2021-04-01)*
 -----------------------------
+Revert "Update dokka 0.10.0 -> 1.4.30 #1684"
+
+Version 1.0.1 *(2021-04-01)*
+-----------------------------
 * Enhancement: Apply close button to every display template (#1686)
 * Fix: Fix SpeechRecognizer invalid operation (#1680)
     * When call startListening, startTriggerWithListening sequentially, the trigger starts sometimes. (the trigger should not start)
