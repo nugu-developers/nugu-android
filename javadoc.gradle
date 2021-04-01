@@ -1,28 +1,28 @@
 apply plugin: 'org.jetbrains.dokka'
 
-//dokka {
-//    outputFormat = 'html'
-//    outputDirectory = "${buildDir}/javadoc"
-//    configuration {
-//        // Use to include or exclude non public members.
-//        includeNonPublic = false
-//        // Do not output deprecated members. Applies globally, can be overridden by packageOptions
-//        skipDeprecated = false
-//    }
-//}
-//
-//
-//task dokkaJavadoc(type: dokka.getClass()/*(org.jetbrains.dokka.gradle.DokkaTask*/) {
-//    outputFormat = 'javadoc'
-//    outputDirectory = "$buildDir/javadoc"
-//}
+dokka {
+    outputFormat = 'html'
+    outputDirectory = "${buildDir}/javadoc"
+    configuration {
+        // Use to include or exclude non public members.
+        includeNonPublic = false
+        // Do not output deprecated members. Applies globally, can be overridden by packageOptions
+        skipDeprecated = false
+    }
+}
+
+
+task dokkaJavadoc(type: dokka.getClass()/*(org.jetbrains.dokka.gradle.DokkaTask*/) {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
+}
 
 task packageJavadoc(type: Jar, dependsOn: dokkaJavadoc) {
-    from dokkaJavadoc
-    archiveClassifier.set('javadoc')
+    from "$buildDir/javadoc"
+    classifier = 'javadoc'
 }
 
 task sourceJar(type: Jar) {
-    archiveClassifier.set('sources')
+    classifier = 'sources'
     from sourceSets.main.allSource
 }
