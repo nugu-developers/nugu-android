@@ -207,7 +207,7 @@ class TemplateWebView @JvmOverloads constructor(
             }
         }
 
-        callJSFunction(JavaScriptHelper.onDuxReceived(dialogRequestedId, templateContent))
+        callJSFunction(JavaScriptHelper.updateDisplay(templateContent))
     }
 
     override fun onDetachedFromWindow() {
