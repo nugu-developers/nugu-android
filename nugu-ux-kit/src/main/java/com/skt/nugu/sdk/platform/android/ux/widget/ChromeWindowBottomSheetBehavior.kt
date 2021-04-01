@@ -28,13 +28,19 @@ class ChromeWindowBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
     constructor() : super()
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
+    var callback: ChromeWindowContentLayout.OnChromeWindowContentLayoutCallback? = null
+
     override fun onInterceptTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent): Boolean {
+        if (callback?.shouldCollapsed() == false) {
+            return true
+        }
+
         if (event.action == MotionEvent.ACTION_DOWN && state == STATE_EXPANDED) {
             val outRect = Rect()
             child.getGlobalVisibleRect(outRect)
+
             if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
                 state = STATE_COLLAPSED
-                return true
             }
         }
 
