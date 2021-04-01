@@ -1,9 +1,6 @@
 package com.skt.nugu.sdk.agent.playbackcontrol
 
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockito_kotlin.*
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackController
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
@@ -25,6 +22,6 @@ class PlaybackControllerTest {
         whenever(mockContextManager.getContext(playbackController)).then { playbackController.onContextAvailable("{}") }
         playbackController.onButtonPressed(PlaybackButton.PLAY)
         verify(mockContextManager).getContext(playbackController)
-        verify(mockMessageSender).newCall(any())
+        verify(mockMessageSender).newCall(any(), eq(null))
     }
 }
