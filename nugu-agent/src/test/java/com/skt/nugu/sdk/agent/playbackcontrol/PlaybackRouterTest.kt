@@ -1,7 +1,6 @@
 package com.skt.nugu.sdk.agent.playbackcontrol
 
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.PlaybackHandler
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter

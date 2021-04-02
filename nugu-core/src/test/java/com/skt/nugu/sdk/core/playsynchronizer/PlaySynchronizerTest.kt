@@ -16,7 +16,7 @@
 
 package com.skt.nugu.sdk.core.playsynchronizer
 
-import com.nhaarman.mockito_kotlin.*
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import org.junit.Test
 

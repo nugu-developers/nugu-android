@@ -1,8 +1,6 @@
 package com.skt.nugu.sdk.core.network
 
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.times
-import com.nhaarman.mockito_kotlin.verify
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
 import org.junit.Test
