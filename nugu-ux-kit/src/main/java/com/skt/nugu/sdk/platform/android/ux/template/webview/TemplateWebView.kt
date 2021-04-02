@@ -43,6 +43,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
+import org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 import java.util.*
@@ -155,7 +156,7 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingCallback: (() -> Unit)?) {
-        Logger.d(TAG, "load() $templateContent")
+        //Logger.d(TAG, "load() $templateContent")
 
         onLoadingComplete = onLoadingCallback
         isSupportVisibleOrFocusedToken =
@@ -197,6 +198,8 @@ class TemplateWebView @JvmOverloads constructor(
         isSupportVisibleOrFocusedToken =
             TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
 
+        val escapedScript = escapeEcmaScript(templateContent)
+
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
@@ -207,7 +210,7 @@ class TemplateWebView @JvmOverloads constructor(
             }
         }
 
-        callJSFunction(JavaScriptHelper.updateDisplay(templateContent))
+        callJSFunction(JavaScriptHelper.updateDisplay(escapedScript))
     }
 
     override fun onDetachedFromWindow() {
