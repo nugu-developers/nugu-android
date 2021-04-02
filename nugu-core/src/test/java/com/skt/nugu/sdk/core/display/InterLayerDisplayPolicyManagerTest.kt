@@ -16,7 +16,7 @@
 
 package com.skt.nugu.sdk.core.display
 
-import com.nhaarman.mockito_kotlin.*
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import org.junit.Test

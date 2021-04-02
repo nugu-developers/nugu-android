@@ -16,7 +16,7 @@
 
 package com.skt.nugu.sdk.core.context
 
-import com.nhaarman.mockito_kotlin.mock
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
 import org.junit.Test

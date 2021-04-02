@@ -16,7 +16,6 @@
 
 package com.skt.nugu.sdk.agent.permission
 
-import com.nhaarman.mockito_kotlin.*
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
@@ -25,6 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import org.junit.Assert
 import org.junit.Test
+import org.mockito.kotlin.*
 import java.util.HashMap
 import java.util.concurrent.Executors
 

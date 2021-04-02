@@ -1,6 +1,6 @@
 package com.skt.nugu.sdk.agent.playbackcontrol
 
-import com.nhaarman.mockito_kotlin.*
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.agent.playback.impl.PlaybackController
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface

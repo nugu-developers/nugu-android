@@ -16,7 +16,7 @@
 
 package com.skt.nugu.sdk.core.session
 
-import com.nhaarman.mockito_kotlin.mock
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import org.junit.Assert
 import org.junit.Test

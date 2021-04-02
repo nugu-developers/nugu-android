@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.permission
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.nhaarman.mockito_kotlin.*
+import org.mockito.kotlin.*
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
