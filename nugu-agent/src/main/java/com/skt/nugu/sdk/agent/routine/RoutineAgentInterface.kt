@@ -16,8 +16,40 @@
 
 package com.skt.nugu.sdk.agent.routine
 
+import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
+
 interface RoutineAgentInterface {
     enum class State {
         IDLE, PLAYING, STOPPED, FINISHED, INTERRUPTED
     }
+
+    interface RoutineListener {
+        fun onPlaying(directive: StartDirectiveHandler.StartDirective)
+        fun onStopped(directive: StartDirectiveHandler.StartDirective)
+        fun onFinished(directive: StartDirectiveHandler.StartDirective)
+        fun onInterrupted(directive: StartDirectiveHandler.StartDirective)
+    }
+
+    /**
+     * Add listener for routine
+     */
+    fun addListener(listener: RoutineListener)
+
+    /**
+     * Remove listener for routine
+     */
+    fun removeListener(listener: RoutineListener)
+
+    /**
+     * Resume a routine started by [directive]
+     */
+    fun resume(directive: StartDirectiveHandler.StartDirective): Boolean
+    /**
+     * Pause a routine started by [directive]
+     */
+    fun pause(directive: StartDirectiveHandler.StartDirective): Boolean
+    /**
+     * Stop a routine started by [directive]
+     */
+    fun stop(directive: StartDirectiveHandler.StartDirective): Boolean
 }
