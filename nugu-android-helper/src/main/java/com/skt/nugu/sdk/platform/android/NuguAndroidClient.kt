@@ -46,6 +46,7 @@ import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
+import com.skt.nugu.sdk.agent.location.LocationAgent
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
@@ -747,11 +748,11 @@ class NuguAndroidClient private constructor(
 
                 builder.locationProvider?.also { locationProvider ->
                     addAgentFactory(
-                        DefaultLocationAgent.NAMESPACE,
-                        object : AgentFactory<DefaultLocationAgent> {
-                            override fun create(container: SdkContainer): DefaultLocationAgent =
+                        LocationAgent.NAMESPACE,
+                        object : AgentFactory<LocationAgent> {
+                            override fun create(container: SdkContainer): LocationAgent =
                                 with(container) {
-                                    DefaultLocationAgent(getContextManager(), locationProvider)
+                                    LocationAgent(getContextManager(), locationProvider)
                                 }
                         })
                 }
