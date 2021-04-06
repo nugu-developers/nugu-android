@@ -7,28 +7,31 @@ def getVersionNameFromCode(code) {
 }
 
 ext {
-    compileSdkVersion=29
-    minSdkVersion=19
-    targetSdkVersion=29
+    compileSdkVersion = 29
+    minSdkVersion = 19
+    targetSdkVersion = 29
 
-    keensenseVersion="0.2.8"
-    jademarbleVersion="0.2.5"
-    silvertrayVersion="4.3.3"
+    keensenseVersion = "0.2.8"
+    jademarbleVersion = "0.2.5"
+    silvertrayVersion = "4.3.3"
 
 
-    baseNuguVersionCode=10002
+    baseNuguVersionCode = 10002
     baseNuguVersionName = "1.0.2"
 
-    if(rootProject.publishSnapshot) {
+    if (rootProject.publishSnapshot) {
         // type current timestamp
         // timestamp='yyyyMMdd.HHmm'
         // ex) timestamp='20210128.1643'
 
+        // for CI
+        timestamp = System.getenv('SNAPSHOT_TIMESTAMP')
+
         // snapshot version is higher than current version.
-        nuguVersionCode=baseNuguVersionCode+1
-        nuguVersionName="${getVersionNameFromCode(nuguVersionCode)}-${timestamp}-SNAPSHOT"
+        nuguVersionCode = baseNuguVersionCode + 1
+        nuguVersionName = "${getVersionNameFromCode(nuguVersionCode)}-${timestamp}-SNAPSHOT"
     } else {
-        nuguVersionCode=baseNuguVersionCode
-        nuguVersionName=getVersionNameFromCode(nuguVersionCode)
+        nuguVersionCode = baseNuguVersionCode
+        nuguVersionName = getVersionNameFromCode(nuguVersionCode)
     }
 }
