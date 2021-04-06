@@ -40,8 +40,8 @@ task clean(type: Delete) {
 }
 
 ext {
-    isReleaseMode=false
-    publishSnapshot=false
+    isReleaseMode = System.getenv("IS_RELEASE_MODE") ?: false
+    publishSnapshot = System.getenv("PUBLISH_SNAPSHOT") ?: false
 }
 
 apply from: 'versions.gradle'
