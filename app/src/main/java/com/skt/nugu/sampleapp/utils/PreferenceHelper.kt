@@ -176,7 +176,7 @@ class PreferenceHelper {
          * @return true is enable, otherwise false
          */
         fun enableFloating(context: Context): Boolean {
-            return this(context)[KEY_ENABLE_FLOATING, true]
+            return this(context)[KEY_ENABLE_FLOATING, false]
         }
 
         /***

@@ -25,8 +25,6 @@ import com.airbnb.lottie.LottieDrawable
 import com.skt.nugu.sdk.platform.android.ux.R
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 /**
  * A Voice Chrome View is a animated view designed by Nugu Design guide.
@@ -68,6 +66,12 @@ class NuguVoiceChromeView : FrameLayout {
             it.setAnimation(R.raw.passive_02)
         }
     }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        lottieView.removeAllAnimatorListeners()
+    }
+
     private val isPendingAnimating = AtomicBoolean(false)
     private val animationListener = object : Animator.AnimatorListener {
         override fun onAnimationStart(animation: Animator?) {
