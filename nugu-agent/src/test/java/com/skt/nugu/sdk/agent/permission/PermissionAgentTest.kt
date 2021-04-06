@@ -104,8 +104,6 @@ class PermissionAgentTest {
 
         agent.requestPermission(Header("", "", "", "", "", ""), payload)
 
-        Executors.newSingleThreadExecutor().submit {
-            verify(delegate, times(1)).requestPermissions(payload.permissions)
-        }.get()
+        verify(delegate, timeout(1000)).requestPermissions(payload.permissions)
     }
 }
