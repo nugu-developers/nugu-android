@@ -59,7 +59,7 @@ class RoutineAgent(
     companion object {
         private const val TAG = "RoutineAgent"
 
-        private val VERSION = Version(1, 1)
+        private val VERSION = Version(1, 2)
         const val NAMESPACE = "Routine"
     }
 
