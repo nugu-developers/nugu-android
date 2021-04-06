@@ -32,9 +32,9 @@ import kotlin.math.min
  * that manages and persists end-user credentials.
  * @see NuguOAuth
  */
-internal class NuguOAuthClient(private val baseUrl: String) {
+class NuguOAuthClient(private val delegate: UrlDelegate) {
     // The http client
-    private val client = HttpClient(baseUrl)
+    private val client = HttpClient(delegate)
 
     // The current Credentials for the app
     private var credential: Credentials
@@ -70,6 +70,10 @@ internal class NuguOAuthClient(private val baseUrl: String) {
 
         /** The default timeout in milliseconds*/
         private const val initialTimeoutMs = 300L
+    }
+
+    interface UrlDelegate {
+        fun baseUrl() : String
     }
 
     init {
@@ -112,7 +116,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
 
         try {
             val request = Request.Builder(
-                uri = "$baseUrl/v1/auth/oauth/token",
+                uri = "${delegate.baseUrl()}/v1/auth/oauth/token",
                 form = form
             ).build()
             val response = client.newCall(request)
@@ -204,7 +208,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("data", data)
-        val request = Request.Builder(uri = "$baseUrl/v1/auth/oauth/device_authorization",
+        val request = Request.Builder(uri = "${delegate.baseUrl()}/v1/auth/oauth/device_authorization",
             form = form).build()
         val response = client.newCall(request)
         when (response.code) {
@@ -285,7 +289,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("authorization", buildAuthorization())
 
         val request = Request.Builder(
-            uri = "$baseUrl/v1/auth/oauth/me",
+            uri = "${delegate.baseUrl()}/v1/auth/oauth/me",
             headers = header,
             method = "GET"
         ).build()
@@ -320,7 +324,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         val request = Request.Builder(
-            uri = "$baseUrl/v1/auth/oauth/revoke",
+            uri = "${delegate.baseUrl()}/v1/auth/oauth/revoke",
             form = form
         ).build()
         val response = client.newCall(request)
@@ -358,7 +362,7 @@ internal class NuguOAuthClient(private val baseUrl: String) {
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         val request = Request.Builder(
-            uri = "$baseUrl/v1/auth/oauth/introspect",
+            uri = "${delegate.baseUrl()}/v1/auth/oauth/introspect",
             form = form
         ).build()
         val response = client.newCall(request)

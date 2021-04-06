@@ -36,7 +36,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnDeviceA
  * NuguOAuth provides an implementation of the NuguOAuthInterface
  * authorization process.
  */
-class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
+class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate, NuguOAuthClient.UrlDelegate {
     /**
      * Companion objects
      */
@@ -96,22 +96,22 @@ class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
 
     private val executor = Executors.newSingleThreadExecutor()
 
+    @Throws(IllegalStateException::class)
+    override fun baseUrl(): String {
+        val url = OAuthServerUrl ?: ConfigurationStore.configuration()?.OAuthServerUrl
+        return url ?: throw IllegalStateException("Invalid server URL address")
+    }
+
     // current state
     private var state = AuthStateListener.State.UNINITIALIZED
     private var code: String? = null
     private var refreshToken: String? = null
 
-    private val baseUrl: String by lazy {
-        val url = OAuthServerUrl ?: ConfigurationStore.configuration()?.OAuthServerUrl
-        url ?: throw IllegalStateException("Invalid server URL address")
-    }
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
-        NuguOAuthClient(baseUrl)
+        NuguOAuthClient(this)
     }
-    private val authorizeUrl: String by lazy {
-        String.format("${baseUrl}/v1/auth/oauth/authorize")
-    }
+
     /// Authorization state change listeners.
     private val listeners = ConcurrentLinkedQueue<AuthStateListener>()
 
@@ -368,7 +368,7 @@ class NuguOAuth(OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate {
     private fun verifyCode(code: String?) = !code.isNullOrBlank()
 
     private fun makeAuthorizeUri(theme: String) = String.format(
-        authorizeUrl + "?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
+        "${baseUrl()}/v1/auth/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
         options.clientId,
         options.redirectUri,
         URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\",\"theme\":\"$theme\"}", "UTF-8")
