@@ -119,11 +119,6 @@ class TemplateFragment : Fragment() {
         loadTemplate()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        templateView?.templateHandler = null
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     private fun initView() {
         templateView = TemplateView.createView(getTemplateType(), requireContext().applicationContext)
