@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.login.net
 
 import android.net.Uri
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthClient
 import java.io.*
 import java.net.URL
 import javax.net.ssl.*
@@ -23,7 +24,7 @@ import javax.net.ssl.*
 /**
  * Provide a base class for http client
  */
-class HttpClient(private val baseUrl: String) {
+class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
     /**
      * Returns a [HttpsURLConnection] instance
      */
@@ -31,7 +32,7 @@ class HttpClient(private val baseUrl: String) {
         val connection = URL(uri).openConnection() as HttpsURLConnection
         connection.hostnameVerifier = HostnameVerifier { _, session ->
             HttpsURLConnection.getDefaultHostnameVerifier().run {
-                verify(Uri.parse(baseUrl).host, session)
+                verify(Uri.parse(delegate.baseUrl()).host, session)
             }
         }
         connection.requestMethod = method
