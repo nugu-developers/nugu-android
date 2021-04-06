@@ -243,8 +243,12 @@ class DefaultAudioPlayerAgent(
                     Logger.d(TAG, "[onGranted] onReleased: ${directive.getMessageId()} , ${this@AudioInfo}, $currentFocus")
                     if (currentItem == this@AudioInfo) {
                         currentItem = null
-                        if (!playDirectiveController.willBeHandle() && currentFocus != FocusState.NONE) {
-                            focusManager.release(focusRequester, focusChannel)
+                        if (!playDirectiveController.willBeHandle()) {
+                            if(currentFocus != FocusState.NONE) {
+                                focusManager.release(focusRequester, focusChannel)
+                            } else {
+                                focusManager.cancel(focusRequester)
+                            }
                         }
                     }
 
