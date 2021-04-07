@@ -52,15 +52,13 @@ class PermissionAgentTest {
 
         agent.provideState(contextSetter, namespaceAndName, ContextType.COMPACT, token)
 
-        Executors.newSingleThreadExecutor().submit {
-            verify(contextSetter, times(1)).setState(
-                namespaceAndName,
-                PermissionAgent.StateContext.CompactContextState,
-                StateRefreshPolicy.NEVER,
-                ContextType.COMPACT,
-                token
-            )
-        }.get()
+        verify(contextSetter, timeout(1000)).setState(
+            eq(namespaceAndName),
+            eq(PermissionAgent.StateContext.CompactContextState),
+            any(),
+            eq(ContextType.COMPACT),
+            eq(token)
+        )
     }
 
     @Test
@@ -77,19 +75,17 @@ class PermissionAgentTest {
 
         agent.provideState(contextSetter, namespaceAndName, ContextType.FULL, token)
 
-        Executors.newSingleThreadExecutor().submit {
-            verify(contextSetter, atLeastOnce()).setState(
-                namespaceAndName,
-                PermissionAgent.StateContext(HashMap<PermissionType, PermissionState>().apply {
-                    delegate.supportedPermissions.forEach {
-                        put(it, delegate.getPermissionState(it))
-                    }
-                }),
-                StateRefreshPolicy.ALWAYS,
-                ContextType.FULL,
-                token
-            )
-        }.get()
+        verify(contextSetter, timeout(1000)).setState(
+            namespaceAndName,
+            PermissionAgent.StateContext(HashMap<PermissionType, PermissionState>().apply {
+                delegate.supportedPermissions.forEach {
+                    put(it, delegate.getPermissionState(it))
+                }
+            }),
+            StateRefreshPolicy.ALWAYS,
+            ContextType.FULL,
+            token
+        )
     }
 
     @Test
