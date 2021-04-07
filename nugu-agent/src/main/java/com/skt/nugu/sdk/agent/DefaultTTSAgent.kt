@@ -143,15 +143,16 @@ class DefaultTTSAgent(
                         when (newFocus) {
                             FocusState.FOREGROUND -> {
                                 val countDownLatch = CountDownLatch(1)
-                                val text = payload.text
-                                interLayerDisplayPolicyManager.onPlayStarted(layerForDisplayPolicy)
-                                listeners.forEach {listener->
-                                    listener.onReceiveTTSText(text, directive.getDialogRequestId())
-                                }
 
                                 playSynchronizer.startSync(playSyncObject,
                                     object : PlaySynchronizerInterface.OnRequestSyncListener {
                                         override fun onGranted() {
+                                            val text = payload.text
+                                            interLayerDisplayPolicyManager.onPlayStarted(layerForDisplayPolicy)
+                                            listeners.forEach {listener->
+                                                listener.onReceiveTTSText(text, directive.getDialogRequestId())
+                                            }
+
                                             isPlaybackInitiated = true
                                             startPlaying()
                                             countDownLatch.countDown()
