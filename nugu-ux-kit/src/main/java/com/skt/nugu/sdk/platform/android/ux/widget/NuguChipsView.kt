@@ -25,6 +25,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.platform.android.ux.R
 
 /**
@@ -45,15 +46,15 @@ class NuguChipsView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
-    class Item(val text: String, val action: Boolean)
+    class Item(val text: String, val type: Chip.Type)
 
     private val adapter = AdapterChips(context)
 
     /**
      * Sets the maximum number of texts in the chips
      */
-    var maxTextSize : Int = 25
-    
+    var maxTextSize: Int = 25
+
     /**
      * Listener used to dispatch click events.
      */
@@ -170,7 +171,7 @@ class NuguChipsView @JvmOverloads constructor(
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
             holder.titleView.setEllipsizeText(items[position].text, maxTextSize)
-            if (items[position].action) {
+            if (items[position].type == Chip.Type.ACTION || items[position].type == Chip.Type.NUDGE) {
                 holder.titleView.setTextColor(highlightColor)
             } else {
                 holder.titleView.setTextColor(defaultColor)
@@ -214,7 +215,7 @@ class NuguChipsView @JvmOverloads constructor(
     }
 
 
-    fun TextView.setEllipsizeText(text: CharSequence, maxTextSize : Int) {
+    fun TextView.setEllipsizeText(text: CharSequence, maxTextSize: Int) {
         var newText = text
         if (newText.length > maxTextSize) {
             newText = newText.substring(0, maxTextSize - 1) + Typography.ellipsis
