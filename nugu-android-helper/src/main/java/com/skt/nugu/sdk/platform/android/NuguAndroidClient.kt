@@ -33,6 +33,7 @@ import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandl
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
+import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothAgentInterface
 import com.skt.nugu.sdk.agent.bluetooth.BluetoothProvider
 import com.skt.nugu.sdk.agent.chips.ChipsAgent
@@ -451,6 +452,10 @@ class NuguAndroidClient private constructor(
     private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
     private val displayAggregator: DisplayAggregator?
     private val audioFocusInteractor: AudioFocusInteractor?
+    private val beepPlaybackController: BeepPlaybackController by lazy {
+        BeepPlaybackController()
+    }
+    private val asrBeepPlaybackPriority = 1
 
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate,
@@ -958,7 +963,9 @@ class NuguAndroidClient private constructor(
                     DefaultFocusChannel.ASR_BEEP_CHANNEL_NAME,
                     asrAgent,
                     provider,
-                    builder.playerFactory.createBeepPlayer()
+                    builder.playerFactory.createBeepPlayer(),
+                    beepPlaybackController,
+                    asrBeepPlaybackPriority
                 )
             }
         }

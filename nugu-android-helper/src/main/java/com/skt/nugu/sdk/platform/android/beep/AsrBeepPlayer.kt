@@ -17,14 +17,18 @@
 package com.skt.nugu.sdk.platform.android.beep
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.mediaplayer.*
+import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
+import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 
 class AsrBeepPlayer(
@@ -32,7 +36,9 @@ class AsrBeepPlayer(
     private val focusChannelName: String,
     asrAgent: ASRAgentInterface,
     private val beepResourceProvider: AsrBeepResourceProvider,
-    private val mediaPlayer: UriSourcePlayablePlayer
+    private val mediaPlayer: UriSourcePlayablePlayer,
+    private val beepPlaybackController: BeepPlaybackController,
+    private val beepPlaybackPriority: Int
 ): MediaPlayerControlInterface.PlaybackEventListener {
     companion object {
         private const val TAG = "AsrBeepPlayer"
@@ -82,8 +88,14 @@ class AsrBeepPlayer(
         }
     }
 
+    private abstract inner class BeepPlaybackControllerSource(val channelObserver: ChannelObserver) : BeepPlaybackController.Source {
+        override val priority: Int = beepPlaybackPriority
+
+        var sourceId: SourceId = SourceId.ERROR()
+    }
+
     private val executor = Executors.newSingleThreadExecutor()
-    private val channelObserverSourceIdMap = ConcurrentHashMap<SourceId, ChannelObserver>()
+    private val currentSources = CopyOnWriteArraySet<BeepPlaybackControllerSource>()
 
     init {
         asrAgent.addOnResultListener(asrOnResultListener)
@@ -103,13 +115,21 @@ class AsrBeepPlayer(
                             FocusState.FOREGROUND,
                             FocusState.BACKGROUND -> {
                                 isHandled = true
-                                mediaPlayer.setSource(uri, null).also {
-                                    if (!it.isError() && mediaPlayer.play(it)) {
-                                        Logger.d(TAG, "[tryPlayBeep] sourceId: $it")
-                                        channelObserverSourceIdMap[it] = this
-                                    } else {
-                                        focusManager.releaseChannel(focusChannelName, this)
+
+                                object: BeepPlaybackControllerSource(this) {
+                                    override fun play() {
+                                        mediaPlayer.setSource(uri, null).let {
+                                            sourceId = it
+                                            if (!it.isError() && mediaPlayer.play(it)) {
+                                                Logger.d(TAG, "[tryPlayBeep] sourceId: $it")
+                                            } else {
+                                                onSourceCompleted(this)
+                                            }
+                                        }
                                     }
+                                }.let {
+                                    currentSources.add(it)
+                                    beepPlaybackController.addSource(it)
                                 }
                             }
                             FocusState.NONE -> {
@@ -127,11 +147,19 @@ class AsrBeepPlayer(
     }
 
     override fun onPlaybackFinished(id: SourceId) {
-        requestReleaseFocus(id)
+        currentSources.find {
+            it.sourceId == id
+        }?.let {
+            onSourceCompleted(it)
+        }
     }
 
     override fun onPlaybackError(id: SourceId, type: ErrorType, error: String) {
-        requestReleaseFocus(id)
+        currentSources.find {
+            it.sourceId == id
+        }?.let {
+            onSourceCompleted(it)
+        }
     }
 
     override fun onPlaybackPaused(id: SourceId) {
@@ -143,13 +171,22 @@ class AsrBeepPlayer(
     }
 
     override fun onPlaybackStopped(id: SourceId) {
-        requestReleaseFocus(id)
+        currentSources.find {
+            it.sourceId == id
+        }?.let {
+            onSourceCompleted(it)
+        }
     }
 
-    private fun requestReleaseFocus(id: SourceId) {
-        channelObserverSourceIdMap.remove(id)?.let {
-            Logger.d(TAG, "[requestReleaseFocus] $id")
-            focusManager.releaseChannel(focusChannelName, it)
+    private fun onSourceCompleted(source: BeepPlaybackControllerSource) {
+        currentSources.remove(source)
+        beepPlaybackController.removeSource(source)
+
+        if (currentSources.isEmpty()) {
+            Logger.d(TAG, "[requestReleaseFocus] remove source($source) and release channel")
+            focusManager.releaseChannel(focusChannelName, source.channelObserver)
+        } else {
+            Logger.d(TAG, "[requestReleaseFocus] remove source($source) only")
         }
     }
 }
