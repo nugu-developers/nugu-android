@@ -17,15 +17,9 @@ package com.skt.nugu.sampleapp.activity
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.ViewGroup
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
@@ -49,18 +43,12 @@ class GuideActivity : AppCompatActivity(), NuguWebView.WindowListener {
         }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val layout = RelativeLayout(this)
-        layout.layoutParams = RelativeLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        )
-        setContentView(layout)
-
         val webView = NuguWebView(this)
+        setContentView(webView)
+
         with(webView) {
             appVersion = BuildConfig.VERSION_NAME
             theme = NuguWebView.THEME.LIGHT
@@ -73,13 +61,6 @@ class GuideActivity : AppCompatActivity(), NuguWebView.WindowListener {
             }
             webView.loadUrl(url)
         }
-
-        layout.addView( webView,
-            ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        )
     }
 
     override fun onCloseWindow(reason: String?) {

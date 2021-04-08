@@ -46,13 +46,13 @@ class SettingsServiceActivity : AppCompatActivity(), NuguWebView.WindowListener 
         getString(R.string.nugu_redirect_scheme) + "://oauth_refresh"
     }
 
-    private val webView: NuguWebView by lazy {
-        findViewById<NuguWebView>(R.id.webView)
+    private val webView by lazy {
+        NuguWebView(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_webview)
+        setContentView(webView)
 
         with(webView) {
             authorization = NuguOAuth.getClient().getAuthorization()
