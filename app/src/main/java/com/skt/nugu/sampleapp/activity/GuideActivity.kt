@@ -34,16 +34,16 @@ import com.skt.nugu.sdk.platform.android.service.webkit.NuguWebView
 /**
  * Demonstrate using nugu with webview.
  */
-class IntroActivity : AppCompatActivity(), NuguWebView.WindowListener {
+class GuideActivity : AppCompatActivity(), NuguWebView.WindowListener {
     companion object {
-        private const val TAG = "IntroActivity"
+        private const val TAG = "GuideActivity"
         const val requestCode = 101
         const val REASON_WAKE_UP = "WAKE_UP"
         const val EXTRA_KEY_DEVICE_UNIQUEID = "key_device_unique_id"
 
         fun invokeActivity(activity: Activity, deviceUniqueId: String) {
             activity.startActivityForResult(
-                Intent(activity, IntroActivity::class.java)
+                Intent(activity, GuideActivity::class.java)
                     .putExtra(EXTRA_KEY_DEVICE_UNIQUEID, deviceUniqueId)
             , requestCode)
         }
@@ -64,7 +64,7 @@ class IntroActivity : AppCompatActivity(), NuguWebView.WindowListener {
         with(webView) {
             appVersion = BuildConfig.VERSION_NAME
             theme = NuguWebView.THEME.LIGHT
-            windowListener = this@IntroActivity
+            windowListener = this@GuideActivity
         }
         ConfigurationStore.usageGuideUrl(intent.extras?.getString(EXTRA_KEY_DEVICE_UNIQUEID).toString()) { url, error ->
             error?.apply {
