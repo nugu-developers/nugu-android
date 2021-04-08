@@ -146,7 +146,7 @@ class NuguButton @JvmOverloads constructor(
             TYPE_FAB -> 8f
             else -> 13f
         }
-        baseLayout.setBackgroundColor(android.R.color.black)
+
         imageView = ImageView(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
