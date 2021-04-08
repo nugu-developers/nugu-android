@@ -17,7 +17,6 @@
 package com.skt.nugu.sdk.agent.chips
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.DefaultSoundAgent
 import com.skt.nugu.sdk.agent.chips.handler.RenderDirectiveHandler
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent

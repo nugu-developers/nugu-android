@@ -64,6 +64,7 @@ import com.skt.nugu.sdk.agent.screen.Screen
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.session.SessionAgent
 import com.skt.nugu.sdk.agent.sound.BeepDirectiveDelegate
+import com.skt.nugu.sdk.agent.sound.SoundAgent
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.agent.speaker.SpeakerFactory
@@ -843,11 +844,11 @@ class NuguAndroidClient private constructor(
 
                 builder.soundProvider?.also { soundProvider ->
                     addAgentFactory(
-                        DefaultSoundAgent.NAMESPACE,
-                        object : AgentFactory<DefaultSoundAgent> {
-                            override fun create(container: SdkContainer): DefaultSoundAgent =
+                        SoundAgent.NAMESPACE,
+                        object : AgentFactory<SoundAgent> {
+                            override fun create(container: SdkContainer): SoundAgent =
                                 with(container) {
-                                    DefaultSoundAgent(
+                                    SoundAgent(
                                         builder.playerFactory.createBeepPlayer(),
                                         getMessageSender(),
                                         getContextManager(),
