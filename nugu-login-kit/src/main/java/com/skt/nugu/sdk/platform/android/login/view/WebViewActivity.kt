@@ -84,7 +84,17 @@ class WebViewActivity : /**AppCompatActivity()**/
                 super.onReceivedError(view, request, error)
 
                 val intent = Intent()
-                intent.putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, Throwable(error?.description.toString()))
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    intent.putExtra(
+                        NuguOAuthCallbackActivity.EXTRA_ERROR,
+                        Throwable(error?.description.toString())
+                    )
+                } else {
+                    intent.putExtra(
+                        NuguOAuthCallbackActivity.EXTRA_ERROR,
+                        Throwable(error?.toString())
+                    )
+                }
                 setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_FAILED, intent)
                 finish()
             }
