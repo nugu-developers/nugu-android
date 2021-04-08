@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+Version 1.0.3 *(2021-04-08)*
+-----------------------------
+* Fix: Fix bug in RadioListTemplate (#1646)
+* Fix: Apply mobile VoiceChrome spec (#1695)
+* Fix: Fix memory leak when orientation changed (#1707)
+* Fix: Fix missing focusManager cancel (#1710)
+* Fix: Handle re-focused for TTS.Speak directive correctly. (#1714)
+* Fix: Fix wrong dismiss for ChromeWindow (#1718)
+* Improve: Apply mobile VoiceChrome Spec (#1687)
+* Improve: Support public API for RoutineAgent (#1701)
+    * Support resume, stop API
+    * Support status callback API
+* Improve: Change the baseUrl of NuguOAuth to delegate (#1705)
+* Improve: Update lottie 2.7.0 to 3.7.0 (#1716)
+
 Version 1.0.2 *(2021-04-01)*
 -----------------------------
 * Revert "Update dokka 0.10.0 -> 1.4.30 #1684"
