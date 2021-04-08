@@ -27,8 +27,10 @@ class TemplateViewModel : ViewModel() {
             }
         }
 
-        return deepMerge(updatedTemplate, savedTemplate).toString().also {
-            Logger.d(TAG, "merge check $it")
+        return runCatching {
+            deepMerge(updatedTemplate, savedTemplate).toString()
+        }.getOrNull().run {
+            this ?: template
         }
     }
 
@@ -44,7 +46,25 @@ class TemplateViewModel : ViewModel() {
                         //source value is json object, start deep merge
                         deepMerge(value.asJsonObject, target[key].asJsonObject)
                     } else {
-                        target.add(key, value)
+                        if (value.isJsonArray && target.get(key).isJsonArray) {
+                            val (sourceArray, targetArray) = Pair(value.asJsonArray, target.get(key).asJsonArray)
+                            sourceArray.forEachIndexed { index, jsonElement ->
+                                val emptyElement = jsonElement.toString() == "{}"
+                                        || jsonElement.isJsonNull
+                                        || jsonElement.asJsonObject.isJsonNull
+                                        || jsonElement.toString().isEmpty()
+
+                                if (!emptyElement) {
+                                    if (jsonElement.isJsonObject && targetArray[index].isJsonObject) {
+                                        deepMerge(jsonElement.asJsonObject, targetArray[index].asJsonObject)
+                                    } else {
+                                        targetArray[index] = jsonElement
+                                    }
+                                }
+                            }
+                        } else {
+                            target.add(key, value)
+                        }
                     }
                 } else {
                     target.remove(key)
