@@ -27,6 +27,6 @@ data class Chip(
     val token: String?
 ) {
     enum class Type {
-        ACTION, GENERAL
+        ACTION, GENERAL, NUDGE
     }
 }

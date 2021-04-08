@@ -29,7 +29,6 @@ import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
-import java.lang.IllegalStateException
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class ChromeWindowContentLayout @JvmOverloads constructor(
@@ -64,6 +63,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     override fun getGlobalVisibleRect(r: Rect?, globalOffset: Point?): Boolean {
         return bottomSheet.getGlobalVisibleRect(r)
     }
+
     fun getChromeWindowHeight() = bottomSheet.height
 
     private lateinit var sttTextView: TextView
@@ -109,7 +109,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 Logger.d(TAG, "[onStateChanged] $newState")
-                if(statusQueue.peek() == newState) {
+                if (statusQueue.peek() == newState) {
                     statusQueue.remove()
                 }
                 when (newState) {
@@ -135,22 +135,24 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     }
 
     @Throws(IllegalStateException::class)
-    private fun addState(newState : Int?) {
-        if(newState == null) {
+    private fun addState(newState: Int?) {
+        if (newState == null) {
             return
         }
-        when(newState) {
+        when (newState) {
             BottomSheetBehavior.STATE_EXPANDED,
-            BottomSheetBehavior.STATE_HIDDEN -> {/* no op */}
+            BottomSheetBehavior.STATE_HIDDEN
+            -> {/* no op */
+            }
             else -> throw IllegalStateException("unsupported state: $newState")
         }
 
-        if(statusQueue.isEmpty() && bottomSheetBehavior.state == newState) {
+        if (statusQueue.isEmpty() && bottomSheetBehavior.state == newState) {
             return
         }
         statusQueue.add(newState)
 
-        if(statusQueue.size == 1) {
+        if (statusQueue.size == 1) {
             bottomSheetBehavior.state = newState
         }
     }
@@ -192,7 +194,10 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     fun updateChips(payload: RenderDirective.Payload?) {
         val items = ArrayList<NuguChipsView.Item>()
         payload?.chips?.forEach {
-            items.add(NuguChipsView.Item(it.text, it.type == Chip.Type.ACTION))
+            NuguChipsView.Item(it.text, it.type).let { chip ->
+                if (it.type == Chip.Type.NUDGE) items.add(0, chip)
+                else items.add(chip)
+            }
         }
         chipsView.addAll(items)
         if (chipsView.size() > 0) {
