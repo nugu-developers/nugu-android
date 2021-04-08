@@ -1,4 +1,20 @@
 /**
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http:www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
  * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +29,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent
+package com.skt.nugu.sdk.agent.sound
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
-import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
-import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
-import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
-import com.skt.nugu.sdk.agent.sound.BeepDirective
-import com.skt.nugu.sdk.agent.sound.BeepDirectiveDelegate
-import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -37,10 +48,9 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 
-class DefaultSoundAgent(
+class SoundAgent(
     private val mediaPlayer: UriSourcePlayablePlayer,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
