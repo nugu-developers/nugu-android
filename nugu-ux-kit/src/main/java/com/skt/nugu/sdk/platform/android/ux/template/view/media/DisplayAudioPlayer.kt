@@ -25,7 +25,6 @@ import android.util.AttributeSet
 import android.view.AbsSavedState
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewConfiguration
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
 import android.widget.SeekBar
@@ -179,9 +178,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         superState: Parcelable,
         var durationMs: Long,
         var currentTimeMs: Long,
-        var mediaPlaying: Boolean,
-        var isBarType: Boolean,
-        var isLyricShowing: Boolean
+        var mediaPlaying: Int,
+        var isBarType: Int,
+        var isLyricShowing: Int
     ) :
         AbsSavedState(superState) {
 
@@ -189,9 +188,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             super.writeToParcel(dest, flags)
             dest?.writeLong(durationMs)
             dest?.writeLong(currentTimeMs)
-            dest?.writeBoolean(mediaPlaying)
-            dest?.writeBoolean(isBarType)
-            dest?.writeBoolean(isLyricShowing)
+            dest?.writeInt(mediaPlaying)
+            dest?.writeInt(isBarType)
+            dest?.writeInt(isLyricShowing)
         }
     }
 
@@ -200,9 +199,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         return SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
             mediaDurationMs,
             mediaCurrentTimeMs,
-            mediaPlaying,
-            player.y != 0f,
-            lyricsView.visibility == View.VISIBLE)
+            if (mediaPlaying) 1 else 0,
+            if (player.y != 0f) 1 else 0,
+            if (lyricsView.visibility == View.VISIBLE) 1 else 0)
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
@@ -211,12 +210,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         (state as? SavedStates)?.let { savedState ->
             mediaDurationMs = savedState.durationMs
             mediaCurrentTimeMs = savedState.currentTimeMs
-            mediaPlaying = savedState.mediaPlaying
+            mediaPlaying = savedState.mediaPlaying == 1
 
             fulltime.post {
                 fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
                 playtime.updateText(TemplateUtils.convertToTimeMs(mediaCurrentTimeMs.toInt()), true)
-                if (savedState.isLyricShowing) lyricsView.visibility = View.VISIBLE
+                if (savedState.isLyricShowing == 1) lyricsView.visibility = View.VISIBLE
                 lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
                 smallLyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
             }
@@ -228,7 +227,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 }
             }
 
-            if (!savedState.isBarType) {
+            if (savedState.isBarType != 1) {
                 player.post { expand(true) }
             }
         }

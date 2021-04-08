@@ -132,7 +132,7 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
     }
 
     fun hide() {
-        if(view.isAttachedToWindow) {
+        if (isViewAdded) {
             windowManager.removeView(view)
             isViewAdded = false
 
