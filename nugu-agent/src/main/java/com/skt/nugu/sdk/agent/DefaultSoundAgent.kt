@@ -16,6 +16,10 @@
 package com.skt.nugu.sdk.agent
 
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
+import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.agent.sound.BeepDirective
 import com.skt.nugu.sdk.agent.sound.BeepDirectiveDelegate
@@ -33,6 +37,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 
 class DefaultSoundAgent(
@@ -42,7 +47,9 @@ class DefaultSoundAgent(
     private val soundProvider: SoundProvider,
     private val focusChannelName: String,
     private val focusManager: FocusManagerInterface,
-    private val beepDirectiveDelegate: BeepDirectiveDelegate?
+    private val beepDirectiveDelegate: BeepDirectiveDelegate?,
+    private val beepPlaybackController: BeepPlaybackController,
+    private val beepPlaybackPriority: Int
 ) : AbstractCapabilityAgent(NAMESPACE) {
 
     companion object {
@@ -72,6 +79,10 @@ class DefaultSoundAgent(
         override fun value(): String = COMPACT_STATE
     }
 
+    private abstract inner class BeepPlaybackControllerSource : BeepPlaybackController.Source {
+        override val priority: Int = beepPlaybackPriority
+    }
+
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
@@ -86,7 +97,10 @@ class DefaultSoundAgent(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
 
         contextSetter.setState(
             namespaceAndName,
@@ -128,41 +142,56 @@ class DefaultSoundAgent(
             val referrerDialogRequestId = info.directive.header.dialogRequestId
 
             val focusInterfaceName = "$NAMESPACE${info.directive.getMessageId()}"
-            focusManager.acquireChannel(focusChannelName, object: ChannelObserver {
+            focusManager.acquireChannel(focusChannelName, object : ChannelObserver {
                 var isHandled = false
 
                 override fun onFocusChanged(newFocus: FocusState) {
+                    val channelObserver = this
+
                     executor.submit {
-                        Logger.d(TAG, "[onFocusChanged] focus: $newFocus, name: $focusInterfaceName")
+                        Logger.d(
+                            TAG,
+                            "[onFocusChanged] focus: $newFocus, name: $focusInterfaceName"
+                        )
                         when (newFocus) {
-                            FocusState.BACKGROUND -> {
-                                // no-op
-                            }
+                            FocusState.BACKGROUND,
                             FocusState.FOREGROUND -> {
-                                if(isHandled) {
-                                    return@submit
-                                }
+                                if (!isHandled) {
+                                    isHandled = true
+                                    object: BeepPlaybackControllerSource() {
+                                        override fun play() {
+                                            val success = if (beepDirectiveDelegate != null) {
+                                                beepDirectiveDelegate.beep(
+                                                    mediaPlayer,
+                                                    soundProvider,
+                                                    BeepDirective(info.directive.header, payload)
+                                                )
+                                            } else {
+                                                val sourceId =
+                                                    mediaPlayer.setSource(
+                                                        soundProvider.getContentUri(
+                                                            payload.beepName
+                                                        ), null
+                                                    )
+                                                !sourceId.isError() && mediaPlayer.play(sourceId)
+                                            }
 
-                                isHandled = true
-                                val success = if (beepDirectiveDelegate != null) {
-                                    beepDirectiveDelegate.beep(
-                                        mediaPlayer,
-                                        soundProvider,
-                                        BeepDirective(info.directive.header, payload)
-                                    )
-                                } else {
-                                    val sourceId =
-                                        mediaPlayer.setSource(soundProvider.getContentUri(payload.beepName), null)
-                                    !sourceId.isError() && mediaPlayer.play(sourceId)
-                                }
+                                            if (success) {
+                                                sendBeepSucceededEvent(
+                                                    playServiceId,
+                                                    referrerDialogRequestId
+                                                )
+                                            } else {
+                                                sendBeepFailedEvent(playServiceId, referrerDialogRequestId)
+                                            }
 
-                                if (success) {
-                                    sendBeepSucceededEvent(playServiceId, referrerDialogRequestId)
-                                } else {
-                                    sendBeepFailedEvent(playServiceId, referrerDialogRequestId)
+                                            beepPlaybackController.removeSource(this)
+                                            focusManager.releaseChannel(focusChannelName, channelObserver)
+                                        }
+                                    }.let {
+                                        beepPlaybackController.addSource(it)
+                                    }
                                 }
-
-                                focusManager.releaseChannel(focusChannelName, this)
                             }
                             FocusState.NONE -> {
                                 if (!isHandled) {
@@ -183,6 +212,7 @@ class DefaultSoundAgent(
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
         info.result.setFailed(description)
     }
+
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
@@ -221,8 +251,10 @@ class DefaultSoundAgent(
                 ).enqueue(object : MessageSender.Callback {
                     override fun onFailure(request: MessageRequest, status: Status) {
                     }
+
                     override fun onSuccess(request: MessageRequest) {
                     }
+
                     override fun onResponseStart(request: MessageRequest) {
                     }
                 })

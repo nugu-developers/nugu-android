@@ -456,6 +456,7 @@ class NuguAndroidClient private constructor(
         BeepPlaybackController()
     }
     private val asrBeepPlaybackPriority = 1
+    private val soundAgentBeepPlaybackPriority = 2
 
     private val client: NuguClient = NuguClient.Builder(
         builder.authDelegate,
@@ -853,7 +854,9 @@ class NuguAndroidClient private constructor(
                                         soundProvider,
                                         DefaultFocusChannel.SOUND_BEEP_CHANNEL_NAME,
                                         getAudioFocusManager(),
-                                        builder.beepDirectiveDelegate
+                                        builder.beepDirectiveDelegate,
+                                        beepPlaybackController,
+                                        soundAgentBeepPlaybackPriority
                                     ).apply {
                                         getDirectiveSequencer().addDirectiveHandler(this)
                                     }
