@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sampleapp.activity
 
+import android.content.Context
 import android.os.Bundle
 import android.content.Intent
 import android.util.Log
@@ -32,15 +33,19 @@ class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListene
     companion object {
         private const val TAG = "SettingsAgreementAct"
         private val REASON_WITHDRAWN_USER = "WITHDRAWN_USER"
+
+        fun invokeActivity(context: Context) {
+            context.startActivity(Intent(context, SettingsAgreementActivity::class.java))
+        }
     }
 
-    private val webView: NuguWebView by lazy {
-        findViewById<NuguWebView>(R.id.webView)
+    private val webView by lazy {
+        NuguWebView(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_webview)
+        setContentView(webView)
 
         with(webView) {
             authorization = NuguOAuth.getClient().getAuthorization()
