@@ -209,13 +209,13 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
     **/
     private fun startIntroActivity() {
         runOnUiThread {
-            IntroActivity.invokeActivity(this@LoginActivity, ClientManager.deviceUniqueId(this))
+            GuideActivity.invokeActivity(this@LoginActivity, ClientManager.deviceUniqueId(this))
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == IntroActivity.requestCode) {
+        if(requestCode == GuideActivity.requestCode) {
             startMainActivity(resultCode == RESULT_FIRST_USER)
         }
     }

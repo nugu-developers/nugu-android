@@ -41,7 +41,7 @@
             android:configChanges="orientation|keyboardHidden"
             android:screenOrientation="portrait" />
 
-        <activity android:name=".activity.IntroActivity" />
+        <activity android:name=".activity.GuideActivity" />
         <activity
             android:name=".activity.SettingsServiceActivity"
             android:launchMode="singleTop">
