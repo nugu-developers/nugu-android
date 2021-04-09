@@ -1233,9 +1233,10 @@ class DefaultAudioPlayerAgent(
             }
         }
 
+        playDirectiveController.onPlayerStopped()
+
         handlePlaybackCompleted(true)
         stopReason = null
-        playDirectiveController.onPlayerStopped()
     }
 
     private fun executeOnPlaybackFinished(id: SourceId) {
