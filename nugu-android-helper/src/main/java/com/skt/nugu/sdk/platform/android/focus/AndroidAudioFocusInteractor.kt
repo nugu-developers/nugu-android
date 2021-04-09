@@ -73,7 +73,7 @@ object AndroidAudioFocusInteractor {
             handler.post {
                 // whenever acquired, request audio focus
                 result = if(requestAudioFocus(audioFocusChangeListener)) {
-                    audioFocusManager.releaseChannel(channelName, this)
+                    audioFocusManager.releaseChannel(this.channelName, this)
                     focusOwnerReferences.add(requesterName)
                     true
                 } else {
