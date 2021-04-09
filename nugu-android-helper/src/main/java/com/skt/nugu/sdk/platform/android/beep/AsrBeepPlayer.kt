@@ -61,7 +61,15 @@ class AsrBeepPlayer(
             }
         }
 
-        override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
+        override fun onError(
+            type: ASRAgentInterface.ErrorType,
+            header: Header,
+            allowEffectBeep: Boolean
+        ) {
+            if(!allowEffectBeep) {
+                return
+            }
+
             when(type) {
                 ASRAgentInterface.ErrorType.ERROR_NETWORK -> beepResourceProvider.getOnErrorNetworkResource()
                 ASRAgentInterface.ErrorType.ERROR_AUDIO_INPUT -> beepResourceProvider.getOnErrorAudioInputResource()

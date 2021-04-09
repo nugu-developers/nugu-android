@@ -102,7 +102,11 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
             }
         }
 
-        override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
+        override fun onError(
+            type: ASRAgentInterface.ErrorType,
+            header: Header,
+            allowEffectBeep: Boolean
+        ) {
             mainHandler.post {
                 sttView.visibility = View.GONE
                 sttView.text = ""
