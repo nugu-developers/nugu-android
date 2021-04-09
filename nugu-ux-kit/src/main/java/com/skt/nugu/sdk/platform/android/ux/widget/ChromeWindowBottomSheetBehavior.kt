@@ -26,7 +26,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class ChromeWindowBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
     constructor() : super()
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
     var callback: ChromeWindowContentLayout.OnChromeWindowContentLayoutCallback? = null
 

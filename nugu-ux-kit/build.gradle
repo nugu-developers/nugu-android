@@ -25,20 +25,20 @@ android {
 dependencies {
     implementation "com.airbnb.android:lottie:3.7.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.google.android.material:material:1.0.0'
-    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation "com.google.android.material:material:$androidMaterialVersion"
+    implementation "androidx.appcompat:appcompat:$androidXAppcompatVersion"
 
     if (isReleaseMode) {
         implementation "com.skt.nugu.sdk:nugu-android-helper:$version"
     } else {
         implementation project(':nugu-android-helper')
     }
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
-    implementation("com.google.code.gson:gson:${gson_version}")
-    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    implementation("com.google.code.gson:gson:$gsonVersion")
+    implementation "com.github.bumptech.glide:glide:$glideVersion"
 }
 
 apply from: '../javadoc-android.gradle'

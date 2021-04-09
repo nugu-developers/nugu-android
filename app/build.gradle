@@ -77,26 +77,26 @@ dependencies {
     implementation "com.skt.nugu.jademarble:default-resource:$jademarbleVersion"
     implementation "com.skt.nugu.keensense:default-resource:$keensenseVersion"
 
-    implementation "com.google.android.exoplayer:exoplayer-core:2.12.1"
-    implementation "com.google.android.exoplayer:exoplayer-hls:2.12.1"
+    implementation "com.google.android.exoplayer:exoplayer-core:$exoPlayerVersion"
+    implementation "com.google.android.exoplayer:exoplayer-hls:$exoPlayerVersion"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.0.0'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+    implementation "androidx.appcompat:appcompat:$androidXAppcompatVersion"
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation "com.google.android.material:material:$androidMaterialVersion"
     // 2.8.0 requires androidx.
     //noinspection GradleDependency
 
-    implementation 'com.github.bumptech.glide:glide:4.9.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1'
+    implementation "com.github.bumptech.glide:glide:$glideVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesAndroidVersion"
 
     // Koin for Kotlin
-    implementation "org.koin:koin-core:2.0.1"
-    implementation "org.koin:koin-android:2.0.1"
-    implementation "org.koin:koin-android-viewmodel:2.0.1"
+    implementation "org.koin:koin-core:$koinVersion"
+    implementation "org.koin:koin-android:$koinVersion"
+    implementation "org.koin:koin-android-viewmodel:$koinVersion"
 
     // firebase distribution
     implementation platform('com.google.firebase:firebase-bom:26.4.0')
