@@ -21,9 +21,9 @@ dependencies {
         api project(':nugu-interface')
     }
 
-    implementation("com.google.code.gson:gson:${gson_version}")
-    implementation("com.squareup.okhttp3:okhttp:4.4.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.4.0")
+    implementation("com.google.code.gson:gson:$gsonVersion")
+    implementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
+    implementation("com.squareup.okhttp3:logging-interceptor:$okhttp3Version")
 }
 
 apply from: '../javadoc.gradle'

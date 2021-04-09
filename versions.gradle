@@ -11,10 +11,26 @@ ext {
     minSdkVersion = 19
     targetSdkVersion = 29
 
+    // 3rd
+    androidMaterialVersion = "1.3.0"
+    androidXAppcompatVersion = "1.2.0"
+    junitVersion = "4.13.2"
+    mokitoCoreVersion = "3.8.0"
+    glideVersion = "4.12.0"
+    gsonVersion = "2.8.6"
+    okhttp3Version = "4.4.0"
+    androidXJunitVersion = "1.1.2"
+    androidXEspressoCoreVersion = "3.3.0"
+    androidXBrowserVersion = "1.3.0"
+    koinVersion = "2.0.1"
+    kotlinxCoroutinesAndroidVersion = "1.4.1"
+    exoPlayerVersion = "2.12.1"
+
+
+    // SDK
     keensenseVersion = "0.2.8"
     jademarbleVersion = "0.2.5"
     silvertrayVersion = "4.3.3"
-
 
     baseNuguVersionCode = 10003
     baseNuguVersionName = "1.0.3"
