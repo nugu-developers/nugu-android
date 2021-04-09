@@ -40,9 +40,9 @@ object ConfigurationStore {
     private var serviceConfigurationMetadata : ConfigurationMetadata? = null
     lateinit var configuration : Configuration
     private val listeners = mutableSetOf<ConfigurationCallback>()
-    private val discoveryUrl by lazy {
+    private fun discoveryUrl() =
         "${configuration.OAuthServerUrl}/.well-known/oauth-authorization-server/${configuration.clientId}"
-    }
+
     /**
      * Callback for [ConfigurationMetadata] results.
      */
@@ -275,7 +275,7 @@ object ConfigurationStore {
         val client = OkHttpClient().apply {
             protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
         }
-        val httpUrl = HttpUrl.parse(discoveryUrl)
+        val httpUrl = HttpUrl.parse(discoveryUrl())
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
             .build()
