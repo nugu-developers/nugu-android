@@ -219,7 +219,7 @@ class ChromeWindow(context: Context, val view: View) :
     override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
     }
 
-    override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
+    override fun onError(type: ASRAgentInterface.ErrorType, header: Header, allowEffectBeep: Boolean) {
     }
 
     override fun onNoneResult(header: Header) {

@@ -74,7 +74,7 @@ class DefaultASRAgent(
         private const val TAG = "DefaultASRAgent"
 
         const val NAMESPACE = "ASR"
-        val VERSION = Version(1,5)
+        val VERSION = Version(1,6)
 
         const val NAME_EXPECT_SPEECH = "ExpectSpeech"
         const val NAME_RECOGNIZE = "Recognize"
@@ -182,10 +182,14 @@ class DefaultASRAgent(
                 }
             }
 
-            override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
-                Logger.w(TAG, "[onError] $type, $header")
+            override fun onError(
+                type: ASRAgentInterface.ErrorType,
+                header: Header,
+                allowEffectBeep: Boolean
+            ) {
+                Logger.w(TAG, "[onError] $type, $header, $allowEffectBeep")
                 onResultListeners.forEach {
-                    it.onError(type, header)
+                    it.onError(type, header, allowEffectBeep)
                 }
             }
 
@@ -722,17 +726,25 @@ class DefaultASRAgent(
                     speechToTextConverterEventObserver.onCompleteResult(result, header)
                 }
 
-                override fun onError(type: ASRAgentInterface.ErrorType, header: Header) {
+                override fun onError(
+                    type: ASRAgentInterface.ErrorType,
+                    header: Header,
+                    allowEffectBeep: Boolean
+                ) {
                     param.expectSpeechDirectiveParam?.let {
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
+                    val payload = param.expectSpeechDirectiveParam?.directive?.payload
                     if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendResponseTimeout(param.expectSpeechDirectiveParam?.directive?.payload, header.dialogRequestId)
+                        sendResponseTimeout(payload, header.dialogRequestId)
+                        speechToTextConverterEventObserver.onError(type, header)
                     } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
-                        sendListenTimeout(param.expectSpeechDirectiveParam?.directive?.payload, header.dialogRequestId)
+                        sendListenTimeout(payload, header.dialogRequestId)
+                        speechToTextConverterEventObserver.onError(type, header, payload?.listenTimeoutFailBeep != false)
+                    } else {
+                        speechToTextConverterEventObserver.onError(type, header)
                     }
-                    speechToTextConverterEventObserver.onError(type, header)
                 }
 
                 override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {

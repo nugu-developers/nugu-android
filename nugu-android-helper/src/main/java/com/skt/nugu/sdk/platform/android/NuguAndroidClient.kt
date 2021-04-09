@@ -660,7 +660,8 @@ class NuguAndroidClient private constructor(
 
                                             override fun onError(
                                                 type: ASRAgentInterface.ErrorType,
-                                                header: Header
+                                                header: Header,
+                                                allowEffectBeep: Boolean
                                             ) {
 
                                             }

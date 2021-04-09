@@ -159,27 +159,33 @@ interface ASRAgentInterface {
     interface OnResultListener {
         /**
          * Called when there is no matched result.
+         * @param header the request header
          */
         fun onNoneResult(header: Header)
         /**
          * Called when received a partial recognized text.
+         * @param header the request header
          * @param result recognized text
          */
         fun onPartialResult(result: String, header: Header)
         /**
          * Called when received a complete recognized text.
-         *
+         * @param header the request header
          * @param result recognized text
          */
         fun onCompleteResult(result: String, header: Header)
         /**
          * Called when occur error on recognizing.
          * @param type reason for error
+         * @param header the request header
+         * @param allowEffectBeep whether allow beep play or not
          */
-        fun onError(type: ErrorType, header: Header)
+        fun onError(type: ErrorType, header: Header, allowEffectBeep: Boolean = true)
 
         /**
          * Called when canceled.
+         * @param cause the cancel cause
+         * @param header the request header
          */
         fun onCancel(cause: CancelCause, header: Header)
     }

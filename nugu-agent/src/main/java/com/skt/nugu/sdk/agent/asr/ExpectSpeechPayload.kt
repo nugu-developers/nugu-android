@@ -25,7 +25,9 @@ data class ExpectSpeechPayload private constructor(
     @SerializedName("asrContext")
     val asrContext: AsrContext?,
     @SerializedName("epd")
-    val epd: EpdParam?
+    val epd: EpdParam?,
+    @SerializedName("listenTimeoutFailBeep")
+    val listenTimeoutFailBeep: Boolean?
 ) {
     data class EpdParam(
         @SerializedName("timeoutMilliseconds")
@@ -85,6 +87,7 @@ data class ExpectSpeechPayload private constructor(
         } else if (other.domainTypes != null) return false
         if (asrContext != other.asrContext) return false
         if (epd != other.epd) return false
+        if (listenTimeoutFailBeep != other.listenTimeoutFailBeep) return false
 
         return true
     }
@@ -94,6 +97,7 @@ data class ExpectSpeechPayload private constructor(
         result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
         result = 31 * result + (asrContext?.hashCode() ?: 0)
         result = 31 * result + (epd?.hashCode() ?: 0)
+        result = 31 * result + (listenTimeoutFailBeep?.hashCode() ?: 0)
         return result
     }
 }
