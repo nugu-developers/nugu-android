@@ -222,6 +222,13 @@ object ConfigurationStore {
     }
 
     /**
+     * Clears the [ConfigurationMetadata]
+     */
+    fun clearConfigurationMetadata() {
+        configurationMetadata(null)
+    }
+
+    /**
      * Returns the [ConfigurationMetadata] by asynchronous, Fetching from cache or network
      */
     fun configurationMetadataAsync(onResult:(ConfigurationMetadata?, Throwable?) -> Unit) {
