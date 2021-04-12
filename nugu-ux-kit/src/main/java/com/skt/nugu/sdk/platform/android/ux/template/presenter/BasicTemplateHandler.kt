@@ -13,7 +13,7 @@ class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, te
         private const val TAG = "BasicTemplateHandler"
     }
 
-    private val fragmentRef = WeakReference(fragment)
+    private var fragmentRef = WeakReference(fragment)
 
     override fun onCloseClicked() {
         Logger.i(TAG, "onClose()")
@@ -48,5 +48,10 @@ class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, te
     override fun clear() {
         super.clear()
         fragmentRef.clear()
+    }
+
+    fun updateFragment(fragment: TemplateFragment) {
+        fragmentRef.clear()
+        fragmentRef = WeakReference(fragment)
     }
 }

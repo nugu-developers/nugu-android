@@ -20,6 +20,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.webkit.JavascriptInterface
@@ -393,24 +394,36 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     private fun addCloseButton() {
-        post {
-            val webViewWidth = measuredWidth
-            val margin = dpToPx(20f, context)
-            addView(
-                ImageView(context).apply {
-                    setImageResource(R.drawable.nugu_btn_close_2)
-                    layoutParams = LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
+        addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            findViewById<View>(R.id.btn_close).let { closeBtn ->
+                post {
+                    val webViewWidth = measuredWidth
+                    val margin = dpToPx(20f, context)
 
-                    post {
-                        x = (webViewWidth - measuredWidth - margin).toFloat()
-                        y = margin.toFloat()
-                    }
+                    if (closeBtn == null) {
+                        addView(
+                            ImageView(context).apply {
+                                id = R.id.btn_close
+                                setImageResource(R.drawable.nugu_btn_close_2)
+                                layoutParams = LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
 
-                    setThrottledOnClickListener {
-                        templateHandler?.onCloseClicked()
+                                post {
+                                    x = (webViewWidth - measuredWidth - margin).toFloat()
+                                    y = margin.toFloat()
+                                }
+
+                                setThrottledOnClickListener {
+                                    templateHandler?.onCloseClicked()
+                                }
+                            }
+                        )
+                    } else {
+                        closeBtn.post {
+                            closeBtn.x = (webViewWidth - closeBtn.measuredWidth - margin).toFloat()
+                        }
                     }
                 }
-            )
+            }
         }
     }
 
