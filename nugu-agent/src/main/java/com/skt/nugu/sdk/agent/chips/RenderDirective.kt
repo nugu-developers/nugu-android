@@ -32,7 +32,7 @@ data class RenderDirective(
         val chips: Array<Chip>
     ) {
         enum class Target {
-            DM, LISTEN
+            DM, LISTEN, SPEAKING
         }
 
         override fun equals(other: Any?): Boolean {
