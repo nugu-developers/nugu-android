@@ -129,6 +129,7 @@ class TemplateFragment : Fragment() {
             with(templateView!!) {
 
                 if (viewModel.templateHandler != null) {
+                    (viewModel.templateHandler as? BasicTemplateHandler)?.updateFragment(this@TemplateFragment)
                     templateHandler = viewModel.templateHandler
                 } else {
                     templateHandler = BasicTemplateHandler(
