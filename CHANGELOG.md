@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+
+Version 1.0.4 *(2021-04-12)*
+-----------------------------
+* Fix: Fix AudioPlayer's focus not canceled (#1729)
+    * Call cancel() of seamlessfocusManager when audio's play stopped before start
+* Fix: Fix AndroidAudioFocusInteractor's wrong focus release (#1731)
+* Improve: Apply play queue for Beep (#1708)
+* Improve: Remove Escape Util (#1724)
+* Improve: Update ConfigurationStore (#1734)
+* New: Add Nudge to Chips Type (#1728)
+* New: Support ASR Interface v1.6 (#1736)
+* New: Add Speaking Target at Chips (#1738)
+
 Version 1.0.3 *(2021-04-08)*
 -----------------------------
 * Fix: Fix bug in RadioListTemplate (#1646)
