@@ -31,7 +31,7 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 class ElementSelectedEventHandler(
     private val contextGetter: ContextGetterInterface,
     private val messageSender: MessageSender
-): InputProcessor {
+) {
     companion object {
         private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
 
@@ -83,18 +83,5 @@ class ElementSelectedEventHandler(
         })
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        return true
     }
 }

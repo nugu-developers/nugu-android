@@ -68,7 +68,6 @@ class DefaultTTSAgent(
     private val channelName: String
 ) : AbstractCapabilityAgent(NAMESPACE)
     , TTSAgentInterface
-    , InputProcessor
     , MediaPlayerControlInterface.PlaybackEventListener
     , PlayStackManagerInterface.PlayContextProvider
     , StopDirectiveHandler.Controller
@@ -1058,17 +1057,6 @@ class DefaultTTSAgent(
     }
 
     override fun setVolume(volume: Float) = speechPlayer.setVolume(volume)
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean = true
-
-    override fun onResponseTimeout(dialogRequestId: String) {
-    }
 
     override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {
         val playContext = playContextManager.getPlayContext()
