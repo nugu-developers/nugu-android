@@ -41,7 +41,7 @@ class DefaultDelegationAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
     private val defaultClient: DelegationClient
-) : AbstractCapabilityAgent(NAMESPACE), DelegationAgentInterface, InputProcessor {
+) : AbstractCapabilityAgent(NAMESPACE), DelegationAgentInterface {
 
     internal data class DelegatePayload(
         @SerializedName("appId")
@@ -233,18 +233,5 @@ class DefaultDelegationAgent(
         }
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
     }
 }

@@ -48,7 +48,6 @@ class DefaultTextAgent(
     private val textRedirectHandler: TextAgentInterface.TextRedirectHandler?,
     private val interactionControlManager: InteractionControlManagerInterface
 ) : AbstractCapabilityAgent(NAMESPACE)
-    , InputProcessor
     , TextAgentInterface{
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
@@ -451,18 +450,5 @@ class DefaultTextAgent(
         })
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
     }
 }

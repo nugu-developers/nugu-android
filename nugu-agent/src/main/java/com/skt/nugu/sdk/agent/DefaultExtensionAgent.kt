@@ -40,8 +40,7 @@ class DefaultExtensionAgent(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender
 ) : AbstractCapabilityAgent(NAMESPACE)
-    , ExtensionAgentInterface
-    , InputProcessor {
+    , ExtensionAgentInterface {
 
     internal data class ExtensionPayload(
         @SerializedName("playServiceId")
@@ -263,18 +262,5 @@ class DefaultExtensionAgent(
         }, namespaceAndName)
 
         return dialogRequestId
-    }
-
-    override fun onSendEventFinished(dialogRequestId: String) {
-    }
-
-    override fun onReceiveDirectives(
-        dialogRequestId: String,
-        directives: List<Directive>
-    ): Boolean {
-        return true
-    }
-
-    override fun onResponseTimeout(dialogRequestId: String) {
     }
 }
