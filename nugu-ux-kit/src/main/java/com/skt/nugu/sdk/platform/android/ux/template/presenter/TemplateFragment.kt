@@ -31,6 +31,7 @@ import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
+import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 class TemplateFragment : Fragment() {
     companion object {
@@ -140,6 +141,15 @@ class TemplateFragment : Fragment() {
                 }
 
                 addView(this.asView())
+            }
+        }
+
+        if (!isMediaTemplate()) {
+            this.view?.findViewById<View>(R.id.btn_bar_close)?.run {
+                visibility = View.VISIBLE
+                setThrottledOnClickListener {
+                    templateView?.templateHandler?.onCloseClicked()
+                }
             }
         }
     }
