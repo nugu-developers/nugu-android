@@ -35,6 +35,7 @@ class WebViewActivity : /**AppCompatActivity()**/
     companion object {
         const val SCHEME_HTTPS = "https"
         const val SCHEME_HTTP = "http"
+        var supportDeepLink = true
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -61,7 +62,11 @@ class WebViewActivity : /**AppCompatActivity()**/
                         return try {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             intent.putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, action.toString())
-                            startActivity(intent)
+                            if (supportDeepLink) {
+                                startActivity(intent)
+                            } else {
+                                setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_SUCCESS, intent)
+                            }
                             finish()
                             true
                         } catch (e: Throwable) {
