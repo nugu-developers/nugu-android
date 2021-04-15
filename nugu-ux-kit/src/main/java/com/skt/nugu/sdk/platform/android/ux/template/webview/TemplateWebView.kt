@@ -148,7 +148,7 @@ class TemplateWebView @JvmOverloads constructor(
             false
         }
 
-        addCloseButton()
+//        addCloseButton()
     }
 
     override fun setServerUrl(url: String) {

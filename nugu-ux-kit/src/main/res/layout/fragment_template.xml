@@ -8,4 +8,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/white" />
+
+    <ImageView
+        android:id="@+id/btn_bar_close"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="right|top"
+        android:layout_margin="20dp"
+        android:src="@drawable/nugu_btn_close"
+        android:visibility="gone" />
 </FrameLayout>
