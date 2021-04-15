@@ -102,7 +102,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private var mediaCurrentTimeMs = 0L
     private var mediaPlaying = false
 
-    private val thumbTransform = RoundedCorners(dpToPx(2f, context))
+    private val thumbTransform_corner10 = RoundedCorners(dpToPx(10.7f, context))
+    private val thumbTransform_corner2 = RoundedCorners(dpToPx(2f, context))
 
     private var audioPlayerItem: AudioPlayer? = null
 
@@ -402,15 +403,15 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         item.title?.run {
             titleView.updateText(text, isMerge)
-            logoView.updateImage(iconUrl, thumbTransform, isMerge)
+            logoView.updateImage(iconUrl, thumbTransform_corner2, isMerge)
         }
 
         item.content?.run {
-            imageView.updateImage(imageUrl, thumbTransform, isMerge)
+            imageView.updateImage(imageUrl, thumbTransform_corner10, isMerge)
             header.updateText(title, isMerge)
             body.updateText(subtitle1, isMerge)
             footer.updateText(subtitle2, isMerge, true)
-            badgeImage.updateImage(badgeImageUrl, thumbTransform, isMerge)
+            badgeImage.updateImage(badgeImageUrl, thumbTransform_corner2, isMerge)
             badgeTextView.updateText(badgeMessage, isMerge)
 
             if (durationSec != null) {
@@ -451,7 +452,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 smallLyricsView.visibility = View.GONE
             }
 
-            bar_image.updateImage(imageUrl, thumbTransform, isMerge)
+            bar_image.updateImage(imageUrl, thumbTransform_corner2, isMerge)
             bar_title.updateText(title, isMerge)
             bar_subtitle.updateText(subtitle1, isMerge)
         }
