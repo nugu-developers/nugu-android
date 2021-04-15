@@ -196,8 +196,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
             chromeWindow.updateChips(
                 RenderDirective.Payload(
-                    "playServiceId",
-                    RenderDirective.Payload.Target.DM,
+                    "playServiceId", RenderDirective.Payload.Target.DM, //dummy params. will be improved soon.
                     dummyChips
                 )
             )
