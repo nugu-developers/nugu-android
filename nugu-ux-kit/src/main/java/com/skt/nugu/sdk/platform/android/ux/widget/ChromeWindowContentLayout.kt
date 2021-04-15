@@ -123,6 +123,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
                     }
                     BottomSheetBehavior.STATE_HIDDEN -> {
                         callback?.onHidden()
+                        chipsView.onVoiceChromeHidden()
                         bottomSheetBehavior.state = statusQueue.poll() ?: return
                     }
                 }

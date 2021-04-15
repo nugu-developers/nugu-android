@@ -37,10 +37,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.navigation.NavigationView
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
@@ -50,11 +46,17 @@ import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.Chip
+import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
+import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
+import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.widget.*
@@ -157,6 +159,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         chromeWindow.setOnChromeWindowCallback(object : ChromeWindow.OnChromeWindowCallback {
             override fun onExpandStarted() {
                 updateNuguButton(voiceChromeExpandStarted = true)
+                updateDummyChips()
             }
 
             override fun onHiddenFinished() {
@@ -182,6 +185,23 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         tokenRefresher.start()
 
         checkPermissionForOverlay()
+    }
+
+    private fun updateDummyChips() {
+        // Add dummy for testing
+        if (chromeWindow.isChipsEmpty()) {
+            var dummyChips = arrayOf<Chip>()
+            for (index in 0 until 5) {
+                dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
+            }
+            chromeWindow.updateChips(
+                RenderDirective.Payload(
+                    "playServiceId",
+                    RenderDirective.Payload.Target.DM,
+                    dummyChips
+                )
+            )
+        }
     }
 
     override fun onResume() {

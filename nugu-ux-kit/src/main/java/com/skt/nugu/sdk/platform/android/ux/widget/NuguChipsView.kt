@@ -15,8 +15,14 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.widget
 
+import android.animation.ArgbEvaluator
+import android.animation.TimeAnimator
+import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -27,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.platform.android.ux.R
+
 
 /**
  * Custom Horizontal RecyclerView by Nugu Design guide.
@@ -109,15 +116,16 @@ class NuguChipsView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         containerView.removeOnScrollListener(onScrollListener)
+        adapter.clear()
         super.onDetachedFromWindow()
     }
-
 
     fun addAll(list: ArrayList<Item>) {
         adapter.items.clear()
         containerView.removeAllViews()
         adapter.items.addAll(list)
         adapter.notifyDataSetChanged()
+        adapter.startNudgeAnimationIfNeeded()
     }
 
     fun size(): Int {
@@ -131,12 +139,18 @@ class NuguChipsView @JvmOverloads constructor(
     fun addItem(item: Item) {
         adapter.items.add(item)
         adapter.notifyDataSetChanged()
+        adapter.startNudgeAnimationIfNeeded()
     }
 
     fun removeAll() {
         adapter.items.clear()
         adapter.notifyDataSetChanged()
         containerView.removeAllViews()
+        adapter.stopNudgeAnimationIfNeeded()
+    }
+
+    fun onVoiceChromeHidden() {
+        adapter.stopNudgeAnimationIfNeeded()
     }
 
     /**
@@ -150,12 +164,34 @@ class NuguChipsView @JvmOverloads constructor(
         var defaultColor: Int = 0
         var highlightColor: Int = 0
 
+        // for nudge border
+        private val start = Color.parseColor("#009dff")
+        private val end = Color.parseColor("#00e688")
+        private val evaluator = ArgbEvaluator()
+        private val animator = TimeAnimator.ofFloat(0.0f, 1.0f).apply {
+            duration = 800
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+
+            addUpdateListener {
+                for (index in 0 until containerView.childCount) {
+                    (containerView.getChildAt(index).findViewById<View>(R.id.nudge_border)?.background as? GradientDrawable)?.apply {
+                        val fraction = it.animatedFraction
+                        val newStart = evaluator.evaluate(fraction, start, end) as Int
+                        val newEnd = evaluator.evaluate(fraction, end, start) as Int
+
+                        colors = intArrayOf(newStart, newEnd)
+                    }
+                }
+            }
+        }
+
         /**
          * Called when RecyclerView needs a new RecyclerView.ViewHolder of the given type to represent an item.
          */
-        override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ChipsViewHolder {
-            val viewHolder =
-                ChipsViewHolder(LayoutInflater.from(context).inflate(R.layout.item_text, p0, false))
+        override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ChipsViewHolder {
+            val layout = if (viewType == Chip.Type.NUDGE.ordinal) R.layout.item_text_nudge else R.layout.item_text
+            val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(layout, viewGroup, false))
             defaultColor = viewHolder.titleView.textColors.defaultColor
             highlightColor = viewHolder.titleView.highlightColor
             return viewHolder
@@ -166,19 +202,48 @@ class NuguChipsView @JvmOverloads constructor(
          */
         override fun getItemCount() = items.size
 
+        override fun getItemViewType(position: Int): Int {
+            return items[position].type.ordinal
+        }
+
         /**
          * Called by RecyclerView to display the data at the specified position. This method should update the contents of the itemView to reflect the item at the given position.
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
             holder.titleView.setEllipsizeText(items[position].text, maxTextSize)
-            if (items[position].type == Chip.Type.ACTION || items[position].type == Chip.Type.NUDGE) {
-                holder.titleView.setTextColor(highlightColor)
-            } else {
-                holder.titleView.setTextColor(defaultColor)
+            when (items[position].type) {
+                Chip.Type.NUDGE -> {
+                    // remove title view border
+                    (holder.titleView.background as? StateListDrawable)?.run {
+                        for (i in 0 until stateCount) {
+                            (getStateDrawable(i) as? GradientDrawable)?.apply {
+                                setStroke(0, 0)
+                            }
+                        }
+                    }
+                }
+                Chip.Type.ACTION -> {
+                    holder.titleView.setTextColor(highlightColor)
+                }
+                else -> {
+                    holder.titleView.setTextColor(defaultColor)
+                }
             }
             holder.titleView.setThrottledOnClickListener {
                 listener?.onClick(items[position])
             }
+        }
+
+        fun startNudgeAnimationIfNeeded() {
+            if (items.any { it.type == Chip.Type.NUDGE }) animator.start()
+        }
+
+        fun stopNudgeAnimationIfNeeded() {
+            if (animator.isRunning || animator.isStarted) animator.cancel()
+        }
+
+        fun clear() {
+            animator.removeAllUpdateListeners()
         }
 
         /**
