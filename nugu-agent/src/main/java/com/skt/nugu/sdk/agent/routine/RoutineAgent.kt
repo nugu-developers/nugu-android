@@ -667,8 +667,14 @@ class RoutineAgent(
     }
 
     override fun doContinue(directive: ContinueDirectiveHandler.ContinueDirective): Boolean {
-        Logger.d(TAG, "[doContinue] $directive")
-        return resumeInternal(directive.payload.token)
+        Logger.d(TAG, "[doContinue] $directive, $causingPauseRequests")
+
+        // cancel doContinue if paused by another request.
+        return if (causingPauseRequests.isEmpty()) {
+            resumeInternal(directive.payload.token)
+        } else {
+            false
+        }
     }
 
     private fun resumeInternal(token: String): Boolean {
