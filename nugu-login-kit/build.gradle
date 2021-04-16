@@ -36,6 +36,10 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.browser:browser:$androidXBrowserVersion"
+
+    testImplementation 'org.mockito:mockito-core:2.8.9'
+    testImplementation "org.mockito.kotlin:mockito-kotlin:3.1.0"
+    testImplementation 'org.json:json:20180813'
 }
 
 apply from: '../javadoc-android.gradle'
