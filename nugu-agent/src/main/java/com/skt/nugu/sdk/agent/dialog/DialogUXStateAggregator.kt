@@ -27,7 +27,6 @@ import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.*
-import kotlin.collections.HashSet
 
 class DialogUXStateAggregator(
     private val transitionDelayForIdleState: Long,
@@ -49,7 +48,8 @@ class DialogUXStateAggregator(
     data class NotifyParams(
         val state: DialogUXStateAggregatorInterface.DialogUXState,
         val dialogMode: Boolean,
-        val chips: RenderDirective.Payload?
+        val chips: RenderDirective.Payload?,
+        val sessionActivated: Boolean
     )
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -101,8 +101,16 @@ class DialogUXStateAggregator(
     override fun addListener(listener: DialogUXStateAggregatorInterface.Listener) {
         executor.submit {
             listeners.add(listener)
-            val activeSessions = sessionManager.getActiveSessions()
-            listener.onDialogUXStateChanged(currentState, dialogModeEnabled, getCurrentChips(activeSessions), activeSessions.isNotEmpty())
+            val notifyParams = lastNotifyParams ?: NotifyParams(currentState, dialogModeEnabled, null, sessionManager.getActiveSessions().isNotEmpty())
+
+            listeners.forEach {
+                it.onDialogUXStateChanged(
+                    notifyParams.state,
+                    notifyParams.dialogMode,
+                    notifyParams.chips,
+                    notifyParams.sessionActivated
+                )
+            }
         }
     }
 
@@ -223,21 +231,31 @@ class DialogUXStateAggregator(
 
     private fun notifyOnStateChangeIfSomethingChanged() {
         val activeSessions = sessionManager.getActiveSessions()
-        getCurrentChips(activeSessions).let { chips ->
-            NotifyParams(currentState, dialogModeEnabled, chips).let {notifyParams ->
-                if(notifyParams != lastNotifyParams) {
-                    lastNotifyParams = notifyParams
-                    listeners.forEach {
-                        it.onDialogUXStateChanged(currentState, dialogModeEnabled, chips, activeSessions.isNotEmpty())
-                    }
+
+        val chips: RenderDirective.Payload? = lastReceivedChips?.let { renderDirective ->
+            val targetChips = renderDirective.payload
+            if ((targetChips.target == RenderDirective.Payload.Target.LISTEN && currentState == DialogUXStateAggregatorInterface.DialogUXState.EXPECTING)
+                || (renderDirective.payload.target == RenderDirective.Payload.Target.SPEAKING && currentState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING)) {
+                lastReceivedChips = null
+                targetChips
+            } else {
+                null
+            }
+        } ?: getCurrentDMChips(activeSessions)
+
+        NotifyParams(currentState, dialogModeEnabled, chips, activeSessions.isNotEmpty()).let {notifyParams ->
+            if(notifyParams != lastNotifyParams) {
+                lastNotifyParams = notifyParams
+                listeners.forEach {
+                    it.onDialogUXStateChanged(notifyParams.state, notifyParams.dialogMode, notifyParams.chips, notifyParams.sessionActivated)
                 }
             }
         }
     }
 
-    private fun getCurrentChips(activeSessions: Map<String, SessionManagerInterface.Session>): RenderDirective.Payload? {
+    private fun getCurrentDMChips(activeSessions: Map<String, SessionManagerInterface.Session>): RenderDirective.Payload? {
         val chips = lastReceivedChips
-        Logger.d(TAG, "[getCurrentChips] activeSessions: $activeSessions, lastReceivedChips: $chips")
+        Logger.d(TAG, "[getCurrentDMChips] activeSessions: $activeSessions, lastReceivedChips: $chips")
 
         if(chips == null) {
             return null
