@@ -43,9 +43,7 @@ class DirectiveGroupProcessor(
             it.onPostProcessed(processedDirectives)
         }
 
-        processedDirectives.forEach {
-            directiveSequencer.onDirective(it)
-        }
+        directiveSequencer.onDirectives(processedDirectives)
     }
 
     override fun addListener(listener: DirectiveGroupProcessorInterface.Listener) {

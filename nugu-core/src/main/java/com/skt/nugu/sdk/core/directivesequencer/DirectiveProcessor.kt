@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
@@ -67,7 +68,6 @@ class DirectiveProcessor(
     private val directivesBeingHandled: MutableMap<String, MutableMap<BlockingPolicy.Medium, Directive>> = HashMap()
     private var cancelingQueue = ArrayDeque<Directive>()
     private var handlingQueue = ArrayDeque<DirectiveAndPolicy>()
-    private val directiveLock = ReentrantLock()
     private val lock = ReentrantLock()
     private val processingLoop: LoopThread = object : LoopThread() {
         override fun onLoop() {
@@ -95,37 +95,43 @@ class DirectiveProcessor(
         listeners.remove(listener)
     }
 
-    fun onDirective(directive: Directive): Boolean {
-        Logger.d(TAG, "[onDirective] $directive")
-        directiveLock.withLock {
-            lock.withLock {
-                directiveBeingPreHandled = directive
-            }
+    fun onDirectives(directives: List<Directive>) {
+        val shouldBeHandleDirectives = ArrayList<Directive>()
 
-            val preHandled = directiveRouter.preHandleDirective(directive, DirectiveHandlerResult(directive))
-
-            if (!preHandled) {
+        directives.forEach { directive ->
+            if(preHandleDirective(directive)) {
+                shouldBeHandleDirectives.add(directive)
+            } else {
                 listeners.forEach {
                     it.onSkipped(directive)
                 }
             }
+        }
 
-            lock.withLock {
-                if (directiveBeingPreHandled == null && preHandled) {
-                    Logger.d(TAG, "[onDirective] directive handling completed at preHandleDirective().")
-                    return true
-                }
+        shouldBeHandleDirectives.forEach {
+            handlingQueue.offer(DirectiveAndPolicy(it, directiveRouter.getPolicy(it)))
+        }
 
-                directiveBeingPreHandled = null
+        processingLoop.wakeAll()
+    }
 
-                if (!preHandled) {
-                    return false
-                }
+    private fun preHandleDirective(directive: Directive): Boolean {
+        Logger.d(TAG, "[onDirective] $directive")
+        lock.withLock {
+            directiveBeingPreHandled = directive
+        }
 
-                handlingQueue.offer(DirectiveAndPolicy(directive, directiveRouter.getPolicy(directive)))
-                processingLoop.wakeAll()
+        val preHandled =
+            directiveRouter.preHandleDirective(directive, DirectiveHandlerResult(directive))
+
+        lock.withLock {
+            if (directiveBeingPreHandled == null && preHandled) {
+                Logger.d(TAG, "[onDirective] directive handling completed at preHandleDirective().")
                 return true
             }
+
+            directiveBeingPreHandled = null
+            return preHandled
         }
     }
 

@@ -35,7 +35,7 @@ interface DirectiveSequencerInterface: DirectiveProcessorInterface {
     fun addDirectiveHandler(handler: DirectiveHandler)
     fun removeDirectiveHandler(handler: DirectiveHandler)
 
-    fun onDirective(directive: Directive): Boolean
+    fun onDirectives(directives: List<Directive>)
 
     fun disable()
     fun enable()
