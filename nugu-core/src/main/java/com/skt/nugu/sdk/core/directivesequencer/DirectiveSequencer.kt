@@ -33,12 +33,12 @@ class DirectiveSequencer :
     private val directiveRouter = DirectiveRouter()
     private val directiveProcessor: DirectiveProcessor
 
-    private val receivingQueue: Deque<Directive> = ArrayDeque<Directive>()
+    private val receivingQueue: Deque<List<Directive>> = ArrayDeque<List<Directive>>()
 
     private val receivingThread: LoopThread = object : LoopThread() {
         override fun onLoop() {
             while(true) {
-                if(!receiveDirective()){
+                if(!receiveDirectives()){
                     lock.withLock {
                         if(receivingQueue.isEmpty()) {
                             return
@@ -58,19 +58,15 @@ class DirectiveSequencer :
         receivingThread.start()
     }
 
-    private fun receiveDirective(): Boolean {
-        Logger.d(TAG, "[receiveDirective]")
-        val directive = lock.withLock {
+    private fun receiveDirectives(): Boolean {
+        val directives = lock.withLock {
             if (receivingQueue.isEmpty()) {
                 return false
             }
             receivingQueue.pop()
         }
 
-        if (!directiveProcessor.onDirective(directive)) {
-            Logger.e(TAG, "[receiveDirective] failed to handle directive: $directive")
-        }
-
+        directiveProcessor.onDirectives(directives)
         return true
     }
 
@@ -90,17 +86,16 @@ class DirectiveSequencer :
         directiveRouter.removeDirectiveHandler(handler)
     }
 
-    override fun onDirective(directive: Directive): Boolean {
-        Logger.d(TAG, "[onDirective] : $directive")
+    override fun onDirectives(directives: List<Directive>) {
         lock.withLock {
             if (!isEnabled) {
-                Logger.w(TAG, "[onDirective] failed, $TAG was disabled")
-                return false
+                Logger.w(TAG, "[onDirectives] failed, $TAG was disabled")
+                return
             }
 
-            receivingQueue.offer(directive)
+            Logger.d(TAG, "[onDirectives] : $directives")
+            receivingQueue.offer(directives)
             receivingThread.wakeAll()
-            return true
         }
     }
 
