@@ -189,6 +189,9 @@ class DialogUXStateAggregator(
     override fun onMultiturnStateChanged(enabled: Boolean) {
         executor.submit {
             dialogModeEnabled = enabled
+
+            notifyOnStateChangeIfSomethingChanged()
+
             if(!enabled) {
                 tryEnterIdleState()
             }
