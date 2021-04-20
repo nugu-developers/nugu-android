@@ -100,7 +100,7 @@ class ChromeWindow(context: Context, val view: View) :
         if (parent == null) {
             throw IllegalArgumentException("No suitable parent found from the given view. Please provide a valid view.")
         } else {
-            contentLayout = ChromeWindowContentLayout(context, parent)
+            contentLayout = ChromeWindowContentLayout(context = context, view = parent)
             contentLayout.setOnChromeWindowContentLayoutCallback(object : ChromeWindowContentLayout.OnChromeWindowContentLayoutCallback {
                 override fun shouldCollapsed(): Boolean {
                     if (isThinking || (isDialogMode && isSpeaking)) {

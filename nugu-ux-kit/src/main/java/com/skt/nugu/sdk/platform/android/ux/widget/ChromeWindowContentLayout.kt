@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
@@ -24,23 +25,31 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.annotation.VisibleForTesting
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
-import java.util.concurrent.ConcurrentLinkedQueue
 
+@SuppressLint("ViewConstructor")
 class ChromeWindowContentLayout @JvmOverloads constructor(
     context: Context,
-    view: ViewGroup,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
+    view: ViewGroup
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private var callback: OnChromeWindowContentLayoutCallback? = null
+    @VisibleForTesting
+    var currentState : Int = BottomSheetBehavior.STATE_COLLAPSED
 
     companion object {
         private const val TAG = "ChromeWindowContentLayout"
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
     }
 
     interface OnChromeWindowContentLayoutCallback {
@@ -51,12 +60,12 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     fun setOnChromeWindowContentLayoutCallback(callback: OnChromeWindowContentLayoutCallback?) {
         this.callback = callback
-        (bottomSheetBehavior as? ChromeWindowBottomSheetBehavior)?.callback = callback
+        (behavior as? ChromeWindowBottomSheetBehavior)?.callback = callback
     }
 
     lateinit var bottomSheet: FrameLayout
 
-    private val bottomSheetBehavior: BottomSheetBehavior<FrameLayout> by lazy {
+    private val behavior: BottomSheetBehavior<FrameLayout> by lazy {
         BottomSheetBehavior.from(bottomSheet)
     }
 
@@ -66,25 +75,47 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     fun getChromeWindowHeight() = bottomSheet.height
 
-    private lateinit var sttTextView: TextView
+    private var sttTextView: TextView
 
-    private lateinit var voiceChrome: NuguVoiceChromeView
+    private var voiceChrome: NuguVoiceChromeView
 
-    private lateinit var chipsView: NuguChipsView
+    lateinit var chipsView : NuguChipsView
 
-    private val statusQueue = ConcurrentLinkedQueue<Int>()
+    private val bottomSheetCallback: BottomSheetCallback = object : BottomSheetCallback() {
+        override fun onStateChanged(bottomSheet: View, @BottomSheetBehavior.State newState: Int) {
+            Logger.d(TAG, "[onStateChanged] $newState")
+            val currentState = currentState
+            when (newState) {
+                BottomSheetBehavior.STATE_COLLAPSED -> {
+                    if (callback?.shouldCollapsed() == true) {
+                        setState(BottomSheetBehavior.STATE_HIDDEN)
+                    }
+                }
+                BottomSheetBehavior.STATE_HIDDEN -> {
+                    callback?.onHidden()
+                    chipsView.onVoiceChromeHidden()
+                }
+                BottomSheetBehavior.STATE_DRAGGING ,
+                BottomSheetBehavior.STATE_SETTLING -> {
+                    return
+                }
+            }
+            if( currentState != newState ) {
+                behavior.state = currentState
+            }
+        }
+
+        override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+    }
 
     init {
-        val inflater = LayoutInflater.from(context)
-        val content = inflater.inflate(
-            R.layout.bottom_sheet_chrome_window,
-            view,
-            true
-        )
-        chipsView = content.findViewById(R.id.chipsView)
-        bottomSheet = content.findViewById(R.id.fl_bottom_sheet)
-        sttTextView = content.findViewById(R.id.tv_stt)
-        voiceChrome = content.findViewById(R.id.voice_chrome)
+        val factory = LayoutInflater.from(context)
+        factory.inflate(R.layout.bottom_sheet_chrome_window, view, true).apply {
+            chipsView = findViewById(R.id.chipsView)
+            bottomSheet = findViewById(R.id.fl_bottom_sheet)
+            sttTextView = findViewById(R.id.tv_stt)
+            voiceChrome = findViewById(R.id.voice_chrome)
+        }
 
         chipsView.setOnChipsListener(object : NuguChipsView.OnChipsListener {
             override fun onClick(item: NuguChipsView.Item) {
@@ -100,70 +131,41 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
             }
         })
 
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-        bottomSheetBehavior.setBottomSheetCallback(object :
-            BottomSheetBehavior.BottomSheetCallback() {
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // no-op
-            }
-
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                Logger.d(TAG, "[onStateChanged] $newState")
-                if (statusQueue.peek() == newState) {
-                    statusQueue.remove()
-                }
-                when (newState) {
-                    BottomSheetBehavior.STATE_COLLAPSED -> {
-                        if (callback?.shouldCollapsed() == true) {
-                            addState(BottomSheetBehavior.STATE_HIDDEN)
-                        }
-                    }
-                    BottomSheetBehavior.STATE_EXPANDED -> {
-                        bottomSheetBehavior.state = statusQueue.poll() ?: return
-                    }
-                    BottomSheetBehavior.STATE_HIDDEN -> {
-                        callback?.onHidden()
-                        chipsView.onVoiceChromeHidden()
-                        bottomSheetBehavior.state = statusQueue.poll() ?: return
-                    }
-                }
-            }
-        })
+       // setState(BottomSheetBehavior.STATE_HIDDEN)
+        behavior.removeBottomSheetCallback(bottomSheetCallback)
+        behavior.addBottomSheetCallback(bottomSheetCallback)
     }
 
     fun isExpanded(): Boolean {
-        return bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
+        return behavior.state == BottomSheetBehavior.STATE_EXPANDED
     }
 
-    @Throws(IllegalStateException::class)
-    private fun addState(newState: Int?) {
-        if (newState == null) {
+    @VisibleForTesting
+    fun setState(newState: Int) {
+        if (currentState == newState) {
+            Logger.w(TAG, "[setState] currentState=$currentState, newState=$newState")
             return
         }
-        when (newState) {
-            BottomSheetBehavior.STATE_EXPANDED,
-            BottomSheetBehavior.STATE_HIDDEN
-            -> {/* no op */
+        currentState = newState
+
+        when (behavior.state) {
+            BottomSheetBehavior.STATE_DRAGGING,
+            BottomSheetBehavior.STATE_SETTLING-> {
+                /** The state is changing, so wait in onStateChanged() for it to complete. **/
+                Logger.d(TAG, "[setState] currentState=$currentState, newState=$newState")
             }
-            else -> throw IllegalStateException("unsupported state: $newState")
-        }
-
-        if (statusQueue.isEmpty() && bottomSheetBehavior.state == newState) {
-            return
-        }
-        statusQueue.add(newState)
-
-        if (statusQueue.size == 1) {
-            bottomSheetBehavior.state = newState
+            else -> {
+                behavior.state = newState
+            }
         }
     }
 
     fun dismiss() {
-        addState(BottomSheetBehavior.STATE_HIDDEN)
+        setState(BottomSheetBehavior.STATE_HIDDEN)
     }
 
     fun expand() {
-        addState(BottomSheetBehavior.STATE_EXPANDED)
+        setState(BottomSheetBehavior.STATE_EXPANDED)
     }
 
     fun hideChips() {
