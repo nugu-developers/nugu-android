@@ -173,10 +173,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         })
 
         chromeWindow.apply {
-            speechRecognizerAggregator.addListener(this)
             ClientManager.getClient().addDialogUXStateListener(this)
             ClientManager.getClient().addASRResultListener(this)
-            ClientManager.getClient().ttsAgent?.addListener(this)
         }
 
         version.text = "v${BuildConfig.VERSION_NAME}"
@@ -263,10 +261,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     override fun onDestroy() {
         chromeWindow.apply {
-            speechRecognizerAggregator.removeListener(this)
             ClientManager.getClient().removeDialogUXStateListener(this)
             ClientManager.getClient().removeASRResultListener(this)
-            ClientManager.getClient().ttsAgent?.removeListener(this)
         }
 
         SoundPoolCompat.release()
