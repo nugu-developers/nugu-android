@@ -24,17 +24,12 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
-import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.R
 
 class ChromeWindow(context: Context, val view: View) :
-    SpeechRecognizerAggregatorInterface.OnStateChangeListener
-    , DialogUXStateAggregatorInterface.Listener
-    , ASRAgentInterface.OnResultListener
-    , TTSAgentInterface.Listener {
+     DialogUXStateAggregatorInterface.Listener, ASRAgentInterface.OnResultListener {
     companion object {
         private const val TAG = "ChromeWindow"
     }
@@ -120,24 +115,6 @@ class ChromeWindow(context: Context, val view: View) :
         }
     }
 
-
-    override fun onStateChanged(state: SpeechRecognizerAggregatorInterface.State) {
-        Logger.d(TAG, "[onStateChanged] state: $state")
-        voiceChromeController.onStateChanged(state)
-    }
-
-    override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
-        isSpeaking = state == TTSAgentInterface.State.PLAYING
-    }
-
-    override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
-        // no op
-    }
-
-    override fun onError(dialogRequestId: String) {
-        // no op
-    }
-
     override fun onDialogUXStateChanged(
         newState: DialogUXStateAggregatorInterface.DialogUXState,
         dialogMode: Boolean,
@@ -147,6 +124,7 @@ class ChromeWindow(context: Context, val view: View) :
         isDialogMode = dialogMode
         isThinking = newState == DialogUXStateAggregatorInterface.DialogUXState.THINKING
         isIdle = newState == DialogUXStateAggregatorInterface.DialogUXState.IDLE
+        isSpeaking = newState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING
 
         view.post {
             Logger.d(
@@ -244,22 +222,9 @@ class ChromeWindow(context: Context, val view: View) :
             Logger.d(TAG, "[updateLayoutScreenOn] ${view.keepScreenOn}")
         }
     }
-    private val voiceChromeController =
-        object : SpeechRecognizerAggregatorInterface.OnStateChangeListener,
-            DialogUXStateAggregatorInterface.Listener {
-            override fun onStateChanged(state: SpeechRecognizerAggregatorInterface.State) {
-                when (state) {
-                    SpeechRecognizerAggregatorInterface.State.ERROR,
-                    SpeechRecognizerAggregatorInterface.State.TIMEOUT,
-                    SpeechRecognizerAggregatorInterface.State.STOP -> {
-                        //  voiceChrome.stopAnimation()
-                    }
-                    else -> {
-                        // nothing to do
-                    }
-                }
-            }
 
+    private val voiceChromeController =
+        object : DialogUXStateAggregatorInterface.Listener {
             override fun onDialogUXStateChanged(
                 newState: DialogUXStateAggregatorInterface.DialogUXState,
                 dialogMode: Boolean,
