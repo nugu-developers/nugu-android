@@ -32,12 +32,15 @@ class PlaySynchronizer : PlaySynchronizerInterface {
      * should release sync object : the sync object which is started
      */
     private data class ContextInfo(
-        private val prepared: HashSet<PlaySynchronizerInterface.SynchronizeObject> = HashSet(),
-        private val started: HashSet<PlaySynchronizerInterface.SynchronizeObject> = HashSet()
+        private val prepared: MutableSet<PlaySynchronizerInterface.SynchronizeObject> = LinkedHashSet(),
+        private val started: MutableSet<PlaySynchronizerInterface.SynchronizeObject> = LinkedHashSet()
     ) {
+        val listeners = LinkedHashSet<PlaySynchronizerInterface.Listener>()
+
         fun prepare(obj: PlaySynchronizerInterface.SynchronizeObject) {
             if(prepared.add(obj)) {
                 notifyOnStateChanged(obj.dialogRequestId, obj.playServiceId)
+                notifyOnPlaySyncChanged()
             }
         }
 
@@ -45,6 +48,7 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             return if(prepared.remove(syncObj)) {
                 started.add(syncObj)
                 notifyOnStateChanged(syncObj.dialogRequestId, syncObj.playServiceId)
+                notifyOnPlaySyncChanged()
                 true
             } else {
                 false
@@ -52,11 +56,10 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         }
 
         fun cancel(syncObj: PlaySynchronizerInterface.SynchronizeObject): Boolean {
-            val preparedRemoved = prepared.remove(syncObj)
-            val startedRemoved = started.remove(syncObj)
-
-            return if(preparedRemoved || startedRemoved) {
+            return if(prepared.remove(syncObj) || started.remove(syncObj)) {
                 cancel(syncObj.dialogRequestId)
+                // TODO: why not call notifyOnStateChanged(*,*) missed
+                notifyOnPlaySyncChanged()
                 true
             } else {
                 false
@@ -77,16 +80,14 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             }
         }
 
-        fun finish(syncObj: PlaySynchronizerInterface.SynchronizeObject): Boolean {
-            val preparedRemoved = prepared.remove(syncObj)
-            val startedRemoved = started.remove(syncObj)
-
-            if(preparedRemoved || startedRemoved) {
+        fun finish(syncObj: PlaySynchronizerInterface.SynchronizeObject): Boolean =
+            if (prepared.remove(syncObj) || started.remove(syncObj)) {
                 notifyOnStateChanged(syncObj.dialogRequestId, syncObj.playServiceId)
+                notifyOnPlaySyncChanged()
+                true
+            } else {
+                false
             }
-
-            return preparedRemoved || startedRemoved
-        }
 
         private fun notifyOnStateChanged(dialogRequestId: String, playServiceId: String?) {
             filterContext(dialogRequestId, playServiceId).apply {
@@ -118,6 +119,12 @@ class PlaySynchronizer : PlaySynchronizerInterface {
             }
 
             return Pair(filteredPrepared, filteredStarted)
+        }
+
+        private fun notifyOnPlaySyncChanged() {
+            listeners.forEach {
+                it.onSyncStateChanged(prepared, started)
+            }
         }
     }
 
@@ -199,6 +206,18 @@ class PlaySynchronizer : PlaySynchronizerInterface {
         lock.withLock {
             Logger.d(TAG, "[cancelSync] dialogRequestId: $dialogRequestId")
             syncContext.cancel(dialogRequestId)
+        }
+    }
+
+    override fun addListener(listener: PlaySynchronizerInterface.Listener) {
+        lock.withLock {
+            syncContext.listeners.add(listener)
+        }
+    }
+
+    override fun removeListener(listener: PlaySynchronizerInterface.Listener) {
+        lock.withLock {
+            syncContext.listeners.remove(listener)
         }
     }
 }

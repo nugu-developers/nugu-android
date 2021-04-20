@@ -50,7 +50,7 @@ interface PlaySynchronizerInterface {
          * Called when a sync state changed.
          * The sync state changed at [prepareSync], [startSync], [releaseSync], [releaseSyncImmediately], [cancelSync] called for assocated synchronizeObject.
          * @param prepared prepared synchronizeObjects associated with the synchronizeObject
-         * @param started prepared synchronizeObjects associated with the synchronizeObject
+         * @param started started synchronizeObjects associated with the synchronizeObject
          */
         fun onSyncStateChanged(
             prepared: List<SynchronizeObject>,
@@ -61,6 +61,19 @@ interface PlaySynchronizerInterface {
          * Returns whether it is for display or not
          */
         fun isDisplay(): Boolean = false
+    }
+
+    interface Listener {
+        /**
+         * Called when a sync state changed.
+         * The sync state changed at [prepareSync], [startSync], [releaseSync], [releaseSyncImmediately], [cancelSync] called for assocated synchronizeObject.
+         * @param prepared all prepared synchronizeObjects
+         * @param started all started synchronizeObjects
+         */
+        fun onSyncStateChanged(
+            prepared: Set<SynchronizeObject>,
+            started: Set<SynchronizeObject>
+        )
     }
 
     /**
@@ -99,4 +112,16 @@ interface PlaySynchronizerInterface {
      * @param dialogRequestId the dialogRequestId
      */
     fun cancelSync(dialogRequestId: String)
+
+    /**
+     * Add a [listener]
+     * @param listener the listener that added
+     */
+    fun addListener(listener: Listener)
+
+    /**
+     * Remove a [listener]
+     * @param listener the listener that removed
+     */
+    fun removeListener(listener: Listener)
 }

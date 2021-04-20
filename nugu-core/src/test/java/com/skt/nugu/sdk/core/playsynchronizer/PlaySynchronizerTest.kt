@@ -16,9 +16,9 @@
 
 package com.skt.nugu.sdk.core.playsynchronizer
 
-import org.mockito.kotlin.*
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import org.junit.Test
+import org.mockito.kotlin.*
 
 class PlaySynchronizerTest {
     private val emptyPlayServiceId = ""
@@ -173,5 +173,51 @@ class PlaySynchronizerTest {
         synchronizer.releaseSync(syncObj1, null)
 
         verify(syncObj2, times(4)).onSyncStateChanged(any(), any())
+    }
+
+    @Test
+    fun testOnSyncStateChangedOfListener() {
+        val listener: PlaySynchronizerInterface.Listener = spy()
+        val synchronizer = PlaySynchronizer()
+        synchronizer.addListener(listener)
+
+        val syncObj1: PlaySynchronizerInterface.SynchronizeObject = mock()
+        whenever(syncObj1.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj1.dialogRequestId).thenReturn(dialogRequestId1)
+
+        val syncObj2: PlaySynchronizerInterface.SynchronizeObject = mock()
+        whenever(syncObj2.playServiceId).thenReturn(playServiceId1)
+        whenever(syncObj2.dialogRequestId).thenReturn(dialogRequestId1)
+
+
+        synchronizer.prepareSync(syncObj1)
+        verify(listener).onSyncStateChanged(eq(setOf(syncObj1)), eq(emptySet()))
+
+        synchronizer.prepareSync(syncObj2)
+        verify(listener, atLeastOnce()).onSyncStateChanged(
+            eq(setOf(syncObj1, syncObj2)),
+            eq(emptySet())
+        )
+
+        synchronizer.startSync(syncObj1)
+        verify(listener, atLeastOnce()).onSyncStateChanged(eq(setOf(syncObj2)), eq(setOf(syncObj1)))
+
+        synchronizer.startSync(syncObj2)
+        verify(listener, atLeastOnce()).onSyncStateChanged(
+            eq(emptySet()),
+            eq(setOf(syncObj1, syncObj2))
+        )
+
+        synchronizer.releaseSync(syncObj1)
+        verify(listener, atLeastOnce()).onSyncStateChanged(
+            eq(emptySet()),
+            eq(setOf(syncObj2))
+        )
+
+        synchronizer.releaseSyncImmediately(syncObj2)
+        verify(listener, atLeastOnce()).onSyncStateChanged(
+            eq(emptySet()),
+            eq(emptySet())
+        )
     }
 }
