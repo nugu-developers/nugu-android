@@ -19,28 +19,25 @@ package com.skt.nugu.sdk.agent.nudge
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.DefaultTTSAgent
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayAgent
-import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler.Companion.isAppendDirective
-import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
 class NudgeAgent(
-    contextManager: ContextManagerInterface
+    contextManager: ContextManagerInterface,
+    playSynchronizer: PlaySynchronizerInterface
 ) : CapabilityAgent,
     SupportedInterfaceContextProvider,
     NudgeDirectiveObserver,
-    DirectiveGroupProcessorInterface.Listener,
-    TTSAgentInterface.Listener,
-    ASRAgentInterface.OnStateChangeListener, DisplayAgentInterface.Listener {
+    DirectiveGroupProcessorInterface.Listener {
 
     companion object {
         private const val TAG = "NudgeAgent"
@@ -78,6 +75,25 @@ class NudgeAgent(
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
+        playSynchronizer.addListener(object : PlaySynchronizerInterface.Listener {
+            override fun onSyncStateChanged(
+                prepared: Set<PlaySynchronizerInterface.SynchronizeObject>,
+                started: Set<PlaySynchronizerInterface.SynchronizeObject>
+            ) {
+                var log = "onSyncStateChanged() nudgeData Exist: ${nudgeData != null}, "
+
+                nudgeData?.run {
+                    val preparedObjectExist = prepared.any { it.dialogRequestId == dialogRequestId }
+                    val startedObjectExist = started.any { it.dialogRequestId == dialogRequestId }
+                    log += "preparedObject Exist: $preparedObjectExist, startedObject Exist: $startedObjectExist"
+                    if (!preparedObjectExist && !startedObjectExist) {
+                        clearNudgeData()
+                    }
+                }
+
+                Logger.d(TAG, log)
+            }
+        })
     }
 
     override fun getInterfaceName(): String = NAMESPACE
@@ -151,66 +167,6 @@ class NudgeAgent(
             nudgeData?.let { nudgeData ->
                 if (nudgeData.dialogRequestId == dialogRequestId) {
                     nudgeData.nudgeInfo = nudgePayload.nudgeInfo
-                }
-            }
-        }
-    }
-
-    override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
-        executor.submit {
-            (nudgeData?.dialogRequestId == dialogRequestId).let { isDialogIdSame ->
-                Logger.d(TAG, "onTTSStateChanged $state, is dialogRequestId same?  $isDialogIdSame")
-
-                if (isDialogIdSame) {
-                    when (state) {
-                        TTSAgentInterface.State.IDLE,
-                        TTSAgentInterface.State.FINISHED
-                        -> {
-                            if (nudgeData?.speakTTSExist == true &&
-                                nudgeData?.displayTemplateExist != true &&
-                                nudgeData?.expectSpeechExist != true
-                            ) {
-                                clearNudgeData()
-                            }
-                        }
-                        else -> Unit
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onStateChanged(state: ASRAgentInterface.State) {
-        Logger.d(TAG, "onASRStateChanged $state")
-
-        executor.submit {
-            //todo. dialogRequestID may be needed.
-            when (state) {
-                ASRAgentInterface.State.BUSY,
-                ASRAgentInterface.State.IDLE
-                -> {
-                    if (nudgeData?.expectSpeechExist == true &&
-                        nudgeData?.displayTemplateExist != true
-                    ) {
-                        clearNudgeData()
-                    }
-                }
-                else -> Unit
-            }
-        }
-    }
-
-    override fun onRendered(templateId: String, dialogRequestId: String) {
-        //skip
-    }
-
-    override fun onCleared(templateId: String, dialogRequestId: String, canceled: Boolean) {
-        executor.submit {
-            (nudgeData?.dialogRequestId == dialogRequestId).let { isDialogIdSame ->
-                Logger.d(TAG, "onDisplayCleared. is dialogRequestId same?  $isDialogIdSame")
-
-                if (isDialogIdSame) {
-                    clearNudgeData()
                 }
             }
         }
