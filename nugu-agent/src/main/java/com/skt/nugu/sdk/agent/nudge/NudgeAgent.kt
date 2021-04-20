@@ -46,19 +46,21 @@ class NudgeAgent(
         val VERSION = Version(1, 0)
     }
 
-    internal data class StateContext(private val nudgeInfo: String) : BaseContextState {
+    internal data class StateContext(private val nudgeInfo: JsonObject) : BaseContextState {
         companion object {
             private val CompactState = JsonObject().apply {
                 addProperty("version", VERSION.toString())
             }
 
+            private val COMPACT_STATE: String = CompactState.toString()
+
             internal val CompactContextState = object : BaseContextState {
-                override fun value(): String = CompactState.toString()
+                override fun value(): String = COMPACT_STATE
             }
         }
 
         override fun value(): String = CompactState.apply {
-            addProperty("nudgeInfo", nudgeInfo)
+            add("nudgeInfo", nudgeInfo)
         }.toString()
     }
 
@@ -121,7 +123,7 @@ class NudgeAgent(
                         if (it == null) {
                             StateContext.CompactContextState
                         } else {
-                            StateContext(it.toString())
+                            StateContext(it)
                         }
                     },
                     StateRefreshPolicy.ALWAYS,
@@ -134,6 +136,7 @@ class NudgeAgent(
 
     private fun clearNudgeData() {
         executor.submit {
+            Logger.d(TAG, "clearNudgeData")
             nudgeData = null
         }
     }
