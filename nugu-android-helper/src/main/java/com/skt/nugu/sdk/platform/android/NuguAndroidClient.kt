@@ -278,7 +278,7 @@ class NuguAndroidClient private constructor(
         internal var permissionDelegate: PermissionDelegate? = null
 
         // nudge agent (optional)
-        internal var enableNudge: Boolean = false
+        internal var enableNudge: Boolean = true
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -912,7 +912,7 @@ class NuguAndroidClient private constructor(
                 if (builder.enableNudge) {
                     addAgentFactory(NudgeAgent.NAMESPACE, object : AgentFactory<NudgeAgent> {
                         override fun create(container: SdkContainer): NudgeAgent {
-                            return NudgeAgent(container.getContextManager()).apply {
+                            return NudgeAgent(container.getContextManager(), container.getPlaySynchronizer()).apply {
                                 container.getDirectiveSequencer().addDirectiveHandler(NudgeDirectiveHandler(this))
                                 container.getDirectiveGroupProcessor().addListener(this)
                             }
@@ -985,14 +985,6 @@ class NuguAndroidClient private constructor(
         }
 
         initOsContextProvider()
-
-        if (builder.enableNudge) {
-            (client.getAgent(NudgeAgent.NAMESPACE) as? NudgeAgent)?.apply {
-                ttsAgent?.addListener(this)
-                asrAgent?.addOnStateChangeListener(this)
-                displayAgent?.addListener(this)
-            }
-        }
     }
 
     private fun initOsContextProvider() {
