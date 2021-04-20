@@ -48,10 +48,6 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         private const val TAG = "ChromeWindowContentLayout"
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-    }
-
     interface OnChromeWindowContentLayoutCallback {
         fun shouldCollapsed(): Boolean
         fun onHidden()
