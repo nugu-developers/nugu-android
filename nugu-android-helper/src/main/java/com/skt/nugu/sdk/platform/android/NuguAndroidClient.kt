@@ -278,7 +278,7 @@ class NuguAndroidClient private constructor(
         internal var permissionDelegate: PermissionDelegate? = null
 
         // nudge agent (optional)
-        internal var enableNudge: Boolean = true
+        internal var enableNudge: Boolean = false
 
         /**
          * @param factory the player factory to create players used at NUGU
