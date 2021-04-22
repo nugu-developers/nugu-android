@@ -169,6 +169,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
             override fun onChipsClicked(item: NuguChipsView.Item) {
                 ClientManager.getClient().requestTextInput(item.text)
+                speechRecognizerAggregator.stopListening()
             }
         })
 
