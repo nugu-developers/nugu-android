@@ -169,7 +169,6 @@ class RoutineAgent(
         private fun cancelCurrentAction() {
             currentActionDialogRequestId?.let {
                 directiveProcessor.cancelDialogRequestId(it)
-                playSynchronizer.cancelSync(it)
             }
         }
 
