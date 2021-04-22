@@ -147,7 +147,7 @@ class ChromeWindow(context: Context, val view: View) :
                     handleListening()
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                    handleSpeaking(dialogMode)
+                    handleSpeaking(dialogMode, chips)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
                     dismiss()
@@ -167,8 +167,17 @@ class ChromeWindow(context: Context, val view: View) :
         } else {
             contentLayout.hideText()
         }
-
-        contentLayout.updateChips(payload)
+        when(payload?.target) {
+            RenderDirective.Payload.Target.DM -> {
+                if(dialogMode) {
+                    contentLayout.updateChips(payload)
+                }
+            }
+            RenderDirective.Payload.Target.LISTEN -> {
+                contentLayout.updateChips(payload)
+            }
+            else -> contentLayout.hideChips()
+        }
         contentLayout.expand()
         callback?.onExpandStarted()
     }
@@ -184,9 +193,15 @@ class ChromeWindow(context: Context, val view: View) :
         contentLayout.hideChips()
     }
 
-    private fun handleSpeaking(dialogMode: Boolean) {
+    private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?) {
         contentLayout.hideText()
-        contentLayout.hideChips()
+        when(payload?.target) {
+            RenderDirective.Payload.Target.SPEAKING -> {
+                contentLayout.updateChips(payload)
+                return
+            }
+            else -> contentLayout.hideChips()
+        }
 
         if (!dialogMode) {
             dismiss()
