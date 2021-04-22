@@ -56,7 +56,6 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     fun setOnChromeWindowContentLayoutCallback(callback: OnChromeWindowContentLayoutCallback?) {
         this.callback = callback
-        (behavior as? ChromeWindowBottomSheetBehavior)?.callback = callback
     }
 
     lateinit var bottomSheet: FrameLayout
