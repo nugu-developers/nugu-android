@@ -204,6 +204,9 @@ class DialogUXStateAggregator(
 
         if(newState == DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
             seamlessFocusManager.cancel(focusRequester)
+            if(currentState != DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
+                lastReceivedChips = null
+            }
         } else {
             if(currentState == DialogUXStateAggregatorInterface.DialogUXState.IDLE) {
                 seamlessFocusManager.prepare(focusRequester)
