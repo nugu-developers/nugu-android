@@ -203,8 +203,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                         getDirectiveSequencer(),
                         getDirectiveSequencer(),
                         getDirectiveGroupProcessor(),
-                        getAudioSeamlessFocusManager(),
-                        getPlaySynchronizer()
+                        getAudioSeamlessFocusManager()
                     )
                 }
             })
