@@ -45,6 +45,10 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
 
         playStack.removeAll { it.timestamp > oldestTimestamp && !it.persistent }
 
+        playStack.sortByDescending {
+            it.timestamp
+        }
+
         return ArrayList<PlayStackProvider.PlayStackContext>()
             .apply {
                 playStack.forEach {

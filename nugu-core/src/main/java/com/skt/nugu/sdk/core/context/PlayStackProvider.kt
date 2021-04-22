@@ -26,7 +26,7 @@ interface PlayStackProvider {
     )
     
     /**
-     * Returns a playstack.
+     * Returns a playstack which is ordered by descending [PlayStackContext.timestamp].
      * @return the playstack
      */
     fun getPlayStack(): List<PlayStackContext>
