@@ -47,8 +47,7 @@ class RoutineAgent(
     private val directiveProcessor: DirectiveProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
-    private val seamlessFocusManager: SeamlessFocusManagerInterface,
-    private val playSynchronizer: PlaySynchronizerInterface
+    private val seamlessFocusManager: SeamlessFocusManagerInterface
 ) : CapabilityAgent,
     RoutineAgentInterface,
     SupportedInterfaceContextProvider,
