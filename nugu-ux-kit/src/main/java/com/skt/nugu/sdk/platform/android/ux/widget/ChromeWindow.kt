@@ -167,17 +167,18 @@ class ChromeWindow(context: Context, val view: View) :
         } else {
             contentLayout.hideText()
         }
-        when(payload?.target) {
-            RenderDirective.Payload.Target.DM -> {
-                if(dialogMode) {
-                    contentLayout.updateChips(payload)
+        contentLayout.updateChips(
+            when (payload?.target) {
+                RenderDirective.Payload.Target.DM -> {
+                    if (dialogMode) payload
+                    else null
                 }
+                RenderDirective.Payload.Target.LISTEN -> {
+                    payload
+                }
+                else -> null
             }
-            RenderDirective.Payload.Target.LISTEN -> {
-                contentLayout.updateChips(payload)
-            }
-            else -> contentLayout.hideChips()
-        }
+        )
         contentLayout.expand()
         callback?.onExpandStarted()
     }
