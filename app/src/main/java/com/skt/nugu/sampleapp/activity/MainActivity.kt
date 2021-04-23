@@ -159,7 +159,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         chromeWindow.setOnChromeWindowCallback(object : ChromeWindow.OnChromeWindowCallback {
             override fun onExpandStarted() {
                 updateNuguButton(voiceChromeExpandStarted = true)
-                updateDummyChips()
             }
 
             override fun onHiddenFinished() {
@@ -176,6 +175,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         chromeWindow.apply {
             ClientManager.getClient().addDialogUXStateListener(this)
             ClientManager.getClient().addASRResultListener(this)
+            setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider{
+                override fun onCustomChipsAvailable(): Array<Chip>? {
+                    var dummyChips = arrayOf<Chip>()
+                    for (index in 0 until 5) {
+                        dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
+                    }
+
+                    return dummyChips
+                }
+            })
         }
 
         version.text = "v${BuildConfig.VERSION_NAME}"
@@ -184,22 +193,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         tokenRefresher.start()
 
         checkPermissionForOverlay()
-    }
-
-    private fun updateDummyChips() {
-        // Add dummy for testing
-        if (chromeWindow.isChipsEmpty()) {
-            var dummyChips = arrayOf<Chip>()
-            for (index in 0 until 5) {
-                dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
-            }
-            chromeWindow.updateChips(
-                RenderDirective.Payload(
-                    "playServiceId", RenderDirective.Payload.Target.DM, //dummy params. will be improved soon.
-                    dummyChips
-                )
-            )
-        }
     }
 
     override fun onResume() {

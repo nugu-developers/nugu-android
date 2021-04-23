@@ -22,11 +22,13 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
+import com.skt.nugu.sdk.agent.chips.RenderDirective.Payload.Target as ChipsRenderTarget
 
 class ChromeWindow(context: Context, val view: View) :
      DialogUXStateAggregatorInterface.Listener, ASRAgentInterface.OnResultListener {
@@ -40,15 +42,24 @@ class ChromeWindow(context: Context, val view: View) :
         fun onChipsClicked(item: NuguChipsView.Item)
     }
 
+    interface CustomChipsProvider {
+        fun onCustomChipsAvailable() : Array<Chip>?
+    }
+
     private var callback: OnChromeWindowCallback? = null
     private var contentLayout: ChromeWindowContentLayout
     private var screenOnWhileASR = false
+    private var customChipsProcess: CustomChipsProvider? = null
 
     /**
      * set ChromeWindow callback
     */
     fun setOnChromeWindowCallback(callback: OnChromeWindowCallback?) {
         this.callback = callback
+    }
+
+    fun setOnCustomChipsProvider(provider: CustomChipsProvider) {
+        customChipsProcess = provider
     }
 
     /**
@@ -167,24 +178,30 @@ class ChromeWindow(context: Context, val view: View) :
         } else {
             contentLayout.hideText()
         }
-        contentLayout.updateChips(
-            when (payload?.target) {
-                RenderDirective.Payload.Target.DM -> {
-                    if (dialogMode) payload
-                    else null
-                }
-                RenderDirective.Payload.Target.LISTEN -> {
-                    payload
-                }
-                else -> null
-            }
-        )
+
+        if (payload?.target == ChipsRenderTarget.DM && dialogMode || payload?.target == ChipsRenderTarget.LISTEN) {
+            updateChips(payload)
+        } else {
+            updateChips(null)
+            updateCustomChips()
+        }
+
         contentLayout.expand()
         callback?.onExpandStarted()
     }
 
-    fun updateChips(payload: RenderDirective.Payload) {
+    private fun updateChips(payload: RenderDirective.Payload?) {
         contentLayout.updateChips(payload)
+    }
+
+    private fun updateCustomChips() : Boolean {
+        customChipsProcess?.onCustomChipsAvailable()?.let { chips ->
+            contentLayout.updateChips(RenderDirective.Payload(chips = chips,
+                playServiceId = "", target = ChipsRenderTarget.DM)) //this two values are meaningless
+            return true
+        }
+
+        return false
     }
 
     fun isChipsEmpty() = contentLayout.isChipsEmpty()
@@ -196,17 +213,17 @@ class ChromeWindow(context: Context, val view: View) :
 
     private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?) {
         contentLayout.hideText()
-        when(payload?.target) {
-            RenderDirective.Payload.Target.SPEAKING -> {
-                contentLayout.updateChips(payload)
-                return
-            }
-            else -> contentLayout.hideChips()
+
+        if (payload?.target == ChipsRenderTarget.SPEAKING) {
+            updateChips(payload)
+            return
+        } else {
+            contentLayout.hideChips()
+            if (updateCustomChips()) return
         }
 
         if (!dialogMode) {
             dismiss()
-            return
         }
     }
 
