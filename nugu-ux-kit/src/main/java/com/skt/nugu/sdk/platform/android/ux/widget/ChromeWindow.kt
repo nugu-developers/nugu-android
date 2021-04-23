@@ -49,7 +49,7 @@ class ChromeWindow(context: Context, val view: View) :
     private var callback: OnChromeWindowCallback? = null
     private var contentLayout: ChromeWindowContentLayout
     private var screenOnWhileASR = false
-    private var customChipsProcess: CustomChipsProvider? = null
+    private var customChipsProvider: CustomChipsProvider? = null
 
     /**
      * set ChromeWindow callback
@@ -59,7 +59,7 @@ class ChromeWindow(context: Context, val view: View) :
     }
 
     fun setOnCustomChipsProvider(provider: CustomChipsProvider) {
-        customChipsProcess = provider
+        customChipsProvider = provider
     }
 
     /**
@@ -195,7 +195,7 @@ class ChromeWindow(context: Context, val view: View) :
     }
 
     private fun updateCustomChips() : Boolean {
-        customChipsProcess?.onCustomChipsAvailable()?.let { chips ->
+        customChipsProvider?.onCustomChipsAvailable()?.let { chips ->
             contentLayout.updateChips(RenderDirective.Payload(chips = chips,
                 playServiceId = "", target = ChipsRenderTarget.DM)) //this two values are meaningless
             return true
