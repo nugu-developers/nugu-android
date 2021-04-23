@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.core.playstack
 
-import com.skt.nugu.sdk.core.context.PlayStackProvider
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
