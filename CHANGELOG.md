@@ -1,5 +1,23 @@
 Change Log
 ==========
+
+Version 1.0.6 *(2021-04-23)*
+-----------------------------
+* Fix: Deliver chips, target LISTEN or SPEAKING properly (#1753)
+* Fix: In ChromeWindowContentLayout, if StateChanged is not a callback, the state is incorrect (#1762)
+* Fix: Fix NudgeInfo Bug (#1763)
+* Fix: Fix wrong play stack order (#1774)
+* Fix: Clear chips at IDLE  state (#1779)
+* Fix: Fix wrong updateChips in ChromeWindow (#1782)
+* Improve: Ensure to call preHandle of all directives before calling handle (#591)
+* Improve: Notify dialogMode changes (#1756)
+* Improve: Add listener for playSynchronizer (#1759)
+* Improve: Using PlaySynchronizer to NudgeAgent logic (#1761)
+* Improve: Update ChromeWindow (#1767)
+* Improve: Update SPEAKING chips at Voice Chrome (#1769)
+* Improve: Not stop play synced directive when routine stopped (#1770)
+* New: Apply Nudge Chips Design (#1752)
+
 Version 1.0.5 *(2021-04-15)*
 -----------------------------
 * Fix: FIx Template Layout Issue during Landscape (#1747)
