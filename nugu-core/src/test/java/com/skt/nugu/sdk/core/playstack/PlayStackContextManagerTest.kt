@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.core.context
+package com.skt.nugu.sdk.core.playstack
 
 import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextType
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
-import com.skt.nugu.sdk.core.playstack.PlayStackManager
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.kotlin.*
@@ -37,6 +36,11 @@ class PlayStackContextManagerTest {
     fun testGetName() {
         val contextProvider = PlayStackContextManager(mock(), mock())
         Assert.assertTrue(contextProvider.getName() == PlayStackContextManager.PROVIDER_NAME)
+    }
+
+    @Test
+    fun testContextValue() {
+        Assert.assertTrue(PlayStackContextManager.StateContext(arrayListOf("playServiceId")).value() == "[\"playServiceId\"]")
     }
 
     @Test

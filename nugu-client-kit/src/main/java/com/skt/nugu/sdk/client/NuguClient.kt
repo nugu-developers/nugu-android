@@ -30,7 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.core.utils.UserAgent
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
-import com.skt.nugu.sdk.core.context.PlayStackContextManager
+import com.skt.nugu.sdk.core.playstack.PlayStackContextManager
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
 import com.skt.nugu.sdk.core.directivesequencer.*
