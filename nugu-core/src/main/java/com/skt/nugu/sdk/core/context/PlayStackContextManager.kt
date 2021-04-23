@@ -32,12 +32,12 @@ import kotlin.collections.LinkedHashSet
 class PlayStackContextManager(
     contextManager: ContextManagerInterface,
     private val audioPlayStackProvider: PlayStackProvider,
-    private val visualPlayStackProvider: PlayStackProvider?
+    private val visualPlayStackProvider: PlayStackProvider? = null
 ) : ClientContextProvider {
     companion object {
         private const val TAG = "PlayStackContextManager"
 
-        private const val PROVIDER_NAME = "playStack"
+        internal const val PROVIDER_NAME = "playStack"
     }
 
     override fun getName(): String = PROVIDER_NAME
@@ -97,7 +97,7 @@ class PlayStackContextManager(
      *
      * the visual is higher priority than audio.
      */
-    internal fun buildPlayStack(): List<String> {
+    private fun buildPlayStack(): List<String> {
         // use treemap to order (descending)
         val foregroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>(timeStampDescendingComparator)
         val backgroundPlayStackMap = TreeMap<PlayStackProvider.PlayStackContext, String>(timeStampDescendingComparator)

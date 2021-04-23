@@ -16,24 +16,90 @@
 
 package com.skt.nugu.sdk.core.context
 
-import org.mockito.kotlin.*
+import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
+import com.skt.nugu.sdk.core.interfaces.context.ContextType
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.playstack.PlayStackManager
+import org.junit.Assert
 import org.junit.Test
+import org.mockito.kotlin.*
 
 class PlayStackContextManagerTest {
     @Test
-    fun testDescendingOrder() {
-        val audioPlayStackProvider = PlayStackManager("Audio")
-        audioPlayStackProvider.apply {
-            addPlayContextProvider(object: PlayStackManagerInterface.PlayContextProvider {
-                override fun getPlayContext(): PlayStackManagerInterface.PlayContext? = PlayStackManagerInterface.PlayContext("first", 200, false)
+    fun testRegisteredAtContextManager() {
+        val contextManager: ContextManagerInterface = mock()
+        val contextProvider = PlayStackContextManager(contextManager, mock())
+        verify(contextManager).setStateProvider(contextProvider.namespaceAndName, contextProvider)
+    }
+
+    @Test
+    fun testGetName() {
+        val contextProvider = PlayStackContextManager(mock(), mock())
+        Assert.assertTrue(contextProvider.getName() == PlayStackContextManager.PROVIDER_NAME)
+    }
+
+    @Test
+    fun testPlayStackContext() {
+        val audioPlayStackProvider = PlayStackManager("audio").apply {
+            addPlayContextProvider(object : PlayStackManagerInterface.PlayContextProvider {
+                override fun getPlayContext(): PlayStackManagerInterface.PlayContext =
+                    PlayStackManagerInterface.PlayContext("playServiceId_5", 5)
             })
-            addPlayContextProvider(object: PlayStackManagerInterface.PlayContextProvider {
-                override fun getPlayContext(): PlayStackManagerInterface.PlayContext? = PlayStackManagerInterface.PlayContext("second", 100, false)
+            addPlayContextProvider(object : PlayStackManagerInterface.PlayContextProvider {
+                override fun getPlayContext(): PlayStackManagerInterface.PlayContext =
+                    PlayStackManagerInterface.PlayContext("playServiceId_2", 2, isBackground = true)
+            })
+            addPlayContextProvider(object : PlayStackManagerInterface.PlayContextProvider {
+                override fun getPlayContext(): PlayStackManagerInterface.PlayContext =
+                    PlayStackManagerInterface.PlayContext("playServiceId_1", 1)
             })
         }
-        val manager = PlayStackContextManager(mock(), audioPlayStackProvider, null)
-        assert(manager.buildPlayStack().first() == "first")
+        val visualPlayStackProvider = PlayStackManager("visual").apply {
+            addPlayContextProvider(object : PlayStackManagerInterface.PlayContextProvider {
+                override fun getPlayContext(): PlayStackManagerInterface.PlayContext =
+                    PlayStackManagerInterface.PlayContext("playServiceId_6", 6)
+            })
+            addPlayContextProvider(object : PlayStackManagerInterface.PlayContextProvider {
+                override fun getPlayContext(): PlayStackManagerInterface.PlayContext =
+                    PlayStackManagerInterface.PlayContext("playServiceId_4", 4, isBackground = true)
+            })
+            addPlayContextProvider(object : PlayStackManagerInterface.PlayContextProvider {
+                override fun getPlayContext(): PlayStackManagerInterface.PlayContext =
+                    PlayStackManagerInterface.PlayContext("playServiceId_3", 3)
+            })
+        }
+
+        val contextProvider =
+            PlayStackContextManager(mock(), audioPlayStackProvider, visualPlayStackProvider)
+        val contextSetter: ContextSetterInterface = mock()
+
+        val token = 1
+
+        contextProvider.provideState(
+            contextSetter,
+            contextProvider.namespaceAndName,
+            ContextType.FULL,
+            token
+        )
+
+        verify(contextSetter, timeout(1000)).setState(
+            eq(contextProvider.namespaceAndName),
+            eq(
+                PlayStackContextManager.StateContext(
+                    arrayListOf(
+                        "playServiceId_6",
+                        "playServiceId_5",
+                        "playServiceId_4",
+                        "playServiceId_3",
+                        "playServiceId_2",
+                        "playServiceId_1"
+                    )
+                )
+            ),
+            any(),
+            eq(ContextType.FULL),
+            eq(token)
+        )
     }
 }
