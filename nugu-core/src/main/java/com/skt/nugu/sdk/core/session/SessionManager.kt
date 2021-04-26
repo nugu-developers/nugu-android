@@ -36,6 +36,7 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
     private val allSessions = LinkedHashMap<String, SessionManagerInterface.Session>()
     private val sessionSetTimeMap = HashMap<String, Long>()
     private val activeSessionsMap = HashMap<String, HashSet<SessionManagerInterface.Requester>>()
+    private val listeners = LinkedHashSet<SessionManagerInterface.Listener>()
 
     private val timeoutFutureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
     private val timeoutScheduler = Executors.newSingleThreadScheduledExecutor()
@@ -47,7 +48,11 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
             sessionSetTimeMap[key] = System.currentTimeMillis()
 
             // if activate called before set, do not schedule.
-            if(!activeSessionsMap.containsKey(key)) {
+            if(activeSessionsMap.containsKey(key)) {
+                listeners.forEach {
+                    it.onSessionActivated(key, session)
+                }
+            } else {
                 scheduleTimeout(key)
             }
         }
@@ -77,6 +82,13 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
             if(syncSet.add(requester)) {
                 timeoutFutureMap.remove(key)?.cancel(true)
                 Logger.d(TAG, "[activate] key: $key, requester: $requester => activated")
+
+                val session = allSessions[key]
+                if(session != null && syncSet.size == 1) {
+                    listeners.forEach {
+                        it.onSessionActivated(key, session)
+                    }
+                }
             } else {
                 Logger.d(TAG, "[activate] key: $key, requester: $requester => already activated")
             }
@@ -97,6 +109,13 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
                     activeSessionsMap.remove(key)
                     scheduleTimeout(key)
                     Logger.d(TAG, "[deactivate] key: $key, session deactivated")
+
+                    val session = allSessions[key]
+                    if(session != null) {
+                        listeners.forEach {
+                            it.onSessionDeactivated(key, session)
+                        }
+                    }
                 }
             } else {
                 Logger.d(TAG, "[deactivate] key: $key, requester: $requester => already deactivated")
@@ -141,6 +160,18 @@ class SessionManager(private val inactiveTimeoutInMillis: Long = DEFAULT_INACTIV
             }
 
             actives
+        }
+    }
+
+    override fun addListener(listener: SessionManagerInterface.Listener) {
+        lock.withLock {
+            listeners.add(listener)
+        }
+    }
+
+    override fun removeListener(listener: SessionManagerInterface.Listener) {
+        lock.withLock {
+            listeners.remove(listener)
         }
     }
 }

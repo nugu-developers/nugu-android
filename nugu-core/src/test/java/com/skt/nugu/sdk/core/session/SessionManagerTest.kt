@@ -48,8 +48,14 @@ class SessionManagerTest {
     fun testSessionActivate() {
         val requester: SessionManagerInterface.Requester = mock()
 
+        val listener: SessionManagerInterface.Listener = mock()
+        sessionManager.addListener(listener)
+
         sessionManager.set(sessionKey1, session1)
+        verify(listener, never()).onSessionActivated(sessionKey1, session1)
+
         sessionManager.activate(sessionKey1, requester)
+        verify(listener).onSessionActivated(sessionKey1, session1)
         Assert.assertTrue(sessionManager.getActiveSessions().size == 1)
     }
 
@@ -57,18 +63,28 @@ class SessionManagerTest {
     fun testSessionDeactivate() {
         val requester: SessionManagerInterface.Requester = mock()
 
+        val listener: SessionManagerInterface.Listener = mock()
+        sessionManager.addListener(listener)
+
         sessionManager.set(sessionKey1, session1)
         sessionManager.activate(sessionKey1, requester)
         sessionManager.deactivate(sessionKey1, requester)
         Assert.assertTrue(sessionManager.getActiveSessions().isEmpty())
+        verify(listener).onSessionActivated(sessionKey1, session1)
+        verify(listener).onSessionDeactivated(sessionKey1, session1)
     }
 
     @Test
     fun testActivateAndSet() {
         val requester: SessionManagerInterface.Requester = mock()
 
+        val listener: SessionManagerInterface.Listener = mock()
+        sessionManager.addListener(listener)
+
         sessionManager.activate(sessionKey1, requester)
+        verify(listener, never()).onSessionActivated(sessionKey1, session1)
         sessionManager.set(sessionKey1, session1)
+        verify(listener).onSessionActivated(sessionKey1, session1)
 
         Thread.sleep(inactiveTimeoutForTest + 100L)
         Assert.assertTrue(sessionManager.getActiveSessions().isNotEmpty())
