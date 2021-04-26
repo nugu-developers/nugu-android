@@ -305,9 +305,17 @@ class DialogUXStateAggregator(
         }
     }
 
-    override fun onReceiveChips(directive: RenderDirective) {
+    override fun renderChips(directive: RenderDirective) {
         executor.submit {
             lastReceivedChips = directive
+        }
+    }
+
+    override fun clearChips(directive: RenderDirective) {
+        executor.submit {
+            if(lastReceivedChips == directive) {
+                lastReceivedChips = null
+            }
         }
     }
 

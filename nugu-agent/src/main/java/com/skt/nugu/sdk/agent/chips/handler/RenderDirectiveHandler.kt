@@ -23,13 +23,100 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
+import com.skt.nugu.sdk.core.utils.Logger
+import java.util.*
+import kotlin.collections.HashMap
 
 class RenderDirectiveHandler(
-    private val renderer: Renderer
+    private val renderer: Renderer,
+    directiveSequencer: DirectiveSequencerInterface,
+    sessionManager: SessionManagerInterface
 ) : AbstractDirectiveHandler() {
     companion object {
+        private const val TAG = "RenderDirectiveHandler"
+
         private const val NAME_RENDER = "Render"
         val RENDER = NamespaceAndName(ChipsAgent.NAMESPACE, NAME_RENDER)
+    }
+
+    private val renderedDirectiveQueue: Queue<RenderDirective> = LinkedList()
+
+    private val directiveLifecycleHandler =
+        object : DirectiveSequencerInterface.OnDirectiveHandlingListener,
+            SessionManagerInterface.Listener {
+            override fun onRequested(directive: Directive) {}
+
+            override fun onCompleted(directive: Directive) {
+                clearDirectiveIfNeed(directive)
+            }
+
+            override fun onCanceled(directive: Directive) {
+                clearDirectiveIfNeed(directive)
+            }
+
+            override fun onFailed(directive: Directive, description: String) {
+                clearDirectiveIfNeed(directive)
+            }
+
+            override fun onSkipped(directive: Directive) {
+                clearDirectiveIfNeed(directive)
+            }
+
+            override fun onSessionActivated(key: String, session: SessionManagerInterface.Session) { }
+
+            override fun onSessionDeactivated(
+                key: String,
+                session: SessionManagerInterface.Session
+            ) {
+                val shouldBeClears = renderedDirectiveQueue.filter {
+                    it.header.dialogRequestId == key
+                }.filter {
+                    it.payload.target == RenderDirective.Payload.Target.DM
+                }
+
+                shouldBeClears.forEach {
+                    Logger.d(TAG, "[onSessionDeactivated] clear: $it")
+                    renderedDirectiveQueue.remove(it)
+                    renderer.clear(it)
+                }
+            }
+
+            private fun clearDirectiveIfNeed(directive: Directive) {
+                val matchedRenderDirective = renderedDirectiveQueue.filter {
+                    it.header.dialogRequestId == directive.getDialogRequestId()
+                }
+
+                if (matchedRenderDirective.isNullOrEmpty()) {
+                    return
+                }
+
+                val shouldBeClears: List<RenderDirective>? =
+                    if (directive.header.namespace == "TTS" && directive.header.name == "Speak") {
+                        matchedRenderDirective.filter {
+                            it.payload.target == RenderDirective.Payload.Target.SPEAKING
+                        }
+                    } else if (directive.header.namespace == "ASR" && directive.header.namespace == "ExpectSpeech") {
+                        matchedRenderDirective.filter {
+                            it.payload.target == RenderDirective.Payload.Target.LISTEN
+                        }
+                    } else {
+                        null
+                    }
+
+                shouldBeClears?.forEach {
+                    Logger.d(TAG, "[clearDirectiveIfNeed] clear: $it")
+                    renderedDirectiveQueue.remove(it)
+                    renderer.clear(it)
+                }
+            }
+        }
+
+    init {
+        directiveSequencer.addOnDirectiveHandlingListener(directiveLifecycleHandler)
+        sessionManager.addListener(directiveLifecycleHandler)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -38,17 +125,22 @@ class RenderDirectiveHandler(
 
     interface Renderer {
         fun render(directive: RenderDirective)
+        fun clear(directive: RenderDirective)
     }
 
     override fun handleDirective(info: DirectiveInfo) {
-        val payload = MessageFactory.create(info.directive.payload, RenderDirective.Payload::class.java)
-        if(payload == null) {
+        val payload =
+            MessageFactory.create(info.directive.payload, RenderDirective.Payload::class.java)
+        if (payload == null) {
             info.result.setFailed("Invalid Payload", DirectiveHandlerResult.POLICY_CANCEL_ALL)
             return
         }
 
         info.result.setCompleted()
-        renderer.render(RenderDirective(info.directive.header, payload))
+        RenderDirective(info.directive.header, payload).let {
+            renderer.render(it)
+            renderedDirectiveQueue.add(it)
+        }
     }
 
     override fun cancelDirective(info: DirectiveInfo) {

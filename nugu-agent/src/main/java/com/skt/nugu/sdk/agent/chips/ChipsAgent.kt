@@ -23,13 +23,15 @@ import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CopyOnWriteArraySet
 
 class ChipsAgent(
     directiveSequencer: DirectiveSequencerInterface,
     contextStateProviderRegistry: ContextStateProviderRegistry,
-    contextSetter: ContextSetterInterface
+    contextSetter: ContextSetterInterface,
+    sessionManager: SessionManagerInterface
 ) : CapabilityAgent
     , ChipsAgentInterface
     , SupportedInterfaceContextProvider
@@ -54,7 +56,7 @@ class ChipsAgent(
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
-        directiveSequencer.addDirectiveHandler(RenderDirectiveHandler(this))
+        directiveSequencer.addDirectiveHandler(RenderDirectiveHandler(this, directiveSequencer, sessionManager))
 
         provideState(contextSetter, namespaceAndName, ContextType.FULL, 0)
         provideState(contextSetter, namespaceAndName, ContextType.COMPACT, 0)
@@ -83,7 +85,14 @@ class ChipsAgent(
     override fun render(directive: RenderDirective) {
         Logger.d(TAG, "[render] $directive")
         listeners.forEach {
-            it.onReceiveChips(directive)
+            it.renderChips(directive)
+        }
+    }
+
+    override fun clear(directive: RenderDirective) {
+        Logger.d(TAG, "[clear] $directive")
+        listeners.forEach {
+            it.clearChips(directive)
         }
     }
 }
