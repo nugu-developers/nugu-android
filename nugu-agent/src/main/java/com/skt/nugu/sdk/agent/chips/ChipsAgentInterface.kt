@@ -18,7 +18,8 @@ package com.skt.nugu.sdk.agent.chips
 
 interface ChipsAgentInterface {
     interface Listener {
-        fun onReceiveChips(directive: RenderDirective)
+        fun renderChips(directive: RenderDirective)
+        fun clearChips(directive: RenderDirective)
     }
 
     fun addListener(listener: Listener)

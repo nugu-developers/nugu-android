@@ -891,7 +891,8 @@ class NuguAndroidClient private constructor(
                         override fun create(container: SdkContainer): ChipsAgent = ChipsAgent(
                             container.getDirectiveSequencer(),
                             container.getContextManager(),
-                            container.getContextManager()
+                            container.getContextManager(),
+                            container.getSessionManager()
                         )
                     })
                 }
