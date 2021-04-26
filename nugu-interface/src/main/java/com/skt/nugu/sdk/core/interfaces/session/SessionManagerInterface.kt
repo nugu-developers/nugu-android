@@ -35,6 +35,27 @@ interface SessionManagerInterface {
     )
 
     /**
+     * The listener for session (de)activation
+     */
+    interface Listener {
+        /**
+         * Called when session activated
+         *
+         * @param key the session's key. Usually, dialogRequestId of directive which set session.
+         * @param session the session info
+         */
+        fun onSessionActivated(key: String, session: Session)
+
+        /**
+         * Called when session deactivated
+         *
+         * @param key the session's key. Usually, dialogRequestId of directive which set session.
+         * @param session the session info
+         */
+        fun onSessionDeactivated(key: String, session: Session)
+    }
+
+    /**
      * the marker interface which request (de)activation for Session
      */
     interface Requester
@@ -66,4 +87,7 @@ interface SessionManagerInterface {
      * @return active sessions
      */
     fun getActiveSessions(): Map<String, Session>
+
+    fun addListener(listener: Listener)
+    fun removeListener(listener: Listener)
 }
