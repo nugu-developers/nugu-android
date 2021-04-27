@@ -41,6 +41,12 @@ interface RoutineAgentInterface {
     fun removeListener(listener: RoutineListener)
 
     /**
+     * Start a routine
+     * @param directive a new directive which to start
+     */
+    fun start(directive: StartDirectiveHandler.StartDirective): Boolean
+
+    /**
      * Resume a routine started by [directive]
      */
     fun resume(directive: StartDirectiveHandler.StartDirective): Boolean
