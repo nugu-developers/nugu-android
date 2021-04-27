@@ -29,7 +29,7 @@ ext {
 
     // SDK
     keensenseVersion = "0.2.8"
-    jademarbleVersion = "0.2.5"
+    jademarbleVersion = "0.2.6"
     silvertrayVersion = "4.3.3"
 
     baseNuguVersionCode = 10100
