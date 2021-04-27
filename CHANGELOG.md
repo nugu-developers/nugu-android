@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.1.0 *(2021-04-27)*
+-----------------------------
+* Improve: Add listener for Session (#1787)
+
 Version 1.0.6 *(2021-04-23)*
 -----------------------------
 * Fix: Deliver chips, target LISTEN or SPEAKING properly (#1753)
