@@ -98,7 +98,7 @@ class RenderDirectiveHandler(
                         matchedRenderDirective.filter {
                             it.payload.target == RenderDirective.Payload.Target.SPEAKING
                         }
-                    } else if (directive.header.namespace == "ASR" && directive.header.namespace == "ExpectSpeech") {
+                    } else if (directive.header.namespace == "ASR" && directive.header.name == "ExpectSpeech") {
                         matchedRenderDirective.filter {
                             it.payload.target == RenderDirective.Payload.Target.LISTEN
                         }
