@@ -190,7 +190,10 @@ class DialogUXStateAggregator(
         executor.submit {
             dialogModeEnabled = enabled
 
-            notifyOnStateChangeIfSomethingChanged()
+            // only notify if currentState is SPEAKING
+            if(currentState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING) {
+                notifyOnStateChangeIfSomethingChanged()
+            }
 
             if(!enabled) {
                 tryEnterIdleState()
