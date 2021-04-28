@@ -464,15 +464,13 @@ class AudioPlayerTemplateHandler(
 
     fun shouldBeUpdate(directive: Directive) {
         executor.submit {
-            executor.submit {
-                templateDirectiveInfoMap.filterValues {
-                    it.directive.getDialogRequestId() == directive.getDialogRequestId()
-                }.forEach {
-                    it.value.shouldBeUpdateDirective = directive
-                    if(it.value.handleDirectiveCalled) {
-                        // should handle directive
-                        executeUpdate(it.value)
-                    }
+            templateDirectiveInfoMap.filterValues {
+                it.directive.getDialogRequestId() == directive.getDialogRequestId()
+            }.forEach {
+                it.value.shouldBeUpdateDirective = directive
+                if(it.value.handleDirectiveCalled) {
+                    // should handle directive
+                    executeUpdate(it.value)
                 }
             }
         }
