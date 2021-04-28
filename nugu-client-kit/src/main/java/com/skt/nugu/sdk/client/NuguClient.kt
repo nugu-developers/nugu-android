@@ -150,8 +150,13 @@ class NuguClient private constructor(
                 directiveSequencer
             ).apply {
                 addListener(inputProcessorManager)
-                addDirectiveGroupPreprocessor(TimeoutResponseHandler(inputProcessorManager))
             }
+
+            TimeoutResponseHandler().let {
+                directiveGroupProcessor.addDirectiveGroupPreprocessor(it)
+                inputProcessorManager.addResponseTimeoutListener(it)
+            }
+
             val attachmentManager = AttachmentManager()
             val messageDispatcher =
                 MessageDispatcher(directiveGroupProcessor, attachmentManager)

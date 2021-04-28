@@ -25,7 +25,7 @@ import kotlin.concurrent.withLock
 /**
  * This class drop directives which received after timeout
  */
-class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterface) : DirectiveGroupPreProcessor,
+class TimeoutResponseHandler : DirectiveGroupPreProcessor,
     InputProcessorManagerInterface.OnResponseTimeoutListener {
     companion object {
         private const val TAG = "TimeoutResponseHandler"
@@ -34,10 +34,6 @@ class TimeoutResponseHandler(inputProcessorManager: InputProcessorManagerInterfa
 
     private val lock = ReentrantLock()
     private val responseTimeoutDialogRequestIds = LinkedHashSet<String>()
-
-    init {
-        inputProcessorManager.addResponseTimeoutListener(this)
-    }
 
     override fun preProcess(directives: List<Directive>): List<Directive> {
         lock.withLock {
