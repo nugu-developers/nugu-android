@@ -43,7 +43,14 @@ class ChromeWindow(context: Context, val view: View) :
     }
 
     interface CustomChipsProvider {
-        fun onCustomChipsAvailable() : Array<Chip>?
+        /**
+         * Called when custom chip could be shown.
+         *
+         * @param isSpeaking Whether TTS is Speaking or not.
+         * If it is true TTS is speaking.
+         * If it is false ASR State is EXPECTING_SPEECH which means system is waiting users utterance
+         */
+        fun onCustomChipsAvailable(isSpeaking : Boolean) : Array<Chip>?
     }
 
     private var callback: OnChromeWindowCallback? = null
@@ -183,7 +190,7 @@ class ChromeWindow(context: Context, val view: View) :
             updateChips(payload)
         } else {
             updateChips(null)
-            updateCustomChips()
+            updateCustomChips(false)
         }
 
         contentLayout.expand()
@@ -194,8 +201,8 @@ class ChromeWindow(context: Context, val view: View) :
         contentLayout.updateChips(payload)
     }
 
-    private fun updateCustomChips() : Boolean {
-        customChipsProvider?.onCustomChipsAvailable()?.let { chips ->
+    private fun updateCustomChips(isSpeaking : Boolean) : Boolean {
+        customChipsProvider?.onCustomChipsAvailable(isSpeaking)?.let { chips ->
             contentLayout.updateChips(RenderDirective.Payload(chips = chips,
                 playServiceId = "", target = ChipsRenderTarget.DM)) //this two values are meaningless
             return true
@@ -219,7 +226,7 @@ class ChromeWindow(context: Context, val view: View) :
             return
         } else {
             contentLayout.hideChips()
-            if (updateCustomChips()) return
+            if (updateCustomChips(true)) return
         }
 
         if (!dialogMode) {

@@ -176,13 +176,17 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             ClientManager.getClient().addDialogUXStateListener(this)
             ClientManager.getClient().addASRResultListener(this)
             setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider{
-                override fun onCustomChipsAvailable(): Array<Chip>? {
-                    var dummyChips = arrayOf<Chip>()
-                    for (index in 0 until 5) {
-                        dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
-                    }
+                override fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>? {
+                    return if(!isSpeaking) {
+                        var dummyChips = arrayOf<Chip>()
+                        for (index in 0 until 5) {
+                            dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
+                        }
 
-                    return dummyChips
+                        dummyChips
+                    }else{
+                        null
+                    }
                 }
             })
         }
