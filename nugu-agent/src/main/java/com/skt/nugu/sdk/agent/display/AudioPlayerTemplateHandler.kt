@@ -67,7 +67,7 @@ class AudioPlayerTemplateHandler(
 
     private var renderer: AudioPlayerDisplayInterface.Renderer? = null
 
-    private var executor: ExecutorService = Executors.newSingleThreadExecutor()
+    private var executor = Executors.newSingleThreadScheduledExecutor()
 
     private val templateDirectiveInfoMap = ConcurrentHashMap<String, TemplateDirectiveInfo>()
     private val templateControllerMap = HashMap<String, AudioPlayerDisplayInterface.Controller>()
@@ -176,7 +176,16 @@ class AudioPlayerTemplateHandler(
         val current = currentInfo
         if (info.directive.getMessageId() == current?.directive?.getMessageId()) {
             Logger.d(TAG, "[executeCancelUnknownInfo] cancel current info: $info")
-            renderer?.clear(current.sourceTemplateId, force)
+            if (pendingInfo == null) {
+                renderer?.clear(current.sourceTemplateId, force)
+            } else {
+                // TODO: hack for delay clear. (AISPKQA-5442)
+                executor.schedule({
+                    if(renderedTemplateDirectiveInfoMap.containsKey(current.sourceTemplateId)) {
+                        renderer?.clear(current.sourceTemplateId, force)
+                    }
+                }, 100, TimeUnit.MILLISECONDS)
+            }
         } else if (info.directive.getMessageId() == pendingInfo?.directive?.getMessageId()) {
             executeCancelPendingInfo()
         } else {
