@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.core.utils.Logger
  * Attachments will be handled by [AttachmentManagerInterface].
  */
 class MessageDispatcher(
-    private val directiveGroupProcessor: DirectiveGroupProcessor,
+    private val directiveGroupHandler: DirectiveGroupHandler,
     private val attachmentManager: AttachmentManagerInterface
 ) : MessageObserver {
     companion object {
@@ -41,7 +41,7 @@ class MessageDispatcher(
             directiveList.add(createDirective(attachmentManager, it))
         }
 
-        directiveGroupProcessor.onReceiveDirectives(directiveList)
+        directiveGroupHandler.onReceiveDirectives(directiveList)
     }
 
     override fun receiveAttachment(attachment: AttachmentMessage) {
