@@ -53,7 +53,7 @@ class BackOff private constructor(builder: Builder) {
 
     enum class BackoffError {
         MaxAttemptExceed,
-        NoRetryableException
+        NoMoreRetryableCode
     }
 
     interface Observer {
@@ -115,6 +115,7 @@ class BackOff private constructor(builder: Builder) {
      *  clean up
      */
     fun reset() {
+        Logger.d(TAG, "[reset] called")
         synchronized(this) {
             this.waitTime = baseDelay
             this.attempts = 0
@@ -134,7 +135,7 @@ class BackOff private constructor(builder: Builder) {
      * @param The exception status code
      * @return True to retry, false to not.
      */
-    private fun isRetryableServiceException(code: Status.Code): Boolean {
+    private fun isRetryableStatusCode(code: Status.Code): Boolean {
         return when(code) {
             Status.Code.OK,
             Status.Code.UNAUTHENTICATED -> false
@@ -151,28 +152,28 @@ class BackOff private constructor(builder: Builder) {
     fun awaitRetry(code: Status.Code, observer: Observer) {
         synchronized(this) {
             if (executorService.isShutdown) {
-                Logger.w(TAG, "BackOff is shutdown")
+                Logger.w(TAG, "Already shutdown")
                 return
             }
             if (scheduledFuture?.isDone == false) {
-                Logger.w(TAG, "BackOff is not done")
+                Logger.w(TAG, "Already started")
+                return
+            }
+            if (!isAttemptExceed()) {
+                observer.onError(BackoffError.MaxAttemptExceed)
                 return
             }
 
-            if (!isAttemptExceed()) {
-                observer.onError(BackoffError.MaxAttemptExceed)
+            if (!isRetryableStatusCode(code)) {
+                observer.onError(BackoffError.NoMoreRetryableCode)
                 return
             }
 
             // Increase attempts count
             attempts++
 
-            if (!isRetryableServiceException(code)) {
-                observer.onError(BackoffError.NoRetryableException)
-                return
-            }
-
             scheduledFuture = executorService.schedule({
+                Logger.d(TAG, "[Scheduled] start")
                 // prevent future invocations.
                 scheduledFuture?.cancel(false)
                 // Retry done
@@ -181,7 +182,7 @@ class BackOff private constructor(builder: Builder) {
 
             Logger.w(
                 TAG,
-                String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}")
+                String.format("will wait ${waitTime}ms before reconnect attempt $attempts / $maxAttempts")
             )
         }
     }
