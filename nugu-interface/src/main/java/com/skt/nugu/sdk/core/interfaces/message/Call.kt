@@ -25,6 +25,7 @@ interface Call {
     fun noAck(): Call
     fun onStart()
     fun onComplete(status: Status)
+    fun isCompleted(): Boolean
     fun callTimeout(millis: Long): Call
     fun callTimeout(): Long
     fun reschedule()

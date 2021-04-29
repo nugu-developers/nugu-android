@@ -314,7 +314,7 @@ internal class DeviceGatewayClient(policy: Policy,
         val dialogRequestId =  message.first().header.dialogRequestId
         asyncCalls[dialogRequestId]?.onStart()
         asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
-        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
+        if(asyncCalls[dialogRequestId]?.isCanceled() != true && asyncCalls[dialogRequestId]?.isCompleted() != true) {
             messageConsumer?.consumeDirectives(message)
         }
     }
@@ -334,7 +334,7 @@ internal class DeviceGatewayClient(policy: Policy,
         val dialogRequestId = message.header.dialogRequestId
         asyncCalls[dialogRequestId]?.onStart()
         asyncCalls[dialogRequestId]?.onComplete(SDKStatus.OK)
-        if(asyncCalls[dialogRequestId]?.isCanceled() != true) {
+        if(asyncCalls[dialogRequestId]?.isCanceled() != true /* && asyncCalls[dialogRequestId]?.isCompleted() != true*/) {
             messageConsumer?.consumeAttachment(message)
         }
     }

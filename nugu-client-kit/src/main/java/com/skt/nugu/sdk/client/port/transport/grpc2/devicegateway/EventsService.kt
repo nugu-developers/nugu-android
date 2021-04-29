@@ -125,7 +125,8 @@ internal class EventsService(
                         if (it.directivesCount > 0) {
                             val log = StringBuilder()
                             val beginTimeStamp = System.currentTimeMillis()
-                            if(!call.isCanceled()) {
+                            val isDispatchNeeded = !call.isCanceled() && !call.isCompleted()
+                            if(isDispatchNeeded) {
                                 observer.onReceiveDirectives(it)
                             }
                             log.append("[onNext] directive, requestMessageId={$streamId}, messageId=")

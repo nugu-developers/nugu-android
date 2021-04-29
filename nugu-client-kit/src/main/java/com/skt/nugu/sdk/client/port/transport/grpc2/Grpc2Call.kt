@@ -29,6 +29,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     MessageCall {
     private var executed = false
     private var canceled = false
+    private var completed = false
     private var callback: MessageSender.Callback? = null
     private var listener: MessageSender.OnSendMessageListener? = listener
     private var noAck = false
@@ -141,7 +142,15 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         }
     }
 
+    override fun isCompleted() = synchronized(this) {
+        completed
+    }
+
     override fun onComplete(status: Status) {
+        synchronized(this) {
+            if (completed) return // Already completed.
+            completed = true
+        }
         // Notify Callback
         if (status.isOk()) {
             if(invokeStartEvent) {

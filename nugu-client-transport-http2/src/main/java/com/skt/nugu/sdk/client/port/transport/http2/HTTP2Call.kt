@@ -35,6 +35,7 @@ internal class HTTP2Call(
     private val timeoutFutures = ConcurrentHashMap<Int, ScheduledFuture<*>>()
     private var executed = false
     private var canceled = false
+    private var completed = false
     private var callback: MessageSender.Callback? = null
     private var listener: MessageSender.OnSendMessageListener? = listener
     private var callTimeoutMillis = 1000 * 10L
@@ -149,7 +150,15 @@ internal class HTTP2Call(
         }
     }
 
+    override fun isCompleted() = synchronized(this) {
+        completed
+    }
+
     override fun onComplete(status: Status) {
+        synchronized(this) {
+            if (completed) return // Already completed.
+            completed = true
+        }
         cancelScheduledTimeout()
 
         // Notify Callback

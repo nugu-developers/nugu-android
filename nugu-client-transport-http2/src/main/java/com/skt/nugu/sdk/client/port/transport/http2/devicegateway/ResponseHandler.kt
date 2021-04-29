@@ -89,7 +89,7 @@ class ResponseHandler {
                                 val directives = handleDirectives(
                                     body
                                 )
-                                if(call?.isCanceled() != true) {
+                                if(call?.isCanceled() != true && call?.isCompleted() != true  ) {
                                     observer.onReceiveDirectives(directives)
                                 }
                             }
