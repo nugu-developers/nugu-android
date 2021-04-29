@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
 import java.util.concurrent.ScheduledExecutorService
+import kotlin.system.measureTimeMillis
 
 
 /**
@@ -123,20 +124,23 @@ internal class EventsService(
                 Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                     downstream.directiveMessage?.let {
                         if (it.directivesCount > 0) {
-                            val log = StringBuilder()
-                            val beginTimeStamp = System.currentTimeMillis()
                             val isDispatchNeeded = !call.isCanceled() && !call.isCompleted()
-                            if(isDispatchNeeded) {
-                                observer.onReceiveDirectives(it)
+                            val elapsed = measureTimeMillis {
+                                if(isDispatchNeeded) {
+                                    observer.onReceiveDirectives(it)
+                                }
                             }
-                            log.append("[onNext] directive, requestMessageId={$streamId}, messageId=")
-                            val elapsed = System.currentTimeMillis() - beginTimeStamp
-                            it.directivesList.forEach {
-                                log.append(it.header.messageId)
-                                log.append(", ")
+
+                            val log = StringBuilder()
+                            log.append("[onNext] directive, requestMessageId={$streamId}, ")
+                            log.append(it.directivesList.joinToString(separator = ", ", prefix = "messageId=") {
+                                it.header.messageId
+                            })
+                            if(!isDispatchNeeded) {
+                                log.append(", dispatched=$isDispatchNeeded")
                             }
                             if(elapsed  > 100) {
-                                log.append("elapsed=$elapsed")
+                                log.append(", elapsed=$elapsed")
                             }
                             Logger.d(TAG, log.toString())
                         }
@@ -149,22 +153,22 @@ internal class EventsService(
                 Downstream.MessageCase.ATTACHMENT_MESSAGE -> {
                     downstream.attachmentMessage?.let {
                         if (it.hasAttachment()) {
-                            val currentTimeMillis =  System.currentTimeMillis()
                             if (it.attachment.seq == 0) {
-                                startAttachmentTimeMillis = currentTimeMillis
+                                startAttachmentTimeMillis = System.currentTimeMillis()
                                 Logger.d(TAG, "[onNext] attachment start, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, requestMessageId={$streamId}")
                             }
-                            if (it.attachment.isEnd) {
-                                val elapsed = currentTimeMillis - startAttachmentTimeMillis
-                                Logger.d(TAG, "[onNext] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, requestMessageId={$streamId}, elapsed=${elapsed}ms")
+                            val elapsed = measureTimeMillis {
+                                if (!call.isCanceled() /** && !call.isCompleted() **/ ) {
+                                    observer.onReceiveAttachment(it)
+                                }
                             }
-                            if(!call.isCanceled()) {
-                                observer.onReceiveAttachment(it)
+                            if (it.attachment.isEnd) {
+                                val totalElapsed = System.currentTimeMillis() - startAttachmentTimeMillis
+                                Logger.d(TAG, "[onNext] attachment end, seq=${it.attachment.seq}, parentMessageId=${it.attachment.parentMessageId}, requestMessageId={$streamId}, elapsed=${totalElapsed}ms")
                             }
 
-                            val dispatchTimestamp = currentTimeMillis - System.currentTimeMillis()
-                            if(dispatchTimestamp  > 100) {
-                                Logger.w(TAG, "[onNext] attachment, operation has been delayed (${dispatchTimestamp}ms), messageId=${it.attachment.header.messageId} ")
+                            if(elapsed  > 100) {
+                                Logger.w(TAG, "[onNext] attachment, operation has been delayed (${elapsed}ms), messageId=${it.attachment.header.messageId} ")
                             }
                         }
                     }
