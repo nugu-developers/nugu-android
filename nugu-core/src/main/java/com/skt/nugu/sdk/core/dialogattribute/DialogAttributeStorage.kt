@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.skt.nugu.sdk.core.dialog
+package com.skt.nugu.sdk.core.dialogattribute
 
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.utils.Logger
