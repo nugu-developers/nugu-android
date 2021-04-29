@@ -39,7 +39,7 @@ import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.context.ContextManager
-import com.skt.nugu.sdk.core.dialog.DialogAttributeStorage
+import com.skt.nugu.sdk.core.dialogattribute.DialogAttributeStorage
 import com.skt.nugu.sdk.core.display.InterLayerDisplayPolicyManagerImpl
 import com.skt.nugu.sdk.core.focus.SeamlessFocusManager
 import com.skt.nugu.sdk.core.interaction.InteractionControlManager
