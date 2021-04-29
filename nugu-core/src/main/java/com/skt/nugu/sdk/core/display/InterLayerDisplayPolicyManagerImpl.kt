@@ -32,6 +32,7 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
     private val displayLayers = HashSet<InterLayerDisplayPolicyManager.DisplayLayer>()
     private val refreshFutureMap = HashMap<InterLayerDisplayPolicyManager.PlayLayer, MutableList<Pair<InterLayerDisplayPolicyManager.DisplayLayer, Future<*>>>>()
     private val displayRefreshScheduler = Executors.newSingleThreadScheduledExecutor()
+    private val listeners = CopyOnWriteArraySet<InterLayerDisplayPolicyManager.Listener>()
 
     private fun isEvaporatableLayer(layerType: LayerType): Boolean =  when(layerType) {
         LayerType.MEDIA,
@@ -134,8 +135,6 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
             Logger.d(TAG, "[onPlayFinished] $layer")
         }
     }
-
-    private val listeners = CopyOnWriteArraySet<InterLayerDisplayPolicyManager.Listener>()
 
     override fun addListener(listener: InterLayerDisplayPolicyManager.Listener) {
         listeners.add(listener)
