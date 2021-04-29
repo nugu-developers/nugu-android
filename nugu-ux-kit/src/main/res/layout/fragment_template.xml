@@ -6,8 +6,7 @@
     <FrameLayout
         android:id="@+id/template_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/white" />
+        android:layout_height="match_parent" />
 
     <ImageView
         android:id="@+id/btn_bar_close"

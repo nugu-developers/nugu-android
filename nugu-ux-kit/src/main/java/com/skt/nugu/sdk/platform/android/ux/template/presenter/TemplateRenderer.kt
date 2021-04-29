@@ -12,6 +12,8 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import org.json.JSONObject
 import java.lang.ref.WeakReference
+import java.util.*
+import kotlin.concurrent.schedule
 
 class TemplateRenderer(
     private val nuguClientProvider: NuguClientProvider,
@@ -24,6 +26,8 @@ class TemplateRenderer(
         private const val TAG = "TemplateRenderer"
         internal var SERVER_URL: String? = null
         internal var DEVICE_TYPE_CODE = "device_type_code"
+
+        private const val TEMPLATE_REMOVE_DELAY_MS = 500L
     }
 
     interface NuguClientProvider {
@@ -43,6 +47,7 @@ class TemplateRenderer(
 
     private var fragmentManagerRef = WeakReference(fragmentManager)
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val timer by lazy { Timer() }
 
     private val gson = Gson()
 
@@ -120,12 +125,15 @@ class TemplateRenderer(
     override fun clear(templateId: String, force: Boolean) {
         Logger.i(TAG, "clear() $templateId, $force")
 
-        fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getTemplateId() == templateId }
-            ?.let { foundFragment ->
-                mainHandler.post {
-                    (foundFragment as TemplateFragment).close()
+        timer.schedule(TEMPLATE_REMOVE_DELAY_MS) {
+            fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getTemplateId() == templateId }
+                ?.let { foundFragment ->
+                    mainHandler.post {
+                        (foundFragment as TemplateFragment).close()
+                    }
                 }
-            }
+        }
+
     }
 
     override fun update(templateId: String, templateContent: String) {
@@ -140,7 +148,7 @@ class TemplateRenderer(
     }
 
     fun clearAll(): Boolean {
-        var clearCnt = 0
+        var clearCnt: Int
 
         fragmentManagerRef.get()?.fragments?.filter { it != null && it is TemplateFragment }.run {
             clearCnt = this!!.size
@@ -155,11 +163,13 @@ class TemplateRenderer(
 
     private fun onNewTemplate(newFragment: Fragment) {
         if ((newFragment as? TemplateFragment)?.isMediaTemplate() == true) {
-            fragmentManagerRef.get()?.fragments?.find { (it as? TemplateFragment)?.isMediaTemplate() == true }
-                ?.run {
-                    Logger.i(TAG, "clear previous media template ${(this as TemplateFragment).getTemplateId()}")
-                    this.close()
-                }
+            timer.schedule(TEMPLATE_REMOVE_DELAY_MS) {
+                fragmentManagerRef.get()?.fragments?.find { it != newFragment && (it as? TemplateFragment)?.isMediaTemplate() == true }
+                    ?.run {
+                        Logger.i(TAG, "clear previous media template ${(this as TemplateFragment).getTemplateId()}")
+                        this.close()
+                    }
+            }
         }
     }
 
