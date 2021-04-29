@@ -22,7 +22,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
 
-class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProcessorInterface.Listener {
+class InputProcessorManager(private val timeoutInMilliSeconds: Long = 10 * 1000L) : InputProcessorManagerInterface, DirectiveGroupProcessorInterface.Listener {
     companion object {
         private const val TAG = "InputProcessorManager"
     }
@@ -55,7 +55,7 @@ class InputProcessorManager : InputProcessorManagerInterface, DirectiveGroupProc
         timeoutFutureMap[dialogRequestId]?.cancel(true)
         timeoutFutureMap[dialogRequestId] = timeoutScheduler.schedule({
             onResponseTimeout(inputProcessor, dialogRequestId)
-        }, 10, TimeUnit.SECONDS)
+        }, timeoutInMilliSeconds, TimeUnit.MILLISECONDS)
     }
 
     private fun onResponseTimeout(inputProcessor: InputProcessor, dialogRequestId: String) {
