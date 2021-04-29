@@ -68,6 +68,7 @@ class FixedStateCall(
         listener?.onPostSendMessage(request(), status)
         listener = null
     }
+    override fun isCompleted() = false
 
     override fun callTimeout(millis: Long): Call {
         // no op
