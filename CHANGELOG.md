@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+Version 1.1.1 *(2021-04-30)*
+-----------------------------
+* Fix: Clear chips explicitly (#1789)
+* Fix: Notify dialogMode changed only if speaking (#1791)
+* Fix: Update JadeMarble v0.2.6 (#1795)
+* Fix: Fix order issue for audio display's render/clear (#1801)
+    * Delay a current display's clear if a next pending directive exist
+* Fix: The directive arrived after a timeout error (#1808)
+* Improve: Add CustomChipsProvider Interface (#1786)
+* Improve: Add ASR state param to CustomChipsProvider (#1803)
+* Improve: Apply delay to removing template to avoid exposure of rear screen very short. (#1805)
+* New: Add start API for Routine (#1797)
+
 Version 1.1.0 *(2021-04-27)*
 -----------------------------
 * Improve: Add listener for Session (#1787)
