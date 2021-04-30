@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
@@ -26,6 +27,7 @@ import android.view.AbsSavedState
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
@@ -58,10 +60,6 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         private const val TAG = "DisplayAudioPlayer"
     }
 
-    init {
-        setContentView(R.layout.view_display_audioplayer)
-    }
-
     private val player: View by lazy { findViewById<View>(R.id.view_music_player) }
     private val imageView by lazy { findViewById<ImageView>(R.id.iv_image) }
     private val header by lazy { findViewById<TextView>(R.id.tv_header) }
@@ -81,6 +79,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val favoriteView by lazy { findViewById<ImageView>(R.id.iv_favorite) }
     private val repeatView by lazy { findViewById<ImageView>(R.id.iv_repeat) }
     private val shuffleView by lazy { findViewById<ImageView>(R.id.iv_shuffle) }
+    private val controller by lazy { findViewById<View>(R.id.controller_area) }
+    private val albumCover by lazy { findViewById<View>(R.id.album_cover) }
 
     /* Bar Player */
 
@@ -102,8 +102,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private var mediaCurrentTimeMs = 0L
     private var mediaPlaying = false
 
-    private val thumbTransform_corner10 = RoundedCorners(dpToPx(10.7f, context))
-    private val thumbTransform_corner2 = RoundedCorners(dpToPx(2f, context))
+    private val thumbTransformCorner10 = RoundedCorners(dpToPx(10.7f, context))
+    private val thumbTransformCorner2 = RoundedCorners(dpToPx(2f, context))
 
     private var audioPlayerItem: AudioPlayer? = null
 
@@ -237,6 +237,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     data class RenderInfo(val lyricShowing: Boolean, val barType: Boolean)
 
     init {
+        setContentView(R.layout.view_display_audioplayer)
+
         isSaveEnabled = true
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -362,6 +364,26 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 //            })
             progressView.setOnTouchListener { _, _ -> true }
         }
+
+        if (resources.configuration.orientation == ORIENTATION_PORTRAIT) {
+            post {
+                val titleHeight = resources.getDimensionPixelSize(R.dimen.media_player_title_height)
+                val imageSize = ((measuredHeight - titleHeight).toFloat() * 0.4f).toInt()
+                val bottomMargin = ((measuredHeight - titleHeight).toFloat() * 0.1f).toInt()
+                val minContentHeight = dpToPx(388f, context)
+
+                if (measuredHeight - titleHeight <= minContentHeight) {
+                    albumCover.visibility = View.GONE
+                } else {
+                    imageView.layoutParams.width = imageSize
+                    imageView.layoutParams.height = imageSize
+                    imageView.postInvalidate()
+                }
+
+                (controller.layoutParams as? FrameLayout.LayoutParams)?.bottomMargin = bottomMargin
+                controller.postInvalidate()
+            }
+        }
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
@@ -403,15 +425,15 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         item.title?.run {
             titleView.updateText(text, isMerge)
-            logoView.updateImage(iconUrl, thumbTransform_corner2, isMerge)
+            logoView.updateImage(iconUrl, thumbTransformCorner2, isMerge)
         }
 
         item.content?.run {
-            imageView.updateImage(imageUrl, thumbTransform_corner10, isMerge)
+            imageView.updateImage(imageUrl, thumbTransformCorner10, isMerge)
             header.updateText(title, isMerge)
             body.updateText(subtitle1, isMerge)
             footer.updateText(subtitle2, isMerge, true)
-            badgeImage.updateImage(badgeImageUrl, thumbTransform_corner2, isMerge)
+            badgeImage.updateImage(badgeImageUrl, thumbTransformCorner2, isMerge)
             badgeTextView.updateText(badgeMessage, isMerge)
 
             if (durationSec != null) {
@@ -452,7 +474,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 smallLyricsView.visibility = View.GONE
             }
 
-            bar_image.updateImage(imageUrl, thumbTransform_corner2, isMerge)
+            bar_image.updateImage(imageUrl, thumbTransformCorner2, isMerge)
             bar_title.updateText(title, isMerge)
             bar_subtitle.updateText(subtitle1, isMerge)
         }
