@@ -225,10 +225,12 @@ class AudioPlayerTemplateHandler(
     }
 
     override fun handleDirective(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleDirective] $info")
+
         executor.submit {
             val templateInfo = pendingInfo
             if (templateInfo == null || (info.directive.getMessageId() != templateInfo.directive.getMessageId())) {
-                Logger.d(TAG, "[handleDirective] skip, maybe canceled display info")
+                Logger.d(TAG, "[handleDirective] executor - skip, maybe canceled display info")
                 return@submit
             }
             pendingInfo = null
@@ -238,14 +240,15 @@ class AudioPlayerTemplateHandler(
 
             when {
                 templateInfo.shouldBeRenderDirective != null -> {
-                    Logger.d(TAG, "[handleDirective] render: $info")
+                    Logger.d(TAG, "[handleDirective] executor - render: $info")
                     executeRender(templateInfo)
                 }
                 templateInfo.shouldBeUpdateDirective != null -> {
-                    Logger.d(TAG, "[handleDirective] update: $info")
+                    Logger.d(TAG, "[handleDirective] executor - update: $info")
                     executeUpdate(templateInfo)
                 }
                 else -> {
+                    Logger.d(TAG, "[handleDirective] executor - wait: $info")
                     // wait...
                 }
             }
@@ -280,27 +283,32 @@ class AudioPlayerTemplateHandler(
         val current = currentInfo
         currentInfo = info
 
-        if(current != null) {
-            templateDirectiveInfoMap.remove(info.sourceTemplateId)
-            info.sourceTemplateId = current.sourceTemplateId
-            info.playContext =
-                info.payload.playStackControl?.getPushPlayServiceId()
-                    ?.let { pushPlayServiceId ->
-                        PlayStackManagerInterface.PlayContext(
-                            pushPlayServiceId,
-                            System.currentTimeMillis()
-                        )
-                    }
-
-            renderer?.update(info.sourceTemplateId, JsonObject().apply {
-                add("template", JsonParser.parseString(info.directive.payload))
-            }.toString())
+        if(current == null) {
+            Logger.d(TAG, "[executeUpdate] failed : no current display (info: $info)")
             setHandlingCompleted(info)
-            templateDirectiveInfoMap[current.sourceTemplateId] = info
-            releaseSyncForce(current)
-
-            Logger.d(TAG, "[executeUpdate] $info")
+            return
         }
+
+        templateDirectiveInfoMap.remove(info.sourceTemplateId)
+        info.sourceTemplateId = current.sourceTemplateId
+        info.playContext =
+            info.payload.playStackControl?.getPushPlayServiceId()
+                ?.let { pushPlayServiceId ->
+                    PlayStackManagerInterface.PlayContext(
+                        pushPlayServiceId,
+                        System.currentTimeMillis()
+                    )
+                }
+
+        renderer?.update(info.sourceTemplateId, JsonObject().apply {
+            add("template", JsonParser.parseString(info.directive.payload))
+        }.toString())
+
+        setHandlingCompleted(info)
+        templateDirectiveInfoMap[current.sourceTemplateId] = info
+        releaseSyncForce(current)
+        Logger.d(TAG, "[executeUpdate] success: $info")
+
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
@@ -450,6 +458,7 @@ class AudioPlayerTemplateHandler(
 
     fun shouldBeRender(directive: Directive) {
         executor.submit {
+            Logger.d(TAG, "[shouldBeRender]")
             templateDirectiveInfoMap.filterValues {
                 it.directive.getDialogRequestId() == directive.getDialogRequestId()
             }.forEach {
@@ -464,6 +473,7 @@ class AudioPlayerTemplateHandler(
 
     fun shouldBeUpdate(directive: Directive) {
         executor.submit {
+            Logger.d(TAG, "[shouldBeUpdate]")
             templateDirectiveInfoMap.filterValues {
                 it.directive.getDialogRequestId() == directive.getDialogRequestId()
             }.forEach {
