@@ -243,7 +243,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 }
 
                 override fun getOnErrorNetworkResource(): URI? {
-                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                    return if (PreferenceHelper.enableResponseFailBeep(context)) {
                         responseFailResource
                     } else {
                         null
@@ -251,7 +251,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 }
 
                 override fun getOnErrorAudioInputResource(): URI? {
-                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                    return if (PreferenceHelper.enableResponseFailBeep(context)) {
                         responseFailResource
                     } else {
                         null
@@ -259,7 +259,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 }
 
                 override fun getOnErrorListeningTimeoutResource(): URI? {
-                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                    return if (PreferenceHelper.enableResponseFailBeep(context)) {
                         responseFailResource
                     } else {
                         null
@@ -271,7 +271,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                 override fun getOnErrorResponseTimeoutResource(): URI? = null
 
                 override fun getOnNoneResultResource(): URI? {
-                    return if (PreferenceHelper.enableRecognitionBeep(context)) {
+                    return if (PreferenceHelper.enableResponseFailBeep(context)) {
                         responseFailResource
                     } else {
                         null
@@ -319,11 +319,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         )
 
         val wakeupWordStateProvider = object : WakeupWordContextProvider() {
-            override fun getWakeupWord(): String = if (PreferenceHelper.triggerId(context) == 0) {
-                "아리아"
-            } else {
-                "팅커벨"
-            }
+            override fun getWakeupWord(): String = PreferenceHelper.triggerKeyword(context = context, defValue = "아리아")
         }
 
         client.setStateProvider(wakeupWordStateProvider.namespaceAndName, wakeupWordStateProvider)
@@ -362,4 +358,9 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         return deviceUniqueId
     }
 
+    fun keywordResourceUpdateIfNeeded(context: Context) {
+        val triggerKeyword = PreferenceHelper.triggerKeyword(context,"아리아")
+        keywordDetector?.keywordResource =
+            if (triggerKeyword == "아리아") ariaResource else tinkerbellResource
+    }
 }

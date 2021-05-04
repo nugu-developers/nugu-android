@@ -202,11 +202,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "[onResume]")
-        if (PreferenceHelper.triggerId(this) == 0) {
-            ClientManager.keywordDetector?.keywordResource = ClientManager.ariaResource
-        } else {
-            ClientManager.keywordDetector?.keywordResource = ClientManager.tinkerbellResource
-        }
+        ClientManager.keywordResourceUpdateIfNeeded(this)
         speechRecognizerAggregator.addListener(this)
 
         // Check Permission
