@@ -1,0 +1,11 @@
+<resources>
+    <string-array name="wakeup_word_entries">
+        <item>아리아</item>
+        <item>팅커벨</item>
+    </string-array>
+
+    <string-array name="wakeup_word_values">
+        <item>아리아</item>
+        <item>팅커벨</item>
+    </string-array>
+</resources>

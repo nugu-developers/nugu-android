@@ -17,19 +17,19 @@ package com.skt.nugu.sampleapp.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
+
 
 class PreferenceHelper {
     companion object {
-        private val DEFAULT_PREF_NAME = "OPENSDK"
-
         private val KEY_CREDENTIAL = "credential"
         private val KEY_ENABLE_NUGU = "enableNugu"
         private val KEY_ENABLE_TRIGGER = "enableTrigger"
-        private val KEY_TRIGGER_ID = "triggerId"
+        private val KEY_TRIGGER_KEYWORD = "triggerKeyword"
         private val KEY_ENABLE_WAKEUP_BEEP = "enableWakeupBeep"
         private val KEY_ENABLE_RECOGNITION_BEEP = "enableRecognitionBeep"
+        private val KEY_ENABLE_RESPONSE_FAIL_BEEP = "enableResponseFailBeep"
         private val KEY_ENABLE_FLOATING = "enableFloating"
-        private val KEY_AUTH_ID = "authId"
         private val KEY_DEVICE_UNIQUE_ID = "deviceUniqueId"
 
         private inline fun SharedPreferences.edit(task: (SharedPreferences.Editor) -> Unit) {
@@ -38,6 +38,7 @@ class PreferenceHelper {
             editor.apply()
         }
 
+        @Throws(UnsupportedOperationException::class)
         operator fun SharedPreferences.set(key: String, value: Any?) {
             when (value) {
                 is String? -> edit { it.putString(key, value) }
@@ -50,6 +51,7 @@ class PreferenceHelper {
         }
 
         @Suppress("UNCHECKED_CAST")
+        @Throws(UnsupportedOperationException::class)
         operator fun <T> SharedPreferences.get(key: String, defaultValue: T? = null): T {
             return when (defaultValue) {
                 is String -> getString(key, defaultValue as? String) as T
@@ -62,7 +64,7 @@ class PreferenceHelper {
         }
 
         private operator fun invoke(context: Context): SharedPreferences  =
-            context.getSharedPreferences(DEFAULT_PREF_NAME, Context.MODE_PRIVATE)
+            PreferenceManager.getDefaultSharedPreferences(context)
 
         /***
          * Returns the credentials
@@ -82,20 +84,11 @@ class PreferenceHelper {
         }
 
         /***
-         * Returns the trigger id
+         * Returns the trigger keyword
          * @param context a context
          */
-        fun triggerId(context: Context): Int {
-            return this(context)[KEY_TRIGGER_ID, 0]
-        }
-
-        /***
-         * Set the trigger id to wakeup word.
-         * @param context a context
-         * @param value trigger id
-         */
-        fun triggerId(context: Context, value: Int) {
-            this(context)[KEY_TRIGGER_ID] = value
+        fun triggerKeyword(context: Context, defValue: String): String {
+            return this(context)[KEY_TRIGGER_KEYWORD, defValue]
         }
 
         /***
@@ -140,7 +133,7 @@ class PreferenceHelper {
          * @return true is enable, otherwise false
          */
         fun enableWakeupBeep(context: Context): Boolean {
-            return this(context)[KEY_ENABLE_WAKEUP_BEEP, false]
+            return this(context)[KEY_ENABLE_WAKEUP_BEEP, true]
         }
 
         /***
@@ -158,7 +151,7 @@ class PreferenceHelper {
          * @return true is enable, otherwise false
          */
         fun enableRecognitionBeep(context: Context): Boolean {
-            return this(context)[KEY_ENABLE_RECOGNITION_BEEP, false]
+            return this(context)[KEY_ENABLE_RECOGNITION_BEEP, true]
         }
 
         /***
@@ -168,6 +161,24 @@ class PreferenceHelper {
          */
         fun enableRecognitionBeep(context: Context, value: Boolean) {
             this(context)[KEY_ENABLE_RECOGNITION_BEEP] = value
+        }
+
+        /***
+         * Returns enabled sound effect when Response failed
+         * @param context a context
+         * @return true is enable, otherwise false
+         */
+        fun enableResponseFailBeep(context: Context): Boolean {
+            return this(context)[KEY_ENABLE_RESPONSE_FAIL_BEEP, true]
+        }
+
+        /***
+         * Sets enabled sound effect when Response failed
+         * @param context a context
+         * @param value true is enable, otherwise false
+         */
+        fun enableResponseFailBeep(context: Context, value: Boolean) {
+            this(context)[KEY_ENABLE_RESPONSE_FAIL_BEEP] = value
         }
 
         /***
@@ -189,31 +200,14 @@ class PreferenceHelper {
         }
 
         /***
-         * Returns the auth index
-         * This is an internal function
-         * @param context a context
-         */
-        fun authId(context: Context): Int {
-            return this(context)[KEY_AUTH_ID, 0]
-        }
-
-        /***
-         * Set the auth id
-         * This is an internal function
-         * @param context a context
-         * @param value auth index
-         */
-        fun authId(context: Context, value: Int) {
-            this(context)[KEY_AUTH_ID] = value
-        }
-        /***
          * Returns the device UniqueId
          * This is an internal function
          * @param context a context
          */
-        fun deviceUniqueId(context: Context) : String {
+        fun deviceUniqueId(context: Context): String {
             return this(context)[KEY_DEVICE_UNIQUE_ID, ""]
         }
+
         /***
          * Set the device UniqueId
          * This is an internal function
@@ -223,5 +217,6 @@ class PreferenceHelper {
         fun deviceUniqueId(context: Context, value: String) {
             this(context)[KEY_DEVICE_UNIQUE_ID] = value
         }
+
     }
 }

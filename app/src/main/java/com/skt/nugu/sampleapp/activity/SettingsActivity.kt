@@ -15,15 +15,14 @@
  */
 package com.skt.nugu.sampleapp.activity
 
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.toResId
@@ -31,88 +30,27 @@ import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.*
-import com.skt.nugu.sdk.platform.android.ux.widget.NuguSnackbar
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguToast
 
 class SettingsActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "SettingsActivity"
-        const val settingsAgreementActivityRequestCode = 102
         fun invokeActivity(context: Context) {
             context.startActivity(Intent(context, SettingsActivity::class.java))
         }
     }
+    private val fragment by lazy {  supportFragmentManager.findFragmentById(R.id.settings) as SettingsFragment  }
 
-    private val switchEnableNugu: Switch by lazy {
-        findViewById<Switch>(R.id.switch_enable_nugu)
-    }
-
-    private val switchEnableTrigger: Switch by lazy {
-        findViewById<Switch>(R.id.switch_enable_trigger)
-    }
-
-    private val spinnerWakeupWord: Spinner by lazy {
-        findViewById<Spinner>(R.id.spinner_wakeup_word)
-    }
-
-    private val switchEnableWakeupBeep: Switch by lazy {
-        findViewById<Switch>(R.id.switch_enable_wakeup_beep)
-    }
-
-    private val switchEnableRecognitionBeep: Switch by lazy {
-        findViewById<Switch>(R.id.switch_enable_recognition_beep)
-    }
-
-    private val switchEnableFloating: Switch by lazy {
-        findViewById<Switch>(R.id.switch_enable_floating)
-    }
-
-    private val buttonRevoke: Button by lazy {
-        findViewById<Button>(R.id.btn_revoke)
-    }
-
-    private val spinnerAuthType: Spinner by lazy {
-        findViewById<Spinner>(R.id.spinner_auth_type)
-    }
-
-    private val textLoginId: TextView by lazy {
-        findViewById<TextView>(R.id.text_login_id)
-    }
-
-    private val buttonPrivacy: TextView by lazy {
-        findViewById<TextView>(R.id.text_privacy)
-    }
-
-    private val buttonService: TextView by lazy {
-        findViewById<TextView>(R.id.text_service)
-    }
-
-    private val buttonAgreement: TextView by lazy {
-        findViewById<TextView>(R.id.text_agreement)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-
-        switchEnableNugu.isChecked = PreferenceHelper.enableNugu(this)
-        switchEnableTrigger.isChecked = PreferenceHelper.enableTrigger(this)
-        switchEnableWakeupBeep.isChecked = PreferenceHelper.enableWakeupBeep(this)
-        switchEnableRecognitionBeep.isChecked = PreferenceHelper.enableRecognitionBeep(this)
-        switchEnableFloating.isChecked = PreferenceHelper.enableFloating(this)
-
-        spinnerWakeupWord.adapter = ArrayAdapter<String>(this, android.R.layout.simple_spinner_item).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            add("아리아")
-            add("팅커벨")
+        if (savedInstanceState == null) {
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.settings, SettingsFragment())
+                .commit()
         }
-
-        if (PreferenceHelper.triggerId(this) == 0) {
-            spinnerWakeupWord.setSelection(0)
-        } else {
-            spinnerWakeupWord.setSelection(1)
-        }
-        initBtnListeners()
         updateAccountInfo()
     }
 
@@ -124,12 +62,14 @@ class SettingsActivity : AppCompatActivity() {
                         Log.i(TAG, "Anonymous logined")
                     }
                     runOnUiThread {
-                        textLoginId.text = response.username
+                        fragment.setSummary("account", response.username, getString(R.string.setting_anonymous_summary))
+                        fragment.setEnabled("account", response.username.isNotEmpty())
+                        fragment.setEnabled("service", response.username.isNotEmpty())
                     }
                 } else {
                     Log.e(TAG, "the token is inactive. response=$response")
                     runOnUiThread {
-                        NuguToast.with(this@SettingsActivity)
+                        NuguToast.with(applicationContext)
                             .message(R.string.device_gw_error_003)
                             .duration(NuguToast.LENGTH_SHORT)
                             .show()
@@ -143,98 +83,67 @@ class SettingsActivity : AppCompatActivity() {
         })
     }
 
-    fun initBtnListeners() {
-        switchEnableNugu.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableNugu(this, isChecked)
-        }
-
-        switchEnableTrigger.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableTrigger(this, isChecked)
-        }
-
-        spinnerWakeupWord.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {
+    private fun revoke() {
+        NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener {
+            override fun onSuccess() {
+                handleRevoke()
             }
 
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (id == 0L) {
-                    PreferenceHelper.triggerId(this@SettingsActivity, 0)
-                } else {
-                    PreferenceHelper.triggerId(this@SettingsActivity, 4)
-                }
+            override fun onError(error: NuguOAuthError) {
+                handleOAuthError(error)
             }
-        }
+        })
+    }
 
-        switchEnableWakeupBeep.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableWakeupBeep(this, isChecked)
-        }
+    private fun launchAgreement() {
+        SettingsAgreementActivity.invokeActivity(this)
+    }
 
-        switchEnableRecognitionBeep.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableRecognitionBeep(this, isChecked)
-        }
+    private fun launchService() {
+        SettingsServiceActivity.invokeActivity(this)
+    }
 
-        switchEnableFloating.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.enableFloating(this, isChecked)
-            if (!isChecked) {
-                SampleAppService.hideFloating(applicationContext)
+    private fun launchPrivacy() {
+        ConfigurationStore.privacyUrl { url, error ->
+            error?.apply {
+                Log.e(TAG, "[launchPrivacy] error=$this")
+                return@privacyUrl
             }
-        }
 
-        buttonRevoke.setOnClickListener {
-            NuguOAuth.getClient().revoke(object : NuguOAuthInterface.OnRevokeListener {
-                override fun onSuccess() {
-                    performRevoke()
-                }
-
-                override fun onError(error: NuguOAuthError) {
-                    handleOAuthError(error)
-                }
-            })
-        }
-
-        textLoginId.setOnClickListener {
-            NuguOAuth.getClient().accountWithTid(this, object : NuguOAuthInterface.OnAccountListener {
-                override fun onSuccess(credentials: Credentials) {
-                    // Update token
-                    PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
-                    ClientManager.getClient().disconnect()
-                    ClientManager.getClient().connect()
-                    updateAccountInfo()
-                }
-
-                override fun onError(error: NuguOAuthError) {
-                    handleOAuthError(error)
-                }
-            })
-        }
-
-        buttonPrivacy.setOnClickListener {
             try {
-                ConfigurationStore.privacyUrl { url, error ->
-                    error?.apply {
-                        Log.e(TAG, "[onCreate] error=$this")
-                        return@privacyUrl
-                    }
-                    startActivity(Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse(url)
-                    })
-                }
-
-            } catch (e: SecurityException) {
-                Log.d(TAG, "[buttonPrivacy] $e")
-            } catch (e: ActivityNotFoundException) {
-                Log.d(TAG, "[buttonPrivacy] $e")
+                startActivity(Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(url)
+                })
+            } catch (e: Throwable) {
+                Log.e(TAG, "[launchPrivacy] $e")
             }
-        }
-
-        buttonService.setOnClickListener {
-            SettingsServiceActivity.invokeActivity(this)
-        }
-        buttonAgreement.setOnClickListener {
-            startActivityForResult(Intent(this, SettingsAgreementActivity::class.java), settingsAgreementActivityRequestCode)
         }
     }
-    private fun performRevoke() {
+
+    private fun hideFloating() {
+        val isEnable = PreferenceHelper.enableFloating(this)
+        if (!isEnable) {
+            SampleAppService.hideFloating(this)
+        }
+    }
+
+    private fun accountWithTid() {
+        NuguOAuth.getClient().accountWithTid(this, object : NuguOAuthInterface.OnAccountListener {
+            override fun onSuccess(credentials: Credentials) {
+                // Update token
+                PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
+                ClientManager.getClient().disconnect()
+                ClientManager.getClient().connect()
+                updateAccountInfo()
+            }
+
+            override fun onError(error: NuguOAuthError) {
+                handleOAuthError(error)
+            }
+        })
+    }
+
+    private fun handleRevoke() {
         ClientManager.getClient().disconnect()
         NuguOAuth.getClient().clearAuthorization()
         PreferenceHelper.credentials(this@SettingsActivity, "")
@@ -252,7 +161,7 @@ class SettingsActivity : AppCompatActivity() {
                 "$error")
         if(error.error != NuguOAuthError.NETWORK_ERROR &&
             error.error != NuguOAuthError.INITIALIZE_ERROR) {
-            performRevoke()
+            handleRevoke()
         }
         runOnUiThread {
             NuguToast.with(this@SettingsActivity)
@@ -261,4 +170,47 @@ class SettingsActivity : AppCompatActivity() {
                 .show()
         }
     }
+
+    class SettingsFragment : PreferenceFragmentCompat() {
+        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+            setPreferencesFromResource(R.xml.root_preferences, rootKey)
+        }
+
+        override fun onPreferenceTreeClick(preference: Preference?): Boolean {
+            when (preference?.key) {
+                "account" -> {
+                    (activity as SettingsActivity).accountWithTid()
+                }
+                "service" -> {
+                    (activity as SettingsActivity).launchService()
+                }
+                "agreement" -> {
+                    (activity as SettingsActivity).launchAgreement()
+                }
+                "privacy" -> {
+                    (activity as SettingsActivity).launchPrivacy()
+                }
+                "revoke" -> {
+                    (activity as SettingsActivity).revoke()
+                }
+                "enableFloating" -> {
+                    (activity as SettingsActivity).hideFloating()
+                }
+            }
+            return super.onPreferenceTreeClick(preference)
+        }
+
+        fun setSummary(key: String, username: String, defValue: String) {
+            findPreference<Preference>(key)?.let {
+                it.summary = if(username.isEmpty()) defValue else username
+            }
+        }
+
+        fun setEnabled(key: String, enabled: Boolean) {
+            findPreference<Preference>(key)?.let {
+                it.isEnabled = enabled
+            }
+        }
+    }
+
 }

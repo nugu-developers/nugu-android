@@ -1,0 +1,82 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory>
+        <Preference
+            app:key="account"
+            app:summary="@string/setting_anonymous_summary"
+            android:enabled="false"
+            app:title="@string/setting_account_info"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            app:key="service"
+            android:enabled="false"
+            app:title="@string/setting_service"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory>
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="enableNugu"
+            app:title="@string/setting_enable_nugu" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:dependency="enableNugu"
+            app:key="enableTrigger"
+            app:title="@string/setting_enable_trigger" />
+
+        <ListPreference
+            app:defaultValue="아리아"
+            app:dependency="enableNugu"
+            app:allowDividerAbove="true"
+            app:entries="@array/wakeup_word_entries"
+            app:entryValues="@array/wakeup_word_values"
+            app:key="triggerKeyword"
+            app:title="@string/setting_wakeup_word"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:dependency="enableNugu"
+            app:key="enableWakeupBeep"
+            app:title="@string/setting_recognition_beep" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:dependency="enableNugu"
+            app:key="enableRecognitionBeep"
+            app:title="@string/setting_enable_recognition_beep" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:dependency="enableNugu"
+            app:key="enableResponseFailBeep"
+            app:title="@string/setting_enable_response_fail_beep" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:dependency="enableNugu"
+            app:key="enableFloating"
+            app:title="@string/setting_floating_button" />
+    </PreferenceCategory>
+    <PreferenceCategory>
+        <Preference
+            app:key="agreement"
+            app:title="@string/setting_agreement"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            app:key="privacy"
+            app:title="@string/setting_privacy"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory>
+        <Preference
+            app:key="revoke"
+            app:title="@string/setting_revoke" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
