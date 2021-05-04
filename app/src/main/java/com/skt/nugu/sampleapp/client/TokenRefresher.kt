@@ -63,7 +63,7 @@ class TokenRefresher(val authClient: NuguOAuth) {
     private var future: ScheduledFuture<*>? = null
     private val executorService = ScheduledThreadPoolExecutor(1)
 
-    private fun nextRefreshInterval(): Long {
+    private fun nextInterval(): Long {
         val expiresInMillis = authClient.getExpiresInMillis()
         val backoffMillis =
             min((expiresInMillis * 0.1).toLong(), REFRESH_BACKOFF_MILLIS).apply {
@@ -75,14 +75,14 @@ class TokenRefresher(val authClient: NuguOAuth) {
         )
     }
 
-    fun start() {
+    fun start(forceUpdate: Boolean = false) {
         Log.d(TAG, "Starting the proactive token refresher")
 
         if (!isRunning.compareAndSet(false, true)) {
-            Log.d(TAG, "already started")
-            return
+            Log.d(TAG, "already started, forceUpdate=$forceUpdate")
+            if(!forceUpdate) return
         }
-        scheduleRefresh(nextRefreshInterval())
+        scheduleRefresh(if (forceUpdate) 0 else nextInterval())
     }
 
     fun stop() {
@@ -164,7 +164,7 @@ class TokenRefresher(val authClient: NuguOAuth) {
             authClient.loginAnonymously(object : NuguOAuthInterface.OnLoginListener {
                 override fun onSuccess(credentials: Credentials) {
                     listener?.onCredentialsChanged(credentials)
-                    scheduleRefresh(nextRefreshInterval())
+                    scheduleRefresh(nextInterval())
                 }
 
                 override fun onError(error: NuguOAuthError) {
@@ -176,7 +176,7 @@ class TokenRefresher(val authClient: NuguOAuth) {
             authClient.loginSilentlyWithTid(refreshToken, object : NuguOAuthInterface.OnLoginListener {
                 override fun onSuccess(credentials: Credentials) {
                     listener?.onCredentialsChanged(credentials)
-                    scheduleRefresh(nextRefreshInterval())
+                    scheduleRefresh(nextInterval())
                 }
 
                 override fun onError(error: NuguOAuthError) {
