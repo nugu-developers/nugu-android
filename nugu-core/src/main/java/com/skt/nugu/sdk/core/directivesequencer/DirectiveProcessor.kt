@@ -108,8 +108,10 @@ class DirectiveProcessor(
             }
         }
 
-        shouldBeHandleDirectives.forEach {
-            handlingQueue.offer(DirectiveAndPolicy(it, directiveRouter.getPolicy(it)))
+        lock.withLock {
+            shouldBeHandleDirectives.forEach {
+                handlingQueue.offer(DirectiveAndPolicy(it, directiveRouter.getPolicy(it)))
+            }
         }
 
         processingLoop.wakeAll()
@@ -314,10 +316,9 @@ class DirectiveProcessor(
     }
 
     private fun handleQueuedDirectives(): Boolean {
-        Logger.d(TAG, "[handleQueuedDirectivesLocked] handlingQueue size : ${handlingQueue.size}")
-
         lock.lock()
 
+        Logger.d(TAG, "[handleQueuedDirectivesLocked] handlingQueue size : ${handlingQueue.size}")
         if (handlingQueue.isEmpty()) {
             lock.unlock()
             return false
@@ -342,6 +343,7 @@ class DirectiveProcessor(
 
             handleDirectiveCalled = true
             lock.unlock()
+
             listeners.forEach {
                 it.onRequested(directive)
             }
@@ -351,6 +353,7 @@ class DirectiveProcessor(
                     it.onFailed(directive, "no handler for directive")
                 }
             }
+
             lock.lock()
 
             // if handle failed or directive is not blocking
