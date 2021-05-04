@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
+import android.content.res.Configuration.ORIENTATION_UNDEFINED
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
@@ -60,39 +61,38 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         private const val TAG = "DisplayAudioPlayer"
     }
 
-    private val player: View by lazy { findViewById<View>(R.id.view_music_player) }
-    private val imageView by lazy { findViewById<ImageView>(R.id.iv_image) }
-    private val header by lazy { findViewById<TextView>(R.id.tv_header) }
-    private val body by lazy { findViewById<TextView>(R.id.tv_body) }
-    private val footer by lazy { findViewById<TextView>(R.id.tv_footer) }
-    private val prev by lazy { findViewById<ImageView>(R.id.btn_prev) }
-    private val play by lazy { findViewById<ImageView>(R.id.btn_play) }
-    private val next by lazy { findViewById<ImageView>(R.id.btn_next) }
-    private val progressView by lazy { findViewById<SeekBar>(R.id.sb_progress) }
-    private val playtime by lazy { findViewById<TextView>(R.id.tv_playtime) }
-    private val fulltime by lazy { findViewById<TextView>(R.id.tv_fulltime) }
-    private val badgeImage by lazy { findViewById<ImageView>(R.id.iv_badgeImage) }
-    private val badgeTextView by lazy { findViewById<TextView>(R.id.tv_badgeMessage) }
-    private val lyricsView by lazy { findViewById<LyricsView>(R.id.cv_lyrics) }
-    private val smallLyricsView by lazy { findViewById<LyricsView>(R.id.cv_small_lyrics) }
-    private val showLyrics by lazy { findViewById<TextView>(R.id.tv_show_lyrics) }
-    private val favoriteView by lazy { findViewById<ImageView>(R.id.iv_favorite) }
-    private val repeatView by lazy { findViewById<ImageView>(R.id.iv_repeat) }
-    private val shuffleView by lazy { findViewById<ImageView>(R.id.iv_shuffle) }
-    private val controller by lazy { findViewById<View>(R.id.controller_area) }
-    private val albumCover by lazy { findViewById<View>(R.id.album_cover) }
+    private lateinit var player: View
+    private lateinit var imageView: ImageView
+    private lateinit var header: TextView
+    private lateinit var body: TextView
+    private lateinit var footer: TextView
+    private lateinit var prev: ImageView
+    private lateinit var play: ImageView
+    private lateinit var next: ImageView
+    private lateinit var progressView: SeekBar
+    private lateinit var playtime: TextView
+    private lateinit var fulltime: TextView
+    private lateinit var badgeImage: ImageView
+    private lateinit var badgeTextView: TextView
+    private lateinit var lyricsView: LyricsView
+    private lateinit var smallLyricsView: LyricsView
+    private lateinit var showLyrics: TextView
+    private lateinit var favoriteView: ImageView
+    private lateinit var repeatView: ImageView
+    private lateinit var shuffleView: ImageView
+    private lateinit var controller: View
+    private lateinit var albumCover: View
 
     /* Bar Player */
-
-    private val bar_body: View by lazy { findViewById<View>(R.id.bar_body) }
-    private val bar_image by lazy { findViewById<ImageView>(R.id.iv_bar_image) }
-    private val bar_title by lazy { findViewById<TextView>(R.id.tv_bar_title) }
-    private val bar_subtitle by lazy { findViewById<TextView>(R.id.tv_bar_subtitle) }
-    private val bar_prev by lazy { findViewById<ImageView>(R.id.btn_bar_prev) }
-    private val bar_play by lazy { findViewById<ImageView>(R.id.btn_bar_play) }
-    private val bar_next by lazy { findViewById<ImageView>(R.id.btn_bar_next) }
-    private val bar_close by lazy { findViewById<ImageView>(R.id.btn_bar_close) }
-    private val bar_progress by lazy { findViewById<SeekBar>(R.id.sb_bar_progress) }
+    private lateinit var bar_body: View
+    private lateinit var bar_image: ImageView
+    private lateinit var bar_title: TextView
+    private lateinit var bar_subtitle: TextView
+    private lateinit var bar_prev: ImageView
+    private lateinit var bar_play: ImageView
+    private lateinit var bar_next: ImageView
+    private lateinit var bar_close: ImageView
+    private lateinit var bar_progress: SeekBar
 
     private val gson = Gson()
 
@@ -106,6 +106,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val thumbTransformCorner2 = RoundedCorners(dpToPx(2f, context))
 
     private var audioPlayerItem: AudioPlayer? = null
+
+    private var currOrientation = ORIENTATION_UNDEFINED
 
     private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
         return try {
@@ -216,7 +218,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             fulltime.post {
                 fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
                 playtime.updateText(TemplateUtils.convertToTimeMs(mediaCurrentTimeMs.toInt()), true)
-                if (savedState.isLyricShowing == 1) lyricsView.visibility = View.VISIBLE
+                lyricsView.visibility = if (savedState.isLyricShowing == 1) View.VISIBLE else View.GONE
                 lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
                 smallLyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
             }
@@ -228,8 +230,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 }
             }
 
-            if (savedState.isBarType != 1) {
-                player.post { expand(true) }
+            player.post {
+                if (savedState.isBarType == 1) collapse(true)
+                else expand(true)
             }
         }
     }
@@ -237,10 +240,48 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     data class RenderInfo(val lyricShowing: Boolean, val barType: Boolean)
 
     init {
-        setContentView(R.layout.view_display_audioplayer)
-
+        currOrientation = resources.configuration.orientation
+        setContentView()
         isSaveEnabled = true
 
+        addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (currOrientation != resources.configuration.orientation) {
+                currOrientation = resources.configuration.orientation
+                setContentView(true)
+            }
+
+            if (currOrientation == ORIENTATION_PORTRAIT) {
+                post {
+                    val titleHeight = resources.getDimensionPixelSize(R.dimen.media_player_title_height)
+                    val imageSize = ((measuredHeight - titleHeight).toFloat() * 0.4f).toInt()
+                    val bottomMargin = ((measuredHeight - titleHeight).toFloat() * 0.1f).toInt()
+                    val minContentHeight = dpToPx(388f, context)
+
+                    if (measuredHeight - titleHeight <= minContentHeight) {
+                        if (albumCover.visibility != View.GONE) {
+                            albumCover.visibility = View.GONE
+                        }
+                    } else {
+                        albumCover.visibility = View.VISIBLE
+                        if (imageView.layoutParams.width != imageSize) {
+                            imageView.layoutParams.width = imageSize
+                            imageView.layoutParams.height = imageSize
+                            imageView.requestLayout()
+                        }
+                    }
+
+                    (controller.layoutParams as? FrameLayout.LayoutParams)?.let { controllerLayout ->
+                        if (controllerLayout.bottomMargin != bottomMargin) {
+                            controllerLayout.bottomMargin = bottomMargin
+                            controller.postInvalidate()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun initView() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             findViewById<View>(R.id.album_cover)?.elevation = dpToPx(11f, context).toFloat()
         }
@@ -315,75 +356,85 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE.command, shuffleView.isSelected.toString())
         }
 
-        progressView.post {
-            //todo. determine provide seek function optionally
-//            progressView.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-//                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-//                    if (fromUser) {
-//                        Logger.i(TAG, "onProgressChanged fromUser $progress")
-//                        val offset = mediaDurationMs / 100 * progressView.progress
-//                        playtime.updateText(TemplateUtils.convertToTimeMs(offset.toInt()), true)
-//                    }
-//                }
-//
-//                override fun onStartTrackingTouch(seekBar: SeekBar?) {
-//                }
-//
-//                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-//                    Logger.i(TAG, "onStopTrackingTouch ${progressView.progress}")
-//                    (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
-//                        val offset = mediaDurationMs / 100 * progressView.progress
-//                        audioPlayerAgent?.seek(offset)
-//                    }
-//                }
-//            })
-//
-//
-//            progressView.setOnTouchListener(object : OnTouchListener {
-//                var touchDownTime = 0L
-//
-//                override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-//                    event ?: return false
-//
-//                    when (event.actionMasked) {
-//                        MotionEvent.ACTION_DOWN -> {
-//                            touchDownTime = System.currentTimeMillis()
-//                        }
-//
-//                        MotionEvent.ACTION_UP -> {
-//                            if (System.currentTimeMillis() - touchDownTime < ViewConfiguration.getTapTimeout()) {
-//                                (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.run {
-//                                    val offset = event.x / progressView.width.toFloat() * mediaDurationMs
-//                                    audioPlayerAgent?.seek(offset.toLong())
-//                                }
-//                            }
-//                        }
-//                    }
-//                    return false
-//                }
-//            })
-            progressView.setOnTouchListener { _, _ -> true }
+        progressView.setOnTouchListener { _, _ -> true }
+    }
+
+    private fun setContentView(isRefresh: Boolean = false) {
+        var savedState: SavedStates? = null
+        val isFavoriteSelected = if (isRefresh) favoriteView.isSelected else false
+        val isShuffle = if (isRefresh) shuffleView.isSelected else false
+        val repeatInfo = if (isRefresh) repeatView.getTag(R.id.iv_repeat) else Unit
+
+        if (isRefresh) {
+            savedState = SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
+                mediaDurationMs,
+                mediaCurrentTimeMs,
+                if (mediaPlaying) 1 else 0,
+                if (player.y != 0f) 1 else 0,
+                if (lyricsView.visibility == View.VISIBLE) 1 else 0)
         }
 
-        if (resources.configuration.orientation == ORIENTATION_PORTRAIT) {
-            post {
-                val titleHeight = resources.getDimensionPixelSize(R.dimen.media_player_title_height)
-                val imageSize = ((measuredHeight - titleHeight).toFloat() * 0.4f).toInt()
-                val bottomMargin = ((measuredHeight - titleHeight).toFloat() * 0.1f).toInt()
-                val minContentHeight = dpToPx(388f, context)
+        if (currOrientation == ORIENTATION_PORTRAIT) {
+            setContentView(R.layout.view_display_audioplayer_port)
+        } else {
+            setContentView(R.layout.view_display_audioplayer_land)
+        }
 
-                if (measuredHeight - titleHeight <= minContentHeight) {
-                    albumCover.visibility = View.GONE
-                } else {
-                    imageView.layoutParams.width = imageSize
-                    imageView.layoutParams.height = imageSize
-                    imageView.postInvalidate()
-                }
+        refreshView()
 
-                (controller.layoutParams as? FrameLayout.LayoutParams)?.bottomMargin = bottomMargin
-                controller.postInvalidate()
+        initView()
+        if (isRefresh) {
+            audioPlayerItem?.run {
+                load(this, false)
             }
+
+            onRestoreInstanceState(savedState)
+
+            repeatInfo?.let {
+                when (it) {
+                    Repeat.ALL -> repeatView.setImageResource(R.drawable.nugu_btn_repeat)
+                    Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
+                    Repeat.NONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
+                }
+            }
+            shuffleView.isSelected = isShuffle
+            favoriteView.isSelected = isFavoriteSelected
         }
+    }
+
+    private fun refreshView() {
+        player = findViewById<View>(R.id.view_music_player)
+        imageView = findViewById(R.id.iv_image)
+        header = findViewById(R.id.tv_header)
+        body = findViewById(R.id.tv_body)
+        footer = findViewById(R.id.tv_footer)
+        prev = findViewById(R.id.btn_prev)
+        play = findViewById(R.id.btn_play)
+        next = findViewById(R.id.btn_next)
+        progressView = findViewById(R.id.sb_progress)
+        playtime = findViewById(R.id.tv_playtime)
+        fulltime = findViewById(R.id.tv_fulltime)
+        badgeImage = findViewById(R.id.iv_badgeImage)
+        badgeTextView = findViewById(R.id.tv_badgeMessage)
+        lyricsView = findViewById(R.id.cv_lyrics)
+        smallLyricsView = findViewById(R.id.cv_small_lyrics)
+        showLyrics = findViewById(R.id.tv_show_lyrics)
+        favoriteView = findViewById(R.id.iv_favorite)
+        repeatView = findViewById(R.id.iv_repeat)
+        shuffleView = findViewById(R.id.iv_shuffle)
+        controller = findViewById<View>(R.id.controller_area)
+        albumCover = findViewById<View>(R.id.album_cover)
+
+        /* Bar Player */
+        bar_body = findViewById<View>(R.id.bar_body)
+        bar_image = findViewById(R.id.iv_bar_image)
+        bar_title = findViewById(R.id.tv_bar_title)
+        bar_subtitle = findViewById(R.id.tv_bar_subtitle)
+        bar_prev = findViewById(R.id.btn_bar_prev)
+        bar_play = findViewById(R.id.btn_bar_play)
+        bar_next = findViewById(R.id.btn_bar_next)
+        bar_close = findViewById(R.id.btn_bar_close)
+        bar_progress = findViewById(R.id.sb_bar_progress)
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
@@ -496,6 +547,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                     Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
                     Repeat.NONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
                 }
+                repeatView.setTag(R.id.iv_repeat, repeat)
                 repeatView.setThrottledOnClickListener { _ ->
                     templateHandler?.onPlayerCommand(PlayerCommand.REPEAT.command, it.name)
                 }

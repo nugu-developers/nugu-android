@@ -174,6 +174,7 @@ class TemplateFragment : Fragment() {
 
                 previousRenderInfo?.run {
                     (templateView as? DisplayAudioPlayer)?.applyPreviousRenderInfo(this)
+                    previousRenderInfo = null
                 }
             }
         }
