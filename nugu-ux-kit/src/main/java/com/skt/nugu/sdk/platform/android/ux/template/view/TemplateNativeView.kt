@@ -37,6 +37,7 @@ abstract class TemplateNativeView @JvmOverloads constructor(context: Context, at
     val collapsed by lazy { findViewById<ImageView>(R.id.btn_collapsed) }
 
     protected fun setContentView(layout: Int) {
+        this.removeAllViewsInLayout()
         LayoutInflater.from(context).inflate(layout, this, true)
     }
 
