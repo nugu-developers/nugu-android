@@ -504,8 +504,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
                 }
                 ConnectionStatusListener.ChangedReason.INVALID_AUTH -> {
-                    /** Authentication failed Please refresh your access_token. **/
-                    performRevoke()
+                    /** Authentication failed. Please refresh your access_token. **/
+                    tokenRefresher.start(forceUpdate = true)
                 }
             }
         } else if (status == ConnectionStatusListener.Status.CONNECTED) {
@@ -515,7 +515,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     override fun onRevoke(reason: SystemAgentInterface.RevokeReason) {
         Log.d(TAG, "[onRevoke] The device has been revoked ($reason)")
-        performRevoke()
+        handleRevoke()
     }
 
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
@@ -571,16 +571,20 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         Log.e(TAG, "An unexpected error has occurred. " +
                 "Please check the logs for details\n" +
                 "$error")
-        if(error.error != NuguOAuthError.NETWORK_ERROR &&
-            error.error != NuguOAuthError.INITIALIZE_ERROR) {
-            performRevoke()
+        runOnUiThread {
+            NuguToast.with(applicationContext)
+                .message(error.toResId())
+                .duration(NuguToast.LENGTH_SHORT)
+                .show()
+
+            if(error.error != NuguOAuthError.NETWORK_ERROR &&
+                error.error != NuguOAuthError.INITIALIZE_ERROR) {
+                handleRevoke()
+            }
         }
-        NuguSnackbar.with(findViewById(R.id.baseLayout))
-            .message(error.toResId())
-            .show()
     }
 
-    private fun performRevoke() {
+    private fun handleRevoke() {
         ClientManager.getClient().disconnect()
         NuguOAuth.getClient().clearAuthorization()
         PreferenceHelper.credentials(this@MainActivity, "")
