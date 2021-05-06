@@ -402,7 +402,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    private fun refreshView() {
+    override fun refreshView() {
+        super.refreshView()
+
         player = findViewById<View>(R.id.view_music_player)
         imageView = findViewById(R.id.iv_image)
         header = findViewById(R.id.tv_header)

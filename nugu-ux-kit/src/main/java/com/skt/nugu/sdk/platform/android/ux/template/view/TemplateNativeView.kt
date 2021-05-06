@@ -28,13 +28,13 @@ import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 abstract class TemplateNativeView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
     RelativeLayout(context, attrs, defStyleAttr), TemplateView {
 
-    val logoView by lazy { findViewById<ImageView>(R.id.iv_logo) }
+    protected lateinit var logoView: ImageView
 
-    val titleView by lazy { findViewById<TextView>(R.id.tv_title) }
+    protected lateinit var titleView: TextView
 
-    val close by lazy { findViewById<ImageView>(R.id.btn_close) }
+    protected lateinit var close: ImageView
 
-    val collapsed by lazy { findViewById<ImageView>(R.id.btn_collapsed) }
+    protected lateinit var collapsed: ImageView
 
     protected fun setContentView(layout: Int) {
         this.removeAllViewsInLayout()
@@ -47,5 +47,12 @@ abstract class TemplateNativeView @JvmOverloads constructor(context: Context, at
         close.setThrottledOnClickListener {
             templateHandler?.onCloseClicked()
         }
+    }
+
+    protected open fun refreshView() {
+        logoView = findViewById(R.id.iv_logo)
+        titleView = findViewById(R.id.tv_title)
+        close = findViewById(R.id.btn_close)
+        collapsed = findViewById(R.id.btn_collapsed)
     }
 }
