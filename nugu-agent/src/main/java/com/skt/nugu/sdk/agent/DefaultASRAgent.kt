@@ -123,7 +123,8 @@ class DefaultASRAgent(
         val endPointDetectorParam: EndPointDetectorParam?,
         val callback: ASRAgentInterface.StartRecognitionCallback?,
         val jsonContext: String,
-        val initiator: ASRAgentInterface.Initiator
+        val initiator: ASRAgentInterface.Initiator,
+        val asrResultListener: ASRAgentInterface.OnResultListener? = null
     )
 
     private val onStateChangeListeners = HashSet<ASRAgentInterface.OnStateChangeListener>()
@@ -374,7 +375,7 @@ class DefaultASRAgent(
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
         executeStartRecognition(audioInputStream, audioFormat, null, param, null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
-                setHandlingCompleted(info)
+                // no-op
             }
 
             override fun onError(
@@ -394,7 +395,31 @@ class DefaultASRAgent(
                     currentAudioProvider = null
                 }
             }
-        }, ASRAgentInterface.Initiator.EXPECT_SPEECH,false)
+        }, ASRAgentInterface.Initiator.EXPECT_SPEECH,false, object: ASRAgentInterface.OnResultListener {
+            override fun onNoneResult(header: Header) {
+                setHandlingCompleted(info)
+            }
+
+            override fun onPartialResult(result: String, header: Header) {
+                // no-op
+            }
+
+            override fun onCompleteResult(result: String, header: Header) {
+                setHandlingCompleted(info)
+            }
+
+            override fun onError(
+                type: ASRAgentInterface.ErrorType,
+                header: Header,
+                allowEffectBeep: Boolean
+            ) {
+                setHandlingCompleted(info)
+            }
+
+            override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
+                setHandlingCompleted(info)
+            }
+        })
     }
 
     private fun parseExpectSpeechPayload(directive: Directive): ExpectSpeechPayload? {
@@ -555,7 +580,9 @@ class DefaultASRAgent(
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String,
         initiator: ASRAgentInterface.Initiator,
-        byUser: Boolean) {
+        byUser: Boolean,
+        resultListener: ASRAgentInterface.OnResultListener?
+    ) {
         Logger.d(
             TAG,
             "[executeStartRecognitionOnContextAvailable] state: $state, focusState: $focusState, expectSpeechDirectiveParam: $expectSpeechDirectiveParam"
@@ -607,7 +634,8 @@ class DefaultASRAgent(
             param,
             callback,
             jsonContext,
-            initiator
+            initiator,
+            resultListener
         ).apply {
             if (focusState == FocusState.FOREGROUND) {
                 executeInternalStartRecognition(this)
@@ -711,10 +739,12 @@ class DefaultASRAgent(
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
+                    param.asrResultListener?.onNoneResult(header)
                     speechToTextConverterEventObserver.onNoneResult(header)
                 }
 
                 override fun onPartialResult(result: String, header: Header) {
+                    param.asrResultListener?.onPartialResult(result, header)
                     speechToTextConverterEventObserver.onPartialResult(result, header)
                 }
 
@@ -723,6 +753,7 @@ class DefaultASRAgent(
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
+                    param.asrResultListener?.onCompleteResult(result, header)
                     speechToTextConverterEventObserver.onCompleteResult(result, header)
                 }
 
@@ -736,13 +767,16 @@ class DefaultASRAgent(
                     }
 
                     val payload = param.expectSpeechDirectiveParam?.directive?.payload
-                    if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
-                        sendResponseTimeout(payload, header.dialogRequestId)
-                        speechToTextConverterEventObserver.onError(type, header)
-                    } else if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
+
+                    if (type == ASRAgentInterface.ErrorType.ERROR_LISTENING_TIMEOUT) {
                         sendListenTimeout(payload, header.dialogRequestId)
+                        param.asrResultListener?.onError(type, header, payload?.listenTimeoutFailBeep != false)
                         speechToTextConverterEventObserver.onError(type, header, payload?.listenTimeoutFailBeep != false)
                     } else {
+                        if (type == ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT) {
+                            sendResponseTimeout(payload, header.dialogRequestId)
+                        }
+                        param.asrResultListener?.onError(type, header)
                         speechToTextConverterEventObserver.onError(type, header)
                     }
                 }
@@ -752,6 +786,7 @@ class DefaultASRAgent(
                         sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     }
 
+                    param.asrResultListener?.onCancel(cause, header)
                     speechToTextConverterEventObserver.onCancel(cause, header)
                 }
             }
@@ -876,7 +911,8 @@ class DefaultASRAgent(
                     expectSpeechDirectiveParam,
                     param,
                     callback,
-                    initiator
+                    initiator,
+                    resultListener = null
                 )
             } else {
                 currentAudioProvider = audioProvider
@@ -900,7 +936,8 @@ class DefaultASRAgent(
                     expectSpeechDirectiveParam,
                     param,
                     callback,
-                    initiator
+                    initiator,
+                    resultListener = null
                 )
             }
         }
@@ -973,7 +1010,8 @@ class DefaultASRAgent(
         param: EndPointDetectorParam?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator,
-        byUser: Boolean = true
+        byUser: Boolean = true,
+        resultListener: ASRAgentInterface.OnResultListener? = null
     ) {
         Logger.d(TAG, "[executeStartRecognition] state: $state, initiator: $initiator")
         if (!canRecognizing()) {
@@ -998,7 +1036,8 @@ class DefaultASRAgent(
                         callback,
                         jsonContext,
                         initiator,
-                        byUser
+                        byUser,
+                        resultListener
                     )
                 }
             }
