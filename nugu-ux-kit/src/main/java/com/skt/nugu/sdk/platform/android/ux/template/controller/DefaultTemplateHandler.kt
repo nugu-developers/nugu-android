@@ -159,6 +159,7 @@ open class DefaultTemplateHandler(val nuguProvider: TemplateRenderer.NuguClientP
     private fun stopMediaProgressSending() {
         Logger.d(TAG, "stopProgressMessageSending")
         mediaProgressJob?.cancel()
+        mediaProgressJob = null
     }
 
     private fun getMediaCurrentTimeMs(): Long {
@@ -190,6 +191,7 @@ open class DefaultTemplateHandler(val nuguProvider: TemplateRenderer.NuguClientP
         }
 
         stopMediaProgressSending()
+        clientListener = null
     }
 
     fun getNuguClient() : NuguAndroidClient = nuguProvider.getNuguClient()
