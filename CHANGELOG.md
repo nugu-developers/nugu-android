@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 1.1.2 *(2021-05-07)*
+-----------------------------
+* Fix: Fix missing call directive complete (#1814)
+* Fix: Fix MediaTemplate layout malfunction (#1816)
+* Fix: Fix crash (#1818)
+* Fix: Fix mediaTemplate issues (#1823)
+* Fix: Call setCompleted for ASR.ExpectSpeech after ASR finished. (#1824)
+* Improve: Precache context at build NuguClient (#1827)
+
 Version 1.1.1 *(2021-04-30)*
 -----------------------------
 * Fix: Clear chips explicitly (#1789)
