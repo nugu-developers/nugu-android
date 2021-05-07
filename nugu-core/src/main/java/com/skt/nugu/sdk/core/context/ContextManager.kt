@@ -294,4 +294,15 @@ class ContextManager : ContextManagerInterface {
         }
         append('}')
     }.toString()
+
+    fun refreshAllState() {
+        lock.withLock {
+            stateProviders.forEach {
+                provideStateExecutor.submit {
+                    it.value.provideState(this, it.key, ContextType.FULL, 0)
+                    it.value.provideState(this, it.key, ContextType.COMPACT, 0)
+                }
+            }
+        }
+    }
 }

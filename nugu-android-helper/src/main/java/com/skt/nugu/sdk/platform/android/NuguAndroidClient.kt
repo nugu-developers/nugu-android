@@ -993,8 +993,6 @@ class NuguAndroidClient private constructor(
             override fun getType(): Type = Type.ANDROID
         }.apply {
             client.setStateProvider(namespaceAndName, this)
-            provideState(client.getSdkContainer().getContextManager(), namespaceAndName, ContextType.FULL, 0)
-            provideState(client.getSdkContainer().getContextManager(), namespaceAndName, ContextType.COMPACT, 0)
         }
     }
 

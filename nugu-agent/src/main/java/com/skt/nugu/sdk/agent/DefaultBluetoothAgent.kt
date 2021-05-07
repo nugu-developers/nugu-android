@@ -238,55 +238,50 @@ class DefaultBluetoothAgent(
          */
         contextManager.setStateProvider(namespaceAndName, this)
 
-        if (bluetoothProvider == null) {
-            provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
-            provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
-        } else {
-            bluetoothProvider.setOnStreamStateChangeListener(
-                StreamingChangeHandler(
-                    focusManager,
-                    focusChannelName,
-                    executor,
-                    focusChangeHandler ?: object : OnFocusChangeHandler {
-                        private var focusState = FocusState.NONE
+        bluetoothProvider?.setOnStreamStateChangeListener(
+            StreamingChangeHandler(
+                focusManager,
+                focusChannelName,
+                executor,
+                focusChangeHandler ?: object : OnFocusChangeHandler {
+                    private var focusState = FocusState.NONE
 
-                        override fun onFocusChanged(
-                            focus: FocusState,
-                            streamingState: StreamingState
-                        ) {
-                            Logger.d(TAG, "[onFocusChanged] $focusState , $focus")
-                            if (focusState == focus) {
-                                return
-                            }
-
-                            when (focus) {
-                                FocusState.FOREGROUND -> {
-                                    val shouldResume = playbackHandlingDirectiveQueue.isEmpty()
-                                            && streamingState == StreamingState.PAUSED
-                                    if (shouldResume) {
-                                        // resume
-                                        executePlay()
-                                    }
-                                }
-                                FocusState.BACKGROUND -> {
-                                    if (streamingState == StreamingState.ACTIVE) {
-                                        // pause
-                                        executePause()
-                                    }
-                                }
-                                FocusState.NONE -> {
-                                    if (streamingState == StreamingState.ACTIVE || streamingState == StreamingState.PAUSED) {
-                                        // stop
-                                        executeStop()
-                                    }
-                                }
-                            }
-
-                            focusState = focus
+                    override fun onFocusChanged(
+                        focus: FocusState,
+                        streamingState: StreamingState
+                    ) {
+                        Logger.d(TAG, "[onFocusChanged] $focusState , $focus")
+                        if (focusState == focus) {
+                            return
                         }
-                    })
-            )
-        }
+
+                        when (focus) {
+                            FocusState.FOREGROUND -> {
+                                val shouldResume = playbackHandlingDirectiveQueue.isEmpty()
+                                        && streamingState == StreamingState.PAUSED
+                                if (shouldResume) {
+                                    // resume
+                                    executePlay()
+                                }
+                            }
+                            FocusState.BACKGROUND -> {
+                                if (streamingState == StreamingState.ACTIVE) {
+                                    // pause
+                                    executePause()
+                                }
+                            }
+                            FocusState.NONE -> {
+                                if (streamingState == StreamingState.ACTIVE || streamingState == StreamingState.PAUSED) {
+                                    // stop
+                                    executeStop()
+                                }
+                            }
+                        }
+
+                        focusState = focus
+                    }
+                })
+        )
     }
 
     internal data class StartDiscoverableModePayload(

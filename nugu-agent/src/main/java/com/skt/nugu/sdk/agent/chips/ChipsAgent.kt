@@ -57,9 +57,6 @@ class ChipsAgent(
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         directiveSequencer.addDirectiveHandler(RenderDirectiveHandler(this, directiveSequencer, sessionManager))
-
-        provideState(contextSetter, namespaceAndName, ContextType.FULL, 0)
-        provideState(contextSetter, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     override fun getInterfaceName(): String = NAMESPACE

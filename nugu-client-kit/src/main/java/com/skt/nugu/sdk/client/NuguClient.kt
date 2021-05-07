@@ -227,6 +227,8 @@ class NuguClient private constructor(
                 audioPlayStackManager,
                 displayPlayStackManager
             )
+
+            contextManager.refreshAllState()
         }
     }
 
