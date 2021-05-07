@@ -68,10 +68,6 @@ class PermissionAgent(
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
-
-        // cache context
-        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
-        provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     override fun getInterfaceName(): String = NAMESPACE

@@ -244,9 +244,6 @@ class DefaultASRAgent(
 
         initialSpeechProcessor.addListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
-
-        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
-        provideState(contextManager, namespaceAndName, ContextType.COMPACT, 0)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
