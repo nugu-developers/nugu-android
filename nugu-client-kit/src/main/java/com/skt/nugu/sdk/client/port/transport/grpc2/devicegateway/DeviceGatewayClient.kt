@@ -310,7 +310,16 @@ internal class DeviceGatewayClient(policy: Policy,
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
                 Logger.w(TAG, "[awaitRetry] error=$error, code=${status.code}")
-
+                when(error) {
+                    BackOff.BackoffError.AlreadyShutdown,
+                    BackOff.BackoffError.AlreadyStarted -> {
+                        return
+                    }
+                    BackOff.BackoffError.ScheduleCancelled -> {
+                        Logger.e(TAG, "[awaitRetry] unexpected error while retrying")
+                    }
+                    else -> {/* no op */}
+                }
                 when (status.code) {
                     Status.Code.UNAUTHENTICATED -> {
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
