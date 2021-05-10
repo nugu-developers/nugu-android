@@ -20,13 +20,14 @@ import androidx.annotation.Keep
 import com.google.gson.JsonObject
 
 internal class JavascriptObjectReceiver(val listener: Listener) {
-    val gson = com.google.gson.Gson()
+    private val gson = com.google.gson.Gson()
 
     interface Listener {
         fun openExternalApp(androidScheme: String?, androidAppId: String?)
         fun openInAppBrowser(url: String)
         fun closeWindow(reason: String?)
         fun setTitle(title: String)
+        fun fixedTextZoom()
     }
 
     @Keep
@@ -82,6 +83,15 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
             if (it.method == "setTitle") {
                 val info = gson.fromJson(it.body, SetTitle::class.java)
                 listener.setTitle(info?.title.toString())
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun fixedTextZoom(parameter: String) {
+        gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
+            if (it.method == "fixedTextZoom") {
+                listener.fixedTextZoom()
             }
         }
     }
