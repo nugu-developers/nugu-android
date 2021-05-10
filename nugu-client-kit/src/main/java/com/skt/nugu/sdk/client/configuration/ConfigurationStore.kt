@@ -25,6 +25,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
+import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
@@ -39,7 +40,7 @@ object ConfigurationStore {
     private val executor = Executors.newSingleThreadExecutor()
     private var serviceConfigurationMetadata : ConfigurationMetadata? = null
     lateinit var configuration : Configuration
-    private val listeners = mutableSetOf<ConfigurationCallback>()
+    private val listeners =  Collections.synchronizedSet(mutableSetOf<ConfigurationCallback>())
     private fun discoveryUrl() =
         "${configuration.OAuthServerUrl}/.well-known/oauth-authorization-server/${configuration.clientId}"
 
