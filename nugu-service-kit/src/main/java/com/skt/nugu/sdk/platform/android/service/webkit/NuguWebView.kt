@@ -165,6 +165,12 @@ class NuguWebView @JvmOverloads constructor(
         }
     }
 
+    override fun fixedTextZoom() {
+        webView.post {
+            webView.settings.textZoom = 100 /* WebSettings.TextSize.NORMAL */
+        }
+    }
+
     fun setWebViewClient(client: WebViewClient) {
         webView.webViewClient = client
     }
