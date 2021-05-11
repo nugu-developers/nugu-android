@@ -137,7 +137,7 @@ class DefaultTTSAgent(
         val focusChannel: SeamlessFocusManagerInterface.Channel = SeamlessFocusManagerInterface.Channel(channelName, object: ChannelObserver {
             override fun onFocusChanged(newFocus: FocusState) {
                 try {
-                    Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus")
+                    Logger.d(TAG, "[onFocusChanged] newFocus: $newFocus, state: $state")
                     executor.submit {
                         when (newFocus) {
                             FocusState.FOREGROUND -> {
@@ -163,29 +163,9 @@ class DefaultTTSAgent(
                                     })
                                 countDownLatch.await()
                             }
-                            FocusState.BACKGROUND -> {
-                                if(!isResultHandled) {
-                                    if (isPlaybackInitiated && state != TTSAgentInterface.State.STOPPED && state != TTSAgentInterface.State.FINISHED) {
-                                        stopPlaying(this@SpeakDirectiveInfo)
-                                        waitUntilNotPlaying()
-                                    } else {
-                                        setHandlingCompleted()
-                                        executeReleaseSyncImmediately(this@SpeakDirectiveInfo)
-                                        executeTryReleaseFocus(this@SpeakDirectiveInfo)
-                                    }
-                                }
-                            }
+                            FocusState.BACKGROUND,
                             FocusState.NONE -> {
-                                if(!isResultHandled) {
-                                    if (isPlaybackInitiated && state != TTSAgentInterface.State.STOPPED && state != TTSAgentInterface.State.FINISHED) {
-                                        stopPlaying(this@SpeakDirectiveInfo)
-                                        waitUntilNotPlaying()
-                                    } else {
-                                        setHandlingCompleted()
-                                        executeReleaseSyncImmediately(this@SpeakDirectiveInfo)
-                                        executeTryReleaseFocus(this@SpeakDirectiveInfo)
-                                    }
-                                }
+                                onFocusLost()
                             }
                         }
 
@@ -195,6 +175,25 @@ class DefaultTTSAgent(
                     }.get(100, TimeUnit.MILLISECONDS)
                 } catch (e: Exception) {
                     Logger.w(TAG, "[onFocusChanged] newFocus: $newFocus", e)
+                }
+            }
+
+            private fun onFocusLost() {
+                if (state == TTSAgentInterface.State.STOPPED || state == TTSAgentInterface.State.FINISHED) {
+                    return
+                }
+
+                if (isResultHandled) {
+                    return
+                }
+
+                if (isPlaybackInitiated) {
+                    stopPlaying(this@SpeakDirectiveInfo)
+                    waitUntilNotPlaying()
+                } else {
+                    setHandlingCompleted()
+                    executeReleaseSyncImmediately(this@SpeakDirectiveInfo)
+                    executeTryReleaseFocus(this@SpeakDirectiveInfo)
                 }
             }
 
