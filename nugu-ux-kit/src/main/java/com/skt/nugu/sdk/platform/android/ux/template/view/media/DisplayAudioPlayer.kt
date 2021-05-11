@@ -212,7 +212,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             mediaPlaying = savedState.mediaPlaying == 1
 
             fulltime.post {
-                fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
+                if (fulltime.visibility == View.VISIBLE) {
+                    fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
+                }
                 lyricsView.visibility = if (savedState.isLyricShowing == 1) View.VISIBLE else View.GONE
 
                 updateCurrentTimeInfo(mediaCurrentTimeMs)
@@ -567,8 +569,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             (offset / duration * 100f).coerceIn(0f, 100f).toFloat()
         }
 
-        playtime.post{
-            playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
+        playtime.post {
+            if (playtime.visibility == View.VISIBLE) {
+                playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
+            }
             progressView.progress = p.toInt()
             bar_progress.progress = p.toInt()
             lyricsView.setCurrentTimeMs(currentTimeMs)
