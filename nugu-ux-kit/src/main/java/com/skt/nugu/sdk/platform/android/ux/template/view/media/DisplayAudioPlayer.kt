@@ -168,11 +168,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             post {
                 progressView.isEnabled = true
                 bar_progress.isEnabled = true
-                playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
-                progressView.progress = progress.toInt()
-                bar_progress.progress = progress.toInt()
-                lyricsView.setCurrentTimeMs(currentTimeMs)
-                smallLyricsView.setCurrentTimeMs(currentTimeMs)
+                updateCurrentTimeInfo(currentTimeMs, progress)
             }
         }
     }
@@ -217,10 +213,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             fulltime.post {
                 fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
-                playtime.updateText(TemplateUtils.convertToTimeMs(mediaCurrentTimeMs.toInt()), true)
                 lyricsView.visibility = if (savedState.isLyricShowing == 1) View.VISIBLE else View.GONE
-                lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
-                smallLyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
+
+                updateCurrentTimeInfo(mediaCurrentTimeMs)
             }
 
             if (mediaPlaying) {
@@ -563,7 +558,22 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         if (player.visibility != View.VISIBLE) {
             collapse(true)
         }
+    }
 
+    private fun updateCurrentTimeInfo(currentTimeMs: Long, progress: Float? = null) {
+        val p = progress ?: run {
+            val offset = currentTimeMs.toFloat()
+            val duration = mediaDurationMs.coerceAtLeast(1L)
+            (offset / duration * 100f).coerceIn(0f, 100f).toFloat()
+        }
+
+        playtime.post{
+            playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
+            progressView.progress = p.toInt()
+            bar_progress.progress = p.toInt()
+            lyricsView.setCurrentTimeMs(currentTimeMs)
+            smallLyricsView.setCurrentTimeMs(currentTimeMs)
+        }
     }
 
     private fun collapse(immediately: Boolean = false) {
