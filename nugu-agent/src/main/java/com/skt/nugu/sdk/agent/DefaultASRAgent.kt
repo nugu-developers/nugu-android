@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
@@ -112,6 +113,7 @@ class DefaultASRAgent(
 
     data class ExpectSpeechDirectiveParam(
         val directive: ExpectSpeechDirective,
+        val result: DirectiveHandlerResult,
         val playSyncObject: PlaySynchronizerInterface.SynchronizeObject
     ) : SessionManagerInterface.Requester
 
@@ -265,17 +267,23 @@ class DefaultASRAgent(
                     "[executePreHandleExpectSpeechDirective] invalid payload"
                 )
             } else {
-                executePreHandleExpectSpeechInternal(ExpectSpeechDirectiveParam(ExpectSpeechDirective(info.directive.header, payload), object: PlaySynchronizerInterface.SynchronizeObject {
-                    override val playServiceId: String? = payload.playServiceId
-                    override val dialogRequestId: String = info.directive.header.dialogRequestId
+                executePreHandleExpectSpeechInternal(
+                    ExpectSpeechDirectiveParam(
+                        ExpectSpeechDirective(info.directive.header, payload),
+                        info.result,
+                        object : PlaySynchronizerInterface.SynchronizeObject {
+                            override val playServiceId: String? = payload.playServiceId
+                            override val dialogRequestId: String =
+                                info.directive.header.dialogRequestId
 
-                    override fun requestReleaseSync() {
-                        executor.submit {
-                            Logger.d(TAG, "[requestReleaseSync]")
-                            executeCancelExpectSpeechDirective(info.directive.header.messageId)
-                        }
-                    }
-                }))
+                            override fun requestReleaseSync() {
+                                executor.submit {
+                                    Logger.d(TAG, "[requestReleaseSync]")
+                                    executeCancelExpectSpeechDirective(info.directive.header.messageId)
+                                }
+                            }
+                        })
+                )
             }
         }
     }
@@ -512,6 +520,8 @@ class DefaultASRAgent(
                 if(it.directive.header.messageId == messageId) {
                     focusManager.cancel(asrFocusRequester)
                     sessionManager.deactivate(it.directive.header.dialogRequestId, it)
+                    // TODO : refactor need
+                    it.result.setFailed("executeCancelExpectSpeechDirective")
                     clearPreHandledExpectSpeech()
                     clearCurrentAttributeKeyIfMatchWith(it)
                 }

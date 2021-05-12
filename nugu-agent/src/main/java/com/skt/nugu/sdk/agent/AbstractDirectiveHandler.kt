@@ -55,16 +55,18 @@ abstract class AbstractDirectiveHandler: DirectiveHandler {
             // wrap result to remove directive from map.
             object : DirectiveHandlerResult {
                 override fun setCompleted() {
-                    directiveInfoMap.remove(messageId)
-                    result.setCompleted()
+                    directiveInfoMap.remove(messageId)?.let {
+                        result.setCompleted()
+                    }
                 }
 
                 override fun setFailed(
                     description: String,
                     cancelPolicy: DirectiveHandlerResult.CancelPolicy
                 ) {
-                    directiveInfoMap.remove(messageId)
-                    result.setFailed(description, cancelPolicy)
+                    directiveInfoMap.remove(messageId)?.let {
+                        result.setFailed(description, cancelPolicy)
+                    }
                 }
             })
         directiveInfoMap[directive.getMessageId()] = info
