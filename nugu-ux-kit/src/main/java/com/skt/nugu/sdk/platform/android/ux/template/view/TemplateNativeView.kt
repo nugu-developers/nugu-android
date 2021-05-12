@@ -41,18 +41,14 @@ abstract class TemplateNativeView @JvmOverloads constructor(context: Context, at
         LayoutInflater.from(context).inflate(layout, this, true)
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-
-        close.setThrottledOnClickListener {
-            templateHandler?.onCloseClicked()
-        }
-    }
-
     protected open fun refreshView() {
         logoView = findViewById(R.id.iv_logo)
         titleView = findViewById(R.id.tv_title)
         close = findViewById(R.id.btn_close)
         collapsed = findViewById(R.id.btn_collapsed)
+
+        close.setThrottledOnClickListener {
+            templateHandler?.onCloseClicked()
+        }
     }
 }
