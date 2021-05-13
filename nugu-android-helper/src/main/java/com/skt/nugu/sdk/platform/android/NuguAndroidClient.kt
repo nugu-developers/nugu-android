@@ -83,6 +83,7 @@ import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.AgentFactory
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.client.port.transport.DefaultTransportFactory
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
@@ -1215,6 +1216,8 @@ class NuguAndroidClient private constructor(
         } catch (th: Throwable) {
             null
         }
+
+    override val themeManager: ThemeManagerInterface = client.themeManager
 
     override fun getAgent(namespace: String): CapabilityAgent? = client.getAgent(namespace)
 }

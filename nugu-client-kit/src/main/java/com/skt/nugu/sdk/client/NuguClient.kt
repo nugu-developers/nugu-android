@@ -37,6 +37,8 @@ import com.skt.nugu.sdk.core.directivesequencer.*
 import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.client.theme.ThemeManager
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.attachment.AttachmentManager
 import com.skt.nugu.sdk.core.context.ContextManager
 import com.skt.nugu.sdk.core.dialogattribute.DialogAttributeStorage
@@ -124,6 +126,8 @@ class NuguClient private constructor(
         MessageRouter(builder.transportFactory, builder.authDelegate)
     val networkManager: ConnectionManagerInterface
 
+    val themeManager : ThemeManagerInterface
+
     var useServerSideEndPointDetector: Boolean = false
 
     private val contextStateProviderRegistry: ContextStateProviderRegistry
@@ -155,6 +159,8 @@ class NuguClient private constructor(
             networkManager = NetworkManager.create(messageRouter).apply {
                 addMessageObserver(messageDispatcher)
             }
+
+            themeManager = ThemeManager()
 
             val contextManager = ContextManager()
             contextStateProviderRegistry = contextManager

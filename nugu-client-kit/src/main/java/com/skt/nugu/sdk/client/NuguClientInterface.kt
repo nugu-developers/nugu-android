@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 
 /**
@@ -41,6 +42,7 @@ interface NuguClientInterface {
     val systemAgent: SystemAgentInterface
     val networkManager: NetworkManagerInterface
     val bluetoothAgent: BluetoothAgentInterface?
+    val themeManager : ThemeManagerInterface
 
     fun getAgent(namespace: String): CapabilityAgent?
 }
