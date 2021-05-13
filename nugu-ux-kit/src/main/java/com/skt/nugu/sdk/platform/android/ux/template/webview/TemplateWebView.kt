@@ -33,6 +33,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
 import com.skt.nugu.sdk.platform.android.ux.R
@@ -54,7 +55,10 @@ class TemplateWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0
-) : WebView(context, attrs, defStyle), TemplateView, TemplateHandler.ClientListener {
+) : WebView(context, attrs, defStyle),
+    TemplateView,
+    TemplateHandler.ClientListener,
+    ThemeManagerInterface.ThemeListener {
 
     companion object {
         private const val TAG = "TemplateWebView"
@@ -74,6 +78,7 @@ class TemplateWebView @JvmOverloads constructor(
                 addJavascriptInterface(WebAppInterface(value), "Android")
                 value.setClientListener(this@TemplateWebView)
                 (this as? DefaultTemplateHandler)?.getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
+                (this as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.addListener(this@TemplateWebView)
             }
         }
 
@@ -220,7 +225,14 @@ class TemplateWebView @JvmOverloads constructor(
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
                 getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
+
+            getNuguClient().themeManager.removeListener(this@TemplateWebView)
         }
+    }
+
+    override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
+        Logger.d(TAG, "onThemeChange to $theme")
+        //todo. apply ui
     }
 
     /**
