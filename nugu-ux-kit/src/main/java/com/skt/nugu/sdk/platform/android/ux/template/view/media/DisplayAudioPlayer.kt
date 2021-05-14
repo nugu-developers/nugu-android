@@ -519,6 +519,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                     else -> Unit
                 }
             } else if (!isMerge) {
+                lyricsView.setItems(null)
+                smallLyricsView.setItems(null)
                 lyricPresenter.hide()
                 showLyrics.visibility = View.GONE
                 smallLyricsView.visibility = View.GONE
@@ -633,7 +635,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     fun applyPreviousRenderInfo(previousRenderInfo: RenderInfo) {
-        if (previousRenderInfo.lyricShowing && audioPlayerItem?.content?.lyrics?.lyricsType != LyricsType.NONE) {
+        if (previousRenderInfo.lyricShowing) {
             lyricsView.post {
                 lyricsView.visibility = View.VISIBLE
                 lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
