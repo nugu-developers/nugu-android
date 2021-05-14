@@ -177,7 +177,6 @@ internal class DeviceGatewayClient(policy: Policy,
      */
     override fun disconnect() {
         Logger.d(TAG, "[disconnect]")
-        backoff.shutdown()
         isConnected.set(false)
         firstResponseReceived.set(false)
 
@@ -344,6 +343,7 @@ internal class DeviceGatewayClient(policy: Policy,
         messageConsumer = null
         transportObserver = null
         disconnect()
+        backoff.shutdown()
         scheduler.shutdown()
         Logger.d(TAG, "[shutdown]")
     }
