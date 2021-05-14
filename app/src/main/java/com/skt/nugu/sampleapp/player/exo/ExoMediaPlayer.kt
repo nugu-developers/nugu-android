@@ -144,6 +144,7 @@ class ExoMediaPlayer(
             )
 
             when (playbackState) {
+                Player.STATE_IDLE -> Unit
                 Player.STATE_BUFFERING -> eventNotifier.notifyBufferUnderRun(sourceId)
                 Player.STATE_READY -> {
                     if (durationCallSourceId.id < sourceId.id) {
@@ -255,7 +256,10 @@ class ExoMediaPlayer(
             })
         )
         extractorsFactory = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
-        player = ExoPlayerFactory.newSimpleInstance(context)
+        player = SimpleExoPlayer.Builder(
+            context,
+            DefaultRenderersFactory(context).setEnableDecoderFallback(true)
+        ).build()
         player.addListener(playerListener)
 
         eventNotifier.addPlaybackEventListener(offsetCalculator)
@@ -282,7 +286,8 @@ class ExoMediaPlayer(
 
         lastPreparedUri = uri
         val uriStr = uri.toString()
-        player.prepare(buildMediaSource(Uri.parse(uriStr), cacheKey))
+        player.setMediaSource(buildMediaSource(Uri.parse(uriStr), cacheKey))
+        player.prepare()
 
         lastPreparedCacheKey = cacheKey
 
