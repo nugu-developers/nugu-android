@@ -64,3 +64,29 @@ fun JsonArray.deepMerge(source: JsonArray) {
         }
     }
 }
+
+fun JsonObject.removeJsonNull() {
+    val removeKeys = HashSet<String>()
+    keySet().forEach {
+        val elem = get(it)
+        if(elem.isJsonNull) {
+            removeKeys.add(it)
+        } else if(elem.isJsonObject) {
+            elem.asJsonObject.removeJsonNull()
+        } else if(elem.isJsonArray) {
+            elem.asJsonArray.removeJsonNull()
+        }
+    }
+
+    removeKeys.forEach {
+        remove(it)
+    }
+}
+
+fun JsonArray.removeJsonNull() {
+    forEach {
+        if(it.isJsonObject) {
+            it.asJsonObject.removeJsonNull()
+        }
+    }
+}
