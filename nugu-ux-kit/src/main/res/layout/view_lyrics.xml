@@ -33,13 +33,11 @@
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:gravity="center"
-        android:lineSpacingExtra="15sp"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:text="가사 서비스를 지원하지 않은 음원입니다."
-        android:textColor="#444444"
-        android:textColorHint="#888888"
-        android:textSize="16sp"
+        android:textColor="#909090"
+        android:textSize="14sp"
         android:visibility="gone" />
 
 </RelativeLayout>
