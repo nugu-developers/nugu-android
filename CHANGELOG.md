@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.1.3 *(2021-05-14)*
+-----------------------------
+* Fix: Fix concurrentModificationException (#1832)
+* Fix: Fix invalid result handling for TTS.Speak (#1836)
+* Fix: SetComplete immediately after preHandleDirective canceled (#1840)
+* Fix: SetComplete when preHandleDirective canceled #1840 (#1841)
+* Improve: Add fixedTextZoom Javascript interface to NuguWebView (#1833)
+
 Version 1.1.2 *(2021-05-07)*
 -----------------------------
 * Fix: Fix missing call directive complete (#1814)
