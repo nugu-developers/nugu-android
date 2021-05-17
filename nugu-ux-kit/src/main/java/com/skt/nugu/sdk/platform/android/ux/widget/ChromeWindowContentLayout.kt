@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.TypedArray
 import android.graphics.Point
 import android.graphics.Rect
 import android.util.AttributeSet
@@ -24,7 +25,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.TextView
+import androidx.annotation.StyleRes
 import androidx.annotation.VisibleForTesting
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
@@ -71,7 +72,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     fun getChromeWindowHeight() = bottomSheet.height
 
-    private var sttTextView: TextView
+    private var sttTextView: EllipsizedTextView
 
     private var voiceChrome: NuguVoiceChromeView
 
@@ -208,5 +209,34 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     fun startAnimation(animation: NuguVoiceChromeView.Animation) {
         voiceChrome.startAnimation(animation)
+    }
+
+    /**
+     * Sets the value of a style attribute
+     */
+    private fun applyThemeAttrs(@StyleRes resId: Int) {
+        val attrs =
+            intArrayOf(android.R.attr.background)
+        val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
+        try {
+            bottomSheet.background = a.getDrawable(0)
+        } finally {
+            a.recycle()
+        }
+    }
+
+    /**
+     * Sets the dark mode.
+     * @param darkMode the dark mode to set
+     */
+    fun setDarkMode(darkMode: Boolean) {
+        applyThemeAttrs(
+            when (darkMode) {
+                true -> R.style.Nugu_Widget_Chrome_Window_Dark
+                false -> R.style.Nugu_Widget_Chrome_Window_Light
+            }
+        )
+        sttTextView.setDarkMode(darkMode)
+        chipsView.setDarkMode(darkMode)
     }
 }

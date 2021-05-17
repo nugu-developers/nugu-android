@@ -16,19 +16,53 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
+import android.content.res.TypedArray
+import android.graphics.Color
 import android.text.TextUtils
 import android.util.AttributeSet
+import androidx.annotation.StyleRes
 import androidx.appcompat.widget.AppCompatTextView
+import com.skt.nugu.sdk.platform.android.ux.R
+
 
 class EllipsizedTextView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
-    private val ELLIPSIS_NORMAL = "\u2026" // HORIZONTAL ELLIPSIS (…)
+    companion object {
+        private val DEFAULT_TEXT_COLOR = Color.parseColor("#00796B")
+        private val DEFAULT_HINT_TEXT_COLOR = Color.parseColor("#404858")
+        private val ELLIPSIS_NORMAL = "\u2026" // HORIZONTAL ELLIPSIS (…)
+    }
 
     init {
         setSingleLine()
+    }
+
+    private fun applyThemeAttrs(@StyleRes resId: Int) {
+        val attrs =
+            intArrayOf(android.R.attr.textColor, android.R.attr.textColorHint)
+        val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
+        try {
+            setTextColor(a.getColor(0, DEFAULT_TEXT_COLOR))
+            setHintTextColor(a.getColor(1, DEFAULT_HINT_TEXT_COLOR))
+        } finally {
+            a.recycle()
+        }
+    }
+
+    /**
+     * Sets the dark mode.
+     * @param darkMode the dark mode to set
+     */
+    fun setDarkMode(darkMode: Boolean) {
+        applyThemeAttrs(
+            when (darkMode) {
+                true -> R.style.Nugu_Widget_Guide_Text_Dark
+                false -> R.style.Nugu_Widget_Guide_Text_Light
+            }
+        )
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

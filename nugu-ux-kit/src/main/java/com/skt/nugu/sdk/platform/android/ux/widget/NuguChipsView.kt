@@ -19,8 +19,10 @@ import android.animation.ArgbEvaluator
 import android.animation.TimeAnimator
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.TypedArray
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
@@ -29,6 +31,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.annotation.StyleRes
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.chips.Chip
@@ -54,8 +57,16 @@ class NuguChipsView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
     class Item(val text: String, val type: Chip.Type)
-
+    companion object {
+        private val DEFAULT_TEXT_COLOR = Color.parseColor("#404858")
+        private val DEFAULT_HIGHLIGHT_TEXT_COLOR = Color.parseColor("#009DFF")
+    }
     private val adapter = AdapterChips(context)
+
+    private val NO_COLOR = 0
+    private var defaultColor: Int = NO_COLOR
+    private var highlightColor: Int = NO_COLOR
+    private var defaultBackground: Drawable? = null
 
     /**
      * Sets the maximum number of texts in the chips
@@ -161,8 +172,6 @@ class NuguChipsView @JvmOverloads constructor(
         RecyclerView.Adapter<AdapterChips.ChipsViewHolder>() {
         /** items **/
         val items: MutableList<Item> = ArrayList()
-        var defaultColor: Int = 0
-        var highlightColor: Int = 0
 
         // for nudge border
         private val start = Color.parseColor("#009dff")
@@ -192,8 +201,12 @@ class NuguChipsView @JvmOverloads constructor(
         override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ChipsViewHolder {
             val layout = if (viewType == Chip.Type.NUDGE.ordinal) R.layout.item_text_nudge else R.layout.item_text
             val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(layout, viewGroup, false))
-            defaultColor = viewHolder.titleView.textColors.defaultColor
-            highlightColor = viewHolder.titleView.highlightColor
+            if(defaultColor == NO_COLOR) {
+                defaultColor = viewHolder.titleView.textColors.defaultColor
+            }
+            if(highlightColor == NO_COLOR) {
+                highlightColor = viewHolder.titleView.highlightColor
+            }
             return viewHolder
         }
 
@@ -211,6 +224,9 @@ class NuguChipsView @JvmOverloads constructor(
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
             holder.titleView.setEllipsizeText(items[position].text, maxTextSize)
+            defaultBackground?.let {
+                holder.titleView.background = it
+            }
             when (items[position].type) {
                 Chip.Type.NUDGE -> {
                     // remove title view border
@@ -221,6 +237,7 @@ class NuguChipsView @JvmOverloads constructor(
                             }
                         }
                     }
+                    holder.titleView.setTextColor(defaultColor)
                 }
                 Chip.Type.ACTION -> {
                     holder.titleView.setTextColor(highlightColor)
@@ -286,5 +303,32 @@ class NuguChipsView @JvmOverloads constructor(
             newText = newText.substring(0, maxTextSize - 1) + Typography.ellipsis
         }
         this.text = newText
+    }
+
+    private fun applyThemeAttrs(@StyleRes resId: Int) {
+        val attrs =
+            intArrayOf(android.R.attr.textColor, android.R.attr.textColorHighlight, android.R.attr.background)
+        val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
+        try {
+            defaultColor = a.getColor(0, DEFAULT_TEXT_COLOR)
+            highlightColor = a.getColor(1, DEFAULT_HIGHLIGHT_TEXT_COLOR)
+            defaultBackground = a.getDrawable(2)
+        } finally {
+            a.recycle()
+        }
+        adapter.notifyDataSetChanged()
+    }
+
+    /**
+     * Sets the dark mode.
+     * @param darkMode the dark mode to set
+     */
+    fun setDarkMode(darkMode: Boolean) {
+        applyThemeAttrs(
+            when (darkMode) {
+                true -> R.style.Nugu_Widget_Chips_Dark
+                false -> R.style.Nugu_Widget_Chips_Light
+            }
+        )
     }
 }
