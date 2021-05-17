@@ -25,7 +25,7 @@ import com.skt.nugu.sdk.core.interfaces.transport.*
  */
 
 class GrpcTransportFactory(
-    private val serverInfo: NuguServerInfo = NuguServerInfo.Default(),
+    private val serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup? = null,
     private val callOptions: CallOptions? = null
 ) : TransportFactory {
@@ -36,7 +36,8 @@ class GrpcTransportFactory(
     override fun createTransport(
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
-        transportObserver: TransportListener
+        transportObserver: TransportListener,
+        isStartReceiveServerInitiatedDirective: () -> Boolean
     ): Transport {
         return GrpcTransport.create(
             serverInfo,
@@ -44,19 +45,8 @@ class GrpcTransportFactory(
             callOptions,
             authDelegate,
             messageConsumer,
-            transportObserver
+            transportObserver,
+            isStartReceiveServerInitiatedDirective
         )
-    }
-
-    override fun keepConnection(enabled: Boolean) : Boolean{
-        if(serverInfo.keepConnection != enabled) {
-            serverInfo.keepConnection = enabled
-            return true
-        }
-        return false /* unchanged */
-    }
-
-    override fun keepConnection(): Boolean {
-        return serverInfo.keepConnection
     }
 }

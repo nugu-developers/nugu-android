@@ -307,7 +307,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Returns true if server-initiative-directive is supported.
      **/
-    override fun isSidSupported(): Boolean {
+    fun isSidSupported(): Boolean {
         return getScope()?.contains("device:S.I.D.") ?: false
     }
 

@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Class to create and manage a transport
@@ -39,7 +40,8 @@ internal class HTTP2Transport(
     private val dnsLookup: DnsLookup?,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
-    private var transportObserver: TransportListener?
+    private var transportObserver: TransportListener?,
+    private val isStartReceiveServerInitiatedDirective: () -> Boolean
 ) : Transport {
     /**
      * Transport Constructor.
@@ -52,24 +54,33 @@ internal class HTTP2Transport(
             dnsLookup: DnsLookup?,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
-            transportObserver: TransportListener
+            transportObserver: TransportListener,
+            isStartReceiveServerInitiatedDirective: () -> Boolean
         ): Transport {
             return HTTP2Transport(
                 serverInfo,
                 dnsLookup,
                 authDelegate,
                 messageConsumer,
-                transportObserver
+                transportObserver,
+                isStartReceiveServerInitiatedDirective
             )
         }
     }
 
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayTransport? = null
-    private var isHandOff = false
+    private var isHandOff = AtomicBoolean(false)
     private var registryClient = RegistryClient(dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+    private fun getDelegatedServerInfo() : NuguServerInfo {
+        val info = serverInfo.delegate()?.serverInfo ?: serverInfo
+        return info.also {
+            it.checkServerSettings()
+        }
+    }
 
     /** @return the detail state **/
     private fun getDetailedState() = state.getDetailedState()
@@ -102,11 +113,15 @@ internal class HTTP2Transport(
             Logger.w(TAG, "[tryGetPolicy] Duplicate status")
             return false
         }
+
+        if(!isStartReceiveServerInitiatedDirective()) {
+            return tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(getDelegatedServerInfo()))
+        }
+
         setState(DetailedState.CONNECTING_REGISTRY)
 
         executor.submit {
-            val serverInfo = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
-            registryClient.getPolicy(serverInfo, authDelegate, object :
+            registryClient.getPolicy(getDelegatedServerInfo(), authDelegate, object :
                 RegistryClient.Observer {
                 override fun onCompleted(policy: Policy?) {
                     // succeeded, then it should be connection to DeviceGateway
@@ -125,7 +140,7 @@ internal class HTTP2Transport(
                         }
                     }
                 }
-            })
+            }, isStartReceiveServerInitiatedDirective)
         }
         return true
     }
@@ -135,9 +150,8 @@ internal class HTTP2Transport(
         override fun onConnected() {
             setState(DetailedState.CONNECTED)
 
-            if (isHandOff) {
-                isHandOff = false
-                Logger.d(TAG, "[onConnected] Handoff changed : $isHandOff")
+            if(isHandOff.compareAndSet(true, false)) {
+                Logger.d(TAG, "[onConnected] The handoff is completed")
             }
         }
 
@@ -148,7 +162,7 @@ internal class HTTP2Transport(
                 ChangedReason.INVALID_AUTH -> setState(DetailedState.FAILED, reason)
                 else -> {
                     // if the handoffConnection fails, the registry must be retry.
-                    if (!isHandOff) {
+                    if(!isHandOff.get()) {
                         setState(DetailedState.FAILED, reason)
                     } else {
                         setState(DetailedState.RECONNECTING, reason)
@@ -173,21 +187,20 @@ internal class HTTP2Transport(
             setState(DetailedState.FAILED, ChangedReason.INVALID_AUTH)
         } ?: return false
 
-        isHandOff = getDetailedState() == DetailedState.HANDOFF
+        isHandOff.set(getDetailedState() == DetailedState.HANDOFF)
 
         setState(DetailedState.CONNECTING_DEVICEGATEWAY)
 
-        deviceGatewayClient?.let {
+        deviceGatewayClient?.shutdown().also {
             Logger.w(TAG, "[tryConnectToDeviceGateway] deviceGatewayClient is not null")
-            deviceGatewayClient?.shutdown()
         }
 
         DeviceGatewayClient.create(
             policy,
-            serverInfo.keepConnection,
             messageConsumer,
             deviceGatewayObserver,
-            authDelegate
+            authDelegate,
+            isStartReceiveServerInitiatedDirective
         ).also {
             deviceGatewayClient = it
             return it.connect()
@@ -331,8 +344,10 @@ internal class HTTP2Transport(
                     DetailedState.CONNECTING == getDetailedState() || DetailedState.RECONNECTING == getDetailedState()
             }
             DetailedState.CONNECTING_DEVICEGATEWAY -> {
-                allowed =
-                    getDetailedState() == DetailedState.CONNECTING_REGISTRY || getDetailedState() == DetailedState.HANDOFF
+                allowed = getDetailedState() == DetailedState.CONNECTING_REGISTRY ||
+                        getDetailedState() == DetailedState.HANDOFF ||
+                        getDetailedState() == DetailedState.CONNECTING ||
+                        getDetailedState() == DetailedState.RECONNECTING
             }
             DetailedState.HANDOFF -> {
                 allowed = DetailedState.IDLE == getDetailedState()
@@ -388,4 +403,18 @@ internal class HTTP2Transport(
         headers: Map<String, String>?,
         listener: MessageSender.OnSendMessageListener
     ) = HTTP2Call(scheduler, activeTransport, request, headers, listener)
+
+    override fun startDirectivesService() {
+        deviceGatewayClient?.let {
+            setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
+            it.startDirectivesService()
+        } ?: Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+    }
+
+    override fun stopDirectivesService() {
+        deviceGatewayClient?.let {
+            setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
+            it.stopDirectivesService()
+        } ?: Logger.w(TAG, "[stopDirectivesService] deviceGatewayClient is not initialized")
+    }
 }

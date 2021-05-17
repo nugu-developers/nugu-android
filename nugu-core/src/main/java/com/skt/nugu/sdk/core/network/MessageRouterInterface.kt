@@ -61,13 +61,17 @@ interface MessageRouterInterface : MessageSender {
     fun resetConnection(description: String?)
 
     /**
-     * Set the keepConnection.
+     * Start the connection-oriented feature.
      */
-    fun keepConnection(enabled: Boolean)
+    fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit)
 
     /**
-     * Gets the keepConnection.
-     * @return enabled True to enable keepConnection, false otherwise.
+     * Stop the connection-oriented feature.
      */
-    fun keepConnection(): Boolean
+    fun stopReceiveServerInitiatedDirective()
+
+    /**
+     * Return whether the connection-oriented has been started.
+     */
+    fun isStartReceiveServerInitiatedDirective() : Boolean
 }
