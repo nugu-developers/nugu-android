@@ -37,13 +37,15 @@ class GrpcTransportFactory(
         const val TAG = "GrpcTransportFactory"
         const val DEFAULT_ADDRESS = "reg-http.sktnugu.com"
     }
+
     /**
      * Create a Transport.
      */
     override fun createTransport(
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
-        transportObserver: TransportListener
+        transportObserver: TransportListener,
+        isStartReceiveServerInitiatedDirective: () -> Boolean
     ): Transport {
         return GrpcTransport.create(
             address,
@@ -52,14 +54,5 @@ class GrpcTransportFactory(
             messageConsumer,
             transportObserver
         )
-    }
-    override fun keepConnection(enabled: Boolean) : Boolean {
-        Logger.w(TAG, "keepConnection not supported by this grpc version, try grpc v2 or h2")
-        return false
-    }
-
-    override fun keepConnection(): Boolean {
-        Logger.w(TAG, "keepConnection not supported by this grpc version, try grpc v2 or h2")
-        return false
     }
 }

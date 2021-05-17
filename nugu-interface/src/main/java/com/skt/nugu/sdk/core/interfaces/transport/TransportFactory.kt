@@ -32,19 +32,7 @@ interface TransportFactory {
     fun createTransport(
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
-        transportObserver: TransportListener
+        transportObserver: TransportListener,
+        isStartReceiveServerInitiatedDirective: () -> Boolean
     ): Transport
-
-    /**
-     * Set the keepConnection
-     * @param enabled True to enable keepConnection, false otherwise.
-     * @return true when successful
-     */
-    fun keepConnection(enabled: Boolean): Boolean
-
-    /**
-     * Gets the keepConnection
-     * @return enabled True to enable keepConnection, false otherwise.
-     */
-    fun keepConnection(): Boolean
 }

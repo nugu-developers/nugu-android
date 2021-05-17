@@ -26,14 +26,10 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverte
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.Call
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
 import devicegateway.grpc.DirectiveMessage
@@ -51,13 +47,11 @@ import javax.net.ssl.SSLHandshakeException
  *  Implementation of DeviceGateway
  **/
 internal class DeviceGatewayClient(policy: Policy,
-                                   private val keepConnection : Boolean,
                                    private var messageConsumer: MessageConsumer?,
-                                   private var transportDelegate: DeviceGatewayTransport.TransportDelegate?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
                                    private val authDelegate: AuthDelegate,
                                    private val callOptions: CallOptions?,
-                                   var isHandOff: Boolean)
+                                   private val isStartReceiveServerInitiatedDirective: () -> Boolean)
     :
     DeviceGatewayTransport, HeaderClientInterceptor.Delegate {
     companion object {
@@ -101,41 +95,23 @@ internal class DeviceGatewayClient(policy: Policy,
                 onError?.invoke(Throwable("no more policy"))
                 return false
             }
-
-            val channel = try {
-                ChannelBuilderUtils.createChannelBuilderWith(
-                    policy,
-                    authDelegate,
-                    this@DeviceGatewayClient
-                ).build()
-            } catch (th: Throwable) {
-                onError?.invoke(th)
-                return false
-            }
-
-            channel.apply {
-                eventsService =
-                    EventsService(
-                        this,
-                        this@DeviceGatewayClient,
-                        scheduler,
-                        callOptions
-                    )
-                if (keepConnection) {
-                    directivesService =
-                        DirectivesService(
-                            this,
-                            this@DeviceGatewayClient
-                        )
-                    pingService =
-                        PingService(
-                            this,
-                            healthCheckPolicy,
-                            this@DeviceGatewayClient
-                        )
+            if(currentChannel == null) {
+                currentChannel = try {
+                    ChannelBuilderUtils.createChannelBuilderWith(
+                        policy,
+                        authDelegate,
+                        this@DeviceGatewayClient
+                    ).build()
+                } catch (th: Throwable) {
+                    onError?.invoke(th)
+                    return false
                 }
-                currentChannel = this
             }
+            if(!isStartReceiveServerInitiatedDirective()) {
+                handleOnConnected()
+                return true
+            }
+            buildDirectivesService()
         }
         return true
     }
@@ -144,32 +120,13 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return true is success, otherwise false
      */
     override fun connect(): Boolean {
-        Logger.d(TAG, "[connect] isConnected = ${isConnected()}, keepConnection = $keepConnection")
+        Logger.d(TAG, "[connect] isConnected = ${isConnected()}, isStartReceiveServerInitiatedDirective = ${isStartReceiveServerInitiatedDirective()}")
 
         if (isConnected()) {
             Logger.w(TAG, "[connect] already connected")
             return false
         }
-        if (!keepConnection) {
-            /** Channel creation([createChannel]) is done when sending([send]) a message for the first time. **/
-            handleOnConnected()
-            return true
-        }
-
-        val policy = currentPolicy ?: run {
-            Logger.w(TAG, "[connect] no more policy")
-            val reason = ChangedReason.UNRECOVERABLE_ERROR
-            reason.cause = Throwable("no more policy")
-            transportObserver?.onError(reason)
-            return false
-        }
-
-        return createChannel(policy) {
-            Logger.w(TAG, "[connect] Can't create a new channel. Exception: $it")
-            val reason = ChangedReason.CONNECTION_ERROR
-            reason.cause = it
-            transportObserver?.onError(reason)
-        }
+        return handleConnection()
     }
 
     /**
@@ -177,30 +134,13 @@ internal class DeviceGatewayClient(policy: Policy,
      */
     override fun disconnect() {
         Logger.d(TAG, "[disconnect]")
-        isConnected.set(false)
-        firstResponseReceived.set(false)
-
-        synchronized(this) {
-            pingService?.shutdown()
-            pingService = null
-            directivesService?.shutdown()
-            directivesService = null
-            eventsService?.shutdown()
-            eventsService = null
-            ChannelBuilderUtils.shutdown(currentChannel)
-            currentChannel = null
-            pendingHeaders = null
-        }
+        handleDisconnect()
     }
 
     /**
      * Returns whether this object is currently connected to DeviceGateway.
      */
-    override fun isConnected(): Boolean = isConnected.get()
-
-    override fun isConnectedOrConnecting(): Boolean {
-        throw NotImplementedError("not implemented")
-    }
+    fun isConnected(): Boolean = isConnected.get()
 
     /**
      * Sends a message request.
@@ -208,34 +148,26 @@ internal class DeviceGatewayClient(policy: Policy,
      * @return true is success, otherwise false
      */
     override fun send(call: Call): Boolean {
-        if(!keepConnection && currentChannel == null) {
-            createChannel(transportDelegate?.newServerPolicy()) {
-                Logger.w(TAG, "[send] Can't create a new channel. Exception: $it")
-            }
-        }
-
-        val event = eventsService
         val request = call.request()
-        val result = when(request) {
+        return when (request) {
             is AttachmentMessageRequest -> {
-                event?.sendAttachmentMessage(call)?.also { result ->
-                    if(result) {
+                getEventsService()?.sendAttachmentMessage(call)?.also { result ->
+                    if (result) {
                         call.onComplete(com.skt.nugu.sdk.core.interfaces.message.Status.OK)
                     }
-                }
+                } ?: false
             }
             is EventMessageRequest -> {
-                call.headers()?.let {
-                    pendingHeaders = it
-                }
-                event?.sendEventMessage(call)
+                getEventsService()?.sendEventMessage(call.also {
+                    it.headers()?.let { headers ->
+                        pendingHeaders = headers
+                    }
+                }) ?: false
             }
-            is CrashReportMessageRequest -> true /* Deprecated */
             else -> false
-        } ?: false
-
-        Logger.d(TAG, "sendMessage : ${call.request().toStringMessage()}, result : $result")
-        return result
+        }.also { result ->
+            Logger.d(TAG, "sendMessage : ${call.request().toStringMessage()}, result : $result")
+        }
     }
 
     /**
@@ -243,7 +175,7 @@ internal class DeviceGatewayClient(policy: Policy,
      * @param the status of grpc
      */
     override fun onError(status: Status, who: String) {
-        Logger.w(TAG, "[onError] Error : ${status.code}")
+        Logger.w(TAG, "[onError] Error=${status.code}, who=$who")
 
         when(status.code) {
             Status.Code.UNAUTHENTICATED -> {
@@ -317,16 +249,16 @@ internal class DeviceGatewayClient(policy: Policy,
                     BackOff.BackoffError.ScheduleCancelled -> {
                         Logger.e(TAG, "[awaitRetry] unexpected error while retrying")
                     }
-                    else -> {/* no op */}
+                    else -> Unit
                 }
                 when (status.code) {
                     Status.Code.UNAUTHENTICATED -> {
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
                     else -> {
-                        disconnect()
+                        handleDisconnect()
                         nextPolicy()
-                        connect()
+                        handleConnection()
                     }
                 }
             }
@@ -334,7 +266,7 @@ internal class DeviceGatewayClient(policy: Policy,
             override fun onRetry(retriesAttempted: Int) {
                 Logger.w(TAG, "[awaitRetry] onRetry count=$retriesAttempted, connected=${isConnected()}, tid=${Thread.currentThread().id}")
                 currentChannel?.enterIdle()
-                pingService?.newPing() ?: connect() /* keepConnection == false */
+                pingService?.newPing() ?: handleOnConnected()  /* keepConnection == false */
             }
         })
     }
@@ -342,39 +274,62 @@ internal class DeviceGatewayClient(policy: Policy,
     override fun shutdown() {
         messageConsumer = null
         transportObserver = null
-        disconnect()
         backoff.shutdown()
         scheduler.shutdown()
+        handleDisconnect()
         Logger.d(TAG, "[shutdown]")
     }
 
     /**
      * Handler for connection completed
      */
-    private fun handleOnConnected()  {
+    private fun handleOnConnected() {
         if (isConnected.compareAndSet(false, true)) {
-            transportObserver?.onConnected()
-            directivesService?.start()
+            Logger.d(TAG, "[handleOnConnected] isConnected is changed")
+        }
+        transportObserver?.onConnected()
+        directivesService?.start()
+    }
+
+    private fun handleDisconnect() {
+        isConnected.set(false)
+        firstResponseReceived.set(false)
+
+        synchronized(this) {
+            pingService?.shutdown()
+            pingService = null
+            directivesService?.shutdown()
+            directivesService = null
+            eventsService?.shutdown()
+            eventsService = null
+            ChannelBuilderUtils.shutdown(currentChannel)
+            currentChannel = null
+            pendingHeaders = null
         }
     }
 
-    /**
-     * Handler for handoff changes
-     */
-    private fun handleHandoffConnection() {
-        if (isHandOff) {
-            Logger.d(TAG, "[handleHandoffConnection] The handoff is completed")
-            isHandOff = false
+    private fun handleConnection(): Boolean {
+        val policy = currentPolicy ?: run {
+            Logger.w(TAG, "[connect] no more policy")
+            val reason = ChangedReason.UNRECOVERABLE_ERROR
+            reason.cause = Throwable("no more policy")
+            transportObserver?.onError(reason)
+            return false
+        }
+        Logger.d(TAG, "[connect] policy = $policy")
+        return createChannel(policy) {
+            Logger.w(TAG, "[connect] Can't create a new channel. Exception: $it")
+            val reason = ChangedReason.CONNECTION_ERROR
+            reason.cause = it
+            transportObserver?.onError(reason)
         }
     }
 
     /**
      * Notification that sending a ping to DeviceGateway has been acknowledged by DeviceGateway.
      */
-    override fun onPingRequestAcknowledged() {
+    override fun onPingRequestAcknowledged() = handleOnConnected().also {
         Logger.d(TAG, "onPingRequestAcknowledged, isConnected:${isConnected()}")
-        handleHandoffConnection()
-        handleOnConnected()
     }
 
     /**
@@ -397,14 +352,51 @@ internal class DeviceGatewayClient(policy: Policy,
         messageConsumer?.consumeDirectives(directiveMessage.toDirectives())
     }
 
-    override fun newCall(
-        activeTransport: Transport?,
-        request: MessageRequest,
-        headers: Map<String, String>?,
-        listener: MessageSender.OnSendMessageListener
-    ): Call {
-        throw NotImplementedError()
+    override fun getHeaders() = pendingHeaders
+
+    override fun startDirectivesService() {
+        Logger.d(TAG, "[startDirectivesService] isConnected=${isConnected()}")
+        buildDirectivesService()
     }
 
-    override fun getHeaders() = pendingHeaders
+    private fun getEventsService() : EventsService? {
+        if(eventsService == null) {
+            currentChannel?.let {
+                eventsService =
+                    EventsService(
+                        it,
+                        this@DeviceGatewayClient,
+                        scheduler,
+                        callOptions
+                    )
+            }
+        }
+        return eventsService
+    }
+
+    private fun buildDirectivesService() {
+        Logger.d(TAG, "[buildDirectivesService] currentChannel=$currentChannel")
+
+        pingService?.shutdown()
+        directivesService?.shutdown()
+        currentChannel?.apply {
+            directivesService =
+                DirectivesService(
+                    this,
+                    this@DeviceGatewayClient
+                )
+            pingService =
+                PingService(
+                    this,
+                    healthCheckPolicy,
+                    this@DeviceGatewayClient
+                )
+        }
+    }
+
+    override fun stopDirectivesService() {
+        Logger.d(TAG, "[stopDirectivesService]")
+        handleDisconnect()
+        handleConnection()
+    }
 }

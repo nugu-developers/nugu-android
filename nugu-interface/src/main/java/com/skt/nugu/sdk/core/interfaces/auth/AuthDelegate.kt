@@ -24,9 +24,4 @@ interface AuthDelegate {
      * @return authorization ( auth_type + access_token )
     */
     fun getAuthorization(): String?
-
-    /**
-     * Returns true if server-initiative-directive is supported.
-     **/
-    fun isSidSupported(): Boolean
 }

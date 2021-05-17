@@ -161,13 +161,22 @@ class NetworkManager private constructor(
     }
 
     /**
-     * Set the keepConnection
+     * Start the connection-oriented feature.
+     * @param result is called after the reconnect
      */
-    override fun keepConnection(enabled: Boolean) = messageRouter.keepConnection(enabled)
+    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) {
+        messageRouter.startReceiveServerInitiatedDirective(onCompletion)
+    }
 
     /**
-     * Gets the keepConnection
-     * @return enabled True to enable keepConnection, false otherwise.
+     * Stop the connection-oriented feature.
      */
-    override fun keepConnection() = messageRouter.keepConnection()
+    override fun stopReceiveServerInitiatedDirective() =
+        messageRouter.stopReceiveServerInitiatedDirective()
+
+    /**
+     * Return whether the connection-oriented has been started.
+     */
+    override fun isStartReceiveServerInitiatedDirective() =
+        messageRouter.isStartReceiveServerInitiatedDirective()
 }

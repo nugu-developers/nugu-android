@@ -30,8 +30,8 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
-import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Class to create and manage an gRPC transport
@@ -42,7 +42,8 @@ internal class GrpcTransport private constructor(
     private val callOptions: CallOptions?,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
-    private var transportObserver: TransportListener?
+    private var transportObserver: TransportListener?,
+    private val isStartReceiveServerInitiatedDirective: () -> Boolean
 ) : Transport {
     /**
      * Transport Constructor.
@@ -56,7 +57,8 @@ internal class GrpcTransport private constructor(
             callOptions: CallOptions?,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
-            transportObserver: TransportListener
+            transportObserver: TransportListener,
+            isStartReceiveServerInitiatedDirective: () -> Boolean
         ): Transport {
             return GrpcTransport(
                 serverInfo,
@@ -64,25 +66,25 @@ internal class GrpcTransport private constructor(
                 callOptions,
                 authDelegate,
                 messageConsumer,
-                transportObserver
+                transportObserver,
+                isStartReceiveServerInitiatedDirective
             )
         }
     }
 
     private var state: TransportState = TransportState()
-    private var deviceGatewayClient: DeviceGatewayClient? = null
+    private var deviceGatewayClient: DeviceGatewayTransport? = null
     private var registryClient = RegistryClient(dnsLookup)
     private val executor = Executors.newSingleThreadExecutor()
-    private fun currentServerInfo() : NuguServerInfo {
-        val info = serverInfo.delegate()?.getNuguServerInfo() ?: serverInfo
+    private var isHandOff = AtomicBoolean(false)
+
+    private fun getDelegatedServerInfo() : NuguServerInfo {
+        val info = serverInfo.delegate()?.serverInfo ?: serverInfo
         return info.also {
             it.checkServerSettings()
         }
     }
 
-
-    /** @return the bearer token **/
-    private fun getAuthorization() = authDelegate.getAuthorization()?:""
     /** @return the detail state **/
     private fun getDetailedState() = state.getDetailedState()
 
@@ -110,16 +112,20 @@ internal class GrpcTransport private constructor(
             Logger.w(TAG,"[tryGetPolicy] Duplicate status")
             return false
         }
+
+        if(!isStartReceiveServerInitiatedDirective()) {
+            return tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(getDelegatedServerInfo()))
+        }
+
         setState(DetailedState.CONNECTING_REGISTRY)
 
         executor.submit {
-            val currentServerInfo = currentServerInfo()
-            registryClient.getPolicy(currentServerInfo, getAuthorization(), object :
+            registryClient.getPolicy(getDelegatedServerInfo(), authDelegate, object :
                 RegistryClient.Observer {
                 override fun onCompleted(policy: Policy?) {
                     // succeeded, then it should be connection to DeviceGateway
                     policy?.let {
-                        tryConnectToDeviceGateway(it, currentServerInfo.keepConnection)
+                        tryConnectToDeviceGateway(it)
                     } ?: setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
                 }
 
@@ -133,22 +139,18 @@ internal class GrpcTransport private constructor(
                         }
                     }
                 }
-            })
+            }, isStartReceiveServerInitiatedDirective)
         }
         return true
-    }
-
-    private val deviceGatewayDelegate = object : DeviceGatewayTransport.TransportDelegate {
-        override fun newServerPolicy(): ServerPolicy? {
-            val newServerInfo = currentServerInfo()
-            newServerInfo.checkServerSettings()
-            return RegistryClient.DefaultPolicy(newServerInfo).serverPolicy.first()
-        }
     }
 
     private val deviceGatewayObserver = object : DeviceGatewayTransport.TransportObserver {
         override fun onConnected() {
             setState(DetailedState.CONNECTED)
+
+            if(isHandOff.compareAndSet(true, false)) {
+                Logger.d(TAG, "[onConnected] The handoff is completed")
+            }
         }
 
         override fun onError(reason: ChangedReason) {
@@ -157,8 +159,7 @@ internal class GrpcTransport private constructor(
                 ChangedReason.INVALID_AUTH -> setState(DetailedState.FAILED,reason)
                 else -> {
                     // if the handoffConnection fails, the registry must be retry.
-                    val isHandOff = deviceGatewayClient?.isHandOff ?: false
-                    if(!isHandOff) {
+                    if(!isHandOff.get()) {
                         setState(DetailedState.FAILED, reason)
                     } else {
                         setState(DetailedState.RECONNECTING, reason)
@@ -178,29 +179,26 @@ internal class GrpcTransport private constructor(
      * @param policy Policy received from the registry server
      * @return true is success, otherwise false
      */
-    private fun tryConnectToDeviceGateway(policy: Policy, keepConnection: Boolean): Boolean {
+    private fun tryConnectToDeviceGateway(policy: Policy): Boolean {
         checkAuthorizationIfEmpty {
             setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
 
-        val isHandOff = getDetailedState() == DetailedState.HANDOFF
+        isHandOff.set(getDetailedState() == DetailedState.HANDOFF)
 
         setState(DetailedState.CONNECTING_DEVICEGATEWAY)
 
-        if( deviceGatewayClient != null ) {
+        deviceGatewayClient?.shutdown()?.also {
             Logger.w(TAG,"[tryConnectToDeviceGateway] deviceGatewayClient is not null")
         }
-        deviceGatewayClient?.shutdown()
 
         DeviceGatewayClient(
-            policy,
-            keepConnection,
-            messageConsumer,
-            deviceGatewayDelegate,
-            deviceGatewayObserver,
-            authDelegate,
-            callOptions,
-            isHandOff
+            policy = policy,
+            messageConsumer = messageConsumer,
+            transportObserver = deviceGatewayObserver,
+            authDelegate = authDelegate,
+            callOptions = callOptions,
+            isStartReceiveServerInitiatedDirective = isStartReceiveServerInitiatedDirective
         ).let {
             deviceGatewayClient = it
             return it.connect()
@@ -213,8 +211,8 @@ internal class GrpcTransport private constructor(
      * @return the authorization
      */
     private fun checkAuthorizationIfEmpty(block: () -> Unit) : String? {
-        val authorization = getAuthorization()
-        if (authorization.isBlank()) {
+        val authorization = authDelegate.getAuthorization()
+        if (authorization.isNullOrBlank()) {
             block.invoke()
             return null
         }
@@ -312,7 +310,7 @@ internal class GrpcTransport private constructor(
                         )
                     )
                 )
-            tryConnectToDeviceGateway(policy, currentServerInfo().keepConnection)
+            tryConnectToDeviceGateway(policy)
         }
     }
 
@@ -338,7 +336,10 @@ internal class GrpcTransport private constructor(
                 allowed = DetailedState.CONNECTING == getDetailedState() || DetailedState.RECONNECTING == getDetailedState()
             }
             DetailedState.CONNECTING_DEVICEGATEWAY -> {
-                allowed = getDetailedState() == DetailedState.CONNECTING_REGISTRY || getDetailedState() == DetailedState.HANDOFF
+                allowed = getDetailedState() == DetailedState.CONNECTING_REGISTRY ||
+                        getDetailedState() == DetailedState.HANDOFF ||
+                        getDetailedState() == DetailedState.CONNECTING ||
+                        getDetailedState() == DetailedState.RECONNECTING
             }
             DetailedState.HANDOFF -> {
                 allowed = DetailedState.IDLE == getDetailedState()
@@ -392,4 +393,18 @@ internal class GrpcTransport private constructor(
         headers: Map<String, String>?,
         listener: MessageSender.OnSendMessageListener
     ) =  Grpc2Call(activeTransport, request, headers, listener)
+
+    override fun startDirectivesService() {
+        deviceGatewayClient?.let {
+            setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
+            it.startDirectivesService()
+        } ?: Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+    }
+
+    override fun stopDirectivesService() {
+        deviceGatewayClient?.let {
+            setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
+            it.stopDirectivesService()
+        } ?: Logger.w(TAG, "[stopDirectivesService] deviceGatewayClient is not initialized")
+    }
 }

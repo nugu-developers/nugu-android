@@ -28,7 +28,6 @@ import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.CrashReportMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import okhttp3.*
 import java.net.ConnectException
@@ -46,26 +45,21 @@ import com.skt.nugu.sdk.core.interfaces.message.Status as SDKStatus
  **/
 internal class DeviceGatewayClient(
     private val policy: Policy,
-    private val keepConnection: Boolean,
     private var messageConsumer: MessageConsumer?,
     private var transportObserver: DeviceGatewayTransport.TransportObserver?,
-    private val authDelegate: AuthDelegate
-) : DeviceGatewayTransport {
+    private val authDelegate: AuthDelegate,
+    private val isStartReceiveServerInitiatedDirective: () -> Boolean) : DeviceGatewayTransport {
     companion object {
         private const val TAG = "HTTP2DeviceGatewayClient"
         private const val maxAsyncCallsSize = 100
 
         fun create(
             policy: Policy,
-            keepConnection: Boolean,
             messageConsumer: MessageConsumer?,
             transportObserver: DeviceGatewayTransport.TransportObserver?,
-            authDelegate: AuthDelegate
-        ) =
-            DeviceGatewayClient(
-                policy, keepConnection,
-                messageConsumer, transportObserver, authDelegate
-            )
+            authDelegate: AuthDelegate,
+            isStartReceiveServerInitiatedDirective: () -> Boolean) = DeviceGatewayClient(policy,
+                messageConsumer, transportObserver, authDelegate, isStartReceiveServerInitiatedDirective)
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -79,6 +73,7 @@ internal class DeviceGatewayClient(
     private var healthCheckPolicy = policy.healthCheckPolicy
 
     private val isConnected = AtomicBoolean(false)
+    private var firstResponseReceived = AtomicBoolean(false)
 
     private var asyncCalls = Collections.synchronizedMap(object : LinkedHashMap<String, Call>() {
         private val serialVersionUID = 301077066599181567L
@@ -105,13 +100,16 @@ internal class DeviceGatewayClient(
      * @return true is success, otherwise false
      */
     override fun connect(): Boolean {
-        Logger.d(TAG, "[connect] isConnected = ${isConnected()}, keepConnection = $keepConnection")
+        Logger.d(TAG, "[connect] isConnected = ${isConnected()}, isStartReceiveServerInitiatedDirective = ${isStartReceiveServerInitiatedDirective()}")
 
         if (isConnected()) {
             Logger.w(TAG, "[connect] already connected")
             return false
         }
+        return handleConnection()
+    }
 
+    private fun handleConnection(): Boolean {
         val policy = currentPolicy ?: run {
             Logger.w(TAG, "[connect] no more policy")
             transportObserver?.onError(
@@ -119,62 +117,87 @@ internal class DeviceGatewayClient(
             )
             return false
         }
+        Logger.d(TAG, "[connect] policy = $policy")
+        return createChannel(policy) {
+            Logger.w(TAG, "[connect] Can't create a new channel. Exception: $it")
+            val reason = ChangedReason.CONNECTION_ERROR
+            reason.cause = it
+            transportObserver?.onError(reason)
+        }
+    }
+
+    private fun createChannel(policy: ServerPolicy?, onError: ((Throwable) -> Unit)? = null) : Boolean {
         synchronized(this) {
-            policy.apply {
-                client = createChannelBuilderWith(this, authDelegate)
-                eventsService =
-                    EventsService.create(
-                        this,
-                        client,
-                        this@DeviceGatewayClient
-                    )
-
-                if (keepConnection) {
-                    directivesService =
-                        DirectivesService.create(
-                            this,
-                            client,
-                            this@DeviceGatewayClient
-                        )
-
-                    pingService =
-                        PingService.create(
-                            this,
-                            client,
-                            healthCheckPolicy,
-                            this@DeviceGatewayClient
-                        )
-                } else {
-                    handleConnectedIfNeeded()
-                }
+            if(policy == null) {
+                onError?.invoke(Throwable("no more policy"))
+                return false
             }
+            client = try {
+                createChannelBuilderWith(policy, authDelegate)
+            } catch (th: Throwable) {
+                onError?.invoke(th)
+                return false
+            }
+            if(!isStartReceiveServerInitiatedDirective()) {
+                handleOnConnected()
+                return true
+            }
+            buildDirectivesService()
         }
         return true
+    }
+
+    private fun buildDirectivesService() {
+        Logger.d(TAG, "[buildDirectivesService] currentChannel=$client")
+
+        pingService?.shutdown()
+        directivesService?.shutdown()
+
+        currentPolicy?.let {
+            directivesService =
+                DirectivesService.create(
+                    it,
+                    client,
+                    this@DeviceGatewayClient
+                )
+
+            pingService =
+                PingService.create(
+                    it,
+                    client,
+                    healthCheckPolicy,
+                    this@DeviceGatewayClient
+                )
+        }
     }
 
     /**
      * disconnect from DeviceGateway
      */
     override fun disconnect() {
-        stopServerInitiated()
+        Logger.d(TAG, "[disconnect]")
+        handleDisconnect()
+    }
+
+    private fun handleDisconnect() {
+        isConnected.set(false)
+        firstResponseReceived.set(false)
 
         synchronized(this) {
+            pingService?.shutdown()
+            pingService = null
+            directivesService?.shutdown()
+            directivesService = null
             eventsService?.shutdown()
             eventsService = null
-
             ChannelBuilderUtils.shutdown(executor, client)
-            isConnected.set(false)
         }
     }
 
     /**
      * Returns whether this object is currently connected to DeviceGateway.
      */
-    override fun isConnected(): Boolean = isConnected.get()
-
-    override fun isConnectedOrConnecting(): Boolean {
-        throw NotImplementedError("not implemented")
-    }
+    fun isConnected(): Boolean = isConnected.get()
 
     /**
      * Sends an message request.
@@ -182,27 +205,25 @@ internal class DeviceGatewayClient(
      * @return true is success, otherwise false
      */
     override fun send(call: Call): Boolean {
-        val event = eventsService ?: return false
-
         val request = call.request()
-        val result = when(request) {
+        return when(request) {
             is AttachmentMessageRequest -> {
-                val result = event.sendAttachmentMessage(request)
-                if(result) {
-                    call.onComplete(SDKStatus.OK)
-                    asyncCalls[request.parentMessageId]?.reschedule()
-                }
-                result
+                getEventsService()?.sendAttachmentMessage(request)?.also { result ->
+                    if(result) {
+                        call.onComplete(SDKStatus.OK)
+                        asyncCalls[request.parentMessageId]?.reschedule()
+                    }
+                } ?: false
             }
             is EventMessageRequest -> {
                 asyncCalls[request.messageId] = call
-                event.sendEventMessage(call)
+                getEventsService()?.sendEventMessage(call) ?: false
             }
             is CrashReportMessageRequest -> true /* Deprecated */
             else -> false
+        }.also { result ->
+            Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
         }
-        Logger.d(TAG, "sendMessage : ${request.toStringMessage()}, result : $result")
-        return result
     }
 
     /**
@@ -213,7 +234,6 @@ internal class DeviceGatewayClient(
         Logger.w(TAG, "[onError] Error : ${status.code}")
 
         when(status.code) {
-            Status.Code.PERMISSION_DENIED,
             Status.Code.UNAUTHENTICATED -> {
                 // nothing to do
             }
@@ -258,8 +278,11 @@ internal class DeviceGatewayClient(
                     Status.Code.INTERNAL -> ChangedReason.SERVER_INTERNAL_ERROR
                     Status.Code.OUT_OF_RANGE,
                     Status.Code.DATA_LOSS,
-                    Status.Code.CANCELLED,
                     Status.Code.INVALID_ARGUMENT -> ChangedReason.INTERNAL_ERROR
+                    Status.Code.CANCELLED -> {
+                        Logger.w(TAG, "skip CANCELLED")
+                        return
+                    }
                     else -> {
                         throw NotImplementedError()
                     }
@@ -267,79 +290,69 @@ internal class DeviceGatewayClient(
             }
         }
 
-        // Only stop ServerInitiated and wait for events to be sent.
-        stopServerInitiated()
         isConnected.set(false)
+        firstResponseReceived.set(false)
+
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
-                Logger.w(TAG, "[awaitRetry] Error : $error")
-
+                Logger.w(TAG, "[awaitRetry] error=$error, code=${status.code}")
+                when(error) {
+                    BackOff.BackoffError.AlreadyShutdown,
+                    BackOff.BackoffError.AlreadyStarted -> {
+                        return
+                    }
+                    BackOff.BackoffError.ScheduleCancelled -> {
+                        Logger.e(TAG, "[awaitRetry] unexpected error while retrying")
+                    }
+                    else -> Unit
+                }
                 when (status.code) {
                     Status.Code.UNAUTHENTICATED -> {
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
                     else -> {
+                        handleDisconnect()
                         nextPolicy()
-                        disconnect()
-                        connect()
+                        handleConnection()
                     }
                 }
             }
 
             override fun onRetry(retriesAttempted: Int) {
-                Logger.w(TAG, "[awaitRetry] onRetry : $retriesAttempted")
-                if (isConnected()) {
-                    Logger.w(TAG, "[awaitRetry] It is currently connected, but will try again.")
-                }
-                disconnect()
-                connect()
+                Logger.w(TAG, "[awaitRetry] onRetry count=$retriesAttempted, connected=${isConnected()}, tid=${Thread.currentThread().id}")
+                pingService?.newPing() ?: handleOnConnected()  /* keepConnection == false */
             }
         })
     }
 
-    private fun stopServerInitiated() {
-        if(!keepConnection) {
-            return
-        }
-        synchronized(this) {
-            pingService?.shutdown()
-            pingService = null
-            directivesService?.shutdown()
-            directivesService = null
-        }
-    }
-
     override fun shutdown() {
-        Logger.d(TAG, "[shutdown]")
         messageConsumer = null
         transportObserver = null
-
-        disconnect()
-        backoff.reset()
-
+        backoff.shutdown()
+        handleDisconnect()
         asyncCalls.forEach{
             it.value.cancel()
         }
         asyncCalls.clear()
+        Logger.d(TAG, "[shutdown]")
     }
 
     /**
      * Connected event received
      * @return boolean value, true if the connection has changed, false otherwise.
      */
-    private fun handleConnectedIfNeeded() {
-        if(isConnected.compareAndSet(false, true)) {
-            backoff.reset()
-            transportObserver?.onConnected()
+    private fun handleOnConnected() {
+        if (isConnected.compareAndSet(false, true)) {
+            Logger.d(TAG, "[handleOnConnected] isConnected is changed")
         }
+        transportObserver?.onConnected()
     }
 
     /**
      * Notification that sending a ping to DeviceGateway has been acknowledged by DeviceGateway.
      */
-    override fun onPingRequestAcknowledged() {
-        handleConnectedIfNeeded()
-        Logger.d(TAG, "onPingRequestAcknowledged")
+    override fun onPingRequestAcknowledged() = handleOnConnected().also {
+        Logger.d(TAG, "onPingRequestAcknowledged, isConnected:${isConnected()}, isStartReceiveServerInitiatedDirective=${isStartReceiveServerInitiatedDirective()}")
     }
 
     /**
@@ -347,6 +360,10 @@ internal class DeviceGatewayClient(
      * @param directiveMessage
      */
     override fun onReceiveDirectives(directiveMessage: List<DirectiveMessage>) {
+        // The backoff reset is at the point of receiving the first directive from the server.
+        if(firstResponseReceived.compareAndSet(false, true)) {
+            backoff.reset()
+        }
         messageConsumer?.consumeDirectives(directiveMessage)
     }
 
@@ -358,12 +375,28 @@ internal class DeviceGatewayClient(
         messageConsumer?.consumeAttachment(attachmentMessage)
     }
 
-    override fun newCall(
-        activeTransport: Transport?,
-        request: MessageRequest,
-        headers: Map<String, String>?,
-        listener: MessageSender.OnSendMessageListener
-    ): Call {
-        throw NotImplementedError()
+    override fun startDirectivesService() {
+        Logger.d(TAG, "[startDirectivesService] isConnected=${isConnected()}")
+        buildDirectivesService()
+    }
+
+    override fun stopDirectivesService() {
+        Logger.d(TAG, "[stopDirectivesService]")
+        handleDisconnect()
+        handleConnection()
+    }
+
+    private fun getEventsService() : EventsService? {
+        if(eventsService == null) {
+            currentPolicy?.let {
+                eventsService =
+                    EventsService.create(
+                        it,
+                        client,
+                        this@DeviceGatewayClient
+                    )
+            }
+        }
+        return eventsService
     }
 }

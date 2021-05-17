@@ -93,14 +93,19 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
     override fun removeConnectionStatusListener(listener: ConnectionStatusListener)
 
     /**
-     * Set the keepConnection
-     * @param enabled True to enable keepConnection, false otherwise.
-     */
-    fun keepConnection(enabled: Boolean)
+     * Start the connection-oriented feature.
+     * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
+    */
+    fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit)
 
     /**
-     * Gets the keepConnection
-     * @return enabled True to enable keepConnection, false otherwise.
+     * Stop the connection-oriented feature.
      */
-    fun keepConnection(): Boolean
+    fun stopReceiveServerInitiatedDirective()
+
+    /**
+     * Return whether the connection-oriented has been started.
+     */
+    fun isStartReceiveServerInitiatedDirective() : Boolean
+
 }

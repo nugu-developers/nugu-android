@@ -25,15 +25,15 @@ import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
  */
 class DefaultTransportFactory {
     companion object {
-        fun buildTransportFactory(authDelegate: AuthDelegate) =
-            GrpcTransportFactory(NuguServerInfo(object : NuguServerInfo.Delegate {
-                override fun getNuguServerInfo(): NuguServerInfo {
-                    val metadata = ConfigurationStore.configurationMetadataSync()
-                    return NuguServerInfo.Builder().deviceGW(metadata?.deviceGatewayServerGrpcUri)
-                        .registry(metadata?.deviceGatewayRegistryUri)
-                        .keepConnection(authDelegate.isSidSupported())
-                        .build()
-                }
+        fun buildTransportFactory() =
+            GrpcTransportFactory(NuguServerInfo(delegate = object : NuguServerInfo.Delegate {
+                override val serverInfo: NuguServerInfo
+                   get() = run {
+                       val metadata = ConfigurationStore.configurationMetadataSync()
+                       return NuguServerInfo.Builder().deviceGW(url = metadata?.deviceGatewayServerGrpcUri)
+                           .registry(url = metadata?.deviceGatewayRegistryUri)
+                           .build()
+                   }
             }))
     }
 }
