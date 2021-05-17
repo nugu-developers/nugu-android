@@ -157,11 +157,17 @@ internal class PingService(
 
     fun isStop() = isShutdown.get()
     fun shutdown() {
+        Logger.w(TAG, "[shutdown]")
         if (isShutdown.compareAndSet(false, true)) {
             intervalFuture?.cancel(true)
             executorService.shutdown()
         } else {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
+    }
+
+    fun newPing() {
+        intervalFuture?.cancel(true)
+        nextInterval(0)
     }
 }

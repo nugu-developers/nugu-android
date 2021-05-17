@@ -30,8 +30,9 @@ class DirectivesService(
     private val observer: DeviceGatewayTransport
 ) {
     private val isShutdown = AtomicBoolean(false)
+    private var call : Call? = null
 
-    companion object {
+        companion object {
         private const val TAG = "DirectivesService"
         private const val HTTPS_SCHEME = "https"
 
@@ -58,7 +59,9 @@ class DirectivesService(
             .build()
 
         val request = Request.Builder().url(httpUrl).tag(responseCallback).build()
-        client.newCall(request).enqueue(responseCallback)
+        call = client.newCall(request).apply {
+            enqueue(responseCallback)
+        }
     }
 
     private val responseCallback = object : Callback {
@@ -95,8 +98,9 @@ class DirectivesService(
     }
 
     fun shutdown() {
-        if (!isShutdown.compareAndSet(false, true)) {
-            Logger.w(TAG, "[shutdown] already shutdown")
+        Logger.w(TAG, "[shutdown]")
+        if (isShutdown.compareAndSet(false, true)) {
+            call?.cancel()
         }
     }
 }

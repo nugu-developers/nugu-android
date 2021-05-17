@@ -20,15 +20,14 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URL
 
 data class NuguServerInfo(
-    var keepConnection: Boolean,
     val registry: Address,
     val deviceGW: Address
 ) {
     interface Delegate {
-        fun getNuguServerInfo() : NuguServerInfo?
+        val serverInfo: NuguServerInfo
     }
-    constructor() : this(false, defaultRegistry, defaultServer)
-    constructor(delegate: Delegate) : this(false, defaultRegistry, defaultServer) {
+    constructor() : this(defaultRegistry, defaultServer)
+    constructor(delegate: Delegate) : this(defaultRegistry, defaultServer) {
         this.delegate = delegate
     }
     private var delegate: Delegate? = null
@@ -54,16 +53,12 @@ data class NuguServerInfo(
                 deviceGW == Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT))
 
         val builder = StringBuilder("NuguServerInfo { protocol: HTTP2")
-            .append(", keepConnection: ").append(keepConnection)
             .append(", server: ")
         if (changed) {
-            if (keepConnection) {
-                builder.append("registry(").append("host: ").append(registry.host)
-                    .append(", port: ").append(registry.port).append(")")
-            } else {
-                builder.append("deviceGW(").append("host: ").append(deviceGW.host)
-                    .append(", port: ").append(deviceGW.port).append(")")
-            }
+            builder.append("registry(").append("host: ").append(registry.host)
+                .append(", port: ").append(registry.port).append(")")
+            builder.append("deviceGW(").append("host: ").append(deviceGW.host)
+                .append(", port: ").append(deviceGW.port).append(")")
         } else {
             builder.append("PRD")
         }
@@ -72,22 +67,17 @@ data class NuguServerInfo(
 
     fun checkServerSettings() {
         Logger.d(TAG, toString())
-
-        if (keepConnection) {
-            if (registry != Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)) {
-                Logger.w(TAG, "Registry host or port has been changed. ($registry)")
-            }
-        } else {
-            if (deviceGW != Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)) {
-                Logger.w(TAG, "DeviceGW host or port has been changed. ($deviceGW)")
-            }
+        if (registry != Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)) {
+            Logger.w(TAG, "Registry host or port has been changed. ($registry)")
+        }
+        if (deviceGW != Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)) {
+            Logger.w(TAG, "DeviceGW host or port has been changed. ($deviceGW)")
         }
     }
     
     class Builder {
         private var registry: Address = Address(DEFAULT_DEVICE_GATEWAY_REGISTRY_HOST, HTTPS_PORT)
         private var deviceGW: Address = Address(DEFAULT_DEVICE_GATEWAY_SERVER_HOST, HTTPS_PORT)
-        private var keepConnection = false
 
         fun registry(host: String, port: Int = HTTPS_PORT): Builder {
             registry = Address(host, port)
@@ -139,13 +129,7 @@ data class NuguServerInfo(
             return this
         }
 
-        fun keepConnection(keepConnection: Boolean): Builder {
-            this.keepConnection = keepConnection
-            return this
-        }
-
         fun build() = NuguServerInfo(
-            keepConnection,
             registry,
             deviceGW
         )

@@ -196,7 +196,7 @@ class NuguAndroidClient private constructor(
         }
 
         internal var dialogUXStateTransitionDelay: Long = 200L
-        internal var transportFactory: TransportFactory = DefaultTransportFactory.buildTransportFactory(authDelegate)
+        internal var transportFactory: TransportFactory = DefaultTransportFactory.buildTransportFactory()
         internal var systemExceptionDirectiveDelegate: ExceptionDirectiveDelegate? = null
         internal var asrBeepResourceProvider: AsrBeepResourceProvider? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =

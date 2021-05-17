@@ -15,25 +15,29 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
-import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import devicegateway.grpc.AttachmentMessage
 import devicegateway.grpc.DirectiveMessage
 import io.grpc.Status
 
-interface DeviceGatewayTransport : Transport {
+interface DeviceGatewayTransport {
     interface TransportObserver {
         fun onConnected()
         fun onReconnecting(reason: ConnectionStatusListener.ChangedReason = ConnectionStatusListener.ChangedReason.NONE)
         fun onError(reason: ConnectionStatusListener.ChangedReason)
-    }
-    interface TransportDelegate {
-        fun newServerPolicy() : ServerPolicy?
     }
 
     fun onReceiveDirectives(directiveMessage: DirectiveMessage)
     fun onReceiveAttachment(attachmentMessage: AttachmentMessage)
     fun onError(status: Status, who: String)
     fun onPingRequestAcknowledged()
+
+    fun send(call: Call) : Boolean
+    fun connect() : Boolean
+    fun disconnect()
+    fun shutdown()
+    fun startDirectivesService()
+    fun stopDirectivesService()
 }

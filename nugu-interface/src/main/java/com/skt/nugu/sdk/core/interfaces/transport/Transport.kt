@@ -68,4 +68,14 @@ interface Transport {
                           charge: String) {}
 
     fun newCall(activeTransport: Transport?, request: MessageRequest, headers: Map<String, String>?, listener: MessageSender.OnSendMessageListener): Call
+
+    /**
+    The server can send some directives at certain times.
+     */
+    fun startDirectivesService() = Unit
+
+    /**
+    Stop receiving server-initiated-directive.
+     */
+    fun stopDirectivesService() = Unit
 }

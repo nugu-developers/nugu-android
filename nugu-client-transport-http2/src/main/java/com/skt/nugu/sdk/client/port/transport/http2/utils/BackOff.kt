@@ -46,14 +46,18 @@ class BackOff private constructor(builder: Builder) {
                 Builder(
                     maxAttempts = 3,
                     baseDelay = DEFAULT_BASE_DELAY,
-                    maxBackoffTime = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
+                    maxBackoffTime = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS,
+                    enableJitter = true
                 )
             )
     }
 
     enum class BackoffError {
         MaxAttemptExceed,
-        NoRetryableException
+        NoMoreRetryableCode,
+        ScheduleCancelled,
+        AlreadyStarted,
+        AlreadyShutdown
     }
 
     interface Observer {
@@ -67,22 +71,24 @@ class BackOff private constructor(builder: Builder) {
     private val executorService: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1).apply {
         removeOnCancelPolicy = true
     }
-    private var scheduledFuture: ScheduledFuture<*>? = null
-
+    private var scheduledFuture: ObservableScheduledFuture? = null
 
     /** The current retry count.  */
-    private var attempts: Int = 0
+    var attempts: Int = 0
     private var baseDelay: Long
     private var maxBackoffTime: Long
     private var waitTime: Long
+    private var enableJitter: Boolean
     /** The maximum number of attempts.  */
     private var maxAttempts: Int
 
     init {
         this.maxAttempts = builder.maxAttempts
         this.maxBackoffTime = builder.maxBackoffTime
-        this.baseDelay = builder.baseDelay
-        this.waitTime = this.baseDelay
+        this.baseDelay = builder.baseDelay.also {
+            waitTime = it
+        }
+        this.enableJitter = builder.enableJitter
     }
     /**
      * Returns the duration (milliseconds).
@@ -93,13 +99,16 @@ class BackOff private constructor(builder: Builder) {
      * sleep = temp / 2 + random_between(0, temp / 2)
      * sleep = min(cap, random_between(base, sleep * 3))
      */
-    private fun duration(): Long {
+    fun duration(): Long {
         // Exponential backoff
-        val temp = Math.min(maxBackoffTime.toDouble(), baseDelay *  Math.pow(2.0, attempts.toDouble()) )
+        val exponential = Math.min(maxBackoffTime.toDouble(), baseDelay *  Math.pow(2.0, attempts.toDouble()) )
+        if(!enableJitter) {
+            return exponential.toLong()
+        }
         // Full Jitter
-        val sleep =  temp.toLong() / 2 + betweenRandom(baseDelay, temp.toLong() / 2)
+        val fullJitter =  exponential.toLong() / 2 + betweenRandom(baseDelay, exponential.toLong() / 2)
         // Decorrelated Jitter
-        return Math.min(maxBackoffTime, betweenRandom(baseDelay, sleep * 3)).apply { waitTime = this }
+        return Math.min(maxBackoffTime, betweenRandom(baseDelay, fullJitter * 3)).also { waitTime = it }
     }
 
     /**
@@ -115,10 +124,12 @@ class BackOff private constructor(builder: Builder) {
      *  clean up
      */
     fun reset() {
+        Logger.d(TAG, "[reset] called")
         synchronized(this) {
             this.waitTime = baseDelay
             this.attempts = 0
-            this.scheduledFuture?.cancel(true)
+            scheduledFuture?.cancel(true)
+            scheduledFuture = null
         }
     }
 
@@ -134,9 +145,8 @@ class BackOff private constructor(builder: Builder) {
      * @param The exception status code
      * @return True to retry, false to not.
      */
-    private fun isRetryableServiceException(code: Status.Code): Boolean {
+    private fun isRetryableStatusCode(code: Status.Code): Boolean {
         return when(code) {
-            Status.Code.OK,
             Status.Code.UNAUTHENTICATED -> false
             else -> true
         }
@@ -146,39 +156,56 @@ class BackOff private constructor(builder: Builder) {
      * Wait for Retry
      * @param The Status Code
      * @param observer [Observer]
-     *
      */
     fun awaitRetry(code: Status.Code, observer: Observer) {
         synchronized(this) {
-            if (scheduledFuture?.isDone == false) {
+            if (executorService.isShutdown) {
+                Logger.w(TAG, "already shutdown")
+                observer.onError(BackoffError.AlreadyShutdown)
                 return
             }
-
+            if (scheduledFuture?.isDone() == false) {
+                Logger.w(TAG, "already started")
+                observer.onError(BackoffError.AlreadyStarted)
+                return
+            }
             if (!isAttemptExceed()) {
                 observer.onError(BackoffError.MaxAttemptExceed)
                 return
             }
+            if (!isRetryableStatusCode(code)) {
+                observer.onError(BackoffError.NoMoreRetryableCode)
+                return
+            }
+
+            scheduledFuture = ObservableScheduledFuture(observer,
+                executorService.schedule({
+                    Logger.d(TAG, "[Scheduled] start")
+                    // prevent future invocations.
+                    synchronized(this) {
+                        scheduledFuture?.cancel(false)
+                        scheduledFuture = null
+                        // Retry done
+                        observer.onRetry(attempts)
+                    }
+                }, duration(), TimeUnit.MILLISECONDS)
+            )
 
             // Increase attempts count
             attempts++
 
-            if (!isRetryableServiceException(code)) {
-                observer.onError(BackoffError.NoRetryableException)
-                return
-            }
-
-            val duration = duration()
-            scheduledFuture = executorService.schedule({
-                // prevent future invocations.
-                scheduledFuture?.cancel(false)
-                // Retry done
-                observer.onRetry(attempts)
-            }, duration, TimeUnit.MILLISECONDS)
-
             Logger.w(
                 TAG,
-                String.format("will wait ${waitTime}ms before reconnect attempt ${attempts} / ${maxAttempts}")
+                String.format("will wait ${waitTime}ms before reconnect attempt $attempts / $maxAttempts")
             )
+        }
+    }
+
+    fun shutdown() {
+        synchronized(this) {
+            scheduledFuture?.cancel(true)
+            scheduledFuture = null
+            executorService.shutdown()
         }
     }
 
@@ -190,9 +217,20 @@ class BackOff private constructor(builder: Builder) {
         /** The maximum number of attempts.  */
         internal val maxAttempts : Int,
         internal val baseDelay: Long = DEFAULT_BASE_DELAY,
-        internal val maxBackoffTime: Long = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS
+        internal val maxBackoffTime: Long = DEFAULT_MAX_BACKOFF_IN_MILLISECONDS,
+        internal val enableJitter : Boolean = true
     ) {
         fun build() =
             BackOff(this)
+    }
+
+    internal class ObservableScheduledFuture(private val observerDelegate: Observer, private val scheduledDelegate: ScheduledFuture<*>) {
+        fun cancel(notify: Boolean) {
+            scheduledDelegate.cancel(true)
+            if(notify) {
+                observerDelegate.onError(BackoffError.ScheduleCancelled)
+            }
+        }
+        fun isDone() = scheduledDelegate.isDone
     }
 }

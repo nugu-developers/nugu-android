@@ -24,6 +24,10 @@ dependencies {
     implementation("com.google.code.gson:gson:$gsonVersion")
     implementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
     implementation("com.squareup.okhttp3:logging-interceptor:$okhttp3Version")
+
+    testImplementation "junit:junit:$junitVersion"
+    testImplementation "org.mockito:mockito-core:$mokitoCoreVersion"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:3.1.0"
 }
 
 apply from: '../javadoc.gradle'
