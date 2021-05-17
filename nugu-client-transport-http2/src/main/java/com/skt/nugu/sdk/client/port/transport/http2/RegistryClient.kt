@@ -36,16 +36,14 @@ import javax.net.ssl.SSLHandshakeException
 /**
  *  Implementation of registry
  **/
-class RegistryClient(
-    private val dnsLookup: DnsLookup?
-    ) : Transport {
+class RegistryClient(private val dnsLookup: DnsLookup?) {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: Policy? = null
         const val HTTPS_SCHEME = "https"
         const val HTTP2_PROTOCOL = "H2"
 
-        fun DefaultPolicy(serverInfo: NuguServerInfo) : Policy {
+        fun DefaultPolicy(serverInfo: NuguServerInfo): Policy {
             return Policy(
                 healthCheckPolicy = HealthCheckPolicy(
                     ttl = 0,
@@ -78,13 +76,18 @@ class RegistryClient(
         fun onError(reason: ChangedReason)
     }
 
-    fun getPolicy(serverInfo: NuguServerInfo,authDelegate: AuthDelegate, observer: Observer) {
+    fun getPolicy(
+        serverInfo: NuguServerInfo,
+        authDelegate: AuthDelegate,
+        observer: Observer,
+        isStartReceiveServerInitiatedDirective: () -> Boolean
+    ) {
         if (isShutdown.get()) {
             Logger.w(TAG, "[getPolicy] already shutdown")
             return
         }
-        if(!serverInfo.keepConnection) {
-            Logger.d(TAG,"[getPolicy] Skip getPolicy call because keepConnection is false.")
+        if (!isStartReceiveServerInitiatedDirective()) {
+            Logger.d(TAG, "[getPolicy] Skip getPolicy call because keepConnection is false.")
             notifyPolicy(DefaultPolicy(serverInfo), observer)
             return
         }
@@ -127,11 +130,11 @@ class RegistryClient(
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     Logger.e(TAG, "A failure occurred during getPolicy", e)
-                    val reason = if(e is UnknownHostException) {
+                    val reason = if (e is UnknownHostException) {
                         ChangedReason.DNS_TIMEDOUT
-                    } else if(e is SocketTimeoutException) {
+                    } else if (e is SocketTimeoutException) {
                         ChangedReason.CONNECTION_TIMEDOUT
-                    } else if(e is ConnectException || e is SSLHandshakeException) {
+                    } else if (e is ConnectException || e is SSLHandshakeException) {
                         ChangedReason.CONNECTION_ERROR
                     } else {
                         ChangedReason.UNRECOVERABLE_ERROR
@@ -144,7 +147,8 @@ class RegistryClient(
                     val code = response.code
                     when (code) {
                         HttpURLConnection.HTTP_OK -> {
-                            val jsonObject = JsonParser.parseString(response.body?.string()).asJsonObject
+                            val jsonObject =
+                                JsonParser.parseString(response.body?.string()).asJsonObject
                             if (!(jsonObject.has("healthCheckPolicy") && jsonObject.has("serverPolicies"))) {
                                 observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
                                 return
@@ -186,37 +190,14 @@ class RegistryClient(
         }
     }
 
-    override fun connect(): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun isConnected(): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun send(call: com.skt.nugu.sdk.core.interfaces.message.Call): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun isConnectedOrConnecting(): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun disconnect() {
+    fun disconnect() {
         // nothing to do
     }
-    override fun shutdown() {
+
+    fun shutdown() {
         if (!isShutdown.compareAndSet(false, true)) {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
     }
 
-    override fun newCall(
-        activeTransport: Transport?,
-        request: MessageRequest,
-        headers: Map<String, String>?,
-        listener: MessageSender.OnSendMessageListener
-    ): com.skt.nugu.sdk.core.interfaces.message.Call {
-        throw NotImplementedError()
-    }
 }

@@ -16,12 +16,9 @@
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.google.gson.*
+import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
-import com.skt.nugu.sdk.core.interfaces.message.Call
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import com.squareup.okhttp.*
@@ -35,12 +32,13 @@ import javax.net.ssl.SSLHandshakeException
  **/
 internal class RegistryClient(
     private val dnsLookup: DnsLookup?
-) : Transport {
+)  {
     companion object {
         private const val TAG = "RegistryClient"
         var cachedPolicy: Policy? = null
         const val GRPC_PROTOCOL = "H2_GRPC"
         const val HTTPS_SCHEME = "https"
+        const val APPLICATION_JSON = "application/json"
 
         fun DefaultPolicy(serverInfo: NuguServerInfo) : Policy {
             return Policy(
@@ -75,12 +73,12 @@ internal class RegistryClient(
         fun onError(reason: ChangedReason)
     }
 
-    fun getPolicy(serverInfo: NuguServerInfo, token: String?, observer: Observer) {
+    fun getPolicy(serverInfo: NuguServerInfo, authDelegate: AuthDelegate, observer: Observer, isStartReceiveServerInitiatedDirective: () -> Boolean) {
         if (isShutdown.get()) {
             Logger.w(TAG, "[getPolicy] already shutdown")
             return
         }
-        if(!serverInfo.keepConnection) {
+        if(!isStartReceiveServerInitiatedDirective()) {
             Logger.d(TAG,"[getPolicy] Skip getPolicy call because keepConnection is false.")
             notifyPolicy(DefaultPolicy(serverInfo), observer)
             return
@@ -110,8 +108,8 @@ internal class RegistryClient(
         }
 
         val request = Request.Builder().url(httpUrl)
-            .header("Accept", "application/json")
-            .header("Authorization", token.toString())
+            .header("Accept", APPLICATION_JSON)
+            .header("Authorization", authDelegate.getAuthorization().toString())
             .header("User-Agent", UserAgent.toString())
             .build()
         client.newCall(request).enqueue(object : Callback {
@@ -194,37 +192,13 @@ internal class RegistryClient(
         }
     }
 
-    override fun connect(): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun isConnected(): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun send(call: Call): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun isConnectedOrConnecting(): Boolean {
-        throw NotImplementedError()
-    }
-
-    override fun disconnect() {
+    fun disconnect() {
         // nothing to do
     }
-    override fun shutdown() {
+
+    fun shutdown() {
         if (!isShutdown.compareAndSet(false, true)) {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
-    }
-
-    override fun newCall(
-        activeTransport: Transport?,
-        request: MessageRequest,
-        headers: Map<String, String>?,
-        listener: MessageSender.OnSendMessageListener
-    ): Call {
-        throw NotImplementedError()
     }
 }

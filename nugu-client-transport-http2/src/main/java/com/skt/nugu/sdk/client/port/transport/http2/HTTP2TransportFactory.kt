@@ -27,33 +27,23 @@ import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
  * @param option the options for Transport
  */
 class HTTP2TransportFactory(
-    private var serverInfo: NuguServerInfo = NuguServerInfo.Default(),
+    private var serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup? = null
 ) : TransportFactory {
 
     override fun createTransport(
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
-        transportObserver: TransportListener
+        transportObserver: TransportListener,
+        isStartReceiveServerInitiatedDirective: () -> Boolean
     ): Transport {
         return HTTP2Transport.create(
             serverInfo,
             dnsLookup,
             authDelegate,
             messageConsumer,
-            transportObserver
+            transportObserver,
+            isStartReceiveServerInitiatedDirective
         )
-    }
-
-    override fun keepConnection(enabled: Boolean) : Boolean{
-        if(serverInfo.keepConnection != enabled) {
-            serverInfo.keepConnection = enabled
-            return true
-        }
-        return false /* unchanged */
-    }
-
-    override fun keepConnection(): Boolean {
-        return serverInfo.keepConnection
     }
 }

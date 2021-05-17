@@ -67,13 +67,11 @@ internal class DirectivesService(
 
 
     fun start() {
-        Logger.d(TAG, "[start] directives called. isStarted=${isStarted.get()}")
-
         if(!isStarted.compareAndSet(false, true)) {
             Logger.d(TAG, "[start] skip already started")
             return
         }
-
+        Logger.d(TAG, "[start] directives called. isStarted=${isStarted.get()}")
         startDeadlineTimer()
         VoiceServiceGrpc.newStub(channel).withWaitForReady().directives(
                 DirectivesRequest.newBuilder().build(),

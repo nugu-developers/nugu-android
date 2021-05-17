@@ -18,10 +18,11 @@ package com.skt.nugu.sdk.client.port.transport.http2.devicegateway
 import com.skt.nugu.sdk.client.port.transport.http2.Status
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.message.AttachmentMessage
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.DirectiveMessage
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 
-interface DeviceGatewayTransport : Transport {
+interface DeviceGatewayTransport {
     interface TransportObserver {
         fun onConnected()
         fun onReconnecting(reason: ConnectionStatusListener.ChangedReason = ConnectionStatusListener.ChangedReason.NONE)
@@ -31,4 +32,11 @@ interface DeviceGatewayTransport : Transport {
     fun onReceiveAttachment(attachmentMessage: AttachmentMessage)
     fun onError(status: Status)
     fun onPingRequestAcknowledged()
+
+    fun send(call: Call) : Boolean
+    fun connect() : Boolean
+    fun disconnect()
+    fun shutdown()
+    fun startDirectivesService()
+    fun stopDirectivesService()
 }

@@ -35,13 +35,15 @@ import com.skt.nugu.sdk.core.interfaces.transport.FixedStateCall
 class MessageRouter(
     private val transportFactory: TransportFactory,
     private val authDelegate: AuthDelegate
-) : MessageRouterInterface, TransportListener, MessageConsumer, MessageSender.OnSendMessageListener {
+) : MessageRouterInterface, TransportListener, MessageConsumer,
+    MessageSender.OnSendMessageListener {
     companion object {
         private const val TAG = "MessageRouter"
     }
 
     /** The current active transport */
     private var activeTransport: Transport? = null
+
     /** The handoff transport */
     private var handoffTransport: Transport? = null
 
@@ -54,25 +56,28 @@ class MessageRouter(
     private val messageSenderListeners = CopyOnWriteArraySet<MessageSender.OnSendMessageListener>()
 
     /** The current connection status. */
-    private var status: ConnectionStatusListener.Status = ConnectionStatusListener.Status.DISCONNECTED
-    private var reason: ConnectionStatusListener.ChangedReason = ConnectionStatusListener.ChangedReason.NONE
+    private var status: ConnectionStatusListener.Status =
+        ConnectionStatusListener.Status.DISCONNECTED
+    private var reason: ConnectionStatusListener.ChangedReason =
+        ConnectionStatusListener.ChangedReason.NONE
+
     /**
      * lock for create transport
      */
     private val lock = ReentrantLock()
-
+    private var enabled = false
     /**
      * Begin the process of establishing an DeviceGateway connection.
      */
     override fun enable() {
         Logger.d(TAG, "[enable] called")
+        enabled = true
         val isConnectedOrConnecting = activeTransport?.isConnectedOrConnecting() ?: false
         if (!isConnectedOrConnecting) {
             setConnectionStatus(
-                ConnectionStatusListener.Status.CONNECTING,
+                ConnectionStatusListener.Status.CONNECTED,
                 ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
             )
-            createActiveTransport()
         }
     }
 
@@ -96,7 +101,12 @@ class MessageRouter(
                 activeTransport?.shutdown()
                 activeTransport = null
             }
-            transportFactory.createTransport(authDelegate, this, this).apply {
+            transportFactory.createTransport(
+                authDelegate = authDelegate,
+                messageConsumer = this,
+                transportObserver = this,
+                isStartReceiveServerInitiatedDirective = isStartReceiveServerInitiatedDirective
+            ).apply {
                 activeTransport = this
             }
         }.connect()
@@ -107,7 +117,9 @@ class MessageRouter(
      */
     override fun disable() {
         Logger.d(TAG, "[disable] called")
+        enabled = false
         disconnectAllTransport()
+        sidController.release()
     }
 
     /**
@@ -121,9 +133,20 @@ class MessageRouter(
      * Prepares the [MessageRequest] to be executed at some point in the future.
      */
     override fun newCall(request: MessageRequest, headers: Map<String, String>?): Call {
-        return activeTransport?.newCall(activeTransport, request, headers, this) ?: FixedStateCall(Status(
-            Status.Code.FAILED_PRECONDITION
-        ).withDescription("Transport is not initialized"), request, this)
+        if(!enabled) {
+            return FixedStateCall(
+                Status(
+                    Status.Code.FAILED_PRECONDITION
+                ).withDescription("NetworkManager is disabled"), request, this)
+        }
+        if (activeTransport == null) {
+            createActiveTransport()
+        }
+        return activeTransport?.newCall(activeTransport, request, headers, this) ?: FixedStateCall(
+            Status(
+                Status.Code.FAILED_PRECONDITION
+            ).withDescription("Transport is not initialized"), request, this
+        )
     }
 
     override fun addOnSendMessageListener(listener: MessageSender.OnSendMessageListener) {
@@ -181,11 +204,11 @@ class MessageRouter(
                 handoffTransport = null
             }
         }
-
         setConnectionStatus(
             ConnectionStatusListener.Status.CONNECTED,
             ConnectionStatusListener.ChangedReason.SUCCESS
         )
+        sidController.notifyOnCompletionListener()
     }
 
     /**
@@ -197,6 +220,7 @@ class MessageRouter(
         transport: Transport,
         reason: ConnectionStatusListener.ChangedReason
     ) {
+        Logger.d(TAG, "[onDisconnected] transport=$transport, activeTransport=$activeTransport")
         lock.withLock {
             if (transport == activeTransport) {
                 activeTransport?.shutdown()
@@ -253,15 +277,27 @@ class MessageRouter(
                 handoffTransport?.shutdown()
                 handoffTransport = null
             }
-            transportFactory.createTransport(authDelegate, this, this).apply {
+            transportFactory.createTransport(
+                authDelegate = authDelegate,
+                messageConsumer = this,
+                transportObserver = this,
+                isStartReceiveServerInitiatedDirective = isStartReceiveServerInitiatedDirective
+            ).apply {
                 handoffTransport = this
             }
-        }.handoffConnection(protocol, hostname, address, port, retryCountLimit, connectionTimeout, charge)
+        }.handoffConnection(
+            protocol,
+            hostname,
+            address,
+            port,
+            retryCountLimit,
+            connectionTimeout,
+            charge
+        )
     }
 
     override fun resetConnection(description: String?) {
         Logger.d(TAG, "[resetConnection] description=$description")
-        disconnectAllTransport()
         createActiveTransport()
     }
 
@@ -291,15 +327,21 @@ class MessageRouter(
         }
     }
 
-    override fun keepConnection(enabled: Boolean) {
-        if(!transportFactory.keepConnection(enabled)) {
-            Logger.w(TAG, "[keepConnection] enabled is not changed (enabled=$enabled)")
+    private var sidController: ServerInitiatedDirectiveController = ServerInitiatedDirectiveController(TAG)
+    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) {
+        if(!enabled) {
+            Logger.e(TAG, "[startReceiveServerInitiatedDirective] NetworkManager is disabled")
             return
         }
-        Logger.d(TAG, "[keepConnection] enabled=$enabled")
-        disconnectAllTransport()
-        createActiveTransport()
+        sidController.setOnCompletionListener(onCompletion)
+        if(!sidController.start(activeTransport)) {
+            createActiveTransport()
+        }
     }
 
-    override fun keepConnection() = transportFactory.keepConnection()
+    override fun stopReceiveServerInitiatedDirective() = sidController.stop(activeTransport)
+    override fun isStartReceiveServerInitiatedDirective() = sidController.isStarted()
+    private val isStartReceiveServerInitiatedDirective: () -> Boolean = {
+        sidController.isStarted()
+    }
 }
