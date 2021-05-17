@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
@@ -25,13 +26,18 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.agent.chips.RenderDirective.Payload.Target as ChipsRenderTarget
 
-class ChromeWindow(context: Context, val view: View) :
-     DialogUXStateAggregatorInterface.Listener, ASRAgentInterface.OnResultListener {
+class ChromeWindow(
+    context: Context,
+    private val view: View,
+    private val nuguClientProvider: NuguClientProvider) :
+     DialogUXStateAggregatorInterface.Listener, ASRAgentInterface.OnResultListener, ThemeManagerInterface.ThemeListener{
     companion object {
         private const val TAG = "ChromeWindow"
     }
@@ -57,7 +63,7 @@ class ChromeWindow(context: Context, val view: View) :
     private var contentLayout: ChromeWindowContentLayout
     private var screenOnWhileASR = false
     private var customChipsProvider: CustomChipsProvider? = null
-
+    private var isDarkMode = false
     /**
      * set ChromeWindow callback
     */
@@ -69,6 +75,9 @@ class ChromeWindow(context: Context, val view: View) :
         customChipsProvider = provider
     }
 
+    interface NuguClientProvider {
+        fun getNuguClient(): NuguAndroidClient
+    }
     /**
      * Returns the visibility of this view
      * @return True if the view is expanded
@@ -109,6 +118,7 @@ class ChromeWindow(context: Context, val view: View) :
     private var isIdle = false
 
     init {
+        Logger.d(TAG, "[init]")
         val parent = view.findSuitableParent()
         if (parent == null) {
             throw IllegalArgumentException("No suitable parent found from the given view. Please provide a valid view.")
@@ -131,6 +141,18 @@ class ChromeWindow(context: Context, val view: View) :
                 }
             })
         }
+        nuguClientProvider.getNuguClient().themeManager.addListener(this)
+        nuguClientProvider.getNuguClient().addDialogUXStateListener(this)
+        nuguClientProvider.getNuguClient().addASRResultListener(this)
+
+        applyTheme(nuguClientProvider.getNuguClient().themeManager.theme)
+    }
+
+    fun destroy() {
+        Logger.d(TAG, "[destroy]")
+        nuguClientProvider.getNuguClient().themeManager.removeListener(this)
+        nuguClientProvider.getNuguClient().removeDialogUXStateListener(this)
+        nuguClientProvider.getNuguClient().removeASRResultListener(this)
     }
 
     override fun onDialogUXStateChanged(
@@ -290,6 +312,28 @@ class ChromeWindow(context: Context, val view: View) :
                 }
             }
         }
+
+    override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
+        Logger.d(TAG, "[onThemeChange] $theme")
+        applyTheme(theme)
+    }
+
+    private fun applyTheme(newTheme: ThemeManagerInterface.THEME) {
+        val newDarkMode = when (newTheme) {
+            ThemeManagerInterface.THEME.LIGHT -> false
+            ThemeManagerInterface.THEME.DARK -> true
+            ThemeManagerInterface.THEME.SYSTEM -> {
+                val uiMode = view.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+                uiMode == Configuration.UI_MODE_NIGHT_YES
+            }
+        }
+        Logger.d(TAG, "[applyTheme] newState=$newTheme, newDarkMode=${newDarkMode}, isDarkMode=$isDarkMode")
+        val isChanged = newDarkMode != isDarkMode
+        if(isChanged) {
+            isDarkMode = newDarkMode
+            contentLayout.setDarkMode(newDarkMode)
+        }
+    }
 }
 
 private fun View.findSuitableParent() : ViewGroup? {

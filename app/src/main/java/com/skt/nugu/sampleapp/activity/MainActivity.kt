@@ -108,7 +108,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         findViewById<Toolbar>(R.id.toolbar)
     }
     private val chromeWindow: ChromeWindow by lazy {
-        ChromeWindow(this, findViewById<CoordinatorLayout>(R.id.coordinator))
+        ChromeWindow(this, findViewById<CoordinatorLayout>(R.id.coordinator), object : ChromeWindow.NuguClientProvider {
+            override fun getNuguClient() = ClientManager.getClient()
+        })
     }
 
     private val onRequestPermissionResultHandler: OnRequestPermissionResultHandler by lazy {
@@ -171,10 +173,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 speechRecognizerAggregator.stopListening()
             }
         })
-
         chromeWindow.apply {
-            ClientManager.getClient().addDialogUXStateListener(this)
-            ClientManager.getClient().addASRResultListener(this)
             setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider{
                 override fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>? {
                     return if(!isSpeaking) {
@@ -254,10 +253,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onDestroy() {
-        chromeWindow.apply {
-            ClientManager.getClient().removeDialogUXStateListener(this)
-            ClientManager.getClient().removeASRResultListener(this)
-        }
+        chromeWindow.destroy()
 
         SoundPoolCompat.release()
 
