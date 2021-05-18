@@ -45,9 +45,4 @@ class ChromeWindowBottomSheetBehavior<V : View> : BottomSheetBehavior<V> {
 
         return super.onInterceptTouchEvent(parent, child, event)
     }
-
-    override fun onTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent): Boolean {
-        // disable drag
-        return false
-    }
 }
