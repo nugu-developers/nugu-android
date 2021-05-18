@@ -57,4 +57,9 @@ class GrpcTransportFactory(
         Logger.w(TAG, "keepConnection not supported by this grpc version, try grpc v2 or h2")
         return false
     }
+
+    override fun keepConnection(): Boolean {
+        Logger.w(TAG, "keepConnection not supported by this grpc version, try grpc v2 or h2")
+        return false
+    }
 }

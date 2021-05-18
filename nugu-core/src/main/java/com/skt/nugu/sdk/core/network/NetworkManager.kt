@@ -164,4 +164,10 @@ class NetworkManager private constructor(
      * Set the keepConnection
      */
     override fun keepConnection(enabled: Boolean) = messageRouter.keepConnection(enabled)
+
+    /**
+     * Gets the keepConnection
+     * @return enabled True to enable keepConnection, false otherwise.
+     */
+    override fun keepConnection() = messageRouter.keepConnection()
 }
