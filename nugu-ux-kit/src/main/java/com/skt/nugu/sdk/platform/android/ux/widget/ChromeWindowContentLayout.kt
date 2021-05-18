@@ -130,6 +130,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
        // setState(BottomSheetBehavior.STATE_HIDDEN)
         behavior.removeBottomSheetCallback(bottomSheetCallback)
         behavior.addBottomSheetCallback(bottomSheetCallback)
+        behavior.isDraggable = false
     }
 
     fun isExpanded(): Boolean {
