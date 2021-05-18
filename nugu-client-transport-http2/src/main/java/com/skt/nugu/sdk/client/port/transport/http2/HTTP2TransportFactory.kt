@@ -52,4 +52,8 @@ class HTTP2TransportFactory(
         }
         return false /* unchanged */
     }
+
+    override fun keepConnection(): Boolean {
+        return serverInfo.keepConnection
+    }
 }

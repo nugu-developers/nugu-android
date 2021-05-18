@@ -300,4 +300,6 @@ class MessageRouter(
         disconnectAllTransport()
         createActiveTransport()
     }
+
+    override fun keepConnection() = transportFactory.keepConnection()
 }

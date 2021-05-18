@@ -55,4 +55,8 @@ class GrpcTransportFactory(
         }
         return false /* unchanged */
     }
+
+    override fun keepConnection(): Boolean {
+        return serverInfo.keepConnection
+    }
 }

@@ -64,4 +64,10 @@ interface MessageRouterInterface : MessageSender {
      * Set the keepConnection.
      */
     fun keepConnection(enabled: Boolean)
+
+    /**
+     * Gets the keepConnection.
+     * @return enabled True to enable keepConnection, false otherwise.
+     */
+    fun keepConnection(): Boolean
 }
