@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.ArrayList
@@ -65,7 +66,7 @@ class DirectiveProcessor(
     )
 
     private var directiveBeingPreHandled: Directive? = null
-    private val directivesBeingHandled: MutableMap<String, MutableMap<BlockingPolicy.Medium, Directive>> = HashMap()
+    private val directivesBeingHandled: ConcurrentHashMap<String, MutableMap<BlockingPolicy.Medium, Directive>> = ConcurrentHashMap()
     private var cancelingQueue = ArrayDeque<Directive>()
     private var handlingQueue = ArrayDeque<DirectiveAndPolicy>()
     private val lock = ReentrantLock()
