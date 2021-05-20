@@ -250,7 +250,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
                             setTextViewText(R.id.tv_content_title, content.optString("title", ""))
 
                             val subtitle1 = content.optString("subtitle1")
-                            if(subtitle1 != null) {
+                            if(!subtitle1.isNullOrBlank()) {
                                 setTextViewText(R.id.tv_content_subtitle, subtitle1)
 
                                 setBoolean(R.id.tv_content_title, "setSingleLine", true)

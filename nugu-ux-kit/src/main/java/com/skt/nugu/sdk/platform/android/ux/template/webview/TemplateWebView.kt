@@ -160,10 +160,10 @@ class TemplateWebView @JvmOverloads constructor(
         templateUrl = url
     }
 
-    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingCallback: (() -> Unit)?) {
+    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
         //Logger.d(TAG, "load() $templateContent")
 
-        onLoadingComplete = onLoadingCallback
+        this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken =
             TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
 
@@ -171,8 +171,8 @@ class TemplateWebView @JvmOverloads constructor(
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
                 if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
-                    onLoadingComplete?.invoke()
-                    onLoadingComplete = null
+                    this@TemplateWebView.onLoadingComplete?.invoke()
+                    this@TemplateWebView.onLoadingComplete = null
                 }
             }
         }
@@ -196,10 +196,10 @@ class TemplateWebView @JvmOverloads constructor(
         }.toByteArray())
     }
 
-    override fun update(templateContent: String, dialogRequestedId: String, onLoadingCallback: (() -> Unit)?) {
+    override fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)?) {
         Logger.d(TAG, "update() $templateContent")
 
-        onLoadingComplete = onLoadingCallback
+        this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken =
             TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
 
@@ -207,8 +207,8 @@ class TemplateWebView @JvmOverloads constructor(
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
                 if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
-                    onLoadingComplete?.invoke()
-                    onLoadingComplete = null
+                    this@TemplateWebView.onLoadingComplete?.invoke()
+                    this@TemplateWebView.onLoadingComplete = null
                 }
             }
         }
