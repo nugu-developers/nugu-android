@@ -59,7 +59,7 @@ class NuguOAuthTest : TestCase() {
 
         Assert.assertEquals(NuguOAuth.getClient().getOptions()?.deviceUniqueId, "device1")
 
-        NuguOAuth.getClient().setOptions(newOptions = NuguOAuthOptions.Builder()
+        NuguOAuth.getClient().setOptions(options = NuguOAuthOptions.Builder()
             .deviceUniqueId("device2")
             .build())
 
