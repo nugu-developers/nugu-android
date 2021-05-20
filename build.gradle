@@ -31,6 +31,14 @@ allprojects {
             url "https://nexus.nugu.co.kr/repository/maven-public/"
         }
     }
+
+    tasks.withType(Test) {
+        testLogging {
+            showStandardStreams = true
+            events "passed", "skipped", "failed"
+        }
+    }
+
 }
 
 task clean(type: Delete) {
