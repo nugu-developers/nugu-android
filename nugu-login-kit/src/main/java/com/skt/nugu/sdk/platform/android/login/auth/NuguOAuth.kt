@@ -334,8 +334,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Set the [NuguOAuthOptions]
      */
-    override fun setOptions(newOptions: NuguOAuthOptions) {
-        this.options = newOptions.apply {
+    override fun setOptions(options: NuguOAuthOptions) {
+        this.options = options.apply {
             ConfigurationStore.configuration()?.let {
                 if (clientId.isBlank()) {
                     clientId = it.clientId

@@ -262,31 +262,31 @@ class DefaultClientSpeechRecognizer(
 
     override fun onExpectingSpeech() {
         Logger.d(TAG, "[AudioEndPointDetector::onExpectingSpeech]")
-        val request = startLock.withLock {
+        val recognizeRequest = startLock.withLock {
             currentRequest
         }
 
-        if(request == null) {
+        if(recognizeRequest == null) {
             Logger.e(TAG, "[AudioEndPointDetector::onExpectingSpeech] null request. check this!!!")
             epdState = AudioEndPointDetector.State.EXPECTING_SPEECH
             return
         }
 
         messageSender.newCall(
-            request.eventMessage,
+            recognizeRequest.eventMessage,
             hashMapOf("Last-Asr-Event-Time" to Preferences.get("Last-Asr-Event-Time").toString())
         ).apply {
-            request.call = this
+            recognizeRequest.call = this
             if(!this.enqueue(object: MessageSender.Callback {
-                    override fun onFailure(req: MessageRequest, status: Status) {
-                        Logger.d(TAG, "[onFailure] request: $req, status: $status")
-                        if(request == currentRequest && status.error == Status.StatusError.TIMEOUT && request.senderThread != null) {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                        Logger.d(TAG, "[onFailure] request: $request, status: $status")
+                        if(recognizeRequest == currentRequest && status.error == Status.StatusError.TIMEOUT && recognizeRequest.senderThread != null) {
                             // if sender thread is working, we handle a timeout error as unknown error.
                             // this occur when some attachment sent too late(after timeout).
-                            request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                            recognizeRequest.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
                             endPointDetector.stopDetector()
                         } else {
-                            request.errorTypeForCausingEpdStop = when (status.error) {
+                            recognizeRequest.errorTypeForCausingEpdStop = when (status.error) {
                                 Status.StatusError.OK /** cancel, no error **/ ,
                                 Status.StatusError.TIMEOUT /** Nothing to do because handle on [onResponseTimeout] **/ ,
                                 Status.StatusError.UNKNOWN -> /** Same as return false of [enqueue] **/ return
@@ -306,12 +306,12 @@ class DefaultClientSpeechRecognizer(
                         Preferences.set("Last-Asr-Event-Time", dateFormat.format(Calendar.getInstance().time))
                     }
                 })) {
-                request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
+                recognizeRequest.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
                 endPointDetector.stopDetector()
             }
         }
         epdState = AudioEndPointDetector.State.EXPECTING_SPEECH
-        setState(SpeechRecognizer.State.EXPECTING_SPEECH, request)
+        setState(SpeechRecognizer.State.EXPECTING_SPEECH, recognizeRequest)
     }
 
     override fun onSpeechStart(eventPosition: Long?) {

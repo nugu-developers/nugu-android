@@ -47,8 +47,8 @@ class EventsService(
     private val isShutdown = AtomicBoolean(false)
     private val streamingCall = MultipartStreamingCalls(object :
         MultipartStreamingCalls.PendingRequestListener<com.skt.nugu.sdk.core.interfaces.message.Call> {
-        override fun execute(call: com.skt.nugu.sdk.core.interfaces.message.Call) {
-            sendEventMessage(call)
+        override fun execute(request: com.skt.nugu.sdk.core.interfaces.message.Call) {
+            sendEventMessage(request)
         }
     })
 
