@@ -28,7 +28,7 @@ But, we explain an simple method here.
 At module's build.gradle
 ```groovy
 dependencies {
-	implementation 'com.skt.nugu.sdk:nugu-android-helper:1.1.3'
+	implementation 'com.skt.nugu.sdk:nugu-android-helper:1.1.4'
 }
 ```
 ##### Create Nugu Android Client

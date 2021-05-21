@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.1.4 *(2021-05-21)*
+-----------------------------
+* Fix: Fix wrong shutdown order for GrpcTransport (#1849)
+* Fix: Revert "Clear chips at IDLE state #1779" (#1853)
+* Fix: ChromeWindow is Freezing while dragging the BottomSheetBehavior (#1854)
+* Fix: Fix ConcurrentModificationException (#1860)
+* Improve: Provide keepConnection getter method to NetworkManager (#1856)
+
 Version 1.1.3 *(2021-05-14)*
 -----------------------------
 * Fix: Fix concurrentModificationException (#1832)
