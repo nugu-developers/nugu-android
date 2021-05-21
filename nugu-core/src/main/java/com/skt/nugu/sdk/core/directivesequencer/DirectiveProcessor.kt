@@ -348,7 +348,9 @@ class DirectiveProcessor(
             listeners.forEach {
                 it.onRequested(directive)
             }
+            Logger.d(TAG, "[handleQueuedDirectivesLocked] before handleDirective :$directive")
             val handleDirectiveSucceeded = directiveRouter.handleDirective(directive)
+            Logger.d(TAG, "[handleQueuedDirectivesLocked] after handleDirective :$handleDirectiveSucceeded")
             if (!handleDirectiveSucceeded) {
                 listeners.forEach {
                     it.onFailed(directive, "no handler for directive")
