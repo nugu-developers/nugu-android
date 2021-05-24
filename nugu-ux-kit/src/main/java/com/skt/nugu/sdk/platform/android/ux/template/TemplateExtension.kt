@@ -23,6 +23,7 @@ import android.text.TextUtils
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.DrawableRes
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.request.target.CustomTarget
@@ -42,11 +43,12 @@ fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout:
     }
 }
 
-fun ImageView.updateImage(url: String?, transformation: Transformation<Bitmap>?, isMerge: Boolean = false) {
+fun ImageView.updateImage(url: String?, transformation: Transformation<Bitmap>?, isMerge: Boolean = false, @DrawableRes placeHolder: Int? = null) {
     if (isMerge && url.isNullOrBlank()) return
 
     visibility = if (url != null) View.VISIBLE else View.GONE
     Glide.with(context).load(url).apply {
+        if (placeHolder != null) placeholder(placeHolder)
         if (transformation != null) transform(transformation)
     }.into(this)
 }

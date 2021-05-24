@@ -59,6 +59,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     companion object {
         private const val TAG = "DisplayAudioPlayer"
+        private val LOGO_PLACE_HOLDER = R.drawable.nugu_logo_placeholder_60
+        private val LOGO_DEFAULT = R.drawable.nugu_logo_60_line
     }
 
     private lateinit var player: View
@@ -475,7 +477,15 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         item.title?.run {
             titleView.updateText(text, isMerge)
-            logoView.updateImage(iconUrl, thumbTransformCorner2, isMerge)
+        }
+
+        item.title?.iconUrl.let {
+            if (it.isNullOrBlank()) {
+                logoView.visibility = View.VISIBLE
+                logoView.setImageResource(LOGO_DEFAULT)
+            } else {
+                logoView.updateImage(it, thumbTransformCorner2, isMerge, placeHolder = LOGO_PLACE_HOLDER)
+            }
         }
 
         item.content?.run {
