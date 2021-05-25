@@ -163,4 +163,10 @@ interface SpeechRecognizerAggregatorInterface {
      * @return true: if recognizing, false: otherwise
      */
     fun isActive(): Boolean
+
+    /**
+     * Get state of [SpeechRecognizerAggregatorInterface]
+     * @return The current state of [SpeechRecognizerAggregatorInterface]
+     */
+    fun getState(): State
 }
