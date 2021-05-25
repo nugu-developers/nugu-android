@@ -129,7 +129,7 @@ class SendCandidatesDirectiveHandler(
                                 }
                             }
                         }
-                    }, namespaceAndName, HashMap<NamespaceAndName, BaseContextState>().apply {
+                    }, null, HashMap<NamespaceAndName, BaseContextState>().apply {
                         put(namespaceAndName, context)
                     })
                 }
