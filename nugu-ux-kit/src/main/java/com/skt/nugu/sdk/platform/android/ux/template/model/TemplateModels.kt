@@ -69,17 +69,20 @@ enum class LyricsType {
 }
 
 enum class ToggleStatus {
-    @SerializedName(value="on", alternate=["on", "ON"])
+    @SerializedName(value = "on", alternate = ["on", "ON"])
     ON,
-    @SerializedName(value="off", alternate=["off", "OFF"])
+
+    @SerializedName(value = "off", alternate = ["off", "OFF"])
     OFF
 }
 
 enum class Repeat {
     @SerializedName("ALL")
     ALL,
+
     @SerializedName("ONE")
     ONE,
+
     @SerializedName("NONE")
     NONE
 }
@@ -87,6 +90,7 @@ enum class Repeat {
 enum class EventType {
     @SerializedName("Display.ElementSelected")
     Display_ElementSelected,
+
     @SerializedName("Text.TextInput")
     Text_TextInput
 }
@@ -198,11 +202,11 @@ data class Lyrics(
     @SerializedName("title") val title: String?,
     @SerializedName("lyricsType") val lyricsType: LyricsType?,
     @SerializedName("lyricsInfoList") val lyricsInfoList: List<LyricsInfo>?,
-    @SerializedName("showButton") val showButton : ShowButtonText?
+    @SerializedName("showButton") val showButton: ShowButtonText?
 )
 
 data class ShowButtonText(
-    @SerializedName("text") val text : String
+    @SerializedName("text") val text: String
 )
 
 data class LyricsInfo(
@@ -392,4 +396,9 @@ class Weather5Content(
     @SerializedName("max") val max: Text?,
     @SerializedName("min") val min: Text?,
     @SerializedName("icon") val image: Image?
+)
+
+data class ClientInfo(
+    var theme: String? = null,
+    var buttonColor: String? = null
 )

@@ -25,7 +25,7 @@ import com.skt.nugu.sdk.agent.common.Direction
  */
 interface TemplateHandler {
 
-    data class TemplateInfo(val templateId: String)
+    data class TemplateInfo(val templateId: String, val templateType: String)
 
     var templateInfo: TemplateInfo
 

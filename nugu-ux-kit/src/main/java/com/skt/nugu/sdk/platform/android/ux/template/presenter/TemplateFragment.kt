@@ -135,7 +135,7 @@ class TemplateFragment : Fragment() {
                 } else {
                     templateHandler = BasicTemplateHandler(
                         viewModel.nuguClientProvider,
-                        TemplateInfo(getTemplateId()),
+                        TemplateInfo(getTemplateId(), getTemplateType()),
                         this@TemplateFragment)
                     viewModel.templateHandler = templateHandler
                 }
