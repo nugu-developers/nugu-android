@@ -187,7 +187,7 @@ class ChromeWindow(
                     handleListening()
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                    handleSpeaking(dialogMode, chips)
+                    handleSpeaking(dialogMode, chips, sessionActivated)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
                     dismiss()
@@ -240,7 +240,8 @@ class ChromeWindow(
         contentLayout.hideChips()
     }
 
-    private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?) {
+    private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?,
+                               sessionActivated: Boolean) {
         contentLayout.hideText()
 
         if (payload?.target == ChipsRenderTarget.SPEAKING) {
@@ -251,7 +252,7 @@ class ChromeWindow(
             if (updateCustomChips(true)) return
         }
 
-        if (!dialogMode) {
+        if (!sessionActivated) {
             dismiss()
         }
     }

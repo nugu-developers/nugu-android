@@ -164,7 +164,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
             override fun onHiddenFinished() {
                 updateNuguButton()
-                speechRecognizerAggregator.stopListening()
+                if(speechRecognizerAggregator.getState() == SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH) {
+                    speechRecognizerAggregator.stopListening()
+                }
             }
 
             override fun onChipsClicked(item: NuguChipsView.Item) {
@@ -275,7 +277,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     override fun onBackPressed() {
         if (chromeWindow.isShown()) {
-            chromeWindow.dismiss()
+            speechRecognizerAggregator.stopListening()
             return
         }
 

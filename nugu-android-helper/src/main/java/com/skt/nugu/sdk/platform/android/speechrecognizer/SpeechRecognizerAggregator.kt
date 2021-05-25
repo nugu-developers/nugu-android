@@ -461,4 +461,6 @@ class SpeechRecognizerAggregator(
             }
         }
     }
+
+    override fun getState() = state
 }
