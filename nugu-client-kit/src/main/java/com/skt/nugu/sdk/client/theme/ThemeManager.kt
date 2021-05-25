@@ -21,7 +21,7 @@ import java.util.*
 class ThemeManager : ThemeManagerInterface {
     companion object {
         private const val TAG = "ThemeManager"
-        private val DEFAULT_THEME = ThemeManagerInterface.THEME.LIGHT
+        val DEFAULT_THEME = ThemeManagerInterface.THEME.LIGHT
     }
 
     override var theme: ThemeManagerInterface.THEME = DEFAULT_THEME

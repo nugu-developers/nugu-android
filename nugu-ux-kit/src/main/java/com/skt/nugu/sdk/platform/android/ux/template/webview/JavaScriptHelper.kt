@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.platform.android.ux.template.webview
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.common.Direction
 
-
 object JavaScriptHelper {
     const val FUNC_ON_CONTROL_RESULT = "onControlResult"
     const val PARAM_COUNT_ON_CONTROL_RESULT = 2
@@ -47,6 +46,7 @@ object JavaScriptHelper {
     private const val FUNC_DISPLAY_ON_DUX_RECEIVED = "javascript:nativeEventListener.onDuxReceived('%s','','','%s');"
     private const val FUNC_DISPLAY_CONTROL = "javascript:nativeEventListener.control('%s','%s');"
     private const val FUNC_DISPLAY_UPDATE = "javascript:nativeEventListener.update('%s');"
+    private const val FUNC_DISPLAY_CLIENT_INFO_CHANGED = "javascript:nativeEventListener.onClientInfoChanged(%s);"
 
     fun onPlayStopped(): String {
         return FUNC_PLAYER_ON_PLAY_STOPPED
@@ -56,8 +56,8 @@ object JavaScriptHelper {
         return FUNC_PLAYER_ON_PLAY_STARTED
     }
 
-    fun onPlayPaused(showController : Boolean = false): String {
-        if(showController) {
+    fun onPlayPaused(showController: Boolean = false): String {
+        if (showController) {
             return FUNC_PLAYER_ON_PLAY_PAUSED_SHOW_CONTROLLER
         }
         return FUNC_PLAYER_ON_PLAY_PAUSED
@@ -97,6 +97,10 @@ object JavaScriptHelper {
 
     fun controlScroll(direction: Direction): String {
         return FUNC_DISPLAY_CONTROL.format(PARAM_SCROLL, direction.name)
+    }
+
+    fun updateClientInfo(clientInfoString: String): String {
+        return FUNC_DISPLAY_CLIENT_INFO_CHANGED.format(clientInfoString)
     }
 
     fun onDuxReceived(dialogRequestId: String, template: String): String {

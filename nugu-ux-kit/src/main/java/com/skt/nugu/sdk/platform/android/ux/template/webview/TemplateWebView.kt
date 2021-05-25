@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -41,6 +42,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.model.ClientInfo
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
@@ -69,6 +71,9 @@ class TemplateWebView @JvmOverloads constructor(
         private const val KEY_POST_PARAM_DIALOG_REQUEST_ID = "dialog_request_id"
     }
 
+    private val gson = Gson()
+    private val clientInfo = ClientInfo()
+
     private var templateUrl = defaultTemplateServerUrl
 
     override var templateHandler: TemplateHandler? = null
@@ -76,9 +81,17 @@ class TemplateWebView @JvmOverloads constructor(
             field = value
             value?.run {
                 addJavascriptInterface(WebAppInterface(value), "Android")
+
+                if (TemplateView.MEDIA_TEMPLATE_TYPES.contains(templateInfo.templateType)) {
+                    (this as? DefaultTemplateHandler)?.observeMediaState()
+                }
+
                 value.setClientListener(this@TemplateWebView)
-                (this as? DefaultTemplateHandler)?.getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
-                (this as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.addListener(this@TemplateWebView)
+                (this as? DefaultTemplateHandler)?.getNuguClient()?.run {
+                    audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
+                    themeManager.addListener(this@TemplateWebView)
+                    clientInfo.theme = TemplateUtils.themeToString(themeManager.theme, resources.configuration)
+                }
             }
         }
 
@@ -161,7 +174,7 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
-        //Logger.d(TAG, "load() $templateContent")
+        Logger.d(TAG, "load() currentTheme ${clientInfo.theme} ")
 
         this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken =
@@ -179,18 +192,13 @@ class TemplateWebView @JvmOverloads constructor(
 
         postUrl(templateUrl, buildString {
             append(String.format("%s=%s", KEY_POST_PARAM_DEVICE_TYPE_CODE, deviceTypeCode))
+            append(String.format("&%s=%s", KEY_POST_PARAM_DATA, URLEncoder.encode(templateContent, "UTF-8")))
+            append(String.format("&%s=%s", KEY_POST_PARAM_DIALOG_REQUEST_ID, URLEncoder.encode(dialogRequestId, "UTF-8")))
             append(
                 String.format(
                     "&%s=%s",
-                    KEY_POST_PARAM_DATA,
-                    URLEncoder.encode(templateContent, "UTF-8")
-                )
-            )
-            append(
-                String.format(
-                    "&%s=%s",
-                    KEY_POST_PARAM_DIALOG_REQUEST_ID,
-                    URLEncoder.encode(dialogRequestId, "UTF-8")
+                    "client_info",
+                    URLEncoder.encode(gson.toJson(clientInfo), "UTF-8")
                 )
             )
         }.toByteArray())
@@ -216,6 +224,22 @@ class TemplateWebView @JvmOverloads constructor(
         callJSFunction(JavaScriptHelper.updateDisplay(templateContent))
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+
+        newConfig ?: return
+
+        (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.run {
+            TemplateUtils.themeToString(theme, newConfig).let { newTheme ->
+                if (clientInfo.theme != newTheme) {
+                    Logger.d(TAG, "onConfigurationChanged. and theme changed to $newTheme")
+                    clientInfo.theme = newTheme
+                    callJSFunction(JavaScriptHelper.updateClientInfo(URLEncoder.encode(gson.toJson(clientInfo), "UTF-8")))
+                }
+            }
+        }
+    }
+
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         Logger.d(TAG, "onDetachedFromWindow")
@@ -232,7 +256,8 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
         Logger.d(TAG, "onThemeChange to $theme")
-        //todo. apply ui
+        clientInfo.theme = TemplateUtils.themeToString(theme, resources.configuration)
+        callJSFunction(JavaScriptHelper.updateClientInfo(URLEncoder.encode(gson.toJson(clientInfo), "UTF-8")))
     }
 
     /**
@@ -358,6 +383,7 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
         callJSFunction(JavaScriptHelper.setProgress(progress))
+        callJSFunction(JavaScriptHelper.setCurrentTime(currentTimeMs))
     }
 
     override fun controlFocus(direction: Direction): Boolean {
