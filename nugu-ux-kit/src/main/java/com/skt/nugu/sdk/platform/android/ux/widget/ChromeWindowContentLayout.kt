@@ -116,7 +116,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
             height = dpToPx(78f, context)  // bottomSheet height(68dp) + shadow height(10dp)
         }
 
-        setDarkMode(false, theme)
+        setDarkMode(isDark, theme)
         clipToPadding = false
 
         chipsView.setOnChipsListener(object : NuguChipsView.OnChipsListener {
