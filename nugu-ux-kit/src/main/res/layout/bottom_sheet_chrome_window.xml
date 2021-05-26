@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/fl_bottom_sheet"
-    style="@style/Nugu.Widget.Chrome.Window"
-    android:layout_width="match_parent"
-    android:layout_height="68dp"
-    android:clipToPadding="false"
-    android:elevation="10dp"
-    app:behavior_hideable="true"
-    app:layout_behavior="com.skt.nugu.sdk.platform.android.ux.widget.ChromeWindowBottomSheetBehavior">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.skt.nugu.sdk.platform.android.ux.widget.NuguVoiceChromeView
         android:id="@+id/voice_chrome"
@@ -16,7 +8,6 @@
         android:layout_height="40dp"
         android:layout_gravity="center_vertical"
         android:layout_marginStart="12dp" />
-
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -46,4 +37,4 @@
             android:orientation="horizontal" />
 
     </LinearLayout>
-</FrameLayout>
+</merge>

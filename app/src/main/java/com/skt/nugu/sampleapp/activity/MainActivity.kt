@@ -27,7 +27,6 @@ import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -47,7 +46,6 @@ import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip
-import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -60,6 +58,7 @@ import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggreg
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.widget.*
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, SystemAgentInterfaceListener,
@@ -341,7 +340,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                         runOnUiThread {
                             NuguToast.with(this)
                                 .message(R.string.volume_mute)
-                                .yOffset(findViewById<FrameLayout>(R.id.fl_bottom_sheet).height)
+                                .yOffset(dpToPx(68f, baseContext))
                                 .duration(NuguToast.LENGTH_SHORT)
                                 .show()
                         }
