@@ -484,7 +484,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 logoView.visibility = View.VISIBLE
                 logoView.setImageResource(LOGO_DEFAULT)
             } else {
-                logoView.updateImage(it, thumbTransformCorner2, isMerge, placeHolder = LOGO_PLACE_HOLDER)
+                logoView.updateImage(it, thumbTransformCorner2, isMerge, placeHolder = LOGO_PLACE_HOLDER, error = LOGO_DEFAULT)
             }
         }
 

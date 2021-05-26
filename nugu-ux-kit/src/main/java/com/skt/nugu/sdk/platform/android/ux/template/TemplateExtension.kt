@@ -43,12 +43,19 @@ fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout:
     }
 }
 
-fun ImageView.updateImage(url: String?, transformation: Transformation<Bitmap>?, isMerge: Boolean = false, @DrawableRes placeHolder: Int? = null) {
+fun ImageView.updateImage(
+    url: String?,
+    transformation: Transformation<Bitmap>?,
+    isMerge: Boolean = false,
+    @DrawableRes placeHolder: Int? = null,
+    @DrawableRes error: Int? = null
+) {
     if (isMerge && url.isNullOrBlank()) return
 
     visibility = if (url != null) View.VISIBLE else View.GONE
     Glide.with(context).load(url).apply {
         if (placeHolder != null) placeholder(placeHolder)
+        if (error != null) error(error)
         if (transformation != null) transform(transformation)
     }.into(this)
 }
