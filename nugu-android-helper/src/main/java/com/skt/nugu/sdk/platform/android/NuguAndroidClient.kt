@@ -957,6 +957,7 @@ class NuguAndroidClient private constructor(
             displayAgent
         ).apply {
             client.getSdkContainer().getInteractionControlManager().addListener(this)
+            client.getSdkContainer().getDirectiveSequencer().addOnDirectiveHandlingListener(this)
         }
 
         ttsAgent?.addListener(dialogUXStateAggregator)
