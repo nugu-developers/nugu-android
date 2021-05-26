@@ -46,7 +46,7 @@ object JavaScriptHelper {
     private const val FUNC_DISPLAY_ON_DUX_RECEIVED = "javascript:nativeEventListener.onDuxReceived('%s','','','%s');"
     private const val FUNC_DISPLAY_CONTROL = "javascript:nativeEventListener.control('%s','%s');"
     private const val FUNC_DISPLAY_UPDATE = "javascript:nativeEventListener.update('%s');"
-    private const val FUNC_DISPLAY_CLIENT_INFO_CHANGED = "javascript:nativeEventListener.onClientInfoChanged(%s);"
+    private const val FUNC_DISPLAY_CLIENT_INFO_CHANGED = "javascript:nativeEventListener.onClientInfoChanged('%s');"
 
     fun onPlayStopped(): String {
         return FUNC_PLAYER_ON_PLAY_STOPPED
