@@ -234,7 +234,7 @@ class TemplateWebView @JvmOverloads constructor(
                 if (clientInfo.theme != newTheme) {
                     Logger.d(TAG, "onConfigurationChanged. and theme changed to $newTheme")
                     clientInfo.theme = newTheme
-                    callJSFunction(JavaScriptHelper.updateClientInfo(URLEncoder.encode(gson.toJson(clientInfo), "UTF-8")))
+                    callJSFunction(JavaScriptHelper.updateClientInfo(gson.toJson(clientInfo)))
                 }
             }
         }
@@ -257,7 +257,7 @@ class TemplateWebView @JvmOverloads constructor(
     override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
         Logger.d(TAG, "onThemeChange to $theme")
         clientInfo.theme = TemplateUtils.themeToString(theme, resources.configuration)
-        callJSFunction(JavaScriptHelper.updateClientInfo(URLEncoder.encode(gson.toJson(clientInfo), "UTF-8")))
+        callJSFunction(JavaScriptHelper.updateClientInfo(gson.toJson(clientInfo)))
     }
 
     /**
