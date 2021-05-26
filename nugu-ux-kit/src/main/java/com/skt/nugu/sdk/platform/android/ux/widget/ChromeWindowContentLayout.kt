@@ -17,9 +17,8 @@ package com.skt.nugu.sdk.platform.android.ux.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.content.res.TypedArray
-import android.graphics.Point
-import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -27,12 +26,16 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.StyleRes
 import androidx.annotation.VisibleForTesting
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
+import com.skt.nugu.sdk.client.theme.ThemeManager
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
+import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 
 @SuppressLint("ViewConstructor")
 class ChromeWindowContentLayout @JvmOverloads constructor(
@@ -44,6 +47,9 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     private var callback: OnChromeWindowContentLayoutCallback? = null
     @VisibleForTesting
     var currentState : Int = BottomSheetBehavior.STATE_COLLAPSED
+
+    private var isDark = false
+    private var theme: ThemeManagerInterface.THEME = ThemeManager.DEFAULT_THEME
 
     companion object {
         private const val TAG = "ChromeWindowContentLayout"
@@ -60,17 +66,9 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         (behavior as? ChromeWindowBottomSheetBehavior)?.callback = callback
     }
 
-    lateinit var bottomSheet: FrameLayout
+    private lateinit var behavior: BottomSheetBehavior<FrameLayout>
 
-    private val behavior: BottomSheetBehavior<FrameLayout> by lazy {
-        BottomSheetBehavior.from(bottomSheet)
-    }
-
-    override fun getGlobalVisibleRect(r: Rect?, globalOffset: Point?): Boolean {
-        return bottomSheet.getGlobalVisibleRect(r)
-    }
-
-    fun getChromeWindowHeight() = bottomSheet.height
+    fun getChromeWindowHeight() = height
 
     private var sttTextView: EllipsizedTextView
 
@@ -106,13 +104,20 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     }
 
     init {
-        val factory = LayoutInflater.from(context)
-        factory.inflate(R.layout.bottom_sheet_chrome_window, view, true).apply {
+        LayoutInflater.from(context).inflate(R.layout.bottom_sheet_chrome_window, this, true).apply{
             chipsView = findViewById(R.id.chipsView)
-            bottomSheet = findViewById(R.id.fl_bottom_sheet)
             sttTextView = findViewById(R.id.tv_stt)
             voiceChrome = findViewById(R.id.voice_chrome)
+
         }
+        view.addView(this)
+        with((this.layoutParams as CoordinatorLayout.LayoutParams)) {
+            behavior = ChromeWindowBottomSheetBehavior<FrameLayout>(context, null)
+            height = dpToPx(78f, context)  // bottomSheet height(68dp) + shadow height(10dp)
+        }
+
+        setDarkMode(false, theme)
+        clipToPadding = false
 
         chipsView.setOnChipsListener(object : NuguChipsView.OnChipsListener {
             override fun onClick(item: NuguChipsView.Item) {
@@ -129,9 +134,11 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         })
 
        // setState(BottomSheetBehavior.STATE_HIDDEN)
+        behavior = BottomSheetBehavior.from(this)
         behavior.removeBottomSheetCallback(bottomSheetCallback)
         behavior.addBottomSheetCallback(bottomSheetCallback)
         behavior.isDraggable = false
+        behavior.isHideable = true
     }
 
     fun isExpanded(): Boolean {
@@ -216,11 +223,10 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
      * Sets the value of a style attribute
      */
     private fun applyThemeAttrs(@StyleRes resId: Int) {
-        val attrs =
-            intArrayOf(android.R.attr.background)
+        val attrs = intArrayOf(android.R.attr.background)
         val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
         try {
-            bottomSheet.background = a.getDrawable(0)
+            background = a.getDrawable(0)
         } finally {
             a.recycle()
         }
@@ -230,14 +236,30 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
      * Sets the dark mode.
      * @param darkMode the dark mode to set
      */
-    fun setDarkMode(darkMode: Boolean) {
+    fun setDarkMode(darkMode: Boolean, theme: ThemeManagerInterface.THEME) {
         applyThemeAttrs(
             when (darkMode) {
                 true -> R.style.Nugu_Widget_Chrome_Window_Dark
                 false -> R.style.Nugu_Widget_Chrome_Window_Light
             }
         )
+
+        isDark = darkMode
+        this.theme = theme
+
         sttTextView.setDarkMode(darkMode)
         chipsView.setDarkMode(darkMode)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        newConfig ?: return
+
+        if (theme == ThemeManagerInterface.THEME.SYSTEM) {
+            val newIsDark = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+            if (isDark != newIsDark) {
+                setDarkMode(newIsDark, theme)
+            }
+        }
     }
 }

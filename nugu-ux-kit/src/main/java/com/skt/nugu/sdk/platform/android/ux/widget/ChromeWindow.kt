@@ -331,7 +331,7 @@ class ChromeWindow(
         val isChanged = newDarkMode != isDarkMode
         if(isChanged) {
             isDarkMode = newDarkMode
-            contentLayout.setDarkMode(newDarkMode)
+            contentLayout.setDarkMode(newDarkMode, newTheme)
         }
     }
 }
