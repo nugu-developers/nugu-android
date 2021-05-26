@@ -48,14 +48,14 @@ fun ImageView.updateImage(
     transformation: Transformation<Bitmap>?,
     isMerge: Boolean = false,
     @DrawableRes placeHolder: Int? = null,
-    @DrawableRes error: Int? = null
+    @DrawableRes loadingFailImage: Int? = null
 ) {
     if (isMerge && url.isNullOrBlank()) return
 
     visibility = if (url != null) View.VISIBLE else View.GONE
     Glide.with(context).load(url).apply {
         if (placeHolder != null) placeholder(placeHolder)
-        if (error != null) error(error)
+        if (loadingFailImage != null) error(loadingFailImage)
         if (transformation != null) transform(transformation)
     }.into(this)
 }
