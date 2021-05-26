@@ -21,8 +21,10 @@ import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
@@ -40,6 +42,7 @@ class DialogUXStateAggregator(
     , ConnectionStatusListener
     , InteractionControlManagerInterface.Listener
     , ChipsAgentInterface.Listener
+    , DirectiveSequencerInterface.OnDirectiveHandlingListener
 {
     companion object {
         private const val TAG = "DialogUXStateAggregator"
@@ -56,8 +59,6 @@ class DialogUXStateAggregator(
     private val listeners: MutableSet<DialogUXStateAggregatorInterface.Listener> = HashSet()
     private var currentState: DialogUXStateAggregatorInterface.DialogUXState =
         DialogUXStateAggregatorInterface.DialogUXState.IDLE
-    private var isTtsPreparing = false
-    private var isLastReceiveTtsDialogRequestId: String? = null
     private var ttsState = TTSAgentInterface.State.FINISHED
     private var asrState: ASRAgentInterface.State =
         ASRAgentInterface.State.IDLE
@@ -71,11 +72,11 @@ class DialogUXStateAggregator(
 
     private val tryEnterIdleStateRunnable: Runnable = Runnable {
         executor.submit {
-            Logger.d(TAG, "[tryEnterIdleStateRunnable] state: $currentState, dialogModeEnabled: $dialogModeEnabled, asrState: $asrState, ttsState: $ttsState, isTtsPreparing: $isTtsPreparing")
+            Logger.d(TAG, "[tryEnterIdleStateRunnable] state: $currentState, dialogModeEnabled: $dialogModeEnabled, asrState: $asrState, ttsState: $ttsState, isTtsPreparing: ${handlingTTSSpeakDirective.isNotEmpty()}")
             if (currentState != DialogUXStateAggregatorInterface.DialogUXState.IDLE
                 && !dialogModeEnabled
                 && !asrState.isRecognizing()
-                && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && !isTtsPreparing
+                && (ttsState == TTSAgentInterface.State.FINISHED || ttsState == TTSAgentInterface.State.STOPPED) && handlingTTSSpeakDirective.isEmpty()
             ) {
                 setState(DialogUXStateAggregatorInterface.DialogUXState.IDLE)
             }
@@ -122,8 +123,8 @@ class DialogUXStateAggregator(
 
     override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
         Logger.d(TAG, "[onStateChanged-TTS] State: $state")
-        isTtsPreparing = false
         ttsState = state
+        handlingTTSSpeakDirective.remove(dialogRequestId)
 
         executor.submit {
             when (state) {
@@ -142,17 +143,11 @@ class DialogUXStateAggregator(
     }
 
     override fun onReceiveTTSText(text: String?, dialogRequestId: String) {
-        Logger.d(TAG, "[onReceiveTTSText] text: $text, dialogRequestId: $dialogRequestId")
-        isTtsPreparing = true
-        isLastReceiveTtsDialogRequestId = dialogRequestId
+        // no-op
     }
 
     override fun onError(dialogRequestId: String) {
-        isTtsPreparing = false
-
-        executor.submit {
-            tryEnterIdleState()
-        }
+        // no-op
     }
 
     override fun onStateChanged(state: ASRAgentInterface.State) {
@@ -328,5 +323,35 @@ class DialogUXStateAggregator(
             delay,
             TimeUnit.MILLISECONDS
         )
+    }
+
+    private val handlingTTSSpeakDirective = HashSet<String>()
+
+    override fun onRequested(directive: Directive) {
+        if(directive.getNamespace() == "TTS" && directive.getNamespace() == "Speak") {
+            handlingTTSSpeakDirective.add(directive.getDialogRequestId())
+        }
+    }
+
+    override fun onCompleted(directive: Directive) {
+        onTTSFinished(directive)
+    }
+
+    override fun onCanceled(directive: Directive) {
+        onTTSFinished(directive)
+    }
+
+    override fun onFailed(directive: Directive, description: String) {
+        onTTSFinished(directive)
+    }
+
+    private fun onTTSFinished(directive: Directive) {
+        if(directive.getNamespace() == "TTS" && directive.getNamespace() == "Speak") {
+            handlingTTSSpeakDirective.remove(directive.getDialogRequestId())
+        }
+
+        executor.submit {
+            tryEnterIdleState()
+        }
     }
 }
