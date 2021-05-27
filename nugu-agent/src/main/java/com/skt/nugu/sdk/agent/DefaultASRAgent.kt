@@ -1048,7 +1048,9 @@ class DefaultASRAgent(
                     )
                 }
             }
-        }, timeoutInMillis = 2000L)
+        }, timeoutInMillis = 2000L, given = HashMap<NamespaceAndName, BaseContextState>().apply {
+            put(namespaceAndName, StateContext(state, initiator))
+        })
     }
 
     private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
