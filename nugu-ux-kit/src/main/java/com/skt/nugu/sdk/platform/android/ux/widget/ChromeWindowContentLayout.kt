@@ -23,6 +23,7 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import androidx.annotation.StyleRes
 import androidx.annotation.VisibleForTesting
@@ -113,6 +114,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         view.addView(this)
         with((this.layoutParams as CoordinatorLayout.LayoutParams)) {
             behavior = ChromeWindowBottomSheetBehavior<FrameLayout>(context, null)
+            width = MATCH_PARENT
             height = dpToPx(78f, context)  // bottomSheet height(68dp) + shadow height(10dp)
         }
 
