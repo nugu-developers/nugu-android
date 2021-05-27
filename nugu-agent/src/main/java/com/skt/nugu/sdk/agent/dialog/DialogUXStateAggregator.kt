@@ -328,7 +328,7 @@ class DialogUXStateAggregator(
     private val handlingTTSSpeakDirective = HashSet<String>()
 
     override fun onRequested(directive: Directive) {
-        if(directive.getNamespace() == "TTS" && directive.getNamespace() == "Speak") {
+        if(directive.getNamespace() == "TTS" && directive.getName() == "Speak") {
             handlingTTSSpeakDirective.add(directive.getDialogRequestId())
         }
     }
@@ -346,12 +346,12 @@ class DialogUXStateAggregator(
     }
 
     private fun onTTSFinished(directive: Directive) {
-        if(directive.getNamespace() == "TTS" && directive.getNamespace() == "Speak") {
+        if(directive.getNamespace() == "TTS" && directive.getName() == "Speak") {
             handlingTTSSpeakDirective.remove(directive.getDialogRequestId())
-        }
 
-        executor.submit {
-            tryEnterIdleState()
+            executor.submit {
+                tryEnterIdleState()
+            }
         }
     }
 }
