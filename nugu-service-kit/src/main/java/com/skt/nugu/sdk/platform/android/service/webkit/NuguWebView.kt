@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
-import androidx.browser.customtabs.CustomTabsIntent
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
 import android.util.Log
@@ -30,6 +29,7 @@ import android.view.ViewGroup
 import android.webkit.*
 import android.widget.FrameLayout
 import androidx.annotation.Keep
+import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.platform.android.service.BuildConfig
 
 class NuguWebView @JvmOverloads constructor(
@@ -58,12 +58,17 @@ class NuguWebView @JvmOverloads constructor(
         fun onSetTitle(title: String)
     }
 
+    interface RoutineListener {
+        fun onRequestActiveRoutine()
+    }
+
     @Keep
     enum class THEME { DARK, LIGHT }
 
     companion object {
         private val JS_INTERFACE_NAME = "NuguWebCommonHandler"
         private const val TAG = "NuguWebView"
+
         /** no activity found errors **/
         private const val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
     }
@@ -93,9 +98,10 @@ class NuguWebView @JvmOverloads constructor(
     var webChromeClientListener: WebChromeClientListener? = null
     var windowListener: WindowListener? = null
     var documentListener: DocumentListener? = null
-    var redirectUri : String? = null
-    var clientId : String? = null
-    var grantType : String? = null
+    var routineListener: RoutineListener? = null
+    var redirectUri: String? = null
+    var clientId: String? = null
+    var grantType: String? = null
     var deviceUniqueId: String? = null
 
     init {
@@ -119,7 +125,9 @@ class NuguWebView @JvmOverloads constructor(
 
     fun loadUrl(url: String) {
         updateCookies(url)
-        webView.loadUrl(url)
+        webView.post {
+            webView.loadUrl(url)
+        }
     }
 
     override fun openExternalApp(androidScheme: String?, androidAppId: String?) {
@@ -147,7 +155,7 @@ class NuguWebView @JvmOverloads constructor(
                 .build()
             try {
                 intent.launchUrl(context, Uri.parse(url))
-            } catch (e : ActivityNotFoundException) {
+            } catch (e: ActivityNotFoundException) {
                 windowListener?.onCloseWindow(ACTIVITY_NOT_FOUND_ERROR)
             }
         }
@@ -171,12 +179,32 @@ class NuguWebView @JvmOverloads constructor(
         }
     }
 
+    override fun requestActiveRoutine() {
+        webView.post {
+            routineListener?.onRequestActiveRoutine()
+        }
+    }
+
+    fun setOnRoutineStatusChanged(token: String, status: String) {
+        callJSFunction(JavaScriptHelper.formatOnRoutineStatusChanged(token, status))
+    }
+
     fun setWebViewClient(client: WebViewClient) {
         webView.webViewClient = client
     }
 
     fun setWebChromeClient(client: WebChromeClient) {
         webView.webChromeClient = client
+    }
+
+    private fun callJSFunction(script: String) {
+        webView.post {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                webView.evaluateJavascript(script,null)
+            } else {
+                webView.loadUrl(script)
+            }
+        }
     }
 
     override fun onAttachedToWindow() {
