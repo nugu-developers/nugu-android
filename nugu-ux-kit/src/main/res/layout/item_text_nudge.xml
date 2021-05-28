@@ -7,7 +7,6 @@
         android:id="@+id/nudge_border"
         android:layout_width="0dp"
         android:layout_height="40dp"
-        android:background="@drawable/nugu_chips_nudge_border"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -16,6 +15,7 @@
     <TextView
         android:id="@+id/tv_chips"
         style="@style/Nugu.Widget.Chips"
+        android:background="@drawable/nugu_chips_nudge_border_light"
         android:layout_height="38dp"
         android:layout_margin="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
