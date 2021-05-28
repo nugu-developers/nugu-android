@@ -330,7 +330,7 @@ class DefaultTTSAgent(
     private val playContextManager = TTSPlayContextProvider()
 
     init {
-        Logger.d(TAG, "[init]")
+        Logger.d(TAG, "[init] $this")
         speechPlayer.setPlaybackEventListener(this)
         contextManager.setStateProvider(namespaceAndName, this)
         interLayerDisplayPolicyManager.addListener(this)
