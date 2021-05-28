@@ -30,6 +30,8 @@ interface RoutineAgentInterface {
         fun onInterrupted(directive: StartDirectiveHandler.StartDirective)
     }
 
+    fun getState(): State
+
     /**
      * Add listener for routine
      */

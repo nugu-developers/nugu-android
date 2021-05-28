@@ -714,6 +714,8 @@ class RoutineAgent(
         }
     }
 
+    override fun getState(): RoutineAgentInterface.State = state
+
     override fun addListener(listener: RoutineAgentInterface.RoutineListener) {
         listeners.add(listener)
     }
