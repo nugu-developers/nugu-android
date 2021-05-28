@@ -29,39 +29,22 @@ class SamplePlayerFactory constructor(
     private val context: Context,
     private val useExoPlayer: Boolean
 ) : PlayerFactory {
+    override fun createAlertsPlayer() = IntegratedMediaPlayer(
+        createPlayer(),
+        NuguOpusPlayer(AudioManager.STREAM_MUSIC)
+    )
 
-    private val alertsPlayer by lazy {
-        IntegratedMediaPlayer(
-            createPlayer(),
-            NuguOpusPlayer(AudioManager.STREAM_MUSIC)
-        )
-    }
+    override fun createAudioPlayer() = IntegratedMediaPlayer(
+        createPlayer(),
+        NuguOpusPlayer(AudioManager.STREAM_MUSIC)
+    )
 
-    private val audioPlayer by lazy {
-        IntegratedMediaPlayer(
-            createPlayer(),
-            NuguOpusPlayer(AudioManager.STREAM_MUSIC)
-        )
-    }
+    override fun createSpeakPlayer() = IntegratedMediaPlayer(
+        createPlayer(),
+        NuguOpusPlayer(AudioManager.STREAM_MUSIC)
+    )
 
-    private val speakPlayer by lazy {
-        IntegratedMediaPlayer(
-            createPlayer(),
-            NuguOpusPlayer(AudioManager.STREAM_MUSIC)
-        )
-    }
-
-    private val beepPlayer by lazy {
-        createPlayer()
-    }
-
-    override fun createAlertsPlayer() = alertsPlayer
-
-    override fun createAudioPlayer() = audioPlayer
-
-    override fun createSpeakPlayer() = speakPlayer
-
-    override fun createBeepPlayer() = beepPlayer
+    override fun createBeepPlayer() = createPlayer()
 
     private fun createPlayer(): UriSourcePlayablePlayer {
         return if (useExoPlayer) {
