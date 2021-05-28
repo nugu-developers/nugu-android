@@ -75,6 +75,7 @@ class TTSScenarioPlayer(
     private val focusChannel = SeamlessFocusManagerInterface.Channel(focusChannelName, this, TAG)
 
     init {
+        Logger.d(TAG, "[init] $this")
         player.setPlaybackEventListener(this)
         audioPlayStackManager.addPlayContextProvider(ttsPlayContextProvider)
     }

@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.mediaplayer
 
 import com.skt.nugu.sdk.agent.mediaplayer.*
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
+import com.skt.nugu.sdk.core.utils.Logger
 import java.net.URI
 
 class IntegratedMediaPlayer(
@@ -116,6 +117,7 @@ class IntegratedMediaPlayer(
     private var activePlayer: MediaPlayerControlInterface? = null
 
     init {
+        Logger.d(TAG, "[init] $this")
         audioPlayer.setPlaybackEventListener(listenerForAudioPlayer)
         audioPlayer.setBufferEventListener(listenerForAudioPlayer)
         audioPlayer.setOnDurationListener(listenerForAudioPlayer)
@@ -208,6 +210,7 @@ class IntegratedMediaPlayer(
     }
 
     override fun setPlaybackEventListener(listener: MediaPlayerControlInterface.PlaybackEventListener) {
+        Logger.d(TAG, "[setPlaybackEventListener] set listener($listener) at $this")
         playbackEventListener = listener
     }
 
