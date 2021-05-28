@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
         fun closeWindow(reason: String?)
         fun setTitle(title: String)
         fun fixedTextZoom()
+        fun requestActiveRoutine()
     }
 
     @Keep
@@ -92,6 +93,15 @@ internal class JavascriptObjectReceiver(val listener: Listener) {
         gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
             if (it.method == "fixedTextZoom") {
                 listener.fixedTextZoom()
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun requestActiveRoutine(parameter: String) {
+        gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
+            if (it.method == "requestActiveRoutine") {
+                listener.requestActiveRoutine()
             }
         }
     }
