@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+Version 1.2.0 *(2021-05-28)*
+-----------------------------
+* Fix: Fix missing initiator at context (#1877)
+* Improve: update media template logo spec (#1866)
+* Improve: support dark mode design (#1867)
+    * bypass to web template
+    * nudge chips
+* Improve: Send full context for Message.CandidatesListed event (#1869)
+* Improve: Prevent back to IDLE state if exist preparing TTS (#1872)
+* New: Add routine javascript Interface to NuguWebView (#1880)
+* New: Get routine's state (#1884)
+    * Add RoutineAgentInterface.getState(): State method
+
 Version 1.1.4 *(2021-05-21)*
 -----------------------------
 * Fix: Fix wrong shutdown order for GrpcTransport (#1849)
