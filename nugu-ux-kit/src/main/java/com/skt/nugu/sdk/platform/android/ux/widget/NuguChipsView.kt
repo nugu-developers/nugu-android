@@ -24,6 +24,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -61,12 +62,14 @@ class NuguChipsView @JvmOverloads constructor(
         private val DEFAULT_TEXT_COLOR = Color.parseColor("#404858")
         private val DEFAULT_HIGHLIGHT_TEXT_COLOR = Color.parseColor("#009DFF")
     }
+
     private val adapter = AdapterChips(context)
 
     private val NO_COLOR = 0
     private var defaultColor: Int = NO_COLOR
     private var highlightColor: Int = NO_COLOR
     private var defaultBackground: Drawable? = null
+    private var isDark = false
 
     /**
      * Sets the maximum number of texts in the chips
@@ -184,12 +187,17 @@ class NuguChipsView @JvmOverloads constructor(
 
             addUpdateListener {
                 for (index in 0 until containerView.childCount) {
-                    (containerView.getChildAt(index).findViewById<View>(R.id.nudge_border)?.background as? GradientDrawable)?.apply {
-                        val fraction = it.animatedFraction
-                        val newStart = evaluator.evaluate(fraction, start, end) as Int
-                        val newEnd = evaluator.evaluate(fraction, end, start) as Int
+                    containerView.getChildViewHolder(containerView.getChildAt(index)).let { viewHolder ->
+                        if (viewHolder.itemViewType == Chip.Type.NUDGE.ordinal) {
+                            ((((viewHolder as ChipsViewHolder).titleView.background as? StateListDrawable)?.current as? LayerDrawable)
+                                ?.getDrawable(0) as? GradientDrawable)?.run {
+                                val fraction = it.animatedFraction
+                                val newStart = evaluator.evaluate(fraction, start, end) as Int
+                                val newEnd = evaluator.evaluate(fraction, end, start) as Int
 
-                        colors = intArrayOf(newStart, newEnd)
+                                colors = intArrayOf(newStart, newEnd)
+                            }
+                        }
                     }
                 }
             }
@@ -201,10 +209,10 @@ class NuguChipsView @JvmOverloads constructor(
         override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ChipsViewHolder {
             val layout = if (viewType == Chip.Type.NUDGE.ordinal) R.layout.item_text_nudge else R.layout.item_text
             val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(layout, viewGroup, false))
-            if(defaultColor == NO_COLOR) {
+            if (defaultColor == NO_COLOR) {
                 defaultColor = viewHolder.titleView.textColors.defaultColor
             }
-            if(highlightColor == NO_COLOR) {
+            if (highlightColor == NO_COLOR) {
                 highlightColor = viewHolder.titleView.highlightColor
             }
             return viewHolder
@@ -224,9 +232,7 @@ class NuguChipsView @JvmOverloads constructor(
          */
         override fun onBindViewHolder(holder: ChipsViewHolder, position: Int) {
             holder.titleView.setEllipsizeText(items[position].text, maxTextSize)
-            defaultBackground?.let {
-                holder.titleView.background = it
-            }
+
             when (items[position].type) {
                 Chip.Type.NUDGE -> {
                     // remove title view border
@@ -237,13 +243,17 @@ class NuguChipsView @JvmOverloads constructor(
                             }
                         }
                     }
+
                     holder.titleView.setTextColor(defaultColor)
+                    holder.titleView.setBackgroundResource(if (isDark) R.drawable.nugu_chips_nudge_border_dark else R.drawable.nugu_chips_nudge_border_light)
                 }
                 Chip.Type.ACTION -> {
                     holder.titleView.setTextColor(highlightColor)
+                    defaultBackground?.apply(holder.titleView::setBackground)
                 }
                 else -> {
                     holder.titleView.setTextColor(defaultColor)
+                    defaultBackground?.apply(holder.titleView::setBackground)
                 }
             }
             holder.titleView.setThrottledOnClickListener {
@@ -324,6 +334,7 @@ class NuguChipsView @JvmOverloads constructor(
      * @param darkMode the dark mode to set
      */
     fun setDarkMode(darkMode: Boolean) {
+        isDark = darkMode
         applyThemeAttrs(
             when (darkMode) {
                 true -> R.style.Nugu_Widget_Chips_Dark
