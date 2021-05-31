@@ -30,4 +30,9 @@ interface BatteryStatusProvider {
      * @return true: charging, false: not charging, null: if not supported or unknown.
      */
     fun isCharging(): Boolean?
+
+    /**
+     * Returns a level measured as approximate or not
+     */
+    fun isApproximateLevel(): Boolean? = null
 }

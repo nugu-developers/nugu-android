@@ -30,7 +30,7 @@ class DefaultBatteryAgent(
         private const val TAG = "BatteryAgent"
 
         const val NAMESPACE = "Battery"
-        private val VERSION = Version(1,0)
+        private val VERSION = Version(1,1)
     }
 
     init {
@@ -41,7 +41,8 @@ class DefaultBatteryAgent(
 
     internal data class StateContext(
         val level: Int,
-        val charging: Boolean
+        val charging: Boolean,
+        val approximateLevel: Boolean?
     ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -58,6 +59,9 @@ class DefaultBatteryAgent(
         override fun value(): String = buildCompactContext().apply {
             addProperty("level", level)
             addProperty("charging", charging)
+            approximateLevel?.let {
+                addProperty("approximateLevel", it)
+            }
         }.toString()
     }
 
@@ -77,7 +81,8 @@ class DefaultBatteryAgent(
             if (contextType == ContextType.COMPACT) StateContext.CompactContextState else
                 StateContext(
                     batteryStatusProvider.getBatteryLevel().coerceIn(0, 100),
-                    batteryStatusProvider.isCharging() ?: false
+                    batteryStatusProvider.isCharging() ?: false,
+                    batteryStatusProvider.isApproximateLevel()
                 ),
             StateRefreshPolicy.ALWAYS,
             contextType,
