@@ -19,6 +19,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
+import android.os.Build
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -427,7 +428,13 @@ class TemplateWebView @JvmOverloads constructor(
 
     private fun callJSFunction(script: String) {
         if (isAttachedToWindow) {
-            post { loadUrl(script) }
+            post {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    evaluateJavascript(script, null)
+                } else {
+                    loadUrl(script)
+                }
+            }
         }
     }
 
