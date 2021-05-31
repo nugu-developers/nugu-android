@@ -31,6 +31,8 @@ import android.widget.FrameLayout
 import androidx.annotation.Keep
 import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.platform.android.service.BuildConfig
+import java.net.MalformedURLException
+import java.net.URL
 
 class NuguWebView @JvmOverloads constructor(
     context: Context,
@@ -103,6 +105,7 @@ class NuguWebView @JvmOverloads constructor(
     var clientId: String? = null
     var grantType: String? = null
     var deviceUniqueId: String? = null
+    var debuggingEnabled = false
 
     init {
         addView(
@@ -200,7 +203,7 @@ class NuguWebView @JvmOverloads constructor(
     private fun callJSFunction(script: String) {
         webView.post {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                webView.evaluateJavascript(script,null)
+                webView.evaluateJavascript(script, null)
             } else {
                 webView.loadUrl(script)
             }
@@ -242,8 +245,12 @@ class NuguWebView @JvmOverloads constructor(
             cookies.forEach { (key, value) ->
                 val header = StringBuilder()
                 header.append(key).append("=").append(value)
-                Log.d("NuguWebView", "$key=$value")
-                CookieManager.getInstance().setCookie(url, header.toString())
+                CookieManager.getInstance()
+                    .setCookie(URL(url).host, header.toString())
+
+                if(debuggingEnabled) {
+                    Log.d(TAG, header.toString())
+                }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 CookieManager.getInstance().flush()
@@ -254,6 +261,8 @@ class NuguWebView @JvmOverloads constructor(
             Log.e(TAG, e.toString())
         } catch (e: AndroidRuntimeException) {
             Log.e(TAG, e.toString())
+        } catch (e: MalformedURLException) {
+            Log.e(TAG, "url=$url, $e")
         }
     }
 
