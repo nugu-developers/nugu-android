@@ -11,7 +11,11 @@ android {
         versionName rootProject.nuguVersionName
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildTypes {
@@ -27,6 +31,10 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$androidXAppcompatVersion"
     implementation "androidx.browser:browser:$androidXBrowserVersion"
     implementation("com.google.code.gson:gson:$gsonVersion")
+
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 }
 
 apply from: '../javadoc-android.gradle'
