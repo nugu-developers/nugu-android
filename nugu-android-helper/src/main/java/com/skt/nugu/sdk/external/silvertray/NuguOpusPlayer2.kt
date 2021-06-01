@@ -28,13 +28,12 @@ import com.skt.nugu.silvertray.player.EventListener
 import com.skt.nugu.silvertray.player.Player
 import com.skt.nugu.silvertray.player.Status
 
-class NuguOpusPlayer2 (private val audioAttributes: AudioAttributes) :
+class NuguOpusPlayer2 (private val audioAttributes: AudioAttributes, private val player: Player = Player()) :
     AttachmentPlayablePlayer {
     companion object {
         private const val TAG = "NuguOpusPlayer2"
     }
 
-    private val player = Player()
     private var currentSourceId: SourceId = SourceId.ERROR()
     private var status = Status.IDLE
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
