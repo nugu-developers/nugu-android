@@ -37,7 +37,7 @@ dependencies {
         api project(':nugu-client-kit')
     }
 
-    implementation "com.skt.nugu:silvertray:$silvertrayVersion-RELEASE@aar"
+    api "com.skt.nugu:silvertray:$silvertrayVersion-RELEASE@aar"
     implementation "com.skt.nugu:jademarble:$jademarbleVersion"
     implementation "com.skt.nugu:keensense:$keensenseVersion"
 

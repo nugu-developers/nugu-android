@@ -26,13 +26,12 @@ import com.skt.nugu.silvertray.player.DurationListener
 /**
  * Porting class silvertray's [Player] to use in NUGU SDK
  */
-class NuguOpusPlayer(private val streamType: Int) :
+class NuguOpusPlayer(private val streamType: Int, private val player: Player = Player()) :
     AttachmentPlayablePlayer {
     companion object {
         private const val TAG = "NuguOpusPlayer"
     }
 
-    private val player = Player()
     private var currentSourceId: SourceId = SourceId.ERROR()
     private var status = Status.IDLE
     private var playbackEventListener: MediaPlayerControlInterface.PlaybackEventListener? = null
