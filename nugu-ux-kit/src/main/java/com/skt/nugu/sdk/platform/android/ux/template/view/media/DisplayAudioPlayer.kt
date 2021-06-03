@@ -772,8 +772,14 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     private fun setRepeatMode(repeat: Repeat) {
         when (repeat) {
-            Repeat.ALL -> repeatView.setImageResource(R.drawable.nugu_btn_repeat)
-            Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
+            Repeat.ALL -> {
+                repeatView.setImageResource(R.drawable.nugu_btn_repeat)
+                repeatView.colorFilter = null
+            }
+            Repeat.ONE -> {
+                repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
+                repeatView.colorFilter = null
+            }
             Repeat.NONE -> {
                 repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
                 if (isDark) {
