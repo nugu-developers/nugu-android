@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bar_player"
     android:layout_width="match_parent"
     android:layout_height="58dp"
     android:layout_gravity="bottom"
@@ -11,7 +12,6 @@
         android:layout_height="wrap_content">
 
         <View
-            android:id="@+id/bar_divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_gravity="top"
@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:layout_gravity="top"
-            android:background="#1A222222"
+            android:background="#33222222"
             android:enabled="false"
             android:max="100"
             android:paddingStart="0dp"

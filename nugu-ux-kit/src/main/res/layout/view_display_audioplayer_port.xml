@@ -11,13 +11,12 @@
         android:id="@+id/view_music_player"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#f8f8f8"
+        android:background="@color/media_template_bg_light"
         android:visibility="invisible">
 
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#f8f8f8"
             android:paddingTop="@dimen/media_player_title_height"
             android:paddingBottom="@dimen/media_player_controller_height">
 
@@ -88,7 +87,7 @@
                         android:focusable="true"
                         android:fontFamily="@font/noto_sans_kr_bold_hestia"
                         android:gravity="center"
-                        android:textColor="#000000"
+                        android:textColor="@color/media_template_text_header_light"
                         android:textSize="20sp" />
 
                     <TextView
@@ -102,7 +101,7 @@
                         android:maxLines="1"
                         android:minHeight="18dp"
                         android:padding="0dp"
-                        android:textColor="#444444"
+                        android:textColor="@color/media_template_text_body_light"
                         android:textSize="15sp"
                         android:visibility="gone" />
 
@@ -115,7 +114,7 @@
                         android:maxLines="1"
                         android:minHeight="18dp"
                         android:padding="0dp"
-                        android:textColor="#888888"
+                        android:textColor="@color/media_template_text_footer_light"
                         android:textSize="12sp"
                         android:visibility="invisible"
                         tool:visibility="visible" />

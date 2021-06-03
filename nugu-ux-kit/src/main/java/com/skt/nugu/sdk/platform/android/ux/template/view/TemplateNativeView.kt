@@ -41,7 +41,7 @@ abstract class TemplateNativeView @JvmOverloads constructor(context: Context, at
         LayoutInflater.from(context).inflate(layout, this, true)
     }
 
-    protected open fun refreshView() {
+    protected open fun setViews() {
         logoView = findViewById(R.id.iv_logo)
         titleView = findViewById(R.id.tv_title)
         close = findViewById(R.id.btn_close)
