@@ -91,7 +91,7 @@ class TemplateWebView @JvmOverloads constructor(
                 (this as? DefaultTemplateHandler)?.getNuguClient()?.run {
                     audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                     themeManager.addListener(this@TemplateWebView)
-                    clientInfo.theme = TemplateUtils.themeToString(themeManager.theme, resources.configuration)
+                    clientInfo.theme = themeToString(themeManager.theme, resources.configuration)
                 }
             }
         }
@@ -231,7 +231,7 @@ class TemplateWebView @JvmOverloads constructor(
         newConfig ?: return
 
         (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.run {
-            TemplateUtils.themeToString(theme, newConfig).let { newTheme ->
+            themeToString(theme, newConfig).let { newTheme ->
                 if (clientInfo.theme != newTheme) {
                     Logger.d(TAG, "onConfigurationChanged. and theme changed to $newTheme")
                     clientInfo.theme = newTheme
@@ -257,7 +257,7 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
         Logger.d(TAG, "onThemeChange to $theme")
-        clientInfo.theme = TemplateUtils.themeToString(theme, resources.configuration)
+        clientInfo.theme = themeToString(theme, resources.configuration)
         callJSFunction(JavaScriptHelper.updateClientInfo(gson.toJson(clientInfo)))
     }
 
@@ -479,4 +479,16 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun isNuguButtonVisible(): Boolean = true
 
+    private fun themeToString(theme: ThemeManagerInterface.THEME, configuration: Configuration): String {
+        return when (theme) {
+            ThemeManagerInterface.THEME.LIGHT -> "light"
+            ThemeManagerInterface.THEME.DARK -> "dark"
+            ThemeManagerInterface.THEME.SYSTEM -> {
+                when (configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+                    Configuration.UI_MODE_NIGHT_YES -> "dark"
+                    else -> "light"
+                }
+            }
+        }
+    }
 }

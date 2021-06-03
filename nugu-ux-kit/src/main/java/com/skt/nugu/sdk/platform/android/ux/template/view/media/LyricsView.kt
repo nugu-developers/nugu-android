@@ -30,6 +30,7 @@ import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils.Companion.dpToPixel
 import com.skt.nugu.sdk.platform.android.ux.template.enableMarquee
+import com.skt.nugu.sdk.platform.android.ux.template.genColor
 import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
 
 class LyricsView @JvmOverloads constructor(
@@ -53,6 +54,13 @@ class LyricsView @JvmOverloads constructor(
 
     private var viewSize = SIZE_STANDARD
 
+    var isDark = false
+        set(value) {
+            val update = field != value
+            field = value
+            if (update) update()
+        }
+
     init {
         init(attrs)
 
@@ -60,7 +68,7 @@ class LyricsView @JvmOverloads constructor(
         adapter = LyricsAdapter(
             context,
             lyrics,
-            if (viewSize == SIZE_STANDARD) R.layout.view_item_lyrics else R.layout.view_item_small_lyrics
+            viewSize
         )
 
         recyclerView.setOnClickListener {
@@ -203,19 +211,27 @@ class LyricsView @JvmOverloads constructor(
         } else {
             View.GONE
         }
+        adapter.isDark = isDark
         adapter.notifyDataSetChanged()
+
+        setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
+        titleView.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
     }
 
     class LyricsAdapter(
         val context: Context?,
         private val lyrics: ArrayList<LyricsInfo>,
-        private val resourceId: Int
+        private val viewSize: Int
     ) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         private var highlightedPosition: Int = -1
+        var isDark = false
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val view = LayoutInflater.from(context).inflate(resourceId, parent, false)
+            val view =
+                LayoutInflater.from(context)
+                    .inflate(if (viewSize == SIZE_SMALL) R.layout.view_item_small_lyrics else R.layout.view_item_lyrics, parent, false)
             view.setOnClickListener {
                 parent.performClick()
             }
@@ -234,7 +250,12 @@ class LyricsView @JvmOverloads constructor(
                 if (highlightedPosition == position) {
                     Color.parseColor("#009dff")
                 } else {
-                    Color.parseColor("#444444")
+                    getItemViewType(position)
+                    if (viewSize == SIZE_STANDARD && !isDark) {
+                        Color.parseColor("#444444")
+                    } else {
+                        Color.parseColor("#888888")
+                    }
                 }
             )
         }

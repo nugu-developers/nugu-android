@@ -16,15 +16,15 @@
 package com.skt.nugu.sdk.platform.android.ux.template
 
 import android.content.Context
-import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.Color
 import android.os.Build
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.util.TypedValue
-import com.skt.nugu.sdk.client.theme.ThemeManager
-import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
+import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
 import org.json.JSONObject
 import java.util.*
 
@@ -120,21 +120,13 @@ class TemplateUtils {
                 JSONObject(template).getBoolean(SUPPORT_VISIBLE_TOKEN_LIST)
             }.getOrDefault(false)
 
-        fun themeToString(theme: ThemeManagerInterface.THEME, configuration: Configuration): String {
-            return when (theme) {
-                ThemeManagerInterface.THEME.LIGHT -> "light"
-                ThemeManagerInterface.THEME.DARK -> "dark"
-                ThemeManagerInterface.THEME.SYSTEM -> {
-                    when (configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-                        Configuration.UI_MODE_NIGHT_NO -> "light"
-                        Configuration.UI_MODE_NIGHT_YES -> "dark"
-                        else -> {
-                            if (ThemeManager.DEFAULT_THEME == ThemeManagerInterface.THEME.LIGHT) "light"
-                            else "dark"
-                        }
-                    }
-                }
-            }
-        }
+
     }
+}
+
+@ColorInt
+fun Resources.genColor(@ColorRes color: Int): Int {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        getColor(color, null)
+    } else getColor(color)
 }

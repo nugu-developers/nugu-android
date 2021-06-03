@@ -9,4 +9,26 @@
 
     <color name="nugu_snackbar_background">#323232</color>
     <color name="nugu_snackbar_border_color">#33000000</color>
+
+
+    <color name="white_40">#66ffffff</color>
+    <color name="white_10">#1affffff</color>
+    <color name="black_10">#1a000000</color>
+
+    <color name="media_template_bg_light">#f8f8f8</color>
+    <color name="media_template_bg_dark">#000000</color>
+
+    <color name="media_template_text_title_light">#222222</color>
+    <color name="media_template_text_title_dark">#e0e0e0</color>
+
+    <color name="media_template_text_header_light">#222222</color>
+    <color name="media_template_text_header_dark">#ffffff</color>
+
+    <color name="media_template_text_body_light">#444444</color>
+    <color name="media_template_text_body_dark">#ccffffff</color>
+
+    <color name="media_template_text_footer_light">#888888</color>
+    <color name="media_template_text_footer_dark">@color/white_40</color>
+
+    <color name="media_title_button_filter">#a7a7a7</color>
 </resources>

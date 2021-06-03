@@ -17,8 +17,11 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.content.res.Configuration.ORIENTATION_UNDEFINED
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
@@ -37,6 +40,9 @@ import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface.THEME.DARK
+import com.skt.nugu.sdk.client.theme.ThemeManagerInterface.THEME.SYSTEM
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.*
@@ -55,7 +61,7 @@ import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 @SuppressLint("ClickableViewAccessibility", "ViewConstructor")
 class DisplayAudioPlayer @JvmOverloads
 constructor(private val templateType: String, context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    TemplateNativeView(context, attrs, defStyleAttr) {
+    TemplateNativeView(context, attrs, defStyleAttr), ThemeManagerInterface.ThemeListener {
 
     companion object {
         private const val TAG = "DisplayAudioPlayer"
@@ -86,15 +92,16 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private lateinit var albumCover: View
 
     /* Bar Player */
-    private lateinit var bar_body: View
-    private lateinit var bar_image: ImageView
-    private lateinit var bar_title: TextView
-    private lateinit var bar_subtitle: TextView
-    private lateinit var bar_prev: ImageView
-    private lateinit var bar_play: ImageView
-    private lateinit var bar_next: ImageView
-    private lateinit var bar_close: ImageView
-    private lateinit var bar_progress: SeekBar
+    private lateinit var barPlayer: View
+    private lateinit var barBody: View
+    private lateinit var barImage: ImageView
+    private lateinit var barTitle: TextView
+    private lateinit var barSubtitle: TextView
+    private lateinit var barPrev: ImageView
+    private lateinit var barPlay: ImageView
+    private lateinit var barNext: ImageView
+    private lateinit var barClose: ImageView
+    private lateinit var barProgress: SeekBar
 
     private val gson = Gson()
 
@@ -110,6 +117,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private var audioPlayerItem: AudioPlayer? = null
 
     private var currOrientation = ORIENTATION_UNDEFINED
+
+    private var isDark: Boolean = false
 
     private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
         return try {
@@ -127,6 +136,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                     observeMediaState()
                     setClientListener(mediaListener)
                     getNuguClient().audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
+                    getNuguClient().themeManager.addListener(this@DisplayAudioPlayer)
+
+                    updateThemeIfNeeded()
                 }
             }
         }
@@ -137,10 +149,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 mediaPlaying = activity == AudioPlayerAgentInterface.State.PLAYING
                 if (mediaPlaying) {
                     play.setImageResource(R.drawable.nugu_btn_pause_48)
-                    bar_play.setImageResource(R.drawable.nugu_btn_pause_32)
+                    barPlay.setImageResource(R.drawable.nugu_btn_pause_32)
                 } else {
                     play.setImageResource(R.drawable.nugu_btn_play_48)
-                    bar_play.setImageResource(R.drawable.nugu_btn_play_32)
+                    barPlay.setImageResource(R.drawable.nugu_btn_play_32)
                 }
             }
         }
@@ -169,7 +181,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             post {
                 progressView.isEnabled = true
-                bar_progress.isEnabled = true
+                barProgress.isEnabled = true
                 updateCurrentTimeInfo(currentTimeMs, progress)
             }
         }
@@ -225,7 +237,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             if (mediaPlaying) {
                 play.post {
                     play.setImageResource(R.drawable.nugu_btn_pause_48)
-                    bar_play.setImageResource(R.drawable.nugu_btn_pause_32)
+                    barPlay.setImageResource(R.drawable.nugu_btn_pause_32)
                 }
             }
 
@@ -280,7 +292,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    private fun initView() {
+    private fun initViews() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             findViewById<View>(R.id.album_cover)?.elevation = dpToPx(11f, context).toFloat()
         }
@@ -293,13 +305,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             header.ellipsize = TextUtils.TruncateAt.END
         }
 
-        bar_title.enableMarquee()
+        barTitle.enableMarquee()
 
         collapsed.setThrottledOnClickListener {
             collapse()
         }
 
-        bar_body.setThrottledOnClickListener {
+        barBody.setThrottledOnClickListener {
             expand()
         }
 
@@ -319,7 +331,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             templateHandler?.onPlayerCommand(PlayerCommand.PREV.command)
         }
 
-        bar_prev.setThrottledOnClickListener {
+        barPrev.setThrottledOnClickListener {
             prev.callOnClick()
         }
 
@@ -331,7 +343,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
         }
 
-        bar_play.setThrottledOnClickListener {
+        barPlay.setThrottledOnClickListener {
             play.performClick()
         }
 
@@ -339,11 +351,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             templateHandler?.onPlayerCommand(PlayerCommand.NEXT.command)
         }
 
-        bar_next.setThrottledOnClickListener {
+        barNext.setThrottledOnClickListener {
             next.performClick()
         }
 
-        bar_close.setThrottledOnClickListener {
+        barClose.setThrottledOnClickListener {
             close.performClick()
         }
 
@@ -358,12 +370,17 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         progressView.setOnTouchListener { _, _ -> true }
     }
 
+    /**
+     * @param isRefresh : Whether Player is newly created or not.
+    If it is true, Player is not newly created and just update content views.
+     */
     private fun setContentView(isRefresh: Boolean = false) {
         var savedState: SavedStates? = null
         val isFavoriteSelected = if (isRefresh) favoriteView.isSelected else false
         val isShuffle = if (isRefresh) shuffleView.isSelected else false
         val repeatInfo = if (isRefresh) repeatView.getTag(R.id.iv_repeat) else Unit
 
+        // if isRefresh, save current state to restore after setContentView
         if (isRefresh) {
             savedState = SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
                 mediaDurationMs,
@@ -379,9 +396,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             setContentView(R.layout.view_display_audioplayer_land)
         }
 
-        refreshView()
+        setViews()
+        initViews()
 
-        initView()
+        // if isRefresh, restore previous state which is saved just before
         if (isRefresh) {
             audioPlayerItem?.run {
                 load(this, false)
@@ -389,20 +407,20 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             onRestoreInstanceState(savedState)
 
-            repeatInfo?.let {
-                when (it) {
-                    Repeat.ALL -> repeatView.setImageResource(R.drawable.nugu_btn_repeat)
-                    Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
-                    Repeat.NONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
-                }
+            (repeatInfo as? Repeat)?.let {
+                setRepeatMode(it)
             }
-            shuffleView.isSelected = isShuffle
+
+            setShuffle(isShuffle)
+
             favoriteView.isSelected = isFavoriteSelected
         }
+
+        updateThemeIfNeeded()
     }
 
-    override fun refreshView() {
-        super.refreshView()
+    override fun setViews() {
+        super.setViews()
 
         player = findViewById<View>(R.id.view_music_player)
         imageView = findViewById(R.id.iv_image)
@@ -427,15 +445,16 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         albumCover = findViewById<View>(R.id.album_cover)
 
         /* Bar Player */
-        bar_body = findViewById<View>(R.id.bar_body)
-        bar_image = findViewById(R.id.iv_bar_image)
-        bar_title = findViewById(R.id.tv_bar_title)
-        bar_subtitle = findViewById(R.id.tv_bar_subtitle)
-        bar_prev = findViewById(R.id.btn_bar_prev)
-        bar_play = findViewById(R.id.btn_bar_play)
-        bar_next = findViewById(R.id.btn_bar_next)
-        bar_close = findViewById(R.id.btn_bar_close)
-        bar_progress = findViewById(R.id.sb_bar_progress)
+        barPlayer = findViewById<View>(R.id.bar_player)
+        barBody = findViewById<View>(R.id.bar_body)
+        barImage = findViewById(R.id.iv_bar_image)
+        barTitle = findViewById(R.id.tv_bar_title)
+        barSubtitle = findViewById(R.id.tv_bar_subtitle)
+        barPrev = findViewById(R.id.btn_bar_prev)
+        barPlay = findViewById(R.id.btn_bar_play)
+        barNext = findViewById(R.id.btn_bar_next)
+        barClose = findViewById(R.id.btn_bar_close)
+        barProgress = findViewById(R.id.sb_bar_progress)
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
@@ -481,8 +500,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         item.title?.iconUrl.let {
             if (it.isNullOrBlank()) {
-                logoView.visibility = View.VISIBLE
-                logoView.setImageResource(LOGO_DEFAULT)
+                if (!isMerge) {
+                    logoView.visibility = View.VISIBLE
+                    logoView.setImageResource(LOGO_DEFAULT)
+                }
             } else {
                 logoView.updateImage(it, thumbTransformCorner2, isMerge, placeHolder = LOGO_PLACE_HOLDER, loadingFailImage = LOGO_DEFAULT)
             }
@@ -498,13 +519,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             if (durationSec != null) {
                 progressView.isEnabled = true
-                bar_progress.isEnabled = true
+                barProgress.isEnabled = true
                 playtime.updateText(TemplateUtils.convertToTime(0), isMerge)
             } else if (!isMerge) {
                 progressView.isEnabled = false
                 progressView.visibility = View.INVISIBLE
-                bar_progress.isEnabled = false
-                bar_progress.visibility = View.INVISIBLE
+                barProgress.isEnabled = false
+                barProgress.visibility = View.INVISIBLE
                 playtime.visibility = View.INVISIBLE
                 fulltime.visibility = View.INVISIBLE
             }
@@ -536,9 +557,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 smallLyricsView.visibility = View.GONE
             }
 
-            bar_image.updateImage(imageUrl, thumbTransformCorner2, isMerge)
-            bar_title.updateText(title, isMerge)
-            bar_subtitle.updateText(subtitle1, isMerge)
+            barImage.updateImage(imageUrl, thumbTransformCorner2, isMerge)
+            barTitle.updateText(title, isMerge)
+            barSubtitle.updateText(subtitle1, isMerge)
         }
 
         item.content?.settings?.run {
@@ -553,11 +574,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
 
             repeat?.let {
-                when (it) {
-                    Repeat.ALL -> repeatView.setImageResource(R.drawable.nugu_btn_repeat)
-                    Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
-                    Repeat.NONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
-                }
+                setRepeatMode(it)
                 repeatView.setTag(R.id.iv_repeat, repeat)
                 repeatView.setThrottledOnClickListener { _ ->
                     templateHandler?.onPlayerCommand(PlayerCommand.REPEAT.command, it.name)
@@ -565,12 +582,78 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
 
             shuffle?.let {
-                shuffleView.isSelected = it
+                setShuffle(it)
             }
         }
 
         if (player.visibility != View.VISIBLE) {
             collapse(true)
+        }
+    }
+
+    override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
+        updateThemeIfNeeded()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        newConfig ?: return
+        updateThemeIfNeeded()
+    }
+
+    private fun updateThemeIfNeeded() {
+        fun update() {
+            player.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
+            titleView.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_title_dark else R.color.media_template_text_title_light))
+            header.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
+            body.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_body_dark else R.color.media_template_text_body_light))
+            footer.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_footer_dark else R.color.media_template_text_footer_light))
+            progressView.setBackgroundColor(resources.genColor(if (isDark) R.color.white_40 else R.color.black_10))
+
+            barPlayer.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
+            barTitle.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
+            barSubtitle.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_body_dark else R.color.media_template_text_body_light))
+
+            lyricsView.isDark = isDark
+            smallLyricsView.isDark = isDark
+
+            setShuffle(shuffleView.isSelected)
+            (repeatView.getTag(R.id.iv_repeat) as? Repeat)?.apply(::setRepeatMode)
+
+            if (isDark) {
+                collapsed.setColorFilter(resources.genColor(R.color.media_title_button_filter), PorterDuff.Mode.SRC_IN)
+                close.setColorFilter(resources.genColor(R.color.media_title_button_filter), PorterDuff.Mode.SRC_IN)
+
+                next.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                prev.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                play.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+
+                barPlay.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                barPrev.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                barNext.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+            } else {
+                collapsed.colorFilter = null
+                close.colorFilter = null
+
+                next.colorFilter = null
+                prev.colorFilter = null
+                play.colorFilter = null
+
+                barPlay.colorFilter = null
+                barPrev.colorFilter = null
+                barNext.colorFilter = null
+            }
+        }
+
+        (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.run {
+            val newIsDark = theme == DARK ||
+                    (theme == SYSTEM && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
+            Logger.d(TAG, "updateThemeIfNeeded. currentTheme $theme current isDark? $isDark,  new isDark? $newIsDark")
+
+            if (isDark != newIsDark) {
+                isDark = newIsDark
+                update()
+            }
         }
     }
 
@@ -586,7 +669,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
             }
             progressView.progress = p.toInt()
-            bar_progress.progress = p.toInt()
+            barProgress.progress = p.toInt()
             lyricsView.setCurrentTimeMs(currentTimeMs)
             smallLyricsView.setCurrentTimeMs(currentTimeMs)
         }
@@ -666,11 +749,39 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
                 getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
+
+            getNuguClient().themeManager.removeListener(this@DisplayAudioPlayer)
         }
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
         (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.localStopTTS()
         return super.onInterceptTouchEvent(ev)
+    }
+
+    private fun setShuffle(shuffle: Boolean) {
+        with(shuffleView) {
+            isSelected = shuffle
+            if (isDark && !isSelected) {
+                setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+            } else {
+                colorFilter = null
+            }
+        }
+    }
+
+    private fun setRepeatMode(repeat: Repeat) {
+        when (repeat) {
+            Repeat.ALL -> repeatView.setImageResource(R.drawable.nugu_btn_repeat)
+            Repeat.ONE -> repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
+            Repeat.NONE -> {
+                repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
+                if (isDark) {
+                    repeatView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                } else {
+                    repeatView.colorFilter = null
+                }
+            }
+        }
     }
 }
