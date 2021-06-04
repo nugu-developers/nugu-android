@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 1.2.1 *(2021-06-04)*
+-----------------------------
+* Fix: Change the NuguWebView setCookie url to host (#1891)
+* Improve: Update VoiceChrome policy (#1862)
+* Improve: support dark mode design (#1887)
+    * native media player
+* Improve: Update SilverTray v4.3.4 (#1894)
+* Improve: Update SilverTray v4.3.6 (#1897)
+* New: Support Battery Interface v1.1 (#1865)
+
 Version 1.2.0 *(2021-05-28)*
 -----------------------------
 * Fix: Fix missing initiator at context (#1877)
