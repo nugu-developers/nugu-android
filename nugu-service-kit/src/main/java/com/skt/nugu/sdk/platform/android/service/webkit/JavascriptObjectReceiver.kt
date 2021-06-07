@@ -15,11 +15,13 @@
  */
 package com.skt.nugu.sdk.platform.android.service.webkit
 
+import android.annotation.SuppressLint
 import android.webkit.JavascriptInterface
 import androidx.annotation.Keep
 import com.google.gson.JsonObject
 
-internal class JavascriptObjectReceiver(val listener: Listener) {
+@SuppressLint("VisibleForTests")
+class JavascriptObjectReceiver(val listener: Listener) {
     private val gson = com.google.gson.Gson()
 
     interface Listener {
