@@ -15,8 +15,11 @@
  */
 package com.skt.nugu.sdk.platform.android.service.webkit
 
+import androidx.annotation.VisibleForTesting
+
 object JavaScriptHelper {
-    private const val JAVASCRIPT_ON_ROUTINE_STATUS_CHANGED = "javascript:onRoutineStatusChanged('%s', '%s');"
+    @VisibleForTesting
+    const val JAVASCRIPT_ON_ROUTINE_STATUS_CHANGED = "javascript:onRoutineStatusChanged('%s', '%s');"
     fun formatOnRoutineStatusChanged(token: String, status: String): String {
         return JAVASCRIPT_ON_ROUTINE_STATUS_CHANGED.format(token, status)
     }
