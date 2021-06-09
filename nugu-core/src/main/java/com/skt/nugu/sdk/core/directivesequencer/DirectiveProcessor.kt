@@ -42,6 +42,7 @@ class DirectiveProcessor(
         private val directive: Directive
     ) : com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult {
         override fun setCompleted() {
+            Logger.d(TAG, "[setCompleted] directive: ${directive.getMessageId()}")
             listeners.forEach {
                 it.onCompleted(directive)
             }
@@ -52,6 +53,7 @@ class DirectiveProcessor(
             description: String,
             cancelPolicy: com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult.CancelPolicy
         ) {
+            Logger.d(TAG, "[setFailed] directive: ${directive.getMessageId()}, description: $description, cancelPolicy: $cancelPolicy")
             listeners.forEach {
                 it.onFailed(directive, description)
             }

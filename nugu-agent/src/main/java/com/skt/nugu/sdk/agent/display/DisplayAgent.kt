@@ -333,7 +333,7 @@ class DisplayAgent(
                     return@submit
                 }
 
-                Logger.d(TAG, "[onRendered] ${it.getTemplateId()}")
+                Logger.d(TAG, "[onRendered] ${it.getTemplateId()}, resultListener: ${it.renderResultListener}")
                 renderedInfo.add(it)
                 playSynchronizer.let {synchronizer ->
                     contextLayerTimer?.get(it.payload.getContextLayerInternal())?.stop(templateId)
