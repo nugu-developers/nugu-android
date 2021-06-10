@@ -1055,8 +1055,10 @@ class DefaultASRAgent(
 
     private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
         currentSpeechRecognizer.stop(cancel, cause)
-        expectSpeechDirectiveParam?.let {
-            executeCancelExpectSpeechDirective(it.directive.header.messageId)
+        if(cancel) {
+            expectSpeechDirectiveParam?.let {
+                executeCancelExpectSpeechDirective(it.directive.header.messageId)
+            }
         }
     }
 
