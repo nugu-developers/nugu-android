@@ -7,11 +7,6 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
  * The response errors return a description as defined in the spec: [https://developers-doc.nugu.co.kr/nugu-sdk/authentication]
  */
 fun NuguOAuthError.toResId(): Int {
-    if (error == NuguOAuthError.NETWORK_ERROR) {
-        httpCode?.let {
-            return R.string.device_gw_error_002
-        } ?: return R.string.device_gw_error_001
-    }
     return when (code) {
         NuguOAuthError.USER_ACCOUNT_CLOSED -> {
             R.string.code_user_account_closed
@@ -45,6 +40,11 @@ fun NuguOAuthError.toResId(): Int {
                 }
                 NuguOAuthError.ACCESS_DENIED -> {
                     R.string.error_access_denied
+                }
+                NuguOAuthError.NETWORK_ERROR -> {
+                    httpCode?.let {
+                        R.string.device_gw_error_002
+                    } ?: R.string.device_gw_error_001
                 }
                 else -> {
                     R.string.device_gw_error_003
