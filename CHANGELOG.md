@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 1.2.2 *(2021-06-10)*
+-----------------------------
+* Fix: Prevent cancelling ExpectSpeech from stopRecognition(false) called. (#1905)
+* Improve: Update gRPC v1.38.0 (#1900)
+
 Version 1.2.1 *(2021-06-04)*
 -----------------------------
 * Fix: Change the NuguWebView setCookie url to host (#1891)
