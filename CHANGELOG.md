@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 1.2.3 *(2021-06-11)*
+-----------------------------
+* Fix: NuguWebview unusable after detached from window (#1909)
+* New: Add api to get context for RoutineAgent (#1911)
+
 Version 1.2.2 *(2021-06-10)*
 -----------------------------
 * Fix: Prevent cancelling ExpectSpeech from stopRecognition(false) called. (#1905)
