@@ -22,6 +22,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
 import android.util.Log
@@ -131,6 +132,26 @@ class NuguWebView @JvmOverloads constructor(
         webView.post {
             webView.loadUrl(url)
         }
+    }
+
+    fun saveState(outState: Bundle) {
+        webView.saveState(outState)
+    }
+
+    fun restoreState(inState: Bundle) {
+        webView.restoreState(inState)
+    }
+
+    fun clearHistory() {
+        webView.clearHistory()
+    }
+
+    fun clearCache(includeDiskFiles: Boolean) {
+        webView.clearCache(includeDiskFiles)
+    }
+
+    fun destroy() {
+        webView.destroy()
     }
 
     override fun openExternalApp(androidScheme: String?, androidAppId: String?) {
