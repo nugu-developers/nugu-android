@@ -64,6 +64,11 @@ class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListene
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        webView.destroy()
+    }
+
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         webView.onNewIntent(intent)
