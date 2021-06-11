@@ -37,7 +37,6 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
 
@@ -63,10 +62,7 @@ class RoutineAgent(
     }
 
     internal data class StateContext(
-        private val token: String?,
-        private val routineActivity: RoutineAgentInterface.State,
-        private val currentAction: Int?,
-        private val actions: Array<Action>?
+        val context: RoutineAgentInterface.Context
     ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -81,14 +77,14 @@ class RoutineAgent(
         }
 
         override fun value(): String = buildCompactContext().apply {
-            token?.let {
+            context.token?.let {
                 addProperty("token", it)
             }
-            addProperty("routineActivity", routineActivity.name)
-            currentAction?.let {
+            addProperty("routineActivity", context.routineActivity.name)
+            context.currentAction?.let {
                 addProperty("currentAction", it)
             }
-            actions?.let {
+            context.actions?.let {
                 add("actions", JsonArray().apply {
                     it.forEach {
                         add(it.toJsonObject())
@@ -96,31 +92,6 @@ class RoutineAgent(
                 })
             }
         }.toString()
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as StateContext
-
-            if (token != other.token) return false
-            if (routineActivity != other.routineActivity) return false
-            if (currentAction != other.currentAction) return false
-            if (actions != null) {
-                if (other.actions == null) return false
-                if (!actions.contentEquals(other.actions)) return false
-            } else if (other.actions != null) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = token?.hashCode() ?: 0
-            result = 31 * result + routineActivity.hashCode()
-            result = 31 * result + (currentAction?.hashCode() ?: 0)
-            result = 31 * result + (actions?.contentHashCode() ?: 0)
-            return result
-        }
     }
 
     interface RoutineRequestListener {
@@ -492,23 +463,9 @@ class RoutineAgent(
             "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
         )
 
-        val request = currentRoutineRequest
-        val context = if (request == null) {
-            StateContext(
-                null, state, null, null
-            )
-        } else {
-            StateContext(
-                request.directive.payload.token,
-                state,
-                request.getCurrentActionIndex() + 1,
-                request.directive.payload.actions
-            )
-        }
-
         contextSetter.setState(
             namespaceAndName,
-            context,
+            StateContext(getContext()),
             StateRefreshPolicy.ALWAYS,
             contextType,
             stateRequestToken
@@ -693,7 +650,10 @@ class RoutineAgent(
         }
     }
 
-    private fun commandInternal(token: String, command: (request: RoutineRequest) -> Unit): Boolean {
+    private fun commandInternal(
+        token: String,
+        command: (request: RoutineRequest) -> Unit
+    ): Boolean {
         val request = currentRoutineRequest
         if (request != null) {
             if (request.directive.payload.token == token) {
@@ -715,6 +675,19 @@ class RoutineAgent(
     }
 
     override fun getState(): RoutineAgentInterface.State = state
+    override fun getContext(): RoutineAgentInterface.Context {
+        val request = currentRoutineRequest
+        return if (request == null) {
+            RoutineAgentInterface.Context(null, state, null, null)
+        } else {
+            RoutineAgentInterface.Context(
+                request.directive.payload.token,
+                state,
+                request.getCurrentActionIndex() + 1,
+                request.directive.payload.actions
+            )
+        }
+    }
 
     override fun addListener(listener: RoutineAgentInterface.RoutineListener) {
         listeners.add(listener)

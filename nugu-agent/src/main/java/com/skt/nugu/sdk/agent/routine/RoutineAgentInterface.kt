@@ -33,6 +33,11 @@ interface RoutineAgentInterface {
     fun getState(): State
 
     /**
+     * Returns a current context
+     */
+    fun getContext(): Context
+
+    /**
      * Add listener for routine
      */
     fun addListener(listener: RoutineListener)
@@ -60,4 +65,36 @@ interface RoutineAgentInterface {
      * Stop a routine started by [directive]
      */
     fun stop(directive: StartDirectiveHandler.StartDirective): Boolean
+
+    data class Context(
+        val token: String?,
+        val routineActivity: State,
+        val currentAction: Int?,
+        val actions: Array<Action>?
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Context
+
+            if (token != other.token) return false
+            if (routineActivity != other.routineActivity) return false
+            if (currentAction != other.currentAction) return false
+            if (actions != null) {
+                if (other.actions == null) return false
+                if (!actions.contentEquals(other.actions)) return false
+            } else if (other.actions != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = token?.hashCode() ?: 0
+            result = 31 * result + routineActivity.hashCode()
+            result = 31 * result + (currentAction ?: 0)
+            result = 31 * result + (actions?.contentHashCode() ?: 0)
+            return result
+        }
+    }
 }
