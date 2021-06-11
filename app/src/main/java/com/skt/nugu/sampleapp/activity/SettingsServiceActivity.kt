@@ -77,6 +77,11 @@ class SettingsServiceActivity : AppCompatActivity(), NuguWebView.WindowListener 
         webView.onNewIntent(intent)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        webView.destroy()
+    }
+
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()
