@@ -218,8 +218,6 @@ class NuguWebView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         webView.removeJavascriptInterface(JS_INTERFACE_NAME)
-        webView.removeAllViews()
-        webView.destroy()
     }
 
     @Deprecated(
