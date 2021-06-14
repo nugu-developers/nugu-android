@@ -40,7 +40,7 @@ class NudgeAgent(
     DirectiveGroupProcessorInterface.Listener {
 
     companion object {
-        private const val TAG = "NudgeAgent"
+        internal const val TAG = "NudgeAgent"
         const val NAMESPACE = "Nudge"
 
         val VERSION = Version(1, 0)
@@ -73,7 +73,7 @@ class NudgeAgent(
     )
 
     private val executor = Executors.newSingleThreadExecutor()
-    private var nudgeData: NudgeData? = null
+    internal var nudgeData: NudgeData? = null
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
@@ -134,7 +134,7 @@ class NudgeAgent(
         }
     }
 
-    private fun clearNudgeData() {
+    internal fun clearNudgeData() {
         executor.submit {
             Logger.d(TAG, "clearNudgeData")
             nudgeData = null
@@ -154,10 +154,10 @@ class NudgeAgent(
 
         Logger.d(TAG, "onDirectiveGroupPreProcessed(). nudgeDirective :  $nudgeDirective")
 
-        nudgeDirective?.let { nudgeDirective ->
+        nudgeDirective?.let {
             executor.submit {
                 nudgeData = NudgeData(null,
-                    nudgeDirective.getDialogRequestId(),
+                    it.getDialogRequestId(),
                     isExpectSpeechDirectiveExist(),
                     isSpeakTTSDirectiveExist(),
                     isDisplayDirectiveExist())

@@ -26,7 +26,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 class NudgeDirectiveHandler(private val nudgeDirectiveObserver: NudgeDirectiveObserver) : AbstractDirectiveHandler() {
 
     companion object {
-        private const val NAME_DIRECTIVE = "Append"
+        internal const val NAME_DIRECTIVE = "Append"
 
         private val APPEND = NamespaceAndName(NudgeAgent.NAMESPACE, NAME_DIRECTIVE)
 
@@ -48,7 +48,7 @@ class NudgeDirectiveHandler(private val nudgeDirectiveObserver: NudgeDirectiveOb
 
     override fun handleDirective(info: DirectiveInfo) {
         val payload = MessageFactory.create(info.directive.payload, Payload::class.java)
-        if (payload == null) {
+        if (payload?.nudgeInfo == null) {
             info.result.setFailed("Invalid Payload")
         } else {
             info.result.setCompleted()
