@@ -19,15 +19,14 @@ class TemplateViewModel : ViewModel() {
     var templateHandler: TemplateHandler? = null
 
     fun mergeTemplate(template: String, newTemplate: String): String {
-        val savedTemplate = JsonParser.parseString(template).asJsonObject
-        val updatedTemplate = JsonParser.parseString(newTemplate).asJsonObject.run {
-            when (this.has("template")) {
-                true -> this.get("template").asJsonObject
-                false -> this
-            }
-        }
-
         return runCatching {
+            val savedTemplate = JsonParser.parseString(template).asJsonObject
+            val updatedTemplate = JsonParser.parseString(newTemplate).asJsonObject.run {
+                when (this.has("template")) {
+                    true -> this.get("template").asJsonObject
+                    false -> this
+                }
+            }
             deepMerge(updatedTemplate, savedTemplate).toString()
         }.getOrNull().run {
             this ?: template
