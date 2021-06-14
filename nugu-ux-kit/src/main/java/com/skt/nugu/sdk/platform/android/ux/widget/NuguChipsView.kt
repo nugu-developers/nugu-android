@@ -61,14 +61,14 @@ class NuguChipsView @JvmOverloads constructor(
     companion object {
         private val DEFAULT_TEXT_COLOR = Color.parseColor("#404858")
         private val DEFAULT_HIGHLIGHT_TEXT_COLOR = Color.parseColor("#009DFF")
+        private val DEFAULT_DRAWABLE_RESOURCE_ID =  R.drawable.nugu_chips_button_light_selector
     }
 
     private val adapter = AdapterChips(context)
 
-    private val NO_COLOR = 0
-    private var defaultColor: Int = NO_COLOR
-    private var highlightColor: Int = NO_COLOR
-    private var defaultBackground: Drawable? = null
+    private var defaultColor: Int = DEFAULT_TEXT_COLOR
+    private var highlightColor: Int = DEFAULT_HIGHLIGHT_TEXT_COLOR
+    private var defaultDrawableId: Int = DEFAULT_DRAWABLE_RESOURCE_ID
     private var isDark = false
 
     /**
@@ -209,12 +209,6 @@ class NuguChipsView @JvmOverloads constructor(
         override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ChipsViewHolder {
             val layout = if (viewType == Chip.Type.NUDGE.ordinal) R.layout.item_text_nudge else R.layout.item_text
             val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(layout, viewGroup, false))
-            if (defaultColor == NO_COLOR) {
-                defaultColor = viewHolder.titleView.textColors.defaultColor
-            }
-            if (highlightColor == NO_COLOR) {
-                highlightColor = viewHolder.titleView.highlightColor
-            }
             return viewHolder
         }
 
@@ -249,11 +243,11 @@ class NuguChipsView @JvmOverloads constructor(
                 }
                 Chip.Type.ACTION -> {
                     holder.titleView.setTextColor(highlightColor)
-                    defaultBackground?.apply(holder.titleView::setBackground)
+                    holder.titleView.setBackgroundResource(defaultDrawableId)
                 }
                 else -> {
                     holder.titleView.setTextColor(defaultColor)
-                    defaultBackground?.apply(holder.titleView::setBackground)
+                    holder.titleView.setBackgroundResource(defaultDrawableId)
                 }
             }
             holder.titleView.setThrottledOnClickListener {
@@ -322,7 +316,7 @@ class NuguChipsView @JvmOverloads constructor(
         try {
             defaultColor = a.getColor(0, DEFAULT_TEXT_COLOR)
             highlightColor = a.getColor(1, DEFAULT_HIGHLIGHT_TEXT_COLOR)
-            defaultBackground = a.getDrawable(2)
+            defaultDrawableId = a.getResourceId(2, DEFAULT_DRAWABLE_RESOURCE_ID)
         } finally {
             a.recycle()
         }
