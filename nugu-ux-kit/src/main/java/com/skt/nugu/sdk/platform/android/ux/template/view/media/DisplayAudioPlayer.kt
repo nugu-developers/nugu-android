@@ -395,6 +395,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         } else {
             setContentView(R.layout.view_display_audioplayer_land)
         }
+        isDark = false // initialize
 
         setViews()
         initViews()
