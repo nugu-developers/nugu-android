@@ -649,7 +649,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.run {
             val newIsDark = theme == DARK ||
                     (theme == SYSTEM && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
-            Logger.d(TAG, "updateThemeIfNeeded. currentTheme $theme current isDark? $isDark,  new isDark? $newIsDark")
+            Logger.i(TAG, "updateThemeIfNeeded. currentTheme $theme current isDark? $isDark,  new isDark? $newIsDark")
 
             if (isDark != newIsDark) {
                 isDark = newIsDark
