@@ -27,7 +27,10 @@ import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-open class DefaultTemplateHandler(val nuguProvider: TemplateRenderer.NuguClientProvider, override var templateInfo: TemplateHandler.TemplateInfo) :
+/**
+ * TemplateHandler focused on Media state observing and interaction with NUGU
+ */
+open class DefaultTemplateHandler(private val nuguProvider: TemplateRenderer.NuguClientProvider, override var templateInfo: TemplateHandler.TemplateInfo) :
     TemplateHandler {
 
     companion object {

@@ -166,7 +166,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             fulltime.post {
                 mediaDurationMs = durationMs
-                fulltime.updateText(TemplateUtils.convertToTimeMs(durationMs.toInt()), true)
+                fulltime.updateText(convertToTimeMs(durationMs.toInt()), true)
             }
         }
 
@@ -227,7 +227,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             fulltime.post {
                 if (fulltime.visibility == View.VISIBLE) {
-                    fulltime.updateText(TemplateUtils.convertToTimeMs(mediaDurationMs.toInt()), true)
+                    fulltime.updateText(convertToTimeMs(mediaDurationMs.toInt()), true)
                 }
                 lyricsView.visibility = if (savedState.isLyricShowing == 1) View.VISIBLE else View.GONE
 
@@ -520,7 +520,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             if (durationSec != null) {
                 progressView.isEnabled = true
                 barProgress.isEnabled = true
-                playtime.updateText(TemplateUtils.convertToTime(0), isMerge)
+                playtime.updateText(convertToTime(0), isMerge)
             } else if (!isMerge) {
                 progressView.isEnabled = false
                 progressView.visibility = View.INVISIBLE
@@ -666,7 +666,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         playtime.post {
             if (playtime.visibility == View.VISIBLE) {
-                playtime.updateText(TemplateUtils.convertToTimeMs(currentTimeMs.toInt()), true)
+                playtime.updateText(convertToTimeMs(currentTimeMs.toInt()), true)
             }
             progressView.progress = p.toInt()
             barProgress.progress = p.toInt()

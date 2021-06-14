@@ -28,7 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.platform.android.ux.R
-import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils.Companion.dpToPixel
+import com.skt.nugu.sdk.platform.android.ux.template.dpToPixel
 import com.skt.nugu.sdk.platform.android.ux.template.enableMarquee
 import com.skt.nugu.sdk.platform.android.ux.template.genColor
 import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
@@ -52,7 +52,8 @@ class LyricsView @JvmOverloads constructor(
 
     private var enableAutoScroll = true
 
-    private var viewSize = SIZE_STANDARD
+    internal var viewSize = SIZE_STANDARD
+        private set
 
     var isDark = false
         set(value) {
@@ -159,6 +160,7 @@ class LyricsView @JvmOverloads constructor(
         if (visibility != View.VISIBLE) {
             return
         }
+
         var foundIndex = -1
         lyrics.forEachIndexed { index, it ->
             if (millis < it.time ?: 0 && foundIndex == -1) {
@@ -173,7 +175,7 @@ class LyricsView @JvmOverloads constructor(
         }
     }
 
-    private fun scrollToCenter(index: Int) {
+    internal fun scrollToCenter(index: Int) {
         if (!enableAutoScroll) {
             return
         }
@@ -205,7 +207,7 @@ class LyricsView @JvmOverloads constructor(
         layoutManager.scrollToPositionWithOffset(targetPosition, 0)
     }
 
-    private fun update() {
+    internal fun update() {
         emptyView.visibility = if (lyrics.size == 0) {
             View.VISIBLE
         } else {
