@@ -1,13 +1,17 @@
-package com.skt.nugu.sdk.platform.android.ux.template.presenter
+package com.skt.nugu.sdk.platform.android.ux.template.controller
 
 import android.content.Intent
 import android.widget.Toast
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import java.lang.ref.WeakReference
 
-class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: TemplateFragment) :
+/**
+ * TemplateHandler focused on interaction with Android component such as Fragment
+ */
+open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: TemplateFragment) :
     DefaultTemplateHandler(nuguProvider, templateInfo) {
     companion object {
         private const val TAG = "BasicTemplateHandler"

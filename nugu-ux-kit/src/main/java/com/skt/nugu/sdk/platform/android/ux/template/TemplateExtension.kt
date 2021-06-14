@@ -35,7 +35,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.model.Source
 fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout: Boolean = false) {
     if (isMerge && text.isNullOrBlank()) return
 
-    this.text = TemplateUtils.getSpannable(text)
+    this.text = getSpannable(text)
     visibility = if (text != null) {
         View.VISIBLE
     } else {
@@ -65,7 +65,7 @@ private fun String.setText(widget: TextView?) {
         return
     }
     widget?.visibility = View.VISIBLE
-    widget?.text = TemplateUtils.getSpannable(this)
+    widget?.text = getSpannable(this)
 }
 
 interface RequestListener {

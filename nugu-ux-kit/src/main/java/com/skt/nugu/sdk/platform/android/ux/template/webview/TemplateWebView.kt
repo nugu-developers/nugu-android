@@ -39,10 +39,11 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
 import com.skt.nugu.sdk.platform.android.ux.R
-import com.skt.nugu.sdk.platform.android.ux.template.TemplateUtils
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.isSupportFocusedItemToken
+import com.skt.nugu.sdk.platform.android.ux.template.isSupportVisibleTokenList
 import com.skt.nugu.sdk.platform.android.ux.template.model.ClientInfo
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
@@ -175,11 +176,10 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
-        Logger.d(TAG, "load() currentTheme ${clientInfo.theme} ")
+        Logger.d(TAG, "load() currentTheme ${clientInfo.theme}")
 
         this.onLoadingComplete = onLoadingComplete
-        isSupportVisibleOrFocusedToken =
-            TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
+        isSupportVisibleOrFocusedToken = isSupportFocusedItemToken(templateContent) || isSupportVisibleTokenList(templateContent)
 
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -209,8 +209,7 @@ class TemplateWebView @JvmOverloads constructor(
         Logger.d(TAG, "update() $templateContent")
 
         this.onLoadingComplete = onLoadingComplete
-        isSupportVisibleOrFocusedToken =
-            TemplateUtils.isSupportFocusedItemToken(templateContent) || TemplateUtils.isSupportVisibleTokenList(templateContent)
+        isSupportVisibleOrFocusedToken = isSupportFocusedItemToken(templateContent) || isSupportVisibleTokenList(templateContent)
 
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
