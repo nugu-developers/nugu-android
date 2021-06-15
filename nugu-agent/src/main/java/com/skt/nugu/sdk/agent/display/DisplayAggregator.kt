@@ -131,12 +131,12 @@ class DisplayAggregator(
             DisplayAgentInterface.ContextLayer.MEDIA -> DisplayAggregatorInterface.Type.AUDIO_PLAYER
             DisplayAgentInterface.ContextLayer.ALERT -> DisplayAggregatorInterface.Type.ALERT
             DisplayAgentInterface.ContextLayer.CALL -> DisplayAggregatorInterface.Type.CALL
-            else -> DisplayAggregatorInterface.Type.INFOMATION
+            else -> DisplayAggregatorInterface.Type.INFORMATION
         }
 
         // for backward compatibility
-        return if(layer == DisplayAggregatorInterface.Type.INFOMATION) {
-            displayTypeMap.remove(header.dialogRequestId) ?: DisplayAggregatorInterface.Type.INFOMATION
+        return if(layer == DisplayAggregatorInterface.Type.INFORMATION) {
+            displayTypeMap.remove(header.dialogRequestId) ?: DisplayAggregatorInterface.Type.INFORMATION
         } else {
             layer
         }

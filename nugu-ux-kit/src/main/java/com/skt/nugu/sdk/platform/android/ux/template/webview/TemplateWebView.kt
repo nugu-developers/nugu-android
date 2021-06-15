@@ -19,16 +19,14 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
+import android.net.http.SslError
 import android.os.Build
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.webkit.JavascriptInterface
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
+import android.webkit.*
 import android.widget.ImageView
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -52,6 +50,7 @@ import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.fixedRateTimer
 
 @SuppressLint("ClickableViewAccessibility")
@@ -77,6 +76,8 @@ class TemplateWebView @JvmOverloads constructor(
     private val clientInfo = ClientInfo()
 
     private var templateUrl = defaultTemplateServerUrl
+
+    private var loadingFailNotified = AtomicBoolean(false)
 
     override var templateHandler: TemplateHandler? = null
         set(value) {
@@ -175,7 +176,13 @@ class TemplateWebView @JvmOverloads constructor(
         templateUrl = url
     }
 
-    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
+    override fun load(
+        templateContent: String,
+        deviceTypeCode: String,
+        dialogRequestId: String,
+        onLoadingComplete: (() -> Unit)?,
+        onLoadingFail: ((String?) -> Unit)?
+    ) {
         Logger.d(TAG, "load() currentTheme ${clientInfo.theme}")
 
         this.onLoadingComplete = onLoadingComplete
@@ -184,9 +191,54 @@ class TemplateWebView @JvmOverloads constructor(
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
-                if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
+                if (newProgress == 100 && !isSupportVisibleOrFocusedToken && !loadingFailNotified.get()) {
                     this@TemplateWebView.onLoadingComplete?.invoke()
                     this@TemplateWebView.onLoadingComplete = null
+                }
+            }
+        }
+
+        webViewClient = object : WebViewClient() {
+            override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                super.onReceivedError(view, errorCode, description, failingUrl)
+                Logger.d(TAG, "onReceivedError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, $errorCode, $description")
+
+                onLoadingFail?.run {
+                    if (loadingFailNotified.compareAndSet(false, true)) {
+                        invoke(description)
+                    }
+                }
+            }
+
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                super.onReceivedError(view, request, error)
+                Logger.d(TAG, "onReceivedError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}," +
+                        " ${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) error?.description else error?.toString()}")
+                onLoadingFail?.run {
+                    if (loadingFailNotified.compareAndSet(false, true)) {
+                        invoke(error.toString())
+                    }
+                }
+            }
+
+            override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                Logger.d(TAG,
+                    "onReceivedHttpError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, ${errorResponse.toString()}")
+                onLoadingFail?.run {
+                    if (loadingFailNotified.compareAndSet(false, true)) {
+                        invoke(errorResponse.toString())
+                    }
+                }
+            }
+
+            override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                super.onReceivedSslError(view, handler, error)
+                Logger.d(TAG, "onReceivedSslError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, ${error.toString()}")
+                onLoadingFail?.run {
+                    if (loadingFailNotified.compareAndSet(false, true)) {
+                        invoke(error.toString())
+                    }
                 }
             }
         }
@@ -205,21 +257,11 @@ class TemplateWebView @JvmOverloads constructor(
         }.toByteArray())
     }
 
-    override fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)?) {
+    override fun update(templateContent: String, dialogRequestedId: String) {
         Logger.d(TAG, "update() $templateContent")
 
         this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken = isSupportFocusedItemToken(templateContent) || isSupportVisibleTokenList(templateContent)
-
-        webChromeClient = object : WebChromeClient() {
-            override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
-                if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
-                    this@TemplateWebView.onLoadingComplete?.invoke()
-                    this@TemplateWebView.onLoadingComplete = null
-                }
-            }
-        }
 
         callJSFunction(JavaScriptHelper.updateDisplay(templateContent))
     }
@@ -330,7 +372,7 @@ class TemplateWebView @JvmOverloads constructor(
         fun onContextChanged(context: String) {
             Logger.d(TAG, "[onContextChanged] isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken \n context: $context")
 
-            if (isSupportVisibleOrFocusedToken) {
+            if (isSupportVisibleOrFocusedToken && !loadingFailNotified.get()) {
                 onLoadingComplete?.invoke()
                 onLoadingComplete = null
             }

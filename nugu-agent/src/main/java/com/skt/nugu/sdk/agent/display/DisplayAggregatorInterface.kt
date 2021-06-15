@@ -31,7 +31,7 @@ interface DisplayAggregatorInterface:
      */
     enum class Type {
         AUDIO_PLAYER,
-        INFOMATION,
+        INFORMATION,
         ALERT,
         CALL
     }
