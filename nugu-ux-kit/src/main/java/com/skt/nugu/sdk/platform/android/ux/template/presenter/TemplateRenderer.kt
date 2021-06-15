@@ -34,7 +34,7 @@ class TemplateRenderer(
         fun getNuguClient(): NuguAndroidClient
     }
 
-    interface TemplateListener {
+    interface TemplateLoadingListener {
         fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {}
         fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {}
     }
@@ -50,7 +50,7 @@ class TemplateRenderer(
         fun getVisibleList(): List<ViewInfo>?
     }
 
-    var templateListener: TemplateListener? = null
+    var templateLoadingListener: TemplateLoadingListener? = null
     private var fragmentManagerRef = WeakReference(fragmentManager)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val timer by lazy { Timer() }
@@ -105,7 +105,7 @@ class TemplateRenderer(
                         TemplateFragment.newInstance(
                             nuguProvider = nuguClientProvider,
                             externalRenderer = externalViewRenderer,
-                            templateListener = templateListener,
+                            templateLoadingListener = templateLoadingListener,
                             name = templateType,
                             dialogRequestId = header.dialogRequestId,
                             templateId = templateId,
