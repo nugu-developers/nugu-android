@@ -24,6 +24,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.exception.ClientUnspecifiedException
 import com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity
 import java.lang.IllegalStateException
+import java.lang.ref.SoftReference
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.*
@@ -62,7 +63,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             OAuthServerUrl: String? = null
         ): NuguOAuth {
             Logger.d(TAG, "[create]")
-            if(instance == null) {
+            if (instance == null) {
                 instance = NuguOAuth(OAuthServerUrl)
             }
             instance?.setOptions(options)
@@ -77,6 +78,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         fun getClient(newOptions: NuguOAuthOptions? = null): NuguOAuth {
             throw NotImplementedError()
         }
+
         /**
          * Returns a NuguOAuth instance.
          */
@@ -123,18 +125,19 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     // CSRF protection
     private var clientState: String = ""
 
-    inner class OnceLoginListener(val realListener: OnLoginListener) : OnLoginListener {
+    inner class OnceLoginListener(realListener: OnLoginListener) : OnLoginListener {
+        private var reference = SoftReference(realListener)
         private var called = false
         override fun onSuccess(credentials: Credentials) {
             if (called) return
             called = true
-            realListener.onSuccess(credentials)
+            reference.get()?.onSuccess(credentials)
         }
 
         override fun onError(error: NuguOAuthError) {
             if (called) return
             called = true
-            realListener.onError(error)
+            reference.get()?.onError(error)
         }
     }
 
@@ -272,6 +275,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         }
         return result
     }
+
     /**
      * Check whether a anonymous user is authenticated or not.
      * @return true is authorized, otherwise not authorized
@@ -281,6 +285,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         val hasRefreshToken = client.getCredentials().refreshToken.isNotBlank()
         return hasAccessToken && !hasRefreshToken
     }
+
     /**
      * Check whether a tid user is authenticated or not
      * @return true is authorized, otherwise not authorized
@@ -364,6 +369,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     private fun generateClientState() = UUID.randomUUID().toString().apply {
         clientState = this
     }
+
     private fun verifyState(state: String?) = state == this.clientState
     private fun verifyCode(code: String?) = !code.isNullOrBlank()
 
@@ -377,24 +383,24 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Creating a login intent
      */
-    fun getLoginIntent(theme : String) = Intent(Intent.ACTION_VIEW).apply {
+    fun getLoginIntent(theme: String) = Intent(Intent.ACTION_VIEW).apply {
         data = getLoginUri(theme)
     }
 
     /**
      * Creating a login uri
      */
-    fun getLoginUri(theme : String?): Uri {
+    fun getLoginUri(theme: String?): Uri {
         val appendUri = String.format(
             "&state=%s", generateClientState()
         )
-        return Uri.parse(makeAuthorizeUri(theme?:NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
+        return Uri.parse(makeAuthorizeUri(theme ?: NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
     }
 
     /**
      * Creating a accountinfo intent
      */
-    fun getAccountInfoIntent(theme : String?) = Intent(Intent.ACTION_VIEW).apply {
+    fun getAccountInfoIntent(theme: String?) = Intent(Intent.ACTION_VIEW).apply {
         data = getAccountInfoUri(theme)
     }
 
@@ -408,7 +414,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             client.getCredentials().accessToken,
             generateClientState()
         )
-        return Uri.parse(makeAuthorizeUri(theme?:NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
+        return Uri.parse(makeAuthorizeUri(theme ?: NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
     }
 
     override fun accountWithTid(
@@ -580,7 +586,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     ): Boolean {
         when (newState) {
             AuthStateListener.State.EXPIRED,
-            AuthStateListener.State.UNINITIALIZED -> { /* noop */
+            AuthStateListener.State.UNINITIALIZED
+            -> { /* noop */
             }
             AuthStateListener.State.REFRESHED -> {
                 /* Authentication successful */
@@ -760,7 +767,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
     fun deviceUniqueId() = try {
         options.deviceUniqueId
-    } catch (e : UninitializedPropertyAccessException ) {
+    } catch (e: UninitializedPropertyAccessException) {
         Logger.w(TAG, "[deviceUniqueId] : $e")
         null
     }
