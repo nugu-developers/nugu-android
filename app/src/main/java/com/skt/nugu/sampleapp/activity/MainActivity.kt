@@ -46,6 +46,7 @@ import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -71,7 +72,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         private const val requestCode = 100
         private const val EXTRA_WAKEUP_ACTION = "wakeupAction"
 
-        fun invokeActivity(context: Context, wakeupAction : Boolean = false) {
+        fun invokeActivity(context: Context, wakeupAction: Boolean = false) {
             context.startActivity(Intent(context, MainActivity::class.java).putExtra(EXTRA_WAKEUP_ACTION, wakeupAction))
         }
 
@@ -134,6 +135,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
+    private val templateListener = object : TemplateRenderer.TemplateListener {
+        override fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {
+            Log.d(TAG, "template loading complete $templateId / $displayType")
+        }
+
+        override fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {
+            Log.d(TAG, "template loading fail $templateId / $displayType / $reason")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -153,6 +164,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 }
                 it.setServerUrl(url)
             }
+
+            it.templateListener = templateListener
         })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
@@ -164,7 +177,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
             override fun onHiddenFinished() {
                 updateNuguButton()
-                if(speechRecognizerAggregator.getState() == SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH) {
+                if (speechRecognizerAggregator.getState() == SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH) {
                     speechRecognizerAggregator.stopListening()
                 }
             }
@@ -175,16 +188,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
         })
         chromeWindow.apply {
-            setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider{
+            setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider {
                 override fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>? {
-                    return if(!isSpeaking) {
+                    return if (!isSpeaking) {
                         var dummyChips = arrayOf<Chip>()
                         for (index in 0 until 5) {
                             dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
                         }
 
                         dummyChips
-                    }else{
+                    } else {
                         null
                     }
                 }
@@ -234,7 +247,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     private fun handleExtras(extras: Bundle?) {
-        if(extras?.getBoolean(EXTRA_WAKEUP_ACTION) == true) {
+        if (extras?.getBoolean(EXTRA_WAKEUP_ACTION) == true) {
             intent.removeExtra(EXTRA_WAKEUP_ACTION)
             speechRecognizerAggregator.startListening(initiator = ASRAgentInterface.Initiator.TAP)
         }
@@ -272,6 +285,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         tokenRefresher.stop()
 
         supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallback)
+
+        templateRenderer.templateListener = null
         super.onDestroy()
     }
 
@@ -570,8 +585,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 .duration(NuguToast.LENGTH_SHORT)
                 .show()
 
-            if(error.error != NuguOAuthError.NETWORK_ERROR &&
-                error.error != NuguOAuthError.INITIALIZE_ERROR) {
+            if (error.error != NuguOAuthError.NETWORK_ERROR &&
+                error.error != NuguOAuthError.INITIALIZE_ERROR
+            ) {
                 handleRevoke()
             }
         }

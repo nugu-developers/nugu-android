@@ -73,13 +73,19 @@ interface TemplateView {
      *  @param templateContent contains all template items to be rendered.
      */
     @MainThread
-    fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)? = null)
+    fun load(
+        templateContent: String,
+        deviceTypeCode: String,
+        dialogRequestId: String,
+        onLoadingComplete: (() -> Unit)? = null,
+        onLoadingFail: ((String?) -> Unit)? = null
+    )
 
     /**
      * @param templateContent contains only template items to be updated.
      */
     @MainThread
-    fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)? = null)
+    fun update(templateContent: String, dialogRequestedId: String)
 
     fun asView(): View = this as View
 
