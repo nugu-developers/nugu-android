@@ -34,6 +34,11 @@ class TemplateRenderer(
         fun getNuguClient(): NuguAndroidClient
     }
 
+    interface TemplateListener {
+        fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {}
+        fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {}
+    }
+
     /**
      * The other Renderer that show any view associated with template.
      * For example if you show media notification by play status independently, it needs to be inform to TemplateRenderer.
@@ -45,6 +50,7 @@ class TemplateRenderer(
         fun getVisibleList(): List<ViewInfo>?
     }
 
+    var templateListener: TemplateListener? = null
     private var fragmentManagerRef = WeakReference(fragmentManager)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val timer by lazy { Timer() }
@@ -99,11 +105,12 @@ class TemplateRenderer(
                         TemplateFragment.newInstance(
                             nuguProvider = nuguClientProvider,
                             externalRenderer = externalViewRenderer,
+                            templateListener = templateListener,
                             name = templateType,
                             dialogRequestId = header.dialogRequestId,
                             templateId = templateId,
                             template = templateContentWithType,
-                            displayType = displayType.name,
+                            displayType = displayType,
                             playServiceId = playServiceId
                         ).apply {
                             previousRenderInfo =

@@ -458,7 +458,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         barProgress = findViewById(R.id.sb_bar_progress)
     }
 
-    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?) {
+    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?,  onLoadingFail: ((String?) -> Unit)?) {
         Logger.i(TAG, "load. dialogRequestId: $dialogRequestId/*, \n template $templateContent*/")
 
         fromJsonOrNull(templateContent, AudioPlayer::class.java)?.let { item ->
@@ -467,7 +467,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         onLoadingComplete?.invoke()
     }
 
-    override fun update(templateContent: String, dialogRequestedId: String, onLoadingComplete: (() -> Unit)?) {
+    override fun update(templateContent: String, dialogRequestedId: String) {
         Logger.i(TAG, "update. dialogRequestId $dialogRequestedId")
 
         var audioPlayer: AudioPlayer? = null
