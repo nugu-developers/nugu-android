@@ -26,6 +26,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
@@ -47,17 +48,19 @@ class TemplateFragment : Fragment() {
         fun newInstance(
             nuguProvider: TemplateRenderer.NuguClientProvider,
             externalRenderer: TemplateRenderer.ExternalViewRenderer? = null,
+            templateListener: TemplateRenderer.TemplateListener? = null,
             name: String,
             dialogRequestId: String,
             templateId: String,
             template: String,
-            displayType: String,
+            displayType: DisplayAggregatorInterface.Type,
             playServiceId: String
         ): TemplateFragment {
             return TemplateFragment().apply {
                 arguments = createBundle(name, dialogRequestId, templateId, template, displayType, playServiceId)
                 pendingNuguProvider = nuguProvider
                 pendingExternalViewRenderer = externalRenderer
+                pendingTemplateListener = templateListener
             }
         }
 
@@ -66,7 +69,7 @@ class TemplateFragment : Fragment() {
             dialogRequestId: String,
             templateId: String,
             template: String,
-            displayType: String,
+            displayType: DisplayAggregatorInterface.Type,
             playServiceId: String
         ): Bundle =
             Bundle().apply {
@@ -74,7 +77,7 @@ class TemplateFragment : Fragment() {
                 putString(ARG_DIALOG_REQUEST_ID, dialogRequestId)
                 putString(ARG_TEMPLATE_ID, templateId)
                 putString(ARG_TEMPLATE, template)
-                putString(ARG_DISPLAY_TYPE, displayType)
+                putSerializable(ARG_DISPLAY_TYPE, displayType)
                 putString(ARG_PLAY_SERVICE_ID, playServiceId)
             }
     }
@@ -85,6 +88,7 @@ class TemplateFragment : Fragment() {
     private var templateView: TemplateView? = null
     private var pendingNuguProvider: TemplateRenderer.NuguClientProvider? = null
     private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
+    private var pendingTemplateListener: TemplateRenderer.TemplateListener? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
 
@@ -100,6 +104,10 @@ class TemplateFragment : Fragment() {
 
         pendingExternalViewRenderer?.run {
             viewModel.externalRenderer = this
+        }
+
+        pendingTemplateListener?.run {
+            viewModel.templateListener = this
         }
 
         viewModel.onClose = { onClose(false) }
@@ -169,9 +177,13 @@ class TemplateFragment : Fragment() {
             TemplateRenderer.SERVER_URL?.run { setServerUrl(this) }
 
             mainHandler.post {
-                load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId, onLoadingComplete = {
-                    notifyRendered()
-                })
+                load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId,
+                    onLoadingComplete = {
+                        notifyRendered()
+                        viewModel.templateListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
+                    }, onLoadingFail = { reason ->
+                        viewModel.templateListener?.onFail(getTemplateId(), getTemplateType(), getDisplayType(), reason)
+                    })
 
                 previousRenderInfo?.run {
                     (templateView as? DisplayAudioPlayer)?.applyPreviousRenderInfo(this)
@@ -189,8 +201,8 @@ class TemplateFragment : Fragment() {
         return arguments?.getString(ARG_DIALOG_REQUEST_ID, "") ?: ""
     }
 
-    fun getDisplayType(): String {
-        return arguments?.getString(ARG_DISPLAY_TYPE, "") ?: ""
+    fun getDisplayType(): DisplayAggregatorInterface.Type? {
+        return (arguments?.getSerializable(ARG_DISPLAY_TYPE) as? DisplayAggregatorInterface.Type)
     }
 
     fun getTemplateType(): String {
@@ -240,7 +252,7 @@ class TemplateFragment : Fragment() {
         Logger.d(TAG, "onClose.. current notifyRenderedState. ${viewModel.renderNotified}")
         if (viewModel.renderNotified == RenderNotifyState.RENDERED) {
             if (!isUserIntention
-                && viewModel.externalRenderer.getVisibleList()?.any { it.templateId == getTemplateId() } == true
+                && viewModel.externalRenderer?.getVisibleList()?.any { it.templateId == getTemplateId() } == true
             ) {
                 // do not invoke notifyCleared()
             } else {

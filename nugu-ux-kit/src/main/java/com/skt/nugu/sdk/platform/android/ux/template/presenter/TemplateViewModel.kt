@@ -13,7 +13,8 @@ class TemplateViewModel : ViewModel() {
     }
 
     lateinit var nuguClientProvider: TemplateRenderer.NuguClientProvider
-    lateinit var externalRenderer: TemplateRenderer.ExternalViewRenderer
+    var externalRenderer: TemplateRenderer.ExternalViewRenderer? = null
+    var templateListener: TemplateRenderer.TemplateListener? = null
     var renderNotified = TemplateFragment.RenderNotifyState.NONE
     var onClose: (() -> Unit)? = null
     var templateHandler: TemplateHandler? = null
