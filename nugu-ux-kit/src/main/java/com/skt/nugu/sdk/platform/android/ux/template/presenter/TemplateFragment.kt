@@ -48,7 +48,7 @@ class TemplateFragment : Fragment() {
         fun newInstance(
             nuguProvider: TemplateRenderer.NuguClientProvider,
             externalRenderer: TemplateRenderer.ExternalViewRenderer? = null,
-            templateListener: TemplateRenderer.TemplateListener? = null,
+            templateLoadingListener: TemplateRenderer.TemplateLoadingListener? = null,
             name: String,
             dialogRequestId: String,
             templateId: String,
@@ -60,7 +60,7 @@ class TemplateFragment : Fragment() {
                 arguments = createBundle(name, dialogRequestId, templateId, template, displayType, playServiceId)
                 pendingNuguProvider = nuguProvider
                 pendingExternalViewRenderer = externalRenderer
-                pendingTemplateListener = templateListener
+                pendingTemplateLoadingListener = templateLoadingListener
             }
         }
 
@@ -88,7 +88,7 @@ class TemplateFragment : Fragment() {
     private var templateView: TemplateView? = null
     private var pendingNuguProvider: TemplateRenderer.NuguClientProvider? = null
     private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
-    private var pendingTemplateListener: TemplateRenderer.TemplateListener? = null
+    private var pendingTemplateLoadingListener: TemplateRenderer.TemplateLoadingListener? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
 
@@ -106,8 +106,8 @@ class TemplateFragment : Fragment() {
             viewModel.externalRenderer = this
         }
 
-        pendingTemplateListener?.run {
-            viewModel.templateListener = this
+        pendingTemplateLoadingListener?.run {
+            viewModel.templateLoadingListener = this
         }
 
         viewModel.onClose = { onClose(false) }
@@ -180,9 +180,9 @@ class TemplateFragment : Fragment() {
                 load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId,
                     onLoadingComplete = {
                         notifyRendered()
-                        viewModel.templateListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
+                        viewModel.templateLoadingListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
                     }, onLoadingFail = { reason ->
-                        viewModel.templateListener?.onFail(getTemplateId(), getTemplateType(), getDisplayType(), reason)
+                        viewModel.templateLoadingListener?.onFail(getTemplateId(), getTemplateType(), getDisplayType(), reason)
                     })
 
                 previousRenderInfo?.run {

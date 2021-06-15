@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
-    private val templateListener = object : TemplateRenderer.TemplateListener {
+    private val templateListener = object : TemplateRenderer.TemplateLoadingListener {
         override fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {
             Log.d(TAG, "template loading complete $templateId / $displayType")
         }
@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 it.setServerUrl(url)
             }
 
-            it.templateListener = templateListener
+            it.templateLoadingListener = templateListener
         })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
@@ -286,7 +286,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
         supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallback)
 
-        templateRenderer.templateListener = null
+        templateRenderer.templateLoadingListener = null
         super.onDestroy()
     }
 
