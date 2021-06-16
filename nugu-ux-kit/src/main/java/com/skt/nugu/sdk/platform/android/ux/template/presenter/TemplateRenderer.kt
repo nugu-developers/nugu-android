@@ -35,6 +35,7 @@ class TemplateRenderer(
     }
 
     interface TemplateLoadingListener {
+        fun onStart(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {}
         fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {}
         fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {}
     }

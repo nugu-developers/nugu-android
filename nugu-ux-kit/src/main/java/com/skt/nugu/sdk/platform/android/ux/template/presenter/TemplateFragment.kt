@@ -177,6 +177,7 @@ class TemplateFragment : Fragment() {
             TemplateRenderer.SERVER_URL?.run { setServerUrl(this) }
 
             mainHandler.post {
+                viewModel.templateLoadingListener?.onStart(getTemplateId(), getTemplateType(), getDisplayType())
                 load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId,
                     onLoadingComplete = {
                         notifyRendered()
