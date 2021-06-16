@@ -25,10 +25,4 @@ class BasicTemplateHandlerTest {
         basicTemplateHandler.onCloseClicked()
         verify(templateFragment).close()
     }
-
-    @Test
-    fun onNuguButtonSelected() {
-        basicTemplateHandler.onNuguButtonSelected()
-        verify(templateFragment).startListening()
-    }
 }
