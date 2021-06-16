@@ -138,12 +138,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     private val templateListener = object : TemplateRenderer.TemplateLoadingListener {
+        override fun onStart(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {
+            //show loading view if you need
+        }
+
         override fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {
-            Log.d(TAG, "template loading complete $templateId / $displayType")
+            //hide loading view if you need
         }
 
         override fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {
-            Log.d(TAG, "template loading fail $templateId / $displayType / $reason")
+            //hide loading view if you need
         }
     }
 
