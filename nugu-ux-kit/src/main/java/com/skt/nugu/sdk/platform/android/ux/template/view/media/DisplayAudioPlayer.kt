@@ -756,7 +756,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.localStopTTS()
+        templateHandler?.onTemplateTouched()
         return super.onInterceptTouchEvent(ev)
     }
 
