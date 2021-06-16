@@ -15,8 +15,10 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
+import androidx.fragment.app.Fragment
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 
 /**
  * Basically Template renders figures to inform. And control logic exists on client side.
@@ -25,30 +27,36 @@ import com.skt.nugu.sdk.agent.common.Direction
  */
 interface TemplateHandler {
 
+    interface TemplateHandlerFactory {
+        fun onCreate(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment): TemplateHandler
+    }
+
     data class TemplateInfo(val templateId: String, val templateType: String)
 
     var templateInfo: TemplateInfo
 
     // template -> client side
-    fun onElementSelected(tokenId: String)
+    fun onElementSelected(tokenId: String) {}
 
-    fun onChipSelected(text: String)
+    fun onChipSelected(text: String) {}
 
-    fun onCloseClicked()
+    fun onCloseClicked() {}
 
-    fun onNuguButtonSelected()
+    fun onNuguButtonSelected() {}
 
-    fun onPlayerCommand(command: String, param: String = "")
+    fun onPlayerCommand(command: String, param: String = "") {}
 
-    fun onContextChanged(context: String)
+    fun onContextChanged(context: String) {}
 
-    fun onControlResult(action: String, result: String)
+    fun onControlResult(action: String, result: String) {}
 
-    fun showToast(text: String)
+    fun showToast(text: String) {}
 
-    fun showActivity(className: String)
+    fun showActivity(className: String) {}
 
-    fun playTTS(text: String)
+    fun playTTS(text: String) {}
+
+    fun onTemplateTouched() {}
 
     // client side -> template
     fun setClientListener(listener: ClientListener) {}

@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
+import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
 import com.skt.nugu.sdk.agent.common.Direction
@@ -30,7 +31,11 @@ import kotlin.concurrent.fixedRateTimer
 /**
  * TemplateHandler focused on Media state observing and interaction with NUGU
  */
-open class DefaultTemplateHandler(private val nuguProvider: TemplateRenderer.NuguClientProvider, override var templateInfo: TemplateHandler.TemplateInfo) :
+//todo. class name check. Is word 'Default' proper?
+open class DefaultTemplateHandler(
+    private val nuguProvider: TemplateRenderer.NuguClientProvider,
+    override var templateInfo: TemplateHandler.TemplateInfo
+) :
     TemplateHandler {
 
     companion object {
@@ -105,7 +110,8 @@ open class DefaultTemplateHandler(private val nuguProvider: TemplateRenderer.Nug
     }
 
     override fun onNuguButtonSelected() {
-        Logger.w(TAG, "onNuguButtonSelected() need to be implemented in application side")
+        Logger.w(TAG, "onNuguButtonSelected()")
+        getNuguClient().asrAgent?.startRecognition(initiator = ASRAgentInterface.Initiator.TAP)
     }
 
     override fun onContextChanged(context: String) {
@@ -197,5 +203,5 @@ open class DefaultTemplateHandler(private val nuguProvider: TemplateRenderer.Nug
         clientListener = null
     }
 
-    fun getNuguClient() : NuguAndroidClient = nuguProvider.getNuguClient()
+    fun getNuguClient(): NuguAndroidClient = nuguProvider.getNuguClient()
 }
