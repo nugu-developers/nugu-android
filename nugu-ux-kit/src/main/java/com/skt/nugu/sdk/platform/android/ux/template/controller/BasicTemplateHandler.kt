@@ -2,6 +2,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.controller
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
@@ -11,7 +12,7 @@ import java.lang.ref.WeakReference
 /**
  * TemplateHandler focused on interaction with Android component such as Fragment
  */
-open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: TemplateFragment) :
+open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment) :
     DefaultTemplateHandler(nuguProvider, templateInfo) {
     companion object {
         private const val TAG = "BasicTemplateHandler"
@@ -21,12 +22,7 @@ open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvide
 
     override fun onCloseClicked() {
         Logger.i(TAG, "onClose()")
-        fragmentRef.get()?.run { close() }
-    }
-
-    override fun onNuguButtonSelected() {
-        Logger.i(TAG, "onNuguButtonSelected()")
-        fragmentRef.get()?.run { startListening() }
+        fragmentRef.get()?.run { (this as? TemplateFragment)?.close() }
     }
 
     override fun showToast(text: String) {

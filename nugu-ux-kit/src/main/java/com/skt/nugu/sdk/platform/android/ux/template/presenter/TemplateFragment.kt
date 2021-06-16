@@ -25,12 +25,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
@@ -49,6 +49,7 @@ class TemplateFragment : Fragment() {
             nuguProvider: TemplateRenderer.NuguClientProvider,
             externalRenderer: TemplateRenderer.ExternalViewRenderer? = null,
             templateLoadingListener: TemplateRenderer.TemplateLoadingListener? = null,
+            templateHandlerFactory: TemplateHandler.TemplateHandlerFactory? = null,
             name: String,
             dialogRequestId: String,
             templateId: String,
@@ -61,6 +62,9 @@ class TemplateFragment : Fragment() {
                 pendingNuguProvider = nuguProvider
                 pendingExternalViewRenderer = externalRenderer
                 pendingTemplateLoadingListener = templateLoadingListener
+                templateHandlerFactory?.let { customHandler ->
+                    this.handlerFactory = customHandler
+                }
             }
         }
 
@@ -91,6 +95,16 @@ class TemplateFragment : Fragment() {
     private var pendingTemplateLoadingListener: TemplateRenderer.TemplateLoadingListener? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
+
+    private var handlerFactory: TemplateHandler.TemplateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory {
+        override fun onCreate(
+            nuguProvider: TemplateRenderer.NuguClientProvider,
+            templateInfo: TemplateInfo,
+            fragment: Fragment
+        ): TemplateHandler {
+            return BasicTemplateHandler(nuguProvider, templateInfo, this@TemplateFragment)
+        }
+    }
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)
@@ -142,8 +156,7 @@ class TemplateFragment : Fragment() {
                     (viewModel.templateHandler as? BasicTemplateHandler)?.updateFragment(this@TemplateFragment)
                     templateHandler = viewModel.templateHandler
                 } else {
-                    templateHandler = BasicTemplateHandler(
-                        viewModel.nuguClientProvider,
+                    templateHandler = handlerFactory.onCreate(viewModel.nuguClientProvider,
                         TemplateInfo(getTemplateId(), getTemplateType()),
                         this@TemplateFragment)
                     viewModel.templateHandler = templateHandler
@@ -262,10 +275,6 @@ class TemplateFragment : Fragment() {
         } else if (viewModel.renderNotified == RenderNotifyState.NONE) {
             notifyRenderFailed()
         }
-    }
-
-    fun startListening() {
-        viewModel.nuguClientProvider.getNuguClient().asrAgent?.startRecognition(initiator = ASRAgentInterface.Initiator.TAP)
     }
 
     private fun notifyRendered() {
