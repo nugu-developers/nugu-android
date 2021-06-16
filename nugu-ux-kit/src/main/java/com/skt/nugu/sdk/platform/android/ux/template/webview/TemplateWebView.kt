@@ -514,7 +514,7 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.localStopTTS()
+        templateHandler?.onTemplateTouched()
         return super.onInterceptTouchEvent(ev)
     }
 

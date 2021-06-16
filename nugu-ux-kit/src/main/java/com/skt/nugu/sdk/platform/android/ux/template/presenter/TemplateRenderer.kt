@@ -10,6 +10,7 @@ import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import org.json.JSONObject
 import java.lang.ref.WeakReference
 import java.util.*
@@ -64,6 +65,8 @@ class TemplateRenderer(
 
     var externalViewRenderer: ExternalViewRenderer? = null
 
+    var templateHandlerFactory: TemplateHandler.TemplateHandlerFactory? = null
+
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
 
@@ -106,6 +109,7 @@ class TemplateRenderer(
                             nuguProvider = nuguClientProvider,
                             externalRenderer = externalViewRenderer,
                             templateLoadingListener = templateLoadingListener,
+                            templateHandlerFactory = templateHandlerFactory,
                             name = templateType,
                             dialogRequestId = header.dialogRequestId,
                             templateId = templateId,

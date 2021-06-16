@@ -56,6 +56,8 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
+import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.widget.*
@@ -145,6 +147,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
+    private class TemplateHandlerStopTTSWhenTouched(
+        nuguProvider: TemplateRenderer.NuguClientProvider,
+        templateInfo: TemplateHandler.TemplateInfo,
+        fragment: Fragment
+    ) : BasicTemplateHandler(nuguProvider, templateInfo, fragment) {
+        override fun onTemplateTouched() {
+            ClientManager.getClient().localStopTTS()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -166,6 +178,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
 
             it.templateLoadingListener = templateListener
+            // (example code)  if you want a template to stop TTS when it touched, uncomment below.
+//            it.templateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory{
+//                override fun onCreate(
+//                    nuguProvider: TemplateRenderer.NuguClientProvider,
+//                    templateInfo: TemplateHandler.TemplateInfo,
+//                    fragment: Fragment
+//                ): TemplateHandler {
+//                    return TemplateHandlerStopTTSWhenTouched(nuguProvider, templateInfo, fragment)
+//                }
+//            }
         })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
@@ -187,6 +209,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 speechRecognizerAggregator.stopListening()
             }
         })
+
         chromeWindow.apply {
             setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider {
                 override fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>? {
