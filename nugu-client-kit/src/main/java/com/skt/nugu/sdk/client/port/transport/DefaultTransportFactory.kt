@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.client.port.transport
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.client.port.transport.grpc2.GrpcTransportFactory
 import com.skt.nugu.sdk.client.port.transport.grpc2.NuguServerInfo
-import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 
 /**
  * Creates the default transport.
