@@ -139,7 +139,7 @@ class MessageRouter(
                     Status.Code.FAILED_PRECONDITION
                 ).withDescription("NetworkManager is disabled"), request, this)
         }
-        if (activeTransport == null) {
+        if(activeTransport.isNotInitialized()) {
             createActiveTransport()
         }
         return activeTransport?.newCall(activeTransport, request, headers, this) ?: FixedStateCall(
@@ -344,4 +344,5 @@ class MessageRouter(
     private val isStartReceiveServerInitiatedDirective: () -> Boolean = {
         sidController.isStarted()
     }
+    private fun Transport?.isNotInitialized() = this == null
 }
