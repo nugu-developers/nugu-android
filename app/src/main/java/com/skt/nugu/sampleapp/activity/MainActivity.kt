@@ -239,32 +239,28 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         checkPermissionForOverlay()
     }
 
+    private fun shouldShowRequestPermissionRationales(permissions: Array<out String>): Boolean {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            permissions.forEach {
+                if (shouldShowRequestPermissionRationale(it)) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "[onResume]")
         ClientManager.keywordResourceUpdateIfNeeded(this)
         speechRecognizerAggregator.addListener(this)
 
-        // Check Permission
-        if (!PermissionUtils.checkPermissions(this, permissions)) {
-            onRequestPermissionResultHandler.requestPermissions(
-                this,
-                permissions,
-                requestCode,
-                object : OnRequestPermissionResultHandler.OnPermissionListener {
-                    override fun onGranted() {
-                        tryStartListeningWithTrigger()
-                    }
-
-                    override fun onDenied() {
-                    }
-
-                    override fun onCanceled() {
-                    }
-                })
-        } else {
+        startOnPermissionGranted {
             tryStartListeningWithTrigger()
         }
+
         // connect to server
         ClientManager.getClient().connect()
         // update view
@@ -333,27 +329,37 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         onRequestPermissionResultHandler.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    private fun initBtnListeners() {
-        btnStartListening.setOnClickListener {
-            if (!PermissionUtils.checkPermissions(this, permissions)) {
+    private fun startOnPermissionGranted(func: () -> Unit) {
+        if (!PermissionUtils.checkPermissions(this, permissions)) {
+            if(shouldShowRequestPermissionRationales(permissions)) {
+                Log.d(TAG, "[startOnPermissionGranted] shouldShowRequestPermissionRationales: true")
+            } else {
                 onRequestPermissionResultHandler.requestPermissions(
                     this,
                     permissions,
                     requestCode,
                     object : OnRequestPermissionResultHandler.OnPermissionListener {
                         override fun onGranted() {
-                            speechRecognizerAggregator.startListening(initiator = ASRAgentInterface.Initiator.TAP)
+                            func()
                         }
 
                         override fun onDenied() {
-                            Log.d(TAG, "[requestPermissions::onDenied]")
+                            Log.d(TAG, "[requestPermissions] onDenied")
                         }
 
                         override fun onCanceled() {
-                            Log.d(TAG, "[requestPermissions::onCanceled]")
+                            Log.d(TAG, "[requestPermissions] onCanceled")
                         }
                     })
-            } else {
+            }
+        } else {
+            func()
+        }
+    }
+
+    private fun initBtnListeners() {
+        btnStartListening.setOnClickListener {
+            startOnPermissionGranted {
                 speechRecognizerAggregator.startListening(initiator = ASRAgentInterface.Initiator.TAP)
             }
         }
