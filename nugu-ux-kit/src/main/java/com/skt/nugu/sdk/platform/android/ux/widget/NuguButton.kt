@@ -25,13 +25,14 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.StateListDrawable
 import android.os.Build
 import android.os.Handler
-import androidx.core.content.ContextCompat
 import android.util.AttributeSet
 import android.util.DisplayMetrics
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.annotation.IntDef
+import androidx.core.content.ContextCompat
 import com.skt.nugu.sdk.platform.android.ux.R
 
 /**
@@ -42,16 +43,27 @@ class NuguButton @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-    private val TYPE_FAB = 0
-    private val TYPE_BUTTON = 1
-    private val TYPE_FLAGS = intArrayOf(TYPE_FAB, TYPE_BUTTON)
+    companion object {
+        const val TYPE_FAB = 0
+        const val TYPE_BUTTON = 1
+        @IntDef( TYPE_FAB, TYPE_BUTTON )
+        annotation class ButtonTypes
 
-    private val COLOR_BLUE = 0
-    private val COLOR_WHITE = 1
-    private val COLOR_FLAGS = intArrayOf(COLOR_BLUE, COLOR_WHITE)
+        const val COLOR_BLUE = 0
+        const val COLOR_WHITE = 1
+        @IntDef( COLOR_BLUE, COLOR_WHITE )
+        annotation class ButtonColors
 
-    private var nuguButtonType: Int = 0
-    private var nuguButtonColor: Int = 0
+        fun dpToPx(dp: Float, context: Context): Int {
+            return (dp * (context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).toInt()
+        }
+    }
+    @ButtonTypes private var buttonType: Int = TYPE_FAB
+    @ButtonColors private var buttonColor: Int = COLOR_BLUE
+
+    private val ICON_MIC = 0
+    private val ICON_LOGO = 1
+    private val ICON_FLAGS = intArrayOf(ICON_MIC, ICON_LOGO)
 
     private val drawableRes: MutableMap<String, Int> = HashMap()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
@@ -72,14 +84,14 @@ class NuguButton @JvmOverloads constructor(
     private var activeDotIndex = 0
     private var inactiveColor = 0
         get() {
-            return when (nuguButtonColor) {
+            return when (buttonColor) {
                 COLOR_BLUE -> 0xffffffff.toInt()
                 else -> 0xff009dff.toInt()
             }
         }
     private var activeColor = 0
         get() {
-            return when (nuguButtonColor) {
+            return when (buttonColor) {
                 COLOR_BLUE -> 0xff00E688.toInt()
                 else -> 0xff16FFA0.toInt()
             }
@@ -99,7 +111,7 @@ class NuguButton @JvmOverloads constructor(
         }
     }
 
-    fun isFab() = nuguButtonType == TYPE_FAB
+    fun isFab() = buttonType == TYPE_FAB
 
     init {
         init(attrs)
@@ -110,19 +122,13 @@ class NuguButton @JvmOverloads constructor(
         isInitialized = true
     }
 
-    companion object {
-        fun dpToPx(dp: Float, context: Context): Int {
-            return (dp * (context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).toInt()
-        }
-    }
-
     // initialize custom attributes
     private fun init(attrs: AttributeSet?) {
         context.obtainStyledAttributes(
             attrs, R.styleable.NuguButton, 0, 0
         ).apply {
-            nuguButtonType = getInt(R.styleable.NuguButton_types, TYPE_FAB)
-            nuguButtonColor = getInt(R.styleable.NuguButton_colors, COLOR_BLUE)
+            buttonType = getInt(R.styleable.NuguButton_types, TYPE_FAB)
+            buttonColor = getInt(R.styleable.NuguButton_colors, COLOR_BLUE)
 
             autoPlay = getBoolean(R.styleable.NuguButton_autoPlay, false)
             loopPlay = getBoolean(R.styleable.NuguButton_loopPlay, true)
@@ -142,7 +148,7 @@ class NuguButton @JvmOverloads constructor(
                 LinearLayout.LayoutParams.MATCH_PARENT
             )
         }
-        val size = when (nuguButtonType) {
+        val size = when (buttonType) {
             TYPE_FAB -> 8f
             else -> 13f
         }
@@ -192,24 +198,25 @@ class NuguButton @JvmOverloads constructor(
     /**
      * Set background color
      */
+    @Throws(IllegalArgumentException::class)
     private fun setupBackground() {
-        val type = when (nuguButtonType) {
+        val type = when (buttonType) {
             TYPE_FAB -> {
                 "fab"
             }
             TYPE_BUTTON -> {
                 "btn"
             }
-            else -> throw IllegalStateException(nuguButtonType.toString())
+            else -> throw IllegalArgumentException("Illegal type value $buttonType")
         }
-        val color = when (nuguButtonColor) {
+        val color = when (buttonColor) {
             COLOR_BLUE -> {
                 "blue"
             }
             COLOR_WHITE -> {
                 "white"
             }
-            else -> throw IllegalArgumentException(nuguButtonColor.toString())
+            else -> throw IllegalArgumentException("Illegal type value $buttonColor")
         }
 
         val states = StateListDrawable()
@@ -219,7 +226,7 @@ class NuguButton @JvmOverloads constructor(
             ContextCompat.getDrawable(
                 context,
                 drawableRes[type + "_" + color + "_" + "activated"]
-                    ?: throw IllegalArgumentException(type + "_" + "activated")
+                    ?: throw IllegalArgumentException("resource not found: ${type}_${color}_activated")
             )
         )
 
@@ -228,7 +235,7 @@ class NuguButton @JvmOverloads constructor(
             ContextCompat.getDrawable(
                 context,
                 drawableRes[type + "_" + color]
-                    ?: throw IllegalArgumentException(type + "_" + color)
+                    ?: throw IllegalArgumentException("resource not found: ${type}_${color}")
             )
         )
 
@@ -237,7 +244,7 @@ class NuguButton @JvmOverloads constructor(
             ContextCompat.getDrawable(
                 context,
                 drawableRes[type + "_" + "disabled"]
-                    ?: throw IllegalArgumentException(type + "_" + "disabled")
+                    ?: throw IllegalArgumentException("resource not found: ${type}_disabled")
             )
         )
 
@@ -246,31 +253,32 @@ class NuguButton @JvmOverloads constructor(
             ContextCompat.getDrawable(
                 context,
                 drawableRes[type + "_" + color + "_" + "pressed"]
-                    ?: throw IllegalArgumentException(type + "_" + color + "_" + "pressed")
+                    ?: throw IllegalArgumentException("resource not found: ${type}_${color}_pressed")
             )
         )
         background = states
     }
 
+    @Throws(IllegalArgumentException::class)
     private fun setupImageDrawable() {
         //fab_white_
-        val type = when (nuguButtonType) {
+        val type = when (buttonType) {
             TYPE_FAB -> {
                 "fab"
             }
             TYPE_BUTTON -> {
                 "btn"
             }
-            else -> throw IllegalStateException(nuguButtonType.toString())
+            else -> throw IllegalArgumentException("Illegal type value $buttonType")
         }
-        val color = when (nuguButtonColor) {
+        val color = when (buttonColor) {
             COLOR_BLUE -> {
                 "blue"
             }
             COLOR_WHITE -> {
                 "white"
             }
-            else -> throw IllegalArgumentException(nuguButtonColor.toString())
+            else -> throw IllegalArgumentException("Illegal type value $buttonColor")
         }
 
         imageView.setImageResource(0)
@@ -280,7 +288,7 @@ class NuguButton @JvmOverloads constructor(
                     ContextCompat.getDrawable(
                         context,
                         drawableRes["${type}_${color}_micicon"]
-                            ?: throw IllegalArgumentException("${type}_${color}_micicon")
+                            ?: throw IllegalArgumentException("resource not found: ${type}_${color}_micicon")
                     )
                 )
             }
@@ -290,7 +298,7 @@ class NuguButton @JvmOverloads constructor(
                 ContextCompat.getDrawable(
                     context,
                     drawableRes["${type}_disabled_micicon"]
-                        ?: throw IllegalArgumentException("${type}_disabled_micicon")
+                        ?: throw IllegalArgumentException("resource not found: ${type}_disabled_micicon")
                 )
             )
         }
@@ -353,28 +361,25 @@ class NuguButton @JvmOverloads constructor(
         }
     }
 
-    private val ICON_MIC = 0
-    private val ICON_LOGO = 1
-    private val ICON_FLAGS = intArrayOf(ICON_MIC, ICON_LOGO)
-
+    @Throws(IllegalArgumentException::class)
     fun getImageDrawableResId(icon: Int): Drawable {
-        val type = when (nuguButtonType) {
+        val type = when (buttonType) {
             TYPE_FAB -> {
                 "fab"
             }
             TYPE_BUTTON -> {
                 "btn"
             }
-            else -> throw IllegalStateException(nuguButtonType.toString())
+            else -> throw IllegalArgumentException("Illegal type value $buttonType")
         }
-        val color = when (nuguButtonColor) {
+        val color = when (buttonColor) {
             COLOR_BLUE -> {
                 "blue"
             }
             COLOR_WHITE -> {
                 "white"
             }
-            else -> throw IllegalArgumentException(nuguButtonColor.toString())
+            else -> throw IllegalArgumentException("Illegal color value $buttonColor")
         }
         val icon = when (icon) {
             ICON_MIC -> {
@@ -383,13 +388,12 @@ class NuguButton @JvmOverloads constructor(
             ICON_LOGO -> {
                 "nugulogo"
             }
-            else -> throw IllegalArgumentException(icon.toString())
+            else -> throw IllegalArgumentException("Illegal color value $icon")
         }
-
         return ContextCompat.getDrawable(
             context,
             drawableRes[type + "_" + color + "_" + icon]
-                ?: throw IllegalArgumentException(type + "_" + color + "_" + icon)
+                ?: throw IllegalArgumentException("resource not found: ${type}_${color}_${icon}")
         )!!
     }
 
@@ -471,11 +475,19 @@ class NuguButton @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
-        val size = when (nuguButtonType) {
+        val size = when (buttonType) {
             TYPE_FAB -> 72f
             else -> 56f
         }
-        super.onMeasure(MeasureSpec.makeMeasureSpec(dpToPx(size,context), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dpToPx(size,context), MeasureSpec.EXACTLY))
+        super.onMeasure(
+            MeasureSpec.makeMeasureSpec(dpToPx(size, context), MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(
+                dpToPx(
+                    size,
+                    context
+                ), MeasureSpec.EXACTLY
+            )
+        )
     }
 
     /**
@@ -546,4 +558,29 @@ class NuguButton @JvmOverloads constructor(
             }
         }
     }
+
+    /**
+     * Set the button type.
+     * @param color The new type to set in the button.
+     */
+    fun setButtonType(@ButtonTypes type: Int) {
+        buttonType = type
+        setupImageDrawable()
+        setupBackground()
+        requestLayout()
+        invalidate()
+    }
+
+
+    /**
+     * Set the button color.
+     * @param color The new color to set in the button.
+     */
+    fun setButtonColor(@ButtonColors color: Int) {
+        buttonColor = color
+        setupImageDrawable()
+        setupBackground()
+        invalidate()
+    }
+
 }
