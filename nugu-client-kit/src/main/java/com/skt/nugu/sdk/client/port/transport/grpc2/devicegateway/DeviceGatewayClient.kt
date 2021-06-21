@@ -126,7 +126,7 @@ internal class DeviceGatewayClient(policy: Policy,
             Logger.w(TAG, "[connect] already connected")
             return false
         }
-        return handleConnection()
+        return processConnection()
     }
 
     /**
@@ -134,7 +134,7 @@ internal class DeviceGatewayClient(policy: Policy,
      */
     override fun disconnect() {
         Logger.d(TAG, "[disconnect]")
-        handleDisconnect()
+        processDisconnect()
     }
 
     /**
@@ -256,9 +256,9 @@ internal class DeviceGatewayClient(policy: Policy,
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
                     else -> {
-                        handleDisconnect()
+                        processDisconnect()
                         nextPolicy()
-                        handleConnection()
+                        processConnection()
                     }
                 }
             }
@@ -276,7 +276,7 @@ internal class DeviceGatewayClient(policy: Policy,
         transportObserver = null
         backoff.shutdown()
         scheduler.shutdown()
-        handleDisconnect()
+        processDisconnect()
         Logger.d(TAG, "[shutdown]")
     }
 
@@ -291,7 +291,7 @@ internal class DeviceGatewayClient(policy: Policy,
         directivesService?.start()
     }
 
-    private fun handleDisconnect() {
+    private fun processDisconnect() {
         isConnected.set(false)
         firstResponseReceived.set(false)
 
@@ -308,7 +308,7 @@ internal class DeviceGatewayClient(policy: Policy,
         }
     }
 
-    private fun handleConnection(): Boolean {
+    private fun processConnection(): Boolean {
         val policy = currentPolicy ?: run {
             Logger.w(TAG, "[connect] no more policy")
             val reason = ChangedReason.UNRECOVERABLE_ERROR
@@ -396,7 +396,7 @@ internal class DeviceGatewayClient(policy: Policy,
 
     override fun stopDirectivesService() {
         Logger.d(TAG, "[stopDirectivesService]")
-        handleDisconnect()
-        handleConnection()
+        processDisconnect()
+        processConnection()
     }
 }
