@@ -106,10 +106,10 @@ internal class DeviceGatewayClient(
             Logger.w(TAG, "[connect] already connected")
             return false
         }
-        return handleConnection()
+        return processConnection()
     }
 
-    private fun handleConnection(): Boolean {
+    private fun processConnection(): Boolean {
         val policy = currentPolicy ?: run {
             Logger.w(TAG, "[connect] no more policy")
             transportObserver?.onError(
@@ -176,10 +176,10 @@ internal class DeviceGatewayClient(
      */
     override fun disconnect() {
         Logger.d(TAG, "[disconnect]")
-        handleDisconnect()
+        processDisconnect()
     }
 
-    private fun handleDisconnect() {
+    private fun processDisconnect() {
         isConnected.set(false)
         firstResponseReceived.set(false)
 
@@ -311,9 +311,9 @@ internal class DeviceGatewayClient(
                         transportObserver?.onError(ChangedReason.INVALID_AUTH)
                     }
                     else -> {
-                        handleDisconnect()
+                        processDisconnect()
                         nextPolicy()
-                        handleConnection()
+                        processConnection()
                     }
                 }
             }
@@ -329,7 +329,7 @@ internal class DeviceGatewayClient(
         messageConsumer = null
         transportObserver = null
         backoff.shutdown()
-        handleDisconnect()
+        processDisconnect()
         asyncCalls.forEach{
             it.value.cancel()
         }
@@ -382,8 +382,8 @@ internal class DeviceGatewayClient(
 
     override fun stopDirectivesService() {
         Logger.d(TAG, "[stopDirectivesService]")
-        handleDisconnect()
-        handleConnection()
+        processDisconnect()
+        processConnection()
     }
 
     private fun getEventsService() : EventsService? {
