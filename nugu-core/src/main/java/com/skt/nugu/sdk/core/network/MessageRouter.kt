@@ -328,16 +328,22 @@ class MessageRouter(
     }
 
     private var sidController: ServerInitiatedDirectiveController = ServerInitiatedDirectiveController(TAG)
-    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) {
+    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) : Boolean {
         if(!enabled) {
             Logger.e(TAG, "[startReceiveServerInitiatedDirective] NetworkManager is disabled")
-            return
+            return false
+        }
+        if(sidController.isStarted()) {
+            Logger.e(TAG, "[startReceiveServerInitiatedDirective] ServerInitiatedDirective is already started.")
+            return false
         }
         sidController.setOnCompletionListener(onCompletion)
         if(!sidController.start(activeTransport)) {
             createActiveTransport()
         }
+        return true
     }
+
 
     override fun stopReceiveServerInitiatedDirective() = sidController.stop(activeTransport)
     override fun isStartReceiveServerInitiatedDirective() = sidController.isStarted()

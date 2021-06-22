@@ -162,11 +162,11 @@ class NetworkManager private constructor(
 
     /**
      * Start the connection-oriented feature.
-     * @param result is called after the reconnect
+     * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
+     * @return success or not
      */
-    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) {
+    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) =
         messageRouter.startReceiveServerInitiatedDirective(onCompletion)
-    }
 
     /**
      * Stop the connection-oriented feature.
