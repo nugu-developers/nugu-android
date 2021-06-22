@@ -17,18 +17,19 @@ package com.skt.nugu.sdk.core.network
 
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ServerInitiatedDirectiveController(val TAG: String) {
-    private var isStart: Boolean = false
-    private var completionListenerCalled = false
+    private var isStart =  AtomicBoolean(false)
+    private var completionListenerCalled =  AtomicBoolean(false)
     private var initialized = false
     private var listener: (() -> Unit?)? = null
 
     fun notifyOnCompletionListener() {
-        if (!completionListenerCalled && isStart) {
+        if (!completionListenerCalled.get() && isStart.get()) {
             listener?.invoke()
         }
-        completionListenerCalled = true
+        completionListenerCalled.set(true)
     }
 
     fun setOnCompletionListener(onCompletionListener: () -> Unit) {
@@ -37,14 +38,15 @@ class ServerInitiatedDirectiveController(val TAG: String) {
 
     /**
      * Start the DirectivesService
-     * @return true is success, otherwise false
+     * @return An initialized true or false.
      */
     fun start(transport: Transport?): Boolean {
-        if (isStart) {
+        if (isStart.get()) {
             Logger.w(TAG, "[start] ServerInitiatedDirective is already started.")
+            return initialized
         }
-        isStart = true
-        completionListenerCalled = false
+        isStart.set(true)
+        completionListenerCalled.set(false)
         return initialized.also { initialized ->
             if (initialized) {
                 transport?.startDirectivesService() ?: Logger.w(
@@ -59,11 +61,11 @@ class ServerInitiatedDirectiveController(val TAG: String) {
     fun stop(transport: Transport?) {
         listener = null
 
-        if (!isStart) {
+        if (!isStart.get()) {
             Logger.w(TAG, "[stop] ServerInitiatedDirective is already stopped. (isStart=$isStart)")
             return
         }
-        isStart = false
+        isStart.set(false)
 
         transport?.stopDirectivesService() ?: Logger.w(
             TAG,
@@ -73,9 +75,9 @@ class ServerInitiatedDirectiveController(val TAG: String) {
 
     fun release() {
         listener = null
-        isStart = false
-        completionListenerCalled = false
+        isStart.set(false)
+        completionListenerCalled.set(false)
     }
 
-    fun isStarted() = isStart
+    fun isStarted() = isStart.get()
 }
