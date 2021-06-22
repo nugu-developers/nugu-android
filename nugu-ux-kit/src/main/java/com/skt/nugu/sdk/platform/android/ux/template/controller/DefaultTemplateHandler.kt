@@ -102,6 +102,7 @@ open class DefaultTemplateHandler(
 
     override fun onChipSelected(text: String) {
         Logger.i(TAG, "ohChipSelected() $text")
+        getNuguClient().asrAgent?.stopRecognition()
         getNuguClient().requestTextInput(text)
     }
 
