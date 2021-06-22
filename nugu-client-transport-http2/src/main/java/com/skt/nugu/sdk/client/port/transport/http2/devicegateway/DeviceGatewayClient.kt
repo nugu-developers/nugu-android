@@ -126,12 +126,8 @@ internal class DeviceGatewayClient(
         }
     }
 
-    private fun createChannel(policy: ServerPolicy?, onError: ((Throwable) -> Unit)? = null) : Boolean {
+    private fun createChannel(policy: ServerPolicy, onError: ((Throwable) -> Unit)? = null) : Boolean {
         synchronized(this) {
-            if(policy == null) {
-                onError?.invoke(Throwable("no more policy"))
-                return false
-            }
             client = try {
                 createChannelBuilderWith(policy, authDelegate)
             } catch (th: Throwable) {
