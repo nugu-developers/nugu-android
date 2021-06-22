@@ -317,7 +317,11 @@ internal class DeviceGatewayClient(
 
             override fun onRetry(retriesAttempted: Int) {
                 Logger.w(TAG, "[awaitRetry] onRetry count=$retriesAttempted, connected=${isConnected()}, tid=${Thread.currentThread().id}")
-                pingService?.newPing() ?: handleOnConnected()  /* keepConnection == false */
+                if(isStartReceiveServerInitiatedDirective()) {
+                    pingService?.newPing()
+                } else {
+                    handleOnConnected()
+                }
             }
         })
     }
