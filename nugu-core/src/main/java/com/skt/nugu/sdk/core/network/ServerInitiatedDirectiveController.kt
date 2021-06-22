@@ -76,6 +76,7 @@ class ServerInitiatedDirectiveController(val TAG: String) {
     fun release() {
         listener = null
         isStart.set(false)
+        initialized = false
         completionListenerCalled.set(false)
     }
 
