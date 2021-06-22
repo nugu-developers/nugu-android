@@ -95,8 +95,9 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
     /**
      * Start the connection-oriented feature.
      * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
+     * @return success or not
     */
-    fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit)
+    fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) : Boolean
 
     /**
      * Stop the connection-oriented feature.
