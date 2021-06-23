@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.2.4 *(2021-06-23)*
+-----------------------------
+* Fix: Fix missing context update call (#1932)
+
 Version 1.2.3 *(2021-06-11)*
 -----------------------------
 * Fix: NuguWebview unusable after detached from window (#1909)
