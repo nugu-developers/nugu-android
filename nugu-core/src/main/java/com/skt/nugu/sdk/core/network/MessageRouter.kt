@@ -69,11 +69,11 @@ class MessageRouter(
     /**
      * Begin the process of establishing an DeviceGateway connection.
      */
-    override fun enable() {
-        Logger.d(TAG, "[enable] called")
-        enabled = true
+    override fun enable(quiet: Boolean) {
         val isConnectedOrConnecting = activeTransport?.isConnectedOrConnecting() ?: false
-        if (!isConnectedOrConnecting) {
+        Logger.d(TAG, "[enable] called, enabled=$enabled, silently=$quiet, isConnectedOrConnecting=$isConnectedOrConnecting")
+        enabled = true
+        if (!isConnectedOrConnecting && !quiet) {
             setConnectionStatus(
                 ConnectionStatusListener.Status.CONNECTED,
                 ConnectionStatusListener.ChangedReason.CLIENT_REQUEST

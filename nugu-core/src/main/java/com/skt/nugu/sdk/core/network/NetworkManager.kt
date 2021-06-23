@@ -44,20 +44,23 @@ class NetworkManager private constructor(
     }
 
     private var enabled = false
+    private var quiet = false
     private val messageObservers = CopyOnWriteArraySet<MessageObserver>()
     private val connectionStatusObservers = CopyOnWriteArraySet<ConnectionStatusListener>()
     /**
      * Initiate a connection to DeviceGateway.
      */
-    override fun enable() {
-        enabled = true
-        messageRouter.enable()
+    override fun enable(quiet: Boolean) {
+        this.enabled = true
+        this.silently = quiet
+        messageRouter.enable(quiet)
     }
+
     /**
      * Disconnect from DeviceGateway.
      */
     override fun disable() {
-        enabled = false
+        this.enabled = false
         messageRouter.disable()
     }
     /**
@@ -71,7 +74,7 @@ class NetworkManager private constructor(
     override fun reconnect() {
         if (enabled) {
             messageRouter.disable()
-            messageRouter.enable()
+            messageRouter.enable(quiet)
         }
     }
     /**
