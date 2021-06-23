@@ -21,7 +21,11 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.net.http.SslError
 import android.os.Build
+import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.AttributeSet
+import android.view.AbsSavedState
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
@@ -120,6 +124,8 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     private var mediaDurationMs = 1L
+    private var mediaCurrentTimeMs = 1L
+    private var mediaPlaying = false
     private var focusedItemToken: String? = null
     private var visibleTokenList: List<String>? = null
     private var lyricsVisible: Boolean = false
@@ -128,7 +134,9 @@ class TemplateWebView @JvmOverloads constructor(
     private var onLoadingComplete: (() -> Unit)? = null
     private var isSupportVisibleOrFocusedToken: Boolean = false
 
+
     init {
+        isSaveEnabled = true
         setBackgroundColor(Color.TRANSPARENT)
         isVerticalScrollBarEnabled = false
         isHorizontalScrollBarEnabled = false
@@ -172,6 +180,40 @@ class TemplateWebView @JvmOverloads constructor(
 //        addCloseButton()
     }
 
+    internal class SavedStates(
+        superState: Parcelable,
+        var durationMs: Long,
+        var currentTimeMs: Long,
+        var mediaPlaying: Int
+    ) :
+        AbsSavedState(superState) {
+
+        override fun writeToParcel(dest: Parcel?, flags: Int) {
+            super.writeToParcel(dest, flags)
+            dest?.writeLong(durationMs)
+            dest?.writeLong(currentTimeMs)
+            dest?.writeInt(mediaPlaying)
+        }
+    }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        super.onSaveInstanceState()
+        return SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
+            mediaDurationMs,
+            mediaCurrentTimeMs,
+            if (mediaPlaying) 1 else 0)
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
+
+        (state as? SavedStates)?.let { savedState ->
+            mediaDurationMs = savedState.durationMs
+            mediaCurrentTimeMs = savedState.currentTimeMs
+            mediaPlaying = savedState.mediaPlaying == 1
+        }
+    }
+
     override fun setServerUrl(url: String) {
         templateUrl = url
     }
@@ -192,8 +234,7 @@ class TemplateWebView @JvmOverloads constructor(
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
                 if (newProgress == 100 && !isSupportVisibleOrFocusedToken && !loadingFailNotified.get()) {
-                    this@TemplateWebView.onLoadingComplete?.invoke()
-                    this@TemplateWebView.onLoadingComplete = null
+                    onLoadingComplete()
                 }
             }
         }
@@ -285,7 +326,6 @@ class TemplateWebView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         Logger.d(TAG, "onDetachedFromWindow")
-        templateHandler?.clear()
 
         (templateHandler as? DefaultTemplateHandler)?.run {
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
@@ -373,8 +413,7 @@ class TemplateWebView @JvmOverloads constructor(
             Logger.d(TAG, "[onContextChanged] isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken \n context: $context")
 
             if (isSupportVisibleOrFocusedToken && !loadingFailNotified.get()) {
-                onLoadingComplete?.invoke()
-                onLoadingComplete = null
+                onLoadingComplete()
             }
 
             weakReference.get()?.run {
@@ -401,6 +440,9 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
+        mediaPlaying = activity == State.PLAYING
+        mediaCurrentTimeMs = currentTimeMs
+
         when (activity) {
             State.IDLE -> callJSFunction(JavaScriptHelper.onPlayStopped())
             State.PLAYING -> {
@@ -426,6 +468,8 @@ class TemplateWebView @JvmOverloads constructor(
     override fun onMediaProgressChanged(progress: Float, currentTimeMs: Long) {
         callJSFunction(JavaScriptHelper.setProgress(progress))
         callJSFunction(JavaScriptHelper.setCurrentTime(currentTimeMs))
+
+        mediaCurrentTimeMs = currentTimeMs
     }
 
     override fun controlFocus(direction: Direction): Boolean {
@@ -444,6 +488,19 @@ class TemplateWebView @JvmOverloads constructor(
 
     override fun getVisibleTokenList(): List<String>? {
         return visibleTokenList
+    }
+
+    private fun onLoadingComplete() {
+        onLoadingComplete?.invoke()
+        onLoadingComplete = null
+
+        if (TemplateView.MEDIA_TEMPLATE_TYPES.contains(templateHandler?.templateInfo?.templateType)) {
+            callJSFunction(JavaScriptHelper.setCurrentTime(mediaCurrentTimeMs))
+            callJSFunction(JavaScriptHelper.setEndTime(mediaDurationMs))
+            if (mediaPlaying) {
+                callJSFunction(JavaScriptHelper.onPlayStarted())
+            }
+        }
     }
 
     private fun startNotifyDisplayInteraction() {

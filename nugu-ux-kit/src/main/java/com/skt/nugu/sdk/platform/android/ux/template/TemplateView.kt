@@ -61,7 +61,7 @@ interface TemplateView {
                 }
             }
 
-            return TemplateWebView(context)
+            return TemplateWebView(context).apply { id = R.id.template_view }
         }
     }
 
