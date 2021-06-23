@@ -195,12 +195,22 @@ class ContextManager : ContextManagerInterface {
                     if (given == null || !given.containsKey(it.key)) {
                         // if not given
                         val stateInfo = namespaceNameToStateInfo[it.key]
-                        if (stateInfo == null || stateInfo.refreshPolicy != StateRefreshPolicy.NEVER) {
-                            // if should be provided
-                            if (target == null || it.key == target) {
-                                pendings[it.key] = ContextType.FULL
-                            } else {
-                                pendings[it.key] = ContextType.COMPACT
+
+                        val requiredContextType = if (target == null || it.key == target) {
+                            ContextType.FULL
+                        } else {
+                            ContextType.COMPACT
+                        }
+
+                        if(stateInfo == null) {
+                            pendings[it.key] = requiredContextType
+                        } else {
+                            if(requiredContextType == ContextType.COMPACT && stateInfo.compact == null) {
+                                pendings[it.key] = requiredContextType
+                            } else if(requiredContextType == ContextType.FULL && stateInfo.full == null) {
+                                pendings[it.key] = requiredContextType
+                            } else if(stateInfo.refreshPolicy != StateRefreshPolicy.NEVER){
+                                pendings[it.key] = requiredContextType
                             }
                         }
                     }
