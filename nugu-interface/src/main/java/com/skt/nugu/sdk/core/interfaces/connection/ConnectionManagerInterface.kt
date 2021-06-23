@@ -22,15 +22,6 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
  */
 interface ConnectionManagerInterface : NetworkManagerInterface {
     /**
-     * Enable connection
-     */
-    override fun enable()
-    /**
-     * Disable connection
-     */
-    override fun disable()
-
-    /**
      * check whether a connection
      */
     fun isEnabled(): Boolean
@@ -82,17 +73,6 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
     fun removeMessageObserver(observer: MessageObserver)
 
     /**
-     * Add listener to be notified when connection status changed for DeviceGateway
-     * @param listener the listener that will add
-     */
-    override fun addConnectionStatusListener(listener: ConnectionStatusListener)
-    /**
-     * Remove listener
-     * @param listener the listener that will removed
-     */
-    override fun removeConnectionStatusListener(listener: ConnectionStatusListener)
-
-    /**
      * Start the connection-oriented feature.
      * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
      * @return success or not
@@ -108,5 +88,4 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
      * Return whether the connection-oriented has been started.
      */
     fun isStartReceiveServerInitiatedDirective() : Boolean
-
 }

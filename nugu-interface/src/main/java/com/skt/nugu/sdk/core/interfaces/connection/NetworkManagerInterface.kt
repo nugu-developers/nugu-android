@@ -21,14 +21,12 @@ package com.skt.nugu.sdk.core.interfaces.connection
 interface NetworkManagerInterface {
     /**
      * Enable network manager.
-     *
-     * If enabled, try to connect NUGU if possible.
+     * @param quiet expectations are no longer notify the CONNECTED state when this is true. Defaults to false.
      */
-    fun enable()
+    fun enable(quiet: Boolean = false)
 
     /**
      * Disable network manager
-     *
      * If connected to NUGU, will be disconnected and never connect to NUGU until enabled.
      */
     fun disable()

@@ -24,8 +24,9 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 interface MessageRouterInterface : MessageSender {
     /**
      * Enable network manager.
+     * @param quiet expectations are no longer notify the CONNECTED state when this is true. Defaults to false.
      */
-    fun enable()
+    fun enable(quiet: Boolean)
 
     /**
      * Disable network manager
