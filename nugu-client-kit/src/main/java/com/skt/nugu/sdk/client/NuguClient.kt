@@ -25,11 +25,9 @@ import com.skt.nugu.sdk.core.interfaces.transport.TransportFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProvider
 import com.skt.nugu.sdk.core.interfaces.log.LogInterface
 import com.skt.nugu.sdk.core.utils.UserAgent
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
-import com.skt.nugu.sdk.core.interfaces.context.ContextStateProviderRegistry
 import com.skt.nugu.sdk.core.playstack.PlayStackContextManager
 import com.skt.nugu.sdk.core.inputprocessor.InputProcessorManager
 import com.skt.nugu.sdk.core.playsynchronizer.PlaySynchronizer
@@ -48,8 +46,7 @@ import com.skt.nugu.sdk.core.interaction.InteractionControlManager
 import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
-import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
+import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
@@ -88,6 +85,8 @@ class NuguClient private constructor(
         // client version for userAgent
         internal var clientVersion: String = "1.0"
 
+        internal var osType: OsContextProvider.Type = OsContextProvider.Type.ANDROID
+
         internal var systemExceptionDelegate: ExceptionDirectiveDelegate? = null
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
@@ -105,6 +104,7 @@ class NuguClient private constructor(
         fun preferences(pref: PreferencesInterface?) = apply { this.preferences = pref }
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
+        fun osType(osType: OsContextProvider.Type) = apply { this.osType = osType }
         fun build() = NuguClient(this)
     }
 
@@ -233,6 +233,12 @@ class NuguClient private constructor(
                 audioPlayStackManager,
                 displayPlayStackManager
             )
+
+            object : OsContextProvider() {
+                override fun getType(): Type = builder.osType
+            }.apply {
+                contextManager.setStateProvider(namespaceAndName, this)
+            }
 
             contextManager.refreshAllState()
         }
