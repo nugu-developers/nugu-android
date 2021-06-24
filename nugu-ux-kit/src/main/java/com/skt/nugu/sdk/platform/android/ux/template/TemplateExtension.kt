@@ -23,6 +23,7 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.Transformation
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 
 fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout: Boolean = false) {
     if (isMerge && text.isNullOrBlank()) return
@@ -45,11 +46,17 @@ fun ImageView.updateImage(
     if (isMerge && url.isNullOrBlank()) return
 
     visibility = if (url != null) View.VISIBLE else View.GONE
-    Glide.with(context).load(url).apply {
-        if (placeHolder != null) placeholder(placeHolder)
-        if (loadingFailImage != null) error(loadingFailImage)
-        if (transformation != null) transform(transformation)
-    }.into(this)
+
+    post {
+        Glide.with(context).load(url)
+            .override(measuredWidth, measuredHeight)
+            .apply {
+                if (placeHolder != null) placeholder(placeHolder)
+                if (loadingFailImage != null) error(loadingFailImage)
+                if (transformation != null) transform(transformation)
+            }
+            .into(this)
+    }
 }
 
 fun TextView.enableMarquee() {
