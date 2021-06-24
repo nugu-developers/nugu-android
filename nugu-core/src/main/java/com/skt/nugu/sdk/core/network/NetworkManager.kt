@@ -52,7 +52,7 @@ class NetworkManager private constructor(
      */
     override fun enable(quiet: Boolean) {
         this.enabled = true
-        this.silently = quiet
+        this.quiet = quiet
         messageRouter.enable(quiet)
     }
 
