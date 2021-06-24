@@ -1,5 +1,11 @@
 Change Log
 ==========
+Version 1.2.5 *(2021-06-24)*
+* Fix: NuguChipsView background not working properly (#1916)
+* Improve: Update ServerInitiatedDirective (#1851)
+* Improve: Make App can custom action when template touched (#1922)
+* Improve: Add the way App can custom close button of TemplateView (#1939)
+* New: Add Template loading result interface (#1918)
 
 Version 1.2.4 *(2021-06-23)*
 -----------------------------
