@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android.ux.template
 import android.content.Context
 import android.view.View
 import androidx.annotation.MainThread
+import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
@@ -31,6 +32,15 @@ interface TemplateView {
         const val AUDIO_PLAYER_TEMPLATE_1 = "AudioPlayer.Template1"
         const val AUDIO_PLAYER_TEMPLATE_2 = "AudioPlayer.Template2"
         val MEDIA_TEMPLATE_TYPES = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
+
+        /**
+         * The basic rule is that SDK show close button on right top of template which is not media Type.
+         * The function below determines whether template must show close button or not.
+         * If you want to have your own rule. Rewrite the function.
+         */
+        var enableCloseButton: (String, String, DisplayAggregatorInterface.Type?) -> Boolean = { templateType, serviceID, displayType ->
+            !MEDIA_TEMPLATE_TYPES.contains(templateType)
+        }
 
         /**
          * key : TemplateType list
