@@ -56,6 +56,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
@@ -182,7 +183,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             }
 
             it.templateLoadingListener = templateListener
-            // (example code)  if you want a template to stop TTS when it touched, uncomment below.
+
+            /** (example code)  if you want a template to stop TTS when it touched, uncomment below. */
 //            it.templateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory{
 //                override fun onCreate(
 //                    nuguProvider: TemplateRenderer.NuguClientProvider,
@@ -192,6 +194,15 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 //                    return TemplateHandlerStopTTSWhenTouched(nuguProvider, templateInfo, fragment)
 //                }
 //            }
+
+            /** (example code) if you want all template rendered as WebView, uncomment below. */
+//            TemplateView.templateConstructor.clear()
+
+            /** (example code) if you want all template to not have close button, uncomment below */
+//            TemplateView.enableCloseButton = { templateType, serviceID, displayType ->
+//                false
+//            }
+
         })
         // add listener for system agent.
         ClientManager.getClient().addSystemAgentListener(this)
@@ -240,7 +251,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     private fun shouldShowRequestPermissionRationales(permissions: Array<out String>): Boolean {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             permissions.forEach {
                 if (shouldShowRequestPermissionRationale(it)) {
                     return true
@@ -331,7 +342,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     private fun startOnPermissionGranted(func: () -> Unit) {
         if (!PermissionUtils.checkPermissions(this, permissions)) {
-            if(shouldShowRequestPermissionRationales(permissions)) {
+            if (shouldShowRequestPermissionRationales(permissions)) {
                 Log.d(TAG, "[startOnPermissionGranted] shouldShowRequestPermissionRationales: true")
             } else {
                 onRequestPermissionResultHandler.requestPermissions(

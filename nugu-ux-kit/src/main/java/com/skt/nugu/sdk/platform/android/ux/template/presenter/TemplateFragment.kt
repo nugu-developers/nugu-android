@@ -166,7 +166,7 @@ class TemplateFragment : Fragment() {
             }
         }
 
-        if (!isMediaTemplate()) {
+        if (TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType())) {
             this.view?.findViewById<View>(R.id.btn_bar_close)?.run {
                 visibility = View.VISIBLE
                 setThrottledOnClickListener {
