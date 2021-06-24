@@ -41,7 +41,8 @@ internal class HTTP2Transport(
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?,
-    private val isStartReceiveServerInitiatedDirective: () -> Boolean
+    private val isStartReceiveServerInitiatedDirective: () -> Boolean,
+    private var connectSilently: Boolean
 ) : Transport {
     /**
      * Transport Constructor.
@@ -55,7 +56,8 @@ internal class HTTP2Transport(
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener,
-            isStartReceiveServerInitiatedDirective: () -> Boolean
+            isStartReceiveServerInitiatedDirective: () -> Boolean,
+            connectSilently: Boolean
         ): Transport {
             return HTTP2Transport(
                 serverInfo,
@@ -63,11 +65,15 @@ internal class HTTP2Transport(
                 authDelegate,
                 messageConsumer,
                 transportObserver,
-                isStartReceiveServerInitiatedDirective
+                isStartReceiveServerInitiatedDirective,
+                connectSilently
             )
         }
     }
-
+    override fun isConnectSilently() = connectSilently
+    override fun setConnectSilently(connectSilently: Boolean) {
+        this.connectSilently = connectSilently
+    }
     private var state: TransportState = TransportState()
     private var deviceGatewayClient: DeviceGatewayTransport? = null
     private var isHandOff = AtomicBoolean(false)

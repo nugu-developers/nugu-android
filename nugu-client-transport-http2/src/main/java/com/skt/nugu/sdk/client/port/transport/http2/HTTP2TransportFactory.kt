@@ -30,12 +30,12 @@ class HTTP2TransportFactory(
     private var serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup? = null
 ) : TransportFactory {
-
     override fun createTransport(
         authDelegate: AuthDelegate,
         messageConsumer: MessageConsumer,
         transportObserver: TransportListener,
-        isStartReceiveServerInitiatedDirective: () -> Boolean
+        isStartReceiveServerInitiatedDirective: () -> Boolean,
+        connectSilently: Boolean
     ): Transport {
         return HTTP2Transport.create(
             serverInfo,
@@ -43,7 +43,8 @@ class HTTP2TransportFactory(
             authDelegate,
             messageConsumer,
             transportObserver,
-            isStartReceiveServerInitiatedDirective
+            isStartReceiveServerInitiatedDirective,
+            connectSilently
         )
     }
 }
