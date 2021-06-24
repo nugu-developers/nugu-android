@@ -334,8 +334,7 @@ class MessageRouter(
             return false
         }
         if(sidController.isStarted()) {
-            Logger.e(TAG, "[startReceiveServerInitiatedDirective] ServerInitiatedDirective is already started.")
-            return false
+            sidController.stop(activeTransport)
         }
         sidController.setOnCompletionListener(onCompletion)
         if(!sidController.start(activeTransport)) {

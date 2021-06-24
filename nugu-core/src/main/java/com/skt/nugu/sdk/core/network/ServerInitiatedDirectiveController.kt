@@ -47,12 +47,18 @@ class ServerInitiatedDirectiveController(val TAG: String) {
         }
         isStart.set(true)
         completionListenerCalled.set(false)
+
+        if(transport == null) {
+            initialized = false
+        }
         return initialized.also { initialized ->
             if (initialized) {
-                transport?.startDirectivesService() ?: Logger.w(
-                    TAG,
-                    "[start] activeTransport is not possible."
-                )
+                transport?.startDirectivesService() ?: run {
+                    Logger.w(
+                        TAG,
+                        "[start] activeTransport is not possible."
+                    )
+                }
             }
             this.initialized = true
         }
