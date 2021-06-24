@@ -19,6 +19,8 @@ class Grpc2CallTest : TestCase() {
         override fun disconnect() = Unit
         override fun isConnected() = true
         override fun isConnectedOrConnecting() = true
+        override fun isConnectSilently(): Boolean = false
+        override fun setConnectSilently(connectSilently: Boolean) = Unit
         override fun send(call: Call) = true
         override fun shutdown() = Unit
         override fun newCall(
