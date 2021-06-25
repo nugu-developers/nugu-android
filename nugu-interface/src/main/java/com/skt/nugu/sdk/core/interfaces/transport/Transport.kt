@@ -45,8 +45,8 @@ interface Transport {
     fun isConnectedOrConnecting(): Boolean
 
     /**
-     * Sends an message request.
-     * @param request the messageRequest to be sent
+     * Send a message request.
+     * @param call A newly send [Call]
      * @return true is success, otherwise false
      */
     fun send(call: Call) : Boolean
