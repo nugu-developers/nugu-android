@@ -80,7 +80,6 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     private val bottomSheetCallback: BottomSheetCallback = object : BottomSheetCallback() {
         override fun onStateChanged(bottomSheet: View, @BottomSheetBehavior.State newState: Int) {
             Logger.d(TAG, "[onStateChanged] $newState")
-            val currentState = currentState
             when (newState) {
                 BottomSheetBehavior.STATE_COLLAPSED -> {
                     if (callback?.shouldCollapsed() == true) {
@@ -95,9 +94,6 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
                 BottomSheetBehavior.STATE_SETTLING -> {
                     return
                 }
-            }
-            if( currentState != newState ) {
-                behavior.state = currentState
             }
         }
 
@@ -141,6 +137,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         behavior.addBottomSheetCallback(bottomSheetCallback)
         behavior.isDraggable = false
         behavior.isHideable = true
+        behavior.peekHeight = 0
     }
 
     fun isExpanded(): Boolean {
@@ -168,10 +165,12 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     }
 
     fun dismiss() {
+        Logger.d(TAG, "[dismiss] called")
         setState(BottomSheetBehavior.STATE_HIDDEN)
     }
 
     fun expand() {
+        Logger.d(TAG, "[expand] called")
         setState(BottomSheetBehavior.STATE_EXPANDED)
     }
 
