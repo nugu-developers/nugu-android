@@ -83,11 +83,17 @@ class MessageRouter(
 
     /**
      * disconnect all transport
+     * @return true is successful disconnect call, otherwise false
      */
-    private fun disconnectAllTransport() {
-        lock.withLock {
-            activeTransport?.disconnect()
-            handoffTransport?.disconnect()
+    private fun disconnectAllTransport(): Boolean {
+        return lock.withLock {
+            if (activeTransport == null && handoffTransport == null) {
+                false
+            } else {
+                activeTransport?.disconnect()
+                handoffTransport?.disconnect()
+                true
+            }
         }
     }
 
@@ -118,7 +124,12 @@ class MessageRouter(
     override fun disable() {
         Logger.d(TAG, "[disable] called")
         enabled = false
-        disconnectAllTransport()
+        if(!disconnectAllTransport()) {
+            setConnectionStatus(
+                ConnectionStatusListener.Status.DISCONNECTED,
+                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
+            )
+        }
         sidController.release()
     }
 
