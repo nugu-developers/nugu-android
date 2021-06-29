@@ -1,6 +1,13 @@
 Change Log
 ==========
+
+Version 1.3.0 *(2021-06-29)*
+-----------------------------
+* Fix: An issue where the animation works when the bottom sheet is collapsed (#1945)
+* Fix: Fix notify state in MessageRouter (#1948)
+
 Version 1.2.5 *(2021-06-24)*
+-----------------------------
 * Fix: NuguChipsView background not working properly (#1916)
 * Improve: Update ServerInitiatedDirective (#1851)
 * Improve: Make App can custom action when template touched (#1922)
