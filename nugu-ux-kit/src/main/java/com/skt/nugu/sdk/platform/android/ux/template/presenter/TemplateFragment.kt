@@ -196,7 +196,7 @@ class TemplateFragment : Fragment() {
                         notifyRendered()
                         viewModel.templateLoadingListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
                     }, onLoadingFail = { reason ->
-                        viewModel.templateLoadingListener?.onFail(getTemplateId(), getTemplateType(), getDisplayType(), reason)
+                        viewModel.templateLoadingListener?.onReceivedError(getTemplateId(), getTemplateType(), getDisplayType(), reason)
                     })
 
                 previousRenderInfo?.run {

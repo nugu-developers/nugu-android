@@ -38,7 +38,13 @@ class TemplateRenderer(
     interface TemplateLoadingListener {
         fun onStart(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {}
         fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {}
-        fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {}
+
+        /**
+         * While template loading if there is error received this callback will be called.
+         * It can be called multiple times if various error received.
+         * It can be called even if loading continues and complete.
+         */
+        fun onReceivedError(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, errorDescription: String?) {}
     }
 
     /**
