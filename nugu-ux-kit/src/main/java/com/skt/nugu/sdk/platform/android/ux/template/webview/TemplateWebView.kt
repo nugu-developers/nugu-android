@@ -241,35 +241,27 @@ class TemplateWebView @JvmOverloads constructor(
                 super.onReceivedError(view, errorCode, description, failingUrl)
                 Logger.d(TAG, "onReceivedError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, $errorCode, $description")
 
-                onLoadingFail?.run {
-                    invoke(description)
-                }
+                onLoadingFail?.invoke(description)
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 super.onReceivedError(view, request, error)
                 Logger.d(TAG, "onReceivedError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}," +
                         " ${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) error?.description else error?.toString()}")
-                onLoadingFail?.run {
-                    invoke(error.toString())
-                }
+                onLoadingFail?.invoke(error.toString())
             }
 
             override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
                 super.onReceivedHttpError(view, request, errorResponse)
                 Logger.d(TAG,
                     "onReceivedHttpError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, ${errorResponse.toString()}")
-                onLoadingFail?.run {
-                    invoke(errorResponse.toString())
-                }
+                onLoadingFail?.invoke(errorResponse.toString())
             }
 
             override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
                 super.onReceivedSslError(view, handler, error)
                 Logger.d(TAG, "onReceivedSslError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, ${error.toString()}")
-                onLoadingFail?.run {
-                    invoke(error.toString())
-                }
+                onLoadingFail?.invoke(error.toString())
             }
         }
 
