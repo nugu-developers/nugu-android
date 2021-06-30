@@ -54,7 +54,6 @@ import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.fixedRateTimer
 
 @SuppressLint("ClickableViewAccessibility")
@@ -80,8 +79,6 @@ class TemplateWebView @JvmOverloads constructor(
     private val clientInfo = ClientInfo()
 
     private var templateUrl = defaultTemplateServerUrl
-
-    private var loadingFailNotified = AtomicBoolean(false)
 
     override var templateHandler: TemplateHandler? = null
         set(value) {
@@ -233,7 +230,7 @@ class TemplateWebView @JvmOverloads constructor(
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 Logger.d(TAG, "progressChanged() $newProgress, isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken ")
-                if (newProgress == 100 && !isSupportVisibleOrFocusedToken && !loadingFailNotified.get()) {
+                if (newProgress == 100 && !isSupportVisibleOrFocusedToken) {
                     onLoadingComplete()
                 }
             }
@@ -245,9 +242,7 @@ class TemplateWebView @JvmOverloads constructor(
                 Logger.d(TAG, "onReceivedError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, $errorCode, $description")
 
                 onLoadingFail?.run {
-                    if (loadingFailNotified.compareAndSet(false, true)) {
-                        invoke(description)
-                    }
+                    invoke(description)
                 }
             }
 
@@ -256,9 +251,7 @@ class TemplateWebView @JvmOverloads constructor(
                 Logger.d(TAG, "onReceivedError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}," +
                         " ${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) error?.description else error?.toString()}")
                 onLoadingFail?.run {
-                    if (loadingFailNotified.compareAndSet(false, true)) {
-                        invoke(error.toString())
-                    }
+                    invoke(error.toString())
                 }
             }
 
@@ -267,9 +260,7 @@ class TemplateWebView @JvmOverloads constructor(
                 Logger.d(TAG,
                     "onReceivedHttpError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, ${errorResponse.toString()}")
                 onLoadingFail?.run {
-                    if (loadingFailNotified.compareAndSet(false, true)) {
-                        invoke(errorResponse.toString())
-                    }
+                    invoke(errorResponse.toString())
                 }
             }
 
@@ -277,9 +268,7 @@ class TemplateWebView @JvmOverloads constructor(
                 super.onReceivedSslError(view, handler, error)
                 Logger.d(TAG, "onReceivedSslError() ${(templateHandler as? DefaultTemplateHandler)?.templateInfo?.templateId}, ${error.toString()}")
                 onLoadingFail?.run {
-                    if (loadingFailNotified.compareAndSet(false, true)) {
-                        invoke(error.toString())
-                    }
+                    invoke(error.toString())
                 }
             }
         }
@@ -412,7 +401,7 @@ class TemplateWebView @JvmOverloads constructor(
         fun onContextChanged(context: String) {
             Logger.d(TAG, "[onContextChanged] isSupportVisibleOrFocusToken $isSupportVisibleOrFocusedToken \n context: $context")
 
-            if (isSupportVisibleOrFocusedToken && !loadingFailNotified.get()) {
+            if (isSupportVisibleOrFocusedToken) {
                 onLoadingComplete()
             }
 

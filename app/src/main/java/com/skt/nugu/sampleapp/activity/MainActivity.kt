@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             //hide loading view if you need
         }
 
-        override fun onFail(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, reason: String?) {
+        override fun onReceivedError(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, errorDescription: String?) {
             //hide loading view if you need
         }
     }
