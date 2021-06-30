@@ -125,19 +125,14 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     // CSRF protection
     private var clientState: String = ""
 
-    inner class OnceLoginListener(realListener: OnLoginListener) : OnLoginListener {
-        private var reference = SoftReference(realListener)
-        private var called = false
+    inner class OnceLoginListener(var onLoginListener: OnLoginListener?) : OnLoginListener {
         override fun onSuccess(credentials: Credentials) {
-            if (called) return
-            called = true
-            reference.get()?.onSuccess(credentials)
+            onLoginListener?.onSuccess(credentials) ?: Logger.w(TAG, "[onSuccess] Listener has already been called.")
+            onLoginListener = null
         }
-
         override fun onError(error: NuguOAuthError) {
-            if (called) return
-            called = true
-            reference.get()?.onError(error)
+            onLoginListener?.onError(error) ?: Logger.w(TAG, "[onError] Listener has already been called.")
+            onLoginListener = null
         }
     }
 
