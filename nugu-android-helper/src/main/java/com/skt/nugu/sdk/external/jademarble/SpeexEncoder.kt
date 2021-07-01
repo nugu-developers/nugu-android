@@ -47,7 +47,17 @@ class SpeexEncoder: Encoder {
         return speexEncoder.encode(input, offset, size)
     }
 
+    override fun flush(): ByteArray? = null
+
     override fun stopEncoding() {
         speexEncoder.release()
+    }
+
+    override fun getMimeType(): String {
+        return "audio/speex"
+    }
+
+    override fun getCodecName(): String {
+        return "speex"
     }
 }
