@@ -83,7 +83,7 @@ class SpeechRecognizeAttachmentSenderThread(
                 }
 
                 // 3. send data
-                if (encodedBuffer != null) {
+                if (encodedBuffer != null && encodedBuffer.isNotEmpty()) {
                     sendAttachment(encodedBuffer, recognizeEvent)
                 }
             }
@@ -93,7 +93,7 @@ class SpeechRecognizeAttachmentSenderThread(
             } else {
                 // due to thread issue, we first finish and then send last attachment...
                 observer.onFinish()
-                sendAttachment(null, recognizeEvent)
+                sendAttachment(audioEncoder.flush(), recognizeEvent, true)
             }
         } catch (e: Exception) {
             Logger.w(TAG, "[exception]", e)
@@ -105,10 +105,10 @@ class SpeechRecognizeAttachmentSenderThread(
         }
     }
 
-    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest) {
+    private fun sendAttachment(encoded: ByteArray?, request: EventMessageRequest, isEnd: Boolean = false) {
         Logger.d(
             TAG,
-            "[sendAttachment] $currentAttachmentSequenceNumber, ${encoded == null}, $this"
+            "[sendAttachment] seq: $currentAttachmentSequenceNumber, isEnd: $isEnd, $this"
         )
 
         val attachmentMessage =
@@ -121,9 +121,9 @@ class SpeechRecognizeAttachmentSenderThread(
                 DefaultASRAgent.VERSION.toString(),
                 request.dialogRequestId,
                 currentAttachmentSequenceNumber,
-                encoded == null,
+                isEnd,
                 request.messageId,
-                "audio/speex", // TODO: Get info from Encoder
+                audioEncoder.getMimeType(),
                 encoded
             )
 

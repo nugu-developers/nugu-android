@@ -40,8 +40,13 @@ interface Encoder {
      */
     fun encode(input: ByteArray, offset: Int, size: Int): ByteArray?
 
+    fun flush(): ByteArray?
+
     /**
      * Stop the current encoding
      */
     fun stopEncoding()
+
+    fun getMimeType(): String
+    fun getCodecName(): String
 }
