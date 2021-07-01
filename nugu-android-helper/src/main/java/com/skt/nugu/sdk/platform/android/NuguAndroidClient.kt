@@ -27,6 +27,7 @@ import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
@@ -225,6 +226,7 @@ class NuguAndroidClient private constructor(
         internal var defaultEpdTimeoutMillis: Long = 10000L
         internal var endPointDetectorModelFilePath: String? = null
         internal var endPointDetector: AudioEndPointDetector? = null
+        internal var asrEncoder: Encoder = SpeexEncoder()
 
         // text agent
         internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
@@ -307,6 +309,12 @@ class NuguAndroidClient private constructor(
          */
         fun endPointDetectorFilePath(endPointDetectorModelFilePath: String?) =
             apply { this.endPointDetectorModelFilePath = endPointDetectorModelFilePath }
+
+        /**
+         * @param asrEncoder the encoder which to be used to encode asr speech.
+         */
+        fun asrEncoder(asrEncoder: Encoder) =
+            apply { this.asrEncoder = asrEncoder }
 
         /**
          * @param factory the transport factory for network
@@ -499,7 +507,7 @@ class NuguAndroidClient private constructor(
                                 getSessionManager(),
                                 getDialogAttributeStorage(),
                                 builder.defaultAudioProvider,
-                                SpeexEncoder(),
+                                builder.asrEncoder,
                                 endpointDetector,
                                 builder.defaultEpdTimeoutMillis,
                                 DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
