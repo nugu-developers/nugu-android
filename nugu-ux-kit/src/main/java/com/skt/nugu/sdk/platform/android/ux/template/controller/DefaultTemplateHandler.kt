@@ -150,7 +150,13 @@ open class DefaultTemplateHandler(
                 PlayerCommand.PREV -> getPlaybackRouter().buttonPressed(PlaybackButton.PREVIOUS)
                 PlayerCommand.NEXT -> getPlaybackRouter().buttonPressed(PlaybackButton.NEXT)
                 PlayerCommand.SHUFFLE -> audioPlayerAgent?.requestShuffleCommand(param.equals("true", true))
-                PlayerCommand.REPEAT -> audioPlayerAgent?.requestRepeatCommand(AudioPlayerAgentInterface.RepeatMode.valueOf(param))
+                PlayerCommand.REPEAT -> {
+                    runCatching {
+                        AudioPlayerAgentInterface.RepeatMode.valueOf(param)
+                    }.getOrNull()?.let { repeatMode ->
+                        audioPlayerAgent?.requestRepeatCommand(repeatMode)
+                    }
+                }
                 PlayerCommand.FAVORITE -> audioPlayerAgent?.requestFavoriteCommand(param.equals("true", true))
                 else -> Unit
             }

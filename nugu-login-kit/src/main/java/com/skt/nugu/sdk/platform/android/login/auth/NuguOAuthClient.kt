@@ -98,19 +98,21 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
             .add("client_secret", options.clientSecret)
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
-        when (GrantType.valueOf(grantType.toUpperCase())) {
-            GrantType.CLIENT_CREDENTIALS -> {
-                // no op
-            }
-            GrantType.AUTHORIZATION_CODE -> {
-                form.add("code", code.toString())
-                    .add("redirect_uri", options.redirectUri.toString())
-            }
-            GrantType.REFRESH_TOKEN -> {
-                form.add("refresh_token", refreshToken.toString())
-            }
-            GrantType.DEVICE_CODE -> {
-                form.add("device_code", code.toString())
+        runCatching { GrantType.valueOf(grantType.toUpperCase(Locale.getDefault())) }.getOrNull()?.let { grantType ->
+            when (grantType) {
+                GrantType.CLIENT_CREDENTIALS -> {
+                    // no op
+                }
+                GrantType.AUTHORIZATION_CODE -> {
+                    form.add("code", code.toString())
+                        .add("redirect_uri", options.redirectUri.toString())
+                }
+                GrantType.REFRESH_TOKEN -> {
+                    form.add("refresh_token", refreshToken.toString())
+                }
+                GrantType.DEVICE_CODE -> {
+                    form.add("device_code", code.toString())
+                }
             }
         }
 
