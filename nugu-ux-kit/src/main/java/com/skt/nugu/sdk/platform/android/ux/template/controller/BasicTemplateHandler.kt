@@ -25,6 +25,11 @@ open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvide
         fragmentRef.get()?.run { (this as? TemplateFragment)?.close() }
     }
 
+    override fun onCloseAllClicked() {
+        Logger.i(TAG, "onCloseAll()")
+        fragmentRef.get()?.run { (this as? TemplateFragment)?.closeAll() }
+    }
+
     override fun showToast(text: String) {
         Logger.i(TAG, "showToast() $text")
         fragmentRef.get()?.run {

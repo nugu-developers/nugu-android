@@ -42,6 +42,8 @@ interface TemplateHandler {
 
     fun onCloseClicked() {}
 
+    fun onCloseAllClicked() {}
+
     fun onNuguButtonSelected() {}
 
     fun onPlayerCommand(command: String, param: String = "") {}

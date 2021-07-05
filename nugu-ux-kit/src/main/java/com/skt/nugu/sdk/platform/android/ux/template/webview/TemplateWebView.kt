@@ -349,6 +349,13 @@ class TemplateWebView @JvmOverloads constructor(
         }
 
         @JavascriptInterface
+        fun closeAll() {
+            weakReference.get()?.run {
+                onCloseAllClicked()
+            }
+        }
+
+        @JavascriptInterface
         fun playerCommand(command: String, param: String) {
             Logger.d(TAG, "[JavascriptInterface] [playerCommand] command: $command, param: $param")
             weakReference.get()?.run {
