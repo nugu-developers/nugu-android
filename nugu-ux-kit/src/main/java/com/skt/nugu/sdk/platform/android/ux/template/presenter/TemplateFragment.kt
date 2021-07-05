@@ -254,6 +254,15 @@ class TemplateFragment : Fragment() {
         }
     }
 
+    fun closeAll() {
+        activity?.run {
+            supportFragmentManager.fragments.filterIsInstance<TemplateFragment>().forEach {
+                supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
+                it.onClose()
+            }
+        }
+    }
+
     fun isNuguButtonVisible(): Boolean = templateView?.isNuguButtonVisible() == true
 
     /**
@@ -263,7 +272,10 @@ class TemplateFragment : Fragment() {
      * If is is false, this means the fragment is destroyed by unknown reason.
      */
     private fun onClose(isUserIntention: Boolean = true) {
-        Logger.d(TAG, "onClose.. current notifyRenderedState. ${viewModel.renderNotified}")
+        Logger.d(TAG,
+            "onClose.. current notifyRenderedState. ${viewModel.renderNotified}, isUserInteraction : $isUserIntention,  externalRendering :${
+                viewModel.externalRenderer?.getVisibleList()?.any { it.templateId == getTemplateId() } == true
+            }")
         if (viewModel.renderNotified == RenderNotifyState.RENDERED) {
             if (!isUserIntention
                 && viewModel.externalRenderer?.getVisibleList()?.any { it.templateId == getTemplateId() } == true

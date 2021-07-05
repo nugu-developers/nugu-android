@@ -110,6 +110,10 @@ open class DefaultTemplateHandler(
         Logger.w(TAG, "onClose() need to be implemented in application side")
     }
 
+    override fun onCloseAllClicked() {
+        Logger.w(TAG, "onCloseAll() need to be implemented in application side")
+    }
+
     override fun onNuguButtonSelected() {
         Logger.w(TAG, "onNuguButtonSelected()")
         getNuguClient().asrAgent?.startRecognition(initiator = ASRAgentInterface.Initiator.TAP)
