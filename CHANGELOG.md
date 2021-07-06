@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.3.1 *(2021-07-06)*
+-----------------------------
+* Fix: Fix issue that TTS not played (#1953)
+* Fix: An issue where the first login fails after installation on a specific device (#1954)
+* New: Apply OggOpus codec for ASR (#1951)
+* New: Add 'closeAll' JsInterace implementation (#1959)
+
 Version 1.3.0 *(2021-06-29)*
 -----------------------------
 * Fix: An issue where the animation works when the bottom sheet is collapsed (#1945)
