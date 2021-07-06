@@ -49,7 +49,7 @@ class TemplateFragment : Fragment() {
             nuguProvider: TemplateRenderer.NuguClientProvider,
             externalRenderer: TemplateRenderer.ExternalViewRenderer? = null,
             templateLoadingListener: TemplateRenderer.TemplateLoadingListener? = null,
-            templateHandlerFactory: TemplateHandler.TemplateHandlerFactory? = null,
+            templateHandlerFactory: TemplateHandler.TemplateHandlerFactory,
             name: String,
             dialogRequestId: String,
             templateId: String,
@@ -62,9 +62,7 @@ class TemplateFragment : Fragment() {
                 pendingNuguProvider = nuguProvider
                 pendingExternalViewRenderer = externalRenderer
                 pendingTemplateLoadingListener = templateLoadingListener
-                templateHandlerFactory?.let { customHandler ->
-                    this.handlerFactory = customHandler
-                }
+                handlerFactory = templateHandlerFactory
             }
         }
 
@@ -96,7 +94,7 @@ class TemplateFragment : Fragment() {
     private val mainHandler = Handler(Looper.getMainLooper())
     var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
 
-    private var handlerFactory = TemplateHandler.TemplateHandlerFactory()
+    private lateinit var handlerFactory : TemplateHandler.TemplateHandlerFactory
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)
