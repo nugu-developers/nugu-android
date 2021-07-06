@@ -31,15 +31,14 @@ import kotlin.concurrent.fixedRateTimer
 /**
  * TemplateHandler focused on Media state observing and interaction with NUGU
  */
-//todo. class name check. Is word 'Default' proper?
-open class DefaultTemplateHandler(
+open class NuguTemplateHandler(
     private val nuguProvider: TemplateRenderer.NuguClientProvider,
     override var templateInfo: TemplateHandler.TemplateInfo
 ) :
     TemplateHandler {
 
     companion object {
-        private const val TAG = "DefaultTemplateHandler"
+        private const val TAG = "NuguTemplateHandler"
     }
 
     private var audioDurationMs = 0L

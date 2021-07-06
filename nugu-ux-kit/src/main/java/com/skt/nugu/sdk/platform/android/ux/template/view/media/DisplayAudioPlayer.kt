@@ -46,7 +46,7 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface.THEME.SYSTEM
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.*
-import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.NuguTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayerUpdate
@@ -132,7 +132,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         set(value) {
             field = value
             value?.run {
-                (this as? DefaultTemplateHandler)?.run {
+                (this as? NuguTemplateHandler)?.run {
                     observeMediaState()
                     setClientListener(mediaListener)
                     getNuguClient().audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
@@ -336,7 +336,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         play.setThrottledOnClickListener {
-            if ((templateHandler as? DefaultTemplateHandler)?.currentMediaState == AudioPlayerAgentInterface.State.PLAYING) {
+            if ((templateHandler as? NuguTemplateHandler)?.currentMediaState == AudioPlayerAgentInterface.State.PLAYING) {
                 templateHandler?.onPlayerCommand(PlayerCommand.PAUSE.command)
             } else {
                 templateHandler?.onPlayerCommand(PlayerCommand.PLAY.command)
@@ -646,7 +646,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
         }
 
-        (templateHandler as? DefaultTemplateHandler)?.getNuguClient()?.themeManager?.run {
+        (templateHandler as? NuguTemplateHandler)?.getNuguClient()?.themeManager?.run {
             val newIsDark = theme == DARK ||
                     (theme == SYSTEM && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
             Logger.i(TAG, "updateThemeIfNeeded. currentTheme $theme current isDark? $isDark,  new isDark? $newIsDark")
@@ -746,7 +746,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
 
-        (templateHandler as? DefaultTemplateHandler)?.run {
+        (templateHandler as? NuguTemplateHandler)?.run {
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
                 getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }

@@ -147,7 +147,12 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             //hide loading view if you need
         }
 
-        override fun onReceivedError(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?, errorDescription: String?) {
+        override fun onReceivedError(
+            templateId: String,
+            templateType: String,
+            displayType: DisplayAggregatorInterface.Type?,
+            errorDescription: String?
+        ) {
             //hide loading view if you need
         }
     }
@@ -185,13 +190,16 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             it.templateLoadingListener = templateListener
 
             /** (example code)  if you want a template to stop TTS when it touched, uncomment below. */
-//            it.templateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory{
+//            it.templateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory() {
 //                override fun onCreate(
 //                    nuguProvider: TemplateRenderer.NuguClientProvider,
 //                    templateInfo: TemplateHandler.TemplateInfo,
 //                    fragment: Fragment
 //                ): TemplateHandler {
-//                    return TemplateHandlerStopTTSWhenTouched(nuguProvider, templateInfo, fragment)
+//                    return if (templateInfo.templateType == "template you want make stop TTS when it touched")
+//                        TemplateHandlerStopTTSWhenTouched(nuguProvider, templateInfo, fragment)
+//                    else
+//                        super.onCreate(nuguProvider, templateInfo, fragment)
 //                }
 //            }
 
