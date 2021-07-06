@@ -243,6 +243,7 @@ class MessageRouter(
                 activeTransport?.shutdown()
                 activeTransport = null
             }
+            sidController.stop(activeTransport)
         }
         setConnectionStatus(ConnectionStatusListener.Status.DISCONNECTED, reason)
     }
