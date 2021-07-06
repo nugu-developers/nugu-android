@@ -96,15 +96,7 @@ class TemplateFragment : Fragment() {
     private val mainHandler = Handler(Looper.getMainLooper())
     var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
 
-    private var handlerFactory: TemplateHandler.TemplateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory {
-        override fun onCreate(
-            nuguProvider: TemplateRenderer.NuguClientProvider,
-            templateInfo: TemplateInfo,
-            fragment: Fragment
-        ): TemplateHandler {
-            return BasicTemplateHandler(nuguProvider, templateInfo, this@TemplateFragment)
-        }
-    }
+    private var handlerFactory = TemplateHandler.TemplateHandlerFactory()
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)

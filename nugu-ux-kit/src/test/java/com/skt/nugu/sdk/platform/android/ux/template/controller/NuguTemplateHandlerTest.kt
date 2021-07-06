@@ -1,9 +1,7 @@
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
-import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.common.Direction
-import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
@@ -13,7 +11,7 @@ import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.*
 
-class DefaultTemplateHandlerTest {
+class NuguTemplateHandlerTest {
     @Mock
     private lateinit var clientListener: TemplateHandler.ClientListener
 
@@ -26,93 +24,93 @@ class DefaultTemplateHandlerTest {
 
     private val templateInfo = TemplateHandler.TemplateInfo("templateId", "templateType")
 
-    private lateinit var defaultTemplateHandler: DefaultTemplateHandler
+    private lateinit var nuguTemplateHandler: NuguTemplateHandler
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        defaultTemplateHandler = DefaultTemplateHandler(nuguAndroidProvider, templateInfo)
-        defaultTemplateHandler.setClientListener(clientListener)
+        nuguTemplateHandler = NuguTemplateHandler(nuguAndroidProvider, templateInfo)
+        nuguTemplateHandler.setClientListener(clientListener)
     }
 
     @Test
     fun testElementSelected() {
-        defaultTemplateHandler.onElementSelected("token123")
+        nuguTemplateHandler.onElementSelected("token123")
         verify(nuguAndroidClient).getDisplay()?.setElementSelected(templateInfo.templateId, "token123")
     }
 
     @Test
     fun testChipSelected() {
-        defaultTemplateHandler.onChipSelected("chip string")
+        nuguTemplateHandler.onChipSelected("chip string")
         verify(nuguAndroidClient).asrAgent?.stopRecognition()
         verify(nuguAndroidClient).requestTextInput("chip string")
     }
 
     @Test
     fun testZeroInteractions() {
-        defaultTemplateHandler.onCloseClicked()
+        nuguTemplateHandler.onCloseClicked()
         verifyZeroInteractions(nuguAndroidClient)
 
-        defaultTemplateHandler.onContextChanged("context")
+        nuguTemplateHandler.onContextChanged("context")
         verifyZeroInteractions(nuguAndroidClient)
 
-        defaultTemplateHandler.onControlResult("action", "result")
+        nuguTemplateHandler.onControlResult("action", "result")
         verifyZeroInteractions(nuguAndroidClient)
 
-        defaultTemplateHandler.showToast("toast")
+        nuguTemplateHandler.showToast("toast")
         verifyZeroInteractions(nuguAndroidClient)
 
 
-        defaultTemplateHandler.showActivity("className")
+        nuguTemplateHandler.showActivity("className")
         verifyZeroInteractions(nuguAndroidClient)
     }
 
     @Test
     fun testNuguButtonSelected() {
-        defaultTemplateHandler.onNuguButtonSelected()
+        nuguTemplateHandler.onNuguButtonSelected()
         verify(nuguAndroidClient).asrAgent?.startRecognition(initiator = ASRAgentInterface.Initiator.TAP)
     }
 
     @Test
     fun testPlayTTS() {
-        defaultTemplateHandler.playTTS("tts")
+        nuguTemplateHandler.playTTS("tts")
         verify(nuguAndroidClient).requestTTS("tts")
     }
 
     @Test
     fun testMediaProgressSending() {
         //periodically sending
-        defaultTemplateHandler.startMediaProgressSending()
+        nuguTemplateHandler.startMediaProgressSending()
         verify(clientListener, timeout(2500).times(2)).onMediaProgressChanged(any(), any())
 
         //after stop. there will be no progress sending
-        defaultTemplateHandler.clear()
+        nuguTemplateHandler.clear()
         verifyNoMoreInteractions(clientListener)
     }
 
     @Test
     fun testController() {
-        defaultTemplateHandler.displayController.controlFocus(Direction.NEXT)
+        nuguTemplateHandler.displayController.controlFocus(Direction.NEXT)
         verify(clientListener).controlFocus(Direction.NEXT)
 
-        defaultTemplateHandler.displayController.controlScroll(Direction.PREVIOUS)
+        nuguTemplateHandler.displayController.controlScroll(Direction.PREVIOUS)
         verify(clientListener).controlScroll(Direction.PREVIOUS)
 
-        defaultTemplateHandler.displayController.getFocusedItemToken()
+        nuguTemplateHandler.displayController.getFocusedItemToken()
         verify(clientListener).getFocusedItemToken()
 
-        defaultTemplateHandler.displayController.getVisibleTokenList()
+        nuguTemplateHandler.displayController.getVisibleTokenList()
         verify(clientListener).getVisibleTokenList()
     }
 
     @Test
     fun testPlayerCommandWithEmptyParam(){
-        defaultTemplateHandler.onPlayerCommand(PlayerCommand.REPEAT.command, "")
+        nuguTemplateHandler.onPlayerCommand(PlayerCommand.REPEAT.command, "")
     }
 
     @Test
     fun testClear(){
-        defaultTemplateHandler.clear()
+        nuguTemplateHandler.clear()
         verify(nuguAndroidClient).audioPlayerAgent?.removeListener(any())
         verify(nuguAndroidClient).audioPlayerAgent?.removeOnDurationListener(any())
     }

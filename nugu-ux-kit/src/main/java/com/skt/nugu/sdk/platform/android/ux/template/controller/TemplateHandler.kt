@@ -27,8 +27,10 @@ import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
  */
 interface TemplateHandler {
 
-    interface TemplateHandlerFactory {
-        fun onCreate(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment): TemplateHandler
+    open class TemplateHandlerFactory {
+        open fun onCreate(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment): TemplateHandler{
+            return BasicTemplateHandler(nuguProvider, templateInfo, fragment)
+        }
     }
 
     data class TemplateInfo(val templateId: String, val templateType: String)

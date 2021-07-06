@@ -13,7 +13,7 @@ import java.lang.ref.WeakReference
  * TemplateHandler focused on interaction with Android component such as Fragment
  */
 open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment) :
-    DefaultTemplateHandler(nuguProvider, templateInfo) {
+    NuguTemplateHandler(nuguProvider, templateInfo) {
     companion object {
         private const val TAG = "BasicTemplateHandler"
     }
