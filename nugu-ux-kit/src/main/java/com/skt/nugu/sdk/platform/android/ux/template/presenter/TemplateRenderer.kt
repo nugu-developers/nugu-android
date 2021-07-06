@@ -73,6 +73,7 @@ class TemplateRenderer(
     var externalViewRenderer: ExternalViewRenderer? = null
 
     var templateHandlerFactory: TemplateHandler.TemplateHandlerFactory? = null
+    private val defaultTemplateHandlerFactory = TemplateHandler.TemplateHandlerFactory()
 
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
@@ -116,7 +117,7 @@ class TemplateRenderer(
                             nuguProvider = nuguClientProvider,
                             externalRenderer = externalViewRenderer,
                             templateLoadingListener = templateLoadingListener,
-                            templateHandlerFactory = templateHandlerFactory,
+                            templateHandlerFactory = templateHandlerFactory ?: defaultTemplateHandlerFactory,
                             name = templateType,
                             dialogRequestId = header.dialogRequestId,
                             templateId = templateId,
