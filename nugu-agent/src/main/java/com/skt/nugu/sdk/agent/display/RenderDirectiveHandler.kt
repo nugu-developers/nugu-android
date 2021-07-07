@@ -78,6 +78,9 @@ class RenderDirectiveHandler(
         // supported for v1.6
         private const val NAME_UNIFIED_SEARCH1 = "UnifiedSearch1"
 
+        // supported for v1.8
+        private const val NAME_TAB_EXTENSION = "TabExtension"
+
         private val FULLTEXT1 = NamespaceAndName(
             DisplayAgent.NAMESPACE,
             NAME_FULLTEXT1
@@ -243,6 +246,11 @@ class RenderDirectiveHandler(
             DisplayAgent.NAMESPACE,
             NAME_UNIFIED_SEARCH1
         )
+
+        private val TAB_EXTENSION = NamespaceAndName(
+            DisplayAgent.NAMESPACE,
+            NAME_TAB_EXTENSION
+        )
     }
 
     interface Controller {
@@ -342,6 +350,8 @@ class RenderDirectiveHandler(
         configuration[DUMMY] = blockingPolicy
 
         configuration[UNIFIED_SEARCH1] = blockingPolicy
+
+        configuration[TAB_EXTENSION] = blockingPolicy
 
         return configuration
     }
