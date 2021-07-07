@@ -59,7 +59,7 @@ class DisplayAgent(
         private const val TAG = "DisplayTemplateAgent"
 
         const val NAMESPACE = "Display"
-        val VERSION = Version(1,7)
+        val VERSION = Version(1,8)
     }
 
     data class TemplatePayload(
