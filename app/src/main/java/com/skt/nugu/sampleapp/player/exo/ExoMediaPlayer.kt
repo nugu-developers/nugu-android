@@ -67,7 +67,7 @@ class ExoMediaPlayer(
             return when (error) {
                 ExoPlaybackException.TYPE_SOURCE -> ErrorType.MEDIA_ERROR_INVALID_REQUST
                 ExoPlaybackException.TYPE_RENDERER,
-                ExoPlaybackException.TYPE_OUT_OF_MEMORY -> ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR
+                ExoPlaybackException.TYPE_UNEXPECTED -> ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR
                 ExoPlaybackException.TYPE_REMOTE -> ErrorType.MEDIA_ERROR_INTERNAL_SERVER_ERROR
                 else -> ErrorType.MEDIA_ERROR_UNKNOWN
             }

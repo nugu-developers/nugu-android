@@ -10,6 +10,9 @@ android {
         versionCode rootProject.nuguVersionCode
         versionName rootProject.nuguVersionName
 
+        buildConfigField 'int', 'VERSION_CODE', "${rootProject.nuguVersionCode}"
+        buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.nuguVersionName}\""
+
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

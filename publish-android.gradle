@@ -1,47 +1,48 @@
-apply plugin: 'maven'
-apply plugin: 'digital.wup.android-maven-publish'
+apply plugin: 'maven-publish'
 
-publishing {
-    Properties properties = new Properties()
-    if (project.rootProject.file('local.properties').canRead()) {
-        properties.load(project.rootProject.file("local.properties").newDataInputStream())
-    }
+afterEvaluate {
+    publishing {
+        Properties properties = new Properties()
+        if (project.rootProject.file('local.properties').canRead()) {
+            properties.load(project.rootProject.file("local.properties").newDataInputStream())
+        }
 
-    def userName = properties['maven.userName']
-    def passWord = properties['maven.password']
-    def mavenTarget = ""
-    if(project.rootProject.publishSnapshot) {
-        mavenTarget = "maven-snapshots"
-    } else {
-        mavenTarget = "maven-releases"
-    }
+        def userName = properties['maven.userName']
+        def passWord = properties['maven.password']
+        def mavenTarget = ""
+        if (project.rootProject.publishSnapshot) {
+            mavenTarget = "maven-snapshots"
+        } else {
+            mavenTarget = "maven-releases"
+        }
 
-    repositories {
-        maven {
-            url "http://223.39.117.163:8081/repository/$mavenTarget/"
-            credentials {
-                username userName
-                password passWord
+        repositories {
+            maven {
+                url "http://223.39.117.163:8081/repository/$mavenTarget/"
+                credentials {
+                    username userName
+                    password passWord
+                }
+            }
+
+            maven {
+                url "http://223.39.117.164:8081/repository/$mavenTarget/"
+                credentials {
+                    username userName
+                    password passWord
+                }
             }
         }
 
-        maven {
-            url "http://223.39.117.164:8081/repository/$mavenTarget/"
-            credentials {
-                username userName
-                password passWord
+        publications {
+            aar(MavenPublication) {
+                groupId = "com.skt.nugu.sdk"
+
+                from components.release
+
+                artifact sourceJar
+                artifact packageJavadoc
             }
-        }
-    }
-
-    publications {
-        mavenAar(MavenPublication) {
-            groupId = "com.skt.nugu.sdk"
-
-            from components.android
-
-            artifact sourceJar
-            artifact packageJavadoc
         }
     }
 }
