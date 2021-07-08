@@ -29,7 +29,7 @@ android {
 }
 
 dependencies {
-    implementation "com.airbnb.android:lottie:3.7.0"
+    implementation "com.airbnb.android:lottie:$lottiVersion"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "com.google.android.material:material:$androidMaterialVersion"
     implementation "androidx.appcompat:appcompat:$androidXAppcompatVersion"
@@ -47,12 +47,12 @@ dependencies {
     implementation "com.github.bumptech.glide:glide:$glideVersion"
 
     testImplementation 'org.json:json:20180813'
-    testImplementation "androidx.test.ext:junit-ktx:1.1.2"
-    testImplementation "androidx.test:core-ktx:1.2.0"
-    testImplementation "org.robolectric:robolectric:4.3.1"
+    testImplementation "androidx.test.ext:junit-ktx:$testJunitKtxVersion"
+    testImplementation "androidx.test:core-ktx:$testCoreKtxVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
 
-    testImplementation 'org.mockito:mockito-inline:3.8.0'
-    testImplementation "org.mockito.kotlin:mockito-kotlin:3.1.0"
+    testImplementation "org.mockito:mockito-inline:$mokitoInlineVersion"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:$mokitoKotlinVersion"
 }
 
 apply from: '../javadoc-android.gradle'

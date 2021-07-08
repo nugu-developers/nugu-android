@@ -1,7 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion rootProject.compileSdkVersion
@@ -42,8 +41,8 @@ android {
         }
     }
 
-    dataBinding {
-        enabled = true
+    buildFeatures {
+        dataBinding true
     }
 
     compileOptions {
@@ -94,9 +93,9 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesAndroidVersion"
 
     // Koin for Kotlin
-    implementation "org.koin:koin-core:$koinVersion"
-    implementation "org.koin:koin-android:$koinVersion"
-    implementation "org.koin:koin-android-viewmodel:$koinVersion"
+    implementation "io.insert-koin:koin-core:$koinVersion"
+    implementation "io.insert-koin:koin-android:$koinVersion"
+    implementation "io.insert-koin:koin-android-viewmodel:$koinVersion"
 
     // firebase distribution
     implementation platform('com.google.firebase:firebase-bom:26.4.0')

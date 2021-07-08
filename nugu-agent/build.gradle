@@ -12,11 +12,11 @@ dependencies {
         implementation project(':nugu-interface')
     }
 
-    implementation "com.google.code.gson:gson:2.8.6"
+    implementation "com.google.code.gson:gson:$gsonVersion"
 
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mokitoCoreVersion"
-    testImplementation "org.mockito.kotlin:mockito-kotlin:3.1.0"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:$mokitoKotlinVersion"
 }
 
 repositories {

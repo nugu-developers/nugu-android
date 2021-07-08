@@ -76,7 +76,7 @@ class NuguWebView @JvmOverloads constructor(
         private const val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
     }
 
-    private val cookies by lazy {
+    private val cookies: MutableMap<String, String> by lazy {
         mutableMapOf(
             "Authorization" to authorization.toString(),
             "Poc-Id" to pocId.toString(),
@@ -90,7 +90,7 @@ class NuguWebView @JvmOverloads constructor(
             "Client-Id" to clientId.toString(),
             "Grant-Type" to grantType.toString(),
             "Device-Unique-Id" to deviceUniqueId.toString()
-        )
+        ) as MutableMap<String, String>
     }
 
     var authorization: String? = null
