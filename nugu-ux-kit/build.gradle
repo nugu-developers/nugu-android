@@ -26,6 +26,15 @@ android {
         unitTests.includeAndroidResources = true
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
 }
 
 dependencies {
@@ -41,7 +50,7 @@ dependencies {
     }
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
+    testImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
     implementation("com.google.code.gson:gson:$gsonVersion")
     implementation "com.github.bumptech.glide:glide:$glideVersion"
@@ -53,6 +62,11 @@ dependencies {
 
     testImplementation 'org.mockito:mockito-inline:3.8.0'
     testImplementation "org.mockito.kotlin:mockito-kotlin:3.1.0"
+
+    testImplementation 'androidx.fragment:fragment-testing:1.2.4'
+    testImplementation 'androidx.test:runner:1.1.0'
+    testImplementation 'androidx.test:rules:1.1.0'
+    testImplementation 'androidx.test.espresso:espresso-web:3.1.0'
 }
 
 apply from: '../javadoc-android.gradle'
