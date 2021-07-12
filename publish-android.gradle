@@ -35,7 +35,7 @@ afterEvaluate {
         }
 
         publications {
-            aar(MavenPublication) {
+            release(MavenPublication) {
                 groupId = "com.skt.nugu.sdk"
 
                 from components.release
