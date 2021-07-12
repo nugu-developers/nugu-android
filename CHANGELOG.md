@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.3.2 *(2021-07-12)*
+-----------------------------
+* Improve: Fix to stop ServerInitiatedDirective when Disconnected (#1963)
+* Improve: Update libraries (#1969)
+* New: Support Display Interface v1.8 (#1965)
+
 Version 1.3.1 *(2021-07-06)*
 -----------------------------
 * Fix: Fix issue that TTS not played (#1953)
