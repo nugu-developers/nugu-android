@@ -10,14 +10,17 @@ import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
+import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.O_MR1])
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class LyricsViewTest {
     private lateinit var lyricsView: LyricsView
 
@@ -27,27 +30,27 @@ class LyricsViewTest {
     }
 
     @Test
-    fun test_initState() {
+    fun test1_initState() {
         assertFalse(lyricsView.isDark)
         assertEquals(lyricsView.viewSize, 1)
     }
 
     @Test
-    fun test_updateWhenItemSet() {
+    fun test2_updateWhenItemSet() {
         val spy = Mockito.spy(lyricsView)
         spy.setItems(listOf(LyricsInfo(0, "0"), LyricsInfo(1, "1")))
         verify(spy).update()
     }
 
     @Test
-    fun test_updateWhenThemeChanged() {
+    fun test3_updateWhenThemeChanged() {
         val spy = Mockito.spy(lyricsView)
         spy.isDark = true
         verify(spy).update()
     }
 
     @Test
-    fun test_showEmptyViewWhenEmptyItem() {
+    fun test4_showEmptyViewWhenEmptyItem() {
         val spy = Mockito.spy(lyricsView)
         spy.setItems(emptyList())
         verify(spy).update()
@@ -56,7 +59,7 @@ class LyricsViewTest {
     }
 
     @Test
-    fun test_scroll() {
+    fun test5_scroll() {
         val spy = Mockito.spy(lyricsView)
         spy.setItems(listOf(LyricsInfo(100, "0"), LyricsInfo(200, "1")))
         spy.setCurrentTimeMs(50)

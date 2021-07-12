@@ -21,14 +21,17 @@ import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import kotlinx.coroutines.MainScope
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.O_MR1])
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TemplateFragmentTest {
     @Mock
     private lateinit var nuguAndroidClient: NuguAndroidClient
@@ -53,7 +56,6 @@ class TemplateFragmentTest {
     private val nuguAndroidProvider = object : TemplateRenderer.NuguClientProvider {
         override fun getNuguClient(): NuguAndroidClient = nuguAndroidClient
     }
-
 
     private fun launchFragment(isMedia: Boolean = false): FragmentScenario<TemplateFragment> {
         val bundle = TemplateFragment.createBundle(if (isMedia) templateType_media else templateType,
@@ -83,7 +85,7 @@ class TemplateFragmentTest {
     }
 
     @Test
-    fun testTemplateArgs() {
+    fun test1TemplateArgs() {
         launchFragment().onFragment { fragment ->
             assertEquals(fragment.getTemplateId(), templateId)
             assertEquals(fragment.getTemplateType(), templateType)
@@ -94,7 +96,7 @@ class TemplateFragmentTest {
     }
 
     @Test
-    fun testCloseButtonVisibility() {
+    fun test2CloseButtonVisibility() {
         // default setting. test close button visible
         launchFragment().onFragment {
             onView(withId(R.id.btn_bar_close)).check(matches(isDisplayed()))
@@ -116,7 +118,7 @@ class TemplateFragmentTest {
     }
 
     @Test
-    fun testNuguButtonVisibility() {
+    fun test3NuguButtonVisibility() {
         launchFragment(true).onFragment {
             assertEquals(it.isNuguButtonVisible(), false)
         }
@@ -127,7 +129,7 @@ class TemplateFragmentTest {
     }
 
     @Test
-    fun testWebView(){
+    fun test4WebView(){
         launchFragment().onFragment {
             it.view?.post {
                 onWebView()
