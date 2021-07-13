@@ -101,11 +101,10 @@ data class LyricsInfo(
 )
 
 @Keep
-class ClientInfo(theme: String? = null, buttonColor: String? = null) {
+class ClientInfo(theme: String? = null, var buttonColor: String? = null) {
     var theme: String? = theme
         set(value) {
             field = value
             buttonColor = if (value == "dark") "white" else "blue"
         }
-    var buttonColor: String? = buttonColor
 }
