@@ -23,6 +23,7 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
@@ -66,7 +67,8 @@ class TemplateFragment : Fragment() {
             }
         }
 
-        private fun createBundle(
+        @VisibleForTesting
+        fun createBundle(
             name: String,
             dialogRequestId: String,
             templateId: String,
