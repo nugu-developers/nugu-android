@@ -38,7 +38,8 @@ class PlayStackManager(tagPrefix: String) : PlayStackManagerInterface, PlayStack
             providers.forEach { add(it.getPlayContext() ?: return@forEach) }
         }
 
-        val oldestTimestamp = playStack.filter { it.affectPersistent }.minBy { it.timestamp }?.timestamp ?: Long.MAX_VALUE
+        val oldestTimestamp = playStack.filter { it.affectPersistent }
+            .minByOrNull { it.timestamp }?.timestamp ?: Long.MAX_VALUE
 
         Logger.d(TAG, "[getPlayStack] provided : $playStack, oldestTimestamp: $oldestTimestamp")
 
