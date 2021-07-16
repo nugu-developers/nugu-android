@@ -60,6 +60,8 @@ dependencies {
     implementation("com.google.code.gson:gson:$gsonVersion")
     implementation "com.github.bumptech.glide:glide:$glideVersion"
 
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesAndroidVersion"
+
     testImplementation 'org.json:json:20180813'
     testImplementation "androidx.test.ext:junit-ktx:$testJunitKtxVersion"
     testImplementation "androidx.test:core-ktx:$testCoreKtxVersion"

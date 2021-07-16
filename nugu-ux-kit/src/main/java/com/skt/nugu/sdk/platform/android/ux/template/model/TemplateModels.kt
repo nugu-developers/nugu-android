@@ -45,18 +45,18 @@ enum class Repeat {
 @Keep
 class AudioPlayer(
     @SerializedName("title") val title: AudioPlayerTitle,
-    @SerializedName("content") val content: AudioPlayerContent
+    @SerializedName("content") val content: AudioPlayerContent,
 )
 
 @Keep
 class AudioPlayerUpdate(
-    @SerializedName("template") val player: AudioPlayer
+    @SerializedName("template") val player: AudioPlayer,
 )
 
 @Keep
 data class AudioPlayerTitle(
     @SerializedName("iconUrl") val iconUrl: String?,
-    @SerializedName("text") val text: String?
+    @SerializedName("text") val text: String?,
 )
 
 @Keep
@@ -71,14 +71,14 @@ data class AudioPlayerContent(
     @SerializedName("badgeMessage") val badgeMessage: String?,
     @SerializedName("badgeImageUrl") val badgeImageUrl: String?,
     @SerializedName("lyrics") val lyrics: Lyrics?,
-    @SerializedName("settings") val settings: Settings?
+    @SerializedName("settings") val settings: Settings?,
 )
 
 @Keep
 data class Settings(
     @SerializedName("favorite") val favorite: Boolean?,
     @SerializedName("repeat") val repeat: Repeat?,
-    @SerializedName("shuffle") val shuffle: Boolean?
+    @SerializedName("shuffle") val shuffle: Boolean?,
 )
 
 @Keep
@@ -86,25 +86,19 @@ data class Lyrics(
     @SerializedName("title") val title: String?,
     @SerializedName("lyricsType") val lyricsType: LyricsType?,
     @SerializedName("lyricsInfoList") val lyricsInfoList: List<LyricsInfo>?,
-    @SerializedName("showButton") val showButton: ShowButtonText?
+    @SerializedName("showButton") val showButton: ShowButtonText?,
 )
 
 @Keep
 data class ShowButtonText(
-    @SerializedName("text") val text: String
+    @SerializedName("text") val text: String,
 )
 
 @Keep
 data class LyricsInfo(
     @SerializedName("time") val time: Int?,
-    @SerializedName("text") val text: String?
+    @SerializedName("text") val text: String?,
 )
 
 @Keep
-class ClientInfo(theme: String? = null, var buttonColor: String? = null) {
-    var theme: String? = theme
-        set(value) {
-            field = value
-            buttonColor = if (value == "dark") "white" else "blue"
-        }
-}
+data class ClientInfo(var theme: String = "", var buttonColor: String = "")
