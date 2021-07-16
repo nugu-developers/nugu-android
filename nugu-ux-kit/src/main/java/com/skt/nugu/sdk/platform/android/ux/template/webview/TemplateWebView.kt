@@ -534,6 +534,7 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        templateHandler?.onTemplateTouched()
         return super.onInterceptTouchEvent(ev)
     }
 
