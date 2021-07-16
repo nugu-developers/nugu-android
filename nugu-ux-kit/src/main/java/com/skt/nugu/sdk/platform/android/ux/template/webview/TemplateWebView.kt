@@ -27,11 +27,7 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.AbsSavedState
 import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup.LayoutParams
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.webkit.*
-import android.widget.ImageView
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
@@ -40,7 +36,6 @@ import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
-import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.NuguTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
@@ -49,8 +44,12 @@ import com.skt.nugu.sdk.platform.android.ux.template.isSupportVisibleTokenList
 import com.skt.nugu.sdk.platform.android.ux.template.model.ClientInfo
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
-import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
-import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.lang.ref.SoftReference
 import java.net.URLEncoder
 import java.util.*
@@ -60,7 +59,7 @@ import kotlin.concurrent.fixedRateTimer
 class TemplateWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyle: Int = 0
+    defStyle: Int = 0,
 ) : WebView(context, attrs, defStyle),
     TemplateView,
     TemplateHandler.ClientListener,
@@ -80,6 +79,8 @@ class TemplateWebView @JvmOverloads constructor(
 
     private var templateUrl = defaultTemplateServerUrl
 
+    private var nuguButtonColorJob: Job? = null
+
     override var templateHandler: TemplateHandler? = null
         set(value) {
             field = value
@@ -95,6 +96,14 @@ class TemplateWebView @JvmOverloads constructor(
                     audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                     themeManager.addListener(this@TemplateWebView)
                     clientInfo.theme = themeToString(themeManager.theme, resources.configuration)
+                }
+
+                nuguButtonColorJob = CoroutineScope(Dispatchers.Main).launch {
+                    TemplateView.nuguButtonColorFlow.asSharedFlow().collect {
+                        clientInfo.buttonColor = it?.clientInfoString ?: ""
+                        Logger.d(TAG, "Nugu Button Color changed to  ${clientInfo.buttonColor}")
+                        callJSFunction(JavaScriptHelper.updateClientInfo(gson.toJson(clientInfo)))
+                    }
                 }
             }
         }
@@ -173,15 +182,13 @@ class TemplateWebView @JvmOverloads constructor(
             }
             false
         }
-
-//        addCloseButton()
     }
 
     internal class SavedStates(
         superState: Parcelable,
         var durationMs: Long,
         var currentTimeMs: Long,
-        var mediaPlaying: Int
+        var mediaPlaying: Int,
     ) :
         AbsSavedState(superState) {
 
@@ -220,9 +227,10 @@ class TemplateWebView @JvmOverloads constructor(
         deviceTypeCode: String,
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)?,
-        onLoadingFail: ((String?) -> Unit)?
+        onLoadingFail: ((String?) -> Unit)?,
     ) {
-        Logger.d(TAG, "load() currentTheme ${clientInfo.theme}")
+        clientInfo.buttonColor = TemplateView.nuguButtonColor?.clientInfoString ?: ""
+        Logger.d(TAG, "load() currentTheme $clientInfo")
 
         this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken = isSupportFocusedItemToken(templateContent) || isSupportVisibleTokenList(templateContent)
@@ -314,6 +322,7 @@ class TemplateWebView @JvmOverloads constructor(
             }
 
             getNuguClient().themeManager.removeListener(this@TemplateWebView)
+            nuguButtonColorJob?.cancel()
         }
     }
 
@@ -524,42 +533,7 @@ class TemplateWebView @JvmOverloads constructor(
         }
     }
 
-    private fun addCloseButton() {
-        addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            findViewById<View>(R.id.btn_close).let { closeBtn ->
-                post {
-                    val webViewWidth = measuredWidth
-                    val margin = dpToPx(20f, context)
-
-                    if (closeBtn == null) {
-                        addView(
-                            ImageView(context).apply {
-                                id = R.id.btn_close
-                                setImageResource(R.drawable.nugu_btn_close_2)
-                                layoutParams = LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
-
-                                post {
-                                    x = (webViewWidth - measuredWidth - margin).toFloat()
-                                    y = margin.toFloat()
-                                }
-
-                                setThrottledOnClickListener {
-                                    templateHandler?.onCloseClicked()
-                                }
-                            }
-                        )
-                    } else {
-                        closeBtn.post {
-                            closeBtn.x = (webViewWidth - closeBtn.measuredWidth - margin).toFloat()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        templateHandler?.onTemplateTouched()
         return super.onInterceptTouchEvent(ev)
     }
 

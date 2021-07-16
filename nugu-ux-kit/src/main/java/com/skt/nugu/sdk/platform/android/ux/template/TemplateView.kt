@@ -24,6 +24,9 @@ import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 
 interface TemplateView {
     companion object {
@@ -32,6 +35,19 @@ interface TemplateView {
         const val AUDIO_PLAYER_TEMPLATE_1 = "AudioPlayer.Template1"
         const val AUDIO_PLAYER_TEMPLATE_2 = "AudioPlayer.Template2"
         val MEDIA_TEMPLATE_TYPES = listOf(AUDIO_PLAYER_TEMPLATE_1, AUDIO_PLAYER_TEMPLATE_2)
+
+        enum class NuguButtonColor(val clientInfoString: String) { BLUE("blue"), WHITE("white") }
+
+        internal val nuguButtonColorFlow = MutableSharedFlow<NuguButtonColor?>()
+        var nuguButtonColor: NuguButtonColor? = null
+            set(value) {
+                if (field != value) {
+                    field = value
+                    GlobalScope.launch {
+                        nuguButtonColorFlow.emit(field)
+                    }
+                }
+            }
 
         /**
          * The basic rule is that SDK show close button on right top of template which is not media Type.
@@ -88,7 +104,7 @@ interface TemplateView {
         deviceTypeCode: String,
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)? = null,
-        onLoadingFail: ((String?) -> Unit)? = null
+        onLoadingFail: ((String?) -> Unit)? = null,
     )
 
     /**
