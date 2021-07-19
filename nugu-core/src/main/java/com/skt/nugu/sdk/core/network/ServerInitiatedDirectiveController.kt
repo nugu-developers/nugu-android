@@ -23,7 +23,7 @@ class ServerInitiatedDirectiveController(val TAG: String) {
     private var isStart =  AtomicBoolean(false)
     private var completionListenerCalled =  AtomicBoolean(false)
     private var initialized = false
-    private var listener: (() -> Unit?)? = null
+    private var listener: (() -> Unit)? = null
 
     fun notifyOnCompletionListener() {
         if (!completionListenerCalled.get() && isStart.get()) {
@@ -32,7 +32,7 @@ class ServerInitiatedDirectiveController(val TAG: String) {
         completionListenerCalled.set(true)
     }
 
-    fun setOnCompletionListener(onCompletionListener: () -> Unit) {
+    fun setOnCompletionListener(onCompletionListener: (() -> Unit)?) {
         listener = onCompletionListener
     }
 

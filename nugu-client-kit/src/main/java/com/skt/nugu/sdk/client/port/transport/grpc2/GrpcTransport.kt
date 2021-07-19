@@ -15,22 +15,22 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.skt.nugu.sdk.client.port.transport.grpc2.TransportState.DetailedState
 import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayClient
+import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayTransport
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
-import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
+import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
+import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.client.port.transport.grpc2.TransportState.*
-import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayTransport
-import com.skt.nugu.sdk.core.interfaces.message.Call
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
-import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -50,6 +50,7 @@ internal class GrpcTransport private constructor(
      */
     companion object {
         private const val TAG = "GrpcTransport"
+        private const val WAIT_FOR_POLICY_TIMEOUT_MS = 5000L // 5 s
 
         fun create(
             serverInfo: NuguServerInfo,
@@ -104,10 +105,6 @@ internal class GrpcTransport private constructor(
      * @return true is success, otherwise false
      */
     private fun tryGetPolicy(): Boolean {
-        checkAuthorizationIfEmpty {
-            setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
-        } ?: return false
-
         if(DetailedState.CONNECTING_REGISTRY == getDetailedState()) {
             Logger.w(TAG,"[tryGetPolicy] Duplicate status")
             return false
@@ -120,6 +117,7 @@ internal class GrpcTransport private constructor(
         setState(DetailedState.CONNECTING_REGISTRY)
 
         executor.submit {
+            val policyLatch =  CountDownLatch(1)
             registryClient.getPolicy(getDelegatedServerInfo(), authDelegate, object :
                 RegistryClient.Observer {
                 override fun onCompleted(policy: Policy?) {
@@ -127,6 +125,8 @@ internal class GrpcTransport private constructor(
                     policy?.let {
                         tryConnectToDeviceGateway(it)
                     } ?: setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
+
+                    policyLatch.countDown()
                 }
 
                 override fun onError(reason: ChangedReason) {
@@ -138,8 +138,18 @@ internal class GrpcTransport private constructor(
                             setState(DetailedState.FAILED, reason)
                         }
                     }
+
+                    policyLatch.countDown()
                 }
             }, isStartReceiveServerInitiatedDirective)
+
+            try {
+                if (!policyLatch.await(WAIT_FOR_POLICY_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    Logger.w(TAG, "Timed out while attempting to perform getPolicy")
+                }
+            } catch ( e: InterruptedException) {
+                Logger.w(TAG, "Interrupted while waiting for getPolicy")
+            }
         }
         return true
     }
@@ -250,7 +260,14 @@ internal class GrpcTransport private constructor(
 
     override fun send(call: Call): Boolean {
         if (!state.isConnected()) {
-            Logger.d(TAG, "[send], Status : ($state), request : ${call.request()}")
+            Logger.d(TAG, "[send] Status : ($state), request : ${call.request()}")
+            if(getDetailedState() == DetailedState.CONNECTING_REGISTRY) {
+                executor.submit {
+                    deviceGatewayClient?.send(call)
+                        ?: call.onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+                }
+                return true
+            }
         }
         return deviceGatewayClient?.send(call) ?: false
     }
@@ -366,8 +383,10 @@ internal class GrpcTransport private constructor(
         if (!allowed) {
             return false
         }
-        Logger.d(TAG, "[setState] ${getDetailedState()} -> $newDetailedState")
-
+        Logger.d(
+            TAG,
+            "[setState] ${getDetailedState()} -> $newDetailedState ${if (transportObserver == null) "(not delivered)" else ""}"
+        )
         // Update state
         state.setDetailedState(newDetailedState, reason)
 

@@ -23,13 +23,20 @@ interface NetworkManagerInterface {
      * Enable network manager.
      * @param quiet expectations are no longer notify the CONNECTED state when this is true. Defaults to false.
      */
+    @Deprecated(message = "No longer used by NetworkManager")
     fun enable(quiet: Boolean = false)
 
     /**
      * Disable network manager
-     * If connected to NUGU, will be disconnected and never connect to NUGU until enabled.
      */
+    @Deprecated(message = "No longer used by NetworkManager", replaceWith = ReplaceWith( expression = "shutdown()"))
     fun disable()
+
+    /**
+     * Shutdown network manager
+     * Shut down all connections and clean up.
+     */
+    fun shutdown()
 
     /**
      * Add listener to be notified when connection status changed for NUGU

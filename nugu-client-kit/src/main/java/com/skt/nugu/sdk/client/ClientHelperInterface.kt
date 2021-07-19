@@ -44,11 +44,13 @@ interface ClientHelperInterface {
     /**
      * Connect to NUGU
      */
+    @Deprecated(message = "No longer used by ClientHelperInterface")
     fun connect()
 
     /**
      * Disconnect from NUGU
      */
+    @Deprecated(message = "No longer used by ClientHelperInterface", replaceWith = ReplaceWith(expression = "this.networkManager.shutdown()"))
     fun disconnect()
 
     // Connection Observer
