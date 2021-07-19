@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.util.TimeUnit
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
@@ -41,6 +42,26 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
          * @param context current context
          */
         fun onStateChanged(activity: State, context: Context)
+    }
+
+    /**
+     * Listener to be called when occur a playback event.
+     */
+    interface OnPlaybackListener {
+        fun onPlaybackStarted(context: Context)
+        fun onPlaybackFinished(context: Context)
+        fun onPlaybackError(context: Context, type: ErrorType, error: String)
+        fun onPlaybackPaused(context: Context)
+        fun onPlaybackResumed(context: Context)
+        fun onPlaybackStopped(context: Context, stopReason: StopReason)
+    }
+
+    /**
+     *
+     */
+    enum class StopReason {
+        PLAY_ANOTHER,
+        STOP
     }
 
     interface OnDurationListener {
@@ -74,6 +95,17 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @param listener the listener that removed
      */
     fun removeListener(listener: Listener)
+
+    /** Add a playback listener
+     * @param listener the listener that added
+     */
+    fun addOnPlaybackListener(listener: OnPlaybackListener)
+
+    /**
+     * Remove a playback listener
+     * @param listener the listener that removed
+     */
+    fun removeOnPlaybackListener(listener: OnPlaybackListener)
 
     /** Add a listener to be called when duration retrieved
      * @param listener the listener that added
