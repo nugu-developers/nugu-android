@@ -23,15 +23,9 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
  */
 interface MessageRouterInterface : MessageSender {
     /**
-     * Enable network manager.
-     * @param quiet expectations are no longer notify the CONNECTED state when this is true. Defaults to false.
+     * Shutdown network manager
      */
-    fun enable(quiet: Boolean)
-
-    /**
-     * Disable network manager
-     */
-    fun disable()
+    fun shutdown()
 
     /**
      * Set the observer to this object.
@@ -42,6 +36,12 @@ interface MessageRouterInterface : MessageSender {
      * Get the connection status.
      */
     fun getConnectionStatus(): ConnectionStatusListener.Status
+
+
+    /**
+     * Get the connection ChangedReason.
+     */
+    fun getConnectionChangedReason(): ConnectionStatusListener.ChangedReason
 
     /**
      *  handoff connection from SystemCapability
@@ -66,7 +66,7 @@ interface MessageRouterInterface : MessageSender {
      * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
      * @return success or not
      */
-    fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) : Boolean
+    fun startReceiveServerInitiatedDirective(onCompletion: (() -> Unit)?) : Boolean
 
     /**
      * Stop the connection-oriented feature.

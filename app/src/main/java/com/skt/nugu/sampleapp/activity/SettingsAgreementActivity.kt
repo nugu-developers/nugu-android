@@ -84,7 +84,7 @@ class SettingsAgreementActivity : AppCompatActivity(), NuguWebView.WindowListene
 
     override fun onCloseWindow(reason: String?) {
         if(REASON_WITHDRAWN_USER == reason) {
-            ClientManager.getClient().disconnect()
+            ClientManager.getClient().networkManager.shutdown()
             NuguOAuth.getClient().clearAuthorization()
             PreferenceHelper.credentials(this@SettingsAgreementActivity,"")
             LoginActivity.invokeActivity(this@SettingsAgreementActivity)

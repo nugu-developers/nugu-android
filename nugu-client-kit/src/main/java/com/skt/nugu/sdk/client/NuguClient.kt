@@ -270,7 +270,7 @@ class NuguClient private constructor(
 
     fun shutdown() {
         systemAgent.shutdown()
-        networkManager.disable()
+        networkManager.shutdown()
     }
 
     fun setStateProvider(

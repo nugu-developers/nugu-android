@@ -132,8 +132,6 @@ class SettingsActivity : AppCompatActivity() {
             override fun onSuccess(credentials: Credentials) {
                 // Update token
                 PreferenceHelper.credentials(this@SettingsActivity, credentials.toString())
-                ClientManager.getClient().disconnect()
-                ClientManager.getClient().connect()
                 updateAccountInfo()
             }
 
@@ -144,7 +142,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun handleRevoke() {
-        ClientManager.getClient().disconnect()
+        ClientManager.getClient().networkManager.shutdown()
         NuguOAuth.getClient().clearAuthorization()
         PreferenceHelper.credentials(this@SettingsActivity, "")
         LoginActivity.invokeActivity(this@SettingsActivity)

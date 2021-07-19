@@ -65,21 +65,6 @@ class MessageRouter(
      * lock for create transport
      */
     private val lock = ReentrantLock()
-    private var enabled = false
-    /**
-     * Begin the process of establishing an DeviceGateway connection.
-     */
-    override fun enable(quiet: Boolean) {
-        val isConnectedOrConnecting = activeTransport?.isConnectedOrConnecting() ?: false
-        Logger.d(TAG, "[enable] called, enabled=$enabled, silently=$quiet, isConnectedOrConnecting=$isConnectedOrConnecting")
-        enabled = true
-        if (!isConnectedOrConnecting && !quiet) {
-            setConnectionStatus(
-                ConnectionStatusListener.Status.CONNECTED,
-                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
-            )
-        }
-    }
 
     /**
      * disconnect all transport
@@ -118,12 +103,7 @@ class MessageRouter(
         }.connect()
     }
 
-    /**
-     * Close the DeviceGateway connection.
-     */
-    override fun disable() {
-        Logger.d(TAG, "[disable] called")
-        enabled = false
+    override fun shutdown() {
         if(!disconnectAllTransport()) {
             setConnectionStatus(
                 ConnectionStatusListener.Status.DISCONNECTED,
@@ -144,12 +124,6 @@ class MessageRouter(
      * Prepares the [MessageRequest] to be executed at some point in the future.
      */
     override fun newCall(request: MessageRequest, headers: Map<String, String>?): Call {
-        if(!enabled) {
-            return FixedStateCall(
-                Status(
-                    Status.Code.FAILED_PRECONDITION
-                ).withDescription("NetworkManager is disabled"), request, this)
-        }
         if(activeTransport.isNotInitialized()) {
             createActiveTransport()
         }
@@ -185,6 +159,12 @@ class MessageRouter(
         return this.status
     }
 
+    /**
+     * Get the status of the connection.
+     */
+    override fun getConnectionChangedReason(): ConnectionStatusListener.ChangedReason {
+        return this.reason
+    }
     /**
      * Set the connection state. If it changes, notify the connection observer.
      */
@@ -339,13 +319,10 @@ class MessageRouter(
     }
 
     private var sidController: ServerInitiatedDirectiveController = ServerInitiatedDirectiveController(TAG)
-    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) : Boolean {
-        if(!enabled) {
-            Logger.e(TAG, "[startReceiveServerInitiatedDirective] NetworkManager is disabled")
-            return false
-        }
+    override fun startReceiveServerInitiatedDirective(onCompletion: (() -> Unit)?) : Boolean {
         if(sidController.isStarted()) {
-            sidController.stop(activeTransport)
+            sidController.release()
+            //sidController.stop(activeTransport)
         }
         sidController.setOnCompletionListener(onCompletion)
         if(!sidController.start(activeTransport)) {
@@ -357,7 +334,6 @@ class MessageRouter(
         }
         return true
     }
-
 
     override fun stopReceiveServerInitiatedDirective() = sidController.stop(activeTransport)
     override fun isStartReceiveServerInitiatedDirective() = sidController.isStarted()

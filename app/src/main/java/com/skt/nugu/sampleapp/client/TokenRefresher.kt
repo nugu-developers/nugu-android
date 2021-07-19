@@ -75,6 +75,9 @@ class TokenRefresher(val authClient: NuguOAuth) {
         )
     }
 
+    /**
+     * Start TokenRefresher.
+     */
     fun start(forceUpdate: Boolean = false) {
         Log.d(TAG, "Starting the proactive token refresher")
 
@@ -85,6 +88,9 @@ class TokenRefresher(val authClient: NuguOAuth) {
         scheduleRefresh(if (forceUpdate) 0 else nextInterval())
     }
 
+    /**
+     * Stop TokenRefresher.
+     */
     fun stop() {
         if (!isRunning.compareAndSet(true, false)) {
             Log.d(TAG, "already stop")

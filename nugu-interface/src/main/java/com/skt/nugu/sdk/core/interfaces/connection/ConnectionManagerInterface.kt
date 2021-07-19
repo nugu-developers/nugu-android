@@ -22,16 +22,6 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageObserver
  */
 interface ConnectionManagerInterface : NetworkManagerInterface {
     /**
-     * check whether a connection
-     */
-    fun isEnabled(): Boolean
-
-    /**
-     * reconnect to DeviceGateway.
-     */
-    fun reconnect()
-
-    /**
      * Returns whether this object is currently connected to DeviceGateway.
      */
     fun isConnected(): Boolean
@@ -77,7 +67,7 @@ interface ConnectionManagerInterface : NetworkManagerInterface {
      * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
      * @return success or not
     */
-    fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) : Boolean
+    fun startReceiveServerInitiatedDirective(onCompletion: (() -> Unit)? = null) : Boolean
 
     /**
      * Stop the connection-oriented feature.

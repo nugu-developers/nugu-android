@@ -43,40 +43,27 @@ class NetworkManager private constructor(
         }
     }
 
-    private var enabled = false
-    private var quiet = false
     private val messageObservers = CopyOnWriteArraySet<MessageObserver>()
     private val connectionStatusObservers = CopyOnWriteArraySet<ConnectionStatusListener>()
     /**
      * Initiate a connection to DeviceGateway.
      */
-    override fun enable(quiet: Boolean) {
-        this.enabled = true
-        this.quiet = quiet
-        messageRouter.enable(quiet)
-    }
+    override fun enable(quiet: Boolean) = Unit
 
     /**
      * Disconnect from DeviceGateway.
      */
     override fun disable() {
-        this.enabled = false
-        messageRouter.disable()
+        shutdown()
     }
-    /**
-     * check whether a enable
-     */
-    override fun isEnabled(): Boolean = enabled
 
     /**
-     * reconnect from DeviceGateway.
+     * Disconnect from DeviceGateway.
      */
-    override fun reconnect() {
-        if (enabled) {
-            messageRouter.disable()
-            messageRouter.enable(quiet)
-        }
+    override fun shutdown() {
+        messageRouter.shutdown()
     }
+
     /**
      * Returns whether this object is currently connected to DeviceGateway.
      */
@@ -168,7 +155,7 @@ class NetworkManager private constructor(
      * @param onCompletion This indicates that the reconnection with the server is complete and the message is ready to be sent.
      * @return success or not
      */
-    override fun startReceiveServerInitiatedDirective(onCompletion: () -> Unit) =
+    override fun startReceiveServerInitiatedDirective(onCompletion: (() -> Unit)?) =
         messageRouter.startReceiveServerInitiatedDirective(onCompletion)
 
     /**
