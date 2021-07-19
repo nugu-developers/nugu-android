@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.3.3 *(2021-07-19)*
+-----------------------------
+* Improve: Update libs (#1974)
+    * kotlin 1.4.32 -> 1.5.20
+    * silvertray 4.3.6 -> 4.3.7
+* New: Add NuguButton Color setting on template interface  (#1978)
+
 Version 1.3.2 *(2021-07-12)*
 -----------------------------
 * Improve: Fix to stop ServerInitiatedDirective when Disconnected (#1963)
