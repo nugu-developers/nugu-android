@@ -25,6 +25,7 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.player.SamplePlayerFactory
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.permission.PermissionDelegate
 import com.skt.nugu.sdk.agent.permission.PermissionState
 import com.skt.nugu.sdk.agent.permission.PermissionType
@@ -302,6 +303,40 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
 
         client.addAudioPlayerListener(this)
         client.addOnDirectiveHandlingListener(directiveHandlingListener)
+
+        client.audioPlayerAgent?.addOnPlaybackListener(object: AudioPlayerAgentInterface.OnPlaybackListener {
+            override fun onPlaybackStarted(context: AudioPlayerAgentInterface.Context) {
+                Logger.d(TAG, "[onPlaybackStarted] dialogRequestId: ${context.dialogRequestId}")
+            }
+
+            override fun onPlaybackFinished(context: AudioPlayerAgentInterface.Context) {
+                Logger.d(TAG, "[onPlaybackFinished] dialogRequestId: $context")
+            }
+
+            override fun onPlaybackError(
+                context: AudioPlayerAgentInterface.Context,
+                type: ErrorType,
+                error: String
+            ) {
+                Logger.d(TAG, "[onPlaybackError] dialogRequestId: ${context.dialogRequestId}, type: $type, error, $error")
+            }
+
+            override fun onPlaybackPaused(context: AudioPlayerAgentInterface.Context) {
+                Logger.d(TAG, "[onPlaybackPaused] dialogRequestId: ${context.dialogRequestId}")
+            }
+
+            override fun onPlaybackResumed(context: AudioPlayerAgentInterface.Context) {
+                Logger.d(TAG, "[onPlaybackResumed] dialogRequestId: ${context.dialogRequestId}")
+            }
+
+            override fun onPlaybackStopped(
+                context: AudioPlayerAgentInterface.Context,
+                stopReason: AudioPlayerAgentInterface.StopReason
+            ) {
+                Logger.d(TAG, "[onPlaybackStopped] dialogRequestId: ${context.dialogRequestId}, stopReason: $stopReason")
+            }
+
+        })
 
         val asrAgent = client.asrAgent
         if(asrAgent == null) {

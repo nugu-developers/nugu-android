@@ -89,11 +89,6 @@ class DefaultAudioPlayerAgent(
         ATTACHMENT("ATTACHMENT")
     }
 
-    enum class StopReason {
-        PLAY_ANOTHER,
-        STOP
-    }
-
     data class PlayPayload(
         @SerializedName("sourceType")
         val sourceType: SourceType?,
@@ -165,6 +160,7 @@ class DefaultAudioPlayerAgent(
     private val activityListeners =
         LinkedHashSet<AudioPlayerAgentInterface.Listener>()
     private val durationListeners = LinkedHashSet<AudioPlayerAgentInterface.OnDurationListener>()
+    private val playbackListeners = LinkedHashSet<AudioPlayerAgentInterface.OnPlaybackListener>()
 
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -181,7 +177,7 @@ class DefaultAudioPlayerAgent(
     private var duration: Long? = null
     private var playCalled = false
     private var stopCalled = false
-    private var stopReason: StopReason? = null
+    private var stopReason: AudioPlayerAgentInterface.StopReason? = null
     private var pauseReason: PauseReason? = null
     private var progressTimer =
         ProgressTimer()
@@ -390,9 +386,9 @@ class DefaultAudioPlayerAgent(
                     val currentPlayServiceId = currentAudioInfo?.playServiceId
                     val nextPlayServiceId = nextAudioInfo.playServiceId
                     val stopReason = if(currentPlayServiceId == nextPlayServiceId) {
-                        StopReason.PLAY_ANOTHER
+                        AudioPlayerAgentInterface.StopReason.PLAY_ANOTHER
                     } else {
-                        StopReason.STOP
+                        AudioPlayerAgentInterface.StopReason.STOP
                     }
 
                     if(executeStop(stopReason)) {
@@ -771,7 +767,7 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun executeStop(reason: StopReason = StopReason.STOP): Boolean {
+    private fun executeStop(reason: AudioPlayerAgentInterface.StopReason = AudioPlayerAgentInterface.StopReason.STOP): Boolean {
         Logger.d(
             TAG,
             "[executeStop] currentActivity: $currentActivity, playCalled: $playCalled, currentItem: $currentItem, reason: $reason"
@@ -852,6 +848,18 @@ class DefaultAudioPlayerAgent(
     override fun removeListener(listener: AudioPlayerAgentInterface.Listener) {
         executor.submit {
             activityListeners.remove(listener)
+        }
+    }
+
+    override fun addOnPlaybackListener(listener: AudioPlayerAgentInterface.OnPlaybackListener) {
+        executor.submit {
+            playbackListeners.add(listener)
+        }
+    }
+
+    override fun removeOnPlaybackListener(listener: AudioPlayerAgentInterface.OnPlaybackListener) {
+        executor.submit {
+            playbackListeners.remove(listener)
         }
     }
 
@@ -1023,11 +1031,9 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    private fun notifyOnActivityChanged() {
-        createAudioInfoContext()?.let {
-            activityListeners.forEach { listener ->
-                listener.onStateChanged(currentActivity, it)
-            }
+    private fun notifyOnActivityChanged(context: AudioPlayerAgentInterface.Context) {
+        activityListeners.forEach { listener ->
+            listener.onStateChanged(currentActivity, context)
         }
     }
 
@@ -1047,18 +1053,20 @@ class DefaultAudioPlayerAgent(
         return null
     }
 
-    private fun changeActivity(activity: AudioPlayerAgentInterface.State) {
+    private fun changeActivity(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context?) {
         Logger.d(TAG, "[changeActivity] $currentActivity/$activity")
         currentActivity = activity
         executeProvideState(contextManager, namespaceAndName, ContextType.FULL, 0)
-        notifyOnActivityChanged()
+        context?.let {
+            notifyOnActivityChanged(it)
+        }
     }
 
     override fun onPlaybackFinished(id: SourceId) {
         Logger.d(TAG, "[onPlaybackFinished] id : $id")
         executor.submit {
             if(currentItem?.isCanceled == true) {
-                executeOnPlaybackStopped(id, false)
+                executeOnPlaybackStopped(id)
             } else {
                 executeOnPlaybackFinished(id)
             }
@@ -1120,7 +1128,7 @@ class DefaultAudioPlayerAgent(
         Logger.d(TAG, "[executeOnPlaybackStarted] id: $id, focus: $currentFocus")
         progressTimer.start()
         sendPlaybackStartedEvent()
-        executeOnPlaybackPlayingInternal(id)
+        executeOnPlaybackPlayingInternal(id, false)
     }
 
     private fun executeOnPlaybackResumed(id: SourceId) {
@@ -1129,10 +1137,10 @@ class DefaultAudioPlayerAgent(
         pauseReason?.let {
             sendPlaybackResumedEvent()
         }
-        executeOnPlaybackPlayingInternal(id)
+        executeOnPlaybackPlayingInternal(id, true)
     }
 
-    private fun executeOnPlaybackPlayingInternal(id: SourceId) {
+    private fun executeOnPlaybackPlayingInternal(id: SourceId ,isResume: Boolean) {
         if (id.id != sourceId.id) {
             return
         }
@@ -1154,7 +1162,17 @@ class DefaultAudioPlayerAgent(
         pauseReason = null
         playbackRouter.setHandler(this)
         lifeCycleScheduler?.onPlaying()
-        changeActivity(AudioPlayerAgentInterface.State.PLAYING)
+
+        createAudioInfoContext()?.let { context->
+            playbackListeners.forEach {
+                if(isResume) {
+                    it.onPlaybackResumed(context)
+                } else {
+                    it.onPlaybackStarted(context)
+                }
+            }
+            changeActivity(AudioPlayerAgentInterface.State.PLAYING, context)
+        }
     }
 
     private fun executeOnPlaybackPlayingOnBackgroundFocus() {
@@ -1195,7 +1213,13 @@ class DefaultAudioPlayerAgent(
         pauseReason?.let {
             sendPlaybackPausedEvent()
         }
-        changeActivity(AudioPlayerAgentInterface.State.PAUSED)
+
+        val audioInfoContext = createAudioInfoContext()
+
+        audioInfoContext?.let { context->
+            playbackListeners.forEach { it.onPlaybackPaused(context) }
+        }
+        changeActivity(AudioPlayerAgentInterface.State.PAUSED, audioInfoContext)
     }
 
     private fun executeOnPlaybackError(id: SourceId, type: ErrorType, error: String) {
@@ -1206,11 +1230,31 @@ class DefaultAudioPlayerAgent(
 
         progressTimer.stop()
         sendPlaybackFailedEvent(type, error)
-        executeOnPlaybackStopped(sourceId, true)
+
+        stopCalled = false
+        pauseReason = null
+        when (currentActivity) {
+            AudioPlayerAgentInterface.State.PLAYING,
+            AudioPlayerAgentInterface.State.PAUSED -> {
+                val audioInfoContext = createAudioInfoContext()
+                audioInfoContext?.let { context->
+                    playbackListeners.forEach { it.onPlaybackError(context, type, error) }
+                }
+                changeActivity(AudioPlayerAgentInterface.State.STOPPED, audioInfoContext)
+            }
+            else -> {
+                // no-op
+            }
+        }
+
+        playDirectiveController.onPlayerStopped()
+
+        handlePlaybackCompleted(true)
+        stopReason = null
     }
 
-    private fun executeOnPlaybackStopped(id: SourceId, isError: Boolean = false) {
-        Logger.d(TAG, "[executeOnPlaybackStopped] id: $id, isError: $isError / currentId: $sourceId")
+    private fun executeOnPlaybackStopped(id: SourceId) {
+        Logger.d(TAG, "[executeOnPlaybackStopped] id: $id / currentId: $sourceId")
         if (id.id != sourceId.id) {
             return
         }
@@ -1221,10 +1265,14 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.PLAYING,
             AudioPlayerAgentInterface.State.PAUSED -> {
                 progressTimer.stop()
-                if (!isError) {
-                    sendPlaybackStoppedEvent(stopReason ?: StopReason.STOP)
+                val reason = stopReason ?: AudioPlayerAgentInterface.StopReason.STOP
+                sendPlaybackStoppedEvent(reason)
+
+                val audioInfoContext = createAudioInfoContext()
+                audioInfoContext?.let { context->
+                    playbackListeners.forEach { it.onPlaybackStopped(context, reason) }
                 }
-                changeActivity(AudioPlayerAgentInterface.State.STOPPED)
+                changeActivity(AudioPlayerAgentInterface.State.STOPPED, audioInfoContext)
             }
             else -> {
                 // no-op
@@ -1255,7 +1303,13 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.PLAYING -> {
                 sendPlaybackFinishedEvent()
                 progressTimer.stop()
-                changeActivity(AudioPlayerAgentInterface.State.FINISHED)
+
+                val audioInfoContext = createAudioInfoContext()
+                audioInfoContext?.let { context->
+                    playbackListeners.forEach { it.onPlaybackFinished(context) }
+                }
+                changeActivity(AudioPlayerAgentInterface.State.FINISHED, audioInfoContext)
+
                 handlePlaybackCompleted(false)
             }
             else -> {
@@ -1527,7 +1581,7 @@ class DefaultAudioPlayerAgent(
         sendEventWithOffset(name = EVENT_NAME_PLAYBACK_FINISHED, fullContext = true)
     }
 
-    private fun sendPlaybackStoppedEvent(stopReason: StopReason) {
+    private fun sendPlaybackStoppedEvent(stopReason: AudioPlayerAgentInterface.StopReason) {
         val offset = getOffsetInMilliseconds()
 
         currentItem?.apply {
