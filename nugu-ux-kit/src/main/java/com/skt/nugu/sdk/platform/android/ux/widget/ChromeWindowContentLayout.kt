@@ -46,8 +46,6 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     view: ViewGroup
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private var callback: OnChromeWindowContentLayoutCallback? = null
-    @VisibleForTesting
-    var currentState : Int = BottomSheetBehavior.STATE_COLLAPSED
 
     private var isDark = false
     private var theme: ThemeManagerInterface.THEME = ThemeManager.DEFAULT_THEME
@@ -146,17 +144,26 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     @VisibleForTesting
     fun setState(newState: Int) {
-        if (currentState == newState) {
-            Logger.w(TAG, "[setState] currentState=$currentState, newState=$newState")
-            return
-        }
-        currentState = newState
+        Logger.d(TAG, "[setState] currentState=${behavior.state}, newState=$newState")
 
         when (behavior.state) {
             BottomSheetBehavior.STATE_DRAGGING,
             BottomSheetBehavior.STATE_SETTLING-> {
                 /** The state is changing, so wait in onStateChanged() for it to complete. **/
-                Logger.d(TAG, "[setState] currentState=$currentState, newState=$newState")
+                behavior.addBottomSheetCallback(object :  BottomSheetCallback() {
+                    override fun onStateChanged(bottomSheet: View, newState2: Int) {
+                        when (newState2) {
+                            BottomSheetBehavior.STATE_DRAGGING,
+                            BottomSheetBehavior.STATE_SETTLING -> Unit
+                            else -> {
+                                Logger.d(TAG, "[setState] currentState=${behavior.state}, newState=$newState")
+                                behavior.removeBottomSheetCallback(this)
+                                behavior.state = newState
+                            }
+                        }
+                    }
+                    override fun onSlide(bottomSheet: View, slideOffset: Float) = Unit
+                })
             }
             else -> {
                 behavior.state = newState
