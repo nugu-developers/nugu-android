@@ -188,12 +188,16 @@ internal class EventsService(
             if (!isShutdown.get()) {
                 val log = StringBuilder()
                 log.append("[onError] ${status.code}, ${status.description}, $streamId")
-                if(status.code == Status.Code.DEADLINE_EXCEEDED) {
-                    if(expectedAttachment && !isSendingAttachmentMessage) {
-                        log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
+                try {
+                    if (status.code == Status.Code.DEADLINE_EXCEEDED) {
+                        if (expectedAttachment && !isSendingAttachmentMessage) {
+                            log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
+                            return
+                        }
                     }
+                } finally {
+                    Logger.e(TAG, log.toString())
                 }
-                Logger.e(TAG, log.toString())
                 observer.onError(status, name)
             }
         }
