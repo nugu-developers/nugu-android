@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.3.4 *(2021-07-23)*
+-----------------------------
+* Fix: Connection leak issue in lower android-os (#1984)
+* Improve: Update gRPC v1.39.0 (#1986)
+* Improve: No error handling if ListenTimeout is expected (#1988)
+* New: Add AudioPlayer's listener to provide more infos (#1973)
+
 Version 1.3.3 *(2021-07-19)*
 -----------------------------
 * Improve: Update libs (#1974)
