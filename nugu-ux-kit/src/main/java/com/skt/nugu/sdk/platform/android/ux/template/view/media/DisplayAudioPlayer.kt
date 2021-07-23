@@ -193,7 +193,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         var currentTimeMs: Long,
         var mediaPlaying: Int,
         var isBarType: Int,
-        var isLyricShowing: Int
+        var isLyricShowing: Int,
     ) :
         AbsSavedState(superState) {
 
@@ -458,7 +458,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         barProgress = findViewById(R.id.sb_bar_progress)
     }
 
-    override fun load(templateContent: String, deviceTypeCode: String, dialogRequestId: String, onLoadingComplete: (() -> Unit)?,  onLoadingFail: ((String?) -> Unit)?) {
+    override fun load(
+        templateContent: String,
+        deviceTypeCode: String,
+        dialogRequestId: String,
+        onLoadingComplete: (() -> Unit)?,
+        onLoadingFail: ((String?) -> Unit)?,
+    ) {
         Logger.i(TAG, "load. dialogRequestId: $dialogRequestId/*, \n template $templateContent*/")
 
         fromJsonOrNull(templateContent, AudioPlayer::class.java)?.let { item ->
@@ -576,9 +582,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             repeat?.let {
                 setRepeatMode(it)
-                repeatView.setTag(R.id.iv_repeat, repeat)
                 repeatView.setThrottledOnClickListener { _ ->
-                    templateHandler?.onPlayerCommand(PlayerCommand.REPEAT.command, it.name)
+                    templateHandler?.onPlayerCommand(PlayerCommand.REPEAT.command, (repeatView.getTag(R.id.iv_repeat) as? Repeat)?.name ?: it.name)
                 }
             }
 
@@ -790,5 +795,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 }
             }
         }
+
+        repeatView.setTag(R.id.iv_repeat, repeat)
     }
 }
