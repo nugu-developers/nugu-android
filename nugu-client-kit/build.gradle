@@ -66,3 +66,4 @@ protobuf {
 
 apply from: '../javadoc.gradle'
 apply from: '../publish.gradle'
+apply from: '../jacocoJavaLib.gradle'

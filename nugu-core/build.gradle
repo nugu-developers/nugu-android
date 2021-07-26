@@ -13,7 +13,7 @@ tasks.withType(JavaCompile) {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    if(isReleaseMode) {
+    if (isReleaseMode) {
         implementation "com.skt.nugu.sdk:nugu-interface:$version"
     } else {
         implementation project(':nugu-interface')
@@ -34,3 +34,5 @@ repositories {
 
 apply from: '../javadoc.gradle'
 apply from: '../publish.gradle'
+apply from: '../jacocoJavaLib.gradle'
+
