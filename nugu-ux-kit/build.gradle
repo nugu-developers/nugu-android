@@ -40,6 +40,13 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    //todo. remove
+    android {
+        lintOptions {
+            abortOnError false
+        }
+    }
 }
 
 dependencies {
@@ -76,5 +83,7 @@ dependencies {
     testImplementation 'androidx.test.espresso:espresso-web:3.1.0'
 }
 
+apply from: '../jacoco.gradle'
 apply from: '../javadoc-android.gradle'
 apply from: '../publish-android.gradle'
+
