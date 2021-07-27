@@ -27,4 +27,4 @@ jobs:
 
       # Builds
       - name: Builds
-        run: ./gradlew test
+        run: ./gradlew test --debug
