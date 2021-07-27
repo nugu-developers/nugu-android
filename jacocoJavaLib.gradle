@@ -1,0 +1,41 @@
+
+apply plugin: 'jacoco'
+apply plugin: 'org.sonarqube'
+
+jacoco {
+    toolVersion = "0.8.7"
+}
+
+task coverageReport(type: JacocoReport, dependsOn: 'test') {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports"
+
+    def fileFilter = ['**/R.class',
+                      '**/R$*.class',
+                      '**/BuildConfig.*',
+                      '**/Manifest*.*',
+                      '**/*Test*.*',
+                      'android/**/*.*',
+                      '**/*InjectAdapter*.*',
+                      '**/*StaticInjection*.*',
+                      '**/*ModuleAdapter*.*',
+                      // Dagger
+                      '**/ * _Provide */**',
+                      '**/ * _Factory */**',
+                      '**/ * _MembersInjector.class ',
+                      '**/*Dagger*']
+
+//    def javaClassDirPath = "$project.buildDir/intermediates/javac/debug/classes"
+    def kotlinClassDirPath = "$project.buildDir/classes/kotlin/"
+    def coverageExecutionDataPath = "${buildDir}/jacoco/test.exec"
+//    def mainJavaSrcPath = "$project.projectDir/src/main/java"
+    def mainKotlinSrcPath = "$project.projectDir/src/main/java"
+    sourceDirectories.from = files([/*mainJavaSrcPath,*/ mainKotlinSrcPath])
+    classDirectories.from = /*fileTree(dir: javaClassDirPath, excludes: fileFilter) + */fileTree(dir: kotlinClassDirPath, excludes: fileFilter)
+    executionData.from = file(coverageExecutionDataPath)
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}

@@ -8,6 +8,10 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
 
     dependencies {
@@ -18,6 +22,9 @@ buildscript {
         // in the individual module build.gradle files
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath 'com.google.gms:google-services:4.3.8'
+
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"
+
     }
 }
 
@@ -28,6 +35,10 @@ allprojects {
 
         maven {
             url "https://nexus.nugu.co.kr/repository/maven-public/"
+        }
+
+        maven {
+            url "https://plugins.gradle.org/m2/"
         }
     }
 
@@ -57,3 +68,28 @@ subprojects {
 
 println("version code: $nuguVersionCode")
 println("version name: $nuguVersionName")
+
+apply plugin: 'org.sonarqube'
+
+sonarqube {
+    properties {
+        property "sonar.host.url", "http://1.225.1.108:9000/"
+        property "sonar.login", "admin"
+        property "sonar.password", "pw"
+        property "sonar.projectKey", "sdk-android"
+        property "sonar.projectName", "sdk-android"
+        property "sonar.projectVersion", "$version"
+        property "sonar.sourceEncoding", "UTF-8"
+        property 'sonar.core.codeCoveragePlugin', 'jacoco'
+        property 'sonar.coverage.jacoco.xmlReportPaths', ["$rootDir/nugu-agent/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-android-helper/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-client-kit/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-client-transport-http2/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-core/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-interface/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-login-kit/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-service-kit/build/reports/jacoco/coverageReport/coverageReport.xml",
+                                                          "$rootDir/nugu-ux-kit/build/reports/jacoco/coverageReport/coverageReport.xml"]
+    }
+}
+

@@ -44,3 +44,4 @@ dependencies {
 
 apply from: '../javadoc-android.gradle'
 apply from: '../publish-android.gradle'
+apply from: '../jacoco.gradle'

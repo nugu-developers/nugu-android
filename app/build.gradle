@@ -53,6 +53,10 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
@@ -102,3 +106,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'androidx.preference:preference:1.1.1'
 }
+
+sonarqube {
+    skipProject = true
+}
+
