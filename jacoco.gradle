@@ -5,15 +5,15 @@ jacoco {
     toolVersion = "0.8.7"
 }
 
-android {
-    testOptions {
-        unitTests.all {
-            jacoco {
-                includeNoLocationClasses = true
-            }
-        }
-    }
-}
+//android {
+//    testOptions {
+//        unitTests.all {
+//            jacoco {
+//                includeNoLocationClasses = true
+//            }
+//        }
+//    }
+//}
 
 
 task coverageReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
