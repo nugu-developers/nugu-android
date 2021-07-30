@@ -1,6 +1,9 @@
 Change Log
 ==========
 
+Version 1.4.0 *(2021-07-30)*
+-----------------------------
+
 Version 1.3.4 *(2021-07-23)*
 -----------------------------
 * Fix: Connection leak issue in lower android-os (#1984)
