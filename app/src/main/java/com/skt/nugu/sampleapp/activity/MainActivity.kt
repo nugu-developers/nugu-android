@@ -458,7 +458,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 return@runOnUiThread
             }
 
-            btnStartListening.isEnabled = isConnected()
+            // NUGU UX policy is not to disable
+            // See [https://developers-doc.nugu.co.kr/nugu-sdk/sdk-design-guide/voice-chrome#nugu-voice-button]
+            // btnStartListening.isEnabled = isConnected()
 
             when (btnStartListening.isFab()) {
                 true -> {
