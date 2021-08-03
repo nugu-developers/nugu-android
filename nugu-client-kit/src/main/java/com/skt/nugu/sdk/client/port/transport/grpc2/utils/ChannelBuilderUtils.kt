@@ -15,13 +15,14 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
+import com.google.common.annotations.VisibleForTesting
 import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
-import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import io.grpc.*
+import io.grpc.okhttp.OkHttpChannelBuilder
 import java.util.concurrent.TimeUnit
 
 /**
@@ -37,7 +38,7 @@ class ChannelBuilderUtils {
             authDelegate: AuthDelegate,
             delegate: HeaderClientInterceptor.Delegate
         ): ManagedChannelBuilder<*> {
-            val channelBuilder = ManagedChannelBuilder
+            val channelBuilder = OkHttpChannelBuilder
                 .forAddress(policy.hostname, policy.port)
                 .userAgent(userAgent())
             Logger.i(TAG,  "userAgent=${userAgent()}")
@@ -49,7 +50,8 @@ class ChannelBuilderUtils {
             )
         }
 
-        private fun userAgent(): String {
+        @VisibleForTesting
+        fun userAgent(): String {
             return UserAgent.toString()
         }
 
@@ -58,8 +60,9 @@ class ChannelBuilderUtils {
             channel?.apply {
                 try {
                     if (!shutdown().awaitTermination(1, TimeUnit.SECONDS)) {
-                        Logger.d(TAG,  "Unable to gracefully shutdown the gRPC ManagedChannel. Will attempt an immediate shutdown.")
-                        shutdownNow()
+                        if (!shutdownNow().awaitTermination(1, TimeUnit.SECONDS)) {
+                            Logger.d(TAG,  "Unable to gracefully shutdown the gRPC ManagedChannel. Will attempt an immediate shutdown.")
+                        }
                     }
                 } catch (e: InterruptedException) {
                     // (Re-)Cancel if current thread also interrupted
