@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.4.1 *(2021-08-05)*
+-----------------------------
+* Fix: Revert "Fix to stop ServerInitiatedDirective when Disconnected #1963" (#2003)
+
 Version 1.4.0 *(2021-07-30)*
 -----------------------------
 
