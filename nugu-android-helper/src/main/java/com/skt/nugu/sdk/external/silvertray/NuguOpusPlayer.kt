@@ -90,6 +90,10 @@ class NuguOpusPlayer(private val streamType: Int, private val player: Player = P
     }
 
     override fun setSource(attachmentReader: Attachment.Reader): SourceId {
+        if(status == Status.READY || status == Status.STARTED) {
+            player.reset()
+        }
+
         val source = RawCBRStreamSource(attachmentReader)
         player.prepare(source, streamType)
         currentSourceId.id++
