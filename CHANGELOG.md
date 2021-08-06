@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 1.4.2 *(2021-08-06)*
+-----------------------------
+* Fix: Reset tts player before setSource(preapre) if READY or STARTED (#2001)
+* Improve: Pause AudioPlayer explicitly if the other player is playing (#1996)
+
 Version 1.4.1 *(2021-08-05)*
 -----------------------------
 * Fix: Revert "Fix to stop ServerInitiatedDirective when Disconnected #1963" (#2003)
