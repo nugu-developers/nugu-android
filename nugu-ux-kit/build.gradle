@@ -60,14 +60,15 @@ dependencies {
     } else {
         implementation project(':nugu-android-helper')
     }
-    testImplementation "junit:junit:$junitVersion"
-    androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
-    testImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
     implementation("com.google.code.gson:gson:$gsonVersion")
     implementation "com.github.bumptech.glide:glide:$glideVersion"
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesAndroidVersion"
+
+    testImplementation "junit:junit:$junitVersion"
+    testImplementation "androidx.test.ext:junit:$androidXJunitVersion"
+    testImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
     testImplementation 'org.json:json:20180813'
     testImplementation "androidx.test.ext:junit-ktx:$testJunitKtxVersion"
