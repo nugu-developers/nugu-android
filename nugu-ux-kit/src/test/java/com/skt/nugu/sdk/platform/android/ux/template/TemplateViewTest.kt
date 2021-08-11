@@ -7,13 +7,18 @@ import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
-import org.junit.Assert.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.verifyNoMoreInteractions
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [Build.VERSION_CODES.O_MR1])
+@Config(sdk = [Build.VERSION_CODES.O_MR1], manifest = Config.NONE)
 class TemplateViewTest {
 
     @Test
@@ -33,8 +38,36 @@ class TemplateViewTest {
         val templateViewWeb2 = TemplateView.createView(TemplateView.AUDIO_PLAYER_TEMPLATE_2, ApplicationProvider.getApplicationContext())
         assertTrue(templateViewWeb2 is TemplateWebView)
 
+        // return to original settings
         TemplateView.templateConstructor[TemplateView.MEDIA_TEMPLATE_TYPES] = { templateType, context ->
             DisplayAudioPlayer(templateType, context).apply { id = R.id.template_view }
         }
+
+        val templateViewForceToWeb =
+            TemplateView.createView(TemplateView.AUDIO_PLAYER_TEMPLATE_2, ApplicationProvider.getApplicationContext(), forceToWebView = true)
+        assertTrue(templateViewForceToWeb is TemplateWebView)
+    }
+
+    @Test
+    fun test_nuguButtonColor() {
+        TemplateView.nuguButtonColor = TemplateView.Companion.NuguButtonColor.BLUE
+        TemplateView.nuguButtonColor = TemplateView.Companion.NuguButtonColor.WHITE
+        GlobalScope.launch {
+            delay(500)
+//            verify(spy(TemplateView.nuguButtonColorFlow)).emit(TemplateView.nuguButtonColor)
+        }
+
+        TemplateView.nuguButtonColor = TemplateView.Companion.NuguButtonColor.WHITE
+        GlobalScope.launch {
+            delay(500)
+            verifyNoMoreInteractions(spy(TemplateView.nuguButtonColorFlow))
+        }
+    }
+
+    @Test
+    fun test_url(){
+        val templateViewWeb = TemplateView.createView("templateType", ApplicationProvider.getApplicationContext())
+        assertTrue(templateViewWeb is TemplateWebView)
+        templateViewWeb.setServerUrl("urlurl")
     }
 }

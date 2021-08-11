@@ -93,7 +93,9 @@ interface TemplateView {
 
     var templateHandler: TemplateHandler?
 
-    fun setServerUrl(url: String) {}
+    fun setServerUrl(url: String) {
+        //If your TemplateView use server connect and url can be changed use this interface to make user change it.
+    }
 
     /**
      *  @param templateContent contains all template items to be rendered.

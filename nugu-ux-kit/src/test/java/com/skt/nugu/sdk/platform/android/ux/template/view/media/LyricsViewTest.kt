@@ -19,7 +19,7 @@ import org.mockito.Mockito.verify
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [Build.VERSION_CODES.O_MR1])
+@Config(sdk = [Build.VERSION_CODES.O_MR1], manifest = Config.NONE)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class LyricsViewTest {
     private lateinit var lyricsView: LyricsView

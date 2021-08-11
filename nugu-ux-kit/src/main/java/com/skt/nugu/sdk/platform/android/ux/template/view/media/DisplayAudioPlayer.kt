@@ -35,6 +35,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.annotation.VisibleForTesting
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -114,7 +115,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private val thumbTransformCorner10 = RoundedCorners(dpToPx(10.7f, context))
     private val thumbTransformCorner2 = RoundedCorners(dpToPx(2f, context))
 
-    private var audioPlayerItem: AudioPlayer? = null
+    @VisibleForTesting
+    internal var audioPlayerItem: AudioPlayer? = null
 
     private var currOrientation = ORIENTATION_UNDEFINED
 
@@ -143,7 +145,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
         }
 
-    private val mediaListener = object : TemplateHandler.ClientListener {
+    @VisibleForTesting
+    internal val mediaListener = object : TemplateHandler.ClientListener {
         override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
             post {
                 mediaPlaying = activity == AudioPlayerAgentInterface.State.PLAYING
@@ -498,7 +501,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    private fun load(item: AudioPlayer, isMerge: Boolean = false) {
+    @VisibleForTesting
+    internal fun load(item: AudioPlayer, isMerge: Boolean = false) {
         if (!isMerge) audioPlayerItem = item
 
         item.title?.run {
@@ -607,7 +611,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         updateThemeIfNeeded()
     }
 
-    private fun updateThemeIfNeeded() {
+    @VisibleForTesting
+    internal fun updateThemeIfNeeded() {
         fun update() {
             player.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
             titleView.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_title_dark else R.color.media_template_text_title_light))

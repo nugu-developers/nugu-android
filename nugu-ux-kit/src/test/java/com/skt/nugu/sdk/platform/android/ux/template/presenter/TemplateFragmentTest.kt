@@ -9,16 +9,12 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.web.sugar.Web.onWebView
-import androidx.test.espresso.web.webdriver.DriverAtoms.findElement
-import androidx.test.espresso.web.webdriver.DriverAtoms.webClick
-import androidx.test.espresso.web.webdriver.Locator
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
-import kotlinx.coroutines.MainScope
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.FixMethodOrder
@@ -30,7 +26,7 @@ import org.mockito.MockitoAnnotations
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [Build.VERSION_CODES.O_MR1])
+@Config(sdk = [Build.VERSION_CODES.O_MR1], manifest = Config.NONE)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TemplateFragmentTest {
     @Mock
@@ -108,7 +104,7 @@ class TemplateFragmentTest {
         }
 
         // set all template not have close button, and test it's work
-        TemplateView.enableCloseButton = { templateType, serviceID, displayType ->
+        TemplateView.enableCloseButton = { _, _, _ ->
             false
         }
 
@@ -129,7 +125,7 @@ class TemplateFragmentTest {
     }
 
     @Test
-    fun test4WebView(){
+    fun test4WebView() {
         launchFragment().onFragment {
             it.view?.post {
                 onWebView()
