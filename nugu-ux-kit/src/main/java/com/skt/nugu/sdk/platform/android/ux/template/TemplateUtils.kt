@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.platform.android.ux.template
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Color
 import android.os.Build
 import android.text.Html
 import android.text.SpannableStringBuilder
@@ -74,17 +73,6 @@ fun convertToTimeMs(ms: Int): String {
     }
 }
 
-fun parseColor(color: String?): Int? {
-    if (color == null) {
-        return null
-    }
-    return try {
-        Color.parseColor(color)
-    } catch (e: Throwable) {
-        null
-    }
-}
-
 fun getSpannable(text: String?): Spanned {
     if (text == null) {
         return SpannableStringBuilder("")
@@ -95,16 +83,6 @@ fun getSpannable(text: String?): Spanned {
         Html.fromHtml(source, Html.FROM_HTML_MODE_LEGACY)
     } else {
         Html.fromHtml(source)
-    }
-}
-
-fun updateLayoutParams(view: android.widget.ToggleButton?, width: Float, height: Float) {
-    view?.apply {
-        val params = layoutParams
-        params.width = dpToPixel(context, width).toInt()
-        params.height = dpToPixel(context, height).toInt()
-        layoutParams = params
-        requestLayout()
     }
 }
 

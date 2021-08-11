@@ -28,7 +28,7 @@ android {
         unitTests.all {
             systemProperty 'robolectric.dependency.repo.url', 'https://repo1.maven.org/maven2/'
             systemProperty 'robolectric.dependency.repo.id', 'https'
-            systemProperty 'robolectric.enabledSdks', '23'
+            systemProperty 'robolectric.enabledSdks', '22, 27'
         }
     }
 
@@ -62,7 +62,7 @@ dependencies {
     }
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
-    implementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
+    testImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
     implementation("com.google.code.gson:gson:$gsonVersion")
     implementation "com.github.bumptech.glide:glide:$glideVersion"
