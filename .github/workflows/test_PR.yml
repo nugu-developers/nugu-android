@@ -22,6 +22,9 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
 
+      - name: Env
+        run: export JAVA_HOME="/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home"
+
       # Builds
       - name: Builds
         run: ./gradlew test

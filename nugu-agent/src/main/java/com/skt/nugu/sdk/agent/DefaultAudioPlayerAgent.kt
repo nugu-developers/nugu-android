@@ -778,7 +778,7 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> {
-                if (playCalled) {
+                if (playCalled || currentItem?.isFetched == true) {
                     if (mediaPlayer.stop(sourceId)) {
                         stopReason = reason
                         stopCalled = true
@@ -793,12 +793,6 @@ class DefaultAudioPlayerAgent(
                         currentItem?.let {
                             notifyOnReleaseAudioInfo(it, true)
                         }
-                    }
-                } else if(currentItem?.isFetched == true) {
-                    if (mediaPlayer.stop(sourceId)) {
-                        stopReason = reason
-                        stopCalled = true
-                        return true
                     }
                 }
             }

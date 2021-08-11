@@ -73,8 +73,8 @@ apply plugin: 'org.sonarqube'
 
 sonarqube {
     properties {
-        property "sonar.host.url", "http://1.225.1.108:9000/"
-        property "sonar.login", "admin"
+        property "sonar.host.url", "sonarqubeurl"
+        property "sonar.login", "name"
         property "sonar.password", "pw"
         property "sonar.projectKey", "sdk-android"
         property "sonar.projectName", "sdk-android"

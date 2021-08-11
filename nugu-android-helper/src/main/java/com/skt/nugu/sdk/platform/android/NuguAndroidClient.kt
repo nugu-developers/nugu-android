@@ -111,6 +111,7 @@ import com.skt.nugu.sdk.platform.android.content.AndroidPreferences
 import com.skt.nugu.sdk.platform.android.focus.AndroidAudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractor
 import com.skt.nugu.sdk.platform.android.focus.AudioFocusInteractorFactory
+import com.skt.nugu.sdk.platform.android.focus.AndroidContextDummyFocusInteractorFactory
 import com.skt.nugu.sdk.platform.android.log.AndroidLogger
 import com.skt.nugu.sdk.platform.android.mediaplayer.AndroidMediaPlayer
 import com.skt.nugu.sdk.platform.android.mediaplayer.IntegratedMediaPlayer
@@ -198,8 +199,7 @@ class NuguAndroidClient private constructor(
         internal var transportFactory: TransportFactory = DefaultTransportFactory.buildTransportFactory()
         internal var systemExceptionDirectiveDelegate: ExceptionDirectiveDelegate? = null
         internal var asrBeepResourceProvider: AsrBeepResourceProvider? = null
-        internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? =
-            AndroidAudioFocusInteractor.Factory(context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
+        internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? = AndroidContextDummyFocusInteractorFactory(context)
 
         internal var clientVersion: String? = null
             get() = try {
@@ -941,6 +941,10 @@ class NuguAndroidClient private constructor(
         .build()
 
     init {
+        (builder.audioFocusInteractorFactory as? AndroidContextDummyFocusInteractorFactory)?.run {
+            builder.audioFocusInteractorFactory = AndroidAudioFocusInteractor.Factory(this.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager, audioPlayerAgent)
+        }
+
         audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.audioFocusManager)
 
         val tempDisplayAgent = displayAgent

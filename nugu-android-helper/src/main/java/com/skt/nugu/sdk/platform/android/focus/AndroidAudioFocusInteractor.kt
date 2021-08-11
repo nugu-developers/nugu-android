@@ -20,6 +20,7 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -38,8 +39,8 @@ object AndroidAudioFocusInteractor {
     /**
      * @param audioManager android audio manager to manage AAFM
      */
-    class Factory(private val audioManager: AudioManager): AudioFocusInteractorFactory {
-        override fun create(focusManager: FocusManagerInterface): AudioFocusInteractor = Impl(audioManager, focusManager).apply {
+    class Factory(private val audioManager: AudioManager, private val audioPlayerAgent: AudioPlayerAgentInterface?): AudioFocusInteractorFactory {
+        override fun create(focusManager: FocusManagerInterface): AudioFocusInteractor = Impl(audioManager, focusManager, audioPlayerAgent).apply {
             focusManager.setExternalFocusInteractor(this)
         }
     }
@@ -50,7 +51,8 @@ object AndroidAudioFocusInteractor {
      */
     internal class Impl(
         private val audioManager: AudioManager,
-        private val audioFocusManager: FocusManagerInterface
+        private val audioFocusManager: FocusManagerInterface,
+        private val audioPlayerAgent: AudioPlayerAgentInterface?
     ) : AudioFocusInteractor,
         FocusManagerInterface.ExternalFocusInteractor, ChannelObserver {
 
@@ -131,6 +133,9 @@ object AndroidAudioFocusInteractor {
                     AudioManager.AUDIOFOCUS_LOSS,
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                        if(it == AudioManager.AUDIOFOCUS_LOSS) {
+                            audioPlayerAgent?.pause()
+                        }
                         // 외부 App에 의해 Focus를 잃는 시점
                         // 현재 Nugu 시나리오를 Pause해야하는데 어떻게 해결?
                         // 현재 외부 App이 Foreground로 가도록 하고, 지금 것은 Background로 가야한다.
