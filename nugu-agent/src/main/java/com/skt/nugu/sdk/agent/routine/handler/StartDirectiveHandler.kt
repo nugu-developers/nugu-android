@@ -42,7 +42,8 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 class StartDirectiveHandler(
-    private val controller: Controller
+    private val controller: Controller,
+    private val handleController: HandleController?
 ) : AbstractDirectiveHandler() {
     companion object {
         private const val NAME_START = "Start"
@@ -84,8 +85,18 @@ class StartDirectiveHandler(
         }
     }
 
+    interface HandleController {
+        sealed class Result {
+            object OK : Result()
+            data class ERROR(val errorMessage: String) : Result()
+        }
+
+        fun shouldExecuteDirective(payload: StartDirective.Payload, header: Header): Result
+    }
+
     interface Controller {
         fun start(directive: StartDirective): Boolean
+        fun failed(directive: StartDirective, errorMessage: String)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -98,6 +109,17 @@ class StartDirectiveHandler(
         if (payload == null) {
             info.result.setFailed("Invalid Payload.")
             return
+        }
+
+        handleController?.shouldExecuteDirective(payload, info.directive.header).let {
+            if(it is HandleController.Result.ERROR) {
+                controller.failed(StartDirective(
+                    info.directive.header,
+                    payload
+                ), it.errorMessage)
+                info.result.setFailed("start failed by handleController: ${it.errorMessage}")
+                return
+            }
         }
 
         if (controller.start(

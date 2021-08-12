@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.text
 
-import com.skt.nugu.sdk.agent.text.TextAgentInterface.TextSourceHandler.Result
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 interface TextAgentInterface {

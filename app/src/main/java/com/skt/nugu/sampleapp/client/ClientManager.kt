@@ -30,6 +30,8 @@ import com.skt.nugu.sdk.agent.permission.PermissionDelegate
 import com.skt.nugu.sdk.agent.permission.PermissionState
 import com.skt.nugu.sdk.agent.permission.PermissionType
 import com.skt.nugu.sdk.agent.routine.RoutineAgent
+import com.skt.nugu.sdk.agent.routine.handler.ContinueDirectiveHandler
+import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
 import com.skt.nugu.sdk.agent.sound.SoundProvider
 import com.skt.nugu.sdk.client.SdkContainer
 import com.skt.nugu.sdk.client.agent.factory.AgentFactory
@@ -38,6 +40,7 @@ import com.skt.nugu.sdk.client.configuration.configure
 import com.skt.nugu.sdk.core.interfaces.context.WakeupWordContextProvider
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
@@ -204,7 +207,25 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                         getDirectiveSequencer(),
                         getDirectiveSequencer(),
                         getDirectiveGroupProcessor(),
-                        getAudioSeamlessFocusManager()
+                        getAudioSeamlessFocusManager(),
+                        object: StartDirectiveHandler.HandleController {
+                            override fun shouldExecuteDirective(
+                                payload: StartDirectiveHandler.StartDirective.Payload,
+                                header: Header
+                            ): StartDirectiveHandler.HandleController.Result {
+                                return StartDirectiveHandler.HandleController.Result.OK
+//                                return StartDirectiveHandler.HandleController.Result.ERROR("type error message")
+                            }
+                        },
+                        object: ContinueDirectiveHandler.HandleController {
+                            override fun shouldExecuteDirective(
+                                payload: ContinueDirectiveHandler.ContinueDirective.Payload,
+                                header: Header
+                            ): ContinueDirectiveHandler.HandleController.Result {
+                                return ContinueDirectiveHandler.HandleController.Result.OK
+//                                return ContinueDirectiveHandler.HandleController.Result.ERROR("type error message")
+                            }
+                        },
                     )
                 }
             })

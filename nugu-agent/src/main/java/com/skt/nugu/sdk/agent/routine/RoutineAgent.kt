@@ -46,7 +46,9 @@ class RoutineAgent(
     private val directiveProcessor: DirectiveProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
-    private val seamlessFocusManager: SeamlessFocusManagerInterface
+    private val seamlessFocusManager: SeamlessFocusManagerInterface,
+    private val startDirectiveHandleController: StartDirectiveHandler.HandleController? = null,
+    private val continueDirectiveHandleController: ContinueDirectiveHandler.HandleController? = null,
 ) : CapabilityAgent,
     RoutineAgentInterface,
     SupportedInterfaceContextProvider,
@@ -59,6 +61,7 @@ class RoutineAgent(
 
         private val VERSION = Version(1, 2)
         const val NAMESPACE = "Routine"
+        const val EVENT_FAILED = "Failed"
     }
 
     internal data class StateContext(
@@ -372,9 +375,9 @@ class RoutineAgent(
     override fun getInterfaceName(): String = NAMESPACE
 
     init {
-        directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this))
+        directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this, startDirectiveHandleController))
         directiveSequencer.addDirectiveHandler(StopDirectiveHandler(this))
-        directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this))
+        directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this, continueDirectiveHandleController))
         contextManager.setStateProvider(namespaceAndName, this)
         messageSender.addOnSendMessageListener(object : MessageSender.OnSendMessageListener {
             override fun onPreSendMessage(request: MessageRequest) {
@@ -558,6 +561,40 @@ class RoutineAgent(
         return currentRoutineRequest != null
     }
 
+    override fun failed(directive: StartDirectiveHandler.StartDirective, errorMessage: String) {
+        Logger.d(TAG, "[failed] $directive")
+        sendRoutineFailedEvent(directive.payload.playServiceId, errorMessage, directive.header.dialogRequestId)
+    }
+
+    private fun sendRoutineFailedEvent(playServiceId: String, errorMessage: String, referrerDialogRequestId: String) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.newCall(
+                    EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        EVENT_FAILED,
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        addProperty("playServiceId", playServiceId)
+                        addProperty("errorMessage", errorMessage)
+                    }.toString())
+                        .referrerDialogRequestId(referrerDialogRequestId)
+                        .build()
+                ).enqueue(object : MessageSender.Callback {
+                    override fun onFailure(request: MessageRequest, status: Status) {
+                    }
+
+                    override fun onSuccess(request: MessageRequest) {
+                    }
+
+                    override fun onResponseStart(request: MessageRequest) {
+                    }
+                })
+            }
+        }, namespaceAndName)
+    }
+
     private fun sendRoutineStopEvent(directive: StartDirectiveHandler.StartDirective) {
         Logger.d(TAG, "[sendRoutineStopEvent]")
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
@@ -630,6 +667,14 @@ class RoutineAgent(
         } else {
             false
         }
+    }
+
+    override fun failed(
+        directive: ContinueDirectiveHandler.ContinueDirective,
+        errorMessage: String
+    ) {
+        Logger.d(TAG, "[failed] $directive")
+        sendRoutineFailedEvent(directive.payload.playServiceId, errorMessage, directive.header.dialogRequestId)
     }
 
     private fun resumeInternal(token: String): Boolean {

@@ -41,7 +41,8 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 class ContinueDirectiveHandler(
-    private val controller: Controller
+    private val controller: Controller,
+    private val handleController: HandleController?
 ): AbstractDirectiveHandler() {
     companion object {
         private const val NAME_CONTINUE = "Continue"
@@ -61,7 +62,17 @@ class ContinueDirectiveHandler(
         )
     }
 
+    interface HandleController {
+        sealed class Result {
+            object OK : Result()
+            data class ERROR(val errorMessage: String) : Result()
+        }
+
+        fun shouldExecuteDirective(payload: ContinueDirective.Payload, header: Header): Result
+    }
+
     interface Controller {
+        fun failed(directive: ContinueDirective, errorMessage: String)
         fun doContinue(directive: ContinueDirective): Boolean
     }
 
@@ -74,6 +85,18 @@ class ContinueDirectiveHandler(
         if(payload == null) {
             info.result.setFailed("Invalid Payload.")
             return
+        }
+
+        handleController?.shouldExecuteDirective(payload, info.directive.header).let {
+            if(it is HandleController.Result.ERROR) {
+                controller.failed(
+                    ContinueDirective(
+                        info.directive.header,
+                        payload
+                    ), it.errorMessage)
+                info.result.setFailed("do continue failed by handleController: ${it.errorMessage}")
+                return
+            }
         }
 
         if(controller.doContinue(ContinueDirective(info.directive.header, payload))) {
