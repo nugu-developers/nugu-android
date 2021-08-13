@@ -86,15 +86,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
-                    messageSender.newCall(message).enqueue( object : MessageSender.Callback {
-                        override fun onFailure(request: MessageRequest, status: Status) {
-                        }
-
-                        override fun onSuccess(request: MessageRequest) {
-                        }
-                        override fun onResponseStart(request: MessageRequest) {
-                        }
-                    })
+                    messageSender.newCall(message).enqueue(null)
 
                     return
                 }
@@ -117,15 +109,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
-                    messageSender.newCall(message).enqueue( object : MessageSender.Callback {
-                        override fun onFailure(request: MessageRequest, status: Status) {
-                        }
-
-                        override fun onSuccess(request: MessageRequest) {
-                        }
-                        override fun onResponseStart(request: MessageRequest) {
-                        }
-                    })
+                    messageSender.newCall(message).enqueue(null)
                 } else {
                     val message = EventMessageRequest.Builder(
                         jsonContext,
@@ -141,15 +125,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
                         .referrerDialogRequestId(info.directive.getDialogRequestId())
                         .build()
 
-                    messageSender.newCall(message).enqueue( object : MessageSender.Callback {
-                        override fun onFailure(request: MessageRequest, status: Status) {
-                        }
-
-                        override fun onSuccess(request: MessageRequest) {
-                        }
-                        override fun onResponseStart(request: MessageRequest) {
-                        }
-                    })
+                    messageSender.newCall(message).enqueue(null)
                 }
             }
         })

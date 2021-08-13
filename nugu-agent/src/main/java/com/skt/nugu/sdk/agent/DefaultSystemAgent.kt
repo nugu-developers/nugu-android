@@ -410,14 +410,7 @@ class DefaultSystemAgent(
                 if(noAck) {
                     call.noAck()
                 }
-                call.enqueue(object : MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                    }
-                    override fun onSuccess(request: MessageRequest) {
-                    }
-                    override fun onResponseStart(request: MessageRequest) {
-                    }
-                })
+                call.enqueue(null)
             }
         }, tempNamespaceAndName)
     }

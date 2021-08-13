@@ -936,16 +936,7 @@ class DefaultAudioPlayerAgent(
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
-                            override fun onFailure(request: MessageRequest, status: Status) {
-                            }
-
-                            override fun onSuccess(request: MessageRequest) {
-                            }
-
-                            override fun onResponseStart(request: MessageRequest) {
-                            }
-                        })
+                        messageSender.newCall(messageRequest).enqueue(null)
                     }
                 }
             }
@@ -969,16 +960,7 @@ class DefaultAudioPlayerAgent(
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
-                            override fun onFailure(request: MessageRequest, status: Status) {
-                            }
-
-                            override fun onSuccess(request: MessageRequest) {
-                            }
-
-                            override fun onResponseStart(request: MessageRequest) {
-                            }
-                        })
+                        messageSender.newCall(messageRequest).enqueue(null)
                     }
                 }
             }
@@ -1002,16 +984,7 @@ class DefaultAudioPlayerAgent(
                             }.toString()
                         ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                        messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
-                            override fun onFailure(request: MessageRequest, status: Status) {
-                            }
-
-                            override fun onSuccess(request: MessageRequest) {
-                            }
-
-                            override fun onResponseStart(request: MessageRequest) {
-                            }
-                        })
+                        messageSender.newCall(messageRequest).enqueue(null)
                     }
                 }
             }
@@ -1596,16 +1569,7 @@ class DefaultAudioPlayerAgent(
                         }.toString()
                     ).referrerDialogRequestId(referrerDialogRequestId).build()
 
-                    messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback{
-                        override fun onFailure(request: MessageRequest, status: Status) {
-                        }
-
-                        override fun onSuccess(request: MessageRequest) {
-                        }
-
-                        override fun onResponseStart(request: MessageRequest) {
-                        }
-                    })
+                    messageSender.newCall(messageRequest).enqueue(null)
                     Logger.d(TAG, "[sendEvent] $messageRequest")
                 }
             }, namespaceAndName)
@@ -1662,16 +1626,7 @@ class DefaultAudioPlayerAgent(
                             }
                         }.toString()).build()
 
-                    messageSender.newCall(messageRequest).enqueue(object : MessageSender.Callback {
-                        override fun onFailure(request: MessageRequest, status: Status) {
-                        }
-
-                        override fun onSuccess(request: MessageRequest) {
-                        }
-
-                        override fun onResponseStart(request: MessageRequest) {
-                        }
-                    })
+                    messageSender.newCall(messageRequest).enqueue(null)
                 }
             }
         }, namespaceAndName)
