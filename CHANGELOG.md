@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 1.4.3 *(2021-08-13)*
+-----------------------------
+* Improve: Improve NetworkManager for better usability (#1970)
+* New: Add interface to control handling for routine's start and continue directive (#2008)
+
 Version 1.4.2 *(2021-08-06)*
 -----------------------------
 * Fix: Reset tts player before setSource(preapre) if READY or STARTED (#2001)
