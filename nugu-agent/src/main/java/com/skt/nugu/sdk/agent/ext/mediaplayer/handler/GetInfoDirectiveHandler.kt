@@ -79,16 +79,7 @@ class GetInfoDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            ).enqueue( object : MessageSender.Callback {
-                                override fun onFailure(request: MessageRequest, status: Status) {
-                                }
-
-                                override fun onSuccess(request: MessageRequest) {
-                                }
-
-                                override fun onResponseStart(request: MessageRequest) {
-                                }
-                            })
+                            ).enqueue(null)
                         }
                     })
                 }
@@ -111,16 +102,7 @@ class GetInfoDirectiveHandler(
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
-                            ).enqueue( object : MessageSender.Callback {
-                                override fun onFailure(request: MessageRequest, status: Status) {
-                                }
-
-                                override fun onSuccess(request: MessageRequest) {
-                                }
-
-                                override fun onResponseStart(request: MessageRequest) {
-                                }
-                            })
+                            ).enqueue(null)
                         }
                     })
                 }

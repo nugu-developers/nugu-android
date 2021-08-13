@@ -581,16 +581,7 @@ class RoutineAgent(
                     }.toString())
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
-                ).enqueue(object : MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                    }
-
-                    override fun onSuccess(request: MessageRequest) {
-                    }
-
-                    override fun onResponseStart(request: MessageRequest) {
-                    }
-                })
+                ).enqueue(null)
             }
         }, namespaceAndName)
     }
@@ -610,16 +601,7 @@ class RoutineAgent(
                     }.toString())
                         .referrerDialogRequestId(directive.header.dialogRequestId)
                         .build()
-                ).enqueue(object : MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                    }
-
-                    override fun onSuccess(request: MessageRequest) {
-                    }
-
-                    override fun onResponseStart(request: MessageRequest) {
-                    }
-                })
+                ).enqueue(null)
             }
         }, namespaceAndName)
     }
@@ -639,16 +621,7 @@ class RoutineAgent(
                     }.toString())
                         .referrerDialogRequestId(directive.header.dialogRequestId)
                         .build()
-                ).enqueue(object : MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                    }
-
-                    override fun onSuccess(request: MessageRequest) {
-                    }
-
-                    override fun onResponseStart(request: MessageRequest) {
-                    }
-                })
+                ).enqueue(null)
             }
         }, namespaceAndName)
     }
