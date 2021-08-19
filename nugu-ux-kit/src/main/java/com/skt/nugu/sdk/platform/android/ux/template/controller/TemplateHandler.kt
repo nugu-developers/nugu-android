@@ -66,7 +66,7 @@ interface TemplateHandler {
     fun setClientListener(listener: ClientListener) {}
 
     interface ClientListener {
-        fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {}
+        fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float, showController: Boolean) {}
 
         fun onMediaDurationRetrieved(durationMs: Long) {}
 

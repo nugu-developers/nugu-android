@@ -56,7 +56,7 @@ object JavaScriptHelper {
         return FUNC_PLAYER_ON_PLAY_STARTED
     }
 
-    fun onPlayPaused(showController: Boolean = false): String {
+    fun onPlayPaused(showController: Boolean): String {
         if (showController) {
             return FUNC_PLAYER_ON_PLAY_PAUSED_SHOW_CONTROLLER
         }

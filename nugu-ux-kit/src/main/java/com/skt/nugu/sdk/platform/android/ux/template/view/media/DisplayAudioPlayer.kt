@@ -147,7 +147,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     @VisibleForTesting
     internal val mediaListener = object : TemplateHandler.ClientListener {
-        override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
+        override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float, showController: Boolean) {
             post {
                 mediaPlaying = activity == AudioPlayerAgentInterface.State.PLAYING
                 if (mediaPlaying) {
