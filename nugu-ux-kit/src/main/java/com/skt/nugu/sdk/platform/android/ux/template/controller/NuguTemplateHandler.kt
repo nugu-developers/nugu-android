@@ -15,16 +15,21 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
+import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
+import com.skt.nugu.sdk.platform.android.ux.template.webview.JavaScriptHelper
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
@@ -61,7 +66,7 @@ open class NuguTemplateHandler(
             Logger.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
 
             currentMediaState = activity
-            clientListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage())
+            clientListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage(), false)
 
             if (activity == State.PLAYING) startMediaProgressSending()
             else stopMediaProgressSending()
@@ -92,6 +97,20 @@ open class NuguTemplateHandler(
                 Logger.i(TAG, "getVisibleTokenList(). return $it")
             }
         }
+    }
+
+    private val directiveHandlingListener = object : DirectiveSequencerInterface.OnDirectiveHandlingListener {
+        private fun Directive.isAudioPlayerPauseDirective() : Boolean {
+            return getNamespaceAndName() == NamespaceAndName(DefaultAudioPlayerAgent.NAMESPACE, DefaultAudioPlayerAgent.NAME_PAUSE)
+        }
+        override fun onCompleted(directive: Directive) {
+            if(directive.isAudioPlayerPauseDirective()) {
+                clientListener?.onMediaStateChanged(State.PAUSED, getMediaCurrentTimeMs(), getMediaProgressPercentage(), true)
+            }
+        }
+        override fun onRequested(directive: Directive) = Unit
+        override fun onCanceled(directive: Directive) = Unit
+        override fun onFailed(directive: Directive, description: String) = Unit
     }
 
     override fun onElementSelected(tokenId: String) {
@@ -199,6 +218,7 @@ open class NuguTemplateHandler(
             removeOnDurationListener(mediaDurationListener)
             addOnDurationListener(mediaDurationListener)
         }
+        getNuguClient().addOnDirectiveHandlingListener(directiveHandlingListener)
     }
 
     override fun clear() {
@@ -208,6 +228,7 @@ open class NuguTemplateHandler(
             removeListener(mediaStateListener)
             removeOnDurationListener(mediaDurationListener)
         }
+        getNuguClient().removeOnDirectiveHandlingListener(directiveHandlingListener)
 
         stopMediaProgressSending()
         clientListener = null

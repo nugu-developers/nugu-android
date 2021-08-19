@@ -436,7 +436,7 @@ class TemplateWebView @JvmOverloads constructor(
         }
     }
 
-    override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float) {
+    override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float, showController: Boolean) {
         mediaPlaying = activity == State.PLAYING
         mediaCurrentTimeMs = currentTimeMs
 
@@ -449,7 +449,7 @@ class TemplateWebView @JvmOverloads constructor(
                 callJSFunction(JavaScriptHelper.setEndTime(mediaDurationMs))
             }
             State.STOPPED -> callJSFunction(JavaScriptHelper.onPlayStopped())
-            State.PAUSED -> callJSFunction(JavaScriptHelper.onPlayPaused())
+            State.PAUSED -> callJSFunction(JavaScriptHelper.onPlayPaused(showController))
             State.FINISHED -> {
                 callJSFunction(JavaScriptHelper.setCurrentTime(mediaDurationMs))
                 callJSFunction(JavaScriptHelper.setProgress(100f))
