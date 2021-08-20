@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.4.4 *(2021-08-20)*
+-----------------------------
+* Fix: Fix show controller when receiving pause directive (#2014)
+* Fix: Fix TemplateWebView when receiving UpdateMetadata directive (#2016)
+* New: Remove ogg-opus encoder from NUGU-SDK (temporary) (#2018)
+    * Remove temporarily,  to resolve sdk size issue.
+
 Version 1.4.3 *(2021-08-13)*
 -----------------------------
 * Improve: Improve NetworkManager for better usability (#1970)
