@@ -293,7 +293,11 @@ class TemplateWebView @JvmOverloads constructor(
         this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken = isSupportFocusedItemToken(templateContent) || isSupportVisibleTokenList(templateContent)
 
-        callJSFunction(JavaScriptHelper.updateDisplay(templateContent))
+        if (TemplateView.MEDIA_TEMPLATE_TYPES.contains(templateHandler?.templateInfo?.templateType)) {
+            callJSFunction(JavaScriptHelper.updatePlayerMetadata(templateContent))
+        } else {
+            callJSFunction(JavaScriptHelper.updateDisplay(templateContent))
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
