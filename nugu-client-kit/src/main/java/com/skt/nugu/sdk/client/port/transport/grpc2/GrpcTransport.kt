@@ -261,13 +261,11 @@ internal class GrpcTransport private constructor(
     override fun send(call: Call): Boolean {
         if (!state.isConnected()) {
             Logger.d(TAG, "[send] Status : ($state), request : ${call.request()}")
-            if(getDetailedState() == DetailedState.CONNECTING_REGISTRY) {
-                executor.submit {
-                    deviceGatewayClient?.send(call)
-                        ?: call.onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
-                }
-                return true
+            executor.submit {
+                deviceGatewayClient?.send(call)
+                    ?: call.onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             }
+            return true
         }
         return deviceGatewayClient?.send(call) ?: false
     }
@@ -414,16 +412,20 @@ internal class GrpcTransport private constructor(
     ) =  Grpc2Call(activeTransport, request, headers, listener)
 
     override fun startDirectivesService() {
-        deviceGatewayClient?.let {
-            setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
-            it.startDirectivesService()
-        } ?: Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+        executor.submit {
+            deviceGatewayClient?.let {
+                setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
+                it.startDirectivesService()
+            } ?: Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+        }
     }
 
     override fun stopDirectivesService() {
-        deviceGatewayClient?.let {
-            setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
-            it.stopDirectivesService()
-        } ?: Logger.w(TAG, "[stopDirectivesService] deviceGatewayClient is not initialized")
+        executor.submit {
+            deviceGatewayClient?.let {
+                setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
+                it.stopDirectivesService()
+            } ?: Logger.w(TAG, "[stopDirectivesService] deviceGatewayClient is not initialized")
+        }
     }
 }
