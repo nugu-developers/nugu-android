@@ -285,11 +285,10 @@ class ExoMediaPlayer(
         }
 
         lastPreparedUri = uri
+        lastPreparedCacheKey = cacheKey
         val uriStr = uri.toString()
         player.setMediaSource(buildMediaSource(Uri.parse(uriStr), cacheKey))
         player.prepare()
-
-        lastPreparedCacheKey = cacheKey
 
         return SourceId(sourceId.id + 1).also {
             sourceId = it
