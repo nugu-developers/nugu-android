@@ -27,6 +27,7 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.AbsSavedState
 import android.view.MotionEvent
+import android.view.View
 import android.webkit.*
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -140,6 +141,7 @@ class TemplateWebView @JvmOverloads constructor(
     private var onLoadingComplete: (() -> Unit)? = null
     private var isSupportVisibleOrFocusedToken: Boolean = false
 
+    data class RenderInfo(val lyricShowing: Boolean)
 
     init {
         isSaveEnabled = true
@@ -290,7 +292,6 @@ class TemplateWebView @JvmOverloads constructor(
     override fun update(templateContent: String, dialogRequestedId: String) {
         Logger.d(TAG, "update() $templateContent")
 
-        this.onLoadingComplete = onLoadingComplete
         isSupportVisibleOrFocusedToken = isSupportFocusedItemToken(templateContent) || isSupportVisibleTokenList(templateContent)
 
         if (TemplateView.MEDIA_TEMPLATE_TYPES.contains(templateHandler?.templateInfo?.templateType)) {
@@ -440,7 +441,12 @@ class TemplateWebView @JvmOverloads constructor(
         }
     }
 
-    override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float, showController: Boolean) {
+    override fun onMediaStateChanged(
+        activity: AudioPlayerAgentInterface.State,
+        currentTimeMs: Long,
+        currentProgress: Float,
+        showController: Boolean,
+    ) {
         mediaPlaying = activity == State.PLAYING
         mediaCurrentTimeMs = currentTimeMs
 
@@ -543,6 +549,16 @@ class TemplateWebView @JvmOverloads constructor(
     }
 
     override fun isNuguButtonVisible(): Boolean = true
+
+    override fun getRenderInfo() = RenderInfo(lyricPresenter.getVisibility())
+
+    override fun applyRenderInfo(renderInfo: Any) {
+        (renderInfo as? RenderInfo)?.run {
+            if (lyricShowing) {
+                lyricPresenter.show()
+            }
+        }
+    }
 
     private fun themeToString(theme: ThemeManagerInterface.THEME, configuration: Configuration): String {
         return when (theme) {

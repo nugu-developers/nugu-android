@@ -147,7 +147,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     @VisibleForTesting
     internal val mediaListener = object : TemplateHandler.ClientListener {
-        override fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float, showController: Boolean) {
+        override fun onMediaStateChanged(
+            activity: AudioPlayerAgentInterface.State,
+            currentTimeMs: Long,
+            currentProgress: Float,
+            showController: Boolean,
+        ) {
             post {
                 mediaPlaying = activity == AudioPlayerAgentInterface.State.PLAYING
                 if (mediaPlaying) {
@@ -738,20 +743,22 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    fun applyPreviousRenderInfo(previousRenderInfo: RenderInfo) {
-        if (previousRenderInfo.lyricShowing) {
-            lyricsView.post {
-                lyricsView.visibility = View.VISIBLE
-                lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
+    override fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, player.y != 0f)
+
+    override fun applyRenderInfo(renderInfo: Any) {
+        (renderInfo as? RenderInfo)?.run {
+            if (lyricShowing) {
+                lyricsView.post {
+                    lyricsView.visibility = View.VISIBLE
+                    lyricsView.setCurrentTimeMs(mediaCurrentTimeMs)
+                }
+            }
+
+            if (!barType) {
+                expand(true)
             }
         }
-
-        if (!previousRenderInfo.barType) {
-            expand(true)
-        }
     }
-
-    fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, player.y != 0f)
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
