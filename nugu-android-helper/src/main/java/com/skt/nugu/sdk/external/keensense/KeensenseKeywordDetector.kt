@@ -16,6 +16,8 @@
 
 package com.skt.nugu.sdk.external.keensense
 
+import android.content.Context
+import android.content.res.AssetManager
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver
 import com.skt.nugu.keensense.tyche.TycheKeywordDetector
@@ -32,7 +34,8 @@ import kotlin.collections.ArrayList
 
 class KeensenseKeywordDetector(
     var keywordResource: KeywordResources,
-    private val powerMeasure: PowerMeasure? = null
+    private val powerMeasure: PowerMeasure? = null,
+    assetManager: AssetManager? = null,
 ) : KeywordDetector {
     companion object {
         private const val TAG = "KeenKeywordDetector"
@@ -44,7 +47,7 @@ class KeensenseKeywordDetector(
         val searchFilePath: String
     )
 
-    private val detector = TycheKeywordDetector()
+    private val detector = TycheKeywordDetector(assetManager)
     private val onStateChangeListeners = CopyOnWriteArraySet<KeywordDetector.OnStateChangeListener>()
 
     init {
@@ -87,11 +90,16 @@ class KeensenseKeywordDetector(
                         keywordPowerMeasure?.accumulate(buffer)
                     }
 
-                    override fun onDetected() {
+                    override fun onDetected(
+                        startOffset: Long?,
+                        endOffset: Long?,
+                        detectOffset: Long?,
+                        startMarginOffset: Long?
+                    ) {
                         observer.onDetected(WakeupInfo(keyword, WakeupInfo.Boundary(
-                            detector.getKeywordStartOffset()!!,
-                            detector.getKeywordEndOffset()!!,
-                            detector.getKeywordDetectOffset()!!
+                            startOffset!!,
+                            endOffset!!,
+                            detectOffset!!
                         ), keywordPowerMeasure?.getEstimatedPower()))
                         it.release()
                     }

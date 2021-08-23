@@ -57,6 +57,10 @@ android {
     lintOptions {
         abortOnError false
     }
+
+    aaptOptions {
+        noCompress "raw"
+    }
 }
 
 dependencies {

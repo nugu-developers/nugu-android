@@ -15,8 +15,9 @@
  */
 package com.skt.nugu.sdk.external.jademarble
 
+import android.content.res.AssetManager
 import com.skt.nugu.jademarblelib.TycheEdgePointDetectorStateObserver
-import com.skt.nugu.jademarblelib.TycheEndPointDetector
+import com.skt.nugu.jademarblelib.TycheEndPointDetectorFactory
 import com.skt.nugu.jademarblelib.TycheEndPointDetectorInterface
 import com.skt.nugu.jademarblelib.core.AudioInput
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
@@ -28,12 +29,16 @@ import com.skt.nugu.sdk.core.utils.Logger
  * Porting class for [TycheEndPointDetector] to use in NUGU SDK
  * @param epdModelFilePath the absolute path for epd model file
  */
-class EndPointDetector(epdModelFilePath: String) : AudioEndPointDetector {
+class EndPointDetector(epdModelFilePath: String, assetManager: AssetManager? = null) : AudioEndPointDetector {
     companion object {
         private const val TAG = "EndPointDetector"
     }
 
-    private val endPointDetector: TycheEndPointDetectorInterface = TycheEndPointDetector(epdModelFilePath)
+    private val endPointDetector: TycheEndPointDetectorInterface = if(assetManager != null ) {
+        TycheEndPointDetectorFactory.create(assetManager, epdModelFilePath)
+    } else {
+        TycheEndPointDetectorFactory.create(epdModelFilePath)
+    }
     private val listeners = HashSet<AudioEndPointDetector.OnStateChangedListener>()
     private var state = AudioEndPointDetector.State.STOP
     private var audioInputStreamReader: SharedDataStream.Reader? = null

@@ -42,6 +42,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.external.jademarble.EndPointDetector
 import com.skt.nugu.sdk.external.keensense.KeensenseKeywordDetector
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.audiosource.AudioSourceManager
@@ -52,14 +53,10 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechProcessorDelegate
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
-import java.io.File
-import java.io.FileOutputStream
 import java.math.BigInteger
 import java.net.URI
 import java.security.SecureRandom
-import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.HashSet
 
 /**
  * This class manage everything related to NUGU.
@@ -115,42 +112,6 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         fun onInitialized()
     }
 
-    private fun loadAssets(context: Context) {
-        val dataDirectory = context.getDir("skt_nugu_assets", Context.MODE_PRIVATE)
-        val dataFiles = dataDirectory.listFiles()
-        val copyAssets = HashSet<String>().apply {
-            add(com.skt.keensense.default_resource.Resources.ARIA_NET_ASSET_FILE_NAME)
-            add(com.skt.keensense.default_resource.Resources.ARIA_SEARCH_ASSET_FILE_NAME)
-            add(com.skt.keensense.default_resource.Resources.TINKERBELL_NET_ASSET_FILE_NAME)
-            add(com.skt.keensense.default_resource.Resources.TINKERBELL_SEARCH_ASSET_FILE_NAME)
-            add(com.skt.jademarble.default_resource.Resources.EPD_MODEL_ASSET_FILE_NAME)
-        }
-
-        try {
-            val assets = context.assets.list("") ?: return
-
-            assets.filter {
-                copyAssets.contains(it)
-            }.map {
-                File(dataDirectory, it)
-            }.filter {
-                !dataFiles.contains(it)
-            }.forEach {
-                context.assets.open(it.name).use { inputStream ->
-                    var read = 0
-                    val buffer = ByteArray(2048)
-                    FileOutputStream(it.absolutePath).use { outputStream ->
-                        while ({ read = inputStream.read(buffer, 0, buffer.size); read }() > 0) {
-                            outputStream.write(buffer, 0, read)
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Logger.w(TAG, "[loadAssets] occur exception ", e)
-        }
-    }
-
     fun init(context: Context) {
         if (initialized) {
             return
@@ -159,20 +120,17 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         ConfigurationStore.configure(context = context, filename = "nugu-config.json" /* nugu-config.json is the default and can be omitted */)
 
         executor.submit {
-            loadAssets(context.applicationContext)
             init(context.applicationContext, object :
                 KeywordResourceProviderInterface {
-                private val assetsFolder =
-                    context.getDir("skt_nugu_assets", Context.MODE_PRIVATE).absolutePath
                 private val aria = KeensenseKeywordDetector.KeywordResources(
                     "아리아",
-                    assetsFolder + File.separator + com.skt.keensense.default_resource.Resources.ARIA_NET_ASSET_FILE_NAME,
-                    assetsFolder + File.separator + com.skt.keensense.default_resource.Resources.ARIA_SEARCH_ASSET_FILE_NAME
+                    com.skt.keensense.default_resource.Resources.ARIA_NET_ASSET_FILE_NAME,
+                    com.skt.keensense.default_resource.Resources.ARIA_SEARCH_ASSET_FILE_NAME
                 )
                 private val tinkerbell = KeensenseKeywordDetector.KeywordResources(
                     "팅커벨",
-                    assetsFolder + File.separator + com.skt.keensense.default_resource.Resources.TINKERBELL_NET_ASSET_FILE_NAME,
-                    assetsFolder + File.separator + com.skt.keensense.default_resource.Resources.TINKERBELL_SEARCH_ASSET_FILE_NAME
+                    com.skt.keensense.default_resource.Resources.TINKERBELL_NET_ASSET_FILE_NAME,
+                    com.skt.keensense.default_resource.Resources.TINKERBELL_SEARCH_ASSET_FILE_NAME
                 )
 
                 override fun provideDefault(): KeensenseKeywordDetector.KeywordResources = aria
@@ -229,10 +187,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
                     )
                 }
             })
-            .endPointDetectorFilePath(context.getDir(
-                "skt_nugu_assets",
-                Context.MODE_PRIVATE
-            ).absolutePath + File.separator + com.skt.jademarble.default_resource.Resources.EPD_MODEL_ASSET_FILE_NAME)
+            .endPointDetector(EndPointDetector(com.skt.jademarble.default_resource.Resources.EPD_MODEL_ASSET_FILE_NAME, context.assets))
             .enableSound(object : SoundProvider {
                 override fun getContentUri(name: SoundProvider.BeepName): URI {
                     return URI.create(
@@ -365,7 +320,7 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             throw RuntimeException("asrAgent cannot be null")
         }
 
-        val keensenseKeywordDetector = KeensenseKeywordDetector(keywordResourceProvider.provideAria(), SimplePcmPowerMeasure())
+        val keensenseKeywordDetector = KeensenseKeywordDetector(keywordResourceProvider.provideAria(), SimplePcmPowerMeasure(), context.assets)
         keywordDetector = keensenseKeywordDetector
         speechRecognizerAggregator = SpeechRecognizerAggregator(
             keensenseKeywordDetector,
