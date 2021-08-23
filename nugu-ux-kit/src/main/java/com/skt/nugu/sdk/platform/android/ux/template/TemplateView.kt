@@ -118,4 +118,8 @@ interface TemplateView {
     fun asView(): View = this as View
 
     fun isNuguButtonVisible(): Boolean = false
+
+    fun getRenderInfo(): Any
+
+    fun applyRenderInfo(renderInfo: Any)
 }

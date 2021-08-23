@@ -34,6 +34,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHan
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
+import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 class TemplateFragment : Fragment() {
@@ -94,7 +95,7 @@ class TemplateFragment : Fragment() {
     private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
     private var pendingTemplateLoadingListener: TemplateRenderer.TemplateLoadingListener? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    var previousRenderInfo: DisplayAudioPlayer.RenderInfo? = null
+    var previousRenderInfo: Any? = null
 
     private lateinit var handlerFactory : TemplateHandler.TemplateHandlerFactory
 
@@ -186,15 +187,16 @@ class TemplateFragment : Fragment() {
                 load(template, TemplateRenderer.DEVICE_TYPE_CODE, dialogRequestId,
                     onLoadingComplete = {
                         notifyRendered()
+
+                        previousRenderInfo?.run {
+                            templateView?.applyRenderInfo(this)
+                            previousRenderInfo = null
+                        }
+
                         viewModel.templateLoadingListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
                     }, onLoadingFail = { reason ->
                         viewModel.templateLoadingListener?.onReceivedError(getTemplateId(), getTemplateType(), getDisplayType(), reason)
                     })
-
-                previousRenderInfo?.run {
-                    (templateView as? DisplayAudioPlayer)?.applyPreviousRenderInfo(this)
-                    previousRenderInfo = null
-                }
             }
         }
     }
@@ -223,8 +225,8 @@ class TemplateFragment : Fragment() {
         return TemplateView.MEDIA_TEMPLATE_TYPES.contains(getTemplateType())
     }
 
-    fun getRenderInfo(): DisplayAudioPlayer.RenderInfo? {
-        return (templateView as? DisplayAudioPlayer)?.getRenderInfo()
+    fun getRenderInfo(): Any? {
+        return templateView?.getRenderInfo()
     }
 
     fun update(templateContent: String) {
