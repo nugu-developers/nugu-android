@@ -222,7 +222,7 @@ object ExponentialBackOff {
         private class DefaultNetworkCallback(val delegate: NetworkCallback) :
             ConnectivityManager.NetworkCallback() {
             private var isConnected = false
-            override fun onAvailable(network: Network?) {
+            override fun onAvailable(network: Network) {
                 if (isConnected) {
                     Log.d(TAG, "이미 상태가 isConnected 입니다.")
                 }
@@ -230,7 +230,7 @@ object ExponentialBackOff {
                 delegate.onAvailable()
             }
 
-            override fun onLost(network: Network?) {
+            override fun onLost(network: Network) {
                 isConnected = false
             }
         }
