@@ -112,11 +112,11 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
     private fun onActionStartService(intent: Intent) {
         audioItemContext = with(intent) {
             AudioPlayerAgentInterface.Context(
-                getStringExtra(EXTRA_AUDIO_ITEM_ID),
-                getStringExtra(EXTRA_AUDIO_ITEM_TEMPLATE_ID),
+                getStringExtra(EXTRA_AUDIO_ITEM_ID) ?: "",
+                getStringExtra(EXTRA_AUDIO_ITEM_TEMPLATE_ID) ?: "",
                 getStringExtra(EXTRA_AUDIO_ITEM_TEMPLATE),
                 getLongExtra(EXTRA_AUDIO_ITEM_OFFSET, -1L),
-                getStringExtra(EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID)
+                getStringExtra(EXTRA_AUDIO_ITEM_DIALOG_REQUEST_ID) ?: ""
             )
         }
 
