@@ -51,7 +51,8 @@ import java.util.concurrent.TimeUnit
 
 class ExoMediaPlayer(
     private val context: Context,
-    private val retryWhenBehindLiveWindow: Boolean = true
+    private val retryWhenBehindLiveWindow: Boolean = true,
+    private val cacheEnabled: Boolean = false
 ) : UriSourcePlayablePlayer {
     companion object {
         private const val TAG = "ExoMediaPlayer"
@@ -483,7 +484,15 @@ class ExoMediaPlayer(
 
     @Throws(IllegalStateException::class)
     private fun buildMediaSource(uri: Uri, cacheKey: String?): MediaSource {
-        val dataSourceFactory = if (cacheKey != null) cacheDataSourceFactory else dataSourceFactory
+        fun getDataSourceFactory(): DefaultDataSourceFactory {
+            return if (cacheEnabled) {
+                if (cacheKey != null) cacheDataSourceFactory else dataSourceFactory
+            } else {
+                dataSourceFactory
+            }
+        }
+
+        val dataSourceFactory = getDataSourceFactory()
         Util.inferContentType(uri).let {
             when (it) {
                 C.TYPE_HLS -> {
