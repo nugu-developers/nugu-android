@@ -46,7 +46,7 @@ data class Contact(
         @SerializedName("text")
         val text: String,
         @SerializedName("type")
-        val type: Type
+        val type: Type?
     ) {
         enum class Type {
             @SerializedName("SMS")
