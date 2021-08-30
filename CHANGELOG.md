@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.5.0 *(2021-08-30)*
+-----------------------------
+* Fix: ExoMediaPlayer does not caching music streams by default (#2029)
+* Improve: Remove unused jna.jar (#2031)
+* New: Support Message Interface v1.5 (#2033)
+
 Version 1.4.5 *(2021-08-30)*
 -----------------------------
 * Fix: Fix ExoMediaPlayer(Sample) cacheKey update order (#2022)
