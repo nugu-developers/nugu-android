@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 1.4.5 *(2021-08-30)*
+-----------------------------
+* Fix: Fix ExoMediaPlayer(Sample) cacheKey update order (#2022)
+* Fix: Fix to synchronize during reconnecting state (#2026)
+
 Version 1.4.4 *(2021-08-20)*
 -----------------------------
 * Fix: Fix show controller when receiving pause directive (#2014)
