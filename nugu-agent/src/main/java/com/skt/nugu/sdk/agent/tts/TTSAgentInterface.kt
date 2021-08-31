@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.tts
 
+import com.skt.nugu.sdk.agent.DefaultTTSAgent
+
 /**
  * Interface for TTS Capability Agent
  */
@@ -88,13 +90,19 @@ interface TTSAgentInterface {
         fun onError(dialogRequestId: String)
     }
 
+    enum class Format {
+        TEXT,
+        SKML
+    }
+
     /**
      * @param text the text which to synthesize to speech
+     * @param format the format of [text]
      * @param playServiceId the playServiceId which request tts, null if not specified.
      * @param listener the playback listener when notified when occur event
      * @return the dialog request id for the request
      */
-    fun requestTTS(text: String, playServiceId: String?, listener: OnPlaybackListener?): String
+    fun requestTTS(text: String, format: Format = Format.TEXT, playServiceId: String?, listener: OnPlaybackListener?): String
 
     /**
      * Sets the player's volume for tts.
