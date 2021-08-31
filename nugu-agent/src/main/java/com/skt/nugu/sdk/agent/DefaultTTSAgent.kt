@@ -108,11 +108,6 @@ class DefaultTTSAgent(
         private const val KEY_TOKEN = "token"
 
         const val NAME_SPEECH_PLAY = "SpeechPlay"
-
-        enum class Format {
-            TEXT,
-            SKML
-        }
     }
 
     internal interface OnSpeakDirectiveFinishListener {
@@ -1006,9 +1001,10 @@ class DefaultTTSAgent(
     }
 
     override fun requestTTS(
-        text: String,
-        playServiceId: String?,
-        listener: TTSAgentInterface.OnPlaybackListener?
+            text: String,
+            format: TTSAgentInterface.Format,
+            playServiceId: String?,
+            listener: TTSAgentInterface.OnPlaybackListener?
     ): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
         val messageId = UUIDGeneration.timeUUID().toString()
@@ -1016,25 +1012,25 @@ class DefaultTTSAgent(
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 val messageRequest =
-                    EventMessageRequest.Builder(
-                        jsonContext,
-                        NAMESPACE,
-                        NAME_SPEECH_PLAY,
-                        VERSION.toString()
-                    )
-                        .dialogRequestId(dialogRequestId)
-                        .messageId(messageId)
-                        .payload(JsonObject().apply {
-                            addProperty("format", Format.TEXT.name)
-                            addProperty("text", text)
-                            playServiceId?.let {
-                                addProperty("playServiceId", it)
-                            }
-                            addProperty("token", UUIDGeneration.timeUUID().toString())
-                        }.toString())
-                        .build()
+                        EventMessageRequest.Builder(
+                                jsonContext,
+                                NAMESPACE,
+                                NAME_SPEECH_PLAY,
+                                VERSION.toString()
+                        )
+                                .dialogRequestId(dialogRequestId)
+                                .messageId(messageId)
+                                .payload(JsonObject().apply {
+                                    addProperty("format", format.name)
+                                    addProperty("text", text)
+                                    playServiceId?.let {
+                                        addProperty("playServiceId", it)
+                                    }
+                                    addProperty("token", UUIDGeneration.timeUUID().toString())
+                                }.toString())
+                                .build()
                 val call = messageSender.newCall(
-                    messageRequest
+                        messageRequest
                 )
                 listener?.let {
                     requestListenerMap[dialogRequestId] = it
@@ -1043,9 +1039,11 @@ class DefaultTTSAgent(
                     override fun onFailure(request: MessageRequest, status: Status) {
                         requestListenerMap.remove(dialogRequestId)?.onError(dialogRequestId)
                     }
+
                     override fun onSuccess(request: MessageRequest) {
 
                     }
+
                     override fun onResponseStart(request: MessageRequest) {
                     }
                 })
