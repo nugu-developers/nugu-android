@@ -39,9 +39,12 @@ dependencies {
         api project(':nugu-client-kit')
     }
 
-    api "com.skt.nugu:silvertray:$silvertrayVersion-RELEASE@aar"
+    api ("com.skt.nugu:silvertray:$silvertrayVersion-RELEASE@aar") {
+        exclude group: "com.skt.nugu.opus", module:"wrapper"
+    }
     implementation "com.skt.nugu:jademarble:$jademarbleVersion"
     implementation "com.skt.nugu:keensense:$keensenseVersion"
+    implementation "com.skt.nugu.opus:wrapper:1.0.2-RELEASE"
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
