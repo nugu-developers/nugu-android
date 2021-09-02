@@ -45,8 +45,11 @@ import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.service.SampleAppService
 import com.skt.nugu.sampleapp.utils.*
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.asr.WakeupInfo
+import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
@@ -54,6 +57,7 @@ import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
+import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
@@ -164,6 +168,37 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     ) : BasicTemplateHandler(nuguProvider, templateInfo, fragment) {
         override fun onTemplateTouched() {
             ClientManager.getClient().localStopTTS()
+        }
+    }
+
+    private val triggerCallback = object : SpeechRecognizerAggregatorInterface.TriggerCallback {
+        override fun onTriggerDetected(wakeupInfo: WakeupInfo?): Boolean {
+            return isNetworkConnected().also { isNetworkConnected->
+                Log.d(TAG, "[TriggerCallback::onTriggerDetected] isNetworkConnected=$isNetworkConnected")
+                if(!isNetworkConnected) {
+                    when (notificationType) {
+                        NotificationType.TOAST ->
+                            NuguSnackbar.with(findViewById(R.id.drawer_layout))
+                                .message(R.string.device_gw_error_001)
+                                .duration(NuguSnackbar.LENGTH_LONG)
+                                .show()
+                        NotificationType.VOICE ->
+                            SoundPoolCompat.play(SoundPoolCompat.LocalTTS.DEVICE_GATEWAY_NETWORK_ERROR)
+                    }
+                }
+            }
+        }
+
+        override fun onTriggerError(errorType: KeywordDetector.DetectorResultObserver.ErrorType) {
+            Log.d(TAG, "[TriggerCallback::onTriggerError] errorType=$errorType")
+        }
+
+        override fun onTriggerStarted(inputStream: SharedDataStream, format: AudioFormat) {
+            Log.d(TAG, "[TriggerCallback::onTriggerStarted]")
+        }
+
+        override fun onTriggerStopped() {
+            Log.d(TAG, "[TriggerCallback::onTriggerStopped]")
         }
     }
 
@@ -295,7 +330,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     private fun tryStartListeningWithTrigger() {
         if (PreferenceHelper.enableNugu(this) && PreferenceHelper.enableTrigger(this) && !speechRecognizerAggregator.isActive()) {
-            speechRecognizerAggregator.startListeningWithTrigger()
+            speechRecognizerAggregator.startListeningWithTrigger(triggerCallback = triggerCallback)
         }
     }
 
