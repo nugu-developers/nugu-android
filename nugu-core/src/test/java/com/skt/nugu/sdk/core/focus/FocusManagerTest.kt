@@ -563,7 +563,7 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(dialogClient, FocusState.FOREGROUND) //  wait focus changed
         for (listener in listeners) {
-            verify(listener).onFocusChanged(
+            verify(listener, timeout(10)).onFocusChanged(
                 dialogChannelConfiguration,
                 FocusState.FOREGROUND,
                 DIALOG_INTERFACE_NAME
@@ -581,7 +581,7 @@ class FocusManagerTest : FocusChangeManager() {
         )
         assertFocusChange(contentClient, FocusState.BACKGROUND) //  wait focus changed
         for (listener in activeListeners) {
-            verify(listener).onFocusChanged(
+            verify(listener, timeout(10)).onFocusChanged(
                 contentChannelConfiguration, FocusState.BACKGROUND, CONTENT_CHANNEL_NAME
             )
         }
