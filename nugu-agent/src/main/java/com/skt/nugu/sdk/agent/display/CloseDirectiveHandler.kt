@@ -71,21 +71,22 @@ class CloseDirectiveHandler(
         val closePayload =
             MessageFactory.create(info.directive.payload, ClosePayload::class.java)
 
-        setHandlingCompleted(info)
-
         if (closePayload == null) {
             Logger.w(TAG, "[executeHandleCloseDirective] (Close) invalid payload.")
             sendCloseFailed(info, "")
+            setHandlingCompleted(info)
             return
         }
 
         controller.close(closePayload.playServiceId, object : Controller.OnCloseListener {
             override fun onSuccess() {
                 sendCloseSucceeded(info, closePayload.playServiceId)
+                setHandlingCompleted(info)
             }
 
             override fun onFailure() {
                 sendCloseFailed(info, closePayload.playServiceId)
+                setHandlingCompleted(info)
             }
         })
     }
