@@ -5,16 +5,15 @@ jacoco {
     toolVersion = "0.8.7"
 }
 
-//android {
-//    testOptions {
-//        unitTests.all {
-//            jacoco {
-//                includeNoLocationClasses = true
-//            }
-//        }
-//    }
-//}
-
+android {
+    testOptions {
+        unitTests.all {
+            jacoco {
+                includeNoLocationClasses = true
+            }
+        }
+    }
+}
 
 task coverageReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
     group = "Reporting"
@@ -33,11 +32,16 @@ task coverageReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
                       '**/ * _Provide */**',
                       '**/ * _Factory */**',
                       '**/ * _MembersInjector.class ',
-                      '**/*Dagger*']
+                      '**/*Dagger*',
+
+                      // nugu-ux-kit
+                      '**/TemplateHandler*.*']
 
     def javaClassDirPath = "$project.buildDir/intermediates/javac/debug/classes"
     def kotlinClassDirPath = "$project.buildDir/tmp/kotlin-classes/debug"
+
     def coverageExecutionDataPath = "${buildDir}/jacoco/testDebugUnitTest.exec"
+
 //    def mainJavaSrcPath = "$project.projectDir/src/main/java"
     def mainKotlinSrcPath = "$project.projectDir/src/main/java"
     sourceDirectories.from = files([/*mainJavaSrcPath,*/ mainKotlinSrcPath])

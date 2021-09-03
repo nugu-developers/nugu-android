@@ -63,7 +63,7 @@ interface TemplateHandler {
     fun onTemplateTouched() {}
 
     // client side -> template
-    fun setClientListener(listener: ClientListener) {}
+    fun setClientListener(listener: ClientListener?) {}
 
     interface ClientListener {
         fun onMediaStateChanged(activity: AudioPlayerAgentInterface.State, currentTimeMs: Long, currentProgress: Float, showController: Boolean) {}

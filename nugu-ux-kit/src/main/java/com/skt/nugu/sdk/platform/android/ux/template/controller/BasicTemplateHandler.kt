@@ -55,7 +55,7 @@ open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvide
         fragmentRef.clear()
     }
 
-    fun updateFragment(fragment: TemplateFragment) {
+    fun updateFragment(fragment: Fragment) {
         fragmentRef.clear()
         fragmentRef = WeakReference(fragment)
     }
