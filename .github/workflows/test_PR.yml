@@ -14,16 +14,21 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout the code
         uses: actions/checkout@v2
+        
+      - name: Install jdk8
+        run: |
+          brew update
+          brew install openjdk@8
 
       - name: Env
-        run: export JAVA_HOME="/Applications/Android Studio.app/Contents/jre/jdk/Contents/Home"
+        run: export JAVA_HOME="/usr/local/opt/openjdk@8/libexec/openjdk.jdk/Contents/Home"
         run: export
 
       # Builds
