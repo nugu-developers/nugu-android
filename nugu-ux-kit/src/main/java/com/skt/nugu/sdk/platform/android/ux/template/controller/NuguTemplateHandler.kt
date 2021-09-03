@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
+import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
@@ -38,9 +39,8 @@ import kotlin.concurrent.fixedRateTimer
  */
 open class NuguTemplateHandler(
     private val nuguProvider: TemplateRenderer.NuguClientProvider,
-    override var templateInfo: TemplateHandler.TemplateInfo
-) :
-    TemplateHandler {
+    override var templateInfo: TemplateHandler.TemplateInfo,
+) : TemplateHandler {
 
     companion object {
         private const val TAG = "NuguTemplateHandler"
@@ -51,7 +51,8 @@ open class NuguTemplateHandler(
     var currentMediaState: AudioPlayerAgentInterface.State = State.IDLE
     private var clientListener: TemplateHandler.ClientListener? = null
 
-    private val mediaDurationListener = object : AudioPlayerAgentInterface.OnDurationListener {
+    @VisibleForTesting
+    internal val mediaDurationListener = object : AudioPlayerAgentInterface.OnDurationListener {
         override fun onRetrieved(duration: Long?, context: AudioPlayerAgentInterface.Context) {
             Logger.d(TAG, "onDurationRetrieved $duration")
             if (context.templateId == templateInfo.templateId) {
@@ -61,7 +62,8 @@ open class NuguTemplateHandler(
         }
     }
 
-    private val mediaStateListener = object : AudioPlayerAgentInterface.Listener {
+    @VisibleForTesting
+    internal val mediaStateListener = object : AudioPlayerAgentInterface.Listener {
         override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
             Logger.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
 
@@ -73,7 +75,7 @@ open class NuguTemplateHandler(
         }
     }
 
-    val displayController = object : DisplayAggregatorInterface.Controller {
+    internal val displayController = object : DisplayAggregatorInterface.Controller {
         override fun controlFocus(direction: Direction): Boolean {
             return (clientListener?.controlFocus(direction) ?: false).also {
                 Logger.i(TAG, "controlFocus() $direction. return $it")
@@ -99,15 +101,18 @@ open class NuguTemplateHandler(
         }
     }
 
-    private val directiveHandlingListener = object : DirectiveSequencerInterface.OnDirectiveHandlingListener {
-        private fun Directive.isAudioPlayerPauseDirective() : Boolean {
+    @VisibleForTesting
+    internal val directiveHandlingListener = object : DirectiveSequencerInterface.OnDirectiveHandlingListener {
+        private fun Directive.isAudioPlayerPauseDirective(): Boolean {
             return getNamespaceAndName() == NamespaceAndName(DefaultAudioPlayerAgent.NAMESPACE, DefaultAudioPlayerAgent.NAME_PAUSE)
         }
+
         override fun onCompleted(directive: Directive) {
-            if(directive.isAudioPlayerPauseDirective()) {
+            if (directive.isAudioPlayerPauseDirective()) {
                 clientListener?.onMediaStateChanged(State.PAUSED, getMediaCurrentTimeMs(), getMediaProgressPercentage(), true)
             }
         }
+
         override fun onRequested(directive: Directive) = Unit
         override fun onCanceled(directive: Directive) = Unit
         override fun onFailed(directive: Directive, description: String) = Unit
@@ -158,7 +163,7 @@ open class NuguTemplateHandler(
         getNuguClient().requestTTS(text)
     }
 
-    override fun setClientListener(listener: TemplateHandler.ClientListener) {
+    override fun setClientListener(listener: TemplateHandler.ClientListener?) {
         clientListener = listener
     }
 
@@ -185,7 +190,7 @@ open class NuguTemplateHandler(
         }
     }
 
-    fun startMediaProgressSending() {
+    internal fun startMediaProgressSending() {
         Logger.d(TAG, "startProgressMessageSending")
         mediaProgressJob?.cancel()
 
@@ -194,7 +199,8 @@ open class NuguTemplateHandler(
         })
     }
 
-    private fun stopMediaProgressSending() {
+    @VisibleForTesting
+    internal fun stopMediaProgressSending() {
         Logger.d(TAG, "stopProgressMessageSending")
         mediaProgressJob?.cancel()
         mediaProgressJob = null
