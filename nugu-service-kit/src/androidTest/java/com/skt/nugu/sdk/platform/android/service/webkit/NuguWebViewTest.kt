@@ -1,8 +1,9 @@
 package com.skt.nugu.sdk.platform.android.service.webkit
 
 import android.webkit.CookieManager
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
-import org.junit.Assert.*
 import java.net.URL
 
 class NuguWebViewTest {
