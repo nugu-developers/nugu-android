@@ -71,6 +71,8 @@ import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.OnStateChangeListener,
     NavigationView.OnNavigationItemSelectedListener, ConnectionStatusListener, SystemAgentInterfaceListener,
     TokenRefresher.Listener {
+
+    // dummy change. for github test action
     companion object {
         private const val TAG = "MainActivity"
         private val permissions = arrayOf(
