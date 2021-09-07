@@ -27,7 +27,7 @@ class ThrottledOnClickListener(
 ) : View.OnClickListener {
     private var previousMillis = 0L
     override fun onClick(v: View?) {
-        val currentMillis = SystemClock.uptimeMillis()
+        val currentMillis = System.currentTimeMillis()
         if (currentMillis - previousMillis < throttleInMillis) {
             return
         }

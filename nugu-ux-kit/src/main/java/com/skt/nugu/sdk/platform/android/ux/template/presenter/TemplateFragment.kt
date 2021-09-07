@@ -33,8 +33,6 @@ import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
-import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
-import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 class TemplateFragment : Fragment() {
@@ -160,7 +158,7 @@ class TemplateFragment : Fragment() {
         }
 
         if (TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType())) {
-            this.view?.findViewById<View>(R.id.btn_bar_close)?.run {
+            this.view?.findViewById<View>(R.id.btn_template_close)?.run {
                 visibility = View.VISIBLE
                 setThrottledOnClickListener {
                     templateView?.templateHandler?.onCloseClicked()

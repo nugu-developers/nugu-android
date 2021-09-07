@@ -95,12 +95,12 @@ class TemplateFragmentTest {
     fun test2CloseButtonVisibility() {
         // default setting. test close button visible
         launchFragment().onFragment {
-            onView(withId(R.id.btn_bar_close)).check(matches(isDisplayed()))
+            onView(withId(R.id.btn_template_close)).check(matches(isDisplayed()))
         }
 
         // launch media template fragment. and test close button not visible
         launchFragment(true).onFragment {
-            withId(R.id.btn_bar_close).matches(doesNotExist())
+            withId(R.id.btn_template_close).matches(doesNotExist())
         }
 
         // set all template not have close button, and test it's work
@@ -109,7 +109,7 @@ class TemplateFragmentTest {
         }
 
         launchFragment().onFragment {
-            withId(R.id.btn_bar_close).matches(doesNotExist())
+            withId(R.id.btn_template_close).matches(doesNotExist())
         }
     }
 
