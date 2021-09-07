@@ -9,7 +9,7 @@
         android:layout_height="match_parent" />
 
     <ImageView
-        android:id="@+id/btn_bar_close"
+        android:id="@+id/btn_template_close"
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_gravity="right|top"
