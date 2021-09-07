@@ -31,7 +31,6 @@ import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -53,6 +52,7 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
@@ -60,7 +60,6 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
-import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
@@ -114,8 +113,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private val toolBar: Toolbar by lazy {
         findViewById<Toolbar>(R.id.toolbar)
     }
+
     private val chromeWindow: ChromeWindow by lazy {
-        ChromeWindow(this, findViewById<CoordinatorLayout>(R.id.coordinator), object : ChromeWindow.NuguClientProvider {
+        ChromeWindow(this, findViewById(R.id.voice_chrome_container), object : ChromeWindow.NuguClientProvider {
             override fun getNuguClient() = ClientManager.getClient()
         })
     }
@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             templateId: String,
             templateType: String,
             displayType: DisplayAggregatorInterface.Type?,
-            errorDescription: String?
+            errorDescription: String?,
         ) {
             //hide loading view if you need
         }
@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     private class TemplateHandlerStopTTSWhenTouched(
         nuguProvider: TemplateRenderer.NuguClientProvider,
         templateInfo: TemplateHandler.TemplateInfo,
-        fragment: Fragment
+        fragment: Fragment,
     ) : BasicTemplateHandler(nuguProvider, templateInfo, fragment) {
         override fun onTemplateTouched() {
             ClientManager.getClient().localStopTTS()
@@ -173,9 +173,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
     private val triggerCallback = object : SpeechRecognizerAggregatorInterface.TriggerCallback {
         override fun onTriggerDetected(wakeupInfo: WakeupInfo?): Boolean {
-            return isNetworkConnected().also { isNetworkConnected->
+            return isNetworkConnected().also { isNetworkConnected ->
                 Log.d(TAG, "[TriggerCallback::onTriggerDetected] isNetworkConnected=$isNetworkConnected")
-                if(!isNetworkConnected) {
+                if (!isNetworkConnected) {
                     when (notificationType) {
                         NotificationType.TOAST ->
                             NuguSnackbar.with(findViewById(R.id.drawer_layout))
@@ -257,33 +257,23 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 
             override fun onHiddenFinished() {
                 updateNuguButton()
-                if (speechRecognizerAggregator.getState() == SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH) {
-                    speechRecognizerAggregator.stopListening()
-                }
-            }
-
-            override fun onChipsClicked(item: NuguChipsView.Item) {
-                ClientManager.getClient().requestTextInput(item.text)
-                speechRecognizerAggregator.stopListening()
             }
         })
 
-        chromeWindow.apply {
-            setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider {
-                override fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>? {
-                    return if (!isSpeaking) {
-                        var dummyChips = arrayOf<Chip>()
-                        for (index in 0 until 5) {
-                            dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
-                        }
-
-                        dummyChips
-                    } else {
-                        null
+        chromeWindow.setOnCustomChipsProvider(object : ChromeWindow.CustomChipsProvider {
+            override fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>? {
+                return if (!isSpeaking) {
+                    var dummyChips = arrayOf<Chip>()
+                    for (index in 0 until 5) {
+                        dummyChips += Chip(type = Chip.Type.values()[index % Chip.Type.values().size], text = "guide text #$index", token = null)
                     }
+
+                    dummyChips
+                } else {
+                    null
                 }
-            })
-        }
+            }
+        })
 
         version.text = "v${BuildConfig.VERSION_NAME}"
 
@@ -377,6 +367,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         // Forward results to PermissionUtils
         onRequestPermissionResultHandler.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
@@ -532,7 +523,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT,
-                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED,
                 -> {
                     /** checking connection status for debugging. **/
                     Log.d(TAG, "reconnecting(reason=$reason)")
@@ -545,7 +536,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.NONE,
                 ConnectionStatusListener.ChangedReason.SUCCESS,
                 ConnectionStatusListener.ChangedReason.CLIENT_REQUEST,
-                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED
+                ConnectionStatusListener.ChangedReason.SERVER_ENDPOINT_CHANGED,
                 -> {
                     /** no error **/
                 }
@@ -558,7 +549,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 ConnectionStatusListener.ChangedReason.FAILURE_PROTOCOL_ERROR,
                 ConnectionStatusListener.ChangedReason.INTERNAL_ERROR,
                 ConnectionStatusListener.ChangedReason.SERVER_INTERNAL_ERROR,
-                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT
+                ConnectionStatusListener.ChangedReason.SERVER_SIDE_DISCONNECT,
                 -> {
                     /**
                      * Only server-initiated-directive

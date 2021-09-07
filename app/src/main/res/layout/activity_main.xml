@@ -9,7 +9,6 @@
     tools:openDrawer="start">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/coordinator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".activity.MainActivity">
@@ -34,6 +33,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+        <FrameLayout
+            android:id="@+id/voice_chrome_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
             android:id="@+id/fab"
