@@ -18,10 +18,7 @@ package com.skt.nugu.sdk.platform.android.ux.widget
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Rect
-import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
@@ -30,14 +27,15 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
+import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.agent.chips.RenderDirective.Payload.Target as ChipsRenderTarget
 
 class ChromeWindow(
     context: Context,
-    private val view: View,
-    private val nuguClientProvider: NuguClientProvider) :
-     DialogUXStateAggregatorInterface.Listener, ASRAgentInterface.OnResultListener, ThemeManagerInterface.ThemeListener{
+    private val view: ViewGroup,
+    private val nuguClientProvider: NuguClientProvider,
+) : DialogUXStateAggregatorInterface.Listener, ASRAgentInterface.OnResultListener, ThemeManagerInterface.ThemeListener {
     companion object {
         private const val TAG = "ChromeWindow"
     }
@@ -45,7 +43,7 @@ class ChromeWindow(
     interface OnChromeWindowCallback {
         fun onExpandStarted()
         fun onHiddenFinished()
-        fun onChipsClicked(item: NuguChipsView.Item)
+        fun onChipsClicked(item: NuguChipsView.Item){}
     }
 
     interface CustomChipsProvider {
@@ -56,7 +54,7 @@ class ChromeWindow(
          * If it is true TTS is speaking.
          * If it is false ASR State is EXPECTING_SPEECH which means system is waiting users utterance
          */
-        fun onCustomChipsAvailable(isSpeaking : Boolean) : Array<Chip>?
+        fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>?
     }
 
     private var callback: OnChromeWindowCallback? = null
@@ -64,83 +62,39 @@ class ChromeWindow(
     private var screenOnWhileASR = false
     private var customChipsProvider: CustomChipsProvider? = null
     private var isDarkMode = false
-    /**
-     * set ChromeWindow callback
-    */
-    fun setOnChromeWindowCallback(callback: OnChromeWindowCallback?) {
-        this.callback = callback
-    }
 
-    fun setOnCustomChipsProvider(provider: CustomChipsProvider) {
-        customChipsProvider = provider
-    }
+    private var isDialogMode = false
+    private var currentDialogUXState: DialogUXStateAggregatorInterface.DialogUXState? = null
 
     interface NuguClientProvider {
         fun getNuguClient(): NuguAndroidClient
     }
-    /**
-     * Returns the visibility of this view
-     * @return True if the view is expanded
-     */
-    fun isShown(): Boolean {
-        return contentLayout.isExpanded()
-    }
-
-    /**
-     * Dismiss the view
-     */
-    fun dismiss() {
-        contentLayout.dismiss()
-    }
-
-    /**
-     * If some part of this view is not clipped by any of its parents, then
-     * return that area in r in global (root) coordinates.
-     */
-    fun getGlobalVisibleRect(outRect: Rect){
-        contentLayout.getGlobalVisibleRect(outRect)
-    }
-    /**
-     * Control whether we should use the attached view to keep the
-     * screen on while asr is occurring.
-     * @param screenOn Supply true to keep the screen on, false to allow it to turn off.
-     */
-    fun setScreenOnWhileASR (screenOn: Boolean) {
-        if (screenOnWhileASR != screenOn) {
-            screenOnWhileASR = screenOn
-            updateLayoutScreenOn()
-        }
-    }
-
-    private var isThinking = false
-    private var isSpeaking = false
-    private var isDialogMode = false
-    private var isIdle = false
 
     init {
         Logger.d(TAG, "[init]")
-        val parent = view.findSuitableParent()
-        if (parent == null) {
-            throw IllegalArgumentException("No suitable parent found from the given view. Please provide a valid view.")
-        } else {
-            contentLayout = ChromeWindowContentLayout(context = context, view = parent)
-            contentLayout.setOnChromeWindowContentLayoutCallback(object : ChromeWindowContentLayout.OnChromeWindowContentLayoutCallback {
-                override fun shouldCollapsed(): Boolean {
-                    if (isThinking || (isDialogMode && isSpeaking)) {
-                        return false
-                    }
-                    return true
+        contentLayout = ChromeWindowContentLayout(context = context, view = view)
+        contentLayout.setOnChromeWindowContentLayoutCallback(object : ChromeWindowContentLayout.OnChromeWindowContentLayoutCallback {
+            override fun onHidden() {
+                callback?.onHiddenFinished()
+            }
+
+            override fun onChipsClicked(item: NuguChipsView.Item) {
+                callback?.onChipsClicked(item)
+
+                nuguClientProvider.getNuguClient().requestTextInput(item.text)
+                nuguClientProvider.getNuguClient().asrAgent?.stopRecognition()
+            }
+
+            override fun onOutSideTouch() {
+                if (isThinking() || (isDialogMode && isSpeaking())) {
+                    return
                 }
 
-                override fun onHidden() {
-                    callback?.onHiddenFinished()
+                if (currentDialogUXState == DialogUXStateAggregatorInterface.DialogUXState.EXPECTING) {
+                    nuguClientProvider.getNuguClient().asrAgent?.stopRecognition()
                 }
-
-                override fun onChipsClicked(item: NuguChipsView.Item) {
-                    callback?.onChipsClicked(item)
-                }
-            })
-        }
+            }
+        })
         nuguClientProvider.getNuguClient().themeManager.addListener(this)
         nuguClientProvider.getNuguClient().addDialogUXStateListener(this)
         nuguClientProvider.getNuguClient().addASRResultListener(this)
@@ -159,25 +113,35 @@ class ChromeWindow(
         newState: DialogUXStateAggregatorInterface.DialogUXState,
         dialogMode: Boolean,
         chips: RenderDirective.Payload?,
-        sessionActivated: Boolean
+        sessionActivated: Boolean,
     ) {
         isDialogMode = dialogMode
-        isThinking = newState == DialogUXStateAggregatorInterface.DialogUXState.THINKING
-        isIdle = newState == DialogUXStateAggregatorInterface.DialogUXState.IDLE
-        isSpeaking = newState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING
+        currentDialogUXState = newState
+
+        Logger.d(
+            TAG,
+            "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode, chips: $chips, sessionActivated: $sessionActivated"
+        )
 
         view.post {
-            Logger.d(
-                TAG,
-                "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode, chips: $chips, sessionActivated: $sessionActivated"
-            )
-
-            voiceChromeController.onDialogUXStateChanged(
-                newState,
-                dialogMode,
-                chips,
-                sessionActivated
-            )
+            // animation
+            when (newState) {
+                DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
+                    contentLayout.startAnimation(NuguVoiceChromeView.Animation.WAITING)
+                }
+                DialogUXStateAggregatorInterface.DialogUXState.LISTENING -> {
+                    contentLayout.startAnimation(NuguVoiceChromeView.Animation.LISTENING)
+                }
+                DialogUXStateAggregatorInterface.DialogUXState.THINKING -> {
+                    contentLayout.startAnimation(NuguVoiceChromeView.Animation.THINKING)
+                }
+                DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
+                    contentLayout.startAnimation(NuguVoiceChromeView.Animation.SPEAKING)
+                }
+                else -> {
+                    // nothing to do
+                }
+            }
 
             when (newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
@@ -196,6 +160,7 @@ class ChromeWindow(
                     // nothing to do
                 }
             }
+
             updateLayoutScreenOn()
         }
     }
@@ -223,7 +188,7 @@ class ChromeWindow(
         contentLayout.updateChips(payload)
     }
 
-    private fun updateCustomChips(isSpeaking : Boolean) : Boolean {
+    private fun updateCustomChips(isSpeaking: Boolean): Boolean {
         customChipsProvider?.onCustomChipsAvailable(isSpeaking)?.let { chips ->
             contentLayout.updateChips(RenderDirective.Payload(chips = chips,
                 playServiceId = "", target = ChipsRenderTarget.DM)) //this two values are meaningless
@@ -233,6 +198,57 @@ class ChromeWindow(
         return false
     }
 
+    /**
+     * set ChromeWindow callback
+     */
+    fun setOnChromeWindowCallback(callback: OnChromeWindowCallback?) {
+        this.callback = callback
+    }
+
+    fun setOnCustomChipsProvider(provider: CustomChipsProvider) {
+        customChipsProvider = provider
+    }
+
+
+    /**
+     * Returns the visibility of this view
+     * @return True if the view is expanded
+     */
+    fun isShown(): Boolean {
+        return contentLayout.isExpanded()
+    }
+
+    private fun isThinking() = currentDialogUXState == DialogUXStateAggregatorInterface.DialogUXState.THINKING
+    private fun isIdle() = currentDialogUXState == DialogUXStateAggregatorInterface.DialogUXState.IDLE
+    private fun isSpeaking() = currentDialogUXState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING
+
+    /**
+     * Dismiss the view
+     */
+    private fun dismiss() {
+        contentLayout.dismiss()
+    }
+
+    /**
+     * If some part of this view is not clipped by any of its parents, then
+     * return that area in r in global (root) coordinates.
+     */
+    fun getGlobalVisibleRect(outRect: Rect) {
+        contentLayout.getGlobalVisibleRect(outRect)
+    }
+
+    /**
+     * Control whether we should use the attached view to keep the
+     * screen on while asr is occurring.
+     * @param screenOn Supply true to keep the screen on, false to allow it to turn off.
+     */
+    fun setScreenOnWhileASR(screenOn: Boolean) {
+        if (screenOnWhileASR != screenOn) {
+            screenOnWhileASR = screenOn
+            updateLayoutScreenOn()
+        }
+    }
+
     fun isChipsEmpty() = contentLayout.isChipsEmpty()
 
     private fun handleListening() {
@@ -240,8 +256,7 @@ class ChromeWindow(
         contentLayout.hideChips()
     }
 
-    private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?,
-                               sessionActivated: Boolean) {
+    private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?, sessionActivated: Boolean) {
         contentLayout.hideText()
 
         if (payload?.target == ChipsRenderTarget.SPEAKING) {
@@ -279,40 +294,12 @@ class ChromeWindow(
     }
 
     private fun updateLayoutScreenOn() {
-        val screenOn = screenOnWhileASR && !isIdle
-        if(view.keepScreenOn != screenOn) {
+        val screenOn = screenOnWhileASR && !isIdle()
+        if (view.keepScreenOn != screenOn) {
             view.keepScreenOn = screenOn
             Logger.d(TAG, "[updateLayoutScreenOn] ${view.keepScreenOn}")
         }
     }
-
-    private val voiceChromeController =
-        object : DialogUXStateAggregatorInterface.Listener {
-            override fun onDialogUXStateChanged(
-                newState: DialogUXStateAggregatorInterface.DialogUXState,
-                dialogMode: Boolean,
-                chips: RenderDirective.Payload?,
-                sessionActivated: Boolean
-            ) {
-                when (newState) {
-                    DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
-                        contentLayout.startAnimation(NuguVoiceChromeView.Animation.WAITING)
-                    }
-                    DialogUXStateAggregatorInterface.DialogUXState.LISTENING -> {
-                        contentLayout.startAnimation(NuguVoiceChromeView.Animation.LISTENING)
-                    }
-                    DialogUXStateAggregatorInterface.DialogUXState.THINKING -> {
-                        contentLayout.startAnimation(NuguVoiceChromeView.Animation.THINKING)
-                    }
-                    DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                        contentLayout.startAnimation(NuguVoiceChromeView.Animation.SPEAKING)
-                    }
-                    else -> {
-                        // nothing to do
-                    }
-                }
-            }
-        }
 
     override fun onThemeChange(theme: ThemeManagerInterface.THEME) {
         Logger.d(TAG, "[onThemeChange] $theme")
@@ -330,30 +317,9 @@ class ChromeWindow(
         }
         Logger.d(TAG, "[applyTheme] newState=$newTheme, newDarkMode=${newDarkMode}, isDarkMode=$isDarkMode")
         val isChanged = newDarkMode != isDarkMode
-        if(isChanged) {
+        if (isChanged) {
             isDarkMode = newDarkMode
             contentLayout.setDarkMode(newDarkMode, newTheme)
         }
     }
-}
-
-private fun View.findSuitableParent() : ViewGroup? {
-    var view: View? = this
-    var fallback: ViewGroup? = null
-    do {
-        if (view is CoordinatorLayout) {
-            return view
-        }
-        if (view is FrameLayout) {
-            if (view.getId() == android.R.id.content) {
-                return view
-            }
-            fallback = view
-        }
-        if (view != null) {
-            val parent = view.parent
-            view = if (parent is View) parent else null
-        }
-    } while (view != null)
-    return fallback
 }

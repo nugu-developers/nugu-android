@@ -19,17 +19,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.TypedArray
+import android.graphics.Rect
 import android.util.AttributeSet
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.view.View.OnLayoutChangeListener
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
-import androidx.annotation.VisibleForTesting
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.client.theme.ThemeManager
@@ -38,12 +36,12 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 
-@SuppressLint("ViewConstructor")
+@SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class ChromeWindowContentLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-    view: ViewGroup
+    view: ViewGroup,
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private var callback: OnChromeWindowContentLayoutCallback? = null
 
@@ -55,59 +53,72 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     }
 
     interface OnChromeWindowContentLayoutCallback {
-        fun shouldCollapsed(): Boolean
         fun onHidden()
         fun onChipsClicked(item: NuguChipsView.Item)
+        fun onOutSideTouch()
     }
 
     fun setOnChromeWindowContentLayoutCallback(callback: OnChromeWindowContentLayoutCallback?) {
         this.callback = callback
-        (behavior as? ChromeWindowBottomSheetBehavior)?.callback = callback
     }
-
-    private lateinit var behavior: BottomSheetBehavior<FrameLayout>
-
-    fun getChromeWindowHeight() = height
 
     private var sttTextView: EllipsizedTextView
 
     private var voiceChrome: NuguVoiceChromeView
 
-    lateinit var chipsView : NuguChipsView
+    private var chipsView: NuguChipsView
 
-    private val bottomSheetCallback: BottomSheetCallback = object : BottomSheetCallback() {
-        override fun onStateChanged(bottomSheet: View, @BottomSheetBehavior.State newState: Int) {
-            Logger.d(TAG, "[onStateChanged] $newState")
-            when (newState) {
-                BottomSheetBehavior.STATE_COLLAPSED -> {
-                    if (callback?.shouldCollapsed() == true) {
-                        setState(BottomSheetBehavior.STATE_HIDDEN)
+    private var currentState = STATE.NONE
+
+    private val animationInterpolator = DecelerateInterpolator()
+
+    enum class STATE {
+        START_SHOWING,
+        SHOWN,
+        START_HIDING,
+        HIDDEN,
+        NONE
+    }
+
+    private val parentLayoutChangeListener = OnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
+        (l == oldL && t == oldT && r == oldR && b == oldB).let { boundEqual ->
+            Logger.d(TAG, "parentLayout Changed.. boundEqual ? $boundEqual")
+            if (boundEqual) return@OnLayoutChangeListener
+        }
+
+        when (currentState) {
+            STATE.START_HIDING -> {
+                dismiss()
+            }
+            STATE.START_SHOWING -> {
+                expand()
+            }
+            STATE.NONE, STATE.HIDDEN -> {
+                ((parent as ViewGroup).height).toFloat().let { newY ->
+                    if (y != newY) {
+                        y = newY
                     }
                 }
-                BottomSheetBehavior.STATE_HIDDEN -> {
-                    callback?.onHidden()
-                    chipsView.onVoiceChromeHidden()
-                }
-                BottomSheetBehavior.STATE_DRAGGING ,
-                BottomSheetBehavior.STATE_SETTLING -> {
-                    return
+            }
+            STATE.SHOWN -> {
+                ((parent as ViewGroup).height - height).toFloat().let { newY ->
+                    if (y != newY) {
+                        y = newY
+                    }
                 }
             }
         }
-
-        override fun onSlide(bottomSheet: View, slideOffset: Float) {}
     }
 
     init {
-        LayoutInflater.from(context).inflate(R.layout.bottom_sheet_chrome_window, this, true).apply{
+        LayoutInflater.from(context).inflate(R.layout.bottom_sheet_chrome_window, this, true).apply {
             chipsView = findViewById(R.id.chipsView)
             sttTextView = findViewById(R.id.tv_stt)
             voiceChrome = findViewById(R.id.voice_chrome)
-
         }
+
         view.addView(this)
-        with((this.layoutParams as CoordinatorLayout.LayoutParams)) {
-            behavior = ChromeWindowBottomSheetBehavior<FrameLayout>(context, null)
+        with(this.layoutParams) {
             width = MATCH_PARENT
             height = dpToPx(78f, context)  // bottomSheet height(68dp) + shadow height(10dp)
         }
@@ -129,56 +140,64 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
             }
         })
 
-       // setState(BottomSheetBehavior.STATE_HIDDEN)
-        behavior = BottomSheetBehavior.from(this)
-        behavior.removeBottomSheetCallback(bottomSheetCallback)
-        behavior.addBottomSheetCallback(bottomSheetCallback)
-        behavior.isDraggable = false
-        behavior.isHideable = true
-        behavior.peekHeight = 0
-    }
+        (parent as ViewGroup).setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN && (currentState == STATE.SHOWN || currentState == STATE.START_SHOWING)) {
+                val outRect = Rect()
+                getGlobalVisibleRect(outRect)
 
-    fun isExpanded(): Boolean {
-        return behavior.state == BottomSheetBehavior.STATE_EXPANDED
-    }
-
-    @VisibleForTesting
-    fun setState(newState: Int) {
-        Logger.d(TAG, "[setState] currentState=${behavior.state}, newState=$newState")
-
-        when (behavior.state) {
-            BottomSheetBehavior.STATE_DRAGGING,
-            BottomSheetBehavior.STATE_SETTLING-> {
-                /** The state is changing, so wait in onStateChanged() for it to complete. **/
-                behavior.addBottomSheetCallback(object :  BottomSheetCallback() {
-                    override fun onStateChanged(bottomSheet: View, newState2: Int) {
-                        when (newState2) {
-                            BottomSheetBehavior.STATE_DRAGGING,
-                            BottomSheetBehavior.STATE_SETTLING -> Unit
-                            else -> {
-                                Logger.d(TAG, "[setState] currentState=${behavior.state}, newState=$newState")
-                                behavior.removeBottomSheetCallback(this)
-                                behavior.state = newState
-                            }
-                        }
-                    }
-                    override fun onSlide(bottomSheet: View, slideOffset: Float) = Unit
-                })
+                if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                    callback?.onOutSideTouch()
+                }
             }
-            else -> {
-                behavior.state = newState
-            }
+
+            return@setOnTouchListener super.onTouchEvent(event)
         }
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        (parent as ViewGroup).addOnLayoutChangeListener(parentLayoutChangeListener)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        (parent as ViewGroup).removeOnLayoutChangeListener(parentLayoutChangeListener)
+    }
+
+    fun isExpanded(): Boolean {
+        return currentState == STATE.SHOWN
+    }
+
     fun dismiss() {
-        Logger.d(TAG, "[dismiss] called")
-        setState(BottomSheetBehavior.STATE_HIDDEN)
+        Logger.d(TAG, "[dismiss] called... currentState:$currentState")
+
+        if (currentState == STATE.HIDDEN) return
+
+        fun onHidden() {
+            callback?.onHidden()
+            chipsView.onVoiceChromeHidden()
+        }
+
+        animate().y((parent as ViewGroup).height.toFloat())
+            .withStartAction { currentState = STATE.START_HIDING }
+            .withEndAction {
+                currentState = STATE.HIDDEN
+                onHidden()
+            }.setInterpolator(animationInterpolator)
+            .duration = 150
     }
 
     fun expand() {
-        Logger.d(TAG, "[expand] called")
-        setState(BottomSheetBehavior.STATE_EXPANDED)
+        Logger.d(TAG, "[expand] called.. currentState:$currentState")
+
+        if (currentState == STATE.SHOWN) return
+
+        animate().y(((parent as ViewGroup).height - height).toFloat())
+            .withStartAction { currentState = STATE.START_SHOWING }
+            .withEndAction {
+                currentState = STATE.SHOWN
+            }.setInterpolator(animationInterpolator)
+            .duration = 150
     }
 
     fun hideChips() {
@@ -195,9 +214,9 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         }
     }
 
-    fun setHint(resid: Int) {
+    fun setHint(@StringRes resId: Int) {
         sttTextView.text = ""
-        sttTextView.setHint(resid)
+        sttTextView.setHint(resId)
     }
 
     fun setText(text: String) {
