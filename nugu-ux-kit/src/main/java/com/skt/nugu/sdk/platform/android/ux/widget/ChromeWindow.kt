@@ -43,7 +43,7 @@ class ChromeWindow(
     interface OnChromeWindowCallback {
         fun onExpandStarted()
         fun onHiddenFinished()
-        fun onChipsClicked(item: NuguChipsView.Item){}
+        fun onChipsClicked(item: NuguChipsView.Item) {}
     }
 
     interface CustomChipsProvider {
@@ -224,6 +224,9 @@ class ChromeWindow(
 
     /**
      * Dismiss the view
+     *
+     * This method changed invisible.
+     * You must call SpeechRecognizerAggregator.stopListening() for dismissing ChromeWindow.
      */
     private fun dismiss() {
         contentLayout.dismiss()
