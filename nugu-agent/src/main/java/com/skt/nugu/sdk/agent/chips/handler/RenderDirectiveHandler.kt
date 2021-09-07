@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.HashMap
 
 class RenderDirectiveHandler(
@@ -42,7 +43,7 @@ class RenderDirectiveHandler(
         val RENDER = NamespaceAndName(ChipsAgent.NAMESPACE, NAME_RENDER)
     }
 
-    private val renderedDirectiveQueue: Queue<RenderDirective> = LinkedList()
+    private val renderedDirectiveQueue: Queue<RenderDirective> = ConcurrentLinkedQueue()
 
     private val directiveLifecycleHandler =
         object : DirectiveSequencerInterface.OnDirectiveHandlingListener,
