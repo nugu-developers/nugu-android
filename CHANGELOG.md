@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.5.1 *(2021-09-07)*
+-----------------------------
+* Fix: Fix ConcurrentModificationException (#2050)
+
 Version 1.5.0 *(2021-08-30)*
 -----------------------------
 * Fix: ExoMediaPlayer does not caching music streams by default (#2029)
