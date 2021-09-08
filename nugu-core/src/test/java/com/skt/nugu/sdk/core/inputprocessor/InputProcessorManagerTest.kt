@@ -25,10 +25,10 @@ import org.mockito.kotlin.*
 
 class InputProcessorManagerTest {
     private val timeoutInMilliSeconds = 1L
-    private val manager = InputProcessorManager(timeoutInMilliSeconds)
 
     @Test
     fun testOnResponseTimeout() {
+        val manager = InputProcessorManager(timeoutInMilliSeconds)
         val timeoutDialogRequestId = "timeoutDialogRequestId"
         val listener: InputProcessorManagerInterface.OnResponseTimeoutListener = mock()
         manager.addResponseTimeoutListener(listener)
@@ -63,9 +63,7 @@ class InputProcessorManagerTest {
         val inputProcessor: InputProcessor = mock()
         whenever(inputProcessor.onReceiveDirectives(dialogRequestId, received)).thenReturn(true)
 
-        val baseTime = System.currentTimeMillis()
         manager.onRequested(inputProcessor, dialogRequestId)
-        println("github test time check ${System.currentTimeMillis() - baseTime}")
         manager.onPostProcessed(received)
 
         verify(inputProcessor).onReceiveDirectives(dialogRequestId, received)
@@ -76,6 +74,7 @@ class InputProcessorManagerTest {
 
     @Test
     fun testRemoveListener() {
+        val manager = InputProcessorManager(timeoutInMilliSeconds)
         val timeoutDialogRequestId = "timeoutDialogRequestId"
         val listener: InputProcessorManagerInterface.OnResponseTimeoutListener = mock()
         manager.addResponseTimeoutListener(listener)
