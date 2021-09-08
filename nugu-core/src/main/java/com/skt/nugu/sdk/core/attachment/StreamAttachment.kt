@@ -69,18 +69,13 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
         override fun isClosed(): Boolean = reachEnd
     }
 
-    private var hasCreatedReader = false
-    private var hasCreatedWriter = false
-
     override fun createWriter(): Attachment.Writer {
         Logger.d(TAG, "[createWriter]")
-        hasCreatedWriter = true
         return writer
     }
 
     override fun createReader(): Attachment.Reader {
         Logger.d(TAG, "[createReader]")
-        hasCreatedReader = true
         return object : Attachment.Reader, BufferEventListener {
             private var contentIndex = 0
             private var chunkIndex = 0
@@ -238,10 +233,6 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
             }
         }
     }
-
-    override fun hasCreatedReader(): Boolean = hasCreatedReader
-
-    override fun hasCreatedWriter(): Boolean = hasCreatedWriter
 
     private fun notifyBufferFilled() {
         synchronized(bufferEventListeners) {
