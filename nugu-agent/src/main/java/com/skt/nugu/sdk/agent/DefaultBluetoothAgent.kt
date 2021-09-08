@@ -200,12 +200,8 @@ class DefaultBluetoothAgent(
 
                 when (state) {
                     StreamingState.ACTIVE -> {
-                        if (streamingState == StreamingState.INACTIVE || streamingState == StreamingState.UNUSABLE) {
-                            // request focus
-                            focusManager.acquireChannel(focusChannelName, this, NAMESPACE)
-                        } else if (streamingState == StreamingState.PAUSED) {
-                            // ignore
-                        }
+                        // always request focus if active.
+                        focusManager.acquireChannel(focusChannelName, this, NAMESPACE)
                     }
                     StreamingState.UNUSABLE,
                     StreamingState.INACTIVE -> {
