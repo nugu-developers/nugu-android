@@ -98,14 +98,4 @@ interface Attachment {
          */
         fun isClosed(): Boolean
     }
-
-    /**
-     * @return true: if has created reader, false: otherwise
-     */
-    fun hasCreatedReader(): Boolean
-
-    /**
-     * @return true: if has created writer, false: otherwise
-     */
-    fun hasCreatedWriter(): Boolean
 }
