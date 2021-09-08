@@ -47,7 +47,7 @@ class InputProcessorManagerTest {
 
     @Test
     fun testOnReceiveResponse() {
-        val manager = InputProcessorManager(10)
+        val manager = InputProcessorManager(100)
         val dialogRequestId = "dialogRequestId"
         val listener: InputProcessorManagerInterface.OnResponseTimeoutListener = mock()
         manager.addResponseTimeoutListener(listener)
