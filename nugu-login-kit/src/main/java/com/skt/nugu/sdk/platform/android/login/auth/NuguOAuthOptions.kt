@@ -47,10 +47,11 @@ data class NuguOAuthOptions(
     /**
      * Builder class for [NuguOAuthOptions] objects.
      */
+    @Suppress("unused")
     class Builder {
         /**
          * the device unique ID
-         * @see https://developer.android.com/training/articles/user-data-ids
+         * Best practices for unique identifiers : [https://developer.android.com/training/articles/user-data-ids]
          */
         private var deviceUniqueId: String = ""
         /**
@@ -95,22 +96,6 @@ data class NuguOAuthOptions(
          * Returns a new instance of an Credentials based on this builder.
          */
         fun build(): NuguOAuthOptions {
-            requireNotNull(grantType) {
-                "`grantType` cannot be null"
-            }
-
-            requireNotNull(clientId) {
-                "`clientId` cannot be null"
-            }
-
-            requireNotNull(clientSecret) {
-                "`clientSecret` cannot be null"
-            }
-
-            requireNotNull(deviceUniqueId) {
-                "`deviceUniqueId` cannot be null"
-            }
-
             if(grantType == AUTHORIZATION_CODE) {
                 requireNotNull(redirectUri) {
                     "`redirectUri` cannot be null"

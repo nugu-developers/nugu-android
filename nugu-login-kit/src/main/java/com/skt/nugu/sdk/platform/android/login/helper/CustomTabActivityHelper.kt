@@ -1,7 +1,6 @@
 package com.skt.nugu.sdk.platform.android.login.helper
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.app.ActivityCompat.startActivityForResult
@@ -10,7 +9,7 @@ import androidx.core.app.ActivityCompat.startActivityForResult
  * This is a helper class to manage the connection to the Custom Tabs Service.
  */
 object CustomTabActivityHelper {
-    val CHROME_CUSTOM_TAB_REQUEST_CODE: Int = 100
+    const val CHROME_CUSTOM_TAB_REQUEST_CODE: Int = 100
     /**
      * To be used as a fallback to open the Uri when Custom Tabs is not available.
      */

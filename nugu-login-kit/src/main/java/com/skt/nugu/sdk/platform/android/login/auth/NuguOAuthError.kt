@@ -39,44 +39,45 @@ class NuguOAuthError(val throwable: Throwable) {
     var code: String? =  (throwable as? BaseException.UnAuthenticatedException)?.code
     var httpCode: Int? =  (throwable as? BaseException.HttpErrorException)?.httpCode
 
+    @Suppress("unused")
     companion object {
         /** oauth errors **/
-        val INVALID_REQUEST = "invalid_request"
-        val INVALID_GRANT = "invalid_grant"
-        val UNSUPPORTED_GRANT_TYPE = "unsupported_grant_type"
-        val INVALID_SCOPE = "invalid_scope"
-        val REDIRECT_URI_MISMATCH = "redirect_uri_mismatch"
-        val UNSUPPORTED_RESPONSE_TYPE = "unsupported_response_type"
-        val UNAUTHORIZED = "unauthorized"
-        val UNAUTHORIZED_CLIENT = "unauthorized_client"
-        val INVALID_TOKEN = "invalid_token"
-        val INVALID_CLIENT = "invalid_client"
-        val ACCESS_DENIED = "access_denied"
+        const val INVALID_REQUEST = "invalid_request"
+        const val INVALID_GRANT = "invalid_grant"
+        const val UNSUPPORTED_GRANT_TYPE = "unsupported_grant_type"
+        const val INVALID_SCOPE = "invalid_scope"
+        const val REDIRECT_URI_MISMATCH = "redirect_uri_mismatch"
+        const val UNSUPPORTED_RESPONSE_TYPE = "unsupported_response_type"
+        const val UNAUTHORIZED = "unauthorized"
+        const val UNAUTHORIZED_CLIENT = "unauthorized_client"
+        const val INVALID_TOKEN = "invalid_token"
+        const val INVALID_CLIENT = "invalid_client"
+        const val ACCESS_DENIED = "access_denied"
 
         /** oauth code **/
-        val USER_ACCOUNT_CLOSED = "user_account_closed"
-        val USER_ACCOUNT_PAUSED =  "user_account_paused"
-        val USER_DEVICE_DISCONNECTED =  "user_device_disconnected"
-        val USER_DEVICE_UNEXPECTED = "user_device_unexpected"
+        const val USER_ACCOUNT_CLOSED = "user_account_closed"
+        const val USER_ACCOUNT_PAUSED =  "user_account_paused"
+        const val USER_DEVICE_DISCONNECTED =  "user_device_disconnected"
+        const val USER_DEVICE_UNEXPECTED = "user_device_unexpected"
 
         /** network errors **/
-        val NETWORK_ERROR = "network_error"
+        const val NETWORK_ERROR = "network_error"
 
         /** unknown errors **/
-        val UNKNOWN_ERROR = "unknown_error"
+        const val UNKNOWN_ERROR = "unknown_error"
 
         /** ActivityNotFoundException **/
-        val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
+        const val ACTIVITY_NOT_FOUND_ERROR = "activity_not_found_error"
 
         /** SecurityException **/
-        val SECURITY_ERROR = "security_error"
+        const val SECURITY_ERROR = "security_error"
 
         /** ClientUnspecifiedException, UninitializedPropertyAccessException **/
-        val INITIALIZE_ERROR = "initialize_error"
+        const val INITIALIZE_ERROR = "initialize_error"
 
         /** poc status **/
-        val FINISHED = "FINISHED"
-        val DROP = "DROP"
+        const val FINISHED = "FINISHED"
+        const val DROP = "DROP"
     }
 
     override fun toString(): String {

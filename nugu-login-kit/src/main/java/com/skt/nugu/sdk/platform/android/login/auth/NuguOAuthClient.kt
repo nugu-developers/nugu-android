@@ -25,6 +25,7 @@ import com.skt.nugu.sdk.platform.android.login.net.Headers
 import com.skt.nugu.sdk.platform.android.login.net.Request
 import java.io.IOException
 import kotlin.math.min
+import kotlin.math.pow
 
 
 /**
@@ -62,7 +63,6 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
     }
 
     companion object {
-        private const val TAG = "NuguOAuthClient"
         private const val maxDelayForRetry: Long = 15L * 1000L /*second in ms*/
 
         /** Max number of times a request is retried before failing.  */
@@ -77,7 +77,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
     }
 
     init {
-        credential = Credentials.DEFAULT()
+        credential = Credentials.getDefault()
         options = NuguOAuthOptions.Builder().build()
     }
 
@@ -90,15 +90,13 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
      *     accepted the request before the failure.
      */
     private fun handleRequestToken(code: String?, refreshToken: String?): AuthFlowState {
-        val grantType = options.grantType
-
         val form = FormEncodingBuilder()
-            .add("grant_type", grantType)
+            .add("grant_type", options.grantType)
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
-        runCatching { GrantType.valueOf(grantType.toUpperCase(Locale.getDefault())) }.getOrNull()?.let { grantType ->
+        runCatching { GrantType.valueOf(options.grantType.uppercase(Locale.getDefault())) }.getOrNull()?.let { grantType ->
             when (grantType) {
                 GrantType.CLIENT_CREDENTIALS -> {
                     // no op
@@ -192,7 +190,8 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
 
     /**
      * Authorization flow
-     * @param refreshAccessToken true is skip the LinkDevice
+     * @param code authCode
+     * @param refreshToken refresh Token
      * */
     fun handleAuthorizationFlow(code: String?, refreshToken: String?) {
         var flowState = AuthFlowState.STARTING
@@ -215,9 +214,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
         val response = client.newCall(request)
         when (response.code) {
             HttpURLConnection.HTTP_OK -> {
-                DeviceAuthorizationResult.parse(response.body)?.let {
-                    return it
-                }
+                return DeviceAuthorizationResult.parse(response.body)
             }
             HttpURLConnection.HTTP_UNAUTHORIZED,
             HttpURLConnection.HTTP_BAD_REQUEST -> {
@@ -237,6 +234,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
         }
     }
 
+    @Suppress("unused")
     fun setRefreshToken(refreshToken: String) {
         credential.refreshToken = refreshToken
     }
@@ -277,7 +275,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
         if (statusCode in 400..499 || throwable is IOException) {
             // Exponential back-off.
             val sleepMillis = min(
-                Math.pow(retriesAttempted.toDouble() + 1, 2.0).toLong() * initialTimeoutMs,
+                (retriesAttempted.toDouble() + 1).pow(2.0).toLong() * initialTimeoutMs,
                 maxDelayForRetry
             )
             Thread.sleep(sleepMillis)
@@ -370,9 +368,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
         val response = client.newCall(request)
         when (response.code) {
             HttpURLConnection.HTTP_OK -> {
-                IntrospectResponse.parse(response.body)?.let {
-                    return it
-                }
+                return IntrospectResponse.parse(response.body)
             }
             HttpURLConnection.HTTP_UNAUTHORIZED,
             HttpURLConnection.HTTP_BAD_REQUEST -> {
