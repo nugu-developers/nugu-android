@@ -23,6 +23,7 @@ import androidx.annotation.Keep
  */
 interface NuguOAuthInterface {
     @Keep
+    @Suppress("unused")
     enum class THEME { DARK, LIGHT }
 
     /**

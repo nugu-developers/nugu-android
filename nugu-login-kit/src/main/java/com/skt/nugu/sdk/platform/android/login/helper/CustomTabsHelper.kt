@@ -12,12 +12,13 @@ import java.util.*
 /**
  * Helper class for Custom Tabs.
  */
+@Suppress("unused")
 object CustomTabsHelper {
     private const val TAG = "CustomTabsHelper"
-    const val STABLE_PACKAGE = "com.android.chrome"
-    const val BETA_PACKAGE = "com.chrome.beta"
-    const val DEV_PACKAGE = "com.chrome.dev"
-    const val LOCAL_PACKAGE = "com.google.android.apps.chrome"
+    private const val STABLE_PACKAGE = "com.android.chrome"
+    private const val BETA_PACKAGE = "com.chrome.beta"
+    private const val DEV_PACKAGE = "com.chrome.dev"
+    private const val LOCAL_PACKAGE = "com.google.android.apps.chrome"
     private const val EXTRA_CUSTOM_TABS_KEEP_ALIVE =
         "android.support.customtabs.extra.KEEP_ALIVE"
     private const val ACTION_CUSTOM_TABS_CONNECTION =
@@ -100,7 +101,7 @@ object CustomTabsHelper {
                 intent,
                 PackageManager.GET_RESOLVED_FILTER
             )
-            if (handlers == null || handlers.size == 0) {
+            if (handlers.size == 0) {
                 return false
             }
             for (resolveInfo in handlers) {

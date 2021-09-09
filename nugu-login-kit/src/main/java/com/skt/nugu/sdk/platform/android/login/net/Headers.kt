@@ -21,8 +21,9 @@ import java.util.*
 /**
  * Provide for Headers
  */
+@Suppress("unused")
 class Headers {
-    internal val namesAndValues: MutableList<String> = ArrayList(20)
+    private val namesAndValues: MutableList<String> = ArrayList(20)
     /** Add new key-value pair.  */
     fun add(name: String, value: String): Headers {
         namesAndValues.add(name)

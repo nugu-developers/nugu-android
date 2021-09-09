@@ -69,7 +69,7 @@ data class Credentials(
         /**
          * Default constructor of Credentials
          **/
-        fun DEFAULT() = Credentials(
+        fun getDefault() = Credentials(
             accessToken = "",
             refreshToken = "",
             expiresIn = 0,
@@ -87,7 +87,7 @@ data class Credentials(
         @Throws(JSONException::class)
         fun parse(string: String): Credentials {
             if (string.isBlank()) {
-                return DEFAULT()
+                return getDefault()
             }
             JSONObject(string).apply {
                 return Credentials(

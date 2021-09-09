@@ -34,11 +34,11 @@ import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 class NuguOAuthCallbackActivity : Activity() {
     /** Get NuguOAuth instance **/
     companion object {
-        private val TAG = "NuguOAuthCallbackActivity"
+        private const val TAG = "NuguOAuthCallbackActivity"
         const val RESULT_WEBVIEW_FAILED = RESULT_FIRST_USER + 1
         const val RESULT_WEBVIEW_SUCCESS = RESULT_FIRST_USER + 2
         const val EXTRA_ERROR  = "error"
-        private val WEBVIEW_REQUEST_CODE = CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE + 1
+        private const val WEBVIEW_REQUEST_CODE = CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE + 1
         private const val finishDelayMillis = 100L
     }
     private val auth by lazy { NuguOAuth.getClient() }
