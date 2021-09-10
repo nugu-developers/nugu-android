@@ -28,6 +28,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
+import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.client.theme.ThemeManager
@@ -43,7 +44,8 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     defStyleAttr: Int = 0,
     view: ViewGroup,
 ) : FrameLayout(context, attrs, defStyleAttr) {
-    private var callback: OnChromeWindowContentLayoutCallback? = null
+    @VisibleForTesting
+    internal var callback: OnChromeWindowContentLayoutCallback? = null
 
     private var isDark = false
     private var theme: ThemeManagerInterface.THEME = ThemeManager.DEFAULT_THEME
@@ -80,7 +82,8 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         NONE
     }
 
-    private val parentLayoutChangeListener = OnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
+    @VisibleForTesting
+    internal val parentLayoutChangeListener = OnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
         (l == oldL && t == oldT && r == oldR && b == oldB).let { boundEqual ->
             Logger.d(TAG, "parentLayout Changed.. boundEqual ? $boundEqual")
             if (boundEqual) return@OnLayoutChangeListener

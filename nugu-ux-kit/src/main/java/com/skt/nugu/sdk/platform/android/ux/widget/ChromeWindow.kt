@@ -19,6 +19,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.view.ViewGroup
+import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.RenderDirective
@@ -27,7 +28,6 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
-import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.agent.chips.RenderDirective.Payload.Target as ChipsRenderTarget
 
@@ -43,7 +43,9 @@ class ChromeWindow(
     interface OnChromeWindowCallback {
         fun onExpandStarted()
         fun onHiddenFinished()
-        fun onChipsClicked(item: NuguChipsView.Item) {}
+        fun onChipsClicked(item: NuguChipsView.Item) {
+            // Chips click basic action is done by SDK, implement this method if you need additional action.
+        }
     }
 
     interface CustomChipsProvider {
@@ -57,8 +59,10 @@ class ChromeWindow(
         fun onCustomChipsAvailable(isSpeaking: Boolean): Array<Chip>?
     }
 
-    private var callback: OnChromeWindowCallback? = null
-    private var contentLayout: ChromeWindowContentLayout
+    @VisibleForTesting
+    internal var callback: OnChromeWindowCallback? = null
+    @VisibleForTesting
+    internal var contentLayout: ChromeWindowContentLayout
     private var screenOnWhileASR = false
     private var customChipsProvider: CustomChipsProvider? = null
     private var isDarkMode = false
@@ -112,7 +116,7 @@ class ChromeWindow(
     override fun onDialogUXStateChanged(
         newState: DialogUXStateAggregatorInterface.DialogUXState,
         dialogMode: Boolean,
-        chips: RenderDirective.Payload?,
+        payload: RenderDirective.Payload?,
         sessionActivated: Boolean,
     ) {
         isDialogMode = dialogMode
@@ -120,7 +124,7 @@ class ChromeWindow(
 
         Logger.d(
             TAG,
-            "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode, chips: $chips, sessionActivated: $sessionActivated"
+            "[onDialogUXStateChanged] newState: $newState, dialogMode: $dialogMode, payload: $payload, sessionActivated: $sessionActivated"
         )
 
         view.post {
@@ -145,13 +149,13 @@ class ChromeWindow(
 
             when (newState) {
                 DialogUXStateAggregatorInterface.DialogUXState.EXPECTING -> {
-                    handleExpecting(dialogMode, chips)
+                    handleExpecting(dialogMode, payload)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.LISTENING -> {
                     handleListening()
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.SPEAKING -> {
-                    handleSpeaking(dialogMode, chips, sessionActivated)
+                    handleSpeaking(payload, sessionActivated)
                 }
                 DialogUXStateAggregatorInterface.DialogUXState.IDLE -> {
                     dismiss()
@@ -173,7 +177,7 @@ class ChromeWindow(
             contentLayout.hideText()
         }
 
-        if (payload?.target == ChipsRenderTarget.DM && dialogMode || payload?.target == ChipsRenderTarget.LISTEN) {
+        if ((payload?.target == ChipsRenderTarget.DM && dialogMode) || payload?.target == ChipsRenderTarget.LISTEN) {
             updateChips(payload)
         } else {
             updateChips(null)
@@ -259,7 +263,7 @@ class ChromeWindow(
         contentLayout.hideChips()
     }
 
-    private fun handleSpeaking(dialogMode: Boolean, payload: RenderDirective.Payload?, sessionActivated: Boolean) {
+    private fun handleSpeaking(payload: RenderDirective.Payload?, sessionActivated: Boolean) {
         contentLayout.hideText()
 
         if (payload?.target == ChipsRenderTarget.SPEAKING) {
@@ -276,12 +280,15 @@ class ChromeWindow(
     }
 
     override fun onCancel(cause: ASRAgentInterface.CancelCause, header: Header) {
+        // do nothing
     }
 
     override fun onError(type: ASRAgentInterface.ErrorType, header: Header, allowEffectBeep: Boolean) {
+        // do nothing
     }
 
     override fun onNoneResult(header: Header) {
+        // do nothing
     }
 
     override fun onPartialResult(result: String, header: Header) {
