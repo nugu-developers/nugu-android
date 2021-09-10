@@ -15,29 +15,49 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.widget
 
+import android.os.Build
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import junit.framework.Assert.assertEquals
 import org.junit.Assert
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoMoreInteractions
+import org.robolectric.Robolectric
+import org.robolectric.annotation.Config
 
-
-/**
- * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [Build.VERSION_CODES.O_MR1], manifest = Config.NONE)
 class ChromeWindowContentLayoutTest {
+
+    private val parent : ViewGroup = FrameLayout(ApplicationProvider.getApplicationContext())
+    private val chromeContent = ChromeWindowContentLayout(context = ApplicationProvider.getApplicationContext(), view = parent)
+
+
     @Test
-    fun setStateTest() {
-        val layout = ChromeWindowContentLayoutMock()
-        Assert.assertTrue(layout.setState(BottomSheetBehavior.STATE_HIDDEN))
-        Assert.assertTrue(layout.behavior.state == BottomSheetBehavior.STATE_SETTLING)
-        layout.setState(BottomSheetBehavior.STATE_EXPANDED)
-        layout.setState(BottomSheetBehavior.STATE_HIDDEN)
-        layout.setState(BottomSheetBehavior.STATE_EXPANDED)
-        layout.setState(BottomSheetBehavior.STATE_HIDDEN)
-        layout.setState(BottomSheetBehavior.STATE_EXPANDED)
-        layout.waitForState(BottomSheetBehavior.STATE_EXPANDED) {
-            Assert.assertTrue(layout.behavior.state == it)
-        }
+    fun testParentLayoutChange(){
+        val spy = spy(chromeContent)
+        spy.parentLayoutChangeListener.onLayoutChange(parent, 0, 0, 0, 0, 0, 0, 0, 0)
+        // STATE NONE
+        spy.parentLayoutChangeListener.onLayoutChange(parent, 0, 0, 0, 0, 10, 0, 0, 0)
+        assertEquals(parent.height.toFloat(), spy.y)
+
+        // STATE START_SHOWING
+        spy.expand()
+        spy.parentLayoutChangeListener.onLayoutChange(parent, 0, 0, 0, 0, 10, 0, 0, 0)
+        verify(spy).expand()
+
+        // STATE START_HIDING
+        spy.dismiss()
+        spy.parentLayoutChangeListener.onLayoutChange(parent, 0, 0, 0, 0, 10, 0, 0, 0)
+        verify(spy).dismiss()
+
     }
+
+
 }
