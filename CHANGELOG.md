@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+Version 1.5.2 *(2021-09-10)*
+-----------------------------
+* Improve: Add format type at requestTTS (#2036)
+* Improve: Update gRPC v1.40.1 (#2040)
+* Improve: Change complete timing for Display.Close directive. (#2044)
+* Improve: Re request focus if bt playing(active) (#2052)
+* Improve: Remove Attachment's unused API (#2056)
+    * remove hasCreatedReader()
+    * remove hasCreatedWriter()
+* Improve: ChromeWindow Refactoring (#2055)
+    * Handle OutSideTouch and ChipsClick post process in UX-Kit
+    * Making capable All ViewGroup as parent
+* New: Re-add Ogg-Opus encoder (#2038)
+
 Version 1.5.1 *(2021-09-07)*
 -----------------------------
 * Fix: Fix ConcurrentModificationException (#2050)
