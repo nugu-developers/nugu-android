@@ -22,7 +22,6 @@ import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
@@ -55,13 +54,13 @@ import com.skt.nugu.sdk.platform.android.ux.R
 class NuguChipsView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
 ) : RelativeLayout(context, attrs, defStyleAttr) {
     class Item(val text: String, val type: Chip.Type)
     companion object {
         private val DEFAULT_TEXT_COLOR = Color.parseColor("#404858")
         private val DEFAULT_HIGHLIGHT_TEXT_COLOR = Color.parseColor("#009DFF")
-        private val DEFAULT_DRAWABLE_RESOURCE_ID =  R.drawable.nugu_chips_button_light_selector
+        private val DEFAULT_DRAWABLE_RESOURCE_ID = R.drawable.nugu_chips_button_light_selector
     }
 
     private val adapter = AdapterChips(context)
@@ -102,7 +101,7 @@ class NuguChipsView @JvmOverloads constructor(
                 outRect: Rect,
                 view: View,
                 parent: RecyclerView,
-                state: RecyclerView.State
+                state: RecyclerView.State,
             ) {
                 val position = parent.getChildAdapterPosition(view)
                 when (position) {
@@ -228,15 +227,6 @@ class NuguChipsView @JvmOverloads constructor(
 
             when (items[position].type) {
                 Chip.Type.NUDGE -> {
-                    // remove title view border
-                    (holder.titleView.background as? StateListDrawable)?.run {
-                        for (i in 0 until stateCount) {
-                            (getStateDrawable(i) as? GradientDrawable)?.apply {
-                                setStroke(0, 0)
-                            }
-                        }
-                    }
-
                     holder.titleView.setTextColor(defaultColor)
                     holder.titleView.setBackgroundResource(if (isDark) R.drawable.nugu_chips_nudge_border_dark else R.drawable.nugu_chips_nudge_border_light)
                 }
@@ -309,8 +299,7 @@ class NuguChipsView @JvmOverloads constructor(
     }
 
     private fun applyThemeAttrs(@StyleRes resId: Int) {
-        val attrs =
-            intArrayOf(android.R.attr.textColor, android.R.attr.textColorHighlight, android.R.attr.background)
+        val attrs = intArrayOf(android.R.attr.textColor, android.R.attr.textColorHighlight, android.R.attr.background)
         val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
         try {
             defaultColor = a.getColor(0, DEFAULT_TEXT_COLOR)
