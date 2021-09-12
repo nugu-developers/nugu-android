@@ -32,6 +32,7 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.annotation.StyleRes
+import androidx.annotation.VisibleForTesting
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.chips.Chip
@@ -63,7 +64,8 @@ class NuguChipsView @JvmOverloads constructor(
         private val DEFAULT_DRAWABLE_RESOURCE_ID = R.drawable.nugu_chips_button_light_selector
     }
 
-    private val adapter = AdapterChips(context)
+    @VisibleForTesting
+    internal var adapter = AdapterChips(context)
 
     private var defaultColor: Int = DEFAULT_TEXT_COLOR
     private var highlightColor: Int = DEFAULT_HIGHLIGHT_TEXT_COLOR
@@ -82,6 +84,7 @@ class NuguChipsView @JvmOverloads constructor(
     private val containerView by lazy {
         RecyclerView(context)
     }
+
     val onScrollListener = object : RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
             listener?.onScrolled(dx, dy)
