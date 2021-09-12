@@ -92,11 +92,10 @@ class NuguChipsView @JvmOverloads constructor(
     init {
         this.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-        layoutParams.addRule(CENTER_VERTICAL);
+        layoutParams.addRule(CENTER_VERTICAL)
         addView(containerView, layoutParams)
         containerView.isNestedScrollingEnabled = false
-        containerView.layoutManager =
-            LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        containerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         containerView.adapter = adapter
         containerView.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(

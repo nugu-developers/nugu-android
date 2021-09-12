@@ -68,7 +68,11 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
     private var voiceChrome: NuguVoiceChromeView
 
-    private var chipsView: NuguChipsView
+    @VisibleForTesting
+    internal var chipsView: NuguChipsView
+
+    @VisibleForTesting
+    internal var chipsListener :NuguChipsView.OnChipsListener
 
     private var currentState = STATE.NONE
 
@@ -129,7 +133,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
         setDarkMode(isDark, theme)
         clipToPadding = false
 
-        chipsView.setOnChipsListener(object : NuguChipsView.OnChipsListener {
+        chipsListener = object : NuguChipsView.OnChipsListener {
             override fun onClick(item: NuguChipsView.Item) {
                 callback?.onChipsClicked(item)
             }
@@ -141,7 +145,9 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
                     }
                 }
             }
-        })
+        }
+
+        chipsView.setOnChipsListener(chipsListener)
 
         (parent as ViewGroup).setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN && (currentState == STATE.SHOWN || currentState == STATE.START_SHOWING)) {
