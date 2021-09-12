@@ -8,7 +8,7 @@ def getVersionNameFromCode(code) {
 
 ext {
     compileSdkVersion = 30
-    minSdkVersion = 19
+    minSdkVersion = 21
     targetSdkVersion = 30
 
     // 3rd
