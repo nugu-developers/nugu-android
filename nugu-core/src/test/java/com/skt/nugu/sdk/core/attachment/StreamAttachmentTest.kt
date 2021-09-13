@@ -32,6 +32,7 @@ class StreamAttachmentTest {
         Assert.assertNotNull(StreamAttachment("testCreateReader").createReader())
     }
 
+
     @Test
     fun testWriteAndReadBuffer() {
         val attachment = StreamAttachment("testWriteAndReadBuffer")
@@ -51,7 +52,10 @@ class StreamAttachmentTest {
         reader.read(readBuffer,0, 128)
 
         Assert.assertArrayEquals(writeBuffer.array(), readBuffer.array())
+        Assert.assertFalse(reader.isClosed())
         Assert.assertEquals(reader.read(readBuffer,0, 128), -1)
+        reader.close()
+        Assert.assertTrue(reader.isClosed())
     }
 
     @Test
@@ -88,6 +92,7 @@ class StreamAttachmentTest {
 
         Assert.assertArrayEquals(writeBuffer.array(), readBuffer.array())
         Assert.assertEquals(reader.read(readBuffer,0, 128), -1)
+        reader.close()
     }
 
 
@@ -108,6 +113,7 @@ class StreamAttachmentTest {
         val readArray = ByteArray(128)
         val reader = attachment.createReader()
         reader.read(readArray,0, 128)
+        reader.close()
 
         Assert.assertArrayEquals(writeBuffer.array(), readArray)
 
@@ -132,5 +138,6 @@ class StreamAttachmentTest {
 
         val reader = attachment.createReader()
         Assert.assertEquals(writeBuffer, reader.readChunk())
+        reader.close()
     }
 }
