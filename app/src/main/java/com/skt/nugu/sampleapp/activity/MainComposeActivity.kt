@@ -17,22 +17,14 @@ package com.skt.nugu.sampleapp.activity
 
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
@@ -44,7 +36,7 @@ import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 
 /**
  * This is very simple example to apply NUGU UI component to Activity which is based on Compose View.
- * This sample not include permission, network state check and interact among NUGU UI component.
+ * This sample not include permission and network state check and interaction among other NUGU UI components.
  * Take a look 'MainActivity' for checking state handling and interaction.
  */
 class MainComposeActivity : AppCompatActivity() {
@@ -74,14 +66,11 @@ class MainComposeActivity : AppCompatActivity() {
                                 id = R.id.template_container
                             })
 
-
                             // chrome window
-                            addView(CoordinatorLayout(context).apply {
+                            addView(FrameLayout(context).apply {
                                 chromeWindow = ChromeWindow(context, this, object : ChromeWindow.NuguClientProvider {
                                     override fun getNuguClient() = ClientManager.getClient()
                                 })
-                            }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                                gravity = Gravity.BOTTOM
                             })
                         }
 
