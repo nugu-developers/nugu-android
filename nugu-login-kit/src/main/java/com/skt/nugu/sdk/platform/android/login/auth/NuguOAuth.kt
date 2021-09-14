@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android.login.auth
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.utils.Logger
@@ -119,12 +120,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /** Oauth default options @see [NuguOAuthOptions] **/
     private lateinit var options: NuguOAuthOptions
 
-    private var onceLoginListener: OnceLoginListener? = null
+    @VisibleForTesting
+    internal var onceLoginListener: OnceLoginListener? = null
 
-    // CSRF protection
-    private var clientState: String = ""
+    @VisibleForTesting
+    internal var clientState: String = "" // CSRF protection
 
-    inner class OnceLoginListener(private var listener: OnLoginListener?) : OnLoginListener {
+    internal class OnceLoginListener(private var listener: OnLoginListener?) : OnLoginListener {
         override fun onSuccess(credentials: Credentials) {
             listener?.onSuccess(credentials) ?: Logger.w(TAG, "[onSuccess] Listener has already been called.")
             listener = null
@@ -240,6 +242,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      */
     fun setCredentials(credential: String) = setCredentials(Credentials.parse(credential))
     fun setCredentials(credential: Credentials) = client.setCredentials(credential)
+    fun getCredentials() = client.getCredentials()
 
     fun getRefreshToken() = client.getCredentials().refreshToken
     fun getIssuedTime(): Long {
@@ -364,14 +367,18 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         null
     }
 
-    private fun generateClientState() = UUID.randomUUID().toString().apply {
+    @VisibleForTesting
+    internal fun generateClientState() = UUID.randomUUID().toString().apply {
         clientState = this
     }
 
-    private fun verifyState(state: String?) = state == this.clientState
-    private fun verifyCode(code: String?) = !code.isNullOrBlank()
+    @VisibleForTesting
+    internal fun verifyState(state: String?) = state == this.clientState
+    @VisibleForTesting
+    internal fun verifyCode(code: String?) = !code.isNullOrBlank()
 
-    private fun makeAuthorizeUri(theme: String) = String.format(
+    @VisibleForTesting
+    internal fun makeAuthorizeUri(theme: String) = String.format(
         "${baseUrl()}/v1/auth/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
         options.clientId,
         options.redirectUri,
@@ -414,7 +421,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             client.getCredentials().accessToken,
             generateClientState()
         )
-        return Uri.parse(makeAuthorizeUri(theme ?: NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
+        val temp = makeAuthorizeUri(theme ?: NuguOAuthInterface.THEME.LIGHT.name) + appendUri
+        return Uri.parse(temp)
     }
 
     override fun accountWithTid(
@@ -654,7 +662,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         }
     }
 
-    private fun checkRedirectUri() {
+    @VisibleForTesting
+    internal fun checkRedirectUri() {
         if ("YOUR REDIRECT URI SCHEME://YOUR REDIRECT URI HOST" == options.redirectUri) {
             throw ClientUnspecifiedException(
                 "Edit your application's strings.xml file, " +
@@ -664,7 +673,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         }
     }
 
-    private fun checkClientSecret() {
+    @VisibleForTesting
+    internal fun checkClientSecret() {
         if ("YOUR_CLIENT_SECRET_HERE" == options.clientSecret) {
             throw ClientUnspecifiedException(
                 "The clientSecret value is Wrong to YOUR_CLIENT_SECRET_HERE." +
@@ -673,7 +683,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         }
     }
 
-    private fun checkClientId() {
+    @VisibleForTesting
+    internal fun checkClientId() {
         if ("YOUR_CLIENT_ID_HERE" == options.clientId) {
             throw ClientUnspecifiedException(
                 "Edit your application's AndroidManifest.xml file, " +

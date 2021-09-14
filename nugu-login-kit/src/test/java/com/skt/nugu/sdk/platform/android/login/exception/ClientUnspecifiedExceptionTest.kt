@@ -13,25 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.platform.android.login.net
+package com.skt.nugu.sdk.platform.android.login.exception
 
 import org.junit.Assert
 import org.junit.Test
 
-class RequestTest {
+class ClientUnspecifiedExceptionTest {
     @Test
-    fun testRequests(){
-        val header = Headers()
-            .add("name", "value")
-        val request = Request.Builder(
-            uri = "/v1/auth/oauth/me",
-            headers = header,
-            method = "GET"
-        ).build()
-        Assert.assertEquals(request.method, "GET")
-        Assert.assertEquals(request.uri, "/v1/auth/oauth/me")
-
-        Assert.assertEquals(header.size(), request.headers?.size())
-        Assert.assertEquals(header, request.headers)
+    fun testHttpErrorException() {
+        val clientUnspecifiedException = ClientUnspecifiedException("ClientUnspecifiedException")
+        Assert.assertEquals(clientUnspecifiedException.message , "ClientUnspecifiedException")
     }
 }

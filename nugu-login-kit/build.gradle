@@ -20,6 +20,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -31,15 +35,19 @@ dependencies {
         implementation project(':nugu-client-kit')
     }
 
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "androidx.browser:browser:$androidXBrowserVersion"
+
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidXJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.browser:browser:$androidXBrowserVersion"
+    testImplementation "androidx.test.ext:junit-ktx:$testJunitKtxVersion"
+    testImplementation "androidx.test:core-ktx:$testCoreKtxVersion"
 
     testImplementation "org.mockito:mockito-core:$mokitoCoreVersion"
     testImplementation "org.mockito.kotlin:mockito-kotlin:$mokitoKotlinVersion"
     testImplementation "org.json:json:$jsonVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
 }
 
 apply from: '../javadoc-android.gradle'

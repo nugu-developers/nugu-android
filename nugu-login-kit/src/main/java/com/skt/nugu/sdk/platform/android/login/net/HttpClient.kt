@@ -30,7 +30,7 @@ class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
      * Returns a [HttpsURLConnection] instance
      */
     @VisibleForTesting
-    fun getConnection(uri: String, method: String, headers: Headers? = null) : HttpsURLConnection{
+    internal fun getConnection(uri: String, method: String, headers: Headers? = null) : HttpsURLConnection{
         val connection = URL(uri).openConnection() as HttpsURLConnection
         connection.hostnameVerifier = HostnameVerifier { _, session ->
             HttpsURLConnection.getDefaultHostnameVerifier().run {
@@ -98,7 +98,7 @@ class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
     }
 
     @VisibleForTesting
-    fun readStream(inputStream: BufferedInputStream): String {
+    internal fun readStream(inputStream: BufferedInputStream): String {
         val stringBuilder = StringBuilder()
         BufferedReader(InputStreamReader(inputStream)).forEachLine {
             stringBuilder.append(it)
