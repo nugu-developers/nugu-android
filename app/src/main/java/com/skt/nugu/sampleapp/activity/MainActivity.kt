@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
     }
 
     private val chromeWindow: ChromeWindow by lazy {
-        ChromeWindow(this, findViewById(R.id.voice_chrome_container), object : ChromeWindow.NuguClientProvider {
+        ChromeWindow(this, findViewById(R.id.coordinator), object : ChromeWindow.NuguClientProvider {
             override fun getNuguClient() = ClientManager.getClient()
         })
     }
