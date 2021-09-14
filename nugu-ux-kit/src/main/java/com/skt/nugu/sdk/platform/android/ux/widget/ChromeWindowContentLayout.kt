@@ -72,7 +72,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     internal var chipsView: NuguChipsView
 
     @VisibleForTesting
-    internal var chipsListener :NuguChipsView.OnChipsListener
+    internal var chipsListener: NuguChipsView.OnChipsListener
 
     private var currentState = STATE.NONE
 
@@ -149,18 +149,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
 
         chipsView.setOnChipsListener(chipsListener)
 
-        (parent as ViewGroup).setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN && (currentState == STATE.SHOWN || currentState == STATE.START_SHOWING)) {
-                val outRect = Rect()
-                getGlobalVisibleRect(outRect)
-
-                if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
-                    callback?.onOutSideTouch()
-                }
-            }
-
-            return@setOnTouchListener super.onTouchEvent(event)
-        }
+        (parent as ViewGroup).addView(InterceptTouchEventView(context), LayoutParams(MATCH_PARENT, MATCH_PARENT))
     }
 
     override fun onAttachedToWindow() {
@@ -296,6 +285,28 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
             if (isDark != newIsDark) {
                 setDarkMode(newIsDark, theme)
             }
+        }
+    }
+
+    inner class InterceptTouchEventView @JvmOverloads constructor(
+        context: Context,
+        attrs: AttributeSet? = null,
+        defStyleAttr: Int = 0,
+    ) : FrameLayout(context, attrs, defStyleAttr) {
+
+        override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
+            event ?: return super.onInterceptTouchEvent(event)
+
+            if (event.action == MotionEvent.ACTION_DOWN && (currentState == STATE.SHOWN || currentState == STATE.START_SHOWING)) {
+                val outRect = Rect()
+                this@ChromeWindowContentLayout.getGlobalVisibleRect(outRect)
+
+                if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                    callback?.onOutSideTouch()
+                }
+            }
+
+            return super.onInterceptTouchEvent(event)
         }
     }
 }
