@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.login.auth
 
+import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.platform.android.login.exception.BaseException
 import java.util.*
 import java.net.HttpURLConnection
@@ -171,7 +172,8 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
      * @return [AuthFlowState.STOPPING]
      * @throws Throwable if the token is empty
      */
-    private fun handleStopping(): AuthFlowState {
+    @VisibleForTesting
+    internal fun handleStopping(): AuthFlowState {
         if (credential.accessToken.isBlank()) {
             throw Throwable("accessToken is empty")
         }
@@ -182,7 +184,8 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
      * Handle the [AuthFlowState.STARTING] AuthFlowState for Initial status.
      * @return [AuthFlowState.REQUEST_ISSUE_TOKEN]
      */
-    private fun handleStarting(): AuthFlowState {
+    @VisibleForTesting
+    internal fun handleStarting(): AuthFlowState {
         //reset retrys
         retriesAttempted = 0
         return AuthFlowState.REQUEST_ISSUE_TOKEN
@@ -264,10 +267,12 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
     /**
      * Simple retry condition that allows retries up to a certain max number of retries.
      */
-    private fun shouldRetry(
+    @VisibleForTesting
+    internal fun shouldRetry(
         retriesAttempted: Int,
         statusCode: Int? = null,
-        throwable: Throwable? = null
+        throwable: Throwable? = null,
+        maxDelay: Long? = null
     ): Boolean {
         if (retriesAttempted >= maxRetries) {
             return false
@@ -276,13 +281,14 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
             // Exponential back-off.
             val sleepMillis = min(
                 (retriesAttempted.toDouble() + 1).pow(2.0).toLong() * initialTimeoutMs,
-                maxDelayForRetry
+                maxDelay ?: maxDelayForRetry
             )
             Thread.sleep(sleepMillis)
             return true
         }
         return false
     }
+
     @Deprecated("Use introspect")
     fun handleMe() : MeResponse {
         val header = Headers()

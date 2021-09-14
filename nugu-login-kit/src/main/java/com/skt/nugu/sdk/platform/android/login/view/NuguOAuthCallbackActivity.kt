@@ -21,6 +21,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import androidx.annotation.VisibleForTesting
 import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
@@ -76,7 +77,13 @@ class NuguOAuthCallbackActivity : Activity() {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(!processOAuthCallback(intent)) {
+            finish()
+        }
+    }
 
+    @VisibleForTesting
+    internal fun processOAuthCallback(intent: Intent?) : Boolean {
         action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION) ?: NuguOAuth.ACTION_LOGIN
         theme = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_THEME)
 
@@ -84,13 +91,12 @@ class NuguOAuthCallbackActivity : Activity() {
             NuguOAuth.ACTION_LOGIN -> {
                 if (auth.isTidLogin()) {
                     auth.setResult(true)
-                    finish()
-                    return
+                    return false
                 }
 
                 if (intent != null && auth.setCodeFromIntent(intent)) {
                     performLogin()
-                    return
+                    return true
                 }
 
                 val fallbackRunnable = Runnable {
@@ -103,11 +109,11 @@ class NuguOAuthCallbackActivity : Activity() {
                 }
                 if(!WebViewActivity.supportDeepLink) {
                     fallbackRunnable.run()
-                    return
+                    return true
                 }
-                val intent = CustomTabsIntent.Builder()
+                val customTabsIntent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(this, intent, auth.getLoginUri(theme), object :
+                CustomTabActivityHelper.openCustomTab(this, customTabsIntent, auth.getLoginUri(theme), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         fallbackRunnable.run()
@@ -117,7 +123,7 @@ class NuguOAuthCallbackActivity : Activity() {
             NuguOAuth.ACTION_ACCOUNT -> {
                 if (intent != null && auth.setCodeFromIntent(intent)) {
                     performLogin()
-                    return
+                    return true
                 }
                 val fallbackRunnable = Runnable {
                     Logger.e(TAG, "[onCreate] fallback, action=$action")
@@ -130,22 +136,23 @@ class NuguOAuthCallbackActivity : Activity() {
 
                 if(!WebViewActivity.supportDeepLink) {
                     fallbackRunnable.run()
-                    return
+                    return true
                 }
-                val intent = CustomTabsIntent.Builder()
+                val customTabsIntent = CustomTabsIntent.Builder()
                     .enableUrlBarHiding().build()
-                CustomTabActivityHelper.openCustomTab(this, intent, auth.getAccountInfoUri(theme), object :
-                        CustomTabActivityHelper.CustomTabFallback {
-                        override fun openUri(activity: Activity?, uri: Uri?) {
-                            fallbackRunnable.run()
-                        }
-                    })
+                CustomTabActivityHelper.openCustomTab(this, customTabsIntent, auth.getAccountInfoUri(theme), object :
+                    CustomTabActivityHelper.CustomTabFallback {
+                    override fun openUri(activity: Activity?, uri: Uri?) {
+                        fallbackRunnable.run()
+                    }
+                })
             }
             else -> {
                 Logger.d(TAG, "[onCreate] unexpected action=$action")
-                finish()
+                return false
             }
         }
+        return true
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -49,7 +49,10 @@ class CredentialsTest {
                     "}"
         )
     }
-
+    @Test
+    fun `JSONObject empty`() {
+        Assert.assertEquals(Credentials.parse(""), Credentials.getDefault())
+    }
     @Test
     fun `JSONObject to string`() {
         val expected = "{\"access_token\":\"123\",\"refresh_token\":\"321\",\"scope\":\"scope\",\"token_type\":\"type\",\"issued_time\":2,\"expires_in\":1}"
@@ -62,5 +65,28 @@ class CredentialsTest {
             scope = "scope"
         )
         Assert.assertEquals(credentials.toString(), expected)
+    }
+
+    @Test
+    fun `Clear Credentials`() {
+        val expected = "{\"access_token\":\"123\",\"refresh_token\":\"321\",\"scope\":\"scope\",\"token_type\":\"type\",\"issued_time\":2,\"expires_in\":1}"
+        val credentials = Credentials(
+            accessToken = "123",
+            refreshToken = "321",
+            expiresIn = 1L,
+            issuedTime = 2L,
+            tokenType = "type",
+            scope = "scope"
+        )
+        Assert.assertEquals(credentials.toString(), expected)
+        credentials.clear()
+        Assert.assertEquals(credentials.accessToken, "")
+    }
+
+    @Test
+    fun `Default constructor of Credentials`() {
+        val credentials = Credentials.getDefault()
+        Assert.assertNotNull(credentials)
+        Assert.assertEquals(credentials.accessToken, "")
     }
 }

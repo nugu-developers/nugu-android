@@ -25,7 +25,7 @@ import java.net.UnknownHostException
 
 class NuguOAuthErrorTest : TestCase() {
     @Test
-    fun testOAuthError() {
+    fun testOAuthErrors() {
         val oAuthError1 = NuguOAuthError(throwable = ActivityNotFoundException())
         Assert.assertTrue(oAuthError1.error == NuguOAuthError.ACTIVITY_NOT_FOUND_ERROR)
         val oAuthError2 = NuguOAuthError(throwable = UnknownHostException())
@@ -40,5 +40,20 @@ class NuguOAuthErrorTest : TestCase() {
         Assert.assertTrue(oAuthError6.error == NuguOAuthError.NETWORK_ERROR)
         Assert.assertTrue(oAuthError6.httpCode == 404)
         Assert.assertTrue(oAuthError6.description == "not found")
+        Assert.assertNotEquals(oAuthError6, oAuthError2)
+
+        val oAuthError7 = NuguOAuthError(throwable = BaseException.HttpErrorException(500, "internal server error"))
+        Assert.assertTrue(oAuthError7.error == NuguOAuthError.NETWORK_ERROR)
+        Assert.assertTrue(oAuthError7.httpCode == 500)
+
+        val oAuthError8 =
+            NuguOAuthError(throwable = BaseException.UnAuthenticatedException("error", "description", "code"))
+        Assert.assertTrue(oAuthError8.code == "code")
+    }
+
+    @Test
+    fun testToString() {
+        val oAuthError1 = NuguOAuthError(throwable = ActivityNotFoundException())
+        Assert.assertNotNull(oAuthError1.toString())
     }
 }

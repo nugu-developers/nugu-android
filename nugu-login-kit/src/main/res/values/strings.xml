@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Nugu Login Kit</string>
+    <string name="nugu_redirect_scheme"/>
+    <string name="nugu_redirect_host"/>
 </resources>

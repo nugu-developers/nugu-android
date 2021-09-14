@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.platform.android.login.net
+package com.skt.nugu.sdk.platform.android.login.helper
 
+import android.app.Activity
+import android.net.Uri
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert
 import org.junit.Test
+import org.junit.runner.RunWith
 
-class RequestTest {
+@RunWith(AndroidJUnit4::class)
+class CustomTabActivityHelperTest {
+    private var fallbackUri: Uri? = null
+
     @Test
-    fun testRequests(){
-        val header = Headers()
-            .add("name", "value")
-        val request = Request.Builder(
-            uri = "/v1/auth/oauth/me",
-            headers = header,
-            method = "GET"
-        ).build()
-        Assert.assertEquals(request.method, "GET")
-        Assert.assertEquals(request.uri, "/v1/auth/oauth/me")
-
-        Assert.assertEquals(header.size(), request.headers?.size())
-        Assert.assertEquals(header, request.headers)
+    fun testCustomTabActivityHelper() {
+        val fallback = object : CustomTabActivityHelper.CustomTabFallback {
+            override fun openUri(activity: Activity?, uri: Uri?) {
+                Assert.assertEquals(fallbackUri , uri)
+            }
+        }
+        fallback.openUri(null, fallbackUri)
     }
 }
