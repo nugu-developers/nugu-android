@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.login.net
 
 import android.net.Uri
+import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthClient
 import java.io.*
 import java.net.URL
@@ -28,7 +29,8 @@ class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
     /**
      * Returns a [HttpsURLConnection] instance
      */
-    private fun getConnection(uri: String, method: String, headers: Headers? = null) : HttpsURLConnection{
+    @VisibleForTesting
+    fun getConnection(uri: String, method: String, headers: Headers? = null) : HttpsURLConnection{
         val connection = URL(uri).openConnection() as HttpsURLConnection
         connection.hostnameVerifier = HostnameVerifier { _, session ->
             HttpsURLConnection.getDefaultHostnameVerifier().run {
@@ -95,7 +97,8 @@ class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
         }
     }
 
-    private fun readStream(inputStream: BufferedInputStream): String {
+    @VisibleForTesting
+    fun readStream(inputStream: BufferedInputStream): String {
         val stringBuilder = StringBuilder()
         BufferedReader(InputStreamReader(inputStream)).forEachLine {
             stringBuilder.append(it)
