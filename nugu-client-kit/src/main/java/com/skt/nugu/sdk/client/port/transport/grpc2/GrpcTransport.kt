@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.google.common.annotations.VisibleForTesting
 import com.skt.nugu.sdk.client.port.transport.grpc2.TransportState.DetailedState
 import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayClient
 import com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway.DeviceGatewayTransport
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Class to create and manage an gRPC transport
  */
-internal class GrpcTransport private constructor(
+internal class GrpcTransport internal constructor(
     private val serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup?,
     private val callOptions: CallOptions?,
@@ -79,7 +80,8 @@ internal class GrpcTransport private constructor(
     private val executor = Executors.newSingleThreadExecutor()
     private var isHandOff = AtomicBoolean(false)
 
-    private fun getDelegatedServerInfo() : NuguServerInfo {
+    @VisibleForTesting
+    internal fun getDelegatedServerInfo() : NuguServerInfo {
         val info = serverInfo.delegate()?.serverInfo ?: serverInfo
         return info.also {
             it.checkServerSettings()
@@ -87,7 +89,8 @@ internal class GrpcTransport private constructor(
     }
 
     /** @return the detail state **/
-    private fun getDetailedState() = state.getDetailedState()
+    @VisibleForTesting
+    internal fun getDetailedState() = state.getDetailedState()
 
     /**
      * connect from deviceGatewayClient and registryClient.
@@ -189,7 +192,8 @@ internal class GrpcTransport private constructor(
      * @param policy Policy received from the registry server
      * @return true is success, otherwise false
      */
-    private fun tryConnectToDeviceGateway(policy: Policy): Boolean {
+    @VisibleForTesting
+    internal fun tryConnectToDeviceGateway(policy: Policy): Boolean {
         checkAuthorizationIfEmpty {
             setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
         } ?: return false
@@ -220,7 +224,8 @@ internal class GrpcTransport private constructor(
      * @param block Invoked only when authorization is NullOrBlank.
      * @return the authorization
      */
-    private fun checkAuthorizationIfEmpty(block: () -> Unit) : String? {
+    @VisibleForTesting
+    internal fun checkAuthorizationIfEmpty(block: () -> Unit) : String? {
         val authorization = authDelegate.getAuthorization()
         if (authorization.isNullOrBlank()) {
             block.invoke()
@@ -332,8 +337,9 @@ internal class GrpcTransport private constructor(
     /**
      * Set the state to a new state.
      */
-    private fun setState(newDetailedState: DetailedState,
-                         reason: ChangedReason = ChangedReason.NONE): Boolean {
+    @VisibleForTesting
+    internal fun setState(newDetailedState: DetailedState,
+                                        reason: ChangedReason = ChangedReason.NONE): Boolean {
         if (newDetailedState == getDetailedState()) {
             Logger.d(TAG, "[setState] Already in state ($state)")
             return true

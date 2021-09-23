@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http:www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
 import com.skt.nugu.sdk.core.interfaces.message.Call
@@ -5,6 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
+import com.skt.nugu.sdk.core.utils.Preferences
 import junit.framework.TestCase
 import org.junit.Assert
 
@@ -14,7 +30,7 @@ import org.mockito.Mockito.mock
 import org.mockito.kotlin.mock
 
 class Grpc2CallTest : TestCase() {
-    private val transport: Transport = object : Transport {
+    val transport: Transport = object : Transport {
         override fun connect() = true
         override fun disconnect() = Unit
         override fun isConnected() = true
@@ -32,7 +48,7 @@ class Grpc2CallTest : TestCase() {
     }
 
     @Test
-    fun test_enqueue_return_true() {
+    fun testEnqueueReturnTrue() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
         val call = Grpc2Call(transport, originRequest, null, listener)
@@ -40,7 +56,7 @@ class Grpc2CallTest : TestCase() {
     }
 
     @Test
-    fun test_enqueue_onResponseStart() {
+    fun testEnqueueOnResponseStart() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
         val call = Grpc2Call(transport, originRequest, null, listener)
@@ -60,7 +76,7 @@ class Grpc2CallTest : TestCase() {
     }
 
     @Test
-    fun test_enqueue_onSuccess() {
+    fun testEnqueueOnSuccess() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
         val call = Grpc2Call(transport, originRequest, null, listener)
@@ -80,7 +96,7 @@ class Grpc2CallTest : TestCase() {
     }
 
     @Test
-    fun test_enqueue_already_executed() {
+    fun testEnqueueAlreadyExecuted() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
         val call = Grpc2Call(transport, originRequest, null, listener)
@@ -101,7 +117,7 @@ class Grpc2CallTest : TestCase() {
     }
 
     @Test
-    fun test_enqueue_cancel() {
+    fun testEnqueueCancel() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
         val call = Grpc2Call(transport, originRequest, null, listener)
@@ -122,16 +138,17 @@ class Grpc2CallTest : TestCase() {
     }
 
     @Test
-    fun test_enqueue_deadline_exceeded() {
+    fun testEnqueueDeadlineExceeded() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
         val call = Grpc2Call(transport, originRequest, null, listener)
         call.callTimeout(1)
+        Assert.assertEquals(1, call.callTimeout())
         Assert.assertEquals(Status.DEADLINE_EXCEEDED, call.execute())
     }
 
     @Test
-    fun test_enqueue_onPostSendMessage() {
+    fun testEnqueueOnPostSendMessage() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener =
             object : MessageSender.OnSendMessageListener {
@@ -140,10 +157,49 @@ class Grpc2CallTest : TestCase() {
                 }
 
                 override fun onPostSendMessage(request: MessageRequest, status: Status) {
+                    Assert.assertTrue(originRequest == request)
                 }
             }
         val call = Grpc2Call(transport, originRequest, null, listener)
         call.callTimeout(1)
+        Assert.assertEquals(1, call.callTimeout())
         call.execute()
+    }
+
+    @Test
+    fun testGetRequest() {
+        val call = Grpc2Call(transport, mock(), null, mock())
+        Assert.assertNotNull(call.request())
+    }
+
+    @Test
+    fun testGetHeaders() {
+        val call = Grpc2Call(transport, mock(), hashMapOf("Last-Asr-Event-Time" to "123"), mock())
+        Assert.assertNotNull(call.headers())
+    }
+
+    @Test
+    fun testEnqueueOnStart() {
+        val call = Grpc2Call(transport, mock(), null, mock())
+        call.enqueue(object : MessageSender.Callback {
+            override fun onFailure(request: MessageRequest, status: Status) {
+            }
+
+            override fun onSuccess(request: MessageRequest) {
+            }
+
+            override fun onResponseStart(request: MessageRequest) {
+                Assert.assertNotNull(request)
+            }
+        })
+        call.onStart()
+    }
+
+    @Test
+    fun testEnqueueOnComplete() {
+        val call = Grpc2Call(transport, mock(), null, mock())
+        call.enqueue(mock())
+        call.onComplete(Status.OK)
+        Assert.assertTrue(call.isCompleted())
     }
 }
