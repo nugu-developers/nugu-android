@@ -50,15 +50,15 @@ class NuguSnackbar(val parentView: View) {
         /**
          * Show the Snackbar indefinitely.
          **/
-        val LENGTH_INDEFINITE = -2
+        const val LENGTH_INDEFINITE = Snackbar.LENGTH_INDEFINITE
         /**
          * Show the Snackbar for a short period of time.
          **/
-        val LENGTH_SHORT = -1
+        const val LENGTH_SHORT = Snackbar.LENGTH_SHORT
         /**
          * Show the Snackbar for a long period of time.
          **/
-        val LENGTH_LONG = 0
+        const val LENGTH_LONG = Snackbar.LENGTH_LONG
 
         /**
          * Returns a new [NuguSnackbar] on this builder.
@@ -109,7 +109,10 @@ class NuguSnackbar(val parentView: View) {
     /**
      * Show the BaseTransientBottomBar.
      */
+    @Throws(IllegalArgumentException::class)
     fun show() {
+        if (resId == 0) throw IllegalArgumentException("message resId necessary")
+
         Snackbar.make(
             this.parentView,
             this.resId,

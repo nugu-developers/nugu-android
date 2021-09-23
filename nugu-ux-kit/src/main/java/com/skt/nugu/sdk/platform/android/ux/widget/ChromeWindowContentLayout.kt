@@ -139,10 +139,8 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
             }
 
             override fun onScrolled(dx: Int, dy: Int) {
-                if (dx > 0) {
-                    if (sttTextView.visibility != View.GONE) {
-                        sttTextView.visibility = View.GONE
-                    }
+                if (dx > 0 && sttTextView.visibility != View.GONE) {
+                    sttTextView.visibility = View.GONE
                 }
             }
         }

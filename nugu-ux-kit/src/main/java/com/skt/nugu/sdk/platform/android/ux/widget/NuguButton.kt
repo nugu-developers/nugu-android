@@ -41,29 +41,34 @@ import com.skt.nugu.sdk.platform.android.ux.R
 class NuguButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr) {
     companion object {
         const val TYPE_FAB = 0
         const val TYPE_BUTTON = 1
-        @IntDef( TYPE_FAB, TYPE_BUTTON )
+
+        @IntDef(TYPE_FAB, TYPE_BUTTON)
         annotation class ButtonTypes
 
         const val COLOR_BLUE = 0
         const val COLOR_WHITE = 1
-        @IntDef( COLOR_BLUE, COLOR_WHITE )
+
+        @IntDef(COLOR_BLUE, COLOR_WHITE)
         annotation class ButtonColors
 
         fun dpToPx(dp: Float, context: Context): Int {
             return (dp * (context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).toInt()
         }
     }
-    @ButtonTypes private var buttonType: Int = TYPE_FAB
-    @ButtonColors private var buttonColor: Int = COLOR_BLUE
+
+    @ButtonTypes
+    private var buttonType: Int = TYPE_FAB
+
+    @ButtonColors
+    private var buttonColor: Int = COLOR_BLUE
 
     private val ICON_MIC = 0
     private val ICON_LOGO = 1
-    private val ICON_FLAGS = intArrayOf(ICON_MIC, ICON_LOGO)
 
     private val drawableRes: MutableMap<String, Int> = HashMap()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
@@ -71,7 +76,6 @@ class NuguButton @JvmOverloads constructor(
     private var autoPlay = false
     private var loopPlay = true
 
-    private fun isAnimating(): Boolean = running
     private var animationSet: AnimatorSet? = null
 
     private var wasAnimatingWhenDetached = false
@@ -134,6 +138,7 @@ class NuguButton @JvmOverloads constructor(
             loopPlay = getBoolean(R.styleable.NuguButton_loopPlay, true)
         }.recycle()
     }
+
     private lateinit var imageView: ImageView
 
     private fun initView() {
@@ -479,15 +484,8 @@ class NuguButton @JvmOverloads constructor(
             TYPE_FAB -> 72f
             else -> 56f
         }
-        super.onMeasure(
-            MeasureSpec.makeMeasureSpec(dpToPx(size, context), MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(
-                dpToPx(
-                    size,
-                    context
-                ), MeasureSpec.EXACTLY
-            )
-        )
+        super.onMeasure(MeasureSpec.makeMeasureSpec(dpToPx(size, context), MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(dpToPx(size, context), MeasureSpec.EXACTLY))
     }
 
     /**

@@ -12,7 +12,7 @@ import com.skt.nugu.sdk.client.theme.ThemeManager
 import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.R
-import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
