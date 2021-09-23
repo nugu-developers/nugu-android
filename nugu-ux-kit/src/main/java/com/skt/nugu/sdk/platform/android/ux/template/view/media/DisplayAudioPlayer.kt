@@ -546,8 +546,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 fulltime.visibility = View.INVISIBLE
             }
 
+            lyrics?.title?.apply { lyricsView.setTitle(this, templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_1) }
+
             if (lyrics != null && lyrics.lyricsType != LyricsType.NONE) {
-                lyricsView.setTitle(lyrics.title, templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_1)
                 lyricsView.setItems(lyrics.lyricsInfoList)
                 smallLyricsView.setItems(lyrics.lyricsInfoList)
 
