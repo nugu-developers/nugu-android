@@ -35,7 +35,8 @@ task coverageReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
                       '**/*Dagger*',
 
                       // nugu-ux-kit
-                      '**/TemplateHandler*.*']
+                      '**/TemplateHandler*.*',
+                      '**/NuguFloatingActionButton*.*']
 
     def javaClassDirPath = "$project.buildDir/intermediates/javac/debug/classes"
     def kotlinClassDirPath = "$project.buildDir/tmp/kotlin-classes/debug"
