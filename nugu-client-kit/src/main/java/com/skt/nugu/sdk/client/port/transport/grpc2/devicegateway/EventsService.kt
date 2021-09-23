@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
+import com.google.common.annotations.VisibleForTesting
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toProtobufMessage
@@ -54,10 +55,12 @@ internal class EventsService(
         val name = EventsService::class.java.simpleName
     }
 
-    private val isShutdown = AtomicBoolean(false)
+    @VisibleForTesting
+    internal val isShutdown = AtomicBoolean(false)
     private val streamLock = ReentrantLock()
 
-    private val requestStreamMap = ConcurrentHashMap<String, ClientChannel?>()
+    @VisibleForTesting
+    internal val requestStreamMap = ConcurrentHashMap<String, ClientChannel?>()
     private val waitForReady = callOptions?.waitForReady ?: true
 
     internal data class ClientChannel (
@@ -82,14 +85,17 @@ internal class EventsService(
         }
         return null
     }
-    private fun obtainChannel(streamId: String): ClientChannel? {
+
+    @VisibleForTesting
+    internal fun obtainChannel(streamId: String): ClientChannel? {
         if (isShutdown.get()) {
             return null
         }
         return requestStreamMap[streamId]
     }
 
-    private fun scheduleTimeout(streamId: String, call: Call) : ScheduledFuture<*>? {
+    @VisibleForTesting
+    internal fun scheduleTimeout(streamId: String, call: Call) : ScheduledFuture<*>? {
         return scheduler.schedule({
             requestStreamMap[streamId]?.apply {
                 if(this.responseObserver.isReceivedDownstream.compareAndSet(true, false)) {
@@ -105,7 +111,8 @@ internal class EventsService(
         }, call.callTimeout(), TimeUnit.MILLISECONDS)
     }
 
-    private fun cancelScheduledTimeout(streamId: String) {
+    @VisibleForTesting
+    fun cancelScheduledTimeout(streamId: String) {
         requestStreamMap[streamId]?.apply {
             scheduledFuture?.cancel(true)
         }
@@ -210,7 +217,8 @@ internal class EventsService(
         }
     }
 
-    private fun halfClose(streamId : String) {
+    @VisibleForTesting
+    fun halfClose(streamId : String) {
         streamLock.withLock {
             try {
                 requestStreamMap[streamId]?.apply {

@@ -27,7 +27,7 @@ class AddressTest : TestCase() {
         Assert.assertTrue(Address("nugu.com", 443) == Address("nugu.com", 443))
         Assert.assertFalse(Address("nugu.com", 443) == Address("nugu.com", 80))
         Assert.assertFalse(Address("nugu1.com", 443) == Address("nugu2.com", 443))
-        Assert.assertTrue(Address("nugu2.com", 443) == Address("nugu2.com", 443))
+        Assert.assertTrue(Address("nugu2.com", 443).equals(Address("nugu2.com", 443)))
         Assert.assertFalse(Address("", 443) == Address("nugu2.com", 443))
     }
 

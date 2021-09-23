@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.google.common.annotations.VisibleForTesting
 import com.google.gson.*
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
@@ -66,7 +67,8 @@ internal class RegistryClient(
 
     }
 
-    private val isShutdown = AtomicBoolean(false)
+    @VisibleForTesting
+    internal val isShutdown = AtomicBoolean(false)
 
     interface Observer {
         fun onCompleted(policy: Policy?)
@@ -160,31 +162,8 @@ internal class RegistryClient(
         })
     }
 
-    fun buildDefaultPolicy(hostname: String) : Policy {
-        return Policy(
-            healthCheckPolicy = HealthCheckPolicy(
-                ttl = 0,
-                ttlMax = 0,
-                beta = 0F,
-                retryCountLimit = 0,
-                retryDelay = 0,
-                healthCheckTimeout = 0,
-                accumulationTime = 0
-            ),
-            serverPolicy = listOf(
-                ServerPolicy(
-                    protocol = GRPC_PROTOCOL,
-                    hostname = hostname,
-                    port = 443,
-                    retryCountLimit = 2,
-                    connectionTimeout = 10,
-                    charge = ""
-                )
-            )
-        )
-    }
-
-    private fun notifyPolicy(policy: Policy?, observer: Observer) {
+    @VisibleForTesting
+    internal fun notifyPolicy(policy: Policy?, observer: Observer) {
         if (!isShutdown.get()) {
             observer.onCompleted(policy)
             // cache setting

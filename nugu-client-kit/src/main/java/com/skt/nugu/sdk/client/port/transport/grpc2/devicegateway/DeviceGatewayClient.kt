@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
+import com.google.common.annotations.VisibleForTesting
 import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc2.Policy
 import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
@@ -280,7 +281,8 @@ internal class DeviceGatewayClient(policy: Policy,
     /**
      * Handler for connection completed
      */
-    private fun handleOnConnected() {
+    @VisibleForTesting
+    internal fun handleOnConnected() {
         if (isConnected.compareAndSet(false, true)) {
             Logger.d(TAG, "[handleOnConnected] isConnected is changed")
         }
