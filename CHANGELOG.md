@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.5.3 *(2021-09-24)*
+-----------------------------
+* Fix: Fix lint warnings in nugu-login-kit (#2059)
+* Fix: Fix side effect for #2001 (#2077)
+    * (AudioPlayer) Handling stop after finished.
+
 Version 1.5.2 *(2021-09-10)*
 -----------------------------
 * Improve: Add format type at requestTTS (#2036)
