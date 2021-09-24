@@ -778,13 +778,17 @@ class DefaultAudioPlayerAgent(
             AudioPlayerAgentInterface.State.IDLE,
             AudioPlayerAgentInterface.State.STOPPED,
             AudioPlayerAgentInterface.State.FINISHED -> {
+                // call stop first, if need.
                 if (playCalled || currentItem?.isFetched == true) {
                     if (mediaPlayer.stop(sourceId)) {
                         stopReason = reason
                         stopCalled = true
                         return true
                     }
-                } else if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
+                }
+
+                // if already stopped, check stop logic after finished.
+                if (currentActivity == AudioPlayerAgentInterface.State.FINISHED) {
                     val scheduler = lifeCycleScheduler
 
                     if (scheduler != null) {
