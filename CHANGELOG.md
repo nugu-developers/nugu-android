@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.5.4 *(2021-09-28)*
+-----------------------------
+* Fix: Change minSDK 19
+
 Version 1.5.3 *(2021-09-24)*
 -----------------------------
 * Fix: Fix lint warnings in nugu-login-kit (#2059)
