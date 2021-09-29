@@ -50,6 +50,7 @@ class InterLayerDisplayPolicyManagerImpl: InterLayerDisplayPolicyManager {
 
             displayLayers.filter {
                 isEvaporatableLayer(it.getLayerType())
+                        && (layer.historyControl?.parentToken != it.token || it.token == null)
             }.forEach {
                 Logger.d(TAG, "[onDisplayLayerRendered] clear: $it")
                 it.clear()
