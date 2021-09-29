@@ -103,6 +103,16 @@ class DisplayAgent(
                 notifyUserInteraction(getTemplateId())
             }
 
+            override val token: String? = payload.token
+            override val historyControl: com.skt.nugu.sdk.core.interfaces.display.HistoryControl? =
+                payload.historyControl?.let {
+                    com.skt.nugu.sdk.core.interfaces.display.HistoryControl(
+                        it.parent,
+                        it.child,
+                        it.parentToken
+                    )
+                }
+
             override fun getLayerType(): LayerType = when(payload.getContextLayerInternal()) {
                 DisplayAgentInterface.ContextLayer.ALERT -> LayerType.ALERT
                 DisplayAgentInterface.ContextLayer.CALL -> LayerType.CALL
@@ -141,9 +151,18 @@ class DisplayAgent(
                 }
 
                 if(prepared.isEmpty() && copyStarted.isEmpty()) {
+                    if(payload.token != null) {
+                        if(currentInfo.any {
+                                it.value.payload.historyControl?.parentToken == payload.token
+                            }) {
+                            Logger.d(TAG, "[onSyncStateChanged] has child display, skip clear (templateId: ${getTemplateId()})")
+                            return@submit
+                        }
+                    }
+
                     executeCancelUnknownInfo(getTemplateId(), false)
                 } else {
-                    Logger.d(TAG, "[onSyncStateChanged] something synced again, so stop timer.")
+                    Logger.d(TAG, "[onSyncStateChanged] something synced again, so stop timer. (templateId: ${getTemplateId()})")
                     contextLayerTimer?.get(payload.getContextLayerInternal())?.stop(getTemplateId())
                 }
             }

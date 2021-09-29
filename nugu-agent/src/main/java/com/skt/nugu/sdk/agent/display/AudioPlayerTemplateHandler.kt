@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.display.HistoryControl
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -114,6 +115,9 @@ class AudioPlayerTemplateHandler(
             override fun refresh() {
                 // nothing
             }
+
+            override val token: String? = null
+            override val historyControl: HistoryControl? = null
 
             override fun getLayerType(): LayerType = LayerType.MEDIA
 

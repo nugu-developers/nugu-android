@@ -42,6 +42,16 @@ interface InterLayerDisplayPolicyManager {
          * refresh the display's timer
          */
         fun refresh()
+
+        /**
+         * the token for display
+         */
+        val token: String?
+
+        /**
+         * the history control for display
+         */
+        val historyControl: HistoryControl?
     }
 
     /**
