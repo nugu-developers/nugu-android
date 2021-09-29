@@ -57,6 +57,22 @@ class DisplayTimer(private val tag: String) {
         }
     }
 
+    fun pause(id: String): Boolean {
+        lock.withLock {
+            val future = clearTimeoutFutureMap.remove(id)
+            var canceled = false
+            if (future != null) {
+                canceled = future.cancel(true)
+            }
+
+            Logger.d(
+                tag,
+                "[DisplayTimer.pause] templateId: $id , future: $future, canceled: $canceled"
+            )
+            return canceled
+        }
+    }
+
     fun stop(id: String): Boolean {
         lock.withLock {
             clearRequestParamMap.remove(id)
