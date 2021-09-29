@@ -72,7 +72,9 @@ class DisplayAgent(
         @SerializedName("contextLayer")
         val contextLayer: DisplayAgentInterface.ContextLayer?,
         @SerializedName("playStackControl")
-        val playStackControl: PlayStackControl?
+        val playStackControl: PlayStackControl?,
+        @SerializedName("historyControl")
+        val historyControl: HistoryControl?,
     ) {
         fun getContextLayerInternal() = contextLayer ?: DisplayAgentInterface.ContextLayer.INFO
     }
