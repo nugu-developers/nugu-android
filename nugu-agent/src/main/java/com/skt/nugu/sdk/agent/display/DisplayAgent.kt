@@ -334,6 +334,7 @@ class DisplayAgent(
                     Logger.w(TAG, "[onRendered] already called for ${it.getTemplateId()}, so ignore this call.")
                     return@submit
                 }
+                pauseParentDisplayTimer(it)
 
                 Logger.d(TAG, "[onRendered] ${it.getTemplateId()}, resultListener: ${it.renderResultListener}")
                 renderedInfo.add(it)
@@ -366,6 +367,26 @@ class DisplayAgent(
         }
     }
 
+    private fun pauseParentDisplayTimer(child: TemplateDirectiveInfo) {
+        val parentToken = child.payload.historyControl?.parentToken
+
+        templateDirectiveInfoMap.filter {
+            it.value.payload.token == parentToken
+        }.forEach {
+            contextLayerTimer?.get(it.value.payload.getContextLayerInternal())?.pause(it.key)
+        }
+    }
+
+    private fun resumeParentDisplayTimer(child: TemplateDirectiveInfo) {
+        val parentToken = child.payload.historyControl?.parentToken
+
+        templateDirectiveInfoMap.filter {
+            it.value.payload.token == parentToken
+        }.forEach {
+            contextLayerTimer?.get(it.value.payload.getContextLayerInternal())?.reset(it.key)
+        }
+    }
+
     override fun displayCardRenderFailed(templateId: String) {
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
@@ -381,6 +402,7 @@ class DisplayAgent(
         executor.submit {
             templateDirectiveInfoMap[templateId]?.let {
                 Logger.d(TAG, "[onCleared] ${it.getTemplateId()}")
+                resumeParentDisplayTimer(it)
                 cleanupInfo(templateId, it)
                 interLayerDisplayPolicyManager.onDisplayLayerCleared(it.layerForInterLayerDisplayPolicy)
 
