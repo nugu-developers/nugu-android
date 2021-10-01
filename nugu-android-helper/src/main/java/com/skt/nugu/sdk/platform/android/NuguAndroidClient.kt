@@ -784,6 +784,10 @@ class NuguAndroidClient private constructor(
                                             getContextManager(),
                                             getMessageSender()
                                         ),
+                                        TriggerChildEventSender(
+                                            getContextManager(),
+                                            getMessageSender()
+                                        ),
                                         getSessionManager(),
                                         getInterLayerDisplayPolicyManager(),
                                         getContextManager(),

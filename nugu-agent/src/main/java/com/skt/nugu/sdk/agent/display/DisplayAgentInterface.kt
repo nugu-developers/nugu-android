@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.agent.display
 
+import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.core.interfaces.common.EventCallback
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
@@ -44,6 +46,9 @@ interface DisplayAgentInterface:
      * @param templateId the unique identifier for the template card
      */
     fun notifyUserInteraction(templateId: String)
+
+    interface OnTriggerChildCallback: EventCallback<DisplayInterface.ErrorType>
+    fun triggerChild(playServiceId: String, parentToken: String, data: JsonObject, referrerDialogRequestId: String?, callback: OnTriggerChildCallback?)
 
     /**
      * The renderer of display agent.

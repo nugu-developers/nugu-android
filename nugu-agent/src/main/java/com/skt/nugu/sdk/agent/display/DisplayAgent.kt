@@ -42,6 +42,7 @@ import kotlin.collections.LinkedHashSet
 class DisplayAgent(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val elementSelectedEventHandler: ElementSelectedEventHandler,
+    private val triggerChildEventSender: TriggerChildEventSender,
     private val sessionManager: SessionManagerInterface,
     private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
     contextStateProviderRegistry: ContextStateProviderRegistry,
@@ -54,6 +55,7 @@ class DisplayAgent(
     , CloseDirectiveHandler.Controller
     , UpdateDirectiveHandler.Controller
     , RenderDirectiveHandler.Controller
+    , RedirectTriggerChildDirectiveHandler.Controller
     , PlayStackManagerInterface.PlayContextProvider {
     companion object {
         private const val TAG = "DisplayTemplateAgent"
@@ -492,6 +494,16 @@ class DisplayAgent(
         }
     }
 
+    override fun triggerChild(
+        playServiceId: String,
+        parentToken: String,
+        data: JsonObject,
+        referrerDialogRequestId: String?,
+        callback: DisplayAgentInterface.OnTriggerChildCallback?
+    ) {
+        triggerChildEventSender.triggerChild(playServiceId, parentToken, data, referrerDialogRequestId, callback)
+    }
+
     override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
         this.renderer = renderer
     }
@@ -710,4 +722,25 @@ class DisplayAgent(
             Logger.d(TAG, "[getPlayContext] $playContext")
             playContext
         }).get()
+
+    override fun redirectTriggerChild(
+        header: Header,
+        payload: RedirectTriggerChildDirectiveHandler.Payload,
+        result: RedirectTriggerChildDirectiveHandler.Controller.OnResultListener
+    ) {
+        executor.submit {
+            triggerChild(payload.playServiceId, payload.parentToken, payload.data, header.dialogRequestId, object: DisplayAgentInterface.OnTriggerChildCallback {
+                override fun onSuccess(dialogRequestId: String) {
+                    result.onSuccess()
+                }
+
+                override fun onError(
+                    dialogRequestId: String,
+                    errorType: DisplayInterface.ErrorType
+                ) {
+                    result.onFailure(errorType.toString())
+                }
+            })
+        }
+    }
 }
