@@ -107,7 +107,7 @@ class TemplateRenderer(
         mainHandler.post {
             val templateContentWithType = insertType(templateContent, templateType)
 
-            val playServiceId = gson.fromJson<TemplatePayload>(templateContent, TemplatePayload::class.java)?.playServiceId ?: ""
+            val playServiceId = runCatching { gson.fromJson(templateContent, TemplatePayload::class.java) }.getOrNull()?.playServiceId ?: ""
 
             fragmentManagerRef.get()?.beginTransaction()?.run {
                 setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)

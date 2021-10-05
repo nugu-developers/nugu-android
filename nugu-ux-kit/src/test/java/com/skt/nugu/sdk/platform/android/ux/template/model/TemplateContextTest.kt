@@ -19,5 +19,14 @@ class TemplateContextTest{
         assertEquals(context.lyricsVisible, true)
 
     }
+
+    @Test
+    fun defaultModels(){
+        val context = TemplateContext(null, null, null)
+
+        assertNull(context.lyricsVisible)
+        assertNull(context.focusedItemToken)
+        assertNull(context.visibleTokenList)
+    }
 }
 
