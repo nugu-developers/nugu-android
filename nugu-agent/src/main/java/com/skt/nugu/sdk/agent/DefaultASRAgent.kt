@@ -134,7 +134,7 @@ class DefaultASRAgent(
     private val onMultiturnListeners = HashSet<ASRAgentInterface.OnMultiturnListener>()
 
     private val executor = Executors.newSingleThreadExecutor()
-    private var state = ASRAgentInterface.State.IDLE
+    private var state: ASRAgentInterface.State = ASRAgentInterface.State.IDLE
 
     private var focusState = FocusState.NONE
 
@@ -875,7 +875,7 @@ class DefaultASRAgent(
         executor.submit {
             val aipState = when (state) {
                 SpeechRecognizer.State.EXPECTING_SPEECH -> {
-                    ASRAgentInterface.State.LISTENING
+                    ASRAgentInterface.State.LISTENING(currentRequest?.second?.initiator ?: ASRAgentInterface.Initiator.WAKE_UP_WORD)
                 }
                 SpeechRecognizer.State.SPEECH_START -> ASRAgentInterface.State.RECOGNIZING
                 SpeechRecognizer.State.SPEECH_END -> {

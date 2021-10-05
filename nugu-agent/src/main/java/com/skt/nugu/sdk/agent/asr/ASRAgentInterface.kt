@@ -24,42 +24,50 @@ import com.skt.nugu.sdk.core.interfaces.message.Header
  * The public interface for ASRAgent
  */
 interface ASRAgentInterface {
-    /**
-     * State of ASRAgent
-     */
-    enum class State {
+    sealed class State {
         /**
          * Not recognizing : Initial state or
          */
-        IDLE,
+        object IDLE : State() {
+            override fun isRecognizing(): Boolean = false
+            override val name: String = "IDLE"
+
+        }
+
         /**
          * Recognizing: waiting to start speech for speech recognition
          */
-        EXPECTING_SPEECH,
+        object EXPECTING_SPEECH : State() {
+            override val name: String = "EXPECTING_SPEECH"
+        }
 
         /**
          * Recognizing: speech recognition started, but not speech started yet.
          */
-        LISTENING,
+        data class LISTENING(val initiator: Initiator) : State() {
+            override val name: String = "LISTENING"
+        }
 
         /**
          * Recognizing: streaming speech data to recognize.
          */
-        RECOGNIZING,
+        object RECOGNIZING : State() {
+            override val name: String = "RECOGNIZING"
+        }
 
         /**
          * Recognizing: streaming finished, waiting to get complete recognized result.
          */
-        BUSY;
+        object BUSY : State() {
+            override val name: String = "BUSY"
+        }
 
         /**
          * Return whether recognizing state or not
          * @return true: recognizing state, false: otherwise
          */
-        fun isRecognizing(): Boolean = when(this) {
-            IDLE -> false
-            else -> true
-        }
+        open fun isRecognizing(): Boolean = true
+        abstract val name: String
     }
 
     enum class Initiator {

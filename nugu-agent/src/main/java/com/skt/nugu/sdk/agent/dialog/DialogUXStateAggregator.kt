@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent.dialog
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.chips.Chip
 import com.skt.nugu.sdk.agent.chips.ChipsAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
@@ -158,23 +159,23 @@ class DialogUXStateAggregator(
 
         executor.submit {
             when (state) {
-                ASRAgentInterface.State.IDLE -> {
+                is ASRAgentInterface.State.IDLE -> {
                     if(prevState == ASRAgentInterface.State.BUSY) {
                         tryEnterIdleState()
                     } else {
                         tryEnterIdleState(0)
                     }
                 }
-                ASRAgentInterface.State.RECOGNIZING -> {
-                    setState(DialogUXStateAggregatorInterface.DialogUXState.LISTENING)
-                }
-                ASRAgentInterface.State.LISTENING -> {
+                is ASRAgentInterface.State.LISTENING -> {
                     setState(DialogUXStateAggregatorInterface.DialogUXState.EXPECTING)
                 }
-                ASRAgentInterface.State.BUSY -> {
+                is ASRAgentInterface.State.RECOGNIZING -> {
+                    setState(DialogUXStateAggregatorInterface.DialogUXState.LISTENING)
+                }
+                is ASRAgentInterface.State.BUSY -> {
                     setState(DialogUXStateAggregatorInterface.DialogUXState.THINKING)
                 }
-                ASRAgentInterface.State.EXPECTING_SPEECH -> {
+                is ASRAgentInterface.State.EXPECTING_SPEECH -> {
                     // ignore
                 }
             }
@@ -234,9 +235,21 @@ class DialogUXStateAggregator(
         val activeSessions = sessionManager.getActiveSessions()
 
         val chips: RenderDirective.Payload? = lastReceivedChips?.let { renderDirective ->
-            val targetChips = renderDirective.payload
-            if ((targetChips.target == RenderDirective.Payload.Target.LISTEN && currentState == DialogUXStateAggregatorInterface.DialogUXState.EXPECTING)
-                || (renderDirective.payload.target == RenderDirective.Payload.Target.SPEAKING && currentState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING)) {
+            // remove nudge chips if ASR not initiated by EXPECT_SPEECH Directive.
+            val tempAsrState = asrState
+            val targetChips = if(tempAsrState is ASRAgentInterface.State.LISTENING && tempAsrState.initiator != ASRAgentInterface.Initiator.EXPECT_SPEECH) {
+                if(renderDirective.payload.chips.any{it.type == Chip.Type.NUDGE}) {
+                    lastReceivedChips = null
+                    null
+                } else {
+                    renderDirective.payload
+                }
+            } else {
+                renderDirective.payload
+            }
+
+            if ((targetChips?.target == RenderDirective.Payload.Target.LISTEN && currentState == DialogUXStateAggregatorInterface.DialogUXState.EXPECTING)
+                || (targetChips?.target == RenderDirective.Payload.Target.SPEAKING && currentState == DialogUXStateAggregatorInterface.DialogUXState.SPEAKING)) {
                 lastReceivedChips = null
                 targetChips
             } else {
