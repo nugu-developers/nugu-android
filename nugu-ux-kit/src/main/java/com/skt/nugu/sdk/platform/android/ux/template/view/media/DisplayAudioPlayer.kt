@@ -123,11 +123,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private var isDark: Boolean = false
 
     private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
-        return try {
-            gson.fromJson(json, classOfT)
-        } catch (e: Throwable) {
-            null
-        }
+        return runCatching { gson.fromJson(json, classOfT) }.getOrNull()
     }
 
     override var templateHandler: TemplateHandler? = null

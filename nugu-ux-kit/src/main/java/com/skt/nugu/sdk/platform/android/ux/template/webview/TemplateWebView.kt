@@ -27,8 +27,8 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.AbsSavedState
 import android.view.MotionEvent
-import android.view.View
 import android.webkit.*
+import androidx.annotation.VisibleForTesting
 import com.google.gson.Gson
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
@@ -82,11 +82,17 @@ class TemplateWebView @JvmOverloads constructor(
 
     private var nuguButtonColorJob: Job? = null
 
+    @VisibleForTesting
+    internal lateinit var webinterface : WebAppInterface
+
     override var templateHandler: TemplateHandler? = null
         set(value) {
             field = value
             value?.run {
-                addJavascriptInterface(WebAppInterface(value), "Android")
+                WebAppInterface(value).apply {
+                    webinterface = this
+                    addJavascriptInterface(this, "Android")
+                }
 
                 if (TemplateView.MEDIA_TEMPLATE_TYPES.contains(templateInfo.templateType)) {
                     (this as? NuguTemplateHandler)?.observeMediaState()
@@ -109,7 +115,8 @@ class TemplateWebView @JvmOverloads constructor(
             }
         }
 
-    private val lyricPresenter = object : LyricsPresenter {
+    @VisibleForTesting
+    internal val lyricPresenter = object : LyricsPresenter {
         override fun getVisibility(): Boolean {
             return lyricsVisible
         }
@@ -422,10 +429,10 @@ class TemplateWebView @JvmOverloads constructor(
                 onContextChanged(context)
             }
 
-            val templateContext = gson.fromJson<TemplateContext>(context, TemplateContext::class.java)
-            templateContext.focusedItemToken?.let { focusedItemToken = it }
-            templateContext.visibleTokenList?.let { visibleTokenList = it }
-            templateContext.lyricsVisible?.let { lyricsVisible = it }
+            val templateContext = runCatching { gson.fromJson(context, TemplateContext::class.java) }.getOrNull()
+            templateContext?.focusedItemToken?.let { focusedItemToken = it }
+            templateContext?.visibleTokenList?.let { visibleTokenList = it }
+            templateContext?.lyricsVisible?.let { lyricsVisible = it }
         }
 
         @JavascriptInterface
@@ -497,7 +504,8 @@ class TemplateWebView @JvmOverloads constructor(
         return visibleTokenList
     }
 
-    private fun onLoadingComplete() {
+    @VisibleForTesting
+    internal fun onLoadingComplete() {
         onLoadingComplete?.invoke()
         onLoadingComplete = null
 
@@ -510,7 +518,8 @@ class TemplateWebView @JvmOverloads constructor(
         }
     }
 
-    private fun startNotifyDisplayInteraction() {
+    @VisibleForTesting
+    internal fun startNotifyDisplayInteraction() {
         fun notifyDisplayInteraction(): String? {
             val handler = templateHandler ?: return "templateHandler is null"
             val androidClient = (handler as? NuguTemplateHandler)?.getNuguClient()
@@ -531,14 +540,11 @@ class TemplateWebView @JvmOverloads constructor(
         notifyUserInteractionTimer?.cancel()
     }
 
-    private fun callJSFunction(script: String) {
+    @VisibleForTesting
+    internal fun callJSFunction(script: String) {
         if (isAttachedToWindow) {
             post {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    evaluateJavascript(script, null)
-                } else {
-                    loadUrl(script)
-                }
+                evaluateJavascript(script, null)
             }
         }
     }
