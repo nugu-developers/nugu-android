@@ -88,7 +88,7 @@ class AsrBeepPlayer(
 
     private val asrOnStateChangeListener: ASRAgentInterface.OnStateChangeListener = object : ASRAgentInterface.OnStateChangeListener {
         override fun onStateChanged(state: ASRAgentInterface.State) {
-            if(state == ASRAgentInterface.State.LISTENING) {
+            if(state is ASRAgentInterface.State.LISTENING) {
                 beepResourceProvider.getOnStartListeningResource()?.let {
                     tryPlayBeep(it)
                 }

@@ -78,12 +78,12 @@ class SpeechProcessorDelegate(
 
                 if(state != ASRAgentInterface.State.EXPECTING_SPEECH) {
                     epdState = when (state) {
-                        ASRAgentInterface.State.IDLE -> AudioEndPointDetector.State.STOP
+                        is ASRAgentInterface.State.IDLE -> AudioEndPointDetector.State.STOP
 //                    ASRAgentListener.State.TIMEOUT -> AudioEndPointDetector.State.TIMEOUT
-                        ASRAgentInterface.State.EXPECTING_SPEECH,
-                        ASRAgentInterface.State.LISTENING -> AudioEndPointDetector.State.EXPECTING_SPEECH
-                        ASRAgentInterface.State.RECOGNIZING -> AudioEndPointDetector.State.SPEECH_START
-                        ASRAgentInterface.State.BUSY -> AudioEndPointDetector.State.SPEECH_END
+                        is ASRAgentInterface.State.EXPECTING_SPEECH,
+                        is ASRAgentInterface.State.LISTENING -> AudioEndPointDetector.State.EXPECTING_SPEECH
+                        is ASRAgentInterface.State.RECOGNIZING -> AudioEndPointDetector.State.SPEECH_START
+                        is ASRAgentInterface.State.BUSY -> AudioEndPointDetector.State.SPEECH_END
                     }
 
                     when(epdState) {
