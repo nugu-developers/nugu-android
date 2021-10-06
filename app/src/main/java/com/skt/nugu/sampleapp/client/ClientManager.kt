@@ -117,6 +117,8 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             return
         }
 
+        // You can hide 'nugu_config.json' in local.properties :
+        // [https://github.com/nugu-developers/nugu-android/wiki/Hiding-nugu%E2%80%90config.json-in-local.properties]
         ConfigurationStore.configure(context = context, filename = "nugu-config.json" /* nugu-config.json is the default and can be omitted */)
 
         executor.submit {
