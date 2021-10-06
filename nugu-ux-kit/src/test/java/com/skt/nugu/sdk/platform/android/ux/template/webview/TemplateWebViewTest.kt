@@ -190,13 +190,4 @@ class TemplateWebViewTest{
         webViewSpy.startNotifyDisplayInteraction()
         verify(displayAgent, never()).notifyUserInteraction(any())
     }
-
-    @Test
-    fun userInteractionWithHandler(){
-        val webViewSpy = spy(webView)
-        webViewSpy.templateHandler = templateHandler
-
-        webViewSpy.startNotifyDisplayInteraction()
-        verify(displayAgent).notifyUserInteraction(any())
-    }
 }
