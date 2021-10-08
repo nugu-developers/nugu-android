@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.6.1 *(2021-10-08)*
+-----------------------------
+* Fix: Fix crash bytebuffer.position(int) API at Android 8.1 (#2091)
+
 Version 1.6.0 *(2021-10-01)*  
 Version 1.5.4 *(2021-09-28)*
 -----------------------------
