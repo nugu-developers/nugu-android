@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.client.sds
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.utils.Logger
 import java.io.IOException
+import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -173,7 +174,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
         }
 
         override fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int {
-            byteBuffer.position(offsetInBytes)
+            (byteBuffer as Buffer).position(offsetInBytes)
 
             return readInternal(offsetInBytes, sizeInBytes) { readOffset, _, readSize ->
                 byteBuffer.put(buffer, readOffset, readSize)

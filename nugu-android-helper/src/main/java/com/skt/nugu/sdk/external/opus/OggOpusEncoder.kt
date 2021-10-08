@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.nio.Buffer
 import java.nio.ByteBuffer
 
 class OggOpusEncoder : Encoder {
@@ -136,7 +137,7 @@ class OggOpusEncoder : Encoder {
                     }
 
                     if (opus_encoded > 0) {
-                        opusEncodedBuffer.position(opus_encoded)
+                        (opusEncodedBuffer as Buffer).position(opus_encoded)
                         opusEncodedBuffer.flip()
                         val opusData = ByteArray(opusEncodedBuffer.remaining())
                         opusEncodedBuffer[opusData, 0, opusData.size]

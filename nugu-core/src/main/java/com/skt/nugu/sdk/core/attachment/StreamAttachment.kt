@@ -19,6 +19,7 @@ import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.utils.Logger
 import java.io.EOFException
 import java.io.IOException
+import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -96,7 +97,7 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
             }
 
             override fun read(byteBuffer: ByteBuffer, offsetInBytes: Int, sizeInBytes: Int): Int {
-                byteBuffer.position(offsetInBytes)
+                (byteBuffer as Buffer).position(offsetInBytes)
 
                 return readInternal(offsetInBytes, sizeInBytes) {src,_ ->
                     byteBuffer.put(src)
