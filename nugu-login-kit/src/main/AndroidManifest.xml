@@ -12,7 +12,8 @@
                 android:name="com.skt.nugu.sdk.platform.android.login.view.NuguOAuthCallbackActivity"
                 android:launchMode="singleTask"
                 android:configChanges="keyboardHidden|orientation|uiMode|fontScale|screenSize"
-                android:theme="@style/Nugu.NoDisplay">
+                android:theme="@style/Nugu.NoDisplay"
+                android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -23,7 +24,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.skt.nugu.sdk.platform.android.login.view.WebViewActivity"/>
+            android:name="com.skt.nugu.sdk.platform.android.login.view.WebViewActivity"
+            android:exported="false" />
 
     </application>
 </manifest>
