@@ -26,8 +26,6 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status

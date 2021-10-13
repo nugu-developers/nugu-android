@@ -39,8 +39,6 @@ import com.skt.nugu.sdk.core.interfaces.display.LayerType
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
-import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
