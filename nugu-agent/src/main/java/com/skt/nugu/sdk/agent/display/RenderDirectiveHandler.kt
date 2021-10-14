@@ -81,6 +81,9 @@ class RenderDirectiveHandler(
         // supported for v1.8
         private const val NAME_TAB_EXTENSION = "TabExtension"
 
+        // supported for v1.9
+        private const val NAME_IMAGETEXT5 = "ImageText5"
+
         private val FULLTEXT1 = NamespaceAndName(
             DisplayAgent.NAMESPACE,
             NAME_FULLTEXT1
@@ -109,6 +112,10 @@ class RenderDirectiveHandler(
         private val IMAGETEXT4 = NamespaceAndName(
             DisplayAgent.NAMESPACE,
             NAME_IMAGETEXT4
+        )
+        private val IMAGETEXT5 = NamespaceAndName(
+            DisplayAgent.NAMESPACE,
+            NAME_IMAGETEXT5
         )
         private val TEXTLIST1 = NamespaceAndName(
             DisplayAgent.NAMESPACE,
@@ -315,6 +322,7 @@ class RenderDirectiveHandler(
         configuration[IMAGETEXT2] = blockingPolicy
         configuration[IMAGETEXT3] = blockingPolicy
         configuration[IMAGETEXT4] = blockingPolicy
+        configuration[IMAGETEXT5] = blockingPolicy
         configuration[TEXTLIST1] = blockingPolicy
         configuration[TEXTLIST2] = blockingPolicy
         configuration[TEXTLIST3] = blockingPolicy
