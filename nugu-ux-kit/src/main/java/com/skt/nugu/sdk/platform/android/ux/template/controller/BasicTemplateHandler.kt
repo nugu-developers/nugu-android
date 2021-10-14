@@ -25,6 +25,11 @@ open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvide
         fragmentRef.get()?.run { (this as? TemplateFragment)?.close() }
     }
 
+    override fun onCloseWithParents() {
+        Logger.i(TAG, "onCloseWithMyParent()")
+        fragmentRef.get()?.run { (this as? TemplateFragment)?.closeWithParents() }
+    }
+
     override fun onCloseAllClicked() {
         Logger.i(TAG, "onCloseAll()")
         fragmentRef.get()?.run { (this as? TemplateFragment)?.closeAll() }
