@@ -48,7 +48,7 @@ interface DisplayAgentInterface:
     fun notifyUserInteraction(templateId: String)
 
     interface OnTriggerChildCallback: EventCallback<DisplayInterface.ErrorType>
-    fun triggerChild(playServiceId: String, parentToken: String, data: JsonObject, referrerDialogRequestId: String?, callback: OnTriggerChildCallback?)
+    fun triggerChild(templateId: String, playServiceId: String, data: JsonObject, callback: OnTriggerChildCallback?)
 
     /**
      * The renderer of display agent.
