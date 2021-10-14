@@ -468,6 +468,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)?,
         onLoadingFail: ((String?) -> Unit)?,
+        disableCloseButton : Boolean
     ) {
         Logger.i(TAG, "load. dialogRequestId: $dialogRequestId/*, \n template $templateContent*/")
 

@@ -107,6 +107,7 @@ interface TemplateView {
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)? = null,
         onLoadingFail: ((String?) -> Unit)? = null,
+        disableCloseButton : Boolean,
     )
 
     /**
