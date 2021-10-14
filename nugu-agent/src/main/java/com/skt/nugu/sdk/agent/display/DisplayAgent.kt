@@ -459,6 +459,7 @@ class DisplayAgent(
         return currentInfo.remove(info.directive.getMessageId()) != null
     }
 
+    @Throws(IllegalStateException::class)
     override fun setElementSelected(
         templateId: String,
         token: String,
@@ -466,10 +467,10 @@ class DisplayAgent(
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
         val directiveInfo = templateDirectiveInfoMap[templateId]
-            ?: throw IllegalStateException("invalid templateId: $templateId (maybe cleared or not rendered yet)")
+            ?: throw IllegalStateException("[setElementSelected] invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
         if(directiveInfo.payload.playServiceId.isNullOrBlank()) {
-            throw IllegalStateException("empty playServiceId: $templateId")
+            throw IllegalStateException("[setElementSelected] empty playServiceId: $templateId")
         }
 
         return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, postback, callback)
@@ -494,14 +495,19 @@ class DisplayAgent(
         }
     }
 
+    @Throws(IllegalStateException::class)
     override fun triggerChild(
+        templateId: String,
         playServiceId: String,
-        parentToken: String,
         data: JsonObject,
-        referrerDialogRequestId: String?,
         callback: DisplayAgentInterface.OnTriggerChildCallback?
     ) {
-        triggerChildEventSender.triggerChild(playServiceId, parentToken, data, referrerDialogRequestId, callback)
+        val directiveInfo = templateDirectiveInfoMap[templateId]
+            ?: throw IllegalStateException("[triggerChild] invalid templateId: $templateId (maybe cleared or not rendered yet)")
+
+        val parentToken = directiveInfo.payload.historyControl?.parentToken ?: throw IllegalStateException("[triggerChild] no parent token for templateId($templateId)")
+
+        triggerChildEventSender.triggerChild(playServiceId, parentToken, data, directiveInfo.dialogRequestId, callback)
     }
 
     override fun setRenderer(renderer: DisplayAgentInterface.Renderer?) {
@@ -729,7 +735,7 @@ class DisplayAgent(
         result: RedirectTriggerChildDirectiveHandler.Controller.OnResultListener
     ) {
         executor.submit {
-            triggerChild(payload.playServiceId, payload.parentToken, payload.data, header.dialogRequestId, object: DisplayAgentInterface.OnTriggerChildCallback {
+            triggerChildEventSender.triggerChild(payload.playServiceId, payload.parentToken, payload.data, header.dialogRequestId, object: DisplayAgentInterface.OnTriggerChildCallback {
                 override fun onSuccess(dialogRequestId: String) {
                     result.onSuccess()
                 }
