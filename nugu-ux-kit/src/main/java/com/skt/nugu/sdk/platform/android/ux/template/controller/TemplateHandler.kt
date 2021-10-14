@@ -38,11 +38,15 @@ interface TemplateHandler {
     var templateInfo: TemplateInfo
 
     // template -> client side
-    fun onElementSelected(tokenId: String) {}
+    fun onElementSelected(tokenId: String){}
+
+    fun onElementSelected(tokenId: String, postback : String?) {}
 
     fun onChipSelected(text: String) {}
 
     fun onCloseClicked() {}
+
+    fun onCloseWithParents() {}
 
     fun onCloseAllClicked() {}
 
