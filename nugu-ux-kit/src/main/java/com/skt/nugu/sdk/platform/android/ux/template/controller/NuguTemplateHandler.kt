@@ -120,7 +120,12 @@ open class NuguTemplateHandler(
 
     override fun onElementSelected(tokenId: String) {
         Logger.i(TAG, "onElementSelected() $tokenId")
-        getNuguClient().getDisplay()?.setElementSelected(templateInfo.templateId, tokenId)
+        getNuguClient().getDisplay()?.setElementSelected(templateId = templateInfo.templateId, token = tokenId, postback = null)
+    }
+
+    override fun onElementSelected(tokenId: String, postback: String?) {
+        Logger.i(TAG, "onElementSelected() $tokenId, postback $postback")
+        getNuguClient().getDisplay()?.setElementSelected(templateId = templateInfo.templateId, token = tokenId, postback = postback)
     }
 
     override fun onChipSelected(text: String) {

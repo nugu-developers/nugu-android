@@ -83,7 +83,7 @@ class TemplateWebView @JvmOverloads constructor(
     private var nuguButtonColorJob: Job? = null
 
     @VisibleForTesting
-    internal lateinit var webinterface : WebAppInterface
+    internal lateinit var webinterface: WebAppInterface
 
     override var templateHandler: TemplateHandler? = null
         set(value) {
@@ -237,6 +237,7 @@ class TemplateWebView @JvmOverloads constructor(
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)?,
         onLoadingFail: ((String?) -> Unit)?,
+        disableCloseButton: Boolean,
     ) {
         clientInfo.buttonColor = TemplateView.nuguButtonColor?.clientInfoString ?: ""
         Logger.d(TAG, "load() currentTheme $clientInfo")
@@ -281,6 +282,8 @@ class TemplateWebView @JvmOverloads constructor(
                 onLoadingFail?.invoke(error.toString())
             }
         }
+
+        clientInfo.disableCloseButton = disableCloseButton
 
         postUrl(templateUrl, buildString {
             append(String.format("%s=%s", KEY_POST_PARAM_DEVICE_TYPE_CODE, deviceTypeCode))
@@ -406,6 +409,12 @@ class TemplateWebView @JvmOverloads constructor(
             weakReference.get()?.run {
                 onElementSelected(tokenId)
             }
+        }
+
+        @JavascriptInterface
+        fun onButtonEvent(eventType: String, data: String) {
+            Logger.d(TAG, "[Javascript Interface] onButtonEvent : $eventType")
+            ButtonEvent.get(eventType)?.handle(weakReference.get() ?: return , data)
         }
 
         @JavascriptInterface
