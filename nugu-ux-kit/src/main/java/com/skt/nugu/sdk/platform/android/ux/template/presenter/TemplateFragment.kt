@@ -33,7 +33,9 @@ import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
+import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
+import java.util.*
 
 class TemplateFragment : Fragment() {
     companion object {
@@ -55,7 +57,7 @@ class TemplateFragment : Fragment() {
             templateId: String,
             template: String,
             displayType: DisplayAggregatorInterface.Type,
-            playServiceId: String
+            playServiceId: String,
         ): TemplateFragment {
             return TemplateFragment().apply {
                 arguments = createBundle(name, dialogRequestId, templateId, template, displayType, playServiceId)
@@ -73,7 +75,7 @@ class TemplateFragment : Fragment() {
             templateId: String,
             template: String,
             displayType: DisplayAggregatorInterface.Type,
-            playServiceId: String
+            playServiceId: String,
         ): Bundle =
             Bundle().apply {
                 putString(ARG_NAME, name)
@@ -95,7 +97,7 @@ class TemplateFragment : Fragment() {
     private val mainHandler = Handler(Looper.getMainLooper())
     var previousRenderInfo: Any? = null
 
-    private lateinit var handlerFactory : TemplateHandler.TemplateHandlerFactory
+    private lateinit var handlerFactory: TemplateHandler.TemplateHandlerFactory
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)
@@ -123,7 +125,7 @@ class TemplateFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         return inflater.inflate(layoutId, container, false)
     }
@@ -156,15 +158,6 @@ class TemplateFragment : Fragment() {
                 addView(this.asView())
             }
         }
-
-        if (TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType())) {
-            this.view?.findViewById<View>(R.id.btn_template_close)?.run {
-                visibility = View.VISIBLE
-                setThrottledOnClickListener {
-                    templateView?.templateHandler?.onCloseClicked()
-                }
-            }
-        }
     }
 
     private fun loadTemplate() {
@@ -194,7 +187,7 @@ class TemplateFragment : Fragment() {
                         viewModel.templateLoadingListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
                     }, onLoadingFail = { reason ->
                         viewModel.templateLoadingListener?.onReceivedError(getTemplateId(), getTemplateType(), getDisplayType(), reason)
-                    })
+                    }, TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType()))
             }
         }
     }
@@ -243,6 +236,17 @@ class TemplateFragment : Fragment() {
         activity?.run {
             supportFragmentManager.beginTransaction().remove(this@TemplateFragment).commitAllowingStateLoss()
             onClose()
+        }
+    }
+
+    fun closeWithParents() {
+        activity?.run {
+            supportFragmentManager.fragments.filterIsInstance<TemplateFragment>().forEach {
+                if (it.getPlayServiceId() == this@TemplateFragment.getPlayServiceId()) {
+                    supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
+                    it.onClose()
+                }
+            }
         }
     }
 

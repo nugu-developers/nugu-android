@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.model
 
 import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.display.DisplayAgent
 
 @Keep
 enum class LyricsType {
@@ -101,4 +102,9 @@ data class LyricsInfo(
 )
 
 @Keep
-data class ClientInfo(var theme: String = "", var buttonColor: String = "")
+data class ClientInfo(
+    var theme: String = "",
+    var buttonColor: String = "",
+    val displayInterfaceVersion: String = DisplayAgent.VERSION.toString(),
+    var disableCloseButton: Boolean = false,
+)
