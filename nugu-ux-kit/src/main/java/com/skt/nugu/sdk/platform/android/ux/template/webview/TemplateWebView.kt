@@ -404,14 +404,6 @@ class TemplateWebView @JvmOverloads constructor(
         }
 
         @JavascriptInterface
-        fun onElementSelected(tokenId: String) {
-            Logger.d(TAG, "[Javascript Interface] onElementSelected : $tokenId")
-            weakReference.get()?.run {
-                onElementSelected(tokenId)
-            }
-        }
-
-        @JavascriptInterface
         fun onButtonEvent(eventType: String, data: String) {
             Logger.d(TAG, "[Javascript Interface] onButtonEvent : $eventType $data")
             ButtonEvent.get(eventType)?.handle(weakReference.get() ?: return, data)
