@@ -92,28 +92,6 @@ class TemplateFragmentTest {
     }
 
     @Test
-    fun test2CloseButtonVisibility() {
-        // default setting. test close button visible
-        launchFragment().onFragment {
-            onView(withId(R.id.btn_template_close)).check(matches(isDisplayed()))
-        }
-
-        // launch media template fragment. and test close button not visible
-        launchFragment(true).onFragment {
-            withId(R.id.btn_template_close).matches(doesNotExist())
-        }
-
-        // set all template not have close button, and test it's work
-        TemplateView.enableCloseButton = { _, _, _ ->
-            false
-        }
-
-        launchFragment().onFragment {
-            withId(R.id.btn_template_close).matches(doesNotExist())
-        }
-    }
-
-    @Test
     fun test3NuguButtonVisibility() {
         launchFragment(true).onFragment {
             assertEquals(it.isNuguButtonVisible(), false)
