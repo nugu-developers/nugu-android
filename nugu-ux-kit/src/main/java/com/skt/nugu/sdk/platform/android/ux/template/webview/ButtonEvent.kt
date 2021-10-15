@@ -82,18 +82,6 @@ enum class ButtonEvent(val eventType: String) {
         }
     },
 
-    DEEPLINK("DEEPLINK") {
-        override fun handle(templateHandler: TemplateHandler, data: String) {
-            // todo. could be out of spec
-        }
-    },
-
-    WEB("WEB") {
-        override fun handle(templateHandler: TemplateHandler, data: String) {
-            // todo. could be out of spec
-        }
-    },
-
     CONTROL("CONTROL") {
         override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }.getOrNull()?.run {
