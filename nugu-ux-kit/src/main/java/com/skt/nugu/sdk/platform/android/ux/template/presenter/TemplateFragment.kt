@@ -187,7 +187,7 @@ class TemplateFragment : Fragment() {
                         viewModel.templateLoadingListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
                     }, onLoadingFail = { reason ->
                         viewModel.templateLoadingListener?.onReceivedError(getTemplateId(), getTemplateType(), getDisplayType(), reason)
-                    }, TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType()))
+                    }, !TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType()))
             }
         }
     }
