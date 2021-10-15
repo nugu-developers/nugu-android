@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.6.2 *(2021-10-15)*
+-----------------------------
+* Fix: Declared android:exported explicitly for components with intent-filter. (Android 12 requirement) (#2094)
+* New: Support DisplayInterface on Template #2097 (#2099)
+* New: Support Display Interface v1.9 (#2082)
+
 Version 1.6.1 *(2021-10-08)*
 -----------------------------
 * Fix: Fix crash bytebuffer.position(int) API at Android 8.1 (#2091)
