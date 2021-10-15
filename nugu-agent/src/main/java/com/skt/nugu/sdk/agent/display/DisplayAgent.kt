@@ -394,7 +394,7 @@ class DisplayAgent(
         templateDirectiveInfoMap.filter {
             it.value.payload.token == parentToken
         }.forEach {
-            contextLayerTimer?.get(it.value.payload.getContextLayerInternal())?.pause(it.key)
+            contextLayerTimer?.get(it.value.payload.getContextLayerInternal())?.stop(it.key)
         }
     }
 
@@ -404,7 +404,15 @@ class DisplayAgent(
         templateDirectiveInfoMap.filter {
             it.value.payload.token == parentToken
         }.forEach {
-            contextLayerTimer?.get(it.value.payload.getContextLayerInternal())?.reset(it.key)
+            contextLayerTimer?.get(it.value.payload.getContextLayerInternal())?.let { timer->
+                val templateId = it.key
+                val info = it.value
+                timer.stop(templateId)
+                timer.start(templateId, it.value.getDuration()) {
+                    info.clearRequested = true
+                    renderer?.clear(templateId, true)
+                }
+            }
         }
     }
 
