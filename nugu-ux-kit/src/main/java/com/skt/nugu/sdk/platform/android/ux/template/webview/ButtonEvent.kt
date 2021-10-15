@@ -9,8 +9,8 @@ enum class ButtonEvent(val eventType: String) {
     ElementSelected("Display.ElementSelected") {
         override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }.getOrNull()?.run {
-                val token = runCatching { get("token") }.getOrNull()?.toString()
-                val postback = runCatching { get("postback") }.getOrNull()?.toString()
+                val token = runCatching { get("token") }.getOrNull()?.asString
+                val postback = runCatching { get("postback") }.getOrNull()?.asString
 
                 if (token == null) {
                     Logger.d(TAG, "ElementSelected fail. token missing")
@@ -28,8 +28,8 @@ enum class ButtonEvent(val eventType: String) {
     TextInput("Text.TextInput") {
         override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }.getOrNull()?.run {
-                val text = runCatching { get("text") }.getOrNull()?.toString()
-                val playServiceId = runCatching { get("playServiceId") }.getOrNull()?.toString()
+                val text = runCatching { get("text") }.getOrNull()?.asString
+                val playServiceId = runCatching { get("playServiceId") }.getOrNull()?.asString
                 val textAgent = (templateHandler as? BasicTemplateHandler)?.getNuguClient()?.textAgent
 
                 if (textAgent == null || text == null) {
@@ -47,9 +47,9 @@ enum class ButtonEvent(val eventType: String) {
     EVENT("EVENT") {
         override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }.getOrNull()?.run {
-                val type = runCatching { get("type") }.getOrNull()?.toString()
-                val playServiceId = runCatching { get("data").asJsonObject.get("playServiceId") }.getOrNull()?.toString()
-                val eventData = runCatching { get("data").asJsonObject.get("data") }.getOrNull()?.toString()
+                val type = runCatching { get("type") }.getOrNull()?.asString
+                val playServiceId = runCatching { get("data").asJsonObject.get("playServiceId") }.getOrNull()?.asString
+                val eventData = runCatching { get("data").asJsonObject.get("data") }.getOrNull()
 
                 if (type == null || playServiceId == null || eventData == null) {
                     Logger.d(TAG, "EVENT fail. something missing. type : $type, playServiceId : $playServiceId, data : $eventData")
@@ -58,12 +58,18 @@ enum class ButtonEvent(val eventType: String) {
 
                 when (type) {
                     "Extension.CommandIssued" -> {
-                        val extensionAgent = (templateHandler as? BasicTemplateHandler)?.getNuguClient()?.extensionAgent
-                        extensionAgent?.issueCommand(playServiceId, eventData, null)
+                        (templateHandler as? BasicTemplateHandler)?.getNuguClient()?.extensionAgent?.issueCommand(
+                            playServiceId,
+                            eventData.asString,
+                            null)
                     }
 
                     "Display.TriggerChild" -> {
-                        //todo
+                        (templateHandler as? BasicTemplateHandler)?.getNuguClient()?.displayAgent?.triggerChild(
+                            templateHandler.templateInfo.templateId,
+                            playServiceId,
+                            eventData.asJsonObject,
+                            null)
                     }
 
                     else -> {
@@ -91,7 +97,7 @@ enum class ButtonEvent(val eventType: String) {
     CONTROL("CONTROL") {
         override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }.getOrNull()?.run {
-                val type = runCatching { get("type") }.getOrNull()?.toString()
+                val type = runCatching { get("type") }.getOrNull()?.asString
 
                 if (type == null) {
                     Logger.d(TAG, "CONTROL fail. type missing. type : $type")
