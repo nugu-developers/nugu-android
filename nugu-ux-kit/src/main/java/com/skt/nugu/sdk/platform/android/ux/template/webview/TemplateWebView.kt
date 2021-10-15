@@ -413,8 +413,8 @@ class TemplateWebView @JvmOverloads constructor(
 
         @JavascriptInterface
         fun onButtonEvent(eventType: String, data: String) {
-            Logger.d(TAG, "[Javascript Interface] onButtonEvent : $eventType")
-            ButtonEvent.get(eventType)?.handle(weakReference.get() ?: return , data)
+            Logger.d(TAG, "[Javascript Interface] onButtonEvent : $eventType $data")
+            ButtonEvent.get(eventType)?.handle(weakReference.get() ?: return, data)
         }
 
         @JavascriptInterface
