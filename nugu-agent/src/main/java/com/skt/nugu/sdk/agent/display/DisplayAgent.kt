@@ -513,7 +513,7 @@ class DisplayAgent(
         val directiveInfo = templateDirectiveInfoMap[templateId]
             ?: throw IllegalStateException("[triggerChild] invalid templateId: $templateId (maybe cleared or not rendered yet)")
 
-        val parentToken = directiveInfo.payload.historyControl?.parentToken ?: throw IllegalStateException("[triggerChild] no parent token for templateId($templateId)")
+        val parentToken = directiveInfo.payload.token ?: throw IllegalStateException("[triggerChild] no token for templateId($templateId)")
 
         triggerChildEventSender.triggerChild(playServiceId, parentToken, data, directiveInfo.dialogRequestId, callback)
     }
