@@ -117,9 +117,6 @@ class TemplateWebViewTest{
         webViewSpy.webinterface.requestTTS("tts")
         verify(templateHandler).playTTS("tts")
 
-        webViewSpy.webinterface.onElementSelected("tokenId")
-        verify(templateHandler).onElementSelected("tokenId")
-
         webViewSpy.webinterface.onControlResult("action", "result")
         verify(templateHandler).onControlResult("action", "result")
 
