@@ -372,6 +372,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         progressView.setOnTouchListener { _, _ -> true }
+        barProgress.setOnTouchListener { _, _ -> true }
     }
 
     /**
