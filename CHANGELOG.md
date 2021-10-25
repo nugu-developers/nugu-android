@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.6.3 *(2021-10-25)*
+-----------------------------
+* Fix: Fix Media Template touch event handling issues. (#2105)
+
 Version 1.6.2 *(2021-10-15)*
 -----------------------------
 * Fix: Declared android:exported explicitly for components with intent-filter. (Android 12 requirement) (#2094)
