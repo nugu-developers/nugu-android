@@ -21,6 +21,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import androidx.annotation.VisibleForTesting
 import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
@@ -45,7 +46,7 @@ class NuguOAuthCallbackActivity : Activity() {
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String = NuguOAuth.ACTION_LOGIN
     private var theme: String? = null
-    private var handler: Handler = Handler()
+    private var handler: Handler = Handler(Looper.getMainLooper())
     private val finishRunnable = Runnable {
         if(firstRequestCode == nextRequestCode) {
             finish()

@@ -25,6 +25,7 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.StateListDrawable
 import android.os.Build
 import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.util.DisplayMetrics
 import android.view.Gravity
@@ -84,7 +85,7 @@ class NuguButton @JvmOverloads constructor(
     private var isInitialized: Boolean = false
 
     private var numberOfDots = 3
-    private val animationHandler = Handler()
+    private val animationHandler = Handler(Looper.getMainLooper())
     private var activeDotIndex = 0
     private var inactiveColor = 0
         get() {
