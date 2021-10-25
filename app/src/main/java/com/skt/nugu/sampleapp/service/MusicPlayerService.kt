@@ -25,6 +25,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.SystemClock
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import android.util.Log
 import android.view.View
@@ -81,7 +82,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
     private var playerActivity: AudioPlayerAgentInterface.State = AudioPlayerAgentInterface.State.PLAYING
     private var audioItemContext: AudioPlayerAgentInterface.Context? = null
     private var isDestroying: Boolean = false
-    private var handler: Handler = Handler()
+    private var handler: Handler = Handler(Looper.getMainLooper())
     private val stopServiceRunnable = Runnable {
         stopServiceSelf()
     }
