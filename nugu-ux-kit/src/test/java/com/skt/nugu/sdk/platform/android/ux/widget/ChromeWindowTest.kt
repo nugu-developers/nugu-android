@@ -210,7 +210,6 @@ class ChromeWindowTest {
         // onChipsClicked() test
         val chipsItem = NuguChipsView.Item(text = "request", Chip.Type.GENERAL)
         chromeWindow.contentLayout.callback!!.onChipsClicked(chipsItem)
-        verify(callbackMock).onChipsClicked(chipsItem)
         verify(nuguAndroidClient).requestTextInput("request")
         verify(asrAgent).stopRecognition()
 
