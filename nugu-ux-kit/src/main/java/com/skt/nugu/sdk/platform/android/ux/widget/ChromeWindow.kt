@@ -43,9 +43,13 @@ class ChromeWindow(
     interface OnChromeWindowCallback {
         fun onExpandStarted()
         fun onHiddenFinished()
-        fun onChipsClicked(item: NuguChipsView.Item) {
-            // Chips click basic action is done by SDK, implement this method if you need additional action.
-        }
+    }
+
+    interface OnChipsClickListener {
+        /**
+         * Called when a chips clicked.
+         */
+        fun onChipsClicked(item: NuguChipsView.Item)
     }
 
     interface CustomChipsProvider {
@@ -61,6 +65,9 @@ class ChromeWindow(
 
     @VisibleForTesting
     internal var callback: OnChromeWindowCallback? = null
+    @VisibleForTesting
+    internal var onChipsClickListener: OnChipsClickListener? = null
+
     @VisibleForTesting
     internal var contentLayout: ChromeWindowContentLayout
     private var screenOnWhileASR = false
@@ -83,8 +90,12 @@ class ChromeWindow(
             }
 
             override fun onChipsClicked(item: NuguChipsView.Item) {
-                callback?.onChipsClicked(item)
+                onChipsClickListener?.let {
+                    it.onChipsClicked(item)
+                    return
+                }
 
+                // if callback exist, do not default behavior(following).
                 nuguClientProvider.getNuguClient().requestTextInput(item.text)
                 nuguClientProvider.getNuguClient().asrAgent?.stopRecognition()
             }
@@ -207,6 +218,14 @@ class ChromeWindow(
      */
     fun setOnChromeWindowCallback(callback: OnChromeWindowCallback?) {
         this.callback = callback
+    }
+
+    /**
+     * Set a listener which invoked on chips clicked.
+     * A listener will override a default behavior.
+     */
+    fun setOnChipsClickListener(listener: OnChipsClickListener?) {
+        this.onChipsClickListener = listener
     }
 
     fun setOnCustomChipsProvider(provider: CustomChipsProvider) {
