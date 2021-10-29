@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 1.6.4 *(2021-10-29)*
+-----------------------------
+* Fix: Fix onChipsClicked behavior (#2111)
+    * When onChipsClicked event occur, just propagate event to callback if ChromeWindow's OnChromeWindowCallback was set.
+
 Version 1.6.3 *(2021-10-25)*
 -----------------------------
 * Fix: Fix Media Template touch event handling issues. (#2105)
