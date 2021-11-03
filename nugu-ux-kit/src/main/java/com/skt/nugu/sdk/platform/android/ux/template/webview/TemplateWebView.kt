@@ -99,7 +99,7 @@ class TemplateWebView @JvmOverloads constructor(
                 }
 
                 value.setClientListener(this@TemplateWebView)
-                (this as? NuguTemplateHandler)?.getNuguClient()?.run {
+                this.getNuguClient().run {
                     audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                     themeManager.addListener(this@TemplateWebView)
                     clientInfo.theme = themeToString(themeManager.theme, resources.configuration)
@@ -257,14 +257,14 @@ class TemplateWebView @JvmOverloads constructor(
         webViewClient = object : WebViewClient() {
             override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
                 super.onReceivedError(view, errorCode, description, failingUrl)
-                Logger.d(TAG, "onReceivedError() ${(templateHandler as? NuguTemplateHandler)?.templateInfo?.templateId}, $errorCode, $description")
+                Logger.d(TAG, "onReceivedError() ${templateHandler?.templateInfo?.templateId}, $errorCode, $description")
 
                 onLoadingFail?.invoke(description)
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 super.onReceivedError(view, request, error)
-                Logger.d(TAG, "onReceivedError() ${(templateHandler as? NuguTemplateHandler)?.templateInfo?.templateId}," +
+                Logger.d(TAG, "onReceivedError() ${templateHandler?.templateInfo?.templateId}," +
                         " ${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) error?.description else error?.toString()}")
                 onLoadingFail?.invoke(error.toString())
             }
@@ -272,13 +272,13 @@ class TemplateWebView @JvmOverloads constructor(
             override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
                 super.onReceivedHttpError(view, request, errorResponse)
                 Logger.d(TAG,
-                    "onReceivedHttpError() ${(templateHandler as? NuguTemplateHandler)?.templateInfo?.templateId}, ${errorResponse.toString()}")
+                    "onReceivedHttpError() ${templateHandler?.templateInfo?.templateId}, ${errorResponse.toString()}")
                 onLoadingFail?.invoke(errorResponse.toString())
             }
 
             override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
                 super.onReceivedSslError(view, handler, error)
-                Logger.d(TAG, "onReceivedSslError() ${(templateHandler as? NuguTemplateHandler)?.templateInfo?.templateId}, ${error.toString()}")
+                Logger.d(TAG, "onReceivedSslError() ${templateHandler?.templateInfo?.templateId}, ${error.toString()}")
                 onLoadingFail?.invoke(error.toString())
             }
         }
@@ -316,7 +316,7 @@ class TemplateWebView @JvmOverloads constructor(
 
         newConfig ?: return
 
-        (templateHandler as? NuguTemplateHandler)?.getNuguClient()?.themeManager?.run {
+        templateHandler?.getNuguClient()?.themeManager?.run {
             themeToString(theme, newConfig).let { newTheme ->
                 if (clientInfo.theme != newTheme) {
                     Logger.d(TAG, "onConfigurationChanged. and theme changed to $newTheme")
@@ -331,7 +331,7 @@ class TemplateWebView @JvmOverloads constructor(
         super.onDetachedFromWindow()
         Logger.d(TAG, "onDetachedFromWindow")
 
-        (templateHandler as? NuguTemplateHandler)?.run {
+        templateHandler?.run {
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
                 getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
@@ -523,7 +523,7 @@ class TemplateWebView @JvmOverloads constructor(
     internal fun startNotifyDisplayInteraction() {
         fun notifyDisplayInteraction(): String? {
             val handler = templateHandler ?: return "templateHandler is null"
-            val androidClient = (handler as? NuguTemplateHandler)?.getNuguClient()
+            val androidClient = handler.getNuguClient()
                 ?: return "androidClient is null"
             androidClient.displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
             return null

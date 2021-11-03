@@ -2,11 +2,11 @@ package com.skt.nugu.sdk.platform.android.ux.template.webview
 
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.platform.android.ux.template.controller.NuguTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 
 enum class ButtonEvent(val eventType: String) {
     ElementSelected("Display.ElementSelected") {
-        override fun handle(templateHandler: NuguTemplateHandler, data: String) {
+        override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }
                 .onSuccess {
                     val token = runCatching { it.get("token") }.getOrNull()?.asString
@@ -25,7 +25,7 @@ enum class ButtonEvent(val eventType: String) {
     },
 
     TextInput("Text.TextInput") {
-        override fun handle(templateHandler: NuguTemplateHandler, data: String) {
+        override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }
                 .onSuccess {
                     val text = runCatching { it.get("text") }.getOrNull()?.asString
@@ -44,7 +44,7 @@ enum class ButtonEvent(val eventType: String) {
     },
 
     EVENT("EVENT") {
-        override fun handle(templateHandler: NuguTemplateHandler, data: String) {
+        override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }
                 .onSuccess {
                     val type = runCatching { it.get("type") }.getOrNull()?.asString
@@ -56,13 +56,13 @@ enum class ButtonEvent(val eventType: String) {
                     } else {
                         when (type) {
                             "Extension.CommandIssued" -> {
-                                templateHandler.getNuguClient()?.extensionAgent?.issueCommand(
+                                templateHandler.getNuguClient().extensionAgent?.issueCommand(
                                     playServiceId,
                                     eventData.asString,
                                     null)
                             }
                             "Display.TriggerChild" -> {
-                                templateHandler.getNuguClient()?.displayAgent?.triggerChild(
+                                templateHandler.getNuguClient().displayAgent?.triggerChild(
                                     templateHandler.templateInfo.templateId,
                                     playServiceId,
                                     eventData.asJsonObject,
@@ -81,7 +81,7 @@ enum class ButtonEvent(val eventType: String) {
     },
 
     CONTROL("CONTROL") {
-        override fun handle(templateHandler: NuguTemplateHandler, data: String) {
+        override fun handle(templateHandler: TemplateHandler, data: String) {
             runCatching { JsonParser.parseString(data).asJsonObject }
                 .onSuccess {
                     val type = runCatching { it.get("type") }.getOrNull()?.asString
@@ -108,7 +108,7 @@ enum class ButtonEvent(val eventType: String) {
         }
     };
 
-    abstract fun handle(templateHandler: NuguTemplateHandler, data: String)
+    abstract fun handle(templateHandler: TemplateHandler, data: String)
 
     companion object {
         private const val TAG = "ButtonEvent"

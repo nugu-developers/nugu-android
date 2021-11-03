@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.controller
 import androidx.fragment.app.Fragment
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.common.Direction
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 
 /**
@@ -86,4 +87,6 @@ interface TemplateHandler {
     }
 
     fun clear()
+
+    fun getNuguClient() : NuguAndroidClient
 }

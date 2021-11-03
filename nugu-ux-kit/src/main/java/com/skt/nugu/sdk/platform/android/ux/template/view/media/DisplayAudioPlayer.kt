@@ -469,7 +469,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)?,
         onLoadingFail: ((String?) -> Unit)?,
-        disableCloseButton : Boolean
+        disableCloseButton: Boolean,
     ) {
         Logger.i(TAG, "load. dialogRequestId: $dialogRequestId/*, \n template $templateContent*/")
 
@@ -660,7 +660,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
         }
 
-        (templateHandler as? NuguTemplateHandler)?.getNuguClient()?.themeManager?.run {
+        templateHandler?.getNuguClient()?.themeManager?.run {
             val newIsDark = theme == DARK ||
                     (theme == SYSTEM && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
             Logger.i(TAG, "updateThemeIfNeeded. currentTheme $theme current isDark? $isDark,  new isDark? $newIsDark")
@@ -762,7 +762,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
 
-        (templateHandler as? NuguTemplateHandler)?.run {
+        templateHandler?.run {
             if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
                 getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
