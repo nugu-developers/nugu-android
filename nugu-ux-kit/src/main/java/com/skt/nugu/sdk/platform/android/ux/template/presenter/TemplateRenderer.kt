@@ -92,11 +92,12 @@ class TemplateRenderer(
         templateType: String,
         templateContent: String,
         header: Header,
-        displayType: DisplayAggregatorInterface.Type
+        displayType: DisplayAggregatorInterface.Type,
+        parentTemplateId: String?
     ): Boolean {
         Logger.i(
             TAG,
-            "render() templateId:$templateId, \n templateType:$templateType, \n templateContent:$templateContent, \n header:$header, \n displayType$displayType"
+            "render() templateId:$templateId, \n templateType:$templateType, \n templateContent:$templateContent, \n header:$header, \n displayType:$displayType, \n parentTemplateId:$parentTemplateId"
         )
 
         if (fragmentManagerRef.get() == null) {

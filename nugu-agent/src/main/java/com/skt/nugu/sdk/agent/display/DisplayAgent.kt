@@ -325,12 +325,24 @@ class DisplayAgent(
     private fun executeRender(info: TemplateDirectiveInfo) {
         val template = info.directive
         val layer = info.payload.contextLayer ?: DisplayAgentInterface.ContextLayer.INFO
+
+        val parentToken = info.payload.historyControl?.parentToken
+
+        val parentTemplateId: String? = if(!parentToken.isNullOrBlank()) {
+            templateDirectiveInfoMap.filter {
+                it.value.payload.token == parentToken
+            }.keys.firstOrNull()
+        } else {
+            null
+        }
+
         val willBeRender = renderer?.render(
             template.getMessageId(),
             "${template.getNamespace()}.${template.getName()}",
             template.payload,
             info.directive.header,
-            layer
+            layer,
+            parentTemplateId
         ) ?: false
         if (!willBeRender) {
             // the renderer denied to render

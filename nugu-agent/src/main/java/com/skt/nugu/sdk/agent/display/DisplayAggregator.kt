@@ -34,7 +34,8 @@ class DisplayAggregator(
             templateType: String,
             templateContent: String,
             header: Header,
-            type: DisplayAggregatorInterface.Type
+            type: DisplayAggregatorInterface.Type,
+            parentTemplateId: String?
         ): Boolean {
             lock.withLock {
                 requestAgentMap[templateId] = getAgent()
@@ -44,7 +45,8 @@ class DisplayAggregator(
                 templateType,
                 templateContent,
                 header,
-                type
+                type,
+                parentTemplateId
             ) ?: false
 
             if (!willRender) {
@@ -81,13 +83,15 @@ class DisplayAggregator(
                 templateType: String,
                 templateContent: String,
                 header: Header,
-                contextLayer: DisplayAgentInterface.ContextLayer
+                contextLayer: DisplayAgentInterface.ContextLayer,
+                parentTemplateId: String?
             ): Boolean = renderer.render(
                 templateId,
                 templateType,
                 templateContent,
                 header,
-                getAndRemoveTypeForTemplateAgent(header, contextLayer)
+                getAndRemoveTypeForTemplateAgent(header, contextLayer),
+                parentTemplateId
             )
 
             override fun clear(templateId: String, force: Boolean) =
@@ -114,7 +118,8 @@ class DisplayAggregator(
                     templateType,
                     templateContent,
                     header,
-                    DisplayAggregatorInterface.Type.AUDIO_PLAYER
+                    DisplayAggregatorInterface.Type.AUDIO_PLAYER,
+                    null
                 )
 
             override fun clear(templateId: String, force: Boolean) =
