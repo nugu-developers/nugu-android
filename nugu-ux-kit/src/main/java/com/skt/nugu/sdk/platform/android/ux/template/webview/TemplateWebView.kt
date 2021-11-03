@@ -523,9 +523,7 @@ class TemplateWebView @JvmOverloads constructor(
     internal fun startNotifyDisplayInteraction() {
         fun notifyDisplayInteraction(): String? {
             val handler = templateHandler ?: return "templateHandler is null"
-            val androidClient = handler.getNuguClient()
-                ?: return "androidClient is null"
-            androidClient.displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
+            handler.getNuguClient().displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
             return null
         }
 
