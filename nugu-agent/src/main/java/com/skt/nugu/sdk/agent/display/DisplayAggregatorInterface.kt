@@ -58,9 +58,10 @@ interface DisplayAggregatorInterface:
          * @param templateContent the content of template in structured JSON
          * @param header the header for the render
          * @param displayType the display type of display
+         * @param parentTemplateId the parent template id, null if not exist.
          * @return true: if will render, false: otherwise
          */
-        fun render(templateId: String, templateType: String, templateContent: String, header: Header, displayType: Type): Boolean
+        fun render(templateId: String, templateType: String, templateContent: String, header: Header, displayType: Type, parentTemplateId: String?): Boolean
 
         /**
          * Used to notify the renderer when display should be cleared .

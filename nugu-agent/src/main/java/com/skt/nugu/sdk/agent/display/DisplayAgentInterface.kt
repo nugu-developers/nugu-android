@@ -67,9 +67,10 @@ interface DisplayAgentInterface:
          * @param templateContent the content of template in structured JSON
          * @param header the header for this render
          * @param contextLayer the layer type
+         * @param parentTemplateId the parent template id, null if not exist.
          * @return true: if will render, false: otherwise
          */
-        fun render(templateId: String, templateType: String, templateContent: String, header: Header, contextLayer: ContextLayer): Boolean
+        fun render(templateId: String, templateType: String, templateContent: String, header: Header, contextLayer: ContextLayer, parentTemplateId: String?): Boolean
 
         /**
          * Used to notify the renderer when display should be cleared .
