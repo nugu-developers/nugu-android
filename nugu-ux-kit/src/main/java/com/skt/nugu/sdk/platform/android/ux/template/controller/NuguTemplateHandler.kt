@@ -30,7 +30,6 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
-import com.skt.nugu.sdk.platform.android.ux.template.webview.JavaScriptHelper
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
@@ -245,5 +244,5 @@ open class NuguTemplateHandler(
         clientListener = null
     }
 
-    fun getNuguClient(): NuguAndroidClient = nuguProvider.getNuguClient()
+    override fun getNuguClient(): NuguAndroidClient = nuguProvider.getNuguClient()
 }
