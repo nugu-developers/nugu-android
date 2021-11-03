@@ -1,6 +1,7 @@
 Change Log
 ==========
 
+Version 1.7.0 *(2021-11-03)*  
 Version 1.6.4 *(2021-10-29)*
 -----------------------------
 * Fix: Fix onChipsClicked behavior (#2111)
