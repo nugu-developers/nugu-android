@@ -30,11 +30,9 @@ import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
-import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
-import com.skt.nugu.sdk.platform.android.ux.template.webview.TemplateWebView
-import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 import java.util.*
 
 class TemplateFragment : Fragment() {
@@ -150,7 +148,7 @@ class TemplateFragment : Fragment() {
             with(templateView!!) {
 
                 if (viewModel.templateHandler != null) {
-                    (viewModel.templateHandler as? BasicTemplateHandler)?.updateFragment(this@TemplateFragment)
+                    (viewModel.templateHandler as? DefaultTemplateHandler)?.updateFragment(this@TemplateFragment)
                     templateHandler = viewModel.templateHandler
                 } else {
                     templateHandler = handlerFactory.onCreate(viewModel.nuguClientProvider,
@@ -300,7 +298,7 @@ class TemplateFragment : Fragment() {
         if (viewModel.renderNotified == RenderNotifyState.NONE) {
             Logger.i(TAG, "notifyRendered ${getTemplateId()}")
             viewModel.nuguClientProvider.getNuguClient().getDisplay()
-                ?.displayCardRendered(getTemplateId(), (templateView?.templateHandler as? BasicTemplateHandler)?.displayController)
+                ?.displayCardRendered(getTemplateId(), (templateView?.templateHandler as? DefaultTemplateHandler)?.displayController)
             viewModel.renderNotified = RenderNotifyState.RENDERED
         }
     }

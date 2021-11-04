@@ -38,13 +38,13 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.BuildConfig
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
-import com.skt.nugu.sdk.platform.android.ux.template.controller.NuguTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.isSupportFocusedItemToken
 import com.skt.nugu.sdk.platform.android.ux.template.isSupportVisibleTokenList
 import com.skt.nugu.sdk.platform.android.ux.template.model.ClientInfo
 import com.skt.nugu.sdk.platform.android.ux.template.model.TemplateContext
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -94,12 +94,8 @@ class TemplateWebView @JvmOverloads constructor(
                     addJavascriptInterface(this, "Android")
                 }
 
-                if (TemplateView.MEDIA_TEMPLATE_TYPES.contains(templateInfo.templateType)) {
-                    (this as? NuguTemplateHandler)?.observeMediaState()
-                }
-
                 value.setClientListener(this@TemplateWebView)
-                this.getNuguClient().run {
+                this.getNuguClient()?.run {
                     audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
                     themeManager.addListener(this@TemplateWebView)
                     clientInfo.theme = themeToString(themeManager.theme, resources.configuration)
@@ -331,12 +327,12 @@ class TemplateWebView @JvmOverloads constructor(
         super.onDetachedFromWindow()
         Logger.d(TAG, "onDetachedFromWindow")
 
-        templateHandler?.run {
-            if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
-                getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
+        templateHandler?.getNuguClient()?.run {
+            if (audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
+                audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
 
-            getNuguClient().themeManager.removeListener(this@TemplateWebView)
+            themeManager.removeListener(this@TemplateWebView)
             nuguButtonColorJob?.cancel()
         }
     }
@@ -383,7 +379,7 @@ class TemplateWebView @JvmOverloads constructor(
         fun playerCommand(command: String, param: String) {
             Logger.d(TAG, "[JavascriptInterface] [playerCommand] command: $command, param: $param")
             weakReference.get()?.run {
-                onPlayerCommand(command, param)
+                onPlayerCommand(PlayerCommand.from(command), param)
             }
         }
 
@@ -523,7 +519,7 @@ class TemplateWebView @JvmOverloads constructor(
     internal fun startNotifyDisplayInteraction() {
         fun notifyDisplayInteraction(): String? {
             val handler = templateHandler ?: return "templateHandler is null"
-            handler.getNuguClient().displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
+            handler.getNuguClient()?.displayAgent?.notifyUserInteraction(handler.templateInfo.templateId)
             return null
         }
 

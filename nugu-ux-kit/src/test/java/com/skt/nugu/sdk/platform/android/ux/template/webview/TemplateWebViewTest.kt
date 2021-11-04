@@ -12,8 +12,9 @@ import com.skt.nugu.sdk.client.theme.ThemeManager
 import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView.Companion.AUDIO_PLAYER_TEMPLATE_1
-import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateAndroidHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
 import junit.framework.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -35,7 +36,7 @@ class TemplateWebViewTest{
     private lateinit var nuguAndroidClient: NuguAndroidClient
 
     @Mock
-    private lateinit var templateHandler: BasicTemplateHandler
+    private lateinit var templateHandler: TemplateAndroidHandler
 
     @Mock
     private lateinit var displayAgent: DisplayAgentInterface
@@ -69,7 +70,6 @@ class TemplateWebViewTest{
         webViewSpy.templateHandler = templateHandler
 
         verify(webViewSpy).addJavascriptInterface(any(), eq("Android"))
-        verify(templateHandler).observeMediaState()
         verify(templateHandler).setClientListener(webViewSpy)
         verify(audioPlayerAgent).setLyricsPresenter(any())
         verify(themeManager).addListener(webViewSpy)
@@ -108,8 +108,8 @@ class TemplateWebViewTest{
         webViewSpy.webinterface.closeAll()
         verify(templateHandler).onCloseAllClicked()
 
-        webViewSpy.webinterface.playerCommand("command", "param")
-        verify(templateHandler).onPlayerCommand("command", "param")
+        webViewSpy.webinterface.playerCommand("next", "param")
+        verify(templateHandler).onPlayerCommand(PlayerCommand.NEXT, "param")
 
         webViewSpy.webinterface.invokeActivity("className")
         verify(templateHandler).showActivity("className")

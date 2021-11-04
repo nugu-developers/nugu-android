@@ -47,7 +47,6 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface.THEME.SYSTEM
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.*
-import com.skt.nugu.sdk.platform.android.ux.template.controller.NuguTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayerUpdate
@@ -130,14 +129,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         set(value) {
             field = value
             value?.run {
-                (this as? NuguTemplateHandler)?.run {
-                    observeMediaState()
-                    setClientListener(mediaListener)
-                    getNuguClient().audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
-                    getNuguClient().themeManager.addListener(this@DisplayAudioPlayer)
+                setClientListener(mediaListener)
+                getNuguClient()?.audioPlayerAgent?.setLyricsPresenter(lyricPresenter)
+                getNuguClient()?.themeManager?.addListener(this@DisplayAudioPlayer)
 
-                    updateThemeIfNeeded()
-                }
+                updateThemeIfNeeded()
             }
         }
 
@@ -332,7 +328,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         prev.setThrottledOnClickListener {
-            templateHandler?.onPlayerCommand(PlayerCommand.PREV.command)
+            templateHandler?.onPlayerCommand(PlayerCommand.PREV)
         }
 
         barPrev.setThrottledOnClickListener {
@@ -340,10 +336,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         play.setThrottledOnClickListener {
-            if ((templateHandler as? NuguTemplateHandler)?.currentMediaState == AudioPlayerAgentInterface.State.PLAYING) {
-                templateHandler?.onPlayerCommand(PlayerCommand.PAUSE.command)
+            if (mediaPlaying) {
+                templateHandler?.onPlayerCommand(PlayerCommand.PAUSE)
             } else {
-                templateHandler?.onPlayerCommand(PlayerCommand.PLAY.command)
+                templateHandler?.onPlayerCommand(PlayerCommand.PLAY)
             }
         }
 
@@ -352,7 +348,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         next.setThrottledOnClickListener {
-            templateHandler?.onPlayerCommand(PlayerCommand.NEXT.command)
+            templateHandler?.onPlayerCommand(PlayerCommand.NEXT)
         }
 
         barNext.setThrottledOnClickListener {
@@ -364,11 +360,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
 
         favoriteView.setThrottledOnClickListener { _ ->
-            templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE.command, favoriteView.isSelected.toString())
+            templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE, favoriteView.isSelected.toString())
         }
 
         shuffleView.setThrottledOnClickListener { _ ->
-            templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE.command, shuffleView.isSelected.toString())
+            templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE, shuffleView.isSelected.toString())
         }
 
         progressView.setOnTouchListener { _, _ -> true }
@@ -591,7 +587,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             repeat?.let {
                 setRepeatMode(it)
                 repeatView.setThrottledOnClickListener { _ ->
-                    templateHandler?.onPlayerCommand(PlayerCommand.REPEAT.command, (repeatView.getTag(R.id.iv_repeat) as? Repeat)?.name ?: it.name)
+                    templateHandler?.onPlayerCommand(PlayerCommand.REPEAT, (repeatView.getTag(R.id.iv_repeat) as? Repeat)?.name ?: it.name)
                 }
             }
 
@@ -762,12 +758,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
 
-        templateHandler?.run {
-            if (getNuguClient().audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
-                getNuguClient().audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
+        templateHandler?.getNuguClient()?.run {
+            if (audioPlayerAgent?.lyricsPresenter == lyricPresenter) {
+                audioPlayerAgent?.setLyricsPresenter(EmptyLyricsPresenter)
             }
 
-            getNuguClient().themeManager.removeListener(this@DisplayAudioPlayer)
+            themeManager.removeListener(this@DisplayAudioPlayer)
         }
     }
 

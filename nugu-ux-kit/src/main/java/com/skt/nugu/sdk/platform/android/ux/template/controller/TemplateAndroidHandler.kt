@@ -1,21 +1,35 @@
+/**
+ * Copyright (c) 2020 SK Telecom Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http:www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.skt.nugu.sdk.platform.android.ux.template.controller
 
 import android.content.Intent
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
-import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import java.lang.ref.WeakReference
 
 /**
  * TemplateHandler focused on interaction with Android component such as Fragment
  */
-open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment) :
-    NuguTemplateHandler(nuguProvider, templateInfo) {
+open class TemplateAndroidHandler(fragment: Fragment, override var templateInfo: TemplateInfo) : TemplateHandler {
     companion object {
-        private const val TAG = "BasicTemplateHandler"
+        private const val TAG = "TemplateAndroidHandler"
     }
 
     private var fragmentRef = WeakReference(fragment)
@@ -56,9 +70,10 @@ open class BasicTemplateHandler(nuguProvider: TemplateRenderer.NuguClientProvide
     }
 
     override fun clear() {
-        super.clear()
         fragmentRef.clear()
     }
+
+    override fun getNuguClient(): NuguAndroidClient? = null
 
     fun updateFragment(fragment: Fragment) {
         fragmentRef.clear()
