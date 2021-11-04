@@ -43,7 +43,7 @@ class TemplateFragment : Fragment() {
         private const val ARG_DIALOG_REQUEST_ID = "dialog_request_id"
         private const val ARG_NAME = "name"
         private const val ARG_TEMPLATE_ID = "template_id"
-        private const val ARG_PARENT_TEMPLATE_ID = "patent_template_id"
+        private const val ARG_PARENT_TEMPLATE_ID = "parent_template_id"
         private const val ARG_TEMPLATE = "template"
         private const val ARG_DISPLAY_TYPE = "display_type"
         private const val ARG_PLAY_SERVICE_ID = "play_service_id"
