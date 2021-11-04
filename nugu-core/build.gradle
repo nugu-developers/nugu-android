@@ -19,7 +19,6 @@ dependencies {
         implementation project(':nugu-interface')
     }
 
-    implementation "javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion"
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mokitoCoreVersion"
     testImplementation "org.mockito.kotlin:mockito-kotlin:$mokitoKotlinVersion"

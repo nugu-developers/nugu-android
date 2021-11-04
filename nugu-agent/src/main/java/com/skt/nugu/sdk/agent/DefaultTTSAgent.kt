@@ -15,8 +15,6 @@
  */
 package com.skt.nugu.sdk.agent
 
-//import javax.annotation.concurrent.GuardedBy
-//import javax.annotation.concurrent.ThreadSafe
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.common.tts.TTSPlayContextProvider
