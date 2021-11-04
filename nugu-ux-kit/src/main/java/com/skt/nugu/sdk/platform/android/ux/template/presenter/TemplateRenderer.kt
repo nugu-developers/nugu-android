@@ -122,6 +122,7 @@ class TemplateRenderer(
                             name = templateType,
                             dialogRequestId = header.dialogRequestId,
                             templateId = templateId,
+                            parentTemplateId = parentTemplateId,
                             template = templateContentWithType,
                             displayType = displayType,
                             playServiceId = playServiceId
