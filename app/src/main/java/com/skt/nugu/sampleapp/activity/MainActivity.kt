@@ -52,7 +52,6 @@ import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
@@ -60,7 +59,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
-import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
@@ -165,7 +164,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         nuguProvider: TemplateRenderer.NuguClientProvider,
         templateInfo: TemplateHandler.TemplateInfo,
         fragment: Fragment,
-    ) : BasicTemplateHandler(nuguProvider, templateInfo, fragment) {
+    ) : DefaultTemplateHandler(nuguProvider, templateInfo, fragment) {
         override fun onTemplateTouched() {
             ClientManager.getClient().localStopTTS()
         }

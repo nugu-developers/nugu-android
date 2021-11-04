@@ -19,7 +19,8 @@ import com.skt.nugu.sdk.client.theme.ThemeManagerInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
-import com.skt.nugu.sdk.platform.android.ux.template.controller.BasicTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateAndroidHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.model.*
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
@@ -161,7 +162,7 @@ class DisplayAudioPlayerTest {
     @Test
     fun test_templateHandler() {
         val playerSpy = spy(audioPlayerViewType1)
-        val handlerSpy = spy(BasicTemplateHandler(nuguClientProvider, templateInfo, fragment))
+        val handlerSpy = spy(DefaultTemplateHandler(nuguClientProvider, templateInfo, fragment))
         playerSpy.templateHandler = handlerSpy
 
         `when`(nuguAndroidClient.themeManager.theme).thenReturn(ThemeManagerInterface.THEME.DARK)
@@ -171,7 +172,6 @@ class DisplayAudioPlayerTest {
         playerSpy.onThemeChange(ThemeManagerInterface.THEME.LIGHT)
 
         verify(playerSpy, atLeastOnce()).updateThemeIfNeeded()
-        verify(handlerSpy).observeMediaState()
         verify(handlerSpy).setClientListener(any())
         verify(handlerSpy, atLeast(2)).getNuguClient()
     }
@@ -179,7 +179,7 @@ class DisplayAudioPlayerTest {
     @Test
     fun test_theme() {
         val playerSpy = spy(audioPlayerViewType1)
-        val handlerSpy = spy(BasicTemplateHandler(nuguClientProvider, templateInfo, fragment))
+        val handlerSpy = spy(DefaultTemplateHandler(nuguClientProvider, templateInfo, fragment))
         playerSpy.templateHandler = handlerSpy
 
         `when`(nuguAndroidClient.themeManager.theme).thenReturn(ThemeManagerInterface.THEME.DARK)
@@ -282,15 +282,15 @@ class DisplayAudioPlayerTest {
 
             // click 'shuffle button' and check
             onView(withId(R.id.iv_shuffle)).perform(click())
-            verify(templateHandlerSpy).onPlayerCommand(eq(PlayerCommand.SHUFFLE.command), any())
+            verify(templateHandlerSpy).onPlayerCommand(eq(PlayerCommand.SHUFFLE), any())
 
             // click 'favorite button' and check
             onView(withId(R.id.iv_favorite)).perform(click())
-            verify(templateHandlerSpy).onPlayerCommand(eq(PlayerCommand.FAVORITE.command), any())
+            verify(templateHandlerSpy).onPlayerCommand(eq(PlayerCommand.FAVORITE), any())
 
             // click 'repeat button' and check
             onView(withId(R.id.iv_repeat)).perform(click())
-            verify(templateHandlerSpy).onPlayerCommand(eq(PlayerCommand.REPEAT.command), any())
+            verify(templateHandlerSpy).onPlayerCommand(eq(PlayerCommand.REPEAT), any())
 
             // click 'small lyrics view' and check
             onView(withId(R.id.cv_small_lyrics)).perform(scrollTo(), click())

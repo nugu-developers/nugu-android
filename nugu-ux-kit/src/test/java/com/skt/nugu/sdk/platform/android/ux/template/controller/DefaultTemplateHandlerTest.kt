@@ -12,7 +12,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 
-class BasicTemplateHandlerTest {
+class DefaultTemplateHandlerTest {
     @Mock
     private lateinit var templateFragment: TemplateFragment
 
@@ -22,47 +22,47 @@ class BasicTemplateHandlerTest {
     @Mock
     private lateinit var nuguAndroidClient: NuguAndroidClient
 
-    private lateinit var basicTemplateHandler: BasicTemplateHandler
+    private lateinit var templateHandler: DefaultTemplateHandler
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        basicTemplateHandler = BasicTemplateHandler(mock(), mock(), templateFragment)
+        templateHandler = DefaultTemplateHandler(mock(), mock(), templateFragment)
 
-        whenever(basicTemplateHandler.getNuguClient()).thenReturn(nuguAndroidClient)
+        whenever(templateHandler.getNuguClient()).thenReturn(nuguAndroidClient)
     }
 
     @Test
     fun onCloseClicked() {
-        basicTemplateHandler.onCloseClicked()
+        templateHandler.onCloseClicked()
         verify(templateFragment).close()
 
-        basicTemplateHandler.clear()
+        templateHandler.clear()
 
-        basicTemplateHandler.onCloseClicked()
+        templateHandler.onCloseClicked()
         verifyNoMoreInteractions(templateFragment)
 
-        basicTemplateHandler.updateFragment(fragment)
-        basicTemplateHandler.onCloseClicked()
+        templateHandler.updateFragment(fragment)
+        templateHandler.onCloseClicked()
         verifyNoMoreInteractions(templateFragment)
     }
 
     @Test
     fun onCloseAllClicked() {
-        basicTemplateHandler.onCloseAllClicked()
+        templateHandler.onCloseAllClicked()
         verify(templateFragment).closeAll()
     }
 
     @Test
     fun showToast(){
         try {
-            basicTemplateHandler.showToast("toast")
+            templateHandler.showToast("toast")
         }catch(e: Exception){
             e.printStackTrace()
         }
 
-        basicTemplateHandler.clear()
-        basicTemplateHandler.showToast("toast")
+        templateHandler.clear()
+        templateHandler.showToast("toast")
         verify(templateFragment).requireContext()
 //        verifyNoMoreInteractions(templateFragment)
     }
@@ -70,13 +70,13 @@ class BasicTemplateHandlerTest {
     @Test
     fun showActivity() {
         try {
-            basicTemplateHandler.showActivity("MainActivity")
+            templateHandler.showActivity("MainActivity")
         }catch(e: Exception){
             e.printStackTrace()
         }
 
-        basicTemplateHandler.clear()
-        basicTemplateHandler.showActivity("MainActivity")
+        templateHandler.clear()
+        templateHandler.showActivity("MainActivity")
 //        verify(templateFragment).startActivity(ArgumentMatchers.any())
     }
 }

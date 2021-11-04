@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
 
 /**
  * Basically Template renders figures to inform. And control logic exists on client side.
@@ -30,7 +31,7 @@ interface TemplateHandler {
 
     open class TemplateHandlerFactory {
         open fun onCreate(nuguProvider: TemplateRenderer.NuguClientProvider, templateInfo: TemplateInfo, fragment: Fragment): TemplateHandler{
-            return BasicTemplateHandler(nuguProvider, templateInfo, fragment)
+            return DefaultTemplateHandler(nuguProvider, templateInfo, fragment)
         }
     }
 
@@ -53,7 +54,7 @@ interface TemplateHandler {
 
     fun onNuguButtonSelected() {}
 
-    fun onPlayerCommand(command: String, param: String = "") {}
+    fun onPlayerCommand(command: PlayerCommand, param: String = "") {}
 
     fun onContextChanged(context: String) {}
 
@@ -88,5 +89,5 @@ interface TemplateHandler {
 
     fun clear()
 
-    fun getNuguClient() : NuguAndroidClient
+    fun getNuguClient() : NuguAndroidClient?
 }

@@ -17,11 +17,8 @@ package com.skt.nugu.sdk.platform.android.ux.template.controller
 
 import androidx.annotation.VisibleForTesting
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
-import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface.State
-import com.skt.nugu.sdk.agent.common.Direction
-import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.playback.PlaybackButton
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
@@ -34,20 +31,19 @@ import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
 /**
- * TemplateHandler focused on Media state observing and interaction with NUGU
+ * TemplateHandler focused on Media state observing and interaction with it
  */
-open class NuguTemplateHandler(
+open class TemplateMediaHandler(
     private val nuguProvider: TemplateRenderer.NuguClientProvider,
     override var templateInfo: TemplateHandler.TemplateInfo,
 ) : TemplateHandler {
 
     companion object {
-        private const val TAG = "NuguTemplateHandler"
+        private const val TAG = "TemplateMediaHandler"
     }
 
     private var audioDurationMs = 0L
     private var mediaProgressJob: Timer? = null
-    var currentMediaState: AudioPlayerAgentInterface.State = State.IDLE
     private var clientListener: TemplateHandler.ClientListener? = null
 
     @VisibleForTesting
@@ -65,38 +61,10 @@ open class NuguTemplateHandler(
     internal val mediaStateListener = object : AudioPlayerAgentInterface.Listener {
         override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
             Logger.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
-
-            currentMediaState = activity
             clientListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage(), false)
 
             if (activity == State.PLAYING) startMediaProgressSending()
             else stopMediaProgressSending()
-        }
-    }
-
-    internal val displayController = object : DisplayAggregatorInterface.Controller {
-        override fun controlFocus(direction: Direction): Boolean {
-            return (clientListener?.controlFocus(direction) ?: false).also {
-                Logger.i(TAG, "controlFocus() $direction. return $it")
-            }
-        }
-
-        override fun controlScroll(direction: Direction): Boolean {
-            return (clientListener?.controlScroll(direction) ?: false).also {
-                Logger.i(TAG, "controlScroll() $direction. return $it")
-            }
-        }
-
-        override fun getFocusedItemToken(): String? {
-            return clientListener?.getFocusedItemToken().also {
-                Logger.i(TAG, "getFocusedItemToken(). return $it")
-            }
-        }
-
-        override fun getVisibleTokenList(): List<String>? {
-            return clientListener?.getVisibleTokenList().also {
-                Logger.i(TAG, "getVisibleTokenList(). return $it")
-            }
         }
     }
 
@@ -117,64 +85,15 @@ open class NuguTemplateHandler(
         override fun onFailed(directive: Directive, description: String) = Unit
     }
 
-    override fun onElementSelected(tokenId: String) {
-        Logger.i(TAG, "onElementSelected() $tokenId")
-        getNuguClient().getDisplay()?.setElementSelected(templateId = templateInfo.templateId, token = tokenId, postback = null)
-    }
-
-    override fun onElementSelected(tokenId: String, postback: String?) {
-        Logger.i(TAG, "onElementSelected() $tokenId, postback $postback")
-        getNuguClient().getDisplay()?.setElementSelected(templateId = templateInfo.templateId, token = tokenId, postback = postback)
-    }
-
-    override fun onChipSelected(text: String) {
-        Logger.i(TAG, "ohChipSelected() $text")
-        getNuguClient().asrAgent?.stopRecognition()
-        getNuguClient().requestTextInput(text)
-    }
-
-    override fun onCloseClicked() {
-        Logger.w(TAG, "onClose() need to be implemented in application side")
-    }
-
-    override fun onCloseAllClicked() {
-        Logger.w(TAG, "onCloseAll() need to be implemented in application side")
-    }
-
-    override fun onNuguButtonSelected() {
-        Logger.w(TAG, "onNuguButtonSelected()")
-        getNuguClient().asrAgent?.startRecognition(initiator = ASRAgentInterface.Initiator.TAP)
-    }
-
-    override fun onContextChanged(context: String) {
-        Logger.i(TAG, "onContextChanged() $context")
-    }
-
-    override fun onControlResult(action: String, result: String) {
-        Logger.i(TAG, "onControlResult() action: $action, result : $result")
-    }
-
-    override fun showToast(text: String) {
-        Logger.w(TAG, "onToastRequested() need to be implemented in application side")
-    }
-
-    override fun showActivity(className: String) {
-        Logger.w(TAG, "onActivityRequested() need to be implemented in application side")
-    }
-
-    override fun playTTS(text: String) {
-        Logger.i(TAG, "onTTSRequested() $text")
-        getNuguClient().requestTTS(text)
-    }
-
     override fun setClientListener(listener: TemplateHandler.ClientListener?) {
         clientListener = listener
+        observeMediaState()
     }
 
-    override fun onPlayerCommand(command: String, param: String) {
+    override fun onPlayerCommand(command: PlayerCommand, param: String) {
         Logger.i(TAG, "onPlayerCommand() $command, $param ")
         getNuguClient().run {
-            when (PlayerCommand.from(command)) {
+            when (command) {
                 PlayerCommand.PLAY -> getPlaybackRouter().buttonPressed(PlaybackButton.PLAY)
                 PlayerCommand.STOP -> getPlaybackRouter().buttonPressed(PlaybackButton.STOP)
                 PlayerCommand.PAUSE -> getPlaybackRouter().buttonPressed(PlaybackButton.PAUSE)
@@ -220,7 +139,7 @@ open class NuguTemplateHandler(
         return (offset / duration * 100f).coerceIn(0f, 100f)
     }
 
-    fun observeMediaState() {
+    private fun observeMediaState() {
         Logger.i(TAG, "observeMediaState")
         getNuguClient().audioPlayerAgent?.run {
             removeListener(mediaStateListener)
