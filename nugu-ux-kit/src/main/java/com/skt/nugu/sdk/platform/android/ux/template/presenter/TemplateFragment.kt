@@ -43,6 +43,7 @@ class TemplateFragment : Fragment() {
         private const val ARG_DIALOG_REQUEST_ID = "dialog_request_id"
         private const val ARG_NAME = "name"
         private const val ARG_TEMPLATE_ID = "template_id"
+        private const val ARG_PARENT_TEMPLATE_ID = "patent_template_id"
         private const val ARG_TEMPLATE = "template"
         private const val ARG_DISPLAY_TYPE = "display_type"
         private const val ARG_PLAY_SERVICE_ID = "play_service_id"
@@ -55,12 +56,13 @@ class TemplateFragment : Fragment() {
             name: String,
             dialogRequestId: String,
             templateId: String,
+            parentTemplateId: String?,
             template: String,
             displayType: DisplayAggregatorInterface.Type,
             playServiceId: String,
         ): TemplateFragment {
             return TemplateFragment().apply {
-                arguments = createBundle(name, dialogRequestId, templateId, template, displayType, playServiceId)
+                arguments = createBundle(name, dialogRequestId, templateId, parentTemplateId, template, displayType, playServiceId)
                 pendingNuguProvider = nuguProvider
                 pendingExternalViewRenderer = externalRenderer
                 pendingTemplateLoadingListener = templateLoadingListener
@@ -73,6 +75,7 @@ class TemplateFragment : Fragment() {
             name: String,
             dialogRequestId: String,
             templateId: String,
+            parentTemplateId: String?,
             template: String,
             displayType: DisplayAggregatorInterface.Type,
             playServiceId: String,
@@ -81,6 +84,7 @@ class TemplateFragment : Fragment() {
                 putString(ARG_NAME, name)
                 putString(ARG_DIALOG_REQUEST_ID, dialogRequestId)
                 putString(ARG_TEMPLATE_ID, templateId)
+                putString(ARG_PARENT_TEMPLATE_ID, parentTemplateId)
                 putString(ARG_TEMPLATE, template)
                 putSerializable(ARG_DISPLAY_TYPE, displayType)
                 putString(ARG_PLAY_SERVICE_ID, playServiceId)
@@ -196,6 +200,10 @@ class TemplateFragment : Fragment() {
         return arguments?.getString(ARG_TEMPLATE_ID, "") ?: ""
     }
 
+    fun getParentTemplateId(): String {
+        return arguments?.getString(ARG_PARENT_TEMPLATE_ID, "") ?: ""
+    }
+
     fun getDialogRequestedId(): String {
         return arguments?.getString(ARG_DIALOG_REQUEST_ID, "") ?: ""
     }
@@ -241,11 +249,13 @@ class TemplateFragment : Fragment() {
 
     fun closeWithParents() {
         activity?.run {
-            supportFragmentManager.fragments.filterIsInstance<TemplateFragment>().forEach {
-                if (it.getPlayServiceId() == this@TemplateFragment.getPlayServiceId()) {
-                    supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
-                    it.onClose()
-                }
+            supportFragmentManager.beginTransaction().remove(this@TemplateFragment).commitAllowingStateLoss()
+            onClose()
+
+            supportFragmentManager.fragments.filterIsInstance<TemplateFragment>()
+                .find { it.getTemplateId() == this@TemplateFragment.getParentTemplateId() }?.let {
+                supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
+                it.onClose()
             }
         }
     }

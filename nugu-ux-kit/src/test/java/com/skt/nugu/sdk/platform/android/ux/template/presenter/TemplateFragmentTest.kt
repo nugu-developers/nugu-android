@@ -45,6 +45,7 @@ class TemplateFragmentTest {
     private val templateType_media = "AudioPlayer.Template1"
     private val dialogRequestId = "abc"
     private val templateId = "123"
+    private val parentTemplateId = "456"
     private val template = "template Content"
     private val displayType = DisplayAggregatorInterface.Type.INFORMATION
     private val playServiceId = "news"
@@ -57,6 +58,7 @@ class TemplateFragmentTest {
         val bundle = TemplateFragment.createBundle(if (isMedia) templateType_media else templateType,
             dialogRequestId,
             templateId,
+            parentTemplateId,
             template,
             displayType,
             playServiceId)
@@ -69,6 +71,7 @@ class TemplateFragmentTest {
                 if (isMedia) templateType_media else templateType,
                 dialogRequestId,
                 templateId,
+                parentTemplateId,
                 template,
                 displayType,
                 playServiceId)
@@ -84,10 +87,13 @@ class TemplateFragmentTest {
     fun test1TemplateArgs() {
         launchFragment().onFragment { fragment ->
             assertEquals(fragment.getTemplateId(), templateId)
+            assertEquals(fragment.getParentTemplateId(), parentTemplateId)
             assertEquals(fragment.getTemplateType(), templateType)
             assertEquals(fragment.getDisplayType(), displayType)
             assertEquals(fragment.getDialogRequestedId(), dialogRequestId)
             assertEquals(fragment.getPlayServiceId(), playServiceId)
+
+            fragment.closeWithParents()
         }
     }
 

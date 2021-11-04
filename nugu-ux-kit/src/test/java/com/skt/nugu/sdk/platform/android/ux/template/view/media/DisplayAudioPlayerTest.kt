@@ -109,6 +109,7 @@ class DisplayAudioPlayerTest {
     private val templateTypeMedia = "AudioPlayer.Template1"
     private val dialogRequestId = "abc"
     private val templateId = "123"
+    private val parentTemplateId = "456"
     private val template_dummy = "template Content"
     private val template_news =
         "{\"type\":\"AudioPlayer.Template1\",\"title\":{\"iconUrl\":\"https://news_logo.png\",\"text\":\"9월 6일 키워드 뉴스\",\"logoimage\":\"https://news_bg.png\"},\"grammarGuide\":[\"다음 뉴스 \",\"MBC 뉴스 들려줘\",\"CBS 뉴스 틀어줘\",\"이전 뉴스\",\"SBS 뉴스 틀어줘\",\"다시 들려줘\",\"TBS 뉴스 재생\",\"KBS 뉴스 재생\",\"정치 뉴스 재생해줘\",\"어제 스포츠 뉴스 틀어줘\",\"연합뉴스 들려줘\",\"지난주 부동산 뉴스 알려줘\",\"SK텔레콤 관련 뉴스 알려줘\",\"일시정지\",\"최근 뉴스 알려줘\",\"코로나 관련 뉴스 들려줘\",\"뉴스 들려줘\",\"오늘 연예 뉴스 알려줘\"],\"content\":{\"title\":\"[증시 키워드] 외국인, 지난주 삼성전자ㆍSK하이닉스 8568억 순매수\",\"subTitle\":\"\",\"subtitle1\":\"\",\"subtitle2\":\"\",\"imageUrl\":\"https://temp.png\",\"durationSec\":\"180\",\"lyrics\":{\"title\":\"[증시 키워드] 외국인, 지난주 삼성전자ㆍSK하이닉스 8568억 순매수\",\"lyricsType\":\"NON_SYNC\",\"lyricsInfoList\":[{\"text\":\"6일 국내 증시 키워드는 #삼성전자\"},{\"text\":\"#SK하이닉스 #네이버 #LG화학 #LG이노텍\"},{\"text\":\"등입니다.\"},{\"text\":\"특히 외국인은 지난주(8월 30일 ~ 9월 3일)\"},{\"text\":\"삼성전자와 SK하이닉스 8568억 원어치를\"},{\"text\":\"순매수했습니다.\"},{\"text\":\"외국인은 지난주 SK하이닉스도 2552억\"},{\"text\":\"원을 순매수했습니다.\"},{\"text\":\"외국인은 지난주 네이버를 3659억 원\"},{\"text\":\"순매수했습니다.\"}],\"showButton\":{\"text\":\"요약문 보기\"}}},\"playServiceId\":\"nugu.builtin.news\",\"playStackControl\":{\"playServiceId\":\"nugu.builtin.news\",\"type\":\"PUSH\"},\"sourceType\":\"ATTACHMENT\",\"token\":\"news-9월 6일 월요일-키워드-THEME\",\"url\":null}\n"
@@ -126,6 +127,7 @@ class DisplayAudioPlayerTest {
         val bundle = TemplateFragment.createBundle(templateTypeMedia,
             dialogRequestId,
             templateId,
+            parentTemplateId,
             templateString,
             displayType,
             playServiceId)
@@ -138,6 +140,7 @@ class DisplayAudioPlayerTest {
                 templateTypeMedia,
                 dialogRequestId,
                 templateId,
+                parentTemplateId,
                 templateString,
                 displayType,
                 playServiceId)
