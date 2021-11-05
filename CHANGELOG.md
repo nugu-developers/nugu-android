@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.7.0 *(2021-11-05)*
+* Fix: Fix condition to determine parent template (#2121)
+* New: Add parentTemplateId param at render() (#2117)
+
 Version 1.7.0 *(2021-11-03)*  
 Version 1.6.4 *(2021-10-29)*
 -----------------------------
