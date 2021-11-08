@@ -27,9 +27,13 @@ import java.util.*
 
 class NuguOAuthClientTest {
     private val delegate = object : NuguOAuthClient.UrlDelegate {
-        override fun baseUrl(): String {
-            return "baseUrl"
-        }
+        override fun baseUrl() = "baseUrl"
+        override fun tokenEndpoint() = "endpoint"
+        override fun authorizationEndpoint() = "endpoint"
+        override fun introspectionEndpoint() = "endpoint"
+        override fun revocationEndpoint() = "endpoint"
+        override fun deviceAuthorizationEndpoint() = "endpoint"
+        override fun meEndpoint() = "endpoint"
     }
     @Test
     fun testUrlDelegate() {

@@ -75,6 +75,12 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
 
     interface UrlDelegate {
         fun baseUrl() : String
+        fun tokenEndpoint() : String
+        fun authorizationEndpoint() : String
+        fun introspectionEndpoint() : String
+        fun revocationEndpoint() : String
+        fun deviceAuthorizationEndpoint() : String
+        fun meEndpoint() : String
     }
 
     init {
@@ -117,7 +123,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
 
         try {
             val request = Request.Builder(
-                uri = "${delegate.baseUrl()}/v1/auth/oauth/token",
+                uri = delegate.tokenEndpoint(),
                 form = form
             ).build()
             val response = client.newCall(request)
@@ -212,7 +218,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("data", data)
-        val request = Request.Builder(uri = "${delegate.baseUrl()}/v1/auth/oauth/device_authorization",
+        val request = Request.Builder(uri = delegate.deviceAuthorizationEndpoint(),
             form = form).build()
         val response = client.newCall(request)
         when (response.code) {
@@ -289,13 +295,12 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
         return false
     }
 
-    @Deprecated("Use introspect")
     fun handleMe() : MeResponse {
         val header = Headers()
             .add("authorization", buildAuthorization())
 
         val request = Request.Builder(
-            uri = "${delegate.baseUrl()}/v1/auth/oauth/me",
+            uri = delegate.meEndpoint(),
             headers = header,
             method = "GET"
         ).build()
@@ -330,7 +335,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         val request = Request.Builder(
-            uri = "${delegate.baseUrl()}/v1/auth/oauth/revoke",
+            uri = delegate.revocationEndpoint(),
             form = form
         ).build()
         val response = client.newCall(request)
@@ -368,7 +373,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
         val request = Request.Builder(
-            uri = "${delegate.baseUrl()}/v1/auth/oauth/introspect",
+            uri = delegate.introspectionEndpoint(),
             form = form
         ).build()
         val response = client.newCall(request)
