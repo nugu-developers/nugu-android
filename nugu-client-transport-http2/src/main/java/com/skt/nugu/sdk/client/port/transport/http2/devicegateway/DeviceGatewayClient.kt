@@ -295,12 +295,8 @@ internal class DeviceGatewayClient(
                 Logger.w(TAG, "[awaitRetry] error=$error, code=${status.code}")
                 when(error) {
                     BackOff.BackoffError.AlreadyShutdown,
-                    BackOff.BackoffError.AlreadyStarted -> {
-                        return
-                    }
-                    BackOff.BackoffError.ScheduleCancelled -> {
-                        Logger.e(TAG, "[awaitRetry] unexpected error while retrying")
-                    }
+                    BackOff.BackoffError.AlreadyStarted,
+                    BackOff.BackoffError.ScheduleCancelled -> return
                     else -> Unit
                 }
                 when (status.code) {
