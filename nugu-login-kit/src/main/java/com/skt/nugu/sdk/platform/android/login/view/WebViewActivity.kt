@@ -62,11 +62,7 @@ class WebViewActivity : /**AppCompatActivity()**/
                         return try {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             intent.putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, action.toString())
-                            if (supportDeepLink) {
-                                startActivity(intent)
-                            } else {
-                                setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_SUCCESS, intent)
-                            }
+                            setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_SUCCESS, intent)
                             finish()
                             true
                         } catch (e: Throwable) {
