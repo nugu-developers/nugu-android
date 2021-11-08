@@ -32,6 +32,12 @@ class HttpClientTest {
             override fun baseUrl(): String {
                 return "https://localhost"
             }
+            override fun tokenEndpoint() = "endpoint"
+            override fun authorizationEndpoint() = "endpoint"
+            override fun introspectionEndpoint() = "endpoint"
+            override fun revocationEndpoint() = "endpoint"
+            override fun deviceAuthorizationEndpoint() = "endpoint"
+            override fun meEndpoint() = "endpoint"
         }
         val client = HttpClient(delegate)
         val header = Headers()
@@ -47,6 +53,12 @@ class HttpClientTest {
             override fun baseUrl(): String {
                 return "test://localhost"
             }
+            override fun tokenEndpoint() = "endpoint"
+            override fun authorizationEndpoint() = "endpoint"
+            override fun introspectionEndpoint() = "endpoint"
+            override fun revocationEndpoint() = "endpoint"
+            override fun deviceAuthorizationEndpoint() = "endpoint"
+            override fun meEndpoint() = "endpoint"
         }
         val client = HttpClient(delegate)
         val header = Headers()
@@ -63,6 +75,12 @@ class HttpClientTest {
             override fun baseUrl(): String {
                 return "https://localhost"
             }
+            override fun tokenEndpoint() = "endpoint"
+            override fun authorizationEndpoint() = "endpoint"
+            override fun introspectionEndpoint() = "endpoint"
+            override fun revocationEndpoint() = "endpoint"
+            override fun deviceAuthorizationEndpoint() = "endpoint"
+            override fun meEndpoint() = "endpoint"
         }
         val client = HttpClient(delegate)
         val content = "Hello !!"

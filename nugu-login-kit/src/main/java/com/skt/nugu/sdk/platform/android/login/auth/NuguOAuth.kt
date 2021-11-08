@@ -95,6 +95,42 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         return url ?: throw IllegalStateException("Invalid server URL address")
     }
 
+    override fun tokenEndpoint(): String {
+        val url = if(ConfigurationStore.configuration() != null) {
+            ConfigurationStore.configurationMetadataSync()?.tokenEndpoint
+        } else null
+        return url ?: "${baseUrl()}/v1/auth/oauth/token"
+    }
+
+    override fun authorizationEndpoint(): String {
+        val url = if(ConfigurationStore.configuration() != null) {
+            ConfigurationStore.configurationMetadataSync()?.authorizationEndpoint
+        } else null
+        return url ?: "${baseUrl()}/v1/auth/oauth/authorize"
+    }
+
+    override fun introspectionEndpoint(): String {
+        val url = if(ConfigurationStore.configuration() != null) {
+            ConfigurationStore.configurationMetadataSync()?.introspectionEndpoint
+        } else null
+        return url ?: "${baseUrl()}/v1/auth/oauth/introspect"
+    }
+
+    override fun revocationEndpoint(): String {
+        val url = if(ConfigurationStore.configuration() != null) {
+            ConfigurationStore.configurationMetadataSync()?.revocationEndpoint
+        } else null
+        return url ?: "${baseUrl()}/v1/auth/oauth/revoke"
+    }
+
+    override fun deviceAuthorizationEndpoint(): String {
+        return "${baseUrl()}/v1/auth/oauth/device_authorization"
+    }
+
+    override fun meEndpoint(): String {
+        return "${baseUrl()}/v1/auth/oauth/me"
+    }
+
     // current state
     private var state = AuthStateListener.State.UNINITIALIZED
     private var code: String? = null
@@ -370,7 +406,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
     @VisibleForTesting
     internal fun makeAuthorizeUri(theme: String) = String.format(
-        "${baseUrl()}/v1/auth/oauth/authorize?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
+        "${authorizationEndpoint()}?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
         options.clientId,
         options.redirectUri,
         URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\",\"theme\":\"$theme\"}", "UTF-8")
