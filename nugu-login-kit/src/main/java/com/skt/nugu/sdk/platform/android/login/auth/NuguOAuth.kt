@@ -70,15 +70,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             return instance as NuguOAuth
         }
 
-        @Deprecated(
-            level = DeprecationLevel.ERROR,
-            replaceWith = ReplaceWith("NuguOAuth.getClient().setOptions(newOptions)"),
-            message = "This feature is no longer supported. Using NuguOAuth.getClient() instead."
-        )
-        fun getClient(newOptions: NuguOAuthOptions? = null): NuguOAuth {
-            throw NotImplementedError()
-        }
-
         /**
          * Returns a NuguOAuth instance.
          */
@@ -443,9 +434,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         }
     }
 
-    @Deprecated("Use setCodeFromIntent", ReplaceWith("setCodeFromIntent(intent)"))
-    fun hasAuthCodeFromIntent(intent: Any) = setCodeFromIntent(intent)
-
     /**
      * Helper function to extract out from the onNewIntent(Intent) for Sign In.
      * @param intent
@@ -694,68 +682,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
                         "                android:value=\"YOUR_CLIENT_ID_HERE\" />"
             )
         }
-    }
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("isTidLogin()"),
-        message = "This feature is no longer supported."
-    )
-    fun isAuthorizationCodeLogin(): Boolean {
-        throw NotImplementedError()
-    }
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("isAnonymouslyLogin()"),
-        message = "This feature is no longer supported."
-    )
-    fun isClientCredentialsLogin(): Boolean {
-        throw NotImplementedError()
-    }
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("loginWithTid(activity, listener)"),
-        message = "This feature is no longer supported."
-    )
-    fun loginByInAppBrowser(
-        activity: Activity,
-        listener: OnLoginListener,
-        theme: NuguOAuthInterface.THEME = NuguOAuthInterface.THEME.LIGHT
-    ) {
-        throw NotImplementedError()
-    }
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("accountWithTid(activity, listener)"),
-        message = "This feature is no longer supported."
-    )
-    fun accountByInAppBrowser(
-        activity: Activity,
-        listener: NuguOAuthInterface.OnAccountListener,
-        theme: NuguOAuthInterface.THEME = NuguOAuthInterface.THEME.LIGHT
-    ) {
-        throw NotImplementedError()
-    }
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("loginAnonymously(listener)"),
-        message = "This feature is no longer supported."
-    )
-    fun login(listener: OnLoginListener) {
-        throw NotImplementedError()
-    }
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("loginSilentlyWithTid(refreshToken, listener)"),
-        message = "This feature is no longer supported."
-    )
-    fun loginSilently(refreshToken: String, listener: OnLoginListener) {
-        throw NotImplementedError()
     }
 
     @Deprecated(
