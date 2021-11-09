@@ -25,6 +25,7 @@ import org.mockito.kotlin.*
 
 class InputProcessorManagerTest {
     private val timeoutInMilliSeconds = 1L
+    private val verifyTimeout = timeoutInMilliSeconds * 500
 
     @Test
     fun testOnResponseTimeout() {
@@ -37,12 +38,17 @@ class InputProcessorManagerTest {
 
         manager.onRequested(inputProcessor, timeoutDialogRequestId)
 
-        verify(inputProcessor, timeout(timeoutInMilliSeconds * 100)).onResponseTimeout(
-            timeoutDialogRequestId
-        )
-        verify(listener, timeout(timeoutInMilliSeconds * 100)).onResponseTimeout(
-            timeoutDialogRequestId
-        )
+        Thread {
+            verify(inputProcessor, timeout(verifyTimeout)).onResponseTimeout(
+                timeoutDialogRequestId
+            )
+            verify(listener, timeout(verifyTimeout)).onResponseTimeout(
+                timeoutDialogRequestId
+            )
+        }.let {
+            it.start()
+            it.join()
+        }
     }
 
     @Test
@@ -84,9 +90,14 @@ class InputProcessorManagerTest {
 
         manager.onRequested(inputProcessor, timeoutDialogRequestId)
 
-        verify(inputProcessor, timeout(timeoutInMilliSeconds * 100)).onResponseTimeout(
-            timeoutDialogRequestId
-        )
-        verify(listener, never()).onResponseTimeout(timeoutDialogRequestId)
+        Thread {
+            verify(inputProcessor, timeout(verifyTimeout)).onResponseTimeout(
+                timeoutDialogRequestId
+            )
+            verify(listener, never()).onResponseTimeout(timeoutDialogRequestId)
+        }.let {
+            it.start()
+            it.join()
+        }
     }
 }
