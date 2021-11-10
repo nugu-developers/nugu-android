@@ -37,7 +37,7 @@ interface TemplateHandler {
 
     data class TemplateInfo(val templateId: String, val templateType: String)
 
-    var templateInfo: TemplateInfo
+    val templateInfo: TemplateInfo
 
     // template -> client side
     fun onElementSelected(tokenId: String){}

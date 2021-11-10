@@ -26,37 +26,38 @@ import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
  * TemplateHandler focused on interaction with NUGU component
  */
 open class TemplateNuguHandler(
-    private val nuguProvider: TemplateRenderer.NuguClientProvider,
-    override var templateInfo: TemplateHandler.TemplateInfo,
+    protected val nuguProvider: TemplateRenderer.NuguClientProvider,
+    override val templateInfo: TemplateHandler.TemplateInfo,
 ) : TemplateHandler {
 
     companion object {
         private const val TAG = "TemplateNuguHandler"
     }
 
-    private var clientListener: TemplateHandler.ClientListener? = null
+    protected var controlListener: TemplateHandler.ClientListener? = null
+        private set
 
     internal val displayController = object : DisplayAggregatorInterface.Controller {
         override fun controlFocus(direction: Direction): Boolean {
-            return (clientListener?.controlFocus(direction) ?: false).also {
+            return (controlListener?.controlFocus(direction) ?: false).also {
                 Logger.i(TAG, "controlFocus() $direction. return $it")
             }
         }
 
         override fun controlScroll(direction: Direction): Boolean {
-            return (clientListener?.controlScroll(direction) ?: false).also {
+            return (controlListener?.controlScroll(direction) ?: false).also {
                 Logger.i(TAG, "controlScroll() $direction. return $it")
             }
         }
 
         override fun getFocusedItemToken(): String? {
-            return clientListener?.getFocusedItemToken().also {
+            return controlListener?.getFocusedItemToken().also {
                 Logger.i(TAG, "getFocusedItemToken(). return $it")
             }
         }
 
         override fun getVisibleTokenList(): List<String>? {
-            return clientListener?.getVisibleTokenList().also {
+            return controlListener?.getVisibleTokenList().also {
                 Logger.i(TAG, "getVisibleTokenList(). return $it")
             }
         }
@@ -89,12 +90,12 @@ open class TemplateNuguHandler(
     }
 
     override fun setClientListener(listener: TemplateHandler.ClientListener?) {
-        clientListener = listener
+        controlListener = listener
     }
 
     override fun clear() {
         Logger.i(TAG, "clear")
-        clientListener = null
+        controlListener = null
     }
 
     override fun getNuguClient(): NuguAndroidClient = nuguProvider.getNuguClient()

@@ -34,17 +34,18 @@ import kotlin.concurrent.fixedRateTimer
  * TemplateHandler focused on Media state observing and interaction with it
  */
 open class TemplateMediaHandler(
-    private val nuguProvider: TemplateRenderer.NuguClientProvider,
-    override var templateInfo: TemplateHandler.TemplateInfo,
+    protected val nuguProvider: TemplateRenderer.NuguClientProvider,
+    override val templateInfo: TemplateHandler.TemplateInfo,
 ) : TemplateHandler {
 
     companion object {
         private const val TAG = "TemplateMediaHandler"
     }
 
-    private var audioDurationMs = 0L
-    private var mediaProgressJob: Timer? = null
-    private var clientListener: TemplateHandler.ClientListener? = null
+    protected var audioDurationMs = 0L
+    protected var mediaProgressJob: Timer? = null
+    protected var mediaListener: TemplateHandler.ClientListener? = null
+        private set
 
     @VisibleForTesting
     internal val mediaDurationListener = object : AudioPlayerAgentInterface.OnDurationListener {
@@ -52,7 +53,7 @@ open class TemplateMediaHandler(
             Logger.d(TAG, "onDurationRetrieved $duration")
             if (context.templateId == templateInfo.templateId) {
                 audioDurationMs = duration ?: 0L
-                clientListener?.onMediaDurationRetrieved(audioDurationMs)
+                mediaListener?.onMediaDurationRetrieved(audioDurationMs)
             }
         }
     }
@@ -61,7 +62,7 @@ open class TemplateMediaHandler(
     internal val mediaStateListener = object : AudioPlayerAgentInterface.Listener {
         override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
             Logger.d(TAG, "mediaStateListener.onStateChanged $activity, $context")
-            clientListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage(), false)
+            mediaListener?.onMediaStateChanged(activity, getMediaCurrentTimeMs(), getMediaProgressPercentage(), false)
 
             if (activity == State.PLAYING) startMediaProgressSending()
             else stopMediaProgressSending()
@@ -76,7 +77,7 @@ open class TemplateMediaHandler(
 
         override fun onCompleted(directive: Directive) {
             if (directive.isAudioPlayerPauseDirective()) {
-                clientListener?.onMediaStateChanged(State.PAUSED, getMediaCurrentTimeMs(), getMediaProgressPercentage(), true)
+                mediaListener?.onMediaStateChanged(State.PAUSED, getMediaCurrentTimeMs(), getMediaProgressPercentage(), true)
             }
         }
 
@@ -86,7 +87,7 @@ open class TemplateMediaHandler(
     }
 
     override fun setClientListener(listener: TemplateHandler.ClientListener?) {
-        clientListener = listener
+        mediaListener = listener
         observeMediaState()
     }
 
@@ -113,13 +114,15 @@ open class TemplateMediaHandler(
         }
     }
 
+    @VisibleForTesting
     internal fun startMediaProgressSending() {
         Logger.d(TAG, "startProgressMessageSending")
         mediaProgressJob?.cancel()
 
         mediaProgressJob = fixedRateTimer(period = 1000, initialDelay = 1000, action = {
-            clientListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
+            mediaListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
         })
+
     }
 
     @VisibleForTesting
@@ -129,17 +132,17 @@ open class TemplateMediaHandler(
         mediaProgressJob = null
     }
 
-    private fun getMediaCurrentTimeMs(): Long {
+    protected fun getMediaCurrentTimeMs(): Long {
         return getNuguClient().audioPlayerAgent?.getOffset()?.times(1000L) ?: 0L
     }
 
-    private fun getMediaProgressPercentage(): Float {
+    protected fun getMediaProgressPercentage(): Float {
         val offset = getMediaCurrentTimeMs().toFloat()
         val duration = audioDurationMs.coerceAtLeast(1L)
         return (offset / duration * 100f).coerceIn(0f, 100f)
     }
 
-    private fun observeMediaState() {
+    protected fun observeMediaState() {
         Logger.i(TAG, "observeMediaState")
         getNuguClient().audioPlayerAgent?.run {
             removeListener(mediaStateListener)
@@ -160,7 +163,7 @@ open class TemplateMediaHandler(
         getNuguClient().removeOnDirectiveHandlingListener(directiveHandlingListener)
 
         stopMediaProgressSending()
-        clientListener = null
+        mediaListener = null
     }
 
     override fun getNuguClient(): NuguAndroidClient = nuguProvider.getNuguClient()
