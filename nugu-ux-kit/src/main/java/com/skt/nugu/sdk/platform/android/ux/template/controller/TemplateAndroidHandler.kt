@@ -27,12 +27,12 @@ import java.lang.ref.WeakReference
 /**
  * TemplateHandler focused on interaction with Android component such as Fragment
  */
-open class TemplateAndroidHandler(fragment: Fragment, override var templateInfo: TemplateInfo) : TemplateHandler {
+open class TemplateAndroidHandler(fragment: Fragment, override val templateInfo: TemplateInfo) : TemplateHandler {
     companion object {
         private const val TAG = "TemplateAndroidHandler"
     }
 
-    private var fragmentRef = WeakReference(fragment)
+    protected var fragmentRef = WeakReference(fragment)
 
     override fun onCloseClicked() {
         Logger.i(TAG, "onClose()")

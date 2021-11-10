@@ -16,19 +16,19 @@ import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.concurrent.schedule
 
-class TemplateRenderer(
-    private val nuguClientProvider: NuguClientProvider,
+open class TemplateRenderer(
+    protected val nuguClientProvider: NuguClientProvider,
     deviceTypeCode: String,
     fragmentManager: FragmentManager? = null,
-    private val containerId: Int
+    protected val containerId: Int
 ) : DisplayAggregatorInterface.Renderer {
+
 
     companion object {
         private const val TAG = "TemplateRenderer"
         internal var SERVER_URL: String? = null
         internal var DEVICE_TYPE_CODE = "device_type_code"
-
-        private const val TEMPLATE_REMOVE_DELAY_MS = 500L
+        private var TEMPLATE_REMOVE_DELAY_MS = 500L
     }
 
     interface NuguClientProvider {
@@ -59,11 +59,11 @@ class TemplateRenderer(
     }
 
     var templateLoadingListener: TemplateLoadingListener? = null
-    private var fragmentManagerRef = WeakReference(fragmentManager)
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private val timer by lazy { Timer() }
+    protected var fragmentManagerRef = WeakReference(fragmentManager)
+    protected val mainHandler = Handler(Looper.getMainLooper())
+    protected val timer by lazy { Timer() }
 
-    private val gson = Gson()
+    protected val gson = Gson()
 
     fun setFragmentManager(fragmentManager: FragmentManager?) {
         fragmentManagerRef.clear()
@@ -73,7 +73,7 @@ class TemplateRenderer(
     var externalViewRenderer: ExternalViewRenderer? = null
 
     var templateHandlerFactory: TemplateHandler.TemplateHandlerFactory? = null
-    private val defaultTemplateHandlerFactory = TemplateHandler.TemplateHandlerFactory()
+    protected val defaultTemplateHandlerFactory = TemplateHandler.TemplateHandlerFactory()
 
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
@@ -83,8 +83,8 @@ class TemplateRenderer(
     }
 
     @Keep
-    private class TemplatePayload(
-        val playServiceId: String? = null
+    protected class TemplatePayload(
+        val playServiceId: String? = null,
     )
 
     override fun render(
@@ -93,7 +93,7 @@ class TemplateRenderer(
         templateContent: String,
         header: Header,
         displayType: DisplayAggregatorInterface.Type,
-        parentTemplateId: String?
+        parentTemplateId: String?,
     ): Boolean {
         Logger.i(
             TAG,
@@ -168,7 +168,7 @@ class TemplateRenderer(
             }
     }
 
-    fun clearAll(): Boolean {
+    open fun clearAll(): Boolean {
         var clearCnt: Int
 
         fragmentManagerRef.get()?.fragments?.filter { it != null && it is TemplateFragment }.run {
@@ -182,7 +182,7 @@ class TemplateRenderer(
         return (clearCnt > 0).also { Logger.i(TAG, "clearAll(). $clearCnt template cleared ") }
     }
 
-    private fun onNewTemplate(newFragment: Fragment) {
+    open fun onNewTemplate(newFragment: Fragment) {
         if ((newFragment as? TemplateFragment)?.isMediaTemplate() == true) {
             timer.schedule(TEMPLATE_REMOVE_DELAY_MS) {
                 fragmentManagerRef.get()?.fragments?.find { it != newFragment && (it as? TemplateFragment)?.isMediaTemplate() == true }
@@ -195,7 +195,7 @@ class TemplateRenderer(
     }
 
     //todo. How long should we use the logic below
-    private fun insertType(content: String, type: String): String {
+    open fun insertType(content: String, type: String): String {
         val newType = when (type.contains(other = ".", ignoreCase = true)) {
             true -> type
             false -> "Display.$type"
@@ -211,5 +211,9 @@ class TemplateRenderer(
 
     fun setServerUrl(url: String? = null) {
         SERVER_URL = url
+    }
+
+    fun setTemplateRemoveDelay(delay : Long){
+        TEMPLATE_REMOVE_DELAY_MS = delay
     }
 }

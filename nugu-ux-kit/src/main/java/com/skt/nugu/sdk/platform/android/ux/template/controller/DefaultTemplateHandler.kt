@@ -27,13 +27,13 @@ import com.skt.nugu.sdk.platform.android.ux.template.view.media.PlayerCommand
  */
 
 open class DefaultTemplateHandler(
-    private val nuguProvider: TemplateRenderer.NuguClientProvider,
-    final override var templateInfo: TemplateHandler.TemplateInfo,
+    protected val nuguProvider: TemplateRenderer.NuguClientProvider,
+    final override val templateInfo: TemplateHandler.TemplateInfo,
     fragment: Fragment,
 ) : TemplateHandler {
-    private val androidHandler = TemplateAndroidHandler(fragment, templateInfo)
-    private val nuguHandler = TemplateNuguHandler(nuguProvider, templateInfo)
-    private val mediaHandler = TemplateMediaHandler(nuguProvider, templateInfo)
+    protected var androidHandler = TemplateAndroidHandler(fragment, templateInfo)
+    protected var nuguHandler = TemplateNuguHandler(nuguProvider, templateInfo)
+    protected var mediaHandler: TemplateHandler = TemplateMediaHandler(nuguProvider, templateInfo)
 
     override fun onElementSelected(tokenId: String) {
         nuguHandler.onElementSelected(tokenId)
@@ -102,7 +102,7 @@ open class DefaultTemplateHandler(
 
     override fun getNuguClient(): NuguAndroidClient = nuguProvider.getNuguClient()
 
-    val displayController = nuguHandler.displayController
+    open val displayController = nuguHandler.displayController
 
     fun updateFragment(fragment: Fragment) {
         androidHandler.updateFragment(fragment)
