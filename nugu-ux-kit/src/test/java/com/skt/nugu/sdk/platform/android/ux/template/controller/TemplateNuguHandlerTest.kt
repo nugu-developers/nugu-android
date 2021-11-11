@@ -2,6 +2,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.controller
 
 import com.skt.nugu.sdk.agent.DefaultAudioPlayerAgent
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
+import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
@@ -45,8 +46,8 @@ class TemplateNuguHandlerTest {
         val display: DisplayAggregatorInterface = mock()
         `when`(nuguAndroidClient.getDisplay()).thenReturn(display)
 
-        nuguTemplateHandler.onElementSelected("token123")
-        verify(display).setElementSelected(templateInfo.templateId, "token123")
+        nuguTemplateHandler.onElementSelected("token123", null)
+        verify(display).setElementSelected(templateInfo.templateId, "token123", null)
 
         // check null condition
         `when`(nuguAndroidClient.getDisplay()).thenReturn(null)
@@ -120,6 +121,21 @@ class TemplateNuguHandlerTest {
     @Test
     fun testMeaninglessForCoverage() {
         nuguTemplateHandler.onCloseAllClicked()
+    }
+
+    @Test
+    fun testDisplayController(){
+        nuguTemplateHandler.displayController.controlFocus(Direction.PREVIOUS)
+        verify(clientListener).controlFocus(Direction.PREVIOUS)
+
+        nuguTemplateHandler.displayController.controlScroll(Direction.PREVIOUS)
+        verify(clientListener).controlScroll(Direction.PREVIOUS)
+
+        nuguTemplateHandler.displayController.getFocusedItemToken()
+        verify(clientListener).getFocusedItemToken()
+
+        nuguTemplateHandler.displayController.getVisibleTokenList()
+        verify(clientListener).getVisibleTokenList()
     }
 
 }

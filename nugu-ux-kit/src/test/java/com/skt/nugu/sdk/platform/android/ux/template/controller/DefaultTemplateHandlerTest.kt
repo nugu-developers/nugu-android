@@ -3,6 +3,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.controller
 import androidx.fragment.app.Fragment
 import com.skt.nugu.sdk.platform.android.NuguAndroidClient
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
+import junit.framework.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -54,6 +55,12 @@ class DefaultTemplateHandlerTest {
     }
 
     @Test
+    fun onCloseWithParent(){
+        templateHandler.onCloseWithParents()
+        verify(templateFragment).closeWithParents()
+    }
+
+    @Test
     fun showToast(){
         try {
             templateHandler.showToast("toast")
@@ -79,4 +86,5 @@ class DefaultTemplateHandlerTest {
         templateHandler.showActivity("MainActivity")
 //        verify(templateFragment).startActivity(ArgumentMatchers.any())
     }
+
 }
