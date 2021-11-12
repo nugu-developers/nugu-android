@@ -22,11 +22,12 @@
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:layout_gravity="top"
+            android:background="#33222222"
             android:enabled="false"
             android:max="100"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
-            android:progressDrawable="@drawable/progress_bar_drawable"
+            android:progressDrawable="@drawable/progress_drawable"
             android:thumb="@null" />
     </FrameLayout>
 

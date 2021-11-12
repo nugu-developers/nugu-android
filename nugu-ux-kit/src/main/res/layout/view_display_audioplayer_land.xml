@@ -11,8 +11,8 @@
         android:id="@+id/view_music_player"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clickable="true"
         android:background="@color/media_template_bg_light"
+        android:clickable="true"
         android:visibility="invisible">
 
         <ScrollView
@@ -180,6 +180,7 @@
                             android:id="@+id/sb_progress"
                             android:layout_width="match_parent"
                             android:layout_height="3dp"
+                            android:background="#1A222222"
                             android:enabled="false"
                             android:max="100"
                             android:paddingStart="0dp"
