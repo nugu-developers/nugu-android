@@ -15,6 +15,10 @@
     <color name="white_10">#1affffff</color>
     <color name="black_10">#1a000000</color>
 
+    <color name ="media_progress_bar_bg">#33222222</color>
+    <color name ="media_progress_bg">#1A222222</color>
+    <color name="media_progress">#009dff</color>
+
     <color name="media_template_bg_light">#f8f8f8</color>
     <color name="media_template_bg_dark">#000000</color>
 
