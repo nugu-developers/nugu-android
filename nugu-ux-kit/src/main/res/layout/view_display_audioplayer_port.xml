@@ -169,12 +169,11 @@
                 android:id="@+id/sb_progress"
                 android:layout_width="match_parent"
                 android:layout_height="3dp"
-                android:background="#1A222222"
                 android:enabled="false"
                 android:max="100"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp"
-                android:progressTint="#009dff"
+                android:progressDrawable="@drawable/progress_drawable"
                 android:thumb="@null" />
 
             <LinearLayout
