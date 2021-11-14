@@ -34,7 +34,7 @@
         android:gravity="center"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
-        android:text="가사 서비스를 지원하지 않은 음원입니다."
+        android:text="@string/lyric_empty"
         android:textColor="#909090"
         android:textSize="14sp"
         android:visibility="gone" />

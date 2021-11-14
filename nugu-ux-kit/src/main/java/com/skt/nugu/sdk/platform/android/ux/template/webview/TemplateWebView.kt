@@ -56,7 +56,7 @@ import java.net.URLEncoder
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
-@SuppressLint("ClickableViewAccessibility")
+@SuppressLint("ClickableViewAccessibility", "SetJavaScriptEnabled")
 class TemplateWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
