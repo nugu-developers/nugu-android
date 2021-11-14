@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -104,6 +105,7 @@ class NuguToast(val context: Context) {
     /**
      * Set the toast content to an explicit view
      */
+    @SuppressLint("InflateParams")
     private fun makeContentView() : View {
         val contentView = LayoutInflater.from(context).inflate(R.layout.nugu_toast_view, null)
         contentView.findViewById<TextView>(R.id.message).text = message

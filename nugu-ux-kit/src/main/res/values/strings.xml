@@ -3,4 +3,5 @@
     <string name="nugu_guide_text">말씀해주세요</string>
 
     <string name="lyrics_button_default_text">전체 가사보기</string>
+    <string name="lyric_empty">가사 서비스를 지원하지 않은 음원입니다.</string>
 </resources>
