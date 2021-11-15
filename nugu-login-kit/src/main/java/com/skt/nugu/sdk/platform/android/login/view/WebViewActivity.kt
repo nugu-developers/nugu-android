@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.webkit.*
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
+import com.skt.nugu.sdk.platform.android.service.webkit.WebViewUtils
 import java.io.File
 
 /**
@@ -52,7 +53,7 @@ class WebViewActivity : /**AppCompatActivity()**/
         setContentView(webView)
         //supportActionBar?.setDisplayHomeAsUpEnabled(true)
         //supportActionBar?.setDisplayShowTitleEnabled(false)
-        setDefaultWebSettings(webView)
+        WebViewUtils.setDefaultWebSettings(webView)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 url?.apply {
@@ -102,40 +103,6 @@ class WebViewActivity : /**AppCompatActivity()**/
         }
         intent.data?.apply {
             webView.loadUrl(this.toString())
-        }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    fun setDefaultWebSettings(webView: WebView) {
-        with(webView.settings) {
-            javaScriptEnabled = true
-            javaScriptCanOpenWindowsAutomatically = true
-            cacheMode = WebSettings.LOAD_NO_CACHE
-            databaseEnabled = true
-            domStorageEnabled = true
-            setSupportMultipleWindows(true)
-            loadsImagesAutomatically = true
-            useWideViewPort = true
-            loadWithOverviewMode = true
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            }
-
-            val cacheDir = File(webView.context.cacheDir, "webviewcache")
-            if (!cacheDir.exists()) {
-                cacheDir.mkdirs()
-            }
-            setAppCachePath(cacheDir.absolutePath)
-            allowFileAccess = true
-            setAppCacheEnabled(true)
-        }
-        webView.isScrollbarFadingEnabled = true
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            CookieManager.getInstance().run {
-                setAcceptCookie(true)
-                setAcceptThirdPartyCookies(webView, true)
-            }
         }
     }
 

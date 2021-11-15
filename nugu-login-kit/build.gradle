@@ -31,8 +31,10 @@ dependencies {
 
     if(isReleaseMode) {
         implementation "com.skt.nugu.sdk:nugu-client-kit:$version"
+        implementation "com.skt.nugu.sdk:nugu-service-kit:$version"
     } else {
         implementation project(':nugu-client-kit')
+        implementation project(':nugu-service-kit')
     }
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
