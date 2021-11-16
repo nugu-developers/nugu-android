@@ -30,7 +30,6 @@ import java.util.concurrent.CopyOnWriteArraySet
 class ChipsAgent(
     directiveSequencer: DirectiveSequencerInterface,
     contextStateProviderRegistry: ContextStateProviderRegistry,
-    contextSetter: ContextSetterInterface,
     sessionManager: SessionManagerInterface
 ) : CapabilityAgent
     , ChipsAgentInterface

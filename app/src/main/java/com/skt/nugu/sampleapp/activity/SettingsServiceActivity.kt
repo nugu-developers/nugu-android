@@ -25,7 +25,6 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.service.webkit.NuguWebView
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
-import com.skt.nugu.sdk.platform.android.service.webkit.Const
 
 class SettingsServiceActivity : AppCompatActivity(), NuguWebView.WindowListener {
     companion object {

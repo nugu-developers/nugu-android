@@ -29,7 +29,9 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.*
 import java.util.concurrent.Executors
+import kotlin.collections.HashMap
 
 class DefaultMicrophoneAgent(
     private val messageSender: MessageSender,
@@ -110,7 +112,7 @@ class DefaultMicrophoneAgent(
             return
         }
 
-        val status = payload.status.toUpperCase()
+        val status = payload.status.uppercase(Locale.getDefault())
 
         if (status != "ON" && status != "OFF") {
             Logger.e(TAG, "[handleSetMic] invalid status: $status")

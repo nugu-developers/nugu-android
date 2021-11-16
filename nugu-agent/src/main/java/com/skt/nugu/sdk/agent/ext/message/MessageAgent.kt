@@ -124,49 +124,49 @@ class MessageAgent(
             override fun onPlaybackStarted(source: TTSScenarioPlayer.Source) {
                 // no-op
                 state = TTSAgentInterface.State.PLAYING
-                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
+                directives.filter { it.value.dialogRequestId == source.dialogRequestId }
+                    .map { it.value }
+                    .firstOrNull()?.let { readSource ->
+                        token = readSource.directive.payload.token
 
-                readSource?.let { source->
-                    token = source.directive.payload.token
-
-                    executor.submit {
-                        listeners.forEach {
-                            it.onPlaybackStarted(source.directive)
+                        executor.submit {
+                            listeners.forEach {
+                                it.onPlaybackStarted(readSource.directive)
+                            }
                         }
                     }
-                }
             }
 
             override fun onPlaybackFinished(source: TTSScenarioPlayer.Source) {
                 state = TTSAgentInterface.State.FINISHED
-                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
+                directives.filter { it.value.dialogRequestId == source.dialogRequestId }
+                    .map { it.value }
+                    .firstOrNull()?.let { readSource ->
+                        readSource.callback.onFinish()
+                        directives.remove(readSource.directive.header.messageId)
 
-                readSource?.let {source->
-                    source.callback.onFinish()
-                    directives.remove(source.directive.header.messageId)
-
-                    executor.submit {
-                        listeners.forEach {
-                            it.onPlaybackFinished(source.directive)
+                        executor.submit {
+                            listeners.forEach {
+                                it.onPlaybackFinished(readSource.directive)
+                            }
                         }
                     }
-                }
             }
 
             override fun onPlaybackStopped(source: TTSScenarioPlayer.Source) {
                 state = TTSAgentInterface.State.STOPPED
-                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
+                directives.filter { it.value.dialogRequestId == source.dialogRequestId }
+                    .map { it.value }
+                    .firstOrNull()?.let { readSource ->
+                        readSource.callback.onStop(true)
+                        directives.remove(readSource.directive.header.messageId)
 
-                readSource?.let {source->
-                    source.callback.onStop(true)
-                    directives.remove(source.directive.header.messageId)
-
-                    executor.submit {
-                        listeners.forEach {
-                            it.onPlaybackStopped(source.directive)
+                        executor.submit {
+                            listeners.forEach {
+                                it.onPlaybackStopped(readSource.directive)
+                            }
                         }
                     }
-                }
             }
 
             override fun onPlaybackError(
@@ -175,20 +175,20 @@ class MessageAgent(
                 error: String
             ) {
                 state = TTSAgentInterface.State.STOPPED
-                val readSource = directives.filter { it.value.dialogRequestId == source.dialogRequestId }.map { it.value }.firstOrNull()
+                directives.filter { it.value.dialogRequestId == source.dialogRequestId }
+                    .map { it.value }
+                    .firstOrNull()?.let { readSource ->
+                        readSource.callback.onError("type: $type, error: $error")
+                        directives.remove(readSource.directive.header.messageId)
 
-                readSource?.let {source->
-                    source.callback.onError("type: $type, error: $error")
-                    directives.remove(source.directive.header.messageId)
-
-                    executor.submit {
-                        listeners.forEach {
-                            it.onPlaybackError(source.directive, type, error)
+                        executor.submit {
+                            listeners.forEach {
+                                it.onPlaybackError(readSource.directive, type, error)
+                            }
                         }
                     }
-                }
             }
-        }
+    }
 
     init {
         contextStateProviderRegistry.setStateProvider(
