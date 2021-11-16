@@ -87,9 +87,12 @@ class NuguClient private constructor(
 
         internal var osType: OsContextProvider.Type = OsContextProvider.Type.ANDROID
 
+        internal var audioFocusChannelConfigurationBuilder = DefaultFocusChannel.Builder()
+
         internal var systemExceptionDelegate: ExceptionDirectiveDelegate? = null
 
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
+
 
 
         /**
@@ -105,6 +108,7 @@ class NuguClient private constructor(
         fun sdkVersion(sdkVersion: String) = apply { this.sdkVersion = sdkVersion }
         fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
         fun osType(osType: OsContextProvider.Type) = apply { this.osType = osType }
+        fun audioFocusChannelConfiguration(builder: DefaultFocusChannel.Builder) = apply { this.audioFocusChannelConfigurationBuilder = builder }
         fun build() = NuguClient(this)
     }
 
@@ -115,12 +119,6 @@ class NuguClient private constructor(
     val systemAgent: AbstractSystemAgent
 
     // CA internal Object (ref)
-
-    val audioFocusManager: FocusManagerInterface = FocusManager(
-        DefaultFocusChannel.Builder().build(),
-        "Audio"
-    )
-    val audioSeamlessFocusManager: SeamlessFocusManagerInterface = SeamlessFocusManager(audioFocusManager, DefaultFocusChannel.INTERACTION_CHANNEL_NAME)
 
     private val messageRouter: MessageRouter =
         MessageRouter(builder.transportFactory, builder.authDelegate)
@@ -144,6 +142,12 @@ class NuguClient private constructor(
         with(builder) {
             Logger.logger = logger
             Preferences.preferences = preferences
+
+            val audioFocusManager: FocusManagerInterface = FocusManager(
+                audioFocusChannelConfigurationBuilder.build(),
+                "Audio"
+            )
+            val audioSeamlessFocusManager: SeamlessFocusManagerInterface = SeamlessFocusManager(audioFocusManager, DefaultFocusChannel.INTERACTION_CHANNEL_NAME)
 
             UserAgent.setVersion(sdkVersion, clientVersion)
             val directiveGroupProcessor = DirectiveGroupProcessor(

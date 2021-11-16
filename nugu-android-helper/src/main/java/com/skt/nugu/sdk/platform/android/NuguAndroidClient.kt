@@ -145,6 +145,8 @@ class NuguAndroidClient private constructor(
         internal val authDelegate: AuthDelegate,
         internal val defaultAudioProvider: AudioProvider
     ) {
+        internal var audioFocusChannelConfigurationBuilder: DefaultFocusChannel.Builder? = null
+
         internal var playerFactory: PlayerFactory = object :
             PlayerFactory {
             override fun createSpeakPlayer(): MediaPlayerInterface = IntegratedMediaPlayer(
@@ -280,6 +282,11 @@ class NuguAndroidClient private constructor(
 
         // nudge agent (optional)
         internal var enableNudge: Boolean = false
+
+        /**
+         * @param builder the builder for audio focus's channel configuration
+         */
+        fun audioFocusChannelConfiguration(builder: DefaultFocusChannel.Builder) = apply { this.audioFocusChannelConfigurationBuilder = builder }
 
         /**
          * @param factory the player factory to create players used at NUGU
@@ -941,6 +948,10 @@ class NuguAndroidClient private constructor(
                 clientVersion(it)
             }
 
+            builder.audioFocusChannelConfigurationBuilder?.let {
+                audioFocusChannelConfiguration(it)
+            }
+
         }
         .build()
 
@@ -949,7 +960,7 @@ class NuguAndroidClient private constructor(
             builder.audioFocusInteractorFactory = AndroidAudioFocusInteractor.Factory(this.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager, audioPlayerAgent)
         }
 
-        audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.audioFocusManager)
+        audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.getSdkContainer().getAudioFocusManager())
 
         val tempDisplayAgent = displayAgent
         val tempAudioPlayerAgent = audioPlayerAgent
@@ -981,7 +992,7 @@ class NuguAndroidClient private constructor(
         asrAgent?.let { asrAgent ->
             builder.asrBeepResourceProvider?.let { provider ->
                 AsrBeepPlayer(
-                    client.audioFocusManager,
+                    client.getSdkContainer().getAudioFocusManager(),
                     DefaultFocusChannel.ASR_BEEP_CHANNEL_NAME,
                     asrAgent,
                     provider,
