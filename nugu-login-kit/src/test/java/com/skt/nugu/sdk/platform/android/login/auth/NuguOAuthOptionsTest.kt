@@ -17,14 +17,11 @@ package com.skt.nugu.sdk.platform.android.login.auth
 
 import org.junit.Assert
 import org.junit.Test
-import java.lang.NullPointerException
-import java.net.MalformedURLException
 
 class NuguOAuthOptionsTest {
     @Test
     fun testNuguOAuthOptions() {
         val response1 = NuguOAuthOptions(
-            grantType = NuguOAuthClient.GrantType.CLIENT_CREDENTIALS.value,
             clientId = "dummy_clientId",
             clientSecret = "dummy_clientSecret",
             redirectUri = "dummy_redirectUri",
@@ -32,7 +29,6 @@ class NuguOAuthOptionsTest {
         )
         Assert.assertNotNull(response1)
         val response2 = NuguOAuthOptions.Builder()
-            .grantType(NuguOAuthClient.GrantType.CLIENT_CREDENTIALS.value)
             .clientId("dummy_clientId")
             .clientSecret("dummy_clientSecret")
             .redirectUri("dummy_redirectUri")
@@ -41,16 +37,4 @@ class NuguOAuthOptionsTest {
         Assert.assertNotNull(response2)
         Assert.assertEquals(response1, response2)
     }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun testRedirectUriIsNull() {
-        val response2 = NuguOAuthOptions.Builder()
-            .grantType(NuguOAuthOptions.AUTHORIZATION_CODE)
-            .clientId("dummy_clientId")
-            .clientSecret("dummy_clientSecret")
-            .deviceUniqueId("dummy_deviceUniqueId")
-            .build()
-        Assert.assertNotNull(response2)
-    }
-
 }
