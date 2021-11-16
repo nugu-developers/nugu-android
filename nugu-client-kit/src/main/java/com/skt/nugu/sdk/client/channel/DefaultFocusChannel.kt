@@ -33,82 +33,104 @@ class DefaultFocusChannel {
         const val INTERACTION_CHANNEL_ACQUIRE_PRIORITY = TOP_PRIORITY
         const val INTERACTION_CHANNEL_RELEASE_PRIORITY = NO_PRIORITY
 
+        @Deprecated("Use CALL_CHANNEL_NAME", ReplaceWith("CALL_CHANNEL_NAME"))
         const val COMMUNICATIONS_CHANNEL_NAME = "Communications"
-        const val COMMUNICATIONS_CHANNEL_PRIORITY = FIRST_PRIORITY
+        const val CALL_CHANNEL_NAME = "Call"
 
+        @Deprecated("Use TTS_CHANNEL_NAME", ReplaceWith("TTS_CHANNEL_NAME"))
         const val DIALOG_CHANNEL_NAME = "Dialog"
-        const val DIALOG_CHANNEL_ACQUIRE_PRIORITY = SECOND_PRIORITY
-        const val DIALOG_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
+        const val TTS_CHANNEL_NAME = "TTS"
 
         const val ALERTS_CHANNEL_NAME = "Alerts"
-        const val ALERTS_CHANNEL_ACQUIRE_PRIORITY = SECOND_PRIORITY
-        const val ALERTS_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
 
+        @Deprecated("Use MEDIA_CHANNEL_NAME", ReplaceWith("MEDIA_CHANNEL_NAME"))
         const val CONTENT_CHANNEL_NAME = "Content"
-        const val CONTENT_CHANNEL_ACQUIRE_PRIORITY = THIRD_PRIORITY
-        const val CONTENT_CHANNEL_RELEASE_PRIORITY = FIFTH_PRIORITY
+        const val MEDIA_CHANNEL_NAME = "Media"
 
+        @Deprecated("Use USER_ASR_CHANNEL_NAME", ReplaceWith("USER_ASR_CHANNEL_NAME"))
         const val USER_DIALOG_CHANNEL_NAME = "UserDialog"
-        const val USER_DIALOG_CHANNEL_ACQUIRE_PRIORITY = FIRST_PRIORITY
-        const val USER_DIALOG_CHANNEL_RELEASE_PRIORITY = SECOND_PRIORITY
+        const val USER_ASR_CHANNEL_NAME = "UserASR"
 
+        @Deprecated("Use DM_ASR_CHANNEL_NAME", ReplaceWith("DM_ASR_CHANNEL_NAME"))
         const val INTERNAL_DIALOG_CHANNEL_NAME = "InternalDialog"
-        const val INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY = FOURTH_PRIORITY
-        const val INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY = THIRD_PRIORITY
+        const val DM_ASR_CHANNEL_NAME = "InternalDialog"
 
         const val SOUND_BEEP_CHANNEL_NAME = "Sound"
-        const val SOUND_BEEP_CHANNEL_ACQUIRE_PRIORITY = FIFTH_PRIORITY
-        const val SOUND_BEEP_CHANNEL_RELEASE_PRIORITY = FIFTH_PRIORITY
 
         const val ASR_BEEP_CHANNEL_NAME = "ASRBeep"
-        const val ASR_BEEP_CHANNEL_ACQUIRE_PRIORITY = FIFTH_PRIORITY
-        const val ASR_BEEP_CHANNEL_RELEASE_PRIORITY = FOURTH_PRIORITY
+    }
 
-        fun getDefaultAudioChannels(): List<FocusManagerInterface.ChannelConfiguration> {
-            return listOf(
-                FocusManagerInterface.ChannelConfiguration(
-                    INTERACTION_CHANNEL_NAME,
-                    INTERACTION_CHANNEL_ACQUIRE_PRIORITY, INTERACTION_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    USER_DIALOG_CHANNEL_NAME,
-                    USER_DIALOG_CHANNEL_ACQUIRE_PRIORITY, USER_DIALOG_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    INTERNAL_DIALOG_CHANNEL_NAME,
-                    INTERNAL_DIALOG_CHANNEL_ACQUIRE_PRIORITY, INTERNAL_DIALOG_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    DIALOG_CHANNEL_NAME,
-                    DIALOG_CHANNEL_ACQUIRE_PRIORITY,
-                    DIALOG_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    COMMUNICATIONS_CHANNEL_NAME,
-                    COMMUNICATIONS_CHANNEL_PRIORITY,
-                    COMMUNICATIONS_CHANNEL_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    ALERTS_CHANNEL_NAME,
-                    ALERTS_CHANNEL_ACQUIRE_PRIORITY,
-                    ALERTS_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    CONTENT_CHANNEL_NAME,
-                    CONTENT_CHANNEL_ACQUIRE_PRIORITY,
-                    CONTENT_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    SOUND_BEEP_CHANNEL_NAME,
-                    SOUND_BEEP_CHANNEL_ACQUIRE_PRIORITY,
-                    SOUND_BEEP_CHANNEL_RELEASE_PRIORITY
-                ),
-                FocusManagerInterface.ChannelConfiguration(
-                    ASR_BEEP_CHANNEL_NAME,
-                    ASR_BEEP_CHANNEL_ACQUIRE_PRIORITY,
-                    ASR_BEEP_CHANNEL_RELEASE_PRIORITY
-                )
+    data class Builder(
+        internal var callChannelAcquirePriority: Int = FIRST_PRIORITY,
+        internal var callChannelReleasePriority: Int = FIRST_PRIORITY,
+
+        internal var ttsChannelAcquirePriority: Int = SECOND_PRIORITY,
+        internal var ttsChannelReleasePriority: Int = THIRD_PRIORITY,
+
+        internal var alertsChannelAcquirePriority: Int = SECOND_PRIORITY,
+        internal var alertsChannelReleasePriority: Int = THIRD_PRIORITY,
+
+        internal var mediaChannelAcquirePriority: Int = THIRD_PRIORITY,
+        internal var mediaChannelReleasePriority: Int = FIFTH_PRIORITY,
+
+        internal var userASRChannelAcquirePriority: Int = FIRST_PRIORITY,
+        internal var userASRChannelReleasePriority: Int = SECOND_PRIORITY,
+
+        internal var dmASRChannelAcquirePriority: Int = FOURTH_PRIORITY,
+        internal var dmASRChannelReleasePriority: Int = THIRD_PRIORITY,
+
+        internal var soundBeepChannelAcquirePriority: Int = FIFTH_PRIORITY,
+        internal var soundBeepChannelReleasePriority: Int = FIFTH_PRIORITY,
+
+        internal var asrBeepChannelAcquirePriority: Int = FIFTH_PRIORITY,
+        internal var asrBeepChannelReleasePriority: Int = FOURTH_PRIORITY,
+    ) {
+        fun build(): List<FocusManagerInterface.ChannelConfiguration> = listOf(
+            FocusManagerInterface.ChannelConfiguration(
+                INTERACTION_CHANNEL_NAME,
+                INTERACTION_CHANNEL_ACQUIRE_PRIORITY,
+                INTERACTION_CHANNEL_RELEASE_PRIORITY
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                CALL_CHANNEL_NAME,
+                callChannelAcquirePriority,
+                callChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                TTS_CHANNEL_NAME,
+                ttsChannelAcquirePriority,
+                ttsChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                ALERTS_CHANNEL_NAME,
+                alertsChannelAcquirePriority,
+                alertsChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                MEDIA_CHANNEL_NAME,
+                mediaChannelAcquirePriority,
+                mediaChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                USER_ASR_CHANNEL_NAME,
+                userASRChannelAcquirePriority,
+                userASRChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                DM_ASR_CHANNEL_NAME,
+                dmASRChannelAcquirePriority,
+                dmASRChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                SOUND_BEEP_CHANNEL_NAME,
+                soundBeepChannelAcquirePriority,
+                soundBeepChannelReleasePriority
+            ),
+            FocusManagerInterface.ChannelConfiguration(
+                ASR_BEEP_CHANNEL_NAME,
+                asrBeepChannelAcquirePriority,
+                asrBeepChannelReleasePriority
             )
-        }
+        )
     }
 }
