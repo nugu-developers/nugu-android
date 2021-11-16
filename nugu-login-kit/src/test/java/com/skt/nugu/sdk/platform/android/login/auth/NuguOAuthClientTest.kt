@@ -131,7 +131,6 @@ class NuguOAuthClientTest {
             )
         )
         client.setOptions(opts = NuguOAuthOptions.Builder()
-            .grantType(NuguOAuthClient.GrantType.CLIENT_CREDENTIALS.value)
             .deviceUniqueId("device2")
             .build())
         Assert.assertEquals(client.buildAuthorization(), "Bearer accessToken1")
@@ -163,7 +162,6 @@ class NuguOAuthClientTest {
             )
         )
         client.setOptions(opts = NuguOAuthOptions.Builder()
-            .grantType(NuguOAuthClient.GrantType.CLIENT_CREDENTIALS.value)
             .deviceUniqueId("device2")
             .build())
         var attempt = 0

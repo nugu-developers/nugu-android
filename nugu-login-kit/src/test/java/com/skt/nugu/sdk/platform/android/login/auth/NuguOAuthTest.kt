@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.platform.android.login.auth
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
@@ -28,8 +29,6 @@ import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
-import org.mockito.kotlin.mock
-import org.mockito.Mockito.`when`
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import java.lang.RuntimeException
@@ -611,7 +610,7 @@ class NuguOAuthTest  {
     }
 
     @Test
-    fun testSetCodeFromIntent() {
+    fun testCodeFromIntent() {
         ConfigurationStore.configure("{\n" +
                 "    \"OAuthServerUrl\": \"https://api.sktnugu.com\",\n" +
                 "    \"OAuthClientId\": \"app.nugu.test\",\n" +
@@ -639,10 +638,9 @@ class NuguOAuthTest  {
             ApplicationProvider.getApplicationContext(),
             NuguOAuthCallbackActivity::class.java
         ).apply {
-            putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, NuguOAuth.ACTION_LOGIN)
-            putExtra(NuguOAuth.EXTRA_OAUTH_THEME, NuguOAuthInterface.THEME.DARK.name)
+            data = Uri.parse("https://dummy.com?code=testcode")
         }
-        client.setCodeFromIntent(intent)
+        Assert.assertNotNull(client.codeFromIntent(intent))
     }
 
     @Test
