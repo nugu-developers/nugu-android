@@ -632,17 +632,15 @@ class NuguAndroidClient private constructor(
                                         builder.enableDisplayLifeCycleManagement,
                                         audioPlayerTemplateHandler
                                     ).apply {
-                                        val audioPlayerMetadataDirectiveHandler =
-
-                                            AudioPlayerLyricsDirectiveHandler(
-                                                getContextManager(),
-                                                getMessageSender(),
-                                                this,
-                                                this,
-                                                getInterLayerDisplayPolicyManager()
-                                            ).apply {
-                                                getDirectiveSequencer().addDirectiveHandler(this)
-                                            }
+                                        AudioPlayerLyricsDirectiveHandler(
+                                            getContextManager(),
+                                            getMessageSender(),
+                                            this,
+                                            this,
+                                            getInterLayerDisplayPolicyManager()
+                                        ).apply {
+                                            getDirectiveSequencer().addDirectiveHandler(this)
+                                        }
 
                                         getAudioPlayStackManager().addPlayContextProvider(this)
 
@@ -901,7 +899,6 @@ class NuguAndroidClient private constructor(
                     addAgentFactory(ChipsAgent.NAMESPACE, object : AgentFactory<ChipsAgent> {
                         override fun create(container: SdkContainer): ChipsAgent = ChipsAgent(
                             container.getDirectiveSequencer(),
-                            container.getContextManager(),
                             container.getContextManager(),
                             container.getSessionManager()
                         )

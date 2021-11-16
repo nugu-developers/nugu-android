@@ -139,7 +139,7 @@ class DefaultClientSpeechRecognizer(
             DefaultASRAgent.VERSION.toString()
         ).payload(
             AsrRecognizeEventPayload(
-                codec = audioEncoder.getCodecName().toUpperCase(Locale.getDefault()),
+                codec = audioEncoder.getCodecName().uppercase(Locale.getDefault()),
                 playServiceId = payload?.playServiceId,
                 domainTypes = payload?.domainTypes,
                 asrContext = payload?.asrContext,

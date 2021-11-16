@@ -167,8 +167,8 @@ class KeensenseKeywordDetector(
 
         override fun getPosition(): Long = reader.position()
 
-        override fun read(audioBuffer: ByteBuffer, sizeInBytes: Int): Int {
-            return reader.read(audioBuffer, 0, sizeInBytes)
+        override fun read(buffer: ByteBuffer, sizeInBytes: Int): Int {
+            return reader.read(buffer, 0, sizeInBytes)
         }
 
         fun release() {

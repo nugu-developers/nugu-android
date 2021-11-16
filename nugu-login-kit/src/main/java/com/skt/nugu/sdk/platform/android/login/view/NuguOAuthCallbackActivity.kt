@@ -113,7 +113,7 @@ class NuguOAuthCallbackActivity : Activity() {
                     return true
                 }
                 val customTabsIntent = CustomTabsIntent.Builder()
-                    .enableUrlBarHiding().build()
+                    .setUrlBarHidingEnabled(true).build()
                 CustomTabActivityHelper.openCustomTab(this, customTabsIntent, auth.getLoginUri(theme), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
@@ -140,7 +140,7 @@ class NuguOAuthCallbackActivity : Activity() {
                     return true
                 }
                 val customTabsIntent = CustomTabsIntent.Builder()
-                    .enableUrlBarHiding().build()
+                    .setUrlBarHidingEnabled(true).build()
                 CustomTabActivityHelper.openCustomTab(this, customTabsIntent, auth.getAccountInfoUri(theme), object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
