@@ -117,7 +117,7 @@ class NuguClient private constructor(
     // CA internal Object (ref)
 
     val audioFocusManager: FocusManagerInterface = FocusManager(
-        DefaultFocusChannel.getDefaultAudioChannels(),
+        DefaultFocusChannel.Builder().build(),
         "Audio"
     )
     val audioSeamlessFocusManager: SeamlessFocusManagerInterface = SeamlessFocusManager(audioFocusManager, DefaultFocusChannel.INTERACTION_CHANNEL_NAME)
