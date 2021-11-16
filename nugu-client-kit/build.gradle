@@ -46,11 +46,26 @@ dependencies {
 }
 
 protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:$protoc_version" }
-    plugins {
-        grpc { artifact = "io.grpc:protoc-gen-grpc-java:$grpc_version" // CURRENT_GRPC_VERSION
+    def useAppleSilicon = true
+
+    if(useAppleSilicon) {
+        protoc { artifact = "com.google.protobuf:protoc:$protoc_version:osx-x86_64" }
+        plugins {
+            grpc {
+                artifact = "io.grpc:protoc-gen-grpc-java:$grpc_version:osx-x86_64"
+                // CURRENT_GRPC_VERSION
+            }
+        }
+    } else {
+        protoc { artifact = "com.google.protobuf:protoc:$protoc_version" }
+        plugins {
+            grpc {
+                artifact = "io.grpc:protoc-gen-grpc-java:$grpc_version"
+                // CURRENT_GRPC_VERSION
+            }
         }
     }
+
     generateProtoTasks {
         all().each { task ->
             task.builtins {
