@@ -32,6 +32,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnLoginListener as OnLoginListener
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface.OnDeviceAuthorizationListener as OnDeviceAuthorizationListener
+import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.ClientCredentialsRequest
+import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.AuthorizationCodeRequest
+import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.RefreshTokenRequest
+import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.DeviceCodeRequest
+
 
 /**
  * NuguOAuth provides an implementation of the NuguOAuthInterface
@@ -133,8 +138,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
     // current state
     private var state = AuthStateListener.State.UNINITIALIZED
-    private var code: String? = null
-    private var refreshToken: String? = null
+    //private var refreshToken: String? = null
 
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
@@ -188,8 +192,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Request an authentication with auth code
      */
-    fun loginInternal(stateListener: AuthStateListener?) {
-        Logger.d(TAG, "[login]")
+    fun loginInternal(authorizationRequest: AuthorizationRequest, stateListener: AuthStateListener?,) {
+        Logger.d(TAG, "[login] $authorizationRequest")
 
         setAuthState(AuthStateListener.State.UNINITIALIZED)
 
@@ -197,7 +201,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             removeAuthStateListener(it)
             addAuthStateListener(it)
         }
-        executeAuthorization()
+        executeAuthorization(authorizationRequest)
     }
 
 
@@ -224,13 +228,10 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Executes an authorization flow in a thread.
      */
-    private fun executeAuthorization() {
+    private fun executeAuthorization(authorizationRequest: AuthorizationRequest) {
         executor.submit {
             runCatching {
-                client.handleAuthorizationFlow(
-                    code = code,
-                    refreshToken = refreshToken
-                )
+                client.handleAuthorizationFlow(authorizationRequest)
             }.onSuccess {
                 setAuthState(AuthStateListener.State.REFRESHED)
             }.onFailure {
@@ -458,7 +459,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         theme: NuguOAuthInterface.THEME
     ) {
         runCatching {
-            this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
             this.onceLoginListener = OnceLoginListener(listener)
             Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
                 putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
@@ -475,28 +475,32 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      * @param intent
      * @return true is successful extract of authCode, otherwise false
      */
-    fun setCodeFromIntent(intent: Any): Boolean {
+    fun verifyStateFromIntent(intent: Intent?): Boolean {
         var state: String? = null
-        var code: String? = null
-        when (intent) {
-            is Intent -> intent.dataString?.let { dataString ->
-                Uri.parse(URLDecoder.decode(dataString, "UTF-8")).let {
-                    code = it.getQueryParameter("code")
-                    state = it.getQueryParameter("state")
-                }
+         intent?.dataString?.let { dataString ->
+            Uri.parse(URLDecoder.decode(dataString, "UTF-8")).let {
+                state = it.getQueryParameter("state")
             }
         }
+        return verifyState(state).also { result ->
+            if(!result) {
+                Logger.d(TAG, "[verifyStateFromIntent] Csrf failed. state=$state")
+            }
+        }
+    }
 
-        if (!verifyState(state)) {
-            Logger.d(TAG, "[setCodeFromIntent] Csrf failed. state=$state")
-            return false
+    fun codeFromIntent(intent: Intent?): String? {
+        var code: String? = null
+        intent?.dataString?.let { dataString ->
+            Uri.parse(URLDecoder.decode(dataString, "UTF-8")).let {
+                code = it.getQueryParameter("code")
+            }
         }
-        if (!verifyCode(code)) {
-            Logger.d(TAG, "[setCodeFromIntent] code is null or blank. code=$code")
-            return false
+        return code.also {
+            if (!verifyCode(code)) {
+                Logger.d(TAG, "[setCodeFromIntent] code is null or blank. code=$code")
+            }
         }
-        this.code = code
-        return true
     }
 
     /**
@@ -511,7 +515,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         theme: NuguOAuthInterface.THEME
     ) {
         runCatching {
-            this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
             this.onceLoginListener = OnceLoginListener(listener)
 
             checkClientId()
@@ -554,17 +557,17 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      */
     override fun loginAnonymously(listener: OnLoginListener) {
         runCatching {
-            this.options.grantType = NuguOAuthOptions.CLIENT_CREDENTIALS
             checkClientId()
             checkClientSecret()
         }.onFailure {
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
-            loginInternal(object : AuthStateListener {
-                override fun onAuthStateChanged(
-                    newState: AuthStateListener.State
-                ) = handleAuthState(newState, OnceLoginListener(listener))
-            })
+            loginInternal(ClientCredentialsRequest(),
+                object : AuthStateListener {
+                    override fun onAuthStateChanged(
+                        newState: AuthStateListener.State
+                    ) = handleAuthState(newState, OnceLoginListener(listener))
+                })
         }
     }
 
@@ -576,14 +579,12 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         listener: OnLoginListener
     ) {
         runCatching {
-            this.options.grantType = NuguOAuthOptions.AUTHORIZATION_CODE
-            this.code = code
             checkClientId()
             checkClientSecret()
         }.onFailure {
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
-            loginInternal(object : AuthStateListener {
+            loginInternal(AuthorizationCodeRequest(code), object : AuthStateListener {
                 override fun onAuthStateChanged(
                     newState: AuthStateListener.State
                 ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -596,15 +597,12 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      */
     override fun loginSilentlyWithTid(refreshToken: String, listener: OnLoginListener) {
         runCatching {
-            this.options.grantType = NuguOAuthOptions.REFRESH_TOKEN
-            this.refreshToken = refreshToken
-
             checkClientId()
             checkClientSecret()
         }.onFailure {
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
-            loginInternal(object : AuthStateListener {
+            loginInternal(RefreshTokenRequest(refreshToken), object : AuthStateListener {
                 override fun onAuthStateChanged(
                     newState: AuthStateListener.State
                 ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -636,19 +634,16 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     }
 
     override fun loginWithDeviceCode(
-        code: String,
+        deviceCode: String,
         listener: OnLoginListener
     ) {
         runCatching {
-            this.options.grantType = NuguOAuthOptions.DEVICE_CODE
-            this.code = code
-
             checkClientId()
             checkClientSecret()
         }.onFailure {
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
-            loginInternal(object : AuthStateListener {
+            loginInternal(DeviceCodeRequest(deviceCode), object : AuthStateListener {
                 override fun onAuthStateChanged(
                     newState: AuthStateListener.State
                 ) = handleAuthState(newState, OnceLoginListener(listener))
@@ -659,8 +654,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     override fun startDeviceAuthorization(data: String, listener: OnDeviceAuthorizationListener) {
         executor.submit {
             runCatching {
-                this.options.grantType = NuguOAuthOptions.DEVICE_CODE
-
                 checkClientId()
                 checkClientSecret()
                 client.handleStartDeviceAuthorization(data)

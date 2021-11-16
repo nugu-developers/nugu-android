@@ -17,33 +17,17 @@ package com.skt.nugu.sdk.platform.android.login.auth
 
 /**
  * OAuth Options builder.
- * @param grantType is authorization_code or client_credentials
  * @param clientId is client identifier
  * @param clientSecret is client secret
  * @param redirectUri for Other Apps to Start Your Activity. only authorization_code
  * @param deviceUniqueId is device unique id
  */
 data class NuguOAuthOptions(
-    var grantType: String,
     var clientId: String,
     var clientSecret: String,
     var redirectUri: String?,
     var deviceUniqueId: String
 ) {
-    /**
-     * Companion objects
-     */
-    companion object {
-        /** Tid **/
-        const val AUTHORIZATION_CODE = "authorization_code"
-        /** anonymous **/
-        const val CLIENT_CREDENTIALS = "client_credentials"
-        /** device_authorization **/
-        const val DEVICE_CODE = "device_code"
-        /** refresh_token **/
-        const val REFRESH_TOKEN = "refresh_token"
-    }
-
     /**
      * Builder class for [NuguOAuthOptions] objects.
      */
@@ -54,10 +38,6 @@ data class NuguOAuthOptions(
          * Best practices for unique identifiers : [https://developer.android.com/training/articles/user-data-ids]
          */
         private var deviceUniqueId: String = ""
-        /**
-         * The NUGU device grant type
-         */
-        private var grantType: String = ""
         /**
          *  The NUGU Client Id
          */
@@ -85,10 +65,6 @@ data class NuguOAuthOptions(
          */
         fun clientSecret(clientSecret: String) = apply { this.clientSecret = clientSecret }
         /**
-         * set [grantType]
-         */
-        fun grantType(grantType: String) = apply { this.grantType = grantType }
-        /**
          * set [redirectUri]
          */
         fun redirectUri(redirectUri: String) = apply { this.redirectUri = redirectUri }
@@ -96,14 +72,7 @@ data class NuguOAuthOptions(
          * Returns a new instance of an Credentials based on this builder.
          */
         fun build(): NuguOAuthOptions {
-            if(grantType == AUTHORIZATION_CODE) {
-                requireNotNull(redirectUri) {
-                    "`redirectUri` cannot be null"
-                }
-            }
-
             return NuguOAuthOptions(
-                grantType,
                 clientId,
                 clientSecret,
                 redirectUri,

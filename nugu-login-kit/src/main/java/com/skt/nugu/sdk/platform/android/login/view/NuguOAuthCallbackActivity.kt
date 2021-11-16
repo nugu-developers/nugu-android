@@ -25,9 +25,7 @@ import android.os.Looper
 import androidx.annotation.VisibleForTesting
 import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
-import com.skt.nugu.sdk.platform.android.login.auth.AuthStateListener
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
+import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 
 /**
@@ -95,8 +93,8 @@ class NuguOAuthCallbackActivity : Activity() {
                     return false
                 }
 
-                if (intent != null && auth.setCodeFromIntent(intent)) {
-                    performLogin()
+                if (auth.verifyStateFromIntent(intent)) {
+                    performLogin(auth.codeFromIntent(intent))
                     return true
                 }
 
@@ -122,8 +120,8 @@ class NuguOAuthCallbackActivity : Activity() {
                 })
             }
             NuguOAuth.ACTION_ACCOUNT -> {
-                if (intent != null && auth.setCodeFromIntent(intent)) {
-                    performLogin()
+                if (auth.verifyStateFromIntent(intent)) {
+                    performLogin(auth.codeFromIntent(intent))
                     return true
                 }
                 val fallbackRunnable = Runnable {
@@ -167,10 +165,10 @@ class NuguOAuthCallbackActivity : Activity() {
             } else auth.setResult(false)
             finish()
         } else if(resultCode == RESULT_WEBVIEW_SUCCESS) {
-            if(data != null && auth.setCodeFromIntent(data)) {
-                performLogin()
+            if(auth.verifyStateFromIntent(data)) {
+                performLogin(auth.codeFromIntent(data))
             } else {
-                auth.setResult(false)
+                auth.setResult(false, NuguOAuthError(Throwable("Csrf failed. data=$data")))
                 finish()
             }
         } else {
@@ -188,8 +186,8 @@ class NuguOAuthCallbackActivity : Activity() {
         super.onNewIntent(intent)
         handler.removeCallbacks(finishRunnable)
 
-        if (intent != null &&  auth.setCodeFromIntent(intent)) {
-            performLogin()
+        if (auth.verifyStateFromIntent(intent)) {
+            performLogin(auth.codeFromIntent(intent))
         } else {
             auth.setResult(false)
             finish()
@@ -199,8 +197,10 @@ class NuguOAuthCallbackActivity : Activity() {
     /**
      * Perform a login.
      */
-    private fun performLogin() {
-        auth.loginInternal(object : AuthStateListener {
+    private fun performLogin(code : String?) {
+        auth.loginInternal(
+            AuthorizationRequest.AuthorizationCodeRequest(code),
+            object : AuthStateListener {
             override fun onAuthStateChanged(newState: AuthStateListener.State): Boolean {
                 if (newState == AuthStateListener.State.REFRESHED /* Authentication successful */) {
                     auth.setResult(true)
