@@ -96,27 +96,27 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
      *     fail during an exchange, it is possible that the remote server
      *     accepted the request before the failure.
      */
-    private fun handleRequestToken(code: String?, refreshToken: String?): AuthFlowState {
+    private fun handleRequestToken(authorizationRequest: AuthorizationRequest/*grantType: GrantType, code: String?, refreshToken: String?*/): AuthFlowState {
         val form = FormEncodingBuilder()
-            .add("grant_type", options.grantType)
+            .add("grant_type", authorizationRequest.grantType.value)
             .add("client_id", options.clientId)
             .add("client_secret", options.clientSecret)
             .add("data", "{\"deviceSerialNumber\":\"${options.deviceUniqueId}\"}")
 
-        runCatching { GrantType.valueOf(options.grantType.uppercase(Locale.getDefault())) }.getOrNull()?.let { grantType ->
-            when (grantType) {
-                GrantType.CLIENT_CREDENTIALS -> {
-                    // no op
-                }
-                GrantType.AUTHORIZATION_CODE -> {
-                    form.add("code", code.toString())
+        runCatching {
+            when (authorizationRequest) {
+                is AuthorizationRequest.AuthorizationCodeRequest -> {
+                    form.add("code", authorizationRequest.code.toString())
                         .add("redirect_uri", options.redirectUri.toString())
                 }
-                GrantType.REFRESH_TOKEN -> {
-                    form.add("refresh_token", refreshToken.toString())
+                is AuthorizationRequest.ClientCredentialsRequest -> {
+                    // no op
                 }
-                GrantType.DEVICE_CODE -> {
-                    form.add("device_code", code.toString())
+                is AuthorizationRequest.DeviceCodeRequest -> {
+                    form.add("device_code", authorizationRequest.deviceCode.toString())
+                }
+                is AuthorizationRequest.RefreshTokenRequest -> {
+                    form.add("refresh_token", authorizationRequest.refreshToken.toString())
                 }
             }
         }
@@ -202,12 +202,12 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
      * @param code authCode
      * @param refreshToken refresh Token
      * */
-    fun handleAuthorizationFlow(code: String?, refreshToken: String?) {
+    fun handleAuthorizationFlow(authorizationRequest: AuthorizationRequest) { //grantType: GrantType, code: String?, refreshToken: String?) {
         var flowState = AuthFlowState.STARTING
         while (flowState != AuthFlowState.STOPPING) {
             flowState = when (flowState) {
                 AuthFlowState.STARTING -> handleStarting()
-                AuthFlowState.REQUEST_ISSUE_TOKEN -> handleRequestToken(code, refreshToken)
+                AuthFlowState.REQUEST_ISSUE_TOKEN -> handleRequestToken(authorizationRequest)
                 AuthFlowState.STOPPING -> handleStopping()
             }
         }
