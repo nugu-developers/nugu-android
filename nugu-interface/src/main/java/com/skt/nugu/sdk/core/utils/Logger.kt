@@ -21,18 +21,38 @@ object Logger: LogInterface {
     var logger: LogInterface? = null
 
     override fun d(tag: String, msg: String, throwable: Throwable?) {
-        logger?.d(tag, msg, throwable)
+        try {
+            logger?.d(tag, msg, throwable)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 
     override fun e(tag: String, msg: String, throwable: Throwable?) {
-        logger?.e(tag, msg, throwable)
+        try {
+            logger?.e(tag, msg, throwable)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 
     override fun w(tag: String, msg: String, throwable: Throwable?) {
-        logger?.w(tag, msg, throwable)
+        try {
+            logger?.w(tag, msg, throwable)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 
     override fun i(tag: String, msg: String, throwable: Throwable?) {
-        logger?.i(tag, msg, throwable)
+        try {
+            logger?.i(tag, msg, throwable)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 }
