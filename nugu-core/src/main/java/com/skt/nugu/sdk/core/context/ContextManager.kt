@@ -182,7 +182,12 @@ class ContextManager : ContextManagerInterface {
             if (stateRequestToken == 0) {
                 stateRequestToken++
             }
+
             val token = stateRequestToken++
+
+            Logger.d(TAG, "[getContext] contextRequester: $contextRequester, target: $target, given: $given, timeoutInMillis: $timeoutInMillis, token: $token")
+
+
             val param = GetContextParam(
                 contextRequester,
                 target,
