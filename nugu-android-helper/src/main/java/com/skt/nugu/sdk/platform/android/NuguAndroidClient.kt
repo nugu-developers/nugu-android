@@ -517,8 +517,8 @@ class NuguAndroidClient private constructor(
                                 builder.asrEncoder,
                                 endpointDetector,
                                 builder.defaultEpdTimeoutMillis,
-                                DefaultFocusChannel.USER_DIALOG_CHANNEL_NAME,
-                                DefaultFocusChannel.INTERNAL_DIALOG_CHANNEL_NAME,
+                                DefaultFocusChannel.USER_ASR_CHANNEL_NAME,
+                                DefaultFocusChannel.DM_ASR_CHANNEL_NAME,
                                 getPlaySynchronizer(),
                                 getInteractionControlManager()
                             ).apply {
@@ -564,7 +564,7 @@ class NuguAndroidClient private constructor(
                             getPlaySynchronizer(),
                             getInterLayerDisplayPolicyManager(),
                             builder.cancelPolicyOnStopTTS,
-                            DefaultFocusChannel.DIALOG_CHANNEL_NAME
+                            DefaultFocusChannel.TTS_CHANNEL_NAME
                         ).apply {
                             getAudioPlayStackManager().addPlayContextProvider(this)
                             getDirectiveSequencer().addDirectiveHandler(this)
@@ -635,7 +635,7 @@ class NuguAndroidClient private constructor(
                                         getPlaySynchronizer(),
                                         getDirectiveSequencer(),
                                         getDirectiveGroupProcessor(),
-                                        DefaultFocusChannel.CONTENT_CHANNEL_NAME,
+                                        DefaultFocusChannel.MEDIA_CHANNEL_NAME,
                                         builder.enableDisplayLifeCycleManagement,
                                         audioPlayerTemplateHandler
                                     ).apply {
@@ -849,7 +849,7 @@ class NuguAndroidClient private constructor(
                                         getMessageSender(),
                                         getContextManager(),
                                         getAudioFocusManager(),
-                                        DefaultFocusChannel.CONTENT_CHANNEL_NAME,
+                                        DefaultFocusChannel.MEDIA_CHANNEL_NAME,
                                         bluetoothProvider,
                                         builder.bluetoothFocusChangeHandler
                                     ).apply {
@@ -889,7 +889,7 @@ class NuguAndroidClient private constructor(
                             TTSScenarioPlayer(
                                 container.getPlaySynchronizer(),
                                 container.getAudioSeamlessFocusManager(),
-                                DefaultFocusChannel.DIALOG_CHANNEL_NAME,
+                                DefaultFocusChannel.TTS_CHANNEL_NAME,
                                 builder.playerFactory.createSpeakPlayer(),
                                 container.getAudioPlayStackManager()
                             ),
