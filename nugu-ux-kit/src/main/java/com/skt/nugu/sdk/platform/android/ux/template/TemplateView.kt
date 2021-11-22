@@ -65,7 +65,7 @@ interface TemplateView {
         val templateConstructor: HashMap<List<String>, (String, Context) -> TemplateView> by lazy {
             HashMap<List<String>, (String, Context) -> TemplateView>().also {
                 it[MEDIA_TEMPLATE_TYPES] = { templateType, context ->
-                    DisplayAudioPlayer(templateType, context).apply { id = R.id.template_view }
+                    DisplayAudioPlayer(templateType, context)
                 }
             }
         }
@@ -82,6 +82,7 @@ interface TemplateView {
             if (!forceToWebView) {
                 templateConstructor.keys.find { it.contains(templateType) }?.let { key ->
                     templateConstructor[key]?.invoke(templateType, context)?.run {
+                        this.asView().id = R.id.template_view
                         return this
                     }
                 }

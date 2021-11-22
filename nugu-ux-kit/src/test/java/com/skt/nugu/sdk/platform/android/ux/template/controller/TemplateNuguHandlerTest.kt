@@ -51,7 +51,7 @@ class TemplateNuguHandlerTest {
 
         // check null condition
         `when`(nuguAndroidClient.getDisplay()).thenReturn(null)
-        nuguTemplateHandler.onElementSelected("token123")
+        nuguTemplateHandler.onElementSelected("token123", null)
         verifyNoMoreInteractions(display)
     }
 
