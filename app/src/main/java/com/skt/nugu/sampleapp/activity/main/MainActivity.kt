@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sampleapp.activity
+package com.skt.nugu.sampleapp.activity.main
 
 import android.annotation.TargetApi
 import android.content.Context
@@ -37,6 +37,8 @@ import androidx.fragment.app.FragmentManager
 import com.google.android.material.navigation.NavigationView
 import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
+import com.skt.nugu.sampleapp.activity.LoginActivity
+import com.skt.nugu.sampleapp.activity.SettingsActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.ExponentialBackOff
 import com.skt.nugu.sampleapp.client.TokenRefresher
@@ -47,7 +49,6 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.chips.Chip
-import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
@@ -59,8 +60,8 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError
 import com.skt.nugu.sdk.platform.android.speechrecognizer.KeywordDetector
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregatorInterface
-import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
-import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateView.Companion.MEDIA_TEMPLATE_TYPES
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateFragment
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.TemplateRenderer
 import com.skt.nugu.sdk.platform.android.ux.widget.*
@@ -141,35 +142,6 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         }
     }
 
-    private val templateListener = object : TemplateRenderer.TemplateLoadingListener {
-        override fun onStart(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {
-            //show loading view if you need
-        }
-
-        override fun onComplete(templateId: String, templateType: String, displayType: DisplayAggregatorInterface.Type?) {
-            //hide loading view if you need
-        }
-
-        override fun onReceivedError(
-            templateId: String,
-            templateType: String,
-            displayType: DisplayAggregatorInterface.Type?,
-            errorDescription: String?,
-        ) {
-            //hide loading view if you need
-        }
-    }
-
-    private class TemplateHandlerStopTTSWhenTouched(
-        nuguProvider: TemplateRenderer.NuguClientProvider,
-        templateInfo: TemplateHandler.TemplateInfo,
-        fragment: Fragment,
-    ) : DefaultTemplateHandler(nuguProvider, templateInfo, fragment) {
-        override fun onTemplateTouched() {
-            ClientManager.getClient().localStopTTS()
-        }
-    }
-
     private val triggerCallback = object : SpeechRecognizerAggregatorInterface.TriggerCallback {
         override fun onTriggerDetected(wakeupInfo: WakeupInfo?): Boolean {
             return isNetworkConnected().also { isNetworkConnected ->
@@ -221,17 +193,15 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
                 it.setServerUrl(url)
             }
 
-            it.templateLoadingListener = templateListener
-
             /** (example code)  if you want a template to stop TTS when it touched, uncomment below. */
 //            it.templateHandlerFactory = object : TemplateHandler.TemplateHandlerFactory() {
 //                override fun onCreate(
 //                    nuguProvider: TemplateRenderer.NuguClientProvider,
 //                    templateInfo: TemplateHandler.TemplateInfo,
-//                    fragment: Fragment
+//                    fragment: Fragment,
 //                ): TemplateHandler {
 //                    return if (templateInfo.templateType == "template you want make stop TTS when it touched")
-//                        TemplateHandlerStopTTSWhenTouched(nuguProvider, templateInfo, fragment)
+//                        CustomTemplateHandler(nuguProvider, templateInfo, fragment)
 //                    else
 //                        super.onCreate(nuguProvider, templateInfo, fragment)
 //                }
@@ -243,6 +213,11 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             /** (example code) if you want all template to not have close button, uncomment below */
 //            TemplateView.enableCloseButton = { templateType, serviceID, displayType ->
 //                false
+//            }
+
+            /** (example code) if you want use your custom media template view, uncomment below and take a look CustomMediaTemplate class */
+//            TemplateView.templateConstructor[MEDIA_TEMPLATE_TYPES] = { templateType, context ->
+//                CustomMediaTemplate(templateType, context)
 //            }
 
         })

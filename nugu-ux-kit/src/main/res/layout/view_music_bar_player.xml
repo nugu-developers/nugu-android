@@ -83,12 +83,24 @@
             android:layout_marginEnd="@dimen/media_player_controller_margin"
             android:src="@drawable/nugu_btn_skip_previous_32" />
 
-        <ImageView
-            android:id="@+id/btn_bar_play"
+        <FrameLayout
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="@dimen/media_player_controller_margin"
-            android:src="@drawable/nugu_btn_play_32" />
+            android:layout_marginEnd="@dimen/media_player_controller_margin">
+
+            <ImageView
+                android:id="@+id/btn_bar_play"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/nugu_btn_play_32" />
+
+            <ImageView
+                android:id="@+id/btn_bar_pause"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/nugu_btn_pause_32"
+                android:visibility="gone"/>
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/btn_bar_next"

@@ -239,13 +239,25 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/nugu_btn_skip_previous_48" />
 
-                            <ImageView
-                                android:id="@+id/btn_play"
+                            <FrameLayout
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 android:layout_marginLeft="20dp"
-                                android:layout_marginRight="20dp"
-                                android:src="@drawable/nugu_btn_play_48" />
+                                android:layout_marginRight="20dp">
+
+                                <ImageView
+                                    android:id="@+id/btn_play"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:src="@drawable/nugu_btn_play_48" />
+
+                                <ImageView
+                                    android:id="@+id/btn_pause"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:src="@drawable/nugu_btn_pause_48"
+                                    android:visibility="gone"/>
+                            </FrameLayout>
 
                             <ImageView
                                 android:id="@+id/btn_next"

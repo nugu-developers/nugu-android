@@ -28,13 +28,13 @@ import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 abstract class TemplateNativeView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
     RelativeLayout(context, attrs, defStyleAttr), TemplateView {
 
-    protected lateinit var logoView: ImageView
+    protected lateinit var logo: ImageView
 
-    protected lateinit var titleView: TextView
+    protected lateinit var title: TextView
 
-    protected lateinit var close: ImageView
+    protected lateinit var btnClose: ImageView
 
-    protected lateinit var collapsed: ImageView
+    protected lateinit var btnCollapse: ImageView
 
     protected fun setContentView(layout: Int) {
         this.removeAllViewsInLayout()
@@ -42,13 +42,17 @@ abstract class TemplateNativeView @JvmOverloads constructor(context: Context, at
     }
 
     protected open fun setViews() {
-        logoView = findViewById(R.id.iv_logo)
-        titleView = findViewById(R.id.tv_title)
-        close = findViewById(R.id.btn_close)
-        collapsed = findViewById(R.id.btn_collapsed)
+        logo = findViewById(R.id.iv_logo)
+        title = findViewById(R.id.tv_title)
+        btnClose = findViewById(R.id.btn_close)
+        btnCollapse = findViewById(R.id.btn_collapsed)
 
-        close.setThrottledOnClickListener {
-            templateHandler?.onCloseClicked()
+        btnClose.setThrottledOnClickListener {
+            onCloseClicked()
         }
+    }
+
+    open fun onCloseClicked(){
+        templateHandler?.onCloseClicked()
     }
 }

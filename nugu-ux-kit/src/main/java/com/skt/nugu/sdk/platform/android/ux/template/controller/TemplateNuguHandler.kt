@@ -63,11 +63,6 @@ open class TemplateNuguHandler(
         }
     }
 
-    override fun onElementSelected(tokenId: String) {
-        Logger.i(TAG, "onElementSelected() $tokenId")
-        getNuguClient().getDisplay()?.setElementSelected(templateId = templateInfo.templateId, token = tokenId, postback = null)
-    }
-
     override fun onElementSelected(tokenId: String, postback: String?) {
         Logger.i(TAG, "onElementSelected() $tokenId, postback $postback")
         getNuguClient().getDisplay()?.setElementSelected(templateId = templateInfo.templateId, token = tokenId, postback = postback)

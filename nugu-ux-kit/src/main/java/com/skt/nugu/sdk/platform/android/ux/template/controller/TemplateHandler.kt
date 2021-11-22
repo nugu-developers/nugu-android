@@ -40,8 +40,6 @@ interface TemplateHandler {
     val templateInfo: TemplateInfo
 
     // template -> client side
-    fun onElementSelected(tokenId: String){}
-
     fun onElementSelected(tokenId: String, postback : String?) {}
 
     fun onChipSelected(text: String) {}

@@ -8,7 +8,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.skt.nugu.sampleapp.R
-import com.skt.nugu.sampleapp.activity.MainActivity
+import com.skt.nugu.sampleapp.activity.main.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.service.floating.FloatingHeadWindow
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface

@@ -35,10 +35,6 @@ open class DefaultTemplateHandler(
     protected var nuguHandler = TemplateNuguHandler(nuguProvider, templateInfo)
     protected var mediaHandler: TemplateHandler = TemplateMediaHandler(nuguProvider, templateInfo)
 
-    override fun onElementSelected(tokenId: String) {
-        nuguHandler.onElementSelected(tokenId)
-    }
-
     override fun onElementSelected(tokenId: String, postback: String?) {
         nuguHandler.onElementSelected(tokenId, postback)
     }

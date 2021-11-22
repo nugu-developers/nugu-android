@@ -58,37 +58,43 @@ import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 
-@SuppressLint("ClickableViewAccessibility", "ViewConstructor")
-class DisplayAudioPlayer @JvmOverloads
-constructor(private val templateType: String, context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    TemplateNativeView(context, attrs, defStyleAttr), ThemeManagerInterface.ThemeListener {
+@SuppressLint("ClickableViewAccessibility")
+open class DisplayAudioPlayer constructor(
+    private val templateType: String,
+    context: Context,
+) : TemplateNativeView(context, null, 0), ThemeManagerInterface.ThemeListener {
+
+    private constructor(context: Context) : this("", context)
+    private constructor(context: Context, attrs: AttributeSet?) : this("", context)
+    private constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : this("", context)
 
     companion object {
         private const val TAG = "DisplayAudioPlayer"
-        private val LOGO_PLACE_HOLDER = R.drawable.nugu_logo_placeholder_60
-        private val LOGO_DEFAULT = R.drawable.nugu_logo_60_line
     }
 
-    private lateinit var player: View
-    private lateinit var imageView: ImageView
+    open val mediaTemplateResources = MediaTemplateResources()
+
+    private lateinit var expandedPlayer: View
+    private lateinit var albumImage: ImageView
     private lateinit var header: TextView
     private lateinit var body: TextView
     private lateinit var footer: TextView
-    private lateinit var prev: ImageView
-    private lateinit var play: ImageView
-    private lateinit var next: ImageView
+    private lateinit var btnPrev: ImageView
+    private lateinit var btnPlay: ImageView
+    private lateinit var btnPause: ImageView
+    private lateinit var btnNext: ImageView
     private lateinit var progressView: SeekBar
-    private lateinit var playtime: TextView
-    private lateinit var fulltime: TextView
-    private lateinit var badgeImage: ImageView
-    private lateinit var badgeTextView: TextView
+    private lateinit var timeCurrent: TextView
+    private lateinit var timeEnd: TextView
+    private lateinit var badgeImage: ImageView      //the image icon at right top of album cover
+    private lateinit var badgeTextView: TextView    //the text icon at right bottom of album cover
     private lateinit var lyricsView: LyricsView
     private lateinit var smallLyricsView: LyricsView
-    private lateinit var showLyrics: TextView
-    private lateinit var favoriteView: ImageView
-    private lateinit var repeatView: ImageView
-    private lateinit var shuffleView: ImageView
-    private lateinit var controller: View
+    private lateinit var btnShowLyrics: TextView
+    private lateinit var btnFavorite: ImageView
+    private lateinit var btnRepeat: ImageView
+    private lateinit var btnShuffle: ImageView
+    private lateinit var mediaController: View
     private lateinit var albumCover: View
 
     /* Bar Player */
@@ -97,22 +103,22 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private lateinit var barImage: ImageView
     private lateinit var barTitle: TextView
     private lateinit var barSubtitle: TextView
-    private lateinit var barPrev: ImageView
-    private lateinit var barPlay: ImageView
-    private lateinit var barNext: ImageView
-    private lateinit var barClose: ImageView
+    private lateinit var btnBarPrev: ImageView
+    private lateinit var btnBarPlay: ImageView
+    private lateinit var btnBarPause: ImageView
+    private lateinit var btnBarNext: ImageView
+    private lateinit var btnBarClose: ImageView
     private lateinit var barProgress: SeekBar
 
     private val gson = Gson()
 
     private val interpolator = AccelerateDecelerateInterpolator()
-    private val transitionDuration = 400L
     private var mediaDurationMs = 0L
     private var mediaCurrentTimeMs = 0L
     private var mediaPlaying = false
 
-    private val thumbTransformCorner10 = RoundedCorners(dpToPx(10.7f, context))
-    private val thumbTransformCorner2 = RoundedCorners(dpToPx(2f, context))
+    private val thumbTransformCornerAlbumCover by lazy { RoundedCorners(dpToPx(mediaTemplateResources.mainImageRoundingRadiusDp, context)) }
+    private val thumbTransformCornerAlbumBadge by lazy { RoundedCorners(dpToPx(mediaTemplateResources.badgeImageRoundingRadiusDp, context)) }
 
     @VisibleForTesting
     internal var audioPlayerItem: AudioPlayer? = null
@@ -147,13 +153,11 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         ) {
             post {
                 mediaPlaying = activity == AudioPlayerAgentInterface.State.PLAYING
-                if (mediaPlaying) {
-                    play.setImageResource(R.drawable.nugu_btn_pause_48)
-                    barPlay.setImageResource(R.drawable.nugu_btn_pause_32)
-                } else {
-                    play.setImageResource(R.drawable.nugu_btn_play_48)
-                    barPlay.setImageResource(R.drawable.nugu_btn_play_32)
-                }
+                btnPlay.visibility = if (mediaPlaying) View.GONE else View.VISIBLE
+                btnPause.visibility = if (mediaPlaying) View.VISIBLE else View.GONE
+
+                btnBarPlay.visibility = if (mediaPlaying) View.GONE else View.VISIBLE
+                btnBarPause.visibility = if (mediaPlaying) View.VISIBLE else View.GONE
             }
         }
 
@@ -164,9 +168,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 }
             }
 
-            fulltime.post {
+            timeEnd.post {
                 mediaDurationMs = durationMs
-                fulltime.updateText(convertToTimeMs(durationMs.toInt()), true)
+                timeEnd.updateText(convertToTimeMs(durationMs.toInt()), true)
             }
         }
 
@@ -213,7 +217,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             mediaDurationMs,
             mediaCurrentTimeMs,
             if (mediaPlaying) 1 else 0,
-            if (player.y != 0f) 1 else 0,
+            if (expandedPlayer.y != 0f) 1 else 0,
             if (lyricsView.visibility == View.VISIBLE) 1 else 0)
     }
 
@@ -225,9 +229,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             mediaCurrentTimeMs = savedState.currentTimeMs
             mediaPlaying = savedState.mediaPlaying == 1
 
-            fulltime.post {
-                if (fulltime.visibility == View.VISIBLE) {
-                    fulltime.updateText(convertToTimeMs(mediaDurationMs.toInt()), true)
+            timeEnd.post {
+                if (timeEnd.visibility == View.VISIBLE) {
+                    timeEnd.updateText(convertToTimeMs(mediaDurationMs.toInt()), true)
                 }
                 lyricsView.visibility = if (savedState.isLyricShowing == 1) View.VISIBLE else View.GONE
 
@@ -235,13 +239,16 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
 
             if (mediaPlaying) {
-                play.post {
-                    play.setImageResource(R.drawable.nugu_btn_pause_48)
-                    barPlay.setImageResource(R.drawable.nugu_btn_pause_32)
+                btnPlay.post {
+                    btnPlay.visibility = View.GONE
+                    btnPause.visibility = View.VISIBLE
+
+                    btnBarPlay.visibility = View.GONE
+                    btnBarPause.visibility = View.VISIBLE
                 }
             }
 
-            player.post {
+            expandedPlayer.post {
                 if (savedState.isBarType == 1) collapse(true)
                 else expand(true)
             }
@@ -255,13 +262,13 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         setContentView()
         isSaveEnabled = true
 
-        addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+        this.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (currOrientation != resources.configuration.orientation) {
                 currOrientation = resources.configuration.orientation
                 setContentView(true)
             }
 
-            if (currOrientation == ORIENTATION_PORTRAIT) {
+            if (mediaTemplateResources.layoutResIdPort == R.layout.view_display_audioplayer_port && currOrientation == ORIENTATION_PORTRAIT) {
                 post {
                     val titleHeight = resources.getDimensionPixelSize(R.dimen.media_player_title_height)
                     val imageSize = ((measuredHeight - titleHeight).toFloat() * 0.4f).toInt()
@@ -274,17 +281,17 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                         }
                     } else {
                         albumCover.visibility = View.VISIBLE
-                        if (imageView.layoutParams.width != imageSize) {
-                            imageView.layoutParams.width = imageSize
-                            imageView.layoutParams.height = imageSize
-                            imageView.requestLayout()
+                        if (albumImage.layoutParams.width != imageSize) {
+                            albumImage.layoutParams.width = imageSize
+                            albumImage.layoutParams.height = imageSize
+                            albumImage.requestLayout()
                         }
                     }
 
-                    (controller.layoutParams as? FrameLayout.LayoutParams)?.let { controllerLayout ->
+                    (mediaController.layoutParams as? FrameLayout.LayoutParams)?.let { controllerLayout ->
                         if (controllerLayout.bottomMargin != bottomMargin) {
                             controllerLayout.bottomMargin = bottomMargin
-                            controller.postInvalidate()
+                            mediaController.postInvalidate()
                         }
                     }
                 }
@@ -294,7 +301,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
     private fun initViews() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            findViewById<View>(R.id.album_cover)?.elevation = dpToPx(11f, context).toFloat()
+            findViewById<View>(R.id.album_cover)?.elevation = dpToPx(mediaTemplateResources.albumCoverElevation, context).toFloat()
         }
 
         if (templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_1) {
@@ -307,12 +314,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
         barTitle.enableMarquee()
 
-        collapsed.setThrottledOnClickListener {
-            collapse()
+        btnCollapse.setThrottledOnClickListener {
+            onCollapseButtonClicked()
         }
 
         barBody.setThrottledOnClickListener {
-            expand()
+            onBarPlayerClicked()
         }
 
         smallLyricsView.setThrottledOnClickListener {
@@ -323,52 +330,64 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             lyricPresenter.hide()
         }
 
-        showLyrics.setThrottledOnClickListener {
+        btnShowLyrics.setThrottledOnClickListener {
             lyricPresenter.show()
         }
 
-        prev.setThrottledOnClickListener {
+        btnPrev.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.PREV)
         }
 
-        barPrev.setThrottledOnClickListener {
-            prev.callOnClick()
+        btnBarPrev.setThrottledOnClickListener {
+            btnPrev.callOnClick()
         }
 
-        play.setThrottledOnClickListener {
-            if (mediaPlaying) {
-                templateHandler?.onPlayerCommand(PlayerCommand.PAUSE)
-            } else {
-                templateHandler?.onPlayerCommand(PlayerCommand.PLAY)
-            }
+        btnPlay.setThrottledOnClickListener {
+            templateHandler?.onPlayerCommand(PlayerCommand.PLAY)
         }
 
-        barPlay.setThrottledOnClickListener {
-            play.performClick()
+        btnPause.setThrottledOnClickListener {
+            templateHandler?.onPlayerCommand(PlayerCommand.PAUSE)
         }
 
-        next.setThrottledOnClickListener {
+        btnBarPlay.setThrottledOnClickListener {
+            btnPlay.performClick()
+        }
+
+        btnBarPause.setThrottledOnClickListener {
+            btnPause.performClick()
+        }
+
+        btnNext.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.NEXT)
         }
 
-        barNext.setThrottledOnClickListener {
-            next.performClick()
+        btnBarNext.setThrottledOnClickListener {
+            btnNext.performClick()
         }
 
-        barClose.setThrottledOnClickListener {
-            close.performClick()
+        btnBarClose.setThrottledOnClickListener {
+            onCloseClicked()
         }
 
-        favoriteView.setThrottledOnClickListener { _ ->
-            templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE, favoriteView.isSelected.toString())
+        btnFavorite.setThrottledOnClickListener { _ ->
+            templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE, btnFavorite.isSelected.toString())
         }
 
-        shuffleView.setThrottledOnClickListener { _ ->
-            templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE, shuffleView.isSelected.toString())
+        btnShuffle.setThrottledOnClickListener { _ ->
+            templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE, btnShuffle.isSelected.toString())
         }
 
         progressView.setOnTouchListener { _, _ -> true }
         barProgress.setOnTouchListener { _, _ -> true }
+    }
+
+    open fun onCollapseButtonClicked() {
+        collapse()
+    }
+
+    open fun onBarPlayerClicked() {
+        expand()
     }
 
     /**
@@ -377,9 +396,9 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
      */
     private fun setContentView(isRefresh: Boolean = false) {
         var savedState: SavedStates? = null
-        val isFavoriteSelected = if (isRefresh) favoriteView.isSelected else false
-        val isShuffle = if (isRefresh) shuffleView.isSelected else false
-        val repeatInfo = if (isRefresh) repeatView.getTag(R.id.iv_repeat) else Unit
+        val isFavoriteSelected = if (isRefresh) btnFavorite.isSelected else false
+        val isShuffle = if (isRefresh) btnShuffle.isSelected else false
+        val repeatInfo = if (isRefresh) btnRepeat.getTag(R.id.iv_repeat) else Unit
 
         // if isRefresh, save current state to restore after setContentView
         if (isRefresh) {
@@ -387,15 +406,16 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 mediaDurationMs,
                 mediaCurrentTimeMs,
                 if (mediaPlaying) 1 else 0,
-                if (player.y != 0f) 1 else 0,
+                if (expandedPlayer.y != 0f) 1 else 0,
                 if (lyricsView.visibility == View.VISIBLE) 1 else 0)
         }
 
         if (currOrientation == ORIENTATION_PORTRAIT) {
-            setContentView(R.layout.view_display_audioplayer_port)
+            setContentView(mediaTemplateResources.layoutResIdPort)
         } else {
-            setContentView(R.layout.view_display_audioplayer_land)
+            setContentView(mediaTemplateResources.layoutResIdLand)
         }
+
         isDark = false // initialize
 
         setViews()
@@ -415,7 +435,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
 
             setShuffle(isShuffle)
 
-            favoriteView.isSelected = isFavoriteSelected
+            btnFavorite.isSelected = isFavoriteSelected
         }
 
         updateThemeIfNeeded()
@@ -424,38 +444,40 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     override fun setViews() {
         super.setViews()
 
-        player = findViewById<View>(R.id.view_music_player)
-        imageView = findViewById(R.id.iv_image)
+        expandedPlayer = findViewById(R.id.view_music_player)
+        albumImage = findViewById(R.id.iv_image)
         header = findViewById(R.id.tv_header)
         body = findViewById(R.id.tv_body)
         footer = findViewById(R.id.tv_footer)
-        prev = findViewById(R.id.btn_prev)
-        play = findViewById(R.id.btn_play)
-        next = findViewById(R.id.btn_next)
+        btnPrev = findViewById(R.id.btn_prev)
+        btnPlay = findViewById(R.id.btn_play)
+        btnPause = findViewById(R.id.btn_pause)
+        btnNext = findViewById(R.id.btn_next)
         progressView = findViewById(R.id.sb_progress)
-        playtime = findViewById(R.id.tv_playtime)
-        fulltime = findViewById(R.id.tv_fulltime)
+        timeCurrent = findViewById(R.id.tv_playtime)
+        timeEnd = findViewById(R.id.tv_fulltime)
         badgeImage = findViewById(R.id.iv_badgeImage)
         badgeTextView = findViewById(R.id.tv_badgeMessage)
         lyricsView = findViewById(R.id.cv_lyrics)
         smallLyricsView = findViewById(R.id.cv_small_lyrics)
-        showLyrics = findViewById(R.id.tv_show_lyrics)
-        favoriteView = findViewById(R.id.iv_favorite)
-        repeatView = findViewById(R.id.iv_repeat)
-        shuffleView = findViewById(R.id.iv_shuffle)
-        controller = findViewById<View>(R.id.controller_area)
-        albumCover = findViewById<View>(R.id.album_cover)
+        btnShowLyrics = findViewById(R.id.tv_show_lyrics)
+        btnFavorite = findViewById(R.id.iv_favorite)
+        btnRepeat = findViewById(R.id.iv_repeat)
+        btnShuffle = findViewById(R.id.iv_shuffle)
+        mediaController = findViewById(R.id.controller_area)
+        albumCover = findViewById(R.id.album_cover)
 
         /* Bar Player */
-        barPlayer = findViewById<View>(R.id.bar_player)
-        barBody = findViewById<View>(R.id.bar_body)
+        barPlayer = findViewById(R.id.bar_player)
+        barBody = findViewById(R.id.bar_body)
         barImage = findViewById(R.id.iv_bar_image)
         barTitle = findViewById(R.id.tv_bar_title)
         barSubtitle = findViewById(R.id.tv_bar_subtitle)
-        barPrev = findViewById(R.id.btn_bar_prev)
-        barPlay = findViewById(R.id.btn_bar_play)
-        barNext = findViewById(R.id.btn_bar_next)
-        barClose = findViewById(R.id.btn_bar_close)
+        btnBarPrev = findViewById(R.id.btn_bar_prev)
+        btnBarPlay = findViewById(R.id.btn_bar_play)
+        btnBarPause = findViewById(R.id.btn_bar_pause)
+        btnBarNext = findViewById(R.id.btn_bar_next)
+        btnBarClose = findViewById(R.id.btn_bar_close)
         barProgress = findViewById(R.id.sb_bar_progress)
     }
 
@@ -505,39 +527,43 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         if (!isMerge) audioPlayerItem = item
 
         item.title?.run {
-            titleView.updateText(text, isMerge)
+            title.updateText(text, isMerge)
         }
 
         item.title?.iconUrl.let {
             if (it.isNullOrBlank()) {
                 if (!isMerge) {
-                    logoView.visibility = View.VISIBLE
-                    logoView.setImageResource(LOGO_DEFAULT)
+                    logo.visibility = View.VISIBLE
+                    logo.setImageResource(mediaTemplateResources.nuguLogoDefault)
                 }
             } else {
-                logoView.updateImage(it, thumbTransformCorner2, isMerge, placeHolder = LOGO_PLACE_HOLDER, loadingFailImage = LOGO_DEFAULT)
+                logo.updateImage(it,
+                    thumbTransformCornerAlbumBadge,
+                    isMerge,
+                    placeHolder = mediaTemplateResources.nuguLogoPlaceHolder,
+                    loadingFailImage = mediaTemplateResources.nuguLogoDefault)
             }
         }
 
         item.content?.run {
-            imageView.updateImage(imageUrl, thumbTransformCorner10, isMerge)
+            albumImage.updateImage(imageUrl, thumbTransformCornerAlbumCover, isMerge)
             header.updateText(title, isMerge)
             body.updateText(subtitle1, isMerge)
             footer.updateText(subtitle2, isMerge, true)
-            badgeImage.updateImage(badgeImageUrl, thumbTransformCorner2, isMerge)
+            badgeImage.updateImage(badgeImageUrl, thumbTransformCornerAlbumBadge, isMerge)
             badgeTextView.updateText(badgeMessage, isMerge)
 
             if (durationSec != null) {
                 progressView.isEnabled = true
                 barProgress.isEnabled = true
-                playtime.updateText(convertToTime(0), isMerge)
+                timeCurrent.updateText(convertToTime(0), isMerge)
             } else if (!isMerge) {
                 progressView.isEnabled = false
                 progressView.visibility = View.INVISIBLE
                 barProgress.isEnabled = false
                 barProgress.visibility = View.INVISIBLE
-                playtime.visibility = View.INVISIBLE
-                fulltime.visibility = View.INVISIBLE
+                timeCurrent.visibility = View.INVISIBLE
+                timeEnd.visibility = View.INVISIBLE
             }
 
             lyrics?.title?.apply { lyricsView.setTitle(this, templateType == TemplateView.AUDIO_PLAYER_TEMPLATE_1) }
@@ -549,10 +575,10 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 when (lyrics.lyricsType) {
                     LyricsType.SYNC -> {
                         smallLyricsView.visibility = View.VISIBLE
-                        showLyrics.visibility = View.GONE
+                        btnShowLyrics.visibility = View.GONE
                     }
                     LyricsType.NON_SYNC -> {
-                        with(showLyrics) {
+                        with(btnShowLyrics) {
                             visibility = View.VISIBLE
                             text = lyrics.showButton?.text ?: resources.getString(R.string.lyrics_button_default_text)
                         }
@@ -564,30 +590,30 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
                 lyricsView.setItems(null)
                 smallLyricsView.setItems(null)
                 lyricPresenter.hide()
-                showLyrics.visibility = View.GONE
+                btnShowLyrics.visibility = View.GONE
                 smallLyricsView.visibility = View.GONE
             }
 
-            barImage.updateImage(imageUrl, thumbTransformCorner2, isMerge)
+            barImage.updateImage(imageUrl, thumbTransformCornerAlbumBadge, isMerge)
             barTitle.updateText(title, isMerge)
             barSubtitle.updateText(subtitle1, isMerge)
         }
 
         item.content?.settings?.run {
             if (!isMerge) {
-                favoriteView.visibility = if (favorite != null) View.VISIBLE else View.INVISIBLE
-                repeatView.visibility = if (repeat != null) View.VISIBLE else View.INVISIBLE
-                shuffleView.visibility = if (shuffle != null) View.VISIBLE else View.INVISIBLE
+                btnFavorite.visibility = if (favorite != null) View.VISIBLE else View.INVISIBLE
+                btnRepeat.visibility = if (repeat != null) View.VISIBLE else View.INVISIBLE
+                btnShuffle.visibility = if (shuffle != null) View.VISIBLE else View.INVISIBLE
             }
 
             favorite?.let {
-                favoriteView.isSelected = it
+                btnFavorite.isSelected = it
             }
 
             repeat?.let {
                 setRepeatMode(it)
-                repeatView.setThrottledOnClickListener { _ ->
-                    templateHandler?.onPlayerCommand(PlayerCommand.REPEAT, (repeatView.getTag(R.id.iv_repeat) as? Repeat)?.name ?: it.name)
+                btnRepeat.setThrottledOnClickListener { _ ->
+                    templateHandler?.onPlayerCommand(PlayerCommand.REPEAT, (btnRepeat.getTag(R.id.iv_repeat) as? Repeat)?.name ?: it.name)
                 }
             }
 
@@ -596,7 +622,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             }
         }
 
-        if (player.visibility != View.VISIBLE) {
+        if (expandedPlayer.visibility != View.VISIBLE) {
             collapse(true)
         }
     }
@@ -614,8 +640,8 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     @VisibleForTesting
     internal fun updateThemeIfNeeded() {
         fun update() {
-            player.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
-            titleView.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_title_dark else R.color.media_template_text_title_light))
+            expandedPlayer.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
+            title.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_title_dark else R.color.media_template_text_title_light))
             header.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
             body.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_body_dark else R.color.media_template_text_body_light))
             footer.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_footer_dark else R.color.media_template_text_footer_light))
@@ -628,31 +654,35 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
             lyricsView.isDark = isDark
             smallLyricsView.isDark = isDark
 
-            setShuffle(shuffleView.isSelected)
-            (repeatView.getTag(R.id.iv_repeat) as? Repeat)?.apply(::setRepeatMode)
+            setShuffle(btnShuffle.isSelected)
+            (btnRepeat.getTag(R.id.iv_repeat) as? Repeat)?.apply(::setRepeatMode)
 
             if (isDark) {
-                collapsed.setColorFilter(resources.genColor(R.color.media_title_button_filter), PorterDuff.Mode.SRC_IN)
-                close.setColorFilter(resources.genColor(R.color.media_title_button_filter), PorterDuff.Mode.SRC_IN)
+                btnCollapse.setColorFilter(resources.genColor(R.color.media_title_button_filter), PorterDuff.Mode.SRC_IN)
+                btnClose.setColorFilter(resources.genColor(R.color.media_title_button_filter), PorterDuff.Mode.SRC_IN)
 
-                next.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-                prev.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-                play.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnNext.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnPrev.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnPlay.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnPause.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
 
-                barPlay.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-                barPrev.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-                barNext.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnBarPlay.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnBarPause.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnBarPrev.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                btnBarNext.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
             } else {
-                collapsed.colorFilter = null
-                close.colorFilter = null
+                btnCollapse.colorFilter = null
+                btnClose.colorFilter = null
 
-                next.colorFilter = null
-                prev.colorFilter = null
-                play.colorFilter = null
+                btnNext.colorFilter = null
+                btnPrev.colorFilter = null
+                btnPlay.colorFilter = null
+                btnPause.colorFilter = null
 
-                barPlay.colorFilter = null
-                barPrev.colorFilter = null
-                barNext.colorFilter = null
+                btnBarPlay.colorFilter = null
+                btnBarPause.colorFilter = null
+                btnBarPrev.colorFilter = null
+                btnBarNext.colorFilter = null
             }
         }
 
@@ -672,12 +702,12 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         val p = progress ?: run {
             val offset = currentTimeMs.toFloat()
             val duration = mediaDurationMs.coerceAtLeast(1L)
-            (offset / duration * 100f).coerceIn(0f, 100f).toFloat()
+            (offset / duration * 100f).coerceIn(0f, 100f)
         }
 
-        playtime.post {
-            if (playtime.visibility == View.VISIBLE) {
-                playtime.updateText(convertToTimeMs(currentTimeMs.toInt()), true)
+        timeCurrent.post {
+            if (timeCurrent.visibility == View.VISIBLE) {
+                timeCurrent.updateText(convertToTimeMs(currentTimeMs.toInt()), true)
             }
             progressView.progress = p.toInt()
             barProgress.progress = p.toInt()
@@ -686,23 +716,24 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    private fun collapse(immediately: Boolean = false) {
-        player.post {
+    protected fun collapse(immediately: Boolean = false) {
+        expandedPlayer.post {
             if (immediately) {
-                player.y = player.height.toFloat()
+                expandedPlayer.y = expandedPlayer.height.toFloat()
             } else {
-                player.animate().y(player.height.toFloat()).setDuration(transitionDuration).interpolator = interpolator
+                expandedPlayer.animate().y(expandedPlayer.height.toFloat())
+                    .setDuration(mediaTemplateResources.barPlayerTransitionDurationMs).interpolator = interpolator
             }
         }
     }
 
-    private fun expand(immediately: Boolean = false) {
-        player.visibility = View.VISIBLE
-        player.post {
+    protected fun expand(immediately: Boolean = false) {
+        expandedPlayer.visibility = View.VISIBLE
+        expandedPlayer.post {
             if (immediately) {
-                player.y = 0f
+                expandedPlayer.y = 0f
             } else {
-                player.animate().y(0f).setDuration(transitionDuration).interpolator = interpolator
+                expandedPlayer.animate().y(0f).setDuration(mediaTemplateResources.barPlayerTransitionDurationMs).interpolator = interpolator
             }
         }
     }
@@ -738,7 +769,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
         }
     }
 
-    override fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, player.y != 0f)
+    override fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, expandedPlayer.y != 0f)
 
     override fun applyRenderInfo(renderInfo: Any) {
         (renderInfo as? RenderInfo)?.run {
@@ -773,7 +804,7 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     }
 
     private fun setShuffle(shuffle: Boolean) {
-        with(shuffleView) {
+        with(btnShuffle) {
             isSelected = shuffle
             if (isDark && !isSelected) {
                 setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
@@ -786,23 +817,23 @@ constructor(private val templateType: String, context: Context, attrs: Attribute
     private fun setRepeatMode(repeat: Repeat) {
         when (repeat) {
             Repeat.ALL -> {
-                repeatView.setImageResource(R.drawable.nugu_btn_repeat)
-                repeatView.colorFilter = null
+                btnRepeat.setImageResource(R.drawable.nugu_btn_repeat)
+                btnRepeat.colorFilter = null
             }
             Repeat.ONE -> {
-                repeatView.setImageResource(R.drawable.nugu_btn_repeat_1)
-                repeatView.colorFilter = null
+                btnRepeat.setImageResource(R.drawable.nugu_btn_repeat_1)
+                btnRepeat.colorFilter = null
             }
             Repeat.NONE -> {
-                repeatView.setImageResource(R.drawable.nugu_btn_repeat_inactive)
+                btnRepeat.setImageResource(R.drawable.nugu_btn_repeat_inactive)
                 if (isDark) {
-                    repeatView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                    btnRepeat.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
                 } else {
-                    repeatView.colorFilter = null
+                    btnRepeat.colorFilter = null
                 }
             }
         }
 
-        repeatView.setTag(R.id.iv_repeat, repeat)
+        btnRepeat.setTag(R.id.iv_repeat, repeat)
     }
 }

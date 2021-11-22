@@ -23,6 +23,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.skt.nugu.sampleapp.R
+import com.skt.nugu.sampleapp.activity.main.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sampleapp.client.toResId
 import com.skt.nugu.sampleapp.utils.PreferenceHelper

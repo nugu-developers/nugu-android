@@ -29,7 +29,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
 import com.skt.nugu.sampleapp.R
-import com.skt.nugu.sampleapp.activity.MainActivity
+import com.skt.nugu.sampleapp.activity.main.MainActivity
 import com.skt.nugu.sampleapp.client.ClientManager
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.chips.RenderDirective
