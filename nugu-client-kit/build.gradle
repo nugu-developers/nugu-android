@@ -46,7 +46,7 @@ dependencies {
 }
 
 protobuf {
-    def useAppleSilicon = true
+    def useAppleSilicon = false
 
     if(useAppleSilicon) {
         protoc { artifact = "com.google.protobuf:protoc:$protoc_version:osx-x86_64" }
