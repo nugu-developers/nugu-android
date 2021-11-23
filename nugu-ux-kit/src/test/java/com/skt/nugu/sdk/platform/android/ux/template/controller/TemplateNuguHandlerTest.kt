@@ -46,12 +46,12 @@ class TemplateNuguHandlerTest {
         val display: DisplayAggregatorInterface = mock()
         `when`(nuguAndroidClient.getDisplay()).thenReturn(display)
 
-        nuguTemplateHandler.onElementSelected("token123", null)
-        verify(display).setElementSelected(templateInfo.templateId, "token123", null)
+        nuguTemplateHandler.onElementSelected("token123")
+        verify(display).setElementSelected(templateInfo.templateId, "token123")
 
         // check null condition
         `when`(nuguAndroidClient.getDisplay()).thenReturn(null)
-        nuguTemplateHandler.onElementSelected("token123", null)
+        nuguTemplateHandler.onElementSelected("token123")
         verifyNoMoreInteractions(display)
     }
 
