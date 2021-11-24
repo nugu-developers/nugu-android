@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
 import com.skt.nugu.sdk.client.port.transport.grpc2.HealthCheckPolicy
 import com.skt.nugu.sdk.core.utils.Logger
-import devicegateway.grpc.PingRequest
 import devicegateway.grpc.VoiceServiceGrpc
 import io.grpc.ManagedChannel
 import io.grpc.Status
@@ -61,10 +60,6 @@ internal class PingService(
             if(blockingStub == null) {
                 blockingStub = VoiceServiceGrpc.newBlockingStub(channel)
             }
-            val response = blockingStub!!.withDeadlineAfter(
-                if (timeout > 0) timeout else defaultTimeout,
-                TimeUnit.MILLISECONDS
-            ).ping(PingRequest.newBuilder().setVersion(2).build())
 
             if (!isShutdown.get()) {
                 observer.onPingRequestAcknowledged()

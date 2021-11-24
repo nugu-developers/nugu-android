@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.math.min
 
 open class CircularBufferSharedDataStream(private val capacity: Int) :
     SharedDataStream {
@@ -102,7 +103,7 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
 
             while (leftSizeInBytes > 0) {
                 val writableBufferSizeAtOnce = capacity - writeOffset
-                val writeSizeInBytes = Math.min(leftSizeInBytes, writableBufferSizeAtOnce)
+                val writeSizeInBytes = min(leftSizeInBytes, writableBufferSizeAtOnce)
 
                 lock.write {
                     System.arraycopy(
@@ -210,9 +211,9 @@ open class CircularBufferSharedDataStream(private val capacity: Int) :
                         readableBufferSizeInBytes > 0 -> {
                             // can read
                             val readOffset = (readPosition % capacity).toInt()
-                            val readSize = Math.min(
+                            val readSize = min(
                                 capacity - readOffset,
-                                Math.min(readableBufferSizeInBytes.toInt(), leftSizeInBytes)
+                                min(readableBufferSizeInBytes.toInt(), leftSizeInBytes)
                             )
 
                             readFunction.invoke(readOffset, dstOffsetInBytes, readSize)

@@ -100,9 +100,9 @@ data class NuguServerInfo(
             return this
         }
 
-        fun registry(url: String?): Builder {
+        fun registry(urlStr: String?): Builder {
             try {
-                val url = URL(url)
+                val url = URL(urlStr)
                 val host = url.host.toString()
                 var port = url.port
                 if (port == -1) {
@@ -115,7 +115,7 @@ data class NuguServerInfo(
                         port
                     )
             } catch ( e: Throwable) {
-                Logger.e(TAG, "[registry] Invalid URL=${url}, exception:$e")
+                Logger.e(TAG, "[registry] Invalid URL=${urlStr}, exception:$e")
                 registry = Address("", -1)
             }
             return this
@@ -129,9 +129,9 @@ data class NuguServerInfo(
             return this
         }
 
-        fun deviceGW(url: String?): Builder {
+        fun deviceGW(urlStr: String?): Builder {
             try {
-                val url = URL(url)
+                val url = URL(urlStr)
                 val host = url.host.toString()
                 var port = url.port
                 if (port == -1) {
@@ -144,7 +144,7 @@ data class NuguServerInfo(
                         port
                     )
             } catch ( e: Throwable) {
-                Logger.e(TAG, "[deviceGW] Invalid URL=${url}, exception:$e")
+                Logger.e(TAG, "[deviceGW] Invalid URL=${urlStr}, exception:$e")
                 deviceGW = Address("", -1)
             }
             return this
