@@ -19,7 +19,10 @@ package com.skt.nugu.sdk.core.context
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.log.LogInterface
+import com.skt.nugu.sdk.core.utils.Logger
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Test
 import org.mockito.kotlin.*
 
@@ -66,6 +69,33 @@ class ContextManagerTest {
             }, StateRefreshPolicy.ALWAYS, contextType, stateRequestToken)
         }
     }
+
+    companion object {
+        init {
+            //initLogger()
+        }
+
+        private fun initLogger() {
+            Logger.logger = object: LogInterface {
+                override fun d(tag: String, msg: String, throwable: Throwable?) {
+                    println("[DEBUG] $tag:$msg")
+                }
+
+                override fun e(tag: String, msg: String, throwable: Throwable?) {
+                    println("[ERROR] $tag:$msg")
+                }
+
+                override fun w(tag: String, msg: String, throwable: Throwable?) {
+                    println("[WARN] $tag:$msg")
+                }
+
+                override fun i(tag: String, msg: String, throwable: Throwable?) {
+                    println("[INFO] $tag:$msg")
+                }
+            }
+        }
+    }
+
 
     @Test
     fun testSetStateWithoutProvider() {

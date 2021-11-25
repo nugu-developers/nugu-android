@@ -24,12 +24,16 @@ interface ContextSetterInterface {
         STATE_TOKEN_OUTDATED
     }
 
+    companion object {
+        const val FORCE_SET_TOKEN: Int = 0
+    }
+
     fun setState(
         namespaceAndName: NamespaceAndName,
         state: BaseContextState,
         refreshPolicy: StateRefreshPolicy,
         type: ContextType,
-        stateRequestToken: Int = 0
+        stateRequestToken: Int = FORCE_SET_TOKEN
     ): SetStateResult
 
 //    fun setState(

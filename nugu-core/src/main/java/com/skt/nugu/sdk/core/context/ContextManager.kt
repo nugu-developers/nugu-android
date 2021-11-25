@@ -44,9 +44,6 @@ class ContextManager : ContextManagerInterface {
 
         // for debug
         val requestedTimes: MutableMap<NamespaceAndName, Long> = HashMap(),
-
-        // output
-        val updated: MutableMap<NamespaceAndName, SetStateParam> = HashMap()
     )
 
     private data class StateInfo(
@@ -59,18 +56,11 @@ class ContextManager : ContextManagerInterface {
         override fun value(): String = cacheValue
     }
 
-    private data class SetStateParam(
-        val state: BaseContextState,
-        val refreshPolicy: StateRefreshPolicy,
-        val type: ContextType
-    )
-
     private val lock = ReentrantLock()
     private val stateProviders = HashMap<NamespaceAndName, ContextStateProvider>()
-    private val namespaceNameToStateInfo = HashMap<NamespaceAndName, StateInfo>()
     private val namespaceToNameStateInfo: MutableMap<String, MutableMap<String, StateInfo>> = HashMap()
 
-    private var stateRequestToken: Int = 0
+    private var stateRequestToken: Int = ContextSetterInterface.FORCE_SET_TOKEN + 1
     private val getContextRequestMap = HashMap<Int, GetContextParam>()
 
     private val stringBuilderForContext = StringBuilder(8192)
@@ -86,7 +76,7 @@ class ContextManager : ContextManagerInterface {
         stateRequestToken: Int
     ): ContextSetterInterface.SetStateResult {
         lock.withLock {
-            if (stateRequestToken == 0) {
+            if (stateRequestToken == ContextSetterInterface.FORCE_SET_TOKEN) {
                 updateStateLocked(namespaceAndName, state, refreshPolicy, type)
                 return ContextSetterInterface.SetStateResult.SUCCESS
             }
@@ -115,10 +105,9 @@ class ContextManager : ContextManagerInterface {
             }
 
             updateStateLocked(namespaceAndName, state, refreshPolicy, type)
-            request.updated[namespaceAndName] = SetStateParam(state, refreshPolicy, type)
 
             val timeTaken = System.currentTimeMillis() - (request.requestedTimes[namespaceAndName] ?: 0)
-            val updatedState: CachedStateContext? = namespaceNameToStateInfo[namespaceAndName]?.state?.get(type)
+            val updatedState: CachedStateContext? = getCachedStateInfo(namespaceAndName)?.state?.get(type)
 
             Logger.d(
                     TAG,
@@ -134,13 +123,14 @@ class ContextManager : ContextManagerInterface {
                 request.outdateFuture?.cancel(true)
                 callbackExecutor.submit {
                     Logger.d(TAG, "[setState] onContextAvailable token: $stateRequestToken")
-                    val tempRequest = getContextRequestMap.remove(stateRequestToken)
-                    tempRequest?.contextRequester?.onContextAvailable(
-                        buildContextLocked(
-                            tempRequest.target,
-                            tempRequest.given
+                    lock.withLock { getContextRequestMap.remove(stateRequestToken) }?.let {
+                        it.contextRequester.onContextAvailable(
+                            buildContextLocked(
+                                it.target,
+                                it.given
+                            )
                         )
-                    )
+                    }
                 }
             }
             return ContextSetterInterface.SetStateResult.SUCCESS
@@ -155,25 +145,29 @@ class ContextManager : ContextManagerInterface {
     ) {
         Logger.d(TAG, "[updateStateLocked] $namespaceAndName, $state, $refreshPolicy, $type")
 
-        var stateInfo = namespaceNameToStateInfo[namespaceAndName]
-        if(stateInfo == null) {
-            stateInfo = StateInfo(refreshPolicy).apply {
+        val cachedStateInfo = getCachedStateInfo(namespaceAndName)
+        if(cachedStateInfo == null) {
+            cacheNewStateInfo(namespaceAndName, StateInfo(refreshPolicy).apply {
                 this.state[type] = CachedStateContext(state)
-            }
-            namespaceNameToStateInfo[namespaceAndName] = stateInfo
+            })
         } else {
+            // update cached state info only.
             if(type == ContextType.FULL) {
-                stateInfo.refreshPolicy = refreshPolicy
+                cachedStateInfo.refreshPolicy = refreshPolicy
             }
-            stateInfo.state[type] = CachedStateContext(state)
+            cachedStateInfo.state[type] = CachedStateContext(state)
+        }
+    }
+
+    private fun cacheNewStateInfo(
+        namespaceAndName: NamespaceAndName,
+        stateInfo: StateInfo
+    ) {
+        val namespaceMap = namespaceToNameStateInfo[namespaceAndName.namespace] ?: HashMap<String, StateInfo>().apply {
+            namespaceToNameStateInfo[namespaceAndName.namespace] = this
         }
 
-        var nameAndStateInfo = namespaceToNameStateInfo[namespaceAndName.namespace]
-        if(nameAndStateInfo == null) {
-            nameAndStateInfo = HashMap()
-            namespaceToNameStateInfo[namespaceAndName.namespace] = nameAndStateInfo
-        }
-        nameAndStateInfo[namespaceAndName.name] = stateInfo
+        namespaceMap[namespaceAndName.name] = stateInfo
     }
 
     override fun getContext(
@@ -183,7 +177,7 @@ class ContextManager : ContextManagerInterface {
         timeoutInMillis: Long
     ) {
         lock.withLock {
-            if (stateRequestToken == 0) {
+            if (stateRequestToken == ContextSetterInterface.FORCE_SET_TOKEN) {
                 stateRequestToken++
             }
 
@@ -200,33 +194,30 @@ class ContextManager : ContextManagerInterface {
             getContextRequestMap[token] = param
 
             param.apply {
+                // create pendings to request
                 stateProviders.forEach {
                     if (given == null || !given.containsKey(it.key)) {
                         // if not given
-                        val stateInfo = namespaceNameToStateInfo[it.key]
-
                         val requiredContextType = if (target == null || it.key == target) {
                             ContextType.FULL
                         } else {
                             ContextType.COMPACT
                         }
 
-                        if(stateInfo == null) {
+                        val stateInfo = getCachedStateInfo(it.key)
+
+                        if(stateInfo == null
+                            || stateInfo.state[requiredContextType] == null
+                            || stateInfo.refreshPolicy != StateRefreshPolicy.NEVER) {
                             pendings[it.key] = requiredContextType
-                        } else {
-                            if(stateInfo.state[requiredContextType] == null) {
-                                pendings[it.key] = requiredContextType
-                            } else if(stateInfo.refreshPolicy != StateRefreshPolicy.NEVER) {
-                                pendings[it.key] = requiredContextType
-                            }
                         }
                     }
                 }
 
+                // schedule outdate
                 outdateFuture = callbackExecutor.schedule({
                     Logger.d(TAG, "[getContext] outdated token: $token")
-                    val request = lock.withLock { getContextRequestMap.remove(token) }
-                    if (request != null) {
+                    lock.withLock { getContextRequestMap.remove(token) }?.let {
                         contextRequester.onContextFailure(
                             ContextRequester.ContextRequestError.STATE_PROVIDER_TIMEOUT,
                             lock.withLock { buildContextLocked(target, given) }
@@ -234,6 +225,7 @@ class ContextManager : ContextManagerInterface {
                     }
                 }, timeoutInMillis, TimeUnit.MILLISECONDS)
 
+                // request pendings.
                 HashMap(pendings).forEach {
                     stateProviders[it.key]?.let { provider->
                         provideStateExecutor.submit {
@@ -259,8 +251,12 @@ class ContextManager : ContextManagerInterface {
             Logger.d(TAG, "[setStateProvider] namespaceAndName: $namespaceAndName, stateProvider: $stateProvider")
             if(stateProvider == null) {
                 stateProviders.remove(namespaceAndName)
-                namespaceNameToStateInfo.remove(namespaceAndName)
-                namespaceToNameStateInfo[namespaceAndName.namespace]?.remove(namespaceAndName.name)
+                namespaceToNameStateInfo[namespaceAndName.namespace]?.let {
+                    it.remove(namespaceAndName.name)
+                    if(it.isEmpty()) {
+                        namespaceToNameStateInfo.remove(namespaceAndName.namespace)
+                    }
+                }
             } else {
                 stateProviders[namespaceAndName] = stateProvider
             }
@@ -317,10 +313,13 @@ class ContextManager : ContextManagerInterface {
         lock.withLock {
             stateProviders.forEach {
                 provideStateExecutor.submit {
-                    it.value.provideState(this, it.key, ContextType.FULL, 0)
-                    it.value.provideState(this, it.key, ContextType.COMPACT, 0)
+                    it.value.provideState(this, it.key, ContextType.FULL, ContextSetterInterface.FORCE_SET_TOKEN)
+                    it.value.provideState(this, it.key, ContextType.COMPACT, ContextSetterInterface.FORCE_SET_TOKEN)
                 }
             }
         }
     }
+
+    private fun getCachedStateInfo(namespaceAndName: NamespaceAndName): StateInfo? =
+        namespaceToNameStateInfo[namespaceAndName.namespace]?.get(namespaceAndName.name)
 }
