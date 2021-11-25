@@ -13,6 +13,7 @@
         android:layout_height="match_parent"
         android:background="@color/media_template_bg_light"
         android:clickable="true"
+        android:focusable="true"
         android:visibility="invisible">
 
         <ScrollView
@@ -159,7 +160,7 @@
                         android:layout_width="320dp"
                         android:layout_height="0dp"
                         android:layout_marginLeft="40dp"
-                        android:background="#f8f8f8"
+                        android:background="@color/media_template_bg_light"
                         android:visibility="gone"
                         app:layout_constraintBottom_toBottomOf="@id/media_content"
                         app:layout_constraintLeft_toRightOf="@id/album_cover"
@@ -256,7 +257,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:src="@drawable/nugu_btn_pause_48"
-                                    android:visibility="gone"/>
+                                    android:visibility="gone" />
                             </FrameLayout>
 
                             <ImageView

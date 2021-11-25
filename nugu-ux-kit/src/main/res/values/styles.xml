@@ -9,9 +9,11 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
     </style>
 
-    <style name="Nugu.Widget.Chips" parent="Nugu.Widget.Chips.Light"/>
-    <style name="Nugu.Widget.Chrome.Window" parent="Nugu.Widget.Chrome.Window.Light"/>
-    <style name="Nugu.Widget.Guide.Text" parent="Nugu.Widget.Guide.Text.Light"/>
+    <style name="Nugu.Widget.Chips" parent="Nugu.Widget.Chips.Light" />
+
+    <style name="Nugu.Widget.Chrome.Window" parent="Nugu.Widget.Chrome.Window.Light" />
+
+    <style name="Nugu.Widget.Guide.Text" parent="Nugu.Widget.Guide.Text.Light" />
 
     <style name="Nugu.Widget.Chips.Light" parent="Nugu.Widget.Button">
         <item name="android:textColor">#404858</item>
@@ -58,10 +60,10 @@
     <style name="Nugu.Widget.Chrome.Window.Light" parent="android:Widget">
         <item name="android:background">@drawable/nugu_view_chrome_window_light_background</item>
     </style>
+
     <style name="Nugu.Widget.Chrome.Window.Dark" parent="android:Widget">
         <item name="android:background">@drawable/nugu_view_chrome_window_dark_background</item>
     </style>
-
 
     <!--- template -->
     <declare-styleable name="LyricsView">
@@ -69,5 +71,9 @@
             <enum name="small" value="0" />
             <enum name="standard" value="1" />
         </attr>
+
+        <attr name="fontColor" format="color|reference" />
+        <attr name="fontColorFocus" format="color|reference" />
+        <attr name="fontColorTitle" format="color|reference" />
     </declare-styleable>
 </resources>

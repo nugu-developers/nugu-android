@@ -22,6 +22,7 @@ import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.content.res.Configuration.ORIENTATION_UNDEFINED
 import android.graphics.Color
 import android.graphics.PorterDuff
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
@@ -119,6 +120,8 @@ open class DisplayAudioPlayer constructor(
 
     private val thumbTransformCornerAlbumCover by lazy { RoundedCorners(dpToPx(mediaTemplateResources.mainImageRoundingRadiusDp, context)) }
     private val thumbTransformCornerAlbumBadge by lazy { RoundedCorners(dpToPx(mediaTemplateResources.badgeImageRoundingRadiusDp, context)) }
+
+    private var bgColorLight = resources.genColor(R.color.media_template_bg_light)
 
     @VisibleForTesting
     internal var audioPlayerItem: AudioPlayer? = null
@@ -479,6 +482,9 @@ open class DisplayAudioPlayer constructor(
         btnBarNext = findViewById(R.id.btn_bar_next)
         btnBarClose = findViewById(R.id.btn_bar_close)
         barProgress = findViewById(R.id.sb_bar_progress)
+
+        (expandedPlayer.background as? ColorDrawable)?.color?.apply { bgColorLight = this }
+        barPlayer.setBackgroundColor(bgColorLight)
     }
 
     override fun load(
@@ -640,14 +646,14 @@ open class DisplayAudioPlayer constructor(
     @VisibleForTesting
     internal fun updateThemeIfNeeded() {
         fun update() {
-            expandedPlayer.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
+            expandedPlayer.setBackgroundColor(if (isDark) resources.genColor(R.color.media_template_bg_dark) else bgColorLight)
             title.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_title_dark else R.color.media_template_text_title_light))
             header.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
             body.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_body_dark else R.color.media_template_text_body_light))
             footer.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_footer_dark else R.color.media_template_text_footer_light))
             progressView.setBackgroundColor(resources.genColor(if (isDark) R.color.white_40 else R.color.black_10))
 
-            barPlayer.setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
+            barPlayer.setBackgroundColor(if (isDark) resources.genColor(R.color.media_template_bg_dark) else bgColorLight)
             barTitle.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
             barSubtitle.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_body_dark else R.color.media_template_text_body_light))
 
@@ -817,15 +823,15 @@ open class DisplayAudioPlayer constructor(
     private fun setRepeatMode(repeat: Repeat) {
         when (repeat) {
             Repeat.ALL -> {
-                btnRepeat.setImageResource(R.drawable.nugu_btn_repeat)
+                btnRepeat.setImageResource(mediaTemplateResources.repeatAllResId)
                 btnRepeat.colorFilter = null
             }
             Repeat.ONE -> {
-                btnRepeat.setImageResource(R.drawable.nugu_btn_repeat_1)
+                btnRepeat.setImageResource(mediaTemplateResources.repeatOneResId)
                 btnRepeat.colorFilter = null
             }
             Repeat.NONE -> {
-                btnRepeat.setImageResource(R.drawable.nugu_btn_repeat_inactive)
+                btnRepeat.setImageResource(mediaTemplateResources.repeatNoneResId)
                 if (isDark) {
                     btnRepeat.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
                 } else {

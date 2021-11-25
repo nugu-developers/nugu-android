@@ -32,10 +32,19 @@ open class MediaTemplateResources {
     @DrawableRes
     open val nuguLogoDefault: Int = R.drawable.nugu_logo_60_line
 
+    @DrawableRes
+    open val repeatAllResId: Int = R.drawable.nugu_btn_repeat
+
+    @DrawableRes
+    open val repeatOneResId: Int = R.drawable.nugu_btn_repeat_1
+
+    @DrawableRes
+    open val repeatNoneResId: Int = R.drawable.nugu_btn_repeat_inactive
+
     open val mainImageRoundingRadiusDp: Float = 10.7f
     open val badgeImageRoundingRadiusDp: Float = 2f
 
     open val barPlayerTransitionDurationMs = 400L
 
-    open val albumCoverElevation : Float = 11f
+    open val albumCoverElevation: Float = 11f
 }

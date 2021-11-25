@@ -23,7 +23,11 @@ import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.MediaTemplateResources
 
-
+/**
+ * This is sample of customising layout or resources of MediaTemplate.
+ * It is for special case.
+ * In most cases you would not use it.
+ */
 @SuppressLint("ViewConstructor")
 class CustomMediaTemplate(templateType: String, context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
     DisplayAudioPlayer(templateType, context) {
@@ -34,8 +38,12 @@ class CustomMediaTemplate(templateType: String, context: Context, attrs: Attribu
         override val layoutResIdPort: Int
             get() = R.layout.custom_media_player
 
-        override val layoutResIdLand: Int
-            get() = super.layoutResIdLand
+        override val repeatAllResId: Int
+            get() = super.repeatAllResId
+        override val repeatOneResId: Int
+            get() = super.repeatOneResId
+        override val repeatNoneResId: Int
+            get() = android.R.drawable.btn_radio
     }
 
     override val mediaTemplateResources: MediaTemplateResources

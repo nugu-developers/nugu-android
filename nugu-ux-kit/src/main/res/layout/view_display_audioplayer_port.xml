@@ -13,6 +13,7 @@
         android:layout_height="match_parent"
         android:background="@color/media_template_bg_light"
         android:clickable="true"
+        android:focusable="true"
         android:visibility="invisible">
 
         <FrameLayout
@@ -148,7 +149,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="45dp"
-                android:background="#f8f8f8"
+                android:background="@color/media_template_bg_light"
                 android:visibility="gone" />
 
         </FrameLayout>
@@ -245,7 +246,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:src="@drawable/nugu_btn_pause_48"
-                        android:visibility="gone"/>
+                        android:visibility="gone" />
                 </FrameLayout>
 
                 <ImageView
