@@ -29,8 +29,8 @@ class DefaultTransportFactory {
                 override val serverInfo: NuguServerInfo
                    get() = run {
                        val metadata = ConfigurationStore.configurationMetadataSync()
-                       return NuguServerInfo.Builder().deviceGW(url = metadata?.deviceGatewayServerGrpcUri)
-                           .registry(url = metadata?.deviceGatewayRegistryUri)
+                       return NuguServerInfo.Builder().deviceGW(urlStr = metadata?.deviceGatewayServerGrpcUri)
+                           .registry(urlStr = metadata?.deviceGatewayRegistryUri)
                            .build()
                    }
             }))

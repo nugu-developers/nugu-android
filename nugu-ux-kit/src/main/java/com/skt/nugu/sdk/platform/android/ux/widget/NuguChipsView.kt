@@ -305,9 +305,13 @@ class NuguChipsView @JvmOverloads constructor(
         val attrs = intArrayOf(android.R.attr.textColor, android.R.attr.textColorHighlight, android.R.attr.background)
         val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
         try {
-            defaultColor = a.getColor(0, DEFAULT_TEXT_COLOR)
-            highlightColor = a.getColor(1, DEFAULT_HIGHLIGHT_TEXT_COLOR)
-            defaultDrawableId = a.getResourceId(2, DEFAULT_DRAWABLE_RESOURCE_ID)
+            attrs.forEachIndexed { index, value ->
+                when (value) {
+                    android.R.attr.textColor -> defaultColor = a.getColor(index, DEFAULT_TEXT_COLOR)
+                    android.R.attr.textColorHighlight -> highlightColor = a.getColor(index, DEFAULT_HIGHLIGHT_TEXT_COLOR)
+                    android.R.attr.background -> defaultDrawableId = a.getResourceId(index, DEFAULT_DRAWABLE_RESOURCE_ID)
+                }
+            }
         } finally {
             a.recycle()
         }

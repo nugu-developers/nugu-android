@@ -41,12 +41,15 @@ class EllipsizedTextView @JvmOverloads constructor(
     }
 
     private fun applyThemeAttrs(@StyleRes resId: Int) {
-        val attrs =
-            intArrayOf(android.R.attr.textColor, android.R.attr.textColorHint)
+        val attrs = intArrayOf(android.R.attr.textColor, android.R.attr.textColorHint)
         val a: TypedArray = context.obtainStyledAttributes(resId, attrs)
         try {
-            setTextColor(a.getColor(0, DEFAULT_TEXT_COLOR))
-            setHintTextColor(a.getColor(1, DEFAULT_HINT_TEXT_COLOR))
+            attrs.forEachIndexed { index, value ->
+                when (value) {
+                    android.R.attr.textColor -> setTextColor(a.getColor(index, DEFAULT_TEXT_COLOR))
+                    android.R.attr.textColorHint -> setHintTextColor(a.getColor(index, DEFAULT_HINT_TEXT_COLOR))
+                }
+            }
         } finally {
             a.recycle()
         }
