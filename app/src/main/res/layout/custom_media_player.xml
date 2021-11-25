@@ -11,7 +11,7 @@
         android:id="@id/view_music_player"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/media_template_bg_light"
+        android:background="#abcdef"
         android:clickable="true"
         android:focusable="true"
         android:visibility="invisible">
@@ -127,7 +127,9 @@
                         android:layout_height="36dp"
                         android:layout_marginTop="10dp"
                         android:visibility="gone"
-                        app:sizes="small" />
+                        app:sizes="small"
+                        app:fontColorFocus="@android:color/holo_orange_dark"
+                        app:fontColor="#009900" />
 
                     <TextView
                         android:id="@id/tv_show_lyrics"
@@ -139,18 +141,20 @@
                         android:textColor="#009dff"
                         android:textSize="12sp"
                         android:visibility="gone" />
-
                 </LinearLayout>
             </ScrollView>
 
             <com.skt.nugu.sdk.platform.android.ux.template.view.media.LyricsView
                 android:id="@id/cv_lyrics"
+                android:background="#abcdef"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="45dp"
-                android:background="#f8f8f8"
-                android:visibility="gone" />
+                android:visibility="gone"
+                app:fontColor="#000099"
+                app:fontColorFocus="@android:color/holo_orange_light"
+                app:fontColorTitle="#e89bbd" />
 
         </FrameLayout>
 
@@ -217,7 +221,8 @@
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:src="@drawable/nugu_btn_repeat_inactive"
-                    android:visibility="invisible" />
+                    android:visibility="invisible"
+                    android:scaleType="centerInside"/>
 
                 <Space
                     android:layout_width="0dp"

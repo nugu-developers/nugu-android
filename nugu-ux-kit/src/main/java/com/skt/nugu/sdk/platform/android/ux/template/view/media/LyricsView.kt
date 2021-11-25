@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -24,6 +25,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.annotation.ColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.common.Direction
@@ -36,7 +38,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
 class LyricsView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr) {
     companion object {
         private const val SIZE_SMALL = 0
@@ -55,6 +57,21 @@ class LyricsView @JvmOverloads constructor(
     internal var viewSize = SIZE_STANDARD
         private set
 
+    @ColorInt
+    private var bgColorLight = Color.TRANSPARENT
+    @ColorInt
+    private val bgColorDark = resources.genColor(R.color.media_template_bg_dark)
+
+    @ColorInt
+    private var titleFontColor = resources.genColor(R.color.media_template_text_header_light)
+    @ColorInt
+    private val titleFontColorDark = resources.genColor(R.color.media_template_text_header_dark)
+
+    @ColorInt
+    private var fontColorFocus = resources.genColor(R.color.media_template_lyrics_text_focus)
+    @ColorInt
+    private var fontColor = resources.genColor(R.color.media_template_lyrics_text)
+
     var isDark = false
         set(value) {
             val update = field != value
@@ -69,7 +86,9 @@ class LyricsView @JvmOverloads constructor(
         adapter = LyricsAdapter(
             context,
             lyrics,
-            viewSize
+            viewSize,
+            fontColor,
+            fontColorFocus,
         )
 
         recyclerView.setOnClickListener {
@@ -94,7 +113,7 @@ class LyricsView @JvmOverloads constructor(
                 if (viewSize == SIZE_STANDARD) {
                     enableAutoScroll = when (newState) {
                         RecyclerView.SCROLL_STATE_DRAGGING,
-                        RecyclerView.SCROLL_STATE_SETTLING
+                        RecyclerView.SCROLL_STATE_SETTLING,
                         -> false
                         RecyclerView.SCROLL_STATE_IDLE -> true
                         else -> enableAutoScroll
@@ -110,7 +129,13 @@ class LyricsView @JvmOverloads constructor(
             attrs, R.styleable.LyricsView, 0, 0
         ).apply {
             viewSize = getInt(R.styleable.LyricsView_sizes, SIZE_STANDARD)
+
+            fontColor = getColor(R.styleable.LyricsView_fontColor, fontColor)
+            fontColorFocus = getColor(R.styleable.LyricsView_fontColorFocus, fontColorFocus)
+            titleFontColor = getColor(R.styleable.LyricsView_fontColorTitle, titleFontColor)
         }.recycle()
+
+        (background as? ColorDrawable)?.color?.apply { bgColorLight = this }
     }
 
     override fun onAttachedToWindow() {
@@ -139,6 +164,8 @@ class LyricsView @JvmOverloads constructor(
     fun setTitle(title: String?, marquee: Boolean = false) {
         titleView.text = title
         titleView.visibility = if (title != null) View.VISIBLE else View.INVISIBLE
+
+        titleView.setTextColor(if (isDark) titleFontColorDark else titleFontColor)
 
         if (marquee) titleView.enableMarquee()
     }
@@ -216,16 +243,21 @@ class LyricsView @JvmOverloads constructor(
         adapter.isDark = isDark
         adapter.notifyDataSetChanged()
 
-        setBackgroundColor(resources.genColor(if (isDark) R.color.media_template_bg_dark else R.color.media_template_bg_light))
-        titleView.setTextColor(resources.genColor(if (isDark) R.color.media_template_text_header_dark else R.color.media_template_text_header_light))
+        setBackgroundColor(if (isDark) bgColorDark else bgColorLight)
+        titleView.setTextColor(if (isDark) titleFontColorDark else titleFontColor)
     }
 
     class LyricsAdapter(
-        val context: Context?,
+        val context: Context,
         private val lyrics: ArrayList<LyricsInfo>,
-        private val viewSize: Int
+        private val viewSize: Int,
+        @ColorInt private val fontColor: Int,
+        @ColorInt private val fontColorFocus: Int,
     ) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+        @ColorInt
+        private val fontColorDark = context.resources.genColor(R.color.media_template_lyrics_text_dark)
 
         private var highlightedPosition: Int = -1
         var isDark = false
@@ -246,18 +278,14 @@ class LyricsView @JvmOverloads constructor(
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val viewHolder = holder as Holder
-            val item = lyrics.get(position)
+            val item = lyrics[position]
             viewHolder.line.text = item.text
+
             viewHolder.line.setTextColor(
-                if (highlightedPosition == position) {
-                    Color.parseColor("#009dff")
-                } else {
-                    getItemViewType(position)
-                    if (viewSize == SIZE_STANDARD && !isDark) {
-                        Color.parseColor("#444444")
-                    } else {
-                        Color.parseColor("#888888")
-                    }
+                when {
+                    highlightedPosition == position -> fontColorFocus
+                    isDark -> fontColorDark
+                    else -> fontColor
                 }
             )
         }

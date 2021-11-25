@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="58dp"
     android:layout_gravity="bottom"
-    android:background="#f8f8f8"
     android:orientation="vertical">
 
     <FrameLayout
@@ -99,7 +98,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:src="@drawable/nugu_btn_pause_32"
-                android:visibility="gone"/>
+                android:visibility="gone" />
         </FrameLayout>
 
         <ImageView
