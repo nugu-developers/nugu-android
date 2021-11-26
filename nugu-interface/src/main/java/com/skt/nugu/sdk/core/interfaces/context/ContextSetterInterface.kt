@@ -28,6 +28,16 @@ interface ContextSetterInterface {
         const val FORCE_SET_TOKEN: Int = 0
     }
 
+    /**
+     * Set a [state]
+     *
+     * @param namespaceAndName the namespace and name of state
+     * @param state the state string formatted json
+     * @param refreshPolicy the refresh policy
+     * @param stateRequestToken the token which should be used to update state.
+     * * If call at [ContextStateProvider.provideState], use stateRequestToken given.
+     * * (to set state unconditionally, default: [FORCE_SET_TOKEN])
+     */
     fun setState(
         namespaceAndName: NamespaceAndName,
         state: BaseContextState,

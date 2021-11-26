@@ -177,6 +177,7 @@ class ContextManager : ContextManagerInterface {
         timeoutInMillis: Long
     ) {
         lock.withLock {
+            // to prevent overflow (stateRequestToken can be 0 again, Int.MAX_VALUE++ => Int.MIN_VALUE)
             if (stateRequestToken == ContextSetterInterface.FORCE_SET_TOKEN) {
                 stateRequestToken++
             }
