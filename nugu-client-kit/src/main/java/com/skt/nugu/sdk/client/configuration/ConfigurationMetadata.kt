@@ -23,6 +23,8 @@ data class ConfigurationMetadata(
     val authorizationEndpoint: String,
     @SerializedName("token_endpoint")
     val tokenEndpoint: String?,
+    @SerializedName("jwks_uri")
+    val jwksUri: String?,
     @SerializedName("token_endpoint_auth_methods_supported")
     val tokenEndpointAuthMethodsSupported: Array<String>,
     @SerializedName("response_types_supported")
@@ -33,6 +35,8 @@ data class ConfigurationMetadata(
     val introspectionEndpoint: String?,
     @SerializedName("introspection_endpoint_auth_methods_supported")
     val introspectionEndpointAuthMethodsSupported: Array<String>,
+    @SerializedName("code_challenge_methods_supported")
+    val codeChallengeMethodsSupported: Array<String>,
     @SerializedName("revocation_endpoint")
     val revocationEndpoint: String?,
     @SerializedName("revocation_endpoint_auth_methods_supported")
