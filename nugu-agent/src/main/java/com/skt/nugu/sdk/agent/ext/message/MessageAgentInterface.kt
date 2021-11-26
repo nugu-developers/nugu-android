@@ -28,5 +28,5 @@ interface MessageAgentInterface {
     }
 
     fun addOnPlaybackListener(listener: OnPlaybackListener)
-    fun removeOnPlaybackListener(lisetener: OnPlaybackListener)
+    fun removeOnPlaybackListener(listener: OnPlaybackListener)
 }
