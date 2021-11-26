@@ -1027,7 +1027,7 @@ class DefaultAudioPlayerAgent(
     private fun changeActivity(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context?) {
         Logger.d(TAG, "[changeActivity] $currentActivity/$activity")
         currentActivity = activity
-        executeProvideState(contextManager, namespaceAndName, ContextType.FULL, 0)
+        executeProvideState(contextManager, namespaceAndName, ContextType.FULL, ContextSetterInterface.FORCE_SET_TOKEN)
         context?.let {
             notifyOnActivityChanged(it)
         }

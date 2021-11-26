@@ -90,7 +90,7 @@ class DefaultMicrophoneAgent(
     }
 
     override fun onSettingsChanged(settings: Microphone.Settings) {
-        provideState(contextManager, namespaceAndName, ContextType.FULL, 0)
+        provideState(contextManager, namespaceAndName, ContextType.FULL, ContextSetterInterface.FORCE_SET_TOKEN)
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
