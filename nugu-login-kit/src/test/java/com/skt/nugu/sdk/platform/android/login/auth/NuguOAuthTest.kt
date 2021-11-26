@@ -277,8 +277,7 @@ class NuguOAuthTest  {
         val client = NuguOAuth.create(options = NuguOAuthOptions.Builder()
             .deviceUniqueId("device1")
             .build(), "https://localhost")
-
-        val uri = client.makeAuthorizeUri(NuguOAuthInterface.THEME.DARK.name)
+        val uri = client.makeAuthorizeUri("{\"deviceSerialNumber\":\"deviceUniqueId\",\"theme\":\"dark\"}")
         Assert.assertNotNull(uri)
     }
 
@@ -672,7 +671,7 @@ class NuguOAuthTest  {
             )
         )
         Assert.assertNotNull(
-            client.getLoginUri(NuguOAuthInterface.THEME.DARK.name)
+            client.getLoginUri("{\"deviceSerialNumber\":\"deviceUniqueId\",\"theme\":\"dark\"}")
         )
     }
 }

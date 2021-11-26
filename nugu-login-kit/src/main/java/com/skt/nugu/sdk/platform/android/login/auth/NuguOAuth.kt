@@ -36,6 +36,7 @@ import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.ClientC
 import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.AuthorizationCodeRequest
 import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.RefreshTokenRequest
 import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.DeviceCodeRequest
+import org.json.JSONObject
 
 
 /**
@@ -52,7 +53,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         private const val REQUEST_CODE_ACCOUNT = 10001
 
         const val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
-        const val EXTRA_OAUTH_THEME = "nugu.intent.extra.oauth.theme"
+        const val EXTRA_OAUTH_DATA = "nugu.intent.extra.oauth.data"
 
         const val ACTION_LOGIN = "nugu.intent.action.oauth.LOGIN"
         const val ACTION_ACCOUNT = "nugu.intent.action.oauth.ACCOUNT"
@@ -192,7 +193,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Request an authentication with auth code
      */
-    fun loginInternal(authorizationRequest: AuthorizationRequest, stateListener: AuthStateListener?,) {
+    fun loginInternal(authorizationRequest: AuthorizationRequest, stateListener: AuthStateListener?) {
         Logger.d(TAG, "[login] $authorizationRequest")
 
         setAuthState(AuthStateListener.State.UNINITIALIZED)
@@ -406,63 +407,68 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     internal fun verifyCode(code: String?) = !code.isNullOrBlank()
 
     @VisibleForTesting
-    internal fun makeAuthorizeUri(theme: String) = String.format(
+    internal fun makeAuthorizeUri(data: String?) = String.format(
         "${authorizationEndpoint()}?response_type=code&client_id=%s&redirect_uri=%s&data=%s",
         options.clientId,
         options.redirectUri,
-        URLEncoder.encode("{\"deviceSerialNumber\":\"${options.deviceUniqueId}\",\"theme\":\"$theme\"}", "UTF-8")
+        URLEncoder.encode(data.toString(), "UTF-8")
     )
 
     /**
      * Creating a login intent
      */
     @Suppress("unused")
-    fun getLoginIntent(theme: String) = Intent(Intent.ACTION_VIEW).apply {
-        data = getLoginUri(theme)
+    fun getLoginIntent(data: String?) = Intent(Intent.ACTION_VIEW).apply {
+        this.data = getLoginUri(data)
     }
 
     /**
      * Creating a login uri
      */
-    fun getLoginUri(theme: String?): Uri {
+    fun getLoginUri(data : String?): Uri {
         val appendUri = String.format(
             "&state=%s", generateClientState()
         )
-        return Uri.parse(makeAuthorizeUri(theme ?: NuguOAuthInterface.THEME.LIGHT.name) + appendUri)
+        return Uri.parse(makeAuthorizeUri(data) + appendUri)
     }
 
     /**
      * Creating a accountinfo intent
      */
     @Suppress("unused")
-    fun getAccountInfoIntent(theme: String?) = Intent(Intent.ACTION_VIEW).apply {
-        data = getAccountInfoUri(theme)
+    fun getAccountInfoIntent(data: String?) = Intent(Intent.ACTION_VIEW).apply {
+        this.data = getAccountInfoUri(data)
     }
 
     /**
      * Creating a accountinfo uri
      */
-    fun getAccountInfoUri(theme: String?): Uri {
+    fun getAccountInfoUri(data: String?): Uri {
         val appendUri = String.format(
             "&prompt=%s&access_token=%s&state=%s",
             "mypage",
             client.getCredentials().accessToken,
             generateClientState()
         )
-        val temp = makeAuthorizeUri(theme ?: NuguOAuthInterface.THEME.LIGHT.name) + appendUri
+        val temp = makeAuthorizeUri(data) + appendUri
         return Uri.parse(temp)
     }
 
     override fun accountWithTid(
         activity: Activity,
         listener: NuguOAuthInterface.OnAccountListener,
+        data: Map<String, String>,
         theme: NuguOAuthInterface.THEME
     ) {
         runCatching {
             this.onceLoginListener = OnceLoginListener(listener)
+
             Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
                 putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
-                putExtra(EXTRA_OAUTH_THEME, theme.name)
+                putExtra(EXTRA_OAUTH_DATA, data.appendDataToJson(mutableMapOf(
+                    "deviceSerialNumber" to options.deviceUniqueId,
+                    "theme" to theme.name
+                )).toString())
                 activity.startActivityForResult(this, REQUEST_CODE_ACCOUNT)
             }
         }.onFailure {
@@ -507,11 +513,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      * Start the login with tid
      * @param activity The activity making the call
      * @param listener The listener to notify
+     * @param data The extensible information
      * @param theme Theme to apply
      */
     override fun loginWithTid(
         activity: Activity,
         listener: OnLoginListener,
+        data: Map<String, String>,
         theme: NuguOAuthInterface.THEME
     ) {
         runCatching {
@@ -523,7 +531,10 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
             Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
                 putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
-                putExtra(EXTRA_OAUTH_THEME, theme.name)
+                putExtra(EXTRA_OAUTH_DATA, data.appendDataToJson(mutableMapOf(
+                    "deviceSerialNumber" to options.deviceUniqueId,
+                    "theme" to theme.name
+                )).toString())
                 activity.startActivityForResult(this, REQUEST_CODE_LOGIN)
             }
         }.onFailure {
@@ -737,4 +748,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         Logger.w(TAG, "[deviceUniqueId] : $e")
         null
     }
+}
+/**
+ * Appends a map of param to the json.
+*/
+internal fun Map<String, String>.appendDataToJson(newData : MutableMap<String, String>) : JSONObject {
+    for ((key, value) in this) {
+        newData[key] = value
+    }
+    return JSONObject(newData.toMap())
 }

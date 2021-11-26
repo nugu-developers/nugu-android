@@ -96,7 +96,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
      *     fail during an exchange, it is possible that the remote server
      *     accepted the request before the failure.
      */
-    private fun handleRequestToken(authorizationRequest: AuthorizationRequest/*grantType: GrantType, code: String?, refreshToken: String?*/): AuthFlowState {
+    private fun handleRequestToken(authorizationRequest: AuthorizationRequest): AuthFlowState {
         val form = FormEncodingBuilder()
             .add("grant_type", authorizationRequest.grantType.value)
             .add("client_id", options.clientId)

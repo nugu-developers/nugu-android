@@ -24,7 +24,6 @@ import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.Companion.ACTION_LOGIN
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.Companion.EXTRA_OAUTH_ACTION
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.Companion.EXTRA_OAUTH_THEME
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import org.junit.Assert
@@ -65,7 +64,6 @@ class NuguOAuthCallbackActivityTest {
             NuguOAuthCallbackActivity::class.java
         ).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
-            putExtra(EXTRA_OAUTH_THEME, NuguOAuthInterface.THEME.DARK.name)
         }
         val activity = NuguOAuthCallbackActivity()
         Assert.assertFalse(activity.processOAuthCallback(intent))
