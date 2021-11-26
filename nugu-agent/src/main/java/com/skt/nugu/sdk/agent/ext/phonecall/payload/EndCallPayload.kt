@@ -20,5 +20,5 @@ import com.google.gson.annotations.SerializedName
 
 data class EndCallPayload(
     @SerializedName("playServiceId")
-    private val playServiceId: String
+    val playServiceId: String
 )
