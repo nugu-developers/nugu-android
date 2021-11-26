@@ -31,8 +31,8 @@ class NuguServerInfoTest {
 
     @Test
     fun testDelegate() {
-        val info = NuguServerInfo.Builder().deviceGW(url = "deviceGW.sk.com")
-            .registry(url = "registry.sk.com")
+        val info = NuguServerInfo.Builder().deviceGW(urlStr = "deviceGW.sk.com")
+            .registry(urlStr = "registry.sk.com")
             .build()
         val delegate = object : NuguServerInfo.Delegate {
             override val serverInfo: NuguServerInfo
