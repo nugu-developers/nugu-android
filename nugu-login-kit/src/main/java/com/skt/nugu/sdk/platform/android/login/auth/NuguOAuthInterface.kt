@@ -64,17 +64,29 @@ interface NuguOAuthInterface {
      * Start the login with tid
      * @param activity The activity making the call.
      * @param listener Listener to receive result.
+     * @param data Constructs any extra parameters necessary to include in the request uri for the client authentication.
      * @param theme Optional custom theme.
      */
-    fun loginWithTid(activity: Activity, listener: OnLoginListener, theme: THEME = THEME.LIGHT)
+    fun loginWithTid(
+        activity: Activity,
+        listener: OnLoginListener,
+        data: Map<String, String> = mapOf(),
+        theme: THEME = THEME.LIGHT
+    )
 
     /**
      * Start the account info with Tid.
      * @param activity The activity making the call.
      * @param listener Listener to receive result.
+     * @param data Constructs any extra parameters necessary to include in the request uri for the client authentication.
      * @param theme Optional custom theme.
      */
-    fun accountWithTid(activity: Activity, listener: OnAccountListener, theme: THEME = THEME.LIGHT)
+    fun accountWithTid(
+        activity: Activity,
+        listener: OnAccountListener,
+        data: Map<String, String> = mapOf(),
+        theme: THEME = THEME.LIGHT
+    )
 
     /**
      * Start anonymous login.
@@ -199,7 +211,7 @@ interface NuguOAuthInterface {
      * @param code The short-lived code that is used by the device when polling for a session token.
      * @param listener Listener to receive result.
      */
-    fun loginWithDeviceCode(code: String, listener: OnLoginListener)
+    fun loginWithDeviceCode(deviceCode: String, listener: OnLoginListener)
 
     /**
      * Start device authorization by requesting a pair of verification codes from the authorization service.
