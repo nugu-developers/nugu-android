@@ -36,7 +36,6 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
@@ -329,9 +328,9 @@ class MessageAgent(
         }
     }
 
-    override fun removeOnPlaybackListener(lisetener: MessageAgentInterface.OnPlaybackListener) {
+    override fun removeOnPlaybackListener(listener: MessageAgentInterface.OnPlaybackListener) {
         executor.submit {
-            listeners.remove(lisetener)
+            listeners.remove(listener)
         }
     }
 }
