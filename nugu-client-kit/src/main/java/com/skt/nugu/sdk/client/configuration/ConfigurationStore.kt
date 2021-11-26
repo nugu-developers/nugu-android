@@ -42,7 +42,7 @@ object ConfigurationStore {
     lateinit var configuration : Configuration
     private val listeners =  Collections.synchronizedSet(mutableSetOf<ConfigurationCallback>())
     private fun discoveryUrl() =
-        "${configuration.OAuthServerUrl}/.well-known/oauth-authorization-server/${configuration.clientId}"
+        "${configuration.OAuthServerUrl}/.well-known/oauth-authorization-server"
 
     /**
      * Callback for [ConfigurationMetadata] results.
@@ -286,6 +286,9 @@ object ConfigurationStore {
         val httpUrl = HttpUrl.parse(discoveryUrl())
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
+            .header("Authorization",
+                "Basic " + "${configuration.clientId}:${configuration.clientSecret}".encodeBase64()
+            )
             .build()
         val response = client.newCall(request).execute()
         val code = response.code()
@@ -332,4 +335,42 @@ object ConfigurationStore {
             it.onConfigurationFailed(e)
         }
     }
+}
+
+internal fun String.encodeBase64(): String {
+    val map: ByteArray = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toByteArray()
+    val value = this.toByteArray()
+    val size = value.size
+    val length = (size + 2) / 3 * 4
+    val out = ByteArray(length)
+    var index = 0
+    val end = size - size % 3
+    var i = 0
+    while (i < end) {
+        val b0 = value[i++].toInt()
+        val b1 = value[i++].toInt()
+        val b2 = value[i++].toInt()
+        out[index++] = map[(b0 and 0xff shr 2)]
+        out[index++] = map[(b0 and 0x03 shl 4) or (b1 and 0xff shr 4)]
+        out[index++] = map[(b1 and 0x0f shl 2) or (b2 and 0xff shr 6)]
+        out[index++] = map[(b2 and 0x3f)]
+    }
+    when (size - end) {
+        1 -> {
+            val b0 = value[i].toInt()
+            out[index++] = map[b0 and 0xff shr 2]
+            out[index++] = map[b0 and 0x03 shl 4]
+            out[index++] = '='.code.toByte()
+            out[index] = '='.code.toByte()
+        }
+        2 -> {
+            val b0 = value[i++].toInt()
+            val b1 = value[i].toInt()
+            out[index++] = map[(b0 and 0xff shr 2)]
+            out[index++] = map[(b0 and 0x03 shl 4) or (b1 and 0xff shr 4)]
+            out[index++] = map[(b1 and 0x0f shl 2)]
+            out[index] = '='.code.toByte()
+        }
+    }
+    return String(out, Charsets.UTF_8)
 }
