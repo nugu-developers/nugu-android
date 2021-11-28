@@ -73,6 +73,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.text.TextAgent
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
@@ -576,9 +577,9 @@ class NuguAndroidClient private constructor(
                     }
                 })
 
-                addAgentFactory(DefaultTextAgent.NAMESPACE, object : AgentFactory<DefaultTextAgent> {
-                    override fun create(container: SdkContainer): DefaultTextAgent = with(container) {
-                        DefaultTextAgent(
+                addAgentFactory(TextAgent.NAMESPACE, object : AgentFactory<TextAgent> {
+                    override fun create(container: SdkContainer): TextAgent = with(container) {
+                        TextAgent(
                             getMessageSender(),
                             getContextManager(),
                             getDialogAttributeStorage(),
@@ -1206,7 +1207,7 @@ class NuguAndroidClient private constructor(
         }
     override val textAgent: TextAgentInterface?
         get() = try {
-            client.getAgent(DefaultTextAgent.NAMESPACE) as TextAgentInterface
+            client.getAgent(TextAgent.NAMESPACE) as TextAgentInterface
         } catch (th: Throwable) {
             null
         }

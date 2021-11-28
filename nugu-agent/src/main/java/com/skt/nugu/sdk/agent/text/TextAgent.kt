@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent
+package com.skt.nugu.sdk.agent.text
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.agent.common.InteractionControl
-import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
@@ -38,7 +38,7 @@ import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 
-class DefaultTextAgent(
+class TextAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val dialogAttributeStorage: DialogAttributeStorageInterface,
@@ -166,7 +166,7 @@ class DefaultTextAgent(
                         EventMessageRequest.Builder(
                             jsonContext,
                             NAMESPACE,
-                            "${NAME_TEXT_SOURCE}$NAME_FAILED",
+                            "$NAME_TEXT_SOURCE$NAME_FAILED",
                             VERSION.toString()
                         ).referrerDialogRequestId(info.directive.getDialogRequestId())
                             .payload(JsonObject().apply {
