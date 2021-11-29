@@ -47,7 +47,7 @@ class DirectiveSequencerTest {
             }
 
             override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
-                put(DIRECTIVE_0.getNamespaceAndName(), BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
+                put(DIRECTIVE_0.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
             }
         }
 
@@ -70,7 +70,7 @@ class DirectiveSequencerTest {
             }
 
             override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
-                put(DIRECTIVE_1.getNamespaceAndName(), BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
+                put(DIRECTIVE_1.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
             }
         }
 
