@@ -73,6 +73,7 @@ import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.system.ExceptionDirectiveDelegate
 import com.skt.nugu.sdk.agent.system.SystemAgentInterface
+import com.skt.nugu.sdk.agent.text.ExpectTypingHandlerInterface
 import com.skt.nugu.sdk.agent.text.TextAgent
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
@@ -234,6 +235,7 @@ class NuguAndroidClient private constructor(
         // text agent
         internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
         internal var textRedirectHandler: TextAgentInterface.TextRedirectHandler? = null
+        internal var expectTypingController: ExpectTypingHandlerInterface.Controller? = null
 
         // tts agent
         internal var cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_NONE
@@ -374,6 +376,12 @@ class NuguAndroidClient private constructor(
          */
         fun textRedirectHandler(handler: TextAgentInterface.TextRedirectHandler?) =
             apply { this.textRedirectHandler = handler }
+
+        /**
+         * @param controller the controller for Text.ExpectTyping directive. If not provided, ignore this directive.
+         */
+        fun textExpectTypingController(controller: ExpectTypingHandlerInterface.Controller?) =
+            apply { this.expectTypingController = controller }
 
         /**
          * @param delegate the delegate which handle Sound.Beep directive.
@@ -585,10 +593,15 @@ class NuguAndroidClient private constructor(
                             getDialogAttributeStorage(),
                             builder.textSourceHandler,
                             builder.textRedirectHandler,
-                            getInteractionControlManager()
-                        ).apply {
-                            getDirectiveSequencer().addDirectiveHandler(this)
-                        }
+                            builder.expectTypingController ?: object : ExpectTypingHandlerInterface.Controller {
+                                override fun expectTyping(directive: ExpectTypingHandlerInterface.Directive) {
+                                    // no-op
+                                }
+                            },
+                            getInteractionControlManager(),
+                            getDirectiveSequencer(),
+                            getInterLayerDisplayPolicyManager()
+                        )
                     }
                 })
 
