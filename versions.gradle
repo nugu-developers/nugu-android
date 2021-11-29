@@ -7,7 +7,7 @@ def getVersionNameFromCode(code) {
 }
 
 ext {
-    compileSdkVersion = 30
+    compileSdkVersion = 31
     minSdkVersion = 19
     targetSdkVersion = 30
 
@@ -20,7 +20,7 @@ ext {
     androidXBrowserVersion = "1.3.0"
     koinVersion = "2.2.3"
     kotlinxCoroutinesAndroidVersion = "1.5.0"
-    exoPlayerVersion = "2.14.1"
+    exoPlayerVersion = "2.16.1"
     lottiVersion = "3.7.0"
     jsonVersion = "20180813"
     javaxAnnotationApiVersion = "1.2"

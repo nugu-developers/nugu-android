@@ -64,6 +64,8 @@ class ExoMediaPlayer(
 
         private const val AWAIT_TIME_OUT_SECONDS = 30L
 
+        private const val CACHE_SIZE = 1024 * 1024 * 100L // 100MB
+
         private fun convertToSDKErrorType(error: Int): ErrorType {
             return when (error) {
                 ExoPlaybackException.TYPE_SOURCE -> ErrorType.MEDIA_ERROR_INVALID_REQUST
@@ -96,7 +98,11 @@ class ExoMediaPlayer(
                         it.mkdir()
                     }
                 },
-                LeastRecentlyUsedCacheEvictor(1024 * 1024 * 100) // 100MB
+                LeastRecentlyUsedCacheEvictor(CACHE_SIZE),
+                null,
+                null,
+                false,
+                false
             ).also {
                 cache = it
             }
@@ -121,9 +127,9 @@ class ExoMediaPlayer(
         var retVal: Any? = null
     }
 
-    private lateinit var player: SimpleExoPlayer
-    private lateinit var dataSourceFactory: DefaultDataSourceFactory
-    private lateinit var cacheDataSourceFactory: DefaultDataSourceFactory
+    private lateinit var player: ExoPlayer
+    private lateinit var dataSourceFactory: DefaultDataSource.Factory
+    private lateinit var cacheDataSourceFactory: DefaultDataSource.Factory
     private lateinit var extractorsFactory: DefaultExtractorsFactory
 
     private var sourceId = SourceId.ERROR()
@@ -135,13 +141,15 @@ class ExoMediaPlayer(
     private var durationListener: MediaPlayerControlInterface.OnDurationListener? = null
     private var durationCallSourceId = SourceId.ERROR()
 
-    private val playerListener = object : Player.EventListener {
+    private val playerListener = object : Player.Listener {
         override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
             Log.d(
                 TAG,
-                "[onPlayerStateChanged] playWhenReady: $playWhenReady, playbackState: ${convertToReadablePlaybackState(
-                    playbackState
-                )}"
+                "[onPlayerStateChanged] playWhenReady: $playWhenReady, playbackState: ${
+                    convertToReadablePlaybackState(
+                        playbackState
+                    )
+                }"
             )
 
             when (playbackState) {
@@ -164,30 +172,33 @@ class ExoMediaPlayer(
             }
         }
 
-        override fun onPlayerError(error: ExoPlaybackException) {
+        override fun onPlayerError(error: PlaybackException) {
             Log.d(TAG, "[onPlayerError] error: $error")
 
-            val needToPrepare =
-                (retryWhenBehindLiveWindow && error.type == ExoPlaybackException.TYPE_SOURCE
-                        && (error.sourceException is BehindLiveWindowException || error.sourceException is HlsPlaylistTracker.PlaylistResetException))
-            if (needToPrepare) {
-                Log.i(TAG, "[onPlayerError] prepare silently ${error.sourceException}")
+            if (error is ExoPlaybackException) {
+                val needToPrepare =
+                    (retryWhenBehindLiveWindow && error.type == ExoPlaybackException.TYPE_SOURCE
+                            && (error.sourceException is BehindLiveWindowException || error.sourceException is HlsPlaylistTracker.PlaylistResetException))
+                if (needToPrepare) {
+                    Log.i(TAG, "[onPlayerError] prepare silently ${error.sourceException}")
 
-                lastPreparedUri?.let { uri ->
-                    player.prepare(buildMediaSource(Uri.parse(uri.toString()), null))
+                    lastPreparedUri?.let { uri ->
+                        player.setMediaSource(buildMediaSource(Uri.parse(uri.toString()), null))
+                        player.prepare()
 
-                    return@onPlayerError // swallow exception
+                        return@onPlayerError // swallow exception
+                    }
                 }
             }
 
             player.playWhenReady = false
-            player.stop(true)
+            player.clearMediaItems()
 
             handler.sendMessage(handler.obtainMessage(FuncMessage.ERROR, sourceId))
 
             eventNotifier.notifyPlaybackError(
                 sourceId,
-                convertToSDKErrorType(error.type),
+                convertToSDKErrorType(if (error is ExoPlaybackException) error.type else ExoPlaybackException.TYPE_UNEXPECTED),
                 error.message ?: ""
             )
         }
@@ -209,55 +220,56 @@ class ExoMediaPlayer(
     }
 
     private fun initInternal() {
-        val httpDataSourceFactory = DefaultHttpDataSourceFactory(
-            Util.getUserAgent(context, "sample-app"),
-            null,
-            DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
-            DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS,
-            true
-        )
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory().apply {
+            setUserAgent(Util.getUserAgent(context, "sample-app"))
+            setAllowCrossProtocolRedirects(true)
+        }
 
-        dataSourceFactory = DefaultDataSourceFactory(context, httpDataSourceFactory)
-        cacheDataSourceFactory = DefaultDataSourceFactory(context, CacheDataSource.Factory()
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-            .setCache(getCache(context))
-            .setCacheKeyFactory { dataSpec ->
-                val cacheKey = lastPreparedCacheKey
-                if (cacheKey != null) {
-                    val uri = dataSpec.uri.toString()
-                    val isHls = uri.contains(".m3u8") || uri.contains(".ts")
-                    if (isHls) {
-                        var end = uri.indexOf(".ts").let { if (it >= 0) it + 3 else it }
-                        if (end < 0) {
-                            end = uri.indexOf(".m3u8").let { if (it >= 0) it + 5 else it }
-                        }
+        dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+        cacheDataSourceFactory = DefaultDataSource.Factory(
+            context, CacheDataSource.Factory()
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                .setCache(getCache(context))
+                .setCacheKeyFactory { dataSpec ->
+                    val cacheKey = lastPreparedCacheKey
+                    if (cacheKey != null) {
+                        val uri = dataSpec.uri.toString()
+                        val isHls = uri.contains(".m3u8") || uri.contains(".ts")
+                        if (isHls) {
+                            var end = uri.indexOf(".ts").let { if (it >= 0) it + 3 else it }
+                            if (end < 0) {
+                                end = uri.indexOf(".m3u8").let { if (it >= 0) it + 5 else it }
+                            }
 
-                        if (end >= 0) {
-                            "${cacheKey}_${uri.substring(0, end)}"
+                            if (end >= 0) {
+                                "${cacheKey}_${uri.substring(0, end)}"
+                            } else {
+                                cacheKey
+                            }
                         } else {
                             cacheKey
                         }
                     } else {
-                        cacheKey
+                        ""
+                    }.also {
+                        Log.d(TAG, "[buildCacheKey] uri: ${dataSpec.uri}, cacheKey: $it")
                     }
-                } else {
-                    ""
-                }.also {
-                    Log.d(TAG, "[buildCacheKey] uri: ${dataSpec.uri}, cacheKey: $it")
-                }
-            }.setUpstreamDataSourceFactory(httpDataSourceFactory)
-            .setEventListener(object : CacheDataSource.EventListener {
-                override fun onCachedBytesRead(cacheSizeBytes: Long, cachedBytesRead: Long) {
-                    Log.d(TAG, "[onCachedBytesRead] cacheSizeBytes: $cacheSizeBytes, cachedBytesRead: $cachedBytesRead")
-                }
+                }.setUpstreamDataSourceFactory(httpDataSourceFactory)
+                .setEventListener(object : CacheDataSource.EventListener {
+                    override fun onCachedBytesRead(cacheSizeBytes: Long, cachedBytesRead: Long) {
+                        Log.d(
+                            TAG,
+                            "[onCachedBytesRead] cacheSizeBytes: $cacheSizeBytes, cachedBytesRead: $cachedBytesRead"
+                        )
+                    }
 
-                override fun onCacheIgnored(reason: Int) {
-                    Log.d(TAG, "[onCacheIgnored] reason: $reason")
-                }
-            })
+                    override fun onCacheIgnored(reason: Int) {
+                        Log.d(TAG, "[onCacheIgnored] reason: $reason")
+                    }
+                })
         )
         extractorsFactory = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
-        player = SimpleExoPlayer.Builder(
+        player = ExoPlayer.Builder(
             context,
             DefaultRenderersFactory(context).setEnableDecoderFallback(true)
         ).build()
@@ -282,7 +294,7 @@ class ExoMediaPlayer(
         player.playWhenReady = false
 
         if (player.playbackState != Player.STATE_IDLE) {
-            player.stop(true)
+            player.clearMediaItems()
         }
 
         lastPreparedUri = uri
@@ -332,7 +344,7 @@ class ExoMediaPlayer(
     private fun stopInternal(id: SourceId): Boolean {
         if (sourceId == id && !isPlayerStoppedOrError()) {
             player.playWhenReady = false
-            player.stop(true)
+            player.clearMediaItems()
 
             eventNotifier.notifyPlaybackStopped(sourceId)
 
@@ -398,7 +410,7 @@ class ExoMediaPlayer(
 
     private fun seekToInternal(id: SourceId, offsetInMilliseconds: Long): Boolean {
         if (sourceId == id && !isPlayerStoppedOrError()) {
-            if (!player.isCurrentWindowDynamic) {
+            if (!player.isCurrentMediaItemDynamic) {
                 runCatching {
                     player.seekTo(offsetInMilliseconds)
 
@@ -420,7 +432,7 @@ class ExoMediaPlayer(
 
     private fun getOffsetInternal(id: SourceId): Long {
         if (player.playbackState != Player.STATE_IDLE) {
-            return if (player.isCurrentWindowDynamic) {
+            return if (player.isCurrentMediaItemDynamic) {
                 offsetCalculator.getOffset(id)
             } else {
                 player.currentPosition
@@ -484,7 +496,7 @@ class ExoMediaPlayer(
 
     @Throws(IllegalStateException::class)
     private fun buildMediaSource(uri: Uri, cacheKey: String?): MediaSource {
-        fun getDataSourceFactory(): DefaultDataSourceFactory {
+        fun getDataSourceFactory(): DefaultDataSource.Factory {
             return if (cacheEnabled) {
                 if (cacheKey != null) cacheDataSourceFactory else dataSourceFactory
             } else {
@@ -613,7 +625,8 @@ class ExoMediaPlayer(
                         val sourceId = funcMessage.data1 as? SourceId
                         val offset = funcMessage.data2 as? Long
                         if (sourceId != null && offset != null) {
-                            val seekResult = playerRef.get()?.seekToInternal(sourceId, offset) ?: false
+                            val seekResult =
+                                playerRef.get()?.seekToInternal(sourceId, offset) ?: false
                             funcMessage.retVal = seekResult
                             if (!seekResult || playerRef.get()?.player?.playbackState == Player.STATE_READY) {
                                 funcMessage.latch.countDown()
