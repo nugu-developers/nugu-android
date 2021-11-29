@@ -112,7 +112,7 @@ class HandlePlaylistDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[HANDLE_PLAYLIST] = BlockingPolicy()
+        configuration[HANDLE_PLAYLIST] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

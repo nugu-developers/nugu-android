@@ -82,7 +82,7 @@ class RequestPermissionDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[DIRECTIVE] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO)
+        configurations[DIRECTIVE] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
 
         return configurations
     }

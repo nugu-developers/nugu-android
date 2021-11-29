@@ -112,7 +112,7 @@ class HandleLyricsDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[HANDLE_LYRICS] = BlockingPolicy()
+        configuration[HANDLE_LYRICS] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

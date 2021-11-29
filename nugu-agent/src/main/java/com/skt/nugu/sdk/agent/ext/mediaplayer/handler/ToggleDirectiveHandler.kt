@@ -113,7 +113,7 @@ class ToggleDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[TOGGLE] = BlockingPolicy()
+        configuration[TOGGLE] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

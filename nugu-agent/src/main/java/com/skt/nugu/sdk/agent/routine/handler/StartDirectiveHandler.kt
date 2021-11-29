@@ -141,7 +141,7 @@ class StartDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[START] = BlockingPolicy()
+        configurations[START] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configurations
     }

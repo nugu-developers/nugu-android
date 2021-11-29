@@ -113,7 +113,7 @@ class ResumeDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[RESUME] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO)
+        configuration[RESUME] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
 
         return configuration
     }

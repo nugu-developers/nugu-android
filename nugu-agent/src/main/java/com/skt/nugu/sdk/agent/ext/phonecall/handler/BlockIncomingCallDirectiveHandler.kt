@@ -56,7 +56,7 @@ class BlockIncomingCallDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[BLOCK_INCOMING_CALL] = BlockingPolicy()
+        configurations[BLOCK_INCOMING_CALL] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configurations
     }

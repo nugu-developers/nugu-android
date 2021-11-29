@@ -58,7 +58,7 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     private val listeners = CopyOnWriteArraySet<Listener>()
 
     init {
-        supportConfigurations[UPDATE_METADATA] = BlockingPolicy()
+        supportConfigurations[UPDATE_METADATA] = BlockingPolicy.sharedInstanceFactory.get()
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {

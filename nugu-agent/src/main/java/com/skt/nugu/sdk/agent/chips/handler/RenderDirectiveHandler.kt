@@ -150,7 +150,7 @@ class RenderDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[RENDER] = BlockingPolicy(
+        configuration[RENDER] = BlockingPolicy.sharedInstanceFactory.get(
             blocking = BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
 

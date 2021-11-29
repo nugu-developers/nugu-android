@@ -66,7 +66,7 @@ class RevokeDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[REVOKE] = BlockingPolicy()
+        configuration[REVOKE] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

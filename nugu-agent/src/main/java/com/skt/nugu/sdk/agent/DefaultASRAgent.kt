@@ -819,11 +819,11 @@ class DefaultASRAgent(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[EXPECT_SPEECH] = BlockingPolicy(
+        configuration[EXPECT_SPEECH] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-        configuration[NOTIFY_RESULT] = BlockingPolicy()
+        configuration[NOTIFY_RESULT] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }
