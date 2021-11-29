@@ -41,7 +41,7 @@ class DirectiveRouterTest {
 
         init {
             whenever(HANDLER.getConfiguration()).thenReturn(mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
-                put(DIRECTIVE.getNamespaceAndName(), BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
+                put(DIRECTIVE.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
             })
         }
     }
