@@ -27,6 +27,8 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
+import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
@@ -35,8 +37,10 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
+import kotlin.collections.HashMap
 
 class TextAgent(
     private val messageSender: MessageSender,
@@ -44,9 +48,14 @@ class TextAgent(
     private val dialogAttributeStorage: DialogAttributeStorageInterface,
     private val textSourceHandler: TextAgentInterface.TextSourceHandler?,
     private val textRedirectHandler: TextAgentInterface.TextRedirectHandler?,
-    private val interactionControlManager: InteractionControlManagerInterface
+    private val expectTypingController: ExpectTypingHandlerInterface.Controller,
+    private val interactionControlManager: InteractionControlManagerInterface,
+    directiveSequencer: DirectiveSequencerInterface,
+    interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager
 ) : AbstractCapabilityAgent(NAMESPACE)
-    , TextAgentInterface{
+    , TextAgentInterface
+    , InterLayerDisplayPolicyManager.Listener
+{
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
         val playServiceId: String?,
@@ -103,6 +112,18 @@ class TextAgent(
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
     private val internalTextRedirectHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextRedirectHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
+    private val textAttributeStorage = TextAttributeStorage()
+    private val activatedTextAttributeKeys = Stack<String>()
+
+    private val expectTypingDirectiveController = object : ExpectTypingHandlerInterface.Controller {
+        override fun expectTyping(
+            directive: ExpectTypingHandlerInterface.Directive
+        ) {
+            executor.submit {
+                expectTypingController.expectTyping(directive)
+            }
+        }
+    }
 
     private val contextState = object : BaseContextState {
         override fun value(): String = COMPACT_STATE
@@ -110,6 +131,11 @@ class TextAgent(
 
     init {
         contextManager.setStateProvider(namespaceAndName, this)
+
+        directiveSequencer.addDirectiveHandler(this)
+        directiveSequencer.addDirectiveHandler(ExpectTypingDirectiveHandler(textAttributeStorage, expectTypingDirectiveController))
+
+        interLayerDisplayPolicyManager.addListener(this)
     }
 
     override fun addInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {
@@ -183,24 +209,24 @@ class TextAgent(
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(payload.text,
                 payload.playServiceId == null, payload.playServiceId, payload.token, payload.source, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
-                override fun onRequestCreated(dialogRequestId: String) {
-                    internalTextSourceHandleListeners.forEach {
-                        it.onRequestCreated(dialogRequestId)
+                    override fun onRequestCreated(dialogRequestId: String) {
+                        internalTextSourceHandleListeners.forEach {
+                            it.onRequestCreated(dialogRequestId)
+                        }
                     }
-                }
 
-                override fun onReceiveResponse(dialogRequestId: String) {
-                    internalTextSourceHandleListeners.forEach {
-                        it.onReceiveResponse(dialogRequestId)
+                    override fun onReceiveResponse(dialogRequestId: String) {
+                        internalTextSourceHandleListeners.forEach {
+                            it.onReceiveResponse(dialogRequestId)
+                        }
                     }
-                }
 
-                override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
-                    internalTextSourceHandleListeners.forEach {
-                        it.onError(dialogRequestId, type)
+                    override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
+                        internalTextSourceHandleListeners.forEach {
+                            it.onError(dialogRequestId, type)
+                        }
                     }
-                }
-            })
+                })
             internalTextSourceHandleListeners.forEach {
                 it.onRequested(dialogRequestId)
             }
@@ -245,19 +271,19 @@ class TextAgent(
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     if(!messageSender.newCall(
-                        EventMessageRequest.Builder(
-                            jsonContext,
-                            NAMESPACE,
-                            "$NAME_TEXT_REDIRECT$NAME_FAILED",
-                            VERSION.toString()
-                        ).referrerDialogRequestId(info.directive.getDialogRequestId())
-                            .payload(JsonObject().apply {
-                                addProperty("playServiceId", payload.playServiceId)
-                                addProperty("token", payload.token)
-                                addProperty("errorCode", result.name)
-                            }.toString())
-                            .build()
-                    ).enqueue(object : MessageSender.Callback{
+                            EventMessageRequest.Builder(
+                                jsonContext,
+                                NAMESPACE,
+                                "$NAME_TEXT_REDIRECT$NAME_FAILED",
+                                VERSION.toString()
+                            ).referrerDialogRequestId(info.directive.getDialogRequestId())
+                                .payload(JsonObject().apply {
+                                    addProperty("playServiceId", payload.playServiceId)
+                                    addProperty("token", payload.token)
+                                    addProperty("errorCode", result.name)
+                                }.toString())
+                                .build()
+                        ).enqueue(object : MessageSender.Callback{
                             override fun onFailure(request: MessageRequest, status: Status) {
                                 interactionControl?.let {
                                     interactionControlManager.finish(it)
@@ -376,29 +402,38 @@ class TextAgent(
             VERSION.toString()
         ).dialogRequestId(dialogRequestId)
             .payload(
-            JsonObject().apply
-            {
-                addProperty("text", text)
-                token?.let {
-                    addProperty("token", it)
-                }
-                source?.let {
-                    addProperty("source", it)
-                }
+                JsonObject().apply
+                {
+                    addProperty("text", text)
+                    token?.let {
+                        addProperty("token", it)
+                    }
+                    source?.let {
+                        addProperty("source", it)
+                    }
 
-                playServiceId?.let {
-                    addProperty("playServiceId", it)
-                }
+                    playServiceId?.let {
+                        addProperty("playServiceId", it)
+                    }
 
-                if(includeDialogAttribute) {
-                    dialogAttributeStorage.getAttributes()?.let { attrs ->
-                        attrs.forEach { attr ->
-                            add(attr.key, Gson().toJsonTree(attr.value))
+                    // use text attribute activated if available.
+                    val textAttributes = activatedTextAttributeKeys.peek()?.let { key ->
+                        textAttributeStorage.getAttributes(key)?.let { attrs ->
+                            attrs.forEach { attr ->
+                                add(attr.key, Gson().toJsonTree(attr.value))
+                            }
                         }
                     }
-                }
-            }.toString()
-        ).referrerDialogRequestId(referrerDialogRequestId ?: "").build()
+
+                    if (includeDialogAttribute && textAttributes == null) {
+                        dialogAttributeStorage.getAttributes()?.let { attrs ->
+                            attrs.forEach { attr ->
+                                add(attr.key, Gson().toJsonTree(attr.value))
+                            }
+                        }
+                    }
+                }.toString()
+            ).referrerDialogRequestId(referrerDialogRequestId ?: "").build()
 
     private fun executeSendTextInputEventInternal(
         text: String,
@@ -445,5 +480,18 @@ class TextAgent(
         })
 
         return dialogRequestId
+    }
+
+    override fun onDisplayLayerRendered(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
+        executor.submit {
+            activatedTextAttributeKeys.push(layer.getDialogRequestId())
+        }
+    }
+
+    override fun onDisplayLayerCleared(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
+        executor.submit {
+            activatedTextAttributeKeys.remove(layer.getDialogRequestId())
+            textAttributeStorage.removeAttributes(layer.getDialogRequestId())
+        }
     }
 }
