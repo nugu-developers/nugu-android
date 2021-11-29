@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.core.interfaces.directive
 
 import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
 
 /**
  * Defines an BlockingPolicy.
@@ -23,7 +24,7 @@ import java.util.*
  * @param blockedBy set mediums which blocked
  * @param blocking set mediums which blocking
  */
-class BlockingPolicy(
+data class BlockingPolicy(
     val blockedBy: EnumSet<Medium>? = MEDIUM_ANY_ONLY,
     val blocking: EnumSet<Medium>? = null
 ) {
@@ -38,5 +39,21 @@ class BlockingPolicy(
         val MEDIUM_ANY_ONLY: EnumSet<Medium> = EnumSet.of(Medium.ANY)
         val MEDIUM_AUDIO: EnumSet<Medium> = EnumSet.of(Medium.ANY, Medium.AUDIO)
         val MEDIUM_AUDIO_ONLY: EnumSet<Medium> = EnumSet.of(Medium.AUDIO)
+
+        val sharedInstanceFactory = SharedInstanceFactory()
+    }
+
+    class SharedInstanceFactory {
+        private val instances = CopyOnWriteArraySet<BlockingPolicy>()
+
+        fun get(
+            blockedBy: EnumSet<Medium>? = MEDIUM_ANY_ONLY,
+            blocking: EnumSet<Medium>? = null
+        ): BlockingPolicy {
+            return instances.find { it.blockedBy == blockedBy && it.blocking == blocking }
+                ?: BlockingPolicy(blockedBy, blocking).apply {
+                    instances.add(this)
+                }
+        }
     }
 }
