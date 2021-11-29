@@ -114,7 +114,7 @@ class SearchDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[SEARCH] = BlockingPolicy()
+        configuration[SEARCH] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

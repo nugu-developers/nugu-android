@@ -695,7 +695,7 @@ class DefaultAudioPlayerAgent(
         // pause directive handler
         PlaybackDirectiveHandler(
             pauseDirectiveController,
-            Pair(PAUSE, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
+            Pair(PAUSE, BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
         ).apply {
             directiveGroupProcessor.addListener(this)
             directiveSequencer.addDirectiveHandler(this)
@@ -704,7 +704,7 @@ class DefaultAudioPlayerAgent(
         // stop directive handler
         PlaybackDirectiveHandler(
             stopDirectiveController,
-            Pair(STOP, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
+            Pair(STOP, BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
         ).apply {
             directiveGroupProcessor.addListener(this)
             directiveSequencer.addDirectiveHandler(this)
@@ -713,7 +713,7 @@ class DefaultAudioPlayerAgent(
         // play directive handler
         PlaybackDirectiveHandler(
             playDirectiveController,
-            Pair(PLAY, BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO))
+            Pair(PLAY, BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
         ).apply {
             directiveGroupProcessor.addListener(this)
             directiveSequencer.addDirectiveHandler(this)

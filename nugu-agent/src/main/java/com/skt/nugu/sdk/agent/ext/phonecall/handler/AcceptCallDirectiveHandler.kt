@@ -56,7 +56,7 @@ class AcceptCallDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[ACCEPT_CALL] = BlockingPolicy()
+        configurations[ACCEPT_CALL] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configurations
     }

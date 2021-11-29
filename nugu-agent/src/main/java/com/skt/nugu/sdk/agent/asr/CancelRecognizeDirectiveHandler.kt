@@ -72,7 +72,7 @@ class CancelRecognizeDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[NOTIFY_RESULT] = BlockingPolicy()
+        configuration[NOTIFY_RESULT] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

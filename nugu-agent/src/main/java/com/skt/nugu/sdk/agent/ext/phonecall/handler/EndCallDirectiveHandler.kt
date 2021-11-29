@@ -56,7 +56,7 @@ class EndCallDirectiveHandler (
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[END_CALL] = BlockingPolicy()
+        configurations[END_CALL] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configurations
     }

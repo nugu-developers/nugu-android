@@ -39,7 +39,7 @@ class NudgeDirectiveHandler(private val nudgeDirectiveObserver: NudgeDirectiveOb
     )
 
     private val config: Map<NamespaceAndName, BlockingPolicy> by lazy {
-        HashMap<NamespaceAndName, BlockingPolicy>().apply { this[APPEND] = BlockingPolicy() }
+        HashMap<NamespaceAndName, BlockingPolicy>().apply { this[APPEND] = BlockingPolicy.sharedInstanceFactory.get() }
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {

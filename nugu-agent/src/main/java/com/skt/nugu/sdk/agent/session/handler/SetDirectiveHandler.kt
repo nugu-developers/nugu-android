@@ -73,7 +73,7 @@ class SetDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[SET] = BlockingPolicy()
+        configuration[SET] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

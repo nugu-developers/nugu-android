@@ -363,7 +363,7 @@ class TextAgent(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy()
+        val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
 
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 

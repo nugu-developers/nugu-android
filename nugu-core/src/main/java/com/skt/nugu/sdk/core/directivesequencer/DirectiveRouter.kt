@@ -75,6 +75,6 @@ class DirectiveRouter {
 
     fun getPolicy(directive: Directive): BlockingPolicy {
         return getDirectiveHandler(directive)?.getConfiguration()?.get(directive.getNamespaceAndName())
-            ?: BlockingPolicy()
+            ?: BlockingPolicy.sharedInstanceFactory.get()
     }
 }

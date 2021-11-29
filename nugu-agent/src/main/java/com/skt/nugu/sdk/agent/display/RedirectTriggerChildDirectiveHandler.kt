@@ -89,6 +89,6 @@ class RedirectTriggerChildDirectiveHandler(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = mapOf(
-        Pair(REDIRECT_TRIGGER_CHILD, BlockingPolicy())
+        Pair(REDIRECT_TRIGGER_CHILD, BlockingPolicy.sharedInstanceFactory.get())
     )
 }

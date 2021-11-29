@@ -140,7 +140,7 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-        val nonBlockingPolicy = BlockingPolicy()
+        val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
 
         configurations[REQUEST_RESUME_COMMAND] = nonBlockingPolicy
         configurations[REQUEST_NEXT_COMMAND] = nonBlockingPolicy

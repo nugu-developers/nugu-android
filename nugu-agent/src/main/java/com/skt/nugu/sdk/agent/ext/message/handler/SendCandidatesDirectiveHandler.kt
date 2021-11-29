@@ -150,7 +150,7 @@ class SendCandidatesDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configurations[SEND_CANDIDATES] = BlockingPolicy()
+        configurations[SEND_CANDIDATES] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configurations
     }

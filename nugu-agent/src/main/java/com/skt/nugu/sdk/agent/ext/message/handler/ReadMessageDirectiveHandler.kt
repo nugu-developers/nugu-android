@@ -124,7 +124,7 @@ class ReadMessageDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[READ_MESSAGE] = BlockingPolicy(
+        configuration[READ_MESSAGE] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )

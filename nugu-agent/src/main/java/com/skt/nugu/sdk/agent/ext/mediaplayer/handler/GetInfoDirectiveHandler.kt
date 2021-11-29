@@ -116,7 +116,7 @@ class GetInfoDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[GET_INFO] = BlockingPolicy()
+        configuration[GET_INFO] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

@@ -109,7 +109,7 @@ class SendMessageDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[SEND_MESSAGE] = BlockingPolicy()
+        configuration[SEND_MESSAGE] = BlockingPolicy.sharedInstanceFactory.get()
 
         return configuration
     }

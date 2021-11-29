@@ -151,7 +151,7 @@ class PlayDirectiveHandler(
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
         val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
 
-        configuration[PLAY] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO)
+        configuration[PLAY] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
 
         return configuration
     }

@@ -292,7 +292,7 @@ class DefaultSpeakerAgent(
     }
 
     override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy(
+        val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
