@@ -21,6 +21,8 @@ import java.util.concurrent.CopyOnWriteArraySet
 /**
  * Defines an BlockingPolicy.
  *
+ * Prefer to use [sharedInstanceFactory] to get instance instead of creation.
+ *
  * @param blockedBy set mediums which blocked
  * @param blocking set mediums which blocking
  */
