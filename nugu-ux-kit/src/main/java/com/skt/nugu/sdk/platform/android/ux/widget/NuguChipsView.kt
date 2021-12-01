@@ -209,8 +209,7 @@ class NuguChipsView @JvmOverloads constructor(
          */
         override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ChipsViewHolder {
             val layout = if (viewType == Chip.Type.NUDGE.ordinal) R.layout.item_text_nudge else R.layout.item_text
-            val viewHolder = ChipsViewHolder(LayoutInflater.from(context).inflate(layout, viewGroup, false))
-            return viewHolder
+            return ChipsViewHolder(LayoutInflater.from(context).inflate(layout, viewGroup, false))
         }
 
         /**
@@ -242,9 +241,7 @@ class NuguChipsView @JvmOverloads constructor(
                     holder.titleView.setBackgroundResource(defaultDrawableId)
                 }
             }
-            holder.titleView.setThrottledOnClickListener {
-                listener?.onClick(items[position])
-            }
+
         }
 
         fun startNudgeAnimationIfNeeded() {
@@ -267,6 +264,12 @@ class NuguChipsView @JvmOverloads constructor(
              * A textview representing the title
              * */
             val titleView: TextView = itemView.findViewById(R.id.tv_chips)
+
+            init{
+                titleView.setThrottledOnClickListener {
+                    listener?.onClick(items[adapterPosition])
+                }
+            }
         }
     }
 
