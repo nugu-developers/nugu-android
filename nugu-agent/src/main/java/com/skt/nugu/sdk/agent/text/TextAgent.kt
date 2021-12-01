@@ -417,12 +417,16 @@ class TextAgent(
                     }
 
                     // use text attribute activated if available.
-                    val textAttributes = activatedTextAttributeKeys.peek()?.let { key ->
-                        textAttributeStorage.getAttributes(key)?.let { attrs ->
-                            attrs.forEach { attr ->
-                                add(attr.key, Gson().toJsonTree(attr.value))
+                    val textAttributes = if(activatedTextAttributeKeys.isNotEmpty()) {
+                        activatedTextAttributeKeys.peek()?.let { key ->
+                            textAttributeStorage.getAttributes(key)?.let { attrs ->
+                                attrs.forEach { attr ->
+                                    add(attr.key, Gson().toJsonTree(attr.value))
+                                }
                             }
                         }
+                    } else {
+                        null
                     }
 
                     if (includeDialogAttribute && textAttributes == null) {
