@@ -70,11 +70,7 @@ class SetDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[SET] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configuration
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[SET] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

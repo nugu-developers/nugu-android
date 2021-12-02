@@ -66,11 +66,11 @@ class PermissionAgent(
         }.toString()
     }
 
-    init {
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
+        init {
         contextManager.setStateProvider(namespaceAndName, this)
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     override fun provideState(
         contextSetter: ContextSetterInterface,

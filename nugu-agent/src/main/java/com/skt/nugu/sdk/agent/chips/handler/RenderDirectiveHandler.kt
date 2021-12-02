@@ -147,13 +147,9 @@ class RenderDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[RENDER] = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[RENDER] = BlockingPolicy.sharedInstanceFactory.get(
             blocking = BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-
-        return configuration
     }
 }

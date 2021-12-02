@@ -60,13 +60,8 @@ internal class ExpectTypingDirectiveHandler(
         directives.remove(info.directive.header.messageId)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> =
-        HashMap<NamespaceAndName, BlockingPolicy>().apply {
-            // only blocked by audio
-            put(
-                EXPECT_TYPING, BlockingPolicy(
-                    BlockingPolicy.MEDIUM_AUDIO
-                )
-            )
-        }
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        // only blocked by audio
+        this[EXPECT_TYPING] = BlockingPolicy(BlockingPolicy.MEDIUM_AUDIO)
+    }
 }

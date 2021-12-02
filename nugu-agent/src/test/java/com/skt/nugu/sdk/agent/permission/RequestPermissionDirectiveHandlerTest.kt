@@ -79,7 +79,7 @@ class RequestPermissionDirectiveHandlerTest {
     @Test
     fun testGetConfiguration() {
         val handler = RequestPermissionDirectiveHandler(mock())
-        handler.getConfiguration().let {
+        handler.configurations().let {
             val requestPermission = it[RequestPermissionDirectiveHandler.DIRECTIVE]
             Assert.assertTrue(requestPermission != null)
             requestPermission?.let { blockingPolicy ->

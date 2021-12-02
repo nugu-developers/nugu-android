@@ -66,11 +66,7 @@ class StopDirectiveHandler(
 
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[STOP] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configuration
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[STOP] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

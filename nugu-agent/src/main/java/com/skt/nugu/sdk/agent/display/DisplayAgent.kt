@@ -242,6 +242,8 @@ class DisplayAgent(
 
     private val listeners = LinkedHashSet<DisplayAgentInterface.Listener>()
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         contextLayerTimer?.apply {
@@ -250,8 +252,6 @@ class DisplayAgent(
             }
         }
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     private fun executePreparePendingInfo(info: AbstractDirectiveHandler.DirectiveInfo, payload: TemplatePayload) {
         TemplateDirectiveInfo(info, payload).apply {

@@ -24,9 +24,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
@@ -186,14 +184,8 @@ class DefaultMicrophoneAgent(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[SET_MIC] = nonBlockingPolicy
-
-        return configuration
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[SET_MIC] = BlockingPolicy.sharedInstanceFactory.get()
     }
 
     override fun provideState(

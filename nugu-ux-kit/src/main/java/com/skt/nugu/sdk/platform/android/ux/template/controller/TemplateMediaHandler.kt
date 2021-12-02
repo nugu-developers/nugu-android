@@ -72,7 +72,7 @@ open class TemplateMediaHandler(
     @VisibleForTesting
     internal val directiveHandlingListener = object : DirectiveSequencerInterface.OnDirectiveHandlingListener {
         private fun Directive.isAudioPlayerPauseDirective(): Boolean {
-            return getNamespaceAndName() == NamespaceAndName(DefaultAudioPlayerAgent.NAMESPACE, DefaultAudioPlayerAgent.NAME_PAUSE)
+            return getNamespace() == DefaultAudioPlayerAgent.NAMESPACE && getName() == DefaultAudioPlayerAgent.NAME_PAUSE
         }
 
         override fun onCompleted(directive: Directive) {

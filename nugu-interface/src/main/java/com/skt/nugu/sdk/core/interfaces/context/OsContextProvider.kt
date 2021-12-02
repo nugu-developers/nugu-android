@@ -31,7 +31,7 @@ abstract class OsContextProvider: ClientContextProvider {
         override fun value(): String = "\"${type.value}\""
     }
 
-    final override fun getName(): String = "os"
+    override val namespaceAndName: NamespaceAndName = NamespaceAndName(ClientContextProvider.NAMESPACE, "os")
 
     final override fun provideState(
         contextSetter: ContextSetterInterface,

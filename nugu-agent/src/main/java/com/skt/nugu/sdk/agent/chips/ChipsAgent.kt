@@ -53,12 +53,12 @@ class ChipsAgent(
         override fun value(): String = COMPACT_STATE
     }
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         directiveSequencer.addDirectiveHandler(RenderDirectiveHandler(this, directiveSequencer, sessionManager))
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     override fun provideState(
         contextSetter: ContextSetterInterface,

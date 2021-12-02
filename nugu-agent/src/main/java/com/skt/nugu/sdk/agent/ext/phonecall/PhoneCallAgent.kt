@@ -29,9 +29,7 @@ import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Callable
@@ -69,7 +67,7 @@ class PhoneCallAgent(
         private const val NAME_CALL_ESTABLISHED = "CallEstablished"
     }
 
-    override fun getInterfaceName(): String = NAMESPACE
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     private val executor = Executors.newSingleThreadExecutor()
     private var state = State.IDLE

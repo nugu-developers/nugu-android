@@ -95,7 +95,6 @@ class DefaultTTSAgent(
             NAME_SPEAK
         )
 
-
         private const val EVENT_SPEECH_STARTED = "SpeechStarted"
         private const val EVENT_SPEECH_FINISHED = "SpeechFinished"
         private const val EVENT_SPEECH_STOPPED = "SpeechStopped"
@@ -649,15 +648,11 @@ class DefaultTTSAgent(
         return SpeakDirectiveInfo(info, payload)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[SPEAK] = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[SPEAK] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-
-        return configuration
     }
 
     private fun executeReleaseSync(info: SpeakDirectiveInfo) {

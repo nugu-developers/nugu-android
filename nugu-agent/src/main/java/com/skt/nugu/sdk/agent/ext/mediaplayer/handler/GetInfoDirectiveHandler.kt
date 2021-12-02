@@ -2,7 +2,6 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.Song
 import com.skt.nugu.sdk.agent.ext.mediaplayer.event.GetInfoCallback
@@ -13,9 +12,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class GetInfoDirectiveHandler(
@@ -113,11 +110,7 @@ class GetInfoDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[GET_INFO] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configuration
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[GET_INFO] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

@@ -53,11 +53,7 @@ class AcceptCallDirectiveHandler (
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configurations[ACCEPT_CALL] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configurations
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[ACCEPT_CALL] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

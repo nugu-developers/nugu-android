@@ -24,9 +24,7 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
@@ -167,16 +165,11 @@ class DefaultScreenAgent(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[TURN_ON] = nonBlockingPolicy
-        configuration[TURN_OFF] = nonBlockingPolicy
-        configuration[SET_BRIGHTNESS] = nonBlockingPolicy
-
-        return configuration
+        this[TURN_ON] = nonBlockingPolicy
+        this[TURN_OFF] = nonBlockingPolicy
+        this[SET_BRIGHTNESS] = nonBlockingPolicy
     }
 
     internal data class StateContext(val settings: Screen.Settings): BaseContextState {

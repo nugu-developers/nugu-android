@@ -43,5 +43,5 @@ interface DirectiveHandler {
      *
      * @return namespace and name for directive which can handle and it's blocking policy.
      */
-    fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy>
+    val configurations : Map<NamespaceAndName, BlockingPolicy>
 }

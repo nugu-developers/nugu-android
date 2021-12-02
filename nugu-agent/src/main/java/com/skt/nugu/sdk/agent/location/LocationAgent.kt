@@ -55,11 +55,11 @@ class LocationAgent(
 
     private var contextUpdateLock = ReentrantLock()
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     internal data class StateContext(private val location: Location?) : BaseContextState {
         companion object {

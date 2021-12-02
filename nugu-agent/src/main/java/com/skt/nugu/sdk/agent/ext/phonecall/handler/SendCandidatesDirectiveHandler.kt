@@ -22,7 +22,6 @@ import com.skt.nugu.sdk.agent.ext.phonecall.Context
 import com.skt.nugu.sdk.agent.ext.phonecall.PhoneCallAgent
 import com.skt.nugu.sdk.agent.ext.phonecall.payload.SendCandidatesPayload
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
-import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.BaseContextState
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
@@ -46,8 +45,7 @@ class SendCandidatesDirectiveHandler(
         private const val NAME_SEND_CANDIDATES = "SendCandidates"
         private const val NAME_CANDIDATES_LISTED = "CandidatesListed"
 
-        private val SEND_CANDIDATES =
-            NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_SEND_CANDIDATES)
+        private val SEND_CANDIDATES = NamespaceAndName(PhoneCallAgent.NAMESPACE, NAME_SEND_CANDIDATES)
     }
 
     interface Callback {
@@ -139,11 +137,7 @@ class SendCandidatesDirectiveHandler(
         // no-op
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configurations[SEND_CANDIDATES] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configurations
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[SEND_CANDIDATES] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

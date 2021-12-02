@@ -45,12 +45,12 @@ class SessionAgent(
 
     private val executor = Executors.newSingleThreadExecutor()
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         directiveSequencer.addDirectiveHandler(SetDirectiveHandler(this))
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     internal data class StateContext(
         val sessions: Set<SessionManagerInterface.Session>

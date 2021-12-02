@@ -147,11 +147,7 @@ class SendCandidatesDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configurations[SEND_CANDIDATES] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configurations
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[SEND_CANDIDATES] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

@@ -53,13 +53,7 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
         val metadata: JsonObject
     )
 
-    private val supportConfigurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
     private val listeners = CopyOnWriteArraySet<Listener>()
-
-    init {
-        supportConfigurations[UPDATE_METADATA] = BlockingPolicy.sharedInstanceFactory.get()
-    }
 
     override fun preHandleDirective(info: DirectiveInfo) {
         // nothing to do
@@ -85,7 +79,9 @@ class AudioPlayerMetadataDirectiveHandler: AbstractDirectiveHandler() {
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = supportConfigurations
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[UPDATE_METADATA] = BlockingPolicy.sharedInstanceFactory.get()
+    }
 
     fun addListener(listener: Listener) {
         listeners.add(listener)

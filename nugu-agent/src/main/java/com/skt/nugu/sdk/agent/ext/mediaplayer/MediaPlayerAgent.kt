@@ -18,7 +18,6 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer
 
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.ext.mediaplayer.event.*
-import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
 import com.skt.nugu.sdk.agent.ext.mediaplayer.handler.*
 import com.skt.nugu.sdk.agent.ext.mediaplayer.payload.*
 import com.skt.nugu.sdk.agent.version.Version
@@ -59,6 +58,8 @@ class MediaPlayerAgent(
         const val NAMESPACE = "MediaPlayer"
         val VERSION = Version(1, 1)
     }
+
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
@@ -160,8 +161,6 @@ class MediaPlayerAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     internal data class StateContext(val context: Context): BaseContextState {
         companion object {

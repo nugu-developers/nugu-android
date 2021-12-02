@@ -60,7 +60,7 @@ class MessageAgent(
         val VERSION = Version(1, 5)
     }
 
-    override fun getInterfaceName(): String = NAMESPACE
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     private val listeners = LinkedHashSet<MessageAgentInterface.OnPlaybackListener>()
     private val executor = Executors.newSingleThreadExecutor()

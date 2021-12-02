@@ -28,9 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextManagerInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
 import com.skt.nugu.sdk.core.interfaces.display.LayerType
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 
@@ -44,10 +42,8 @@ class AudioPlayerLyricsDirectiveHandler(
     companion object {
         private const val TAG = "AudioPlayerLyricsDirectiveHandler"
 
-        private const val NAMESPACE =
-            DefaultAudioPlayerAgent.NAMESPACE
-        private val VERSION =
-            DefaultAudioPlayerAgent.VERSION
+        private const val NAMESPACE = DefaultAudioPlayerAgent.NAMESPACE
+        private val VERSION = DefaultAudioPlayerAgent.VERSION
 
         // v1.1
         private const val NAME_SHOW_LYRICS = "ShowLyrics"
@@ -100,6 +96,8 @@ class AudioPlayerLyricsDirectiveHandler(
         @SerializedName("playStackControl")
         val playStackControl: PlayStackControl?
     )
+
+   private val audioPlayerNamespaceAndName = NamespaceAndName("supportedInterfaces", NAMESPACE)
 
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
@@ -184,7 +182,7 @@ class AudioPlayerLyricsDirectiveHandler(
                         .build()
                 ).enqueue(null)
             }
-        }, NamespaceAndName("supportedInterfaces", NAMESPACE))
+        },audioPlayerNamespaceAndName)
     }
 
     private fun sendPageControlEvent(name: String, playServiceId: String, direction: Direction, referrerDialogRequestId: String) {
@@ -202,21 +200,17 @@ class AudioPlayerLyricsDirectiveHandler(
                         .build()
                 ).enqueue(null)
             }
-        }, NamespaceAndName("supportedInterfaces", NAMESPACE))
+        }, audioPlayerNamespaceAndName)
     }
 
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[SHOW_LYRICS] = nonBlockingPolicy
-        configuration[HIDE_LYRICS] = nonBlockingPolicy
-        configuration[CONTROL_LYRICS_PAGE] = nonBlockingPolicy
-
-        return configuration
+        this[SHOW_LYRICS] = nonBlockingPolicy
+        this[HIDE_LYRICS] = nonBlockingPolicy
+        this[CONTROL_LYRICS_PAGE] = nonBlockingPolicy
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, msg: String) {

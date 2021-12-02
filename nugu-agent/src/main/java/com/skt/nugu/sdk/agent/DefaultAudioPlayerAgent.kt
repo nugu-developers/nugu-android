@@ -154,6 +154,8 @@ class DefaultAudioPlayerAgent(
         INTERNAL_LOGIC,
     }
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     private val lifeCycleScheduler: LifeCycleScheduler? =
         if (enableDisplayLifeCycleManagement) LifeCycleScheduler() else null
 
@@ -719,8 +721,6 @@ class DefaultAudioPlayerAgent(
             directiveSequencer.addDirectiveHandler(this)
         }
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     private fun notifyOnReleaseAudioInfo(info: AudioInfo, immediately: Boolean) {
         Logger.d(TAG, "[notifyOnReleaseAudioInfo] $info")

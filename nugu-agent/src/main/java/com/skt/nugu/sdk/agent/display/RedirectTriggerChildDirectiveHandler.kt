@@ -88,7 +88,7 @@ class RedirectTriggerChildDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = mapOf(
-        Pair(REDIRECT_TRIGGER_CHILD, BlockingPolicy.sharedInstanceFactory.get())
-    )
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[REDIRECT_TRIGGER_CHILD] = BlockingPolicy.sharedInstanceFactory.get()
+    }
 }

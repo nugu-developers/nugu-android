@@ -33,11 +33,11 @@ class DefaultBatteryAgent(
         private val VERSION = Version(1,1)
     }
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     init {
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     internal data class StateContext(
         val level: Int,

@@ -48,8 +48,8 @@ class PlaybackDirectiveHandler(
         controller.onCancel(info.directive)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
-        put(configuration.first, configuration.second)
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[configuration.first] = configuration.second
     }
 
     override fun onPostProcessed(directives: List<Directive>) {

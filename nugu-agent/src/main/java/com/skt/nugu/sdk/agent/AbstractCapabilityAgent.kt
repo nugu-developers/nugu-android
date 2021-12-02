@@ -25,12 +25,9 @@ import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvide
  * * should handle directives which provided
  * * should provide an capability context's state
  */
-abstract class AbstractCapabilityAgent(private val interfaceName: String) : CapabilityAgent
+abstract class AbstractCapabilityAgent(interfaceName: String) : CapabilityAgent
     , AbstractDirectiveHandler()
     , SupportedInterfaceContextProvider {
 
-    final override val namespaceAndName: NamespaceAndName
-        get() = super.namespaceAndName
-
-    override fun getInterfaceName(): String = interfaceName
+    final override val namespaceAndName: NamespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, interfaceName)
 }
