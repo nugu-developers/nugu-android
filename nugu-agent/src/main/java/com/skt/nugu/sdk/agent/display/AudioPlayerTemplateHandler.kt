@@ -419,18 +419,14 @@ class AudioPlayerTemplateHandler(
         this.renderer = renderer
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply{
         val blockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
 
-        val configuration = java.util.HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[AUDIOPLAYER_TEMPLATE1] = blockingPolicy
-        configuration[AUDIOPLAYER_TEMPLATE2] = blockingPolicy
-
-        return configuration
+        this[AUDIOPLAYER_TEMPLATE1] = blockingPolicy
+        this[AUDIOPLAYER_TEMPLATE2] = blockingPolicy
     }
 
     override fun onMetadataUpdate(playServiceId: String, jsonMetaData: String) {

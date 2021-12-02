@@ -29,15 +29,11 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionManagerInterface
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 import kotlin.collections.HashMap
 
 class DefaultSystemAgent(
@@ -174,19 +170,17 @@ class DefaultSystemAgent(
         onUserDisconnect()
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
 
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-        configuration[HANDOFF_CONNECTION] = nonBlockingPolicy
-        configuration[TURN_OFF] = nonBlockingPolicy
-        configuration[UPDATE_STATE] = nonBlockingPolicy
-        configuration[EXCEPTION] = nonBlockingPolicy
-        configuration[ECHO] = nonBlockingPolicy
-        configuration[NO_DIRECTIVES] = nonBlockingPolicy
-        configuration[NOOP] = nonBlockingPolicy
-        configuration[RESET_CONNECTION] = nonBlockingPolicy
-        return configuration
+        this[HANDOFF_CONNECTION] = nonBlockingPolicy
+        this[TURN_OFF] = nonBlockingPolicy
+        this[UPDATE_STATE] = nonBlockingPolicy
+        this[EXCEPTION] = nonBlockingPolicy
+        this[ECHO] = nonBlockingPolicy
+        this[NO_DIRECTIVES] = nonBlockingPolicy
+        this[NOOP] = nonBlockingPolicy
+        this[RESET_CONNECTION] = nonBlockingPolicy
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {

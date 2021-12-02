@@ -138,11 +138,7 @@ class StartDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configurations[START] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configurations
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[START] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

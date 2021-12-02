@@ -40,7 +40,7 @@ class PlayStackContextManager(
         internal const val PROVIDER_NAME = "playStack"
     }
 
-    override fun getName(): String = PROVIDER_NAME
+    override val namespaceAndName: NamespaceAndName = NamespaceAndName(ClientContextProvider.NAMESPACE, PROVIDER_NAME)
 
     private val executor = Executors.newSingleThreadExecutor()
 

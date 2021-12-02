@@ -24,7 +24,10 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import org.junit.Test
-import org.mockito.kotlin.*
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.timeout
+import org.mockito.kotlin.verify
 
 class DirectiveSequencerTest {
     companion object {
@@ -46,8 +49,8 @@ class DirectiveSequencerTest {
                 resultMap.remove(messageId)?.setFailed("")
             }
 
-            override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
-                put(DIRECTIVE_0.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
+            override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+                this[DIRECTIVE_0.getNamespaceAndName()] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
             }
         }
 
@@ -69,8 +72,8 @@ class DirectiveSequencerTest {
                 resultMap.remove(messageId)?.setFailed("")
             }
 
-            override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> = mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
-                put(DIRECTIVE_1.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
+            override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+                this[DIRECTIVE_1.getNamespaceAndName()] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
             }
         }
 

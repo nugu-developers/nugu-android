@@ -23,9 +23,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 
@@ -120,16 +118,10 @@ class ControlFocusDirectiveHandler(
         }, namespaceAndName)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val blockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[CONTROL_FOCUS] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[CONTROL_FOCUS] = blockingPolicy
-
-        return configuration
     }
 }

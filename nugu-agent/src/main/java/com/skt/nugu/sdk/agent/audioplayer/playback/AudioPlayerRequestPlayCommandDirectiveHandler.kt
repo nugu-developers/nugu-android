@@ -23,9 +23,7 @@ import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class AudioPlayerRequestPlayCommandDirectiveHandler(
@@ -77,13 +75,8 @@ class AudioPlayerRequestPlayCommandDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-        val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
-
-        configurations[REQUEST_PLAY_COMMAND] = nonBlockingPolicy
-
-        return configurations
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[REQUEST_PLAY_COMMAND] = BlockingPolicy.sharedInstanceFactory.get()
     }
 
     fun setRequestCommandHandler(handler: AudioPlayerAgentInterface.RequestCommandHandler) {

@@ -19,8 +19,8 @@ package com.skt.nugu.sdk.core.interfaces.context
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 
 abstract class WakeupWordContextProvider : ClientContextProvider {
-    override fun getName(): String = "wakeupWord"
-
+    override val namespaceAndName: NamespaceAndName = NamespaceAndName(ClientContextProvider.NAMESPACE, "wakeupWord")
+    
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,

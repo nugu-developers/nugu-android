@@ -175,14 +175,8 @@ class DefaultExtensionAgent(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[ACTION] = nonBlockingPolicy
-
-        return configuration
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[ACTION] = BlockingPolicy.sharedInstanceFactory.get()
     }
 
     private fun sendActionEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {

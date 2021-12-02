@@ -307,61 +307,56 @@ class RenderDirectiveHandler(
         controller.cancelRender(info.directive.getMessageId())
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val blockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
+        this[FULLTEXT1] = blockingPolicy
+        this[FULLTEXT2] = blockingPolicy
+        this[FULLTEXT3] = blockingPolicy
+        this[IMAGETEXT1] = blockingPolicy
+        this[IMAGETEXT2] = blockingPolicy
+        this[IMAGETEXT3] = blockingPolicy
+        this[IMAGETEXT4] = blockingPolicy
+        this[IMAGETEXT5] = blockingPolicy
+        this[TEXTLIST1] = blockingPolicy
+        this[TEXTLIST2] = blockingPolicy
+        this[TEXTLIST3] = blockingPolicy
+        this[TEXTLIST4] = blockingPolicy
+        this[IMAGELIST1] = blockingPolicy
+        this[IMAGELIST2] = blockingPolicy
+        this[IMAGELIST3] = blockingPolicy
+        this[CUSTOM_TEMPLATE] = blockingPolicy
 
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
+        this[WEATHER1] = blockingPolicy
+        this[WEATHER2] = blockingPolicy
+        this[WEATHER3] = blockingPolicy
+        this[WEATHER4] = blockingPolicy
+        this[WEATHER5] = blockingPolicy
+        this[FULLIMAGE] = blockingPolicy
 
-        configuration[FULLTEXT1] = blockingPolicy
-        configuration[FULLTEXT2] = blockingPolicy
-        configuration[FULLTEXT3] = blockingPolicy
-        configuration[IMAGETEXT1] = blockingPolicy
-        configuration[IMAGETEXT2] = blockingPolicy
-        configuration[IMAGETEXT3] = blockingPolicy
-        configuration[IMAGETEXT4] = blockingPolicy
-        configuration[IMAGETEXT5] = blockingPolicy
-        configuration[TEXTLIST1] = blockingPolicy
-        configuration[TEXTLIST2] = blockingPolicy
-        configuration[TEXTLIST3] = blockingPolicy
-        configuration[TEXTLIST4] = blockingPolicy
-        configuration[IMAGELIST1] = blockingPolicy
-        configuration[IMAGELIST2] = blockingPolicy
-        configuration[IMAGELIST3] = blockingPolicy
-        configuration[CUSTOM_TEMPLATE] = blockingPolicy
+        this[SCORE_1] = blockingPolicy
+        this[SCORE_2] = blockingPolicy
+        this[SEARCH_LIST_1] = blockingPolicy
+        this[SEARCH_LIST_2] = blockingPolicy
 
-        configuration[WEATHER1] = blockingPolicy
-        configuration[WEATHER2] = blockingPolicy
-        configuration[WEATHER3] = blockingPolicy
-        configuration[WEATHER4] = blockingPolicy
-        configuration[WEATHER5] = blockingPolicy
-        configuration[FULLIMAGE] = blockingPolicy
+        this[COMMERCE_LIST] = blockingPolicy
+        this[COMMERCE_OPTION] = blockingPolicy
+        this[COMMERCE_PRICE] = blockingPolicy
+        this[COMMERCE_INFO] = blockingPolicy
 
-        configuration[SCORE_1] = blockingPolicy
-        configuration[SCORE_2] = blockingPolicy
-        configuration[SEARCH_LIST_1] = blockingPolicy
-        configuration[SEARCH_LIST_2] = blockingPolicy
+        this[CALL_1] = blockingPolicy
+        this[CALL_2] = blockingPolicy
+        this[CALL_3] = blockingPolicy
 
-        configuration[COMMERCE_LIST] = blockingPolicy
-        configuration[COMMERCE_OPTION] = blockingPolicy
-        configuration[COMMERCE_PRICE] = blockingPolicy
-        configuration[COMMERCE_INFO] = blockingPolicy
+        this[TIMER] = blockingPolicy
 
-        configuration[CALL_1] = blockingPolicy
-        configuration[CALL_2] = blockingPolicy
-        configuration[CALL_3] = blockingPolicy
+        this[DUMMY] = blockingPolicy
 
-        configuration[TIMER] = blockingPolicy
+        this[UNIFIED_SEARCH1] = blockingPolicy
 
-        configuration[DUMMY] = blockingPolicy
-
-        configuration[UNIFIED_SEARCH1] = blockingPolicy
-
-        configuration[TAB_EXTENSION] = blockingPolicy
-
-        return configuration
+        this[TAB_EXTENSION] = blockingPolicy
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {

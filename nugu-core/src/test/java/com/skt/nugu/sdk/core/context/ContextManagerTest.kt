@@ -29,7 +29,7 @@ import org.mockito.kotlin.*
 class ContextManagerTest {
 
     private val audioPlayerContextProvider = object: SupportedInterfaceContextProvider {
-        override fun getInterfaceName(): String = "AudioPlayer"
+        override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, "AudioPlayer")
 
         override fun provideState(
             contextSetter: ContextSetterInterface,
@@ -50,7 +50,7 @@ class ContextManagerTest {
     }
 
     private val ttsContextProvider = object: SupportedInterfaceContextProvider {
-        override fun getInterfaceName(): String = "TTS"
+        override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, "TTS")
 
         override fun provideState(
             contextSetter: ContextSetterInterface,

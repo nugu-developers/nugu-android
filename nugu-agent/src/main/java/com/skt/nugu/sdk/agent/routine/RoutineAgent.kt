@@ -372,7 +372,7 @@ class RoutineAgent(
     private var causingPauseRequests = HashMap<String, EventMessageRequest>()
     var textAgent: TextAgentInterface? = null
 
-    override fun getInterfaceName(): String = NAMESPACE
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     init {
         directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this, startDirectiveHandleController))

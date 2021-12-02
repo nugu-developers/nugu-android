@@ -22,7 +22,7 @@ import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import java.util.HashMap
+import java.util.*
 
 class CancelRecognizeDirectiveHandler(
     private val agent: ASRAgentInterface
@@ -69,11 +69,7 @@ class CancelRecognizeDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[NOTIFY_RESULT] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configuration
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[NOTIFY_RESULT] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }

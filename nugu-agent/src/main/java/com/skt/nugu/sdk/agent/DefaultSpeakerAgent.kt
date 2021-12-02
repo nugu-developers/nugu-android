@@ -18,20 +18,18 @@ package com.skt.nugu.sdk.agent
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.agent.speaker.Speaker
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerInterface
 import com.skt.nugu.sdk.agent.speaker.SpeakerManagerObserver
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.Executors
 
 class DefaultSpeakerAgent(
@@ -291,18 +289,14 @@ class DefaultSpeakerAgent(
         info.result.setFailed(msg)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
 
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[SET_VOLUME] = nonBlockingPolicy
-        configuration[SET_MUTE] = nonBlockingPolicy
-
-        return configuration
+        this[SET_VOLUME] = nonBlockingPolicy
+        this[SET_MUTE] = nonBlockingPolicy
     }
 
     data class SpeakerContext(

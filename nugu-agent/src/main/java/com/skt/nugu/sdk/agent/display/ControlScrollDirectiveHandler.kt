@@ -162,16 +162,10 @@ class ControlScrollDirectiveHandler(
         }, namespaceAndName)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val blockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[CONTROL_SCROLL] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[CONTROL_SCROLL] = blockingPolicy
-
-        return configuration
     }
 }

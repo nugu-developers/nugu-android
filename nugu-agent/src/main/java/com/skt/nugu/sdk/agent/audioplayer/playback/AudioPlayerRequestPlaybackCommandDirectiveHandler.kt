@@ -9,9 +9,7 @@ import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 
 class AudioPlayerRequestPlaybackCommandDirectiveHandler(
@@ -138,17 +136,14 @@ class AudioPlayerRequestPlaybackCommandDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
 
-        configurations[REQUEST_RESUME_COMMAND] = nonBlockingPolicy
-        configurations[REQUEST_NEXT_COMMAND] = nonBlockingPolicy
-        configurations[REQUEST_PREVIOUS_COMMAND] = nonBlockingPolicy
-        configurations[REQUEST_PAUSE_COMMAND] = nonBlockingPolicy
-        configurations[REQUEST_STOP_COMMAND] = nonBlockingPolicy
-
-        return configurations
+        this[REQUEST_RESUME_COMMAND] = nonBlockingPolicy
+        this[REQUEST_NEXT_COMMAND] = nonBlockingPolicy
+        this[REQUEST_PREVIOUS_COMMAND] = nonBlockingPolicy
+        this[REQUEST_PAUSE_COMMAND] = nonBlockingPolicy
+        this[REQUEST_STOP_COMMAND] = nonBlockingPolicy
     }
 
     fun setRequestCommandHandler(handler: AudioPlayerAgentInterface.RequestCommandHandler) {

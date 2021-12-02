@@ -66,14 +66,10 @@ class BlockDirectiveHandler: AbstractDirectiveHandler() {
         sleepFutureMap.remove(info.directive.getMessageId())?.cancel(true)
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configurations[BLOCK] = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[BLOCK] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_ALL,
             BlockingPolicy.MEDIUM_ANY_ONLY
         )
-
-        return configurations
     }
 }

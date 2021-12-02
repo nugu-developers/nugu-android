@@ -70,11 +70,11 @@ class DirectiveRouter {
     }
 
     private fun getDirectiveHandler(directive: Directive): DirectiveHandler? {
-        return handlers.find { it.getConfiguration().containsKey(directive.getNamespaceAndName()) }
+        return handlers.find { it.configurations.containsKey(directive.getNamespaceAndName()) }
     }
 
     fun getPolicy(directive: Directive): BlockingPolicy {
-        return getDirectiveHandler(directive)?.getConfiguration()?.get(directive.getNamespaceAndName())
+        return getDirectiveHandler(directive)?.configurations?.get(directive.getNamespaceAndName())
             ?: BlockingPolicy.sharedInstanceFactory.get()
     }
 }

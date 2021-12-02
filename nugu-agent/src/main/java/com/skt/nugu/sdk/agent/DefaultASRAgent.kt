@@ -816,16 +816,12 @@ class DefaultASRAgent(
         }
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[EXPECT_SPEECH] = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[EXPECT_SPEECH] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-        configuration[NOTIFY_RESULT] = BlockingPolicy.sharedInstanceFactory.get()
-
-        return configuration
+        this[NOTIFY_RESULT] = BlockingPolicy.sharedInstanceFactory.get()
     }
 
     override fun addOnStateChangeListener(listener: ASRAgentInterface.OnStateChangeListener) {

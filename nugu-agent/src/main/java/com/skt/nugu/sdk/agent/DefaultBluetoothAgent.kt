@@ -289,18 +289,16 @@ class DefaultBluetoothAgent(
         @SerializedName("playServiceId") val playServiceId: String
     )
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
 
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-        configuration[START_DISCOVERABLE_MODE] = nonBlockingPolicy
-        configuration[FINISH_DISCOVERABLE_MODE] = nonBlockingPolicy
-        configuration[PLAY] = nonBlockingPolicy
-        configuration[STOP] = nonBlockingPolicy
-        configuration[PAUSE] = nonBlockingPolicy
-        configuration[NEXT] = nonBlockingPolicy
-        configuration[PREVIOUS] = nonBlockingPolicy
-        return configuration
+        this[START_DISCOVERABLE_MODE] = nonBlockingPolicy
+        this[FINISH_DISCOVERABLE_MODE] = nonBlockingPolicy
+        this[PLAY] = nonBlockingPolicy
+        this[STOP] = nonBlockingPolicy
+        this[PAUSE] = nonBlockingPolicy
+        this[NEXT] = nonBlockingPolicy
+        this[PREVIOUS] = nonBlockingPolicy
     }
 
     override fun provideState(

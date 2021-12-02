@@ -41,7 +41,7 @@ class UtilityAgent(
         private val COMPACT_STATE: String = buildCompactContext().toString()
     }
 
-    override fun getInterfaceName(): String = NAMESPACE
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     private val contextState = object : BaseContextState {
         override fun value(): String = COMPACT_STATE

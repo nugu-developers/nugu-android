@@ -24,9 +24,7 @@ import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextGetterInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 
@@ -63,6 +61,8 @@ class CloseDirectiveHandler(
         }
     }
 
+    private val displayNamespaceAndName = NamespaceAndName("supportedInterfaces", DisplayAgent.NAMESPACE)
+
     override fun preHandleDirective(info: DirectiveInfo) {
         // no-op
     }
@@ -98,17 +98,11 @@ class CloseDirectiveHandler(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val blockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[CLOSE] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
             BlockingPolicy.MEDIUM_AUDIO_ONLY
         )
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[CLOSE] = blockingPolicy
-
-        return configuration
     }
 
     private fun sendCloseEvent(eventName: String, info: DirectiveInfo, playServiceId: String) {
@@ -127,10 +121,7 @@ class CloseDirectiveHandler(
                         .build()
                 ).enqueue(null)
             }
-        }, NamespaceAndName(
-            "supportedInterfaces",
-            DisplayAgent.NAMESPACE
-        ))
+        }, displayNamespaceAndName)
     }
 
     private fun sendCloseSucceeded(info: DirectiveInfo, playServiceId: String) {

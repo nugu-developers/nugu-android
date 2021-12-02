@@ -16,14 +16,11 @@
 
 package com.skt.nugu.sdk.core.interfaces.context
 
-import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
-
 /**
  * Interface to provide context of supportedInterfaces's element
  */
 interface SupportedInterfaceContextProvider : ContextStateProvider {
-    override val namespaceAndName: NamespaceAndName
-        get() = NamespaceAndName("supportedInterfaces", getInterfaceName())
-
-    fun getInterfaceName(): String
+    companion object{
+        const val NAMESPACE = "supportedInterfaces"
+    }
 }

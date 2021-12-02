@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent.nudge
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.DefaultTTSAgent
+import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.display.DisplayAgent
 import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler.Companion.isAppendDirective
 import com.skt.nugu.sdk.agent.version.Version
@@ -75,6 +76,8 @@ class NudgeAgent(
     private val executor = Executors.newSingleThreadExecutor()
     internal var nudgeData: NudgeData? = null
 
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
     init {
         contextManager.setStateProvider(namespaceAndName, this)
         playSynchronizer.addListener(object : PlaySynchronizerInterface.Listener {
@@ -97,8 +100,6 @@ class NudgeAgent(
             }
         })
     }
-
-    override fun getInterfaceName(): String = NAMESPACE
 
     override fun provideState(
         contextSetter: ContextSetterInterface,

@@ -362,15 +362,10 @@ class TextAgent(
     override fun cancelDirective(info: DirectiveInfo) {
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
-
-        val configuration = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configuration[TEXT_SOURCE] = nonBlockingPolicy
-        configuration[TEXT_REDIRECT] = nonBlockingPolicy
-
-        return configuration
+        this[TEXT_SOURCE] = nonBlockingPolicy
+        this[TEXT_REDIRECT] = nonBlockingPolicy
     }
 
     override fun provideState(

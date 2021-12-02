@@ -110,13 +110,9 @@ class ContinueDirectiveHandler(
         // no-op
     }
 
-    override fun getConfiguration(): Map<NamespaceAndName, BlockingPolicy> {
-        val configurations = HashMap<NamespaceAndName, BlockingPolicy>()
-
-        configurations[CONTINUE] = BlockingPolicy.sharedInstanceFactory.get(
+    override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
+        this[CONTINUE] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO
         )
-
-        return configurations
     }
 }
