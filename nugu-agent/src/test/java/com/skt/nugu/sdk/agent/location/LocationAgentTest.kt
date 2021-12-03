@@ -37,7 +37,7 @@ class LocationAgentTest {
     @Test
     fun testGetInterfaceName() {
         val agent = LocationAgent(mock(), mock())
-        Assert.assertTrue(agent.getInterfaceName() == LocationAgent.NAMESPACE)
+        Assert.assertTrue(agent.namespaceAndName.name == LocationAgent.NAMESPACE)
     }
 
     @Test
