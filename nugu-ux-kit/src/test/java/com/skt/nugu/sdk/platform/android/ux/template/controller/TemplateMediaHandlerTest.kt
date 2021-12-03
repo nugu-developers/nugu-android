@@ -144,18 +144,21 @@ class TemplateMediaHandlerTest {
     @Test
     fun testPauseDirective() {
         val directive: Directive = mock()
-        `when`(directive.getNamespaceAndName()).thenReturn(NamespaceAndName(DefaultAudioPlayerAgent.NAMESPACE, DefaultAudioPlayerAgent.NAME_PAUSE))
+        `when`(directive.getNamespace()).thenReturn(DefaultAudioPlayerAgent.NAMESPACE)
+        `when`(directive.getName()).thenReturn(DefaultAudioPlayerAgent.NAME_PAUSE)
         mediaTemplateHandler.directiveHandlingListener.onCompleted(directive)
         verify(clientListener).onMediaStateChanged(eq(AudioPlayerAgentInterface.State.PAUSED), any(), any(), eq(true))
 
         // check not PAUSE directive
-        `when`(directive.getNamespaceAndName()).thenReturn(NamespaceAndName("I'm not", "PAUSE"))
+        `when`(directive.getNamespace()).thenReturn("I'm not")
+        `when`(directive.getName()).thenReturn("PAUSE")
         mediaTemplateHandler.directiveHandlingListener.onCompleted(directive)
         verifyNoMoreInteractions(clientListener)
 
         // check null condition
         mediaTemplateHandler.setClientListener(null)
-        `when`(directive.getNamespaceAndName()).thenReturn(NamespaceAndName(DefaultAudioPlayerAgent.NAMESPACE, DefaultAudioPlayerAgent.NAME_PAUSE))
+        `when`(directive.getNamespace()).thenReturn(DefaultAudioPlayerAgent.NAMESPACE)
+        `when`(directive.getName()).thenReturn(DefaultAudioPlayerAgent.NAME_PAUSE)
         mediaTemplateHandler.directiveHandlingListener.onCompleted(directive)
         verifyNoMoreInteractions(clientListener)
 
