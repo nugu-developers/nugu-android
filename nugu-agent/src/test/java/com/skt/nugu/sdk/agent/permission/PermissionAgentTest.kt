@@ -39,7 +39,7 @@ class PermissionAgentTest {
     @Test
     fun testGetInterfaceName() {
         val agent = PermissionAgent(mock(), mock())
-        Assert.assertTrue(agent.getInterfaceName() == PermissionAgent.NAMESPACE)
+        Assert.assertTrue(agent.namespaceAndName.name == PermissionAgent.NAMESPACE)
     }
 
     @Test

@@ -31,6 +31,24 @@ import org.mockito.kotlin.verify
 
 class DirectiveSequencerTest {
     companion object {
+        private val DIRECTIVE_0 = Directive(null, Header(
+            "dialogRequestId",
+            "messageId_0",
+            "Play",
+            "AudioPlayer",
+            "1.0",
+            ""
+        ), "{}")
+
+        private val DIRECTIVE_1 = Directive(null, Header(
+            "dialogRequestId",
+            "messageId_1",
+            "Play",
+            "TTS",
+            "1.0",
+            ""
+        ), "{}")
+
         private val HANDLER_0: DirectiveHandler = object : DirectiveHandler {
             val resultMap = HashMap<String, DirectiveHandlerResult>()
 
@@ -76,24 +94,6 @@ class DirectiveSequencerTest {
                 this[DIRECTIVE_1.getNamespaceAndName()] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
             }
         }
-
-        private val DIRECTIVE_0 = Directive(null, Header(
-            "dialogRequestId",
-            "messageId_0",
-            "Play",
-            "AudioPlayer",
-            "1.0",
-            ""
-        ), "{}")
-
-        private val DIRECTIVE_1 = Directive(null, Header(
-            "dialogRequestId",
-            "messageId_1",
-            "Play",
-            "TTS",
-            "1.0",
-            ""
-        ), "{}")
     }
 
     @Test

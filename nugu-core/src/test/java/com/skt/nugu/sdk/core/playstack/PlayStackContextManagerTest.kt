@@ -35,7 +35,7 @@ class PlayStackContextManagerTest {
     @Test
     fun testGetName() {
         val contextProvider = PlayStackContextManager(mock(), mock())
-        Assert.assertTrue(contextProvider.getName() == PlayStackContextManager.PROVIDER_NAME)
+        Assert.assertTrue(contextProvider.namespaceAndName.name == PlayStackContextManager.PROVIDER_NAME)
     }
 
     @Test

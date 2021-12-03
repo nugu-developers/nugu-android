@@ -40,7 +40,7 @@ class DirectiveRouterTest {
         ), "{}")
 
         init {
-            whenever(HANDLER.getConfiguration()).thenReturn(mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
+            whenever(HANDLER.configurations).thenReturn(mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
                 put(DIRECTIVE.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
             })
         }
@@ -81,7 +81,7 @@ class DirectiveRouterTest {
         val router = DirectiveRouter()
         router.addDirectiveHandler(HANDLER)
 
-        Assert.assertEquals(HANDLER.getConfiguration()[DIRECTIVE.getNamespaceAndName()], router.getPolicy(DIRECTIVE))
-        verify(HANDLER, atLeastOnce()).getConfiguration()
+        Assert.assertEquals(HANDLER.configurations[DIRECTIVE.getNamespaceAndName()], router.getPolicy(DIRECTIVE))
+        verify(HANDLER, atLeastOnce()).configurations
     }
 }
