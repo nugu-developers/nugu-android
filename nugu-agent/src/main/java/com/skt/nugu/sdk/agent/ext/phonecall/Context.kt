@@ -36,6 +36,8 @@ data class Context(
         REDIAL,
         @SerializedName("MISSED")
         MISSED,
+        @SerializedName("EXACT_ONE")
+        EXACT_ONE,
         @SerializedName("NONE")
         NONE
     }

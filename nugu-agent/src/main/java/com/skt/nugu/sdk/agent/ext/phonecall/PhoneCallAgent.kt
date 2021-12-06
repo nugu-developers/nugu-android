@@ -62,7 +62,7 @@ class PhoneCallAgent(
         private const val TAG = "PhoneCallAgent"
 
         const val NAMESPACE = "PhoneCall"
-        val VERSION = Version(1, 2)
+        val VERSION = Version(1, 3)
 
         private const val NAME_CALL_ARRIVED = "CallArrived"
         private const val NAME_CALL_ENDED = "CallEnded"
