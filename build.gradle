@@ -1,8 +1,8 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext.kotlin_version = '1.5.20'
-    ext.grpc_version = '1.40.1'
-    ext.protoc_version = '3.17.3'
+    ext.grpc_version = '1.42.1'
+    ext.protoc_version = '3.17.2'
     ext.dokka_version = '1.4.32'
 
     repositories {
@@ -17,7 +17,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.14"
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.17"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
