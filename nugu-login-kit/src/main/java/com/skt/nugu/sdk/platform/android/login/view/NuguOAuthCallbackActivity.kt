@@ -27,6 +27,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
+import java.lang.IllegalStateException
 
 /**
  * Getting an authentication result as callback from an Activity
@@ -42,7 +43,7 @@ class NuguOAuthCallbackActivity : Activity() {
         private const val finishDelayMillis = 100L
     }
     private val auth by lazy { NuguOAuth.getClient() }
-    private var action: String = NuguOAuth.ACTION_LOGIN
+    private var action: String? = NuguOAuth.ACTION_LOGIN
     private var data: String? = null
     private var handler: Handler = Handler(Looper.getMainLooper())
     private val finishRunnable = Runnable {
@@ -61,7 +62,7 @@ class NuguOAuthCallbackActivity : Activity() {
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        action = savedInstanceState.getString(NuguOAuth.EXTRA_OAUTH_ACTION) ?: NuguOAuth.ACTION_LOGIN
+        action = savedInstanceState.getString(NuguOAuth.EXTRA_OAUTH_ACTION)
         data = savedInstanceState.getString(NuguOAuth.EXTRA_OAUTH_DATA)
     }
 
@@ -79,12 +80,20 @@ class NuguOAuthCallbackActivity : Activity() {
 
     @VisibleForTesting
     internal fun processOAuthCallback(intent: Intent?) : Boolean {
-        action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION) ?: NuguOAuth.ACTION_LOGIN
+        action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
         data = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_DATA)
+
+        val isTidLogin = try {
+            auth.isTidLogin()
+        } catch (e: IllegalStateException) {
+            e.printStackTrace()
+            return false
+        }
 
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
-                if (auth.isTidLogin()) {
+                if (isTidLogin) {
+                    Logger.d(TAG, "[processOAuthCallback] isTidLogin=$isTidLogin")
                     auth.setResult(true)
                     return false
                 }
@@ -95,7 +104,7 @@ class NuguOAuthCallbackActivity : Activity() {
                 }
 
                 val fallbackRunnable = Runnable {
-                    Logger.e(TAG, "[onCreate] fallback, action=$action")
+                    Logger.e(TAG, "[processOAuthCallback] fallback, action=$action")
                     nextRequestCode = WEBVIEW_REQUEST_CODE
                     startActivityForResult(Intent(this, WebViewActivity::class.java).apply {
                         putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
@@ -121,7 +130,7 @@ class NuguOAuthCallbackActivity : Activity() {
                     return true
                 }
                 val fallbackRunnable = Runnable {
-                    Logger.e(TAG, "[onCreate] fallback, action=$action")
+                    Logger.e(TAG, "[processOAuthCallback] fallback, action=$action")
                     nextRequestCode = WEBVIEW_REQUEST_CODE
                     startActivityForResult(Intent(this, WebViewActivity::class.java).apply {
                         putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
@@ -143,7 +152,7 @@ class NuguOAuthCallbackActivity : Activity() {
                 })
             }
             else -> {
-                Logger.d(TAG, "[onCreate] unexpected action=$action")
+                Logger.e(TAG, "[processOAuthCallback] unexpected action=$action")
                 return false
             }
         }
