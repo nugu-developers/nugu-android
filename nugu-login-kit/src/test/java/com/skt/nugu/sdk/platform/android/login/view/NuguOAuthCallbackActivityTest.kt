@@ -29,12 +29,13 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.lang.IllegalStateException
 import java.util.*
 
 @RunWith(AndroidJUnit4::class)
 class NuguOAuthCallbackActivityTest {
     @Test
-    fun testOnActivity() {
+    fun testAlreadyTidLogIn() {
         ConfigurationStore.configure(
             "{\n" +
                     "    \"OAuthServerUrl\": \"https://api.sktnugu.com\",\n" +
@@ -65,6 +66,52 @@ class NuguOAuthCallbackActivityTest {
         ).apply {
             putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
         }
+        val activity = NuguOAuthCallbackActivity()
+        Assert.assertFalse(activity.processOAuthCallback(intent))
+    }
+
+    @Test
+    fun testNuguOAuthNotInitialized() {
+        val intent = Intent(
+            ApplicationProvider.getApplicationContext(),
+            NuguOAuthCallbackActivity::class.java
+        ).apply {
+            putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
+        }
+        val activity = NuguOAuthCallbackActivity()
+        Assert.assertFalse(activity.processOAuthCallback(intent))
+    }
+
+    @Test
+    fun testActionIsEmpty() {
+        ConfigurationStore.configure(
+            "{\n" +
+                    "    \"OAuthServerUrl\": \"https://api.sktnugu.com\",\n" +
+                    "    \"OAuthClientId\": \"app.nugu.test\",\n" +
+                    "    \"OAuthClientSecret\": \"12121212-eee-ddd-ccc-12121212\",\n" +
+                    "    \"OAuthRedirectUri\": \"nugu.user.app.nugu.test://auth\",\n" +
+                    "    \"PoCId\": \"app.nugu.test\",\n" +
+                    "    \"DeviceTypeCode\": \"APP\"\n" +
+                    "}"
+        )
+        NuguOAuth.create(options = NuguOAuthOptions.Builder()
+            .deviceUniqueId("device1")
+            .build())
+
+        NuguOAuth.getClient().setCredentials(
+            Credentials(
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                expiresIn = 10L,
+                issuedTime = Date().time,
+                tokenType = "",
+                scope = "device:S.I.D."
+            )
+        )
+        val intent = Intent(
+            ApplicationProvider.getApplicationContext(),
+            NuguOAuthCallbackActivity::class.java
+        )
         val activity = NuguOAuthCallbackActivity()
         Assert.assertFalse(activity.processOAuthCallback(intent))
     }
