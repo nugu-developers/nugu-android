@@ -90,7 +90,7 @@ class NuguWebView @JvmOverloads constructor(
             "Client-Id" to clientId.toString(),
             "Grant-Type" to grantType.toString(),
             "Device-Unique-Id" to deviceUniqueId.toString()
-        ) as MutableMap<String, String>
+        )
     }
 
     var authorization: String? = null
@@ -122,7 +122,7 @@ class NuguWebView @JvmOverloads constructor(
     }
 
     fun cacheMode(mode: Int) {
-        webView.settings?.apply {
+        webView.settings.apply {
             cacheMode = mode
         }
     }
@@ -175,7 +175,7 @@ class NuguWebView @JvmOverloads constructor(
     override fun openInAppBrowser(url: String) {
         webView.post {
             val intent = CustomTabsIntent.Builder()
-                .enableUrlBarHiding()
+                .setUrlBarHidingEnabled(true)
                 .build()
             try {
                 intent.launchUrl(context, Uri.parse(url))

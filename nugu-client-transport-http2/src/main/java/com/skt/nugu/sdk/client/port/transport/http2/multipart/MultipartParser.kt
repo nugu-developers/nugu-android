@@ -94,7 +94,7 @@ class MultipartParser(private val source: BufferedSource?, private val listener:
             }
             if (indexOfBoundary == -1L) {
                 contentSize = content.size
-                if (source.read(content, 4 * 1024) <= 0) {
+                if (source.read(content, (4 * 1024).toLong()) <= 0) {
                     return false
                 }
                 continue

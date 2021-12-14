@@ -86,11 +86,11 @@ data class NuguServerInfo(
 
         fun registry(url: String?): Builder {
             try {
-                val url = URL(url)
-                val host = url.host.toString()
-                var port = url.port
+                val registryURL = URL(url)
+                val host = registryURL.host.toString()
+                var port = registryURL.port
                 if (port == -1) {
-                    port = if (url.protocol == "https")
+                    port = if (registryURL.protocol == "https")
                         HTTPS_PORT else HTTP_PORT
                 }
                 registry =
@@ -106,11 +106,11 @@ data class NuguServerInfo(
         }
         fun deviceGW(url: String?): Builder {
             try {
-                val url = URL(url)
-                val host = url.host.toString()
-                var port = url.port
+                val gatewayURL = URL(url)
+                val host = gatewayURL.host.toString()
+                var port = gatewayURL.port
                 if (port == -1) {
-                    port = if (url.protocol == "https")
+                    port = if (gatewayURL.protocol == "https")
                         HTTPS_PORT else HTTP_PORT
                 }
                 deviceGW =

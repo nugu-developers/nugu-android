@@ -230,9 +230,9 @@ class MultipartRequestBody(
     companion object {
         private val TAG = "MultipartRequestBody"
 
-        private val COLONSPACE = byteArrayOf(':'.toByte(), ' '.toByte())
-        private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())
-        private val DASHDASH = byteArrayOf('-'.toByte(), '-'.toByte())
+        private val COLONSPACE = byteArrayOf(':'.code.toByte(), ' '.code.toByte())
+        private val CRLF = byteArrayOf('\r'.code.toByte(), '\n'.code.toByte())
+        private val DASHDASH = byteArrayOf('-'.code.toByte(), '-'.code.toByte())
 
         fun String.toMultipartRequestBody(name : String, close : Boolean, call: MessageCall) : MultipartRequestBody {
             return Builder()
