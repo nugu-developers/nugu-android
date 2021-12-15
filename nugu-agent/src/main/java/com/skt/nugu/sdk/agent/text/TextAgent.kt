@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.text
 
-import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
@@ -38,7 +37,6 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
-import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
 import kotlin.collections.HashMap
@@ -55,7 +53,6 @@ class TextAgent(
     interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager
 ) : AbstractCapabilityAgent(NAMESPACE)
     , TextAgentInterface
-    , InterLayerDisplayPolicyManager.Listener
 {
     internal data class TextSourcePayload(
         @SerializedName("playServiceId")
@@ -113,8 +110,6 @@ class TextAgent(
     private val internalTextSourceHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextSourceHandlerListener>()
     private val internalTextRedirectHandleListeners = CopyOnWriteArraySet<TextAgentInterface.InternalTextRedirectHandlerListener>()
     private val executor = Executors.newSingleThreadExecutor()
-    private val textAttributeStorage = TextAttributeStorage()
-    private val activatedTextAttributeKeys = Stack<String>()
 
     private val expectTypingDirectiveController = object : ExpectTypingHandlerInterface.Controller {
         override fun expectTyping(
@@ -134,9 +129,13 @@ class TextAgent(
         contextManager.setStateProvider(namespaceAndName, this)
 
         directiveSequencer.addDirectiveHandler(this)
-        directiveSequencer.addDirectiveHandler(ExpectTypingDirectiveHandler(textAttributeStorage, expectTypingDirectiveController))
-
-        interLayerDisplayPolicyManager.addListener(this)
+        directiveSequencer.addDirectiveHandler(
+            ExpectTypingDirectiveHandler(
+                dialogAttributeStorage,
+                expectTypingDirectiveController
+            ).apply {
+                interLayerDisplayPolicyManager.addListener(this)
+            })
     }
 
     override fun addInternalTextSourceHandlerListener(listener: TextAgentInterface.InternalTextSourceHandlerListener) {
@@ -412,20 +411,7 @@ class TextAgent(
                         addProperty("playServiceId", it)
                     }
 
-                    // use text attribute activated if available.
-                    val textAttributes = if(activatedTextAttributeKeys.isNotEmpty()) {
-                        activatedTextAttributeKeys.peek()?.let { key ->
-                            textAttributeStorage.getAttributes(key)?.let { attrs ->
-                                attrs.forEach { attr ->
-                                    add(attr.key, Gson().toJsonTree(attr.value))
-                                }
-                            }
-                        }
-                    } else {
-                        null
-                    }
-
-                    if (includeDialogAttribute && textAttributes == null) {
+                    if(includeDialogAttribute) {
                         dialogAttributeStorage.getRecentAttribute()?.let { attr ->
                             attr.playServiceId?.let {
                                 addProperty("playServiceId", it)
@@ -487,18 +473,5 @@ class TextAgent(
         })
 
         return dialogRequestId
-    }
-
-    override fun onDisplayLayerRendered(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
-        executor.submit {
-            activatedTextAttributeKeys.push(layer.getDialogRequestId())
-        }
-    }
-
-    override fun onDisplayLayerCleared(layer: InterLayerDisplayPolicyManager.DisplayLayer) {
-        executor.submit {
-            activatedTextAttributeKeys.remove(layer.getDialogRequestId())
-            textAttributeStorage.removeAttributes(layer.getDialogRequestId())
-        }
     }
 }
