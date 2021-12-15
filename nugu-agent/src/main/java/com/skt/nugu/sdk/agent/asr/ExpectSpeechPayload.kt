@@ -16,8 +16,9 @@
 package com.skt.nugu.sdk.agent.asr
 
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 
-data class ExpectSpeechPayload private constructor(
+data class ExpectSpeechPayload internal constructor(
     @SerializedName("playServiceId")
     val playServiceId: String?,
     @SerializedName("domainTypes")
@@ -29,6 +30,23 @@ data class ExpectSpeechPayload private constructor(
     @SerializedName("listenTimeoutFailBeep")
     val listenTimeoutFailBeep: Boolean?
 ) {
+    companion object {
+        fun getDialogAttribute(payload: ExpectSpeechPayload) = with(payload) {
+            DialogAttributeStorageInterface.Attribute(
+                this.playServiceId,
+                this.domainTypes,
+                this.asrContext?.let {
+                    DialogAttributeStorageInterface.Attribute.AsrContext(
+                        it.task,
+                        it.sceneId,
+                        it.sceneText,
+                        it.playServiceId
+                    )
+                }
+            )
+        }
+    }
+
     data class EpdParam(
         @SerializedName("timeoutMilliseconds")
         val timeoutMilliseconds: Long?,
