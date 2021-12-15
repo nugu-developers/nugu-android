@@ -17,6 +17,8 @@
 package com.skt.nugu.sdk.agent.text
 
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 interface ExpectTypingHandlerInterface {
@@ -33,8 +35,63 @@ interface ExpectTypingHandlerInterface {
         @SerializedName("playServiceId")
         val playServiceId: String,
         @SerializedName("domainTypes")
-        val domainTypes: Array<String>?
+        val domainTypes: Array<String>?,
+        @SerializedName("asrContext")
+        val asrContext: AsrContext?,
     ) {
+        companion object {
+            fun getDialogAttribute(payload: Payload) = with(payload) {
+                DialogAttributeStorageInterface.Attribute(
+                    this.playServiceId,
+                    this.domainTypes,
+                    this.asrContext?.let {
+                        DialogAttributeStorageInterface.Attribute.AsrContext(
+                            it.task,
+                            it.sceneId,
+                            it.sceneText,
+                            it.playServiceId
+                        )
+                    }
+                )
+            }
+        }
+
+        data class AsrContext(
+            @SerializedName("task")
+            val task: String?,
+            @SerializedName("sceneId")
+            val sceneId: String?,
+            @SerializedName("sceneText")
+            val sceneText: Array<String>?,
+            @SerializedName("playServiceId")
+            val playServiceId: String?
+        ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as AsrContext
+
+                if (task != other.task) return false
+                if (sceneId != other.sceneId) return false
+                if (sceneText != null) {
+                    if (other.sceneText == null) return false
+                    if (!sceneText.contentEquals(other.sceneText)) return false
+                } else if (other.sceneText != null) return false
+                if (playServiceId != other.playServiceId) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = task?.hashCode() ?: 0
+                result = 31 * result + (sceneId?.hashCode() ?: 0)
+                result = 31 * result + (sceneText?.contentHashCode() ?: 0)
+                result = 31 * result + (playServiceId?.hashCode() ?: 0)
+                return result
+            }
+        }
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -46,6 +103,7 @@ interface ExpectTypingHandlerInterface {
                 if (other.domainTypes == null) return false
                 if (!domainTypes.contentEquals(other.domainTypes)) return false
             } else if (other.domainTypes != null) return false
+            if (asrContext != other.asrContext) return false
 
             return true
         }
@@ -53,6 +111,7 @@ interface ExpectTypingHandlerInterface {
         override fun hashCode(): Int {
             var result = playServiceId.hashCode()
             result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
+            result = 31 * result + (asrContext?.hashCode() ?: 0)
             return result
         }
     }
