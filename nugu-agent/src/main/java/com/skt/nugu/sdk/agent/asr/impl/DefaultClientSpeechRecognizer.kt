@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -108,6 +109,7 @@ class DefaultClientSpeechRecognizer(
         context: String,
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
+        attribute: DialogAttributeStorageInterface.Attribute?,
         epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
@@ -129,8 +131,10 @@ class DefaultClientSpeechRecognizer(
 
         // Do not deliver wakeup info when client epd mode.
         val sendPositionAndWakeupBoundary = Pair(null, null)
-        val payload = expectSpeechDirectiveParam?.directive?.payload
         val referrerDialogRequestId = expectSpeechDirectiveParam?.directive?.header?.dialogRequestId
+        val payloadAttribute = expectSpeechDirectiveParam?.directive?.payload?.let {
+            ExpectSpeechPayload.getDialogAttribute(it)
+        } ?: attribute
 
         val eventMessage = EventMessageRequest.Builder(
             context,
@@ -140,9 +144,9 @@ class DefaultClientSpeechRecognizer(
         ).payload(
             AsrRecognizeEventPayload(
                 codec = audioEncoder.getCodecName().uppercase(Locale.getDefault()),
-                playServiceId = payload?.playServiceId,
-                domainTypes = payload?.domainTypes,
-                asrContext = payload?.asrContext,
+                playServiceId = payloadAttribute?.playServiceId,
+                domainTypes = payloadAttribute?.domainTypes,
+                asrContext = payloadAttribute?.asrContext,
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
                 wakeup = payloadWakeup
