@@ -1157,19 +1157,7 @@ class DefaultASRAgent(
         fun setAttributes(param: ExpectSpeechDirectiveParam) {
             Logger.d(TAG, "[AttributeStorageManager::setAttributes] currentParam: $currentParam, param: $param")
             val key = param.directive.header.messageId
-            val attr = HashMap<String, Any>().apply {
-                param.directive.payload.also { payload ->
-                    payload.playServiceId?.let {
-                        put("playServiceId", it)
-                    }
-                    payload.domainTypes?.let {
-                        put("domainTypes", it)
-                    }
-                    payload.asrContext?.let {
-                        put("asrContext", it)
-                    }
-                }
-            }
+            val attr = ExpectSpeechPayload.getDialogAttribute(param.directive.payload)
 
             val current = currentParam
             if(current != null && current != param) {
@@ -1177,7 +1165,7 @@ class DefaultASRAgent(
             }
 
             currentParam = param
-            storage.setAttributes(attr)
+            storage.setAttribute(param.directive.header.messageId, attr)
             onSetAttribute(key)
 
             playSynchronizer.prepareSync(param.playSyncObject)
@@ -1188,7 +1176,7 @@ class DefaultASRAgent(
             Logger.d(TAG, "[AttributeStorageManager::clearAttributes] currentParam: $currentParam, key: $key")
             currentParam?.let {
                 if(it.directive.header.messageId == key) {
-                    storage.clearAttributes()
+                    storage.removeAttribute(key)
                     currentParam = null
                     onUnsetAttribute(key)
                     playSynchronizer.releaseSync(it.playSyncObject)

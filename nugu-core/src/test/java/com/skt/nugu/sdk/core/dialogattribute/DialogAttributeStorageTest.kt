@@ -24,12 +24,26 @@ class DialogAttributeStorageTest {
     @Test
     fun testStorage() {
         val storage: DialogAttributeStorageInterface = DialogAttributeStorage()
-        val attribute = mapOf<String, Any>()
+        val key = "test_key"
+        val attribute = DialogAttributeStorageInterface.Attribute("test_playServiceId", null, null)
 
-        storage.setAttributes(attribute)
-        Assert.assertEquals(storage.getAttributes(), attribute)
+        storage.setAttribute(key, attribute)
+        Assert.assertEquals(storage.getAttribute(key), attribute)
 
-        storage.clearAttributes()
-        Assert.assertTrue(storage.getAttributes() == null)
+        storage.removeAttribute(key)
+        Assert.assertTrue(storage.getAttribute(key) == null)
+    }
+
+    @Test
+    fun testGetRecentAttributes() {
+        val storage: DialogAttributeStorageInterface = DialogAttributeStorage()
+        val key1 = "test_key1"
+        val attribute1 = DialogAttributeStorageInterface.Attribute("test_playServiceId_2", null, null)
+        val key2 = "test_key2"
+        val attribute2 = DialogAttributeStorageInterface.Attribute("test_playServiceId_2", null, null)
+
+        storage.setAttribute(key1, attribute1)
+        storage.setAttribute(key2, attribute2)
+        Assert.assertEquals(storage.getRecentAttribute(), attribute2)
     }
 }

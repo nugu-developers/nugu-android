@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.agent.text
 
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
@@ -425,9 +426,16 @@ class TextAgent(
                     }
 
                     if (includeDialogAttribute && textAttributes == null) {
-                        dialogAttributeStorage.getAttributes()?.let { attrs ->
-                            attrs.forEach { attr ->
-                                add(attr.key, Gson().toJsonTree(attr.value))
+                        dialogAttributeStorage.getRecentAttribute()?.let { attr ->
+                            attr.playServiceId?.let {
+                                addProperty("playServiceId", it)
+                            }
+                            attr.domainTypes?.let {
+                                add("domainTypes", JsonArray().apply {
+                                    it.forEach {
+                                        add(it)
+                                    }
+                                })
                             }
                         }
                     }

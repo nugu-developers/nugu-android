@@ -18,23 +18,42 @@ package com.skt.nugu.sdk.core.dialogattribute
 
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
-class DialogAttributeStorage: DialogAttributeStorageInterface {
+class DialogAttributeStorage : DialogAttributeStorageInterface {
     companion object {
         private const val TAG = "DialogAttributeStorage"
     }
 
-    private var attrs: Map<String, Any>? = null
+    private val lock = ReentrantLock()
+    private val attrs: LinkedHashMap<String, DialogAttributeStorageInterface.Attribute> =
+        LinkedHashMap()
 
-    override fun setAttributes(attr: Map<String, Any>) {
-        Logger.d(TAG, "[setAttribute]")
-        this.attrs = attr
+    override fun setAttribute(key: String, attr: DialogAttributeStorageInterface.Attribute) {
+        lock.withLock {
+            Logger.d(TAG, "[setAttribute] key: $key, attr: $attr")
+            attrs[key] = attr
+        }
     }
 
-    override fun getAttributes(): Map<String, Any>? = attrs
+    override fun getAttribute(key: String): DialogAttributeStorageInterface.Attribute? =
+        lock.withLock {
+            Logger.d(TAG, "[getAttribute] key: $key")
+            attrs[key]
+        }
 
-    override fun clearAttributes() {
-        Logger.d(TAG, "[clearAttributes]")
-        attrs = null
+    override fun getRecentAttribute(): DialogAttributeStorageInterface.Attribute? = lock.withLock {
+        attrs.values.lastOrNull().also {
+            Logger.d(TAG, "[getRecentAttribute] attr: $it")
+        }
+    }
+
+    override fun removeAttribute(key: String) {
+        lock.withLock {
+            attrs.remove(key).let {
+                Logger.d(TAG, "[removeAttributes] key: $key, attr: $it")
+            }
+        }
     }
 }
