@@ -58,7 +58,7 @@ class DefaultASRAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
     private val sessionManager: SessionManagerInterface,
-    dialogAttributeStorage: DialogAttributeStorageInterface,
+    private val dialogAttributeStorage: DialogAttributeStorageInterface,
     private val audioProvider: AudioProvider,
     audioEncoder: Encoder,
     endPointDetector: AudioEndPointDetector?,
@@ -739,6 +739,7 @@ class DefaultASRAgent(
             param.jsonContext,
             param.wakeupInfo,
             param.expectSpeechDirectiveParam,
+            dialogAttributeStorage.getRecentAttribute(),
             endPointDetectorParam,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(header: Header) {

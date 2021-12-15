@@ -15,15 +15,15 @@
  */
 package com.skt.nugu.sdk.agent.asr
 
-import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 
 data class AsrRecognizeEventPayload(
     private val codec: String,
     private val playServiceId: String? = null,
     private val domainTypes: Array<String>? = null,
-    private val asrContext: ExpectSpeechPayload.AsrContext? = null,
+    private val asrContext: DialogAttributeStorageInterface.Attribute.AsrContext? = null,
     private val language: String? = null,
     private val endpointing: String,
     private val encoding: String? = null,
@@ -65,7 +65,27 @@ data class AsrRecognizeEventPayload(
             })
         }
         asrContext?.let { asrContext ->
-            add("asrContext", Gson().toJsonTree(asrContext))
+            add("asrContext", JsonObject().apply {
+                asrContext.task?.let {
+                    addProperty("task", it)
+                }
+
+                asrContext.sceneId?.let {
+                    addProperty("sceneId", it)
+                }
+
+                asrContext.sceneText?.let {
+                    add("sceneText", JsonArray().apply {
+                        it.forEach {
+                            add(it)
+                        }
+                    })
+                }
+
+                asrContext.playServiceId?.let {
+                    addProperty("playServiceId", it)
+                }
+            })
         }
 
         language?.let {
