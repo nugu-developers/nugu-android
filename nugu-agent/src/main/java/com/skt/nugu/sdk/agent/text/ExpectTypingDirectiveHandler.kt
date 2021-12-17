@@ -3,6 +3,7 @@ package com.skt.nugu.sdk.agent.text
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.display.InterLayerDisplayPolicyManager
@@ -31,7 +32,7 @@ internal class ExpectTypingDirectiveHandler(
 
     private val lock = ReentrantLock()
 
-    private val pendingAttributes = LinkedHashMap<Header, DialogAttributeStorageInterface.Attribute>()
+    private val pendingAttributes = LinkedHashMap<Header, DialogAttribute>()
     private val activatedTextAttributeKeys = Stack<Header>()
 
     override fun preHandleDirective(info: DirectiveInfo) {

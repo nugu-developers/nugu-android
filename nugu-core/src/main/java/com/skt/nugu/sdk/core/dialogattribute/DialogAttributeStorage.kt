@@ -16,6 +16,7 @@
 
 package com.skt.nugu.sdk.core.dialogattribute
 
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
@@ -27,23 +28,23 @@ class DialogAttributeStorage : DialogAttributeStorageInterface {
     }
 
     private val lock = ReentrantLock()
-    private val attrs: LinkedHashMap<String, DialogAttributeStorageInterface.Attribute> =
+    private val attrs: LinkedHashMap<String, DialogAttribute> =
         LinkedHashMap()
 
-    override fun setAttribute(key: String, attr: DialogAttributeStorageInterface.Attribute) {
+    override fun setAttribute(key: String, attr: DialogAttribute) {
         lock.withLock {
             Logger.d(TAG, "[setAttribute] key: $key, attr: $attr")
             attrs[key] = attr
         }
     }
 
-    override fun getAttribute(key: String): DialogAttributeStorageInterface.Attribute? =
+    override fun getAttribute(key: String): DialogAttribute? =
         lock.withLock {
             Logger.d(TAG, "[getAttribute] key: $key")
             attrs[key]
         }
 
-    override fun getRecentAttribute(): DialogAttributeStorageInterface.Attribute? = lock.withLock {
+    override fun getRecentAttribute(): DialogAttribute? = lock.withLock {
         attrs.values.lastOrNull().also {
             Logger.d(TAG, "[getRecentAttribute] attr: $it")
         }
