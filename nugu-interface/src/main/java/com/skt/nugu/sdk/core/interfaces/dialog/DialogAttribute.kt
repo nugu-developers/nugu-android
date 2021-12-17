@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 SK Telecom Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 SK Telecom Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,57 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent.asr
 
-import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
+package com.skt.nugu.sdk.core.interfaces.dialog
 
-data class ExpectSpeechPayload internal constructor(
-    @SerializedName("playServiceId")
+data class DialogAttribute(
     val playServiceId: String?,
-    @SerializedName("domainTypes")
     val domainTypes: Array<String>?,
-    @SerializedName("asrContext")
-    val asrContext: AsrContext?,
-    @SerializedName("epd")
-    val epd: EpdParam?,
-    @SerializedName("listenTimeoutFailBeep")
-    val listenTimeoutFailBeep: Boolean?
+    val asrContext: AsrContext?
 ) {
-    companion object {
-        fun getDialogAttribute(payload: ExpectSpeechPayload) = with(payload) {
-            DialogAttribute(
-                this.playServiceId,
-                this.domainTypes,
-                this.asrContext?.let {
-                    DialogAttribute.AsrContext(
-                        it.task,
-                        it.sceneId,
-                        it.sceneText,
-                        it.playServiceId
-                    )
-                }
-            )
-        }
-    }
-
-    data class EpdParam(
-        @SerializedName("timeoutMilliseconds")
-        val timeoutMilliseconds: Long?,
-        @SerializedName("silenceIntervalInMilliseconds")
-        val silenceIntervalInMilliseconds: Long?,
-        @SerializedName("maxSpeechDurationMilliseconds")
-        val maxSpeechDurationMilliseconds: Long?
-    )
-
     data class AsrContext(
-        @SerializedName("task")
         val task: String?,
-        @SerializedName("sceneId")
         val sceneId: String?,
-        @SerializedName("sceneText")
         val sceneText: Array<String>?,
-        @SerializedName("playServiceId")
         val playServiceId: String?
     ) {
         override fun equals(other: Any?): Boolean {
@@ -96,26 +57,19 @@ data class ExpectSpeechPayload internal constructor(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ExpectSpeechPayload
+        other as DialogAttribute
 
         if (playServiceId != other.playServiceId) return false
-        if (domainTypes != null) {
-            if (other.domainTypes == null) return false
-            if (!domainTypes.contentEquals(other.domainTypes)) return false
-        } else if (other.domainTypes != null) return false
+        if (!domainTypes.contentEquals(other.domainTypes)) return false
         if (asrContext != other.asrContext) return false
-        if (epd != other.epd) return false
-        if (listenTimeoutFailBeep != other.listenTimeoutFailBeep) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = playServiceId?.hashCode() ?: 0
-        result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
-        result = 31 * result + (asrContext?.hashCode() ?: 0)
-        result = 31 * result + (epd?.hashCode() ?: 0)
-        result = 31 * result + (listenTimeoutFailBeep?.hashCode() ?: 0)
+        result = 31 * result + domainTypes.contentHashCode()
+        result = 31 * result + asrContext.hashCode()
         return result
     }
 }

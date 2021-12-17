@@ -17,8 +17,7 @@
 package com.skt.nugu.sdk.agent.text
 
 import com.google.gson.annotations.SerializedName
-import com.skt.nugu.sdk.agent.asr.ExpectSpeechPayload
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 interface ExpectTypingHandlerInterface {
@@ -41,11 +40,11 @@ interface ExpectTypingHandlerInterface {
     ) {
         companion object {
             fun getDialogAttribute(payload: Payload) = with(payload) {
-                DialogAttributeStorageInterface.Attribute(
+                DialogAttribute(
                     this.playServiceId,
                     this.domainTypes,
                     this.asrContext?.let {
-                        DialogAttributeStorageInterface.Attribute.AsrContext(
+                        DialogAttribute.AsrContext(
                             it.task,
                             it.sceneId,
                             it.sceneText,

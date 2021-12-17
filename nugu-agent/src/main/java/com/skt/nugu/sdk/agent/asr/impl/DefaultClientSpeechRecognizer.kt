@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -109,7 +109,7 @@ class DefaultClientSpeechRecognizer(
         context: String,
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
-        attribute: DialogAttributeStorageInterface.Attribute?,
+        attribute: DialogAttribute?,
         epdParam: EndPointDetectorParam,
         resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {

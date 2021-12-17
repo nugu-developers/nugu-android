@@ -16,6 +16,7 @@
 
 package com.skt.nugu.sdk.core.dialogattribute
 
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import org.junit.Assert
 import org.junit.Test
@@ -25,7 +26,7 @@ class DialogAttributeStorageTest {
     fun testStorage() {
         val storage: DialogAttributeStorageInterface = DialogAttributeStorage()
         val key = "test_key"
-        val attribute = DialogAttributeStorageInterface.Attribute("test_playServiceId", null, null)
+        val attribute = DialogAttribute("test_playServiceId", null, null)
 
         storage.setAttribute(key, attribute)
         Assert.assertEquals(storage.getAttribute(key), attribute)
@@ -38,9 +39,9 @@ class DialogAttributeStorageTest {
     fun testGetRecentAttributes() {
         val storage: DialogAttributeStorageInterface = DialogAttributeStorage()
         val key1 = "test_key1"
-        val attribute1 = DialogAttributeStorageInterface.Attribute("test_playServiceId_2", null, null)
+        val attribute1 = DialogAttribute("test_playServiceId_2", null, null)
         val key2 = "test_key2"
-        val attribute2 = DialogAttributeStorageInterface.Attribute("test_playServiceId_2", null, null)
+        val attribute2 = DialogAttribute("test_playServiceId_2", null, null)
 
         storage.setAttribute(key1, attribute1)
         storage.setAttribute(key2, attribute2)

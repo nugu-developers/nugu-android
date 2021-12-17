@@ -17,13 +17,13 @@ package com.skt.nugu.sdk.agent.asr
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
+import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 
 data class AsrRecognizeEventPayload(
     private val codec: String,
     private val playServiceId: String? = null,
     private val domainTypes: Array<String>? = null,
-    private val asrContext: DialogAttributeStorageInterface.Attribute.AsrContext? = null,
+    private val asrContext: DialogAttribute.AsrContext? = null,
     private val language: String? = null,
     private val endpointing: String,
     private val encoding: String? = null,
