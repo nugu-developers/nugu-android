@@ -62,7 +62,7 @@ class LyricsViewTest {
     fun test5_scroll() {
         val spy = Mockito.spy(lyricsView)
         spy.setItems(listOf(LyricsInfo(100, "0"), LyricsInfo(200, "1")))
-        spy.setCurrentTimeMs(50)
+        spy.setCurrentTimeMs(150)
         verify(spy).scrollToCenter(0)
     }
 }
