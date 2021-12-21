@@ -119,7 +119,7 @@ open class TemplateMediaHandler(
         Logger.d(TAG, "startProgressMessageSending")
         mediaProgressJob?.cancel()
 
-        mediaProgressJob = fixedRateTimer(period = 1000, initialDelay = 1000, action = {
+        mediaProgressJob = fixedRateTimer(period = 100, initialDelay = 1000, action = {
             mediaListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
         })
 
@@ -133,7 +133,7 @@ open class TemplateMediaHandler(
     }
 
     protected fun getMediaCurrentTimeMs(): Long {
-        return getNuguClient().audioPlayerAgent?.getOffset()?.times(1000L) ?: 0L
+        return getNuguClient().audioPlayerAgent?.getOffset(com.skt.nugu.sdk.agent.util.TimeUnit.MILLISECONDS) ?: 0L
     }
 
     protected fun getMediaProgressPercentage(): Float {
