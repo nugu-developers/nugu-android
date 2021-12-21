@@ -193,13 +193,24 @@ class LyricsView @JvmOverloads constructor(
             return
         }
 
-        val foundIndex = lyrics.indexOfFirst { it.time ?: 0 > millis }
+        var foundIndex = -1
 
-        if (foundIndex != -1) {
-            val previous = adapter.highlightedPosition
+        run {
+            lyrics.forEachIndexed { index, lyricsInfo ->
+                val startTime = lyricsInfo.time ?: 0
+                val endTime = if (index < lyrics.size - 1) lyrics[index + 1].time ?: 0 else Int.MAX_VALUE
+                if (millis in startTime until endTime) {
+                    foundIndex = index
+                    return@run
+                }
+            }
+        }
+
+        val previous = adapter.highlightedPosition
+        if (foundIndex != -1 && previous != foundIndex) {
             adapter.highlightedPosition = foundIndex
             adapter.notifyItemChanged(foundIndex)
-            if(previous in 0 until lyrics.size) adapter.notifyItemChanged(previous)
+            if (previous in 0 until lyrics.size) adapter.notifyItemChanged(previous)
             scrollToCenter(foundIndex)
         }
     }
