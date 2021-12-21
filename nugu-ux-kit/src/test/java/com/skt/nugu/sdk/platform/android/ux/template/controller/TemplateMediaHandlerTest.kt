@@ -52,7 +52,7 @@ class TemplateMediaHandlerTest {
     fun testMediaProgressSending() {
         //periodically sending
         mediaTemplateHandler.startMediaProgressSending()
-        verify(clientListener, timeout(2500).times(2)).onMediaProgressChanged(any(), any())
+        verify(clientListener, timeout(1500).atLeast(2)).onMediaProgressChanged(any(), any())
 
         //after stop. there will be no progress sending
         mediaTemplateHandler.clear()
