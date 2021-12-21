@@ -59,16 +59,19 @@ class LyricsView @JvmOverloads constructor(
 
     @ColorInt
     private var bgColorLight = Color.TRANSPARENT
+
     @ColorInt
     private val bgColorDark = resources.genColor(R.color.media_template_bg_dark)
 
     @ColorInt
     private var titleFontColor = resources.genColor(R.color.media_template_text_header_light)
+
     @ColorInt
     private val titleFontColorDark = resources.genColor(R.color.media_template_text_header_dark)
 
     @ColorInt
     private var fontColorFocus = resources.genColor(R.color.media_template_lyrics_text_focus)
+
     @ColorInt
     private var fontColor = resources.genColor(R.color.media_template_lyrics_text)
 
@@ -122,6 +125,8 @@ class LyricsView @JvmOverloads constructor(
                 super.onScrollStateChanged(recyclerView, newState)
             }
         })
+
+        recyclerView.itemAnimator?.changeDuration = 0L
     }
 
     private fun init(attrs: AttributeSet?) {
@@ -188,16 +193,13 @@ class LyricsView @JvmOverloads constructor(
             return
         }
 
-        var foundIndex = -1
-        lyrics.forEachIndexed { index, it ->
-            if (millis < it.time ?: 0 && foundIndex == -1) {
-                foundIndex = index - 1
-            }
-        }
+        val foundIndex = lyrics.indexOfFirst { it.time ?: 0 > millis }
 
         if (foundIndex != -1) {
-            adapter.setHighlighted(foundIndex)
-            adapter.notifyDataSetChanged()
+            val previous = adapter.highlightedPosition
+            adapter.highlightedPosition = foundIndex
+            adapter.notifyItemChanged(foundIndex)
+            if(previous in 0 until lyrics.size) adapter.notifyItemChanged(previous)
             scrollToCenter(foundIndex)
         }
     }
@@ -259,7 +261,7 @@ class LyricsView @JvmOverloads constructor(
         @ColorInt
         private val fontColorDark = context.resources.genColor(R.color.media_template_lyrics_text_dark)
 
-        private var highlightedPosition: Int = -1
+        var highlightedPosition: Int = -1
         var isDark = false
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -288,10 +290,6 @@ class LyricsView @JvmOverloads constructor(
                     else -> fontColor
                 }
             )
-        }
-
-        fun setHighlighted(position: Int) {
-            highlightedPosition = position
         }
 
         inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
