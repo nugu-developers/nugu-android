@@ -456,7 +456,6 @@ class NuguButton @JvmOverloads constructor(
             play(animator1).before(animator2)
             play(animator2).before(animator3)
             play(animator3).before(animator4)
-            play(animator4).after(animator3)
 
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationRepeat(animation: Animator?) {
