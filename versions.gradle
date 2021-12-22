@@ -16,7 +16,7 @@ ext {
     androidXAppcompatVersion = "1.3.0"
     glideVersion = "4.12.0"
     gsonVersion = "2.8.6"
-    okhttp3Version = "4.4.0"
+    okhttp3Version = "4.9.3"
     androidXBrowserVersion = "1.3.0"
     koinVersion = "2.2.3"
     kotlinxCoroutinesAndroidVersion = "1.5.0"

@@ -22,10 +22,11 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.Chan
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
-import com.squareup.okhttp.*
+import okhttp3.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.io.IOException
 import java.net.*
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLHandshakeException
 
 /**
@@ -86,13 +87,19 @@ internal class RegistryClient(
             return
         }
 
-        val client = OkHttpClient().apply {
-            protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
-            connectionPool = ConnectionPool(0, 1)
-        }
-        dnsLookup?.let { customDns ->
-            client.setDns { hostname -> customDns.lookup(hostname.toString()).toMutableList() }
-        }
+        val client = OkHttpClient().newBuilder()
+            .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .apply {
+                dnsLookup?.let { customDns ->
+                    dns(object : Dns {
+                        override fun lookup(hostname: String): List<InetAddress> {
+                            return customDns.lookup(hostname)
+                        }
+                    })
+                }
+            }.build()
+
         val httpUrl = try {
             HttpUrl.Builder()
                 .scheme(HTTPS_SCHEME)
@@ -114,52 +121,63 @@ internal class RegistryClient(
             .header("Authorization", authDelegate.getAuthorization().toString())
             .header("User-Agent", UserAgent.toString())
             .build()
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(request: Request?, e: IOException?) {
-                Logger.e(TAG, "A failure occurred during getPolicy", e)
-                val reason = if(e is UnknownHostException) {
-                    ChangedReason.DNS_TIMEDOUT
-                } else if(e is SocketTimeoutException) {
-                    ChangedReason.CONNECTION_TIMEDOUT
-                } else if(e is ConnectException || e is SSLHandshakeException) {
-                    ChangedReason.CONNECTION_ERROR
-                } else {
-                    ChangedReason.UNRECOVERABLE_ERROR
+        try {
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Logger.e(TAG, "A failure occurred during getPolicy", e)
+                    val reason = if (e is UnknownHostException) {
+                        ChangedReason.DNS_TIMEDOUT
+                    } else if (e is SocketTimeoutException) {
+                        ChangedReason.CONNECTION_TIMEDOUT
+                    } else if (e is ConnectException || e is SSLHandshakeException) {
+                        ChangedReason.CONNECTION_ERROR
+                    } else {
+                        ChangedReason.UNRECOVERABLE_ERROR
+                    }
+                    reason.cause = e
+                    observer.onError(reason)
                 }
-                reason.cause = e
-                observer.onError(reason)
-            }
 
-            override fun onResponse(response: Response?) {
-                val code = response?.code()
-                when (code) {
-                    HttpURLConnection.HTTP_OK -> {
-                        val jsonObject = JsonParser.parseString(response.body().string()).asJsonObject
-                        if (!(jsonObject.has("healthCheckPolicy") && jsonObject.has("serverPolicies"))) {
-                            observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
-                            return
+                override fun onResponse(call: Call, response: Response) {
+                    val code = response.code
+                    when (code) {
+                        HttpURLConnection.HTTP_OK -> {
+                            val jsonObject =
+                                JsonParser.parseString(response.body?.string()).asJsonObject
+                            if (!(jsonObject.has("healthCheckPolicy") && jsonObject.has("serverPolicies"))) {
+                                observer.onError(ChangedReason.FAILURE_PROTOCOL_ERROR)
+                                return
+                            }
+                            val policy = Gson().fromJson(jsonObject, Policy::class.java)
+                            notifyPolicy(policy, observer)
                         }
-                        val policy = Gson().fromJson(jsonObject, Policy::class.java)
-                        notifyPolicy(policy, observer)
-                    }
-                    HttpURLConnection.HTTP_UNAUTHORIZED,
-                    HttpURLConnection.HTTP_FORBIDDEN -> {
-                        observer.onError(ChangedReason.INVALID_AUTH)
-                    }
-                    else -> {
-                        cachedPolicy?.let {
-                            notifyPolicy(it, observer)
-                        } ?: run {
-                            when (code) {
-                                in 400..499 -> observer.onError(ChangedReason.INTERNAL_ERROR)
-                                in 500..599 -> observer.onError(ChangedReason.SERVER_INTERNAL_ERROR)
-                                else -> observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
+                        HttpURLConnection.HTTP_UNAUTHORIZED,
+                        HttpURLConnection.HTTP_FORBIDDEN -> {
+                            observer.onError(ChangedReason.INVALID_AUTH)
+                        }
+                        else -> {
+                            cachedPolicy?.let {
+                                notifyPolicy(it, observer)
+                            } ?: run {
+                                when (code) {
+                                    in 400..499 -> observer.onError(ChangedReason.INTERNAL_ERROR)
+                                    in 500..599 -> observer.onError(ChangedReason.SERVER_INTERNAL_ERROR)
+                                    else -> observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
+                                }
                             }
                         }
                     }
                 }
-            }
-        })
+            })
+        } catch (e: UnknownHostException) {
+            observer.onError(ChangedReason.DNS_TIMEDOUT)
+        } catch (e: IllegalStateException) {
+            Logger.e(TAG, "the task has already been executed", e)
+            observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
+        } catch (e: IOException) {
+            Logger.e(TAG, "An exception occurred during getPolicy", e)
+            observer.onError(ChangedReason.CONNECTION_TIMEDOUT)
+        }
     }
 
     @VisibleForTesting

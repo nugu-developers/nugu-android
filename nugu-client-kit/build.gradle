@@ -36,7 +36,10 @@ dependencies {
 
     implementation("io.grpc:grpc-protobuf-lite:${grpc_version}")
     implementation("io.grpc:grpc-stub:${grpc_version}")
-    implementation("io.grpc:grpc-okhttp:${grpc_version}")
+    implementation("io.grpc:grpc-okhttp:${grpc_version}") {
+        exclude group: 'com.squareup.okhttp'
+    }
+    implementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
     implementation("com.google.code.gson:gson:$gsonVersion")
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
 
