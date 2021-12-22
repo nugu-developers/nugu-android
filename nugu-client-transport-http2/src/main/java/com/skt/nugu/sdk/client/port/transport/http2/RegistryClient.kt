@@ -176,6 +176,9 @@ class RegistryClient(private val dnsLookup: DnsLookup?) {
             })
         } catch (e: UnknownHostException) {
             observer.onError(ChangedReason.DNS_TIMEDOUT)
+        } catch (e: IllegalStateException) {
+            Logger.e(TAG, "the task has already been executed", e)
+            observer.onError(ChangedReason.UNRECOVERABLE_ERROR)
         } catch (e: IOException) {
             Logger.e(TAG, "An exception occurred during getPolicy", e)
             observer.onError(ChangedReason.CONNECTION_TIMEDOUT)

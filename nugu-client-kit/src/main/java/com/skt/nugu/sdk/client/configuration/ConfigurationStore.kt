@@ -17,9 +17,8 @@ package com.skt.nugu.sdk.client.configuration
 
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import com.squareup.okhttp.HttpUrl
-import com.squareup.okhttp.OkHttpClient
-import com.squareup.okhttp.Request
+import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -28,6 +27,7 @@ import java.net.HttpURLConnection
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
 /**
@@ -280,10 +280,15 @@ object ConfigurationStore {
      * @return the [ConfigurationMetadata]
      */
     private fun requestDiscovery(): ConfigurationMetadata {
-        val client = OkHttpClient().apply {
-            protocols = listOf(com.squareup.okhttp.Protocol.HTTP_1_1)
+        val client = OkHttpClient().newBuilder()
+            .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
+            .protocols(listOf(Protocol.HTTP_1_1)).build()
+        val httpUrl  = try {
+            discoveryUrl().toHttpUrl()
+        } catch (th: Throwable) {
+            throw Throwable("An unexpected error has occurred (throwable=$th)")
         }
-        val httpUrl = HttpUrl.parse(discoveryUrl())
+
         val request = Request.Builder().url(httpUrl)
             .header("Accept", "application/json")
             .header("Authorization",
@@ -291,10 +296,10 @@ object ConfigurationStore {
             )
             .build()
         val response = client.newCall(request).execute()
-        val code = response.code()
+        val code = response.code
         when (code) {
             HttpURLConnection.HTTP_OK -> {
-                val jsonObject = JsonParser.parseString(response.body().string()).asJsonObject
+                val jsonObject = JsonParser.parseString(response.body?.string()).asJsonObject
                 if (jsonObject.size() > 0) {
                     return Gson().fromJson(jsonObject, ConfigurationMetadata::class.java)
                 }
