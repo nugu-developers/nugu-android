@@ -16,7 +16,9 @@
 package com.skt.nugu.sdk.client.configuration
 
 import com.google.gson.Gson
+import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.BufferedReader
@@ -29,6 +31,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
+import kotlin.jvm.Throws
 
 /**
  * This is a helper for configuration. It contains the APIs for getting the configuration
@@ -278,7 +281,11 @@ object ConfigurationStore {
     /**
      * Request the discovery api.
      * @return the [ConfigurationMetadata]
+     * @throws JsonParseException – if the specified text is not valid JSON
+     * @throws JsonSyntaxException – if json is not a valid representation for an object of type typeOfT
+     * @throws IllegalStateException - If an unexpected error occurs
      */
+    @Throws(JsonParseException::class, JsonSyntaxException::class, java.lang.IllegalStateException::class)
     private fun requestDiscovery(): ConfigurationMetadata {
         val client = OkHttpClient().newBuilder()
             .connectionPool(ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
@@ -286,7 +293,7 @@ object ConfigurationStore {
         val httpUrl  = try {
             discoveryUrl().toHttpUrl()
         } catch (th: Throwable) {
-            throw Throwable("An unexpected error has occurred (throwable=$th)")
+            throw IllegalStateException("An unexpected error has occurred (throwable=$th)")
         }
 
         val request = Request.Builder().url(httpUrl)
@@ -300,12 +307,10 @@ object ConfigurationStore {
         when (code) {
             HttpURLConnection.HTTP_OK -> {
                 val jsonObject = JsonParser.parseString(response.body?.string()).asJsonObject
-                if (jsonObject.size() > 0) {
-                    return Gson().fromJson(jsonObject, ConfigurationMetadata::class.java)
-                }
+                return Gson().fromJson(jsonObject, ConfigurationMetadata::class.java)
             }
         }
-        throw Throwable("An unexpected error has occurred (code=$code)")
+        throw IllegalStateException("An unexpected error has occurred (code=$code)")
     }
 
     /**
