@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.ux.template.view.media
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -34,6 +35,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.dpToPixel
 import com.skt.nugu.sdk.platform.android.ux.template.enableMarquee
 import com.skt.nugu.sdk.platform.android.ux.template.genColor
 import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsInfo
+import kotlin.math.min
 
 class LyricsView @JvmOverloads constructor(
     context: Context,
@@ -162,10 +164,6 @@ class LyricsView @JvmOverloads constructor(
         }
     }
 
-    fun addItem(item: LyricsInfo) {
-        lyrics.add(item)
-    }
-
     fun setTitle(title: String?, marquee: Boolean = false) {
         titleView.text = title
         titleView.visibility = if (title != null) View.VISIBLE else View.INVISIBLE
@@ -188,6 +186,7 @@ class LyricsView @JvmOverloads constructor(
         update()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun setCurrentTimeMs(millis: Long) {
         if (visibility != View.VISIBLE) {
             return
@@ -197,7 +196,8 @@ class LyricsView @JvmOverloads constructor(
 
         run {
             lyrics.forEachIndexed { index, lyricsInfo ->
-                val startTime = lyricsInfo.time ?: 0
+                lyricsInfo.time ?: return@forEachIndexed
+                val startTime = lyricsInfo.time
                 val endTime = if (index < lyrics.size - 1) lyrics[index + 1].time ?: 0 else Int.MAX_VALUE
                 if (millis in startTime until endTime) {
                     foundIndex = index
@@ -205,12 +205,17 @@ class LyricsView @JvmOverloads constructor(
                 }
             }
         }
-
         val previous = adapter.highlightedPosition
         if (foundIndex != -1 && previous != foundIndex) {
             adapter.highlightedPosition = foundIndex
-            adapter.notifyItemChanged(foundIndex)
-            if (previous in 0 until lyrics.size) adapter.notifyItemChanged(previous)
+
+            if (viewSize == SIZE_SMALL) {
+                adapter.notifyDataSetChanged()
+            } else {
+                adapter.notifyItemChanged(foundIndex)
+                if (previous in 0 until lyrics.size) adapter.notifyItemChanged(previous)
+            }
+
             scrollToCenter(foundIndex)
         }
     }
@@ -247,6 +252,7 @@ class LyricsView @JvmOverloads constructor(
         layoutManager.scrollToPositionWithOffset(targetPosition, 0)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     internal fun update() {
         emptyView.visibility = if (lyrics.size == 0) {
             View.VISIBLE
@@ -286,17 +292,33 @@ class LyricsView @JvmOverloads constructor(
         }
 
         override fun getItemCount(): Int {
-            return lyrics.size
+            return if (viewSize == SIZE_SMALL) min(2, lyrics.size) else lyrics.size
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val viewHolder = holder as Holder
             val item = lyrics[position]
-            viewHolder.line.text = item.text
 
+            // set text
+            if (viewSize == SIZE_SMALL) {
+                if (highlightedPosition == -1) {
+                    viewHolder.line.text = item.text
+                } else {
+                    viewHolder.line.text = when {
+                        position == 0 -> lyrics[highlightedPosition].text
+                        position == 1 && highlightedPosition < lyrics.size - 1 -> lyrics[highlightedPosition + 1].text
+                        else -> ""
+                    }
+                }
+            } else {
+                viewHolder.line.text = item.text
+            }
+
+            // set focus
+            val highLightPos = if (viewSize == SIZE_SMALL) min(0, highlightedPosition) else highlightedPosition
             viewHolder.line.setTextColor(
                 when {
-                    highlightedPosition == position -> fontColorFocus
+                    highLightPos == position -> fontColorFocus
                     isDark -> fontColorDark
                     else -> fontColor
                 }
