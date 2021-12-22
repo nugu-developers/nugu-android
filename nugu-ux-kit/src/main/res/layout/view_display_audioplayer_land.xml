@@ -137,7 +137,7 @@
                         <com.skt.nugu.sdk.platform.android.ux.template.view.media.LyricsView
                             android:id="@+id/cv_small_lyrics"
                             android:layout_width="match_parent"
-                            android:layout_height="36dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
                             android:visibility="gone"
                             app:sizes="small" />
