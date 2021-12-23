@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+Version 1.7.2 *(2021-12-23)*
+* Fix: Fix not reconnect when canceled in backoff (#2126)
+* Fix: Fix call only with ActivityResult in fallback webview (#2128)
+* Fix: Public EndCallPayload's member (#2152)
+* Fix: Update Text Interface v1.6 (#2175)
+* Fix: Crash issue : Circular dependencies cannot exist in AnimatorSet (#2177)
+* Improve: Expanding the factors of customize template (#2124)
+* Improve: Expand DisplayAudioPlayer  (#2144)
+* Improve: When issuing authorization_code, key/value needs to be added to data field (#2155)
+* Improve: Add Basic Authorization header to .well-known/oauth-authorization-server (#2156)
+* New: Customizable focus channel's priority (#2134)
+* New: Support Text Interface v1.6 (#2159)
+* New: Support PhoneCall Interface v1.3 (#2169)
+* Improve: DirectiveHandler Interface change (See https://github.com/nugu-developers/nugu-android/wiki/Update-Guide#v172)
+
 Version 1.7.0 *(2021-11-05)*
 * Fix: Fix condition to determine parent template (#2121)
 * New: Add parentTemplateId param at render() (#2117)
