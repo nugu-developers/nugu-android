@@ -27,7 +27,8 @@ import com.skt.nugu.sdk.core.interfaces.transport.*
 class GrpcTransportFactory(
     private val serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup? = null,
-    private val callOptions: CallOptions? = null
+    private val callOptions: CallOptions? = null,
+    private val channelOptions: ChannelOptions? = null
 ) : TransportFactory {
 
     /**
@@ -43,6 +44,7 @@ class GrpcTransportFactory(
             serverInfo,
             dnsLookup,
             callOptions,
+            channelOptions,
             authDelegate,
             messageConsumer,
             transportObserver,
