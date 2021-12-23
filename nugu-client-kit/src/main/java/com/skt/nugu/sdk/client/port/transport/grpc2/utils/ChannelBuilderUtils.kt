@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting
 import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.interfaces.transport.ChannelOptions
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UserAgent
 import io.grpc.*
@@ -35,12 +36,21 @@ class ChannelBuilderUtils {
         /** configures the gRPC channel. */
         fun createChannelBuilderWith(
             policy: ServerPolicy,
+            channelOptions: ChannelOptions?,
             authDelegate: AuthDelegate,
-            delegate: HeaderClientInterceptor.Delegate
+            delegate: HeaderClientInterceptor.Delegate,
+            isStartReceiveServerInitiatedDirective: () -> Boolean
         ): ManagedChannelBuilder<*> {
             val channelBuilder = OkHttpChannelBuilder
                 .forAddress(policy.hostname, policy.port)
                 .userAgent(userAgent())
+
+            channelOptions?.let {
+                // Do not use idleTimeout in ServerInitiatedDirective.
+                if (!isStartReceiveServerInitiatedDirective()) {
+                    channelBuilder.idleTimeout(it.idleTimeout.value, it.idleTimeout.unit)
+                }
+            }
             Logger.i(TAG,  "userAgent=${userAgent()}")
             return channelBuilder.intercept(
                 HeaderClientInterceptor(

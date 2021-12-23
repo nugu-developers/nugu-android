@@ -24,10 +24,7 @@ import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
 import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
-import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
-import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
-import com.skt.nugu.sdk.core.interfaces.transport.TransportListener
+import com.skt.nugu.sdk.core.interfaces.transport.*
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -41,6 +38,7 @@ internal class GrpcTransport internal constructor(
     private val serverInfo: NuguServerInfo,
     private val dnsLookup: DnsLookup?,
     private val callOptions: CallOptions?,
+    private val channelOptions: ChannelOptions?,
     private val authDelegate: AuthDelegate,
     private val messageConsumer: MessageConsumer,
     private var transportObserver: TransportListener?,
@@ -57,6 +55,7 @@ internal class GrpcTransport internal constructor(
             serverInfo: NuguServerInfo,
             dnsLookup: DnsLookup?,
             callOptions: CallOptions?,
+            channelOptions: ChannelOptions?,
             authDelegate: AuthDelegate,
             messageConsumer: MessageConsumer,
             transportObserver: TransportListener,
@@ -66,6 +65,7 @@ internal class GrpcTransport internal constructor(
                 serverInfo,
                 dnsLookup,
                 callOptions,
+                channelOptions,
                 authDelegate,
                 messageConsumer,
                 transportObserver,
@@ -212,6 +212,7 @@ internal class GrpcTransport internal constructor(
             transportObserver = deviceGatewayObserver,
             authDelegate = authDelegate,
             callOptions = callOptions,
+            channelOptions = channelOptions,
             isStartReceiveServerInitiatedDirective = isStartReceiveServerInitiatedDirective
         ).let {
             deviceGatewayClient = it
