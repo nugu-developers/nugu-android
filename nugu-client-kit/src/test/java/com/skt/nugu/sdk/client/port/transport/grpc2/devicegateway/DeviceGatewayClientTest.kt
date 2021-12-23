@@ -28,6 +28,8 @@ import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toAttachmentMessage
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toDirectives
+import com.skt.nugu.sdk.core.interfaces.transport.ChannelOptions
+import com.skt.nugu.sdk.core.interfaces.transport.IdleTimeout
 import io.grpc.Status
 import org.junit.Assert.*
 import devicegateway.grpc.AttachmentMessage
@@ -37,6 +39,7 @@ import junit.framework.TestCase
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.kotlin.*
+import java.util.concurrent.TimeUnit
 
 class DeviceGatewayClientTest : TestCase() {
     private val serverInfo = NuguServerInfo.Builder().deviceGW(host = "deviceGW.sk.com", 44)
@@ -89,6 +92,7 @@ class DeviceGatewayClientTest : TestCase() {
             transportObserver = mock(),
             authDelegate = mock(),
             callOptions = null,
+            channelOptions = null,
             isStartReceiveServerInitiatedDirective = mock()
         )
         Assert.assertNotNull(client)
@@ -107,6 +111,7 @@ class DeviceGatewayClientTest : TestCase() {
             transportObserver = mock(),
             authDelegate = mock(),
             callOptions = null,
+            channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
         Assert.assertFalse(client.isConnected())
@@ -133,6 +138,7 @@ class DeviceGatewayClientTest : TestCase() {
             transportObserver = mock(),
             authDelegate = mock(),
             callOptions = null,
+            channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
         client.connect()
@@ -154,6 +160,7 @@ class DeviceGatewayClientTest : TestCase() {
             transportObserver = mock(),
             authDelegate = mock(),
             callOptions = null,
+            channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
         client.connect()
@@ -192,6 +199,7 @@ class DeviceGatewayClientTest : TestCase() {
             transportObserver = deviceGatewayObserver,
             authDelegate = mock(),
             callOptions = null,
+            channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
         client.connect()

@@ -49,6 +49,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = mock(),
             messageConsumer = mock(),
             transportObserver = mock(),
@@ -74,6 +75,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = mock(),
             messageConsumer = mock(),
             transportObserver = mock(),
@@ -97,6 +99,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = mock(),
             messageConsumer = mock(),
             transportObserver = mock(),
@@ -115,6 +118,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = object : AuthDelegate {
                 override fun getAuthorization(): String? {
                     return "Authorization"
@@ -134,6 +138,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = object : AuthDelegate {
                 override fun getAuthorization(): String? {
                     return null
@@ -163,6 +168,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = object : AuthDelegate {
                 override fun getAuthorization(): String? {
                     return "Authorization"
@@ -191,6 +197,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = mock(),
             messageConsumer = mock(),
             transportObserver = mock(),
@@ -282,6 +289,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = mock(),
             messageConsumer = mock(),
             transportObserver = object : TransportListener {
@@ -330,6 +338,7 @@ class GrpcTransportTest : TestCase() {
                 }
             },
             callOptions = null,
+            channelOptions = null,
             authDelegate = mock(),
             messageConsumer = mock(),
             transportObserver = object : TransportListener {
