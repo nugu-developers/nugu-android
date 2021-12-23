@@ -18,6 +18,8 @@ package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 import com.skt.nugu.sdk.client.port.transport.grpc2.HeaderClientInterceptor
 import com.skt.nugu.sdk.client.port.transport.grpc2.ServerPolicy
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
+import com.skt.nugu.sdk.core.interfaces.transport.ChannelOptions
+import com.skt.nugu.sdk.core.interfaces.transport.IdleTimeout
 import com.skt.nugu.sdk.core.utils.UserAgent
 
 import junit.framework.TestCase
@@ -27,6 +29,7 @@ import org.mockito.Mockito.spy
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
+import java.util.concurrent.TimeUnit
 
 class ChannelBuilderUtilsTest : TestCase() {
     private val defaultServerPolicy = ServerPolicy("https", "localhost", 443, 1, 1000, "Normal")
@@ -38,9 +41,10 @@ class ChannelBuilderUtilsTest : TestCase() {
         val channel = ChannelBuilderUtils.Companion
         channel.createChannelBuilderWith(
             defaultServerPolicy,
+            ChannelOptions(IdleTimeout(10,TimeUnit.SECONDS)),
             defaultAuthDelegate,
             delegate
-        ).build()
+        ) { false }.build()
         assertNotNull(channel)
     }
 
@@ -48,9 +52,10 @@ class ChannelBuilderUtilsTest : TestCase() {
     fun testCreateChannelBuilderWithIsTerminated() {
         val channel = ChannelBuilderUtils.createChannelBuilderWith(
             defaultServerPolicy,
+            ChannelOptions(IdleTimeout(10,TimeUnit.SECONDS)),
             defaultAuthDelegate,
             delegate
-        ).build()
+        ) { false }.build()
         assertFalse(channel.isTerminated)
     }
 
@@ -58,9 +63,10 @@ class ChannelBuilderUtilsTest : TestCase() {
     fun testCreateChannelBuilderWithShutdown() {
         val channel = ChannelBuilderUtils.createChannelBuilderWith(
             defaultServerPolicy,
+            ChannelOptions(IdleTimeout(10,TimeUnit.SECONDS)),
             defaultAuthDelegate,
             delegate
-        ).build()
+        ) { false }.build()
         ChannelBuilderUtils.shutdown(channel)
         assertTrue(channel.isShutdown)
     }
