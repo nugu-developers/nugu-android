@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
@@ -99,12 +100,15 @@ class DirectiveProcessor(
     }
 
     fun onDirectives(directives: List<Directive>) {
-        val shouldBeHandleDirectives = ArrayList<Directive>()
+        val shouldBeHandleDirectives = ArrayList<DirectiveAndPolicy>()
 
         directives.forEach { directive ->
-            if(preHandleDirective(directive)) {
-                shouldBeHandleDirectives.add(directive)
+            val handlerAndPolicy = directiveRouter.getHandlerAndPolicyOfDirective(directive)
+            if(handlerAndPolicy != null) {
+                preHandleDirective(directive, handlerAndPolicy.first)
+                shouldBeHandleDirectives.add(DirectiveAndPolicy(directive, handlerAndPolicy.second))
             } else {
+                Logger.w(TAG, "[onDirectives] no handler for ${directive.getNamespaceAndName()}")
                 listeners.forEach {
                     it.onSkipped(directive)
                 }
@@ -113,30 +117,27 @@ class DirectiveProcessor(
 
         lock.withLock {
             shouldBeHandleDirectives.forEach {
-                handlingQueue.offer(DirectiveAndPolicy(it, directiveRouter.getPolicy(it)))
+                handlingQueue.offer(it)
             }
         }
 
         processingLoop.wakeAll()
     }
 
-    private fun preHandleDirective(directive: Directive): Boolean {
+    private fun preHandleDirective(directive: Directive, handler: DirectiveHandler) {
         Logger.d(TAG, "[onDirective] $directive")
         lock.withLock {
             directiveBeingPreHandled = directive
         }
 
-        val preHandled =
-            directiveRouter.preHandleDirective(directive, DirectiveHandlerResult(directive))
+        handler.preHandleDirective(directive, DirectiveHandlerResult(directive))
 
         lock.withLock {
-            if (directiveBeingPreHandled == null && preHandled) {
+            if (directiveBeingPreHandled == null) {
                 Logger.d(TAG, "[onDirective] directive handling completed at preHandleDirective().")
-                return true
+            } else {
+                directiveBeingPreHandled = null
             }
-
-            directiveBeingPreHandled = null
-            return preHandled
         }
     }
 
@@ -307,14 +308,12 @@ class DirectiveProcessor(
         }
 
         for (directive in copyCancelingQueue) {
-            directiveRouter.cancelDirective(directive)
-            // todo. what if cancelDirective() return false
+            directiveRouter.getDirectiveHandler(directive)?.cancelDirective(directive.getMessageId())
             listeners.forEach {
                 it.onCanceled(directive)
             }
         }
 
-        // todo. what if cancelDirective() return false
         return true
     }
 
@@ -350,7 +349,7 @@ class DirectiveProcessor(
             listeners.forEach {
                 it.onRequested(directive)
             }
-            val handleDirectiveSucceeded = directiveRouter.handleDirective(directive)
+            val handleDirectiveSucceeded = directiveRouter.getDirectiveHandler(directive)?.handleDirective(directive.getMessageId()) ?: false
             if (!handleDirectiveSucceeded) {
                 listeners.forEach {
                     it.onFailed(directive, "no handler for directive")
