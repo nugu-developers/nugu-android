@@ -20,22 +20,27 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
-import java.util.*
-import kotlin.collections.HashSet
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class DirectiveRouter {
     companion object {
         private const val TAG = "DirectiveRouter"
     }
 
-    private val handlers = Collections.synchronizedSet(HashSet<DirectiveHandler>())
+    private val lock = ReentrantLock()
+    private val handlers = HashSet<DirectiveHandler>()
 
     fun addDirectiveHandler(handler: DirectiveHandler) {
-        handlers.add(handler)
+        lock.withLock {
+            handlers.add(handler)
+        }
     }
 
     fun removeDirectiveHandler(handler: DirectiveHandler) {
-        handlers.remove(handler)
+        lock.withLock {
+            handlers.remove(handler)
+        }
     }
 
     fun preHandleDirective(directive: Directive, result: DirectiveHandlerResult): Boolean {
@@ -69,12 +74,11 @@ class DirectiveRouter {
         }
     }
 
-    private fun getDirectiveHandler(directive: Directive): DirectiveHandler? {
-        return handlers.find { it.configurations.containsKey(directive.getNamespaceAndName()) }
+    private fun getDirectiveHandler(directive: Directive): DirectiveHandler? = lock.withLock {
+        handlers.find { it.configurations.containsKey(directive.getNamespaceAndName()) }
     }
 
-    fun getPolicy(directive: Directive): BlockingPolicy {
-        return getDirectiveHandler(directive)?.configurations?.get(directive.getNamespaceAndName())
+    fun getPolicy(directive: Directive): BlockingPolicy =
+        getDirectiveHandler(directive)?.configurations?.get(directive.getNamespaceAndName())
             ?: BlockingPolicy.sharedInstanceFactory.get()
-    }
 }
