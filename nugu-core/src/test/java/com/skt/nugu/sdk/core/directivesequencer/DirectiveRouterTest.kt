@@ -39,49 +39,32 @@ class DirectiveRouterTest {
             ""
         ), "{}")
 
+        private val POLICY = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
+
         init {
             whenever(HANDLER.configurations).thenReturn(mutableMapOf<NamespaceAndName, BlockingPolicy>().apply{
-                put(DIRECTIVE.getNamespaceAndName(), BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO))
+                put(DIRECTIVE.getNamespaceAndName(), POLICY)
             })
         }
     }
 
     @Test
-    fun testDirectiveRouterTrue() {
+    fun testGetDirectiveHandler() {
         val router = DirectiveRouter()
         router.addDirectiveHandler(HANDLER)
 
-        val result: DirectiveHandlerResult = mock()
-
-        Assert.assertTrue(router.preHandleDirective(DIRECTIVE, result))
-        Assert.assertTrue(router.handleDirective(DIRECTIVE))
-        Assert.assertTrue(router.cancelDirective(DIRECTIVE))
-        verify(HANDLER).preHandleDirective(DIRECTIVE, result)
-        verify(HANDLER).handleDirective(DIRECTIVE.getMessageId())
-        verify(HANDLER).cancelDirective(DIRECTIVE.getMessageId())
-    }
-
-    @Test
-    fun testDirectiveRouterFalseWithRemoveDirectiveHandler() {
-        val router = DirectiveRouter()
-        router.addDirectiveHandler(HANDLER)
+        Assert.assertEquals(router.getDirectiveHandler(DIRECTIVE), HANDLER)
         router.removeDirectiveHandler(HANDLER)
-        val result: DirectiveHandlerResult = mock()
-
-        Assert.assertFalse(router.preHandleDirective(DIRECTIVE, result))
-        Assert.assertFalse(router.handleDirective(DIRECTIVE))
-        Assert.assertFalse(router.cancelDirective(DIRECTIVE))
-        verify(HANDLER, never()).preHandleDirective(DIRECTIVE, result)
-        verify(HANDLER, never()).handleDirective(DIRECTIVE.getMessageId())
-        verify(HANDLER, never()).cancelDirective(DIRECTIVE.getMessageId())
+        Assert.assertNull(router.getDirectiveHandler(DIRECTIVE))
     }
 
     @Test
-    fun testGetPolicy() {
+    fun testGetHandlerAndPolicyOfDirective() {
         val router = DirectiveRouter()
         router.addDirectiveHandler(HANDLER)
 
-        Assert.assertEquals(HANDLER.configurations[DIRECTIVE.getNamespaceAndName()], router.getPolicy(DIRECTIVE))
-        verify(HANDLER, atLeastOnce()).configurations
+        Assert.assertEquals(router.getHandlerAndPolicyOfDirective(DIRECTIVE), Pair(HANDLER, POLICY))
+        router.removeDirectiveHandler(HANDLER)
+        Assert.assertNull(router.getHandlerAndPolicyOfDirective(DIRECTIVE))
     }
 }

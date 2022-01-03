@@ -43,42 +43,17 @@ class DirectiveRouter {
         }
     }
 
-    fun preHandleDirective(directive: Directive, result: DirectiveHandlerResult): Boolean {
-        val handler = getDirectiveHandler(directive)
-        return if (handler != null) {
-            handler.preHandleDirective(directive, result)
-            true
-        } else {
-            Logger.w(TAG, "[preHandleDirective] no handler for ${directive.getNamespaceAndName()}")
-            false
-        }
-    }
-
-    fun handleDirective(directive: Directive): Boolean {
-        val handler = getDirectiveHandler(directive)
-        return if (handler != null) {
-            handler.handleDirective(directive.getMessageId())
-            true
-        } else {
-            false
-        }
-    }
-
-    fun cancelDirective(directive: Directive): Boolean {
-        val handler = getDirectiveHandler(directive)
-        return if (handler != null) {
-            handler.cancelDirective(directive.getMessageId())
-            true
-        } else {
-            false
-        }
-    }
-
-    private fun getDirectiveHandler(directive: Directive): DirectiveHandler? = lock.withLock {
+    fun getDirectiveHandler(directive: Directive): DirectiveHandler? = lock.withLock {
         handlers.find { it.configurations.containsKey(directive.getNamespaceAndName()) }
     }
 
-    fun getPolicy(directive: Directive): BlockingPolicy =
-        getDirectiveHandler(directive)?.configurations?.get(directive.getNamespaceAndName())
-            ?: BlockingPolicy.sharedInstanceFactory.get()
+    fun getHandlerAndPolicyOfDirective(directive: Directive): Pair<DirectiveHandler, BlockingPolicy>? = lock.withLock {
+        handlers.forEach { handler ->
+            handler.configurations[directive.getNamespaceAndName()]?.let {
+                return Pair(handler, it)
+            }
+        }
+
+        return null
+    }
 }
