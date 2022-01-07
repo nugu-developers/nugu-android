@@ -17,10 +17,12 @@
 package com.skt.nugu.sdk.platform.android.focus
 
 import android.content.Context
+import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 
 class AndroidContextDummyFocusInteractorFactory(val context: Context) : AudioFocusInteractorFactory {
-    override fun create(focusManager: FocusManagerInterface): AudioFocusInteractor = object: AudioFocusInteractor {
-
-    }
+    override fun create(
+        focusManager: FocusManagerInterface,
+        nuguClient: NuguClientInterface
+    ): AudioFocusInteractor = object: AudioFocusInteractor {}
 }
