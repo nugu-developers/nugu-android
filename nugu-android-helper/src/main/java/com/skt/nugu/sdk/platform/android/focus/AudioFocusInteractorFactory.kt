@@ -15,8 +15,9 @@
  */
 package com.skt.nugu.sdk.platform.android.focus
 
+import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 
 interface AudioFocusInteractorFactory {
-    fun create(focusManager: FocusManagerInterface): AudioFocusInteractor
+    fun create(focusManager: FocusManagerInterface, nuguClient: NuguClientInterface): AudioFocusInteractor
 }
