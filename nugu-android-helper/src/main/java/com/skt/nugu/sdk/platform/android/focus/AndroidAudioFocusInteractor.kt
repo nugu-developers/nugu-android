@@ -19,8 +19,10 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
+import com.skt.nugu.sdk.client.NuguClientInterface
 import com.skt.nugu.sdk.client.channel.DefaultFocusChannel
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
@@ -33,14 +35,28 @@ import java.util.concurrent.CountDownLatch
  *
  * To do so, this requires two audio focus manager. One is android audio focus manager(AAFM), and the other is NUGU audio focus manager(NAFM).
  */
-object AndroidAudioFocusInteractor {
-    private const val TAG = "AndAudioFocusInteractor"
+class AndroidAudioFocusInteractor {
+    companion object {
+        private const val TAG = "AndAudioFocusInteractor"
+    }
 
     /**
      * @param audioManager android audio manager to manage AAFM
      */
-    class Factory(private val audioManager: AudioManager, private val audioPlayerAgent: AudioPlayerAgentInterface?): AudioFocusInteractorFactory {
-        override fun create(focusManager: FocusManagerInterface): AudioFocusInteractor = Impl(audioManager, focusManager, audioPlayerAgent).apply {
+    class Factory(private val audioManager: AudioManager, private val useMainThreadOnRequestAudioManager: Boolean = true): AudioFocusInteractorFactory {
+        override fun create(
+            focusManager: FocusManagerInterface,
+            nuguClient: NuguClientInterface
+        ): AudioFocusInteractor = Impl(
+            audioManager,
+            focusManager,
+            nuguClient.audioPlayerAgent,
+            if (useMainThreadOnRequestAudioManager) {
+                Handler(Looper.getMainLooper())
+            } else {
+                Handler(HandlerThread("request_audio_manager_thread").apply { start() }.looper)
+            }
+        ).apply {
             focusManager.setExternalFocusInteractor(this)
         }
     }
@@ -52,12 +68,14 @@ object AndroidAudioFocusInteractor {
     internal class Impl(
         private val audioManager: AudioManager,
         private val audioFocusManager: FocusManagerInterface,
-        private val audioPlayerAgent: AudioPlayerAgentInterface?
+        private val audioPlayerAgent: AudioPlayerAgentInterface?,
+        private val handler: Handler
     ) : AudioFocusInteractor,
         FocusManagerInterface.ExternalFocusInteractor, ChannelObserver {
 
         private val channelName = DefaultFocusChannel.INTERACTION_CHANNEL_NAME
         private val releaseCallbackMap = HashMap<String, Runnable>()
+        private var focusOwnerReferences = HashSet<String>()
 
         override fun acquire(channelName: String, requesterName: String): Boolean {
             if(requesterName == TAG) {
@@ -123,6 +141,7 @@ object AndroidAudioFocusInteractor {
 
         private val audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener =
             AudioManager.OnAudioFocusChangeListener {
+                Logger.d(TAG, "[onAudioFocusChange] focusChange: $it")
                 when (it) {
                     AudioManager.AUDIOFOCUS_GAIN,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
@@ -147,8 +166,7 @@ object AndroidAudioFocusInteractor {
                     }
                 }
             }
-        private var focusOwnerReferences = HashSet<String>()
-        private val handler = Handler(Looper.getMainLooper())
+
 
         private fun requestAudioFocus(listener: AudioManager.OnAudioFocusChangeListener): Boolean {
             val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

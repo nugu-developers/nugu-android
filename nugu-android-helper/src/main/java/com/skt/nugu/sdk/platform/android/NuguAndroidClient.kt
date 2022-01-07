@@ -968,10 +968,10 @@ class NuguAndroidClient private constructor(
 
     init {
         (builder.audioFocusInteractorFactory as? AndroidContextDummyFocusInteractorFactory)?.run {
-            builder.audioFocusInteractorFactory = AndroidAudioFocusInteractor.Factory(this.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager, audioPlayerAgent)
+            builder.audioFocusInteractorFactory = AndroidAudioFocusInteractor.Factory(this.context.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
         }
 
-        audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.getSdkContainer().getAudioFocusManager())
+        audioFocusInteractor = builder.audioFocusInteractorFactory?.create(client.getSdkContainer().getAudioFocusManager(), this)
 
         val tempDisplayAgent = displayAgent
         val tempAudioPlayerAgent = audioPlayerAgent
