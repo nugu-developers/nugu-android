@@ -142,6 +142,7 @@ class SpeechRecognizerAggregator(
             }
 
             private fun updateState(state: AudioEndPointDetector.State, aggregatorState: SpeechRecognizerAggregatorInterface.State) {
+                Logger.d(TAG, "[updateState] state: $state, aggregatorState: $aggregatorState")
                 if (!state.isActive()) {
                     audioProvider.releaseAudioInputStream(speechProcessor)
                     if(keywordDetectorState == KeywordDetector.State.ACTIVE) {
