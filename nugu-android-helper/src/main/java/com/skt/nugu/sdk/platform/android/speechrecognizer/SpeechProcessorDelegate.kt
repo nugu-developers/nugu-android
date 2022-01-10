@@ -64,6 +64,7 @@ class SpeechProcessorDelegate(
     fun addListener(listener: Listener) {
         object : ASRAgentInterface.OnStateChangeListener {
             override fun onStateChanged(state: ASRAgentInterface.State) {
+                Logger.d(TAG, "[onStateChanged] epdState: $epdState, state: $state")
                 if(!epdState.isActive() && !state.isRecognizing()) {
                     if(epdState == AudioEndPointDetector.State.SPEECH_END && state == ASRAgentInterface.State.IDLE) {
                         listener.onIdle()
