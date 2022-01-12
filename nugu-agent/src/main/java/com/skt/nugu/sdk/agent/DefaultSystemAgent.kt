@@ -283,7 +283,7 @@ class DefaultSystemAgent(
         executor.submit {
             with(info.directive.header) {
                 executeSynchronizeStateEvent(
-                    if (referrerDialogRequestId.isBlank()) {
+                    if (referrerDialogRequestId.isNullOrBlank()) {
                         dialogRequestId
                     } else {
                         referrerDialogRequestId

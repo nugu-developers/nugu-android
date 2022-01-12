@@ -30,6 +30,6 @@ data class Header(
     val name: String,
     val namespace: String,
     val version: String,
-    val referrerDialogRequestId: String
+    val referrerDialogRequestId: String?
 )
 
