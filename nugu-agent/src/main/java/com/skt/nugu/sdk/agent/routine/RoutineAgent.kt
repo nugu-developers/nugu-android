@@ -308,7 +308,7 @@ class RoutineAgent(
                         }
                         add("data", action.data)
                     }.toString())
-                        .referrerDialogRequestId(directive.header.referrerDialogRequestId)
+                        .referrerDialogRequestId(directive.header.referrerDialogRequestId ?: "")
                         .build()
 
                     Logger.d(

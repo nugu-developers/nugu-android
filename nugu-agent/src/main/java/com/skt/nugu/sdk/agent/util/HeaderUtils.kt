@@ -17,8 +17,12 @@ package com.skt.nugu.sdk.agent.util
 
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
-fun Header.getValidReferrerDialogRequestId(): String = if (referrerDialogRequestId.isNotBlank()) {
-    referrerDialogRequestId
-} else {
-    dialogRequestId
+fun Header.getValidReferrerDialogRequestId(): String {
+    referrerDialogRequestId?.let {
+        if(it.isNotBlank()) {
+            return it
+        }
+    }
+
+    return dialogRequestId
 }
