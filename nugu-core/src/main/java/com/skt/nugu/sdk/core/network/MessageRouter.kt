@@ -92,6 +92,10 @@ class MessageRouter(
                 activeTransport?.shutdown()
                 activeTransport = null
             }
+            // Release ServerInitiatedDirective if not started
+            if (!sidController.isStarted()) {
+                sidController.release()
+            }
             transportFactory.createTransport(
                 authDelegate = authDelegate,
                 messageConsumer = this,
