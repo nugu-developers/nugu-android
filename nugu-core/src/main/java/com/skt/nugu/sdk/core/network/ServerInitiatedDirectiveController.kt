@@ -60,6 +60,7 @@ class ServerInitiatedDirectiveController(val TAG: String) {
                     )
                 }
             }
+            Logger.i(TAG, "[start] ServerInitiatedDirective started, initialized=$initialized")
             this.initialized = true
         }
     }
@@ -73,10 +74,13 @@ class ServerInitiatedDirectiveController(val TAG: String) {
         }
         isStart.set(false)
 
-        transport?.stopDirectivesService() ?: Logger.w(
-            TAG,
-            "[stop] activeTransport is not possible."
-        )
+        transport?.stopDirectivesService() ?: run {
+            Logger.w(
+                TAG,
+                "[stop] activeTransport is not possible."
+            )
+        }
+        Logger.i(TAG, "[stop] ServerInitiatedDirective stopped.")
     }
 
     fun release() {
