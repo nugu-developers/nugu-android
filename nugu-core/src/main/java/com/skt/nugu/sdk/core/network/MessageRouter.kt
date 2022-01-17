@@ -215,7 +215,7 @@ class MessageRouter(
         transport: Transport,
         reason: ConnectionStatusListener.ChangedReason
     ) {
-        Logger.d(TAG, "[onDisconnected] transport=$transport, activeTransport=$activeTransport")
+        Logger.d(TAG, "[onDisconnected] transport=$transport, activeTransport=$activeTransport, reason=$reason")
         lock.withLock {
             if (transport == activeTransport) {
                 activeTransport?.shutdown()
@@ -326,7 +326,6 @@ class MessageRouter(
     override fun startReceiveServerInitiatedDirective(onCompletion: (() -> Unit)?) : Boolean {
         if(sidController.isStarted()) {
             sidController.release()
-            //sidController.stop(activeTransport)
         }
         sidController.setOnCompletionListener(onCompletion)
         if(!sidController.start(activeTransport)) {
