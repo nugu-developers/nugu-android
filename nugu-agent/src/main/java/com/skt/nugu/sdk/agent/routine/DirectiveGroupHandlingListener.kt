@@ -38,13 +38,13 @@ class DirectiveGroupHandlingListener(
         fun onFailed(directive: Directive)
     }
 
+    private val directives = CopyOnWriteArrayList<Directive>()
+    private var existCanceledOrFailed = false
+
     init {
         directiveSequencer.addOnDirectiveHandlingListener(this)
         directiveGroupProcessor.addListener(this)
     }
-
-    private var directives = CopyOnWriteArrayList<Directive>()
-    private var existCanceledOrFailed = false
 
     override fun onPostProcessed(directives: List<Directive>) {
         if (directives.firstOrNull()?.header?.dialogRequestId == dialogRequestId) {
