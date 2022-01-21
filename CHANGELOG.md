@@ -1,7 +1,16 @@
 Change Log
 ==========
 
+Version 1.7.3 *(2022-01-21)*
+-----------------------------
+* Fix: Fix ConcurrentModificationException at DirectiveRouter (#2186)
+* Fix: NPE issue at DirectiveGroupHandlingListener (#2200)
+* Improve: Add feature to select thread when request android audio focus at AndroidAudioFocusInteractor (#2189)
+* Improve: Optional referrerDialogRequestId field (#2196)
+* Improve: Improve parent&child display check logic (#2202)
+
 Version 1.7.2 *(2021-12-23)*
+-----------------------------
 * Fix: Fix not reconnect when canceled in backoff (#2126)
 * Fix: Fix call only with ActivityResult in fallback webview (#2128)
 * Fix: Public EndCallPayload's member (#2152)
@@ -17,6 +26,7 @@ Version 1.7.2 *(2021-12-23)*
 * Improve: DirectiveHandler Interface change (See https://github.com/nugu-developers/nugu-android/wiki/Update-Guide#v172)
 
 Version 1.7.0 *(2021-11-05)*
+-----------------------------
 * Fix: Fix condition to determine parent template (#2121)
 * New: Add parentTemplateId param at render() (#2117)
 

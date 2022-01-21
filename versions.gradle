@@ -41,8 +41,8 @@ ext {
     jademarbleVersion = "0.2.7"
     silvertrayVersion = "4.4.0"
 
-    baseNuguVersionCode = 10702
-    baseNuguVersionName = "1.7.2"
+    baseNuguVersionCode = 10703
+    baseNuguVersionName = "1.7.3"
 
     if (rootProject.publishSnapshot) {
         // type current timestamp
