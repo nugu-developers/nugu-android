@@ -155,7 +155,7 @@ class DisplayAgent(
                 if(prepared.isEmpty() && copyStarted.isEmpty()) {
                     if(payload.token != null) {
                         if(currentInfo.any {
-                                it.value.payload.historyControl?.parentToken == payload.token
+                                it.key != this.getTemplateId() && it.value.payload.historyControl?.parentToken == payload.token
                             }) {
                             Logger.d(TAG, "[onSyncStateChanged] has child display, skip clear (templateId: ${getTemplateId()})")
                             return@submit
