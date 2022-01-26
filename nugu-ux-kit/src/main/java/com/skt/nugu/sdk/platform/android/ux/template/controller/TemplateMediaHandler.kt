@@ -146,9 +146,9 @@ open class TemplateMediaHandler(
         Logger.i(TAG, "observeMediaState")
         getNuguClient().audioPlayerAgent?.run {
             removeListener(mediaStateListener)
-            addListener(mediaStateListener)
+            addListener(mediaStateListener, true)
             removeOnDurationListener(mediaDurationListener)
-            addOnDurationListener(mediaDurationListener)
+            addOnDurationListener(mediaDurationListener, true)
         }
         getNuguClient().addOnDirectiveHandlingListener(directiveHandlingListener)
     }
