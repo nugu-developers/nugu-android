@@ -88,7 +88,7 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     /** Add a listener to be called when a state changed.
      * @param listener the listener that added
      */
-    fun addListener(listener: Listener)
+    fun addListener(listener: Listener, requestCurrentState: Boolean = false)
 
     /**
      * Remove a listener
@@ -110,7 +110,7 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     /** Add a listener to be called when duration retrieved
      * @param listener the listener that added
      */
-    fun addOnDurationListener(listener: OnDurationListener)
+    fun addOnDurationListener(listener: OnDurationListener, requestCurrentState: Boolean = false)
 
     /**
      * Remove a listener

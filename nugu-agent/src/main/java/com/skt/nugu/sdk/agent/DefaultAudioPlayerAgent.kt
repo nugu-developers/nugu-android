@@ -837,9 +837,12 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    override fun addListener(listener: AudioPlayerAgentInterface.Listener) {
+    override fun addListener(listener: AudioPlayerAgentInterface.Listener, requestCurrentState: Boolean) {
         executor.submit {
             activityListeners.add(listener)
+            if (requestCurrentState) {
+                listener.onStateChanged(currentActivity, createAudioInfoContext() ?: return@submit)
+            }
         }
     }
 
@@ -861,9 +864,12 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    override fun addOnDurationListener(listener: AudioPlayerAgentInterface.OnDurationListener) {
+    override fun addOnDurationListener(listener: AudioPlayerAgentInterface.OnDurationListener, requestCurrentState: Boolean) {
         executor.submit {
             durationListeners.add(listener)
+            if (requestCurrentState){
+                listener.onRetrieved(duration, createAudioInfoContext() ?: return@submit)
+            }
         }
     }
 
