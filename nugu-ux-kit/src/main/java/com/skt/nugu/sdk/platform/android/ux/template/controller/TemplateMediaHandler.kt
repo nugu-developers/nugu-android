@@ -119,7 +119,7 @@ open class TemplateMediaHandler(
         Logger.d(TAG, "startProgressMessageSending")
         mediaProgressJob?.cancel()
 
-        mediaProgressJob = fixedRateTimer(period = 100, initialDelay = 1000, action = {
+        mediaProgressJob = fixedRateTimer(period = 100, initialDelay = 0, action = {
             mediaListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
         })
 
