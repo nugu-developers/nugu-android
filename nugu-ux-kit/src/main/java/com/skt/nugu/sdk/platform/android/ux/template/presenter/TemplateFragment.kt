@@ -234,7 +234,7 @@ class TemplateFragment : Fragment() {
         }
 
         arguments?.run {
-            putString(ARG_TEMPLATE, viewModel.mergeTemplate(getString(ARG_TEMPLATE, ""), templateContent))
+            putString(ARG_TEMPLATE, mergeTemplate(getString(ARG_TEMPLATE, ""), templateContent))
         }
     }
 
