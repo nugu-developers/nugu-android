@@ -11,22 +11,21 @@ class TemplateViewModelTest {
 
     @Test
     fun mergeTemplate() {
-        val viewModel = TemplateViewModel()
-        assertEquals(viewModel.mergeTemplate(template, updatedTemplate), expectedResult)
+        assertEquals(mergeTemplate(template, updatedTemplate), expectedResult)
 
         template = "{\"param1\":\"value1\",\"param2\":\"value2\"}"
         updatedTemplate = "{\"param2\":\"value2-2\"}"
         expectedResult = "{\"param1\":\"value1\",\"param2\":\"value2-2\"}"
-        assertEquals(viewModel.mergeTemplate(template, updatedTemplate), expectedResult)
+        assertEquals(mergeTemplate(template, updatedTemplate), expectedResult)
 
         template = "{\"param1\":\"value1\",\"list\":[{\"listItem1\":\"list-value-1\"},{\"listItem2\":\"list-value-2\"}]}"
         updatedTemplate = ""
         expectedResult = "{\"param1\":\"value1\",\"list\":[{\"listItem1\":\"list-value-1\"},{\"listItem2\":\"list-value-2\"}]}"
-        assertEquals(viewModel.mergeTemplate(template, updatedTemplate), expectedResult)
+        assertEquals(mergeTemplate(template, updatedTemplate), expectedResult)
 
         template = "{\"param1\":\"value1\",\"list\":[{\"listItem1\":\"list-value-1\"},{\"listItem2\":\"list-value-2\"}]}"
         updatedTemplate = "{\"param2\":\"value2-2\"}"
         expectedResult = "{\"param1\":\"value1\",\"list\":[{\"listItem1\":\"list-value-1\"},{\"listItem2\":\"list-value-2\"}],\"param2\":\"value2-2\"}"
-        assertEquals(viewModel.mergeTemplate(template, updatedTemplate), expectedResult)
+        assertEquals(mergeTemplate(template, updatedTemplate), expectedResult)
     }
 }
