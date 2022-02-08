@@ -20,6 +20,8 @@ class JavascriptObjectReceiverTest : TestCase() {
             override fun setTitle(title: String) {}
             override fun fixedTextZoom() {}
             override fun requestActiveRoutine() {}
+            override fun requestPermission(permission: String) {}
+            override fun checkPermission(permission: String): Boolean = false
         })
         receiver.openExternalApp("{\n" +
                 "    \"method\": \"openExternalApp\",\n" +
@@ -41,6 +43,8 @@ class JavascriptObjectReceiverTest : TestCase() {
             override fun setTitle(title: String) {}
             override fun fixedTextZoom() {}
             override fun requestActiveRoutine() {}
+            override fun requestPermission(permission: String) {}
+            override fun checkPermission(permission: String): Boolean = false
         })
         receiver.openInAppBrowser("{\n" +
                 "    \"method\": \"openInAppBrowser\",\n" +
@@ -61,6 +65,8 @@ class JavascriptObjectReceiverTest : TestCase() {
             override fun setTitle(title: String) {}
             override fun fixedTextZoom() {}
             override fun requestActiveRoutine() {}
+            override fun requestPermission(permission: String) {}
+            override fun checkPermission(permission: String): Boolean = false
         })
         receiver.closeWindow("{\n" +
                 "    \"method\": \"closeWindow\" ,\n" +
@@ -81,6 +87,8 @@ class JavascriptObjectReceiverTest : TestCase() {
             }
             override fun fixedTextZoom() {}
             override fun requestActiveRoutine() {}
+            override fun requestPermission(permission: String) {}
+            override fun checkPermission(permission: String): Boolean = false
         })
         receiver.setTitle("{\n" +
                 "    \"method\": \"setTitle\" ,\n" +
@@ -101,6 +109,8 @@ class JavascriptObjectReceiverTest : TestCase() {
                 Assert.assertTrue("called", true)
             }
             override fun requestActiveRoutine() {}
+            override fun requestPermission(permission: String) {}
+            override fun checkPermission(permission: String): Boolean = false
         })
         receiver.fixedTextZoom("{\"method\": \"fixedTextZoom\"}")
     }
@@ -116,7 +126,38 @@ class JavascriptObjectReceiverTest : TestCase() {
             override fun requestActiveRoutine() {
                 Assert.assertTrue("called", true)
             }
+            override fun requestPermission(permission: String) {}
+            override fun checkPermission(permission: String): Boolean = false
         })
         receiver.requestActiveRoutine("{\"method\": \"requestActiveRoutine\"}")
+    }
+
+    @Test
+    fun testPermissions() {
+        val receiver = JavascriptObjectReceiver(object : JavascriptObjectReceiver.Listener {
+            override fun openExternalApp(androidScheme: String?, androidAppId: String?) {}
+            override fun openInAppBrowser(url: String) {}
+            override fun closeWindow(reason: String?) {}
+            override fun setTitle(title: String) {}
+            override fun fixedTextZoom() {}
+            override fun requestActiveRoutine() { }
+            override fun requestPermission(permission: String) {
+                Assert.assertTrue("called", true)
+            }
+            override fun checkPermission(permission: String): Boolean = false
+        })
+        if(!receiver.checkPermission("{\n" +
+                    "    \"method\": \"checkPermission\" ,\n" +
+                    "    \"body\": {\n" +
+                    "    \"permission\": \"REQUEST_SCHEDULE_EXACT_ALARM\"\n" +
+                    "    }\n" +
+                    "    }")) {
+            receiver.requestPermission("{\n" +
+                    "    \"method\": \"requestPermission\" ,\n" +
+                    "    \"body\": {\n" +
+                    "    \"permission\": \"REQUEST_SCHEDULE_EXACT_ALARM\"\n" +
+                    "    }\n" +
+                    "    }")
+        }
     }
 }
