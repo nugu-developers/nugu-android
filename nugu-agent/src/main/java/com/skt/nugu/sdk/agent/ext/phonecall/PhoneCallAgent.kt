@@ -115,6 +115,13 @@ class PhoneCallAgent(
                     }
                 })
             }
+            context.numberBlockable?.let {
+                addProperty("numberBlockable",if(it) {
+                    "TRUE"
+                } else {
+                    "FALSE"
+                })
+            }
         }.toString()
     }
 

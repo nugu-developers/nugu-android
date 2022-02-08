@@ -23,7 +23,8 @@ import com.google.gson.annotations.SerializedName
 data class Context(
     val state: State,
     val template: Template?,
-    val recipient: Recipient?
+    val recipient: Recipient?,
+    val numberBlockable: Boolean?
 ) {
     enum class Intent {
         @SerializedName("CALL")
@@ -38,6 +39,10 @@ data class Context(
         MISSED,
         @SerializedName("EXACT_ONE")
         EXACT_ONE,
+        @SerializedName("SAVE_CONTACT")
+        SAVE_CONTACT,
+        @SerializedName("BLOCK")
+        BLOCK,
         @SerializedName("NONE")
         NONE
     }

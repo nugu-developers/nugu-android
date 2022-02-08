@@ -22,7 +22,9 @@ data class Contact(
     @SerializedName("label")
     val label: Label?,
     @SerializedName("number")
-    val number: String
+    val number: String?,
+    @SerializedName("isBlocked")
+    val isBlocked: Boolean?
 ) {
     enum class Label {
         MOBILE,
