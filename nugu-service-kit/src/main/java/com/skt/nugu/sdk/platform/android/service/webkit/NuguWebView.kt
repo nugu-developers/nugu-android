@@ -65,6 +65,11 @@ class NuguWebView @JvmOverloads constructor(
         fun onRequestActiveRoutine()
     }
 
+    interface PermissionListener {
+        fun onRequestPermission(permission: String)
+        fun onCheckPermission(permission: String) : Boolean
+    }
+
     @Keep
     enum class THEME { DARK, LIGHT }
 
@@ -102,6 +107,7 @@ class NuguWebView @JvmOverloads constructor(
     var windowListener: WindowListener? = null
     var documentListener: DocumentListener? = null
     var routineListener: RoutineListener? = null
+    var permissionListener: PermissionListener? = null
     var redirectUri: String? = null
     var clientId: String? = null
     var grantType: String? = null
@@ -209,6 +215,26 @@ class NuguWebView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Requests permission to be granted to this application
+     * @param permission – The requested permission. Must be non-null and not empty
+     */
+    override fun requestPermission(permission: String) {
+        webView.post {
+            permissionListener?.onRequestPermission(permission)
+        }
+    }
+
+    /**
+     * Determine whether the given permission is allowed.
+     * In the lower version, the default value is set to true.
+     * @param permission – The name of the permission being checked.
+     * @returns true if the given permission is allowed, false if not.
+     */
+    override fun checkPermission(permission: String) : Boolean {
+        return permissionListener?.onCheckPermission(permission) ?: true
+    }
+
     fun setOnRoutineStatusChanged(token: String, status: String) {
         callJSFunction(JavaScriptHelper.formatOnRoutineStatusChanged(token, status))
     }
@@ -238,8 +264,13 @@ class NuguWebView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        webView.removeJavascriptInterface(JS_INTERFACE_NAME)
+        try {
+            webView.removeJavascriptInterface(JS_INTERFACE_NAME)
+        } catch (th : Throwable) {
+            th.printStackTrace()
+        }
     }
+
 
     @Deprecated(
         level = DeprecationLevel.WARNING,

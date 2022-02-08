@@ -31,6 +31,8 @@ class JavascriptObjectReceiver(val listener: Listener) {
         fun setTitle(title: String)
         fun fixedTextZoom()
         fun requestActiveRoutine()
+        fun requestPermission(permission: String)
+        fun checkPermission(permission: String) : Boolean
     }
 
     @Keep
@@ -49,6 +51,9 @@ class JavascriptObjectReceiver(val listener: Listener) {
 
     @Keep
     data class CloseWindow(val reason: String)
+
+    @Keep
+    data class Permissions(val permission: String)
 
     @JavascriptInterface
     fun openExternalApp(parameter: String) {
@@ -106,5 +111,26 @@ class JavascriptObjectReceiver(val listener: Listener) {
                 listener.requestActiveRoutine()
             }
         }
+    }
+
+    @JavascriptInterface
+    fun requestPermission(parameter: String) {
+        gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
+            if (it.method == "requestPermission") {
+                val info = gson.fromJson(it.body, Permissions::class.java)
+                listener.requestPermission(info?.permission.toString())
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun checkPermission(parameter: String) : Boolean {
+        gson.fromJson(parameter, JavascriptParameter::class.java)?.let {
+            if (it.method == "checkPermission") {
+                val info = gson.fromJson(it.body, Permissions::class.java)
+                return listener.checkPermission(info?.permission.toString())
+            }
+        }
+        return false
     }
 }
