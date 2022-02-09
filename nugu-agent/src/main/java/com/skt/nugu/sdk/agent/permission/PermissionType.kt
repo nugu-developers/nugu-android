@@ -21,5 +21,6 @@ enum class PermissionType {
     CALL,
     MESSAGE,
     PHONEBOOK,
-    CALL_HISTORY
+    CALL_HISTORY,
+    ALARM
 }
