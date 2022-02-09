@@ -16,16 +16,33 @@
 
 package com.skt.nugu.sdk.agent.common
 
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 
 data class InteractionControl(
     @SerializedName("mode")
-    val mode: Mode
+    val mode: Mode,
+    @SerializedName("referrerEvent")
+    val referrerEvent: ReferrerEvent?
 ) {
     enum class Mode {
         @SerializedName("NONE")
         NONE,
         @SerializedName("MULTI_TURN")
         MULTI_TURN
+    }
+
+    data class ReferrerEvent(
+        @SerializedName("type")
+        val type: String
+    )
+
+    fun toJsonObject(): JsonObject = JsonObject().apply {
+        addProperty("mode", mode.name)
+        referrerEvent?.let {
+            add("referrerEvent", JsonObject().apply {
+                addProperty("type", it.type)
+            })
+        }
     }
 }

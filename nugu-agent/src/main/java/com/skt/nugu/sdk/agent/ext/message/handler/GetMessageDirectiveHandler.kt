@@ -102,6 +102,9 @@ class GetMessageDirectiveHandler (
                                             }
                                         })
                                     }
+                                    payload.interactionControl?.let {
+                                        add("interactionControl", it.toJsonObject())
+                                    }
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
@@ -134,6 +137,9 @@ class GetMessageDirectiveHandler (
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("errorCode", errorCode)
+                                    payload.interactionControl?.let {
+                                        add("interactionControl", it.toJsonObject())
+                                    }
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()

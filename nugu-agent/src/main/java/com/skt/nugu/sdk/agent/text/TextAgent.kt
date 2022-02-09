@@ -281,6 +281,9 @@ class TextAgent(
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("token", payload.token)
                                     addProperty("errorCode", result.name)
+                                    payload.interactionControl?.let {
+                                        add("interactionControl", it.toJsonObject())
+                                    }
                                 }.toString())
                                 .build()
                         ).enqueue(object : MessageSender.Callback{

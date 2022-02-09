@@ -94,6 +94,9 @@ class SendCandidatesDirectiveHandler(
                                     PhoneCallAgent.VERSION.toString()
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
+                                    payload.interactionControl?.let {
+                                        add("interactionControl", it.toJsonObject())
+                                    }
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
