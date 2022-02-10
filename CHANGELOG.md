@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.7.4 *(2022-02-10)*
+-----------------------------
+* Improve: Improve media template Information update fast (#2207)
+* New: Update PhoneCall Interface v1.3 (#2208)
+* New: Update InteractionControl Policy (#2211)
+* New: Support Permission v1.1 (#2214)
+
 Version 1.7.3 *(2022-01-21)*
 -----------------------------
 * Fix: Fix ConcurrentModificationException at DirectiveRouter (#2186)
