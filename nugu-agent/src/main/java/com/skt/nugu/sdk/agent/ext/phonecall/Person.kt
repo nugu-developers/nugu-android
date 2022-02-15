@@ -42,7 +42,9 @@ data class Person(
     @SerializedName("score")
     val score: String?,
     @SerializedName("contacts")
-    val contacts: Array<Contact>?
+    val contacts: Array<Contact>?,
+    @SerializedName("poiId")
+    val poiId: String?
 ) {
     enum class Type {
         @SerializedName("CONTACT")
