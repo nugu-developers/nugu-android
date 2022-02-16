@@ -24,6 +24,7 @@ interface PhoneCallClient
     , EndCallDirectiveHandler.Controller
     , AcceptCallDirectiveHandler.Controller
     , BlockIncomingCallDirectiveHandler.Controller
+    , BlockNumberDirectiveHandler.Controller
 {
     fun getContext(): Context
 
