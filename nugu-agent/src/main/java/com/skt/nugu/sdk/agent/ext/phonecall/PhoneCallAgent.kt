@@ -53,6 +53,7 @@ class PhoneCallAgent(
     , EndCallDirectiveHandler.Controller
     , AcceptCallDirectiveHandler.Controller
     , BlockIncomingCallDirectiveHandler.Controller
+    , BlockNumberDirectiveHandler.Controller
     , PhoneCallClient.OnStateChangeListener
     , ChannelObserver
 {
@@ -152,6 +153,7 @@ class PhoneCallAgent(
             addDirectiveHandler(EndCallDirectiveHandler(this@PhoneCallAgent))
             addDirectiveHandler(AcceptCallDirectiveHandler(this@PhoneCallAgent))
             addDirectiveHandler(BlockIncomingCallDirectiveHandler(this@PhoneCallAgent))
+            addDirectiveHandler(BlockNumberDirectiveHandler(this@PhoneCallAgent))
         }
 
         client.addOnStateChangeListener(this)
@@ -210,6 +212,12 @@ class PhoneCallAgent(
     override fun blockIncomingCall(payload: BlockIncomingCallPayload) {
         executor.submit {
             client.blockIncomingCall(payload)
+        }
+    }
+
+    override fun blockNumber(payload: BlockNumberPayload) {
+        executor.submit {
+            client.blockNumber(payload)
         }
     }
 
