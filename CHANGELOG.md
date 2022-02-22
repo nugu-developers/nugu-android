@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+Version 1.7.5 *(2022-02-22)*
+-----------------------------
+* New: Update PhoneCall v1.3 (#2217)
+
 Version 1.7.4 *(2022-02-10)*
 -----------------------------
 * Improve: Improve media template Information update fast (#2207)
