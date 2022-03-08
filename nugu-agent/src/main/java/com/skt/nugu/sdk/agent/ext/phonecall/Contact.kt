@@ -16,6 +16,8 @@
 
 package com.skt.nugu.sdk.agent.ext.phonecall
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializer
 import com.google.gson.annotations.SerializedName
 
 data class Contact(
@@ -26,6 +28,26 @@ data class Contact(
     @SerializedName("isBlocked")
     val isBlocked: Boolean?
 ) {
+    companion object {
+        val gsonSerializer by lazy {
+            JsonSerializer<Contact> { src, _, _ ->
+                JsonObject().apply {
+                    src?.let {
+                        it.label?.let { label ->
+                            addProperty("label", label.name)
+                        }
+                        it.number?.let { number ->
+                            addProperty("number", number)
+                        }
+                        it.isBlocked?.let { isBlocked ->
+                            addProperty("isBlocked", if (isBlocked) "TRUE" else "FALSE")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     enum class Label {
         MOBILE,
         COMPANY,
