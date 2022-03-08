@@ -327,58 +327,72 @@ open class DisplayAudioPlayer constructor(
 
         smallLyricsView.setThrottledOnClickListener {
             lyricPresenter.show()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         lyricsView.setThrottledOnClickListener {
             lyricPresenter.hide()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnShowLyrics.setThrottledOnClickListener {
             lyricPresenter.show()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnPrev.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.PREV)
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnBarPrev.setThrottledOnClickListener {
             btnPrev.callOnClick()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnPlay.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.PLAY)
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnPause.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.PAUSE)
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnBarPlay.setThrottledOnClickListener {
             btnPlay.performClick()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnBarPause.setThrottledOnClickListener {
             btnPause.performClick()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnNext.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.NEXT)
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnBarNext.setThrottledOnClickListener {
             btnNext.performClick()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         btnBarClose.setThrottledOnClickListener {
             onCloseClicked()
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
-        btnFavorite.setThrottledOnClickListener { _ ->
+        btnFavorite.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.FAVORITE, btnFavorite.isSelected.toString())
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
-        btnShuffle.setThrottledOnClickListener { _ ->
+        btnShuffle.setThrottledOnClickListener {
             templateHandler?.onPlayerCommand(PlayerCommand.SHUFFLE, btnShuffle.isSelected.toString())
+            onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
         progressView.setOnTouchListener { _, _ -> true }
@@ -391,6 +405,10 @@ open class DisplayAudioPlayer constructor(
 
     open fun onBarPlayerClicked() {
         expand()
+    }
+
+    open fun onViewClicked(v: View) {
+        // do nothing. This function is only for notifying clicked view information to Custom Media Template
     }
 
     /**
@@ -618,8 +636,9 @@ open class DisplayAudioPlayer constructor(
 
             repeat?.let {
                 setRepeatMode(it)
-                btnRepeat.setThrottledOnClickListener { _ ->
+                btnRepeat.setThrottledOnClickListener { v ->
                     templateHandler?.onPlayerCommand(PlayerCommand.REPEAT, (btnRepeat.getTag(R.id.iv_repeat) as? Repeat)?.name ?: it.name)
+                    onViewClicked(v ?: return@setThrottledOnClickListener)
                 }
             }
 
