@@ -16,7 +16,7 @@
 
 package com.skt.nugu.sdk.agent.ext.phonecall
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 
@@ -59,7 +59,9 @@ data class Context(
         @SerializedName("candidates")
         val candidates: Array<Person>?
     ) {
-        fun toJson(): JsonElement = Gson().toJsonTree(this)
+        fun toJson(): JsonElement =
+            GsonBuilder().registerTypeAdapter(Contact::class.java, Contact.gsonSerializer).create()
+                .toJsonTree(this)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
