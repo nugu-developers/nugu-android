@@ -196,7 +196,7 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
     override fun onStateChanged(activity: AudioPlayerAgentInterface.State, context: AudioPlayerAgentInterface.Context) {
         playerActivity = activity
         handler.post {
-            Log.d(TAG, "[onStateChanged] activity")
+            Log.d(TAG, "[onStateChanged] activity: $activity, context: $context")
             handler.removeCallbacks(stopServiceRunnable)
             invalidateNotification(createDefaultRemoteViews())
         }
