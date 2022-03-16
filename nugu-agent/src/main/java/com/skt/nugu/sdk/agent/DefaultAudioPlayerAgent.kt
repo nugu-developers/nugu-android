@@ -417,7 +417,7 @@ class DefaultAudioPlayerAgent(
                     currentAudioInfo?.let {
                         playSynchronizer.releaseSync(it, null)
                         nextAudioInfo.referrerDialogRequestId = it.referrerDialogRequestId
-                        nextAudioInfo.sourceAudioInfo = it
+                        nextAudioInfo.sourceAudioInfo = it.sourceAudioInfo
                         nextAudioInfo.playContext = it.playContext
                     }
 
