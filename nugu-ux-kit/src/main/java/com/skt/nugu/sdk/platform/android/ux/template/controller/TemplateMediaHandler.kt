@@ -54,6 +54,7 @@ open class TemplateMediaHandler(
             if (context.templateId == templateInfo.templateId) {
                 audioDurationMs = duration ?: 0L
                 mediaListener?.onMediaDurationRetrieved(audioDurationMs)
+                mediaListener?.onMediaProgressChanged(getMediaProgressPercentage(), getMediaCurrentTimeMs())
             }
         }
     }
