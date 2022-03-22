@@ -66,14 +66,6 @@ class TemplateMediaHandlerTest {
 
         mediaTemplateHandler.mediaDurationListener.onRetrieved(null, mediaContextSample)
         verify(clientListener).onMediaDurationRetrieved(0L)
-
-        mediaTemplateHandler.mediaDurationListener.onRetrieved(null, mediaContextDiffSample)
-        verifyNoMoreInteractions(clientListener)
-
-        // check null condition
-        mediaTemplateHandler.setClientListener(null)
-        mediaTemplateHandler.mediaDurationListener.onRetrieved(1000L, mediaContextSample)
-        verifyNoMoreInteractions(clientListener)
     }
 
     @Test
