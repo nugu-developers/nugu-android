@@ -39,7 +39,6 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.Executors
-import kotlin.collections.HashMap
 
 class TextAgent(
     private val messageSender: MessageSender,
@@ -207,26 +206,29 @@ class TextAgent(
                 }
             }, namespaceAndName)
         } else {
-            val dialogRequestId = executeSendTextInputEventInternal(payload.text,
-                payload.playServiceId == null, payload.playServiceId, payload.token, payload.source, info.directive.header.dialogRequestId, object: TextAgentInterface.RequestListener {
-                    override fun onRequestCreated(dialogRequestId: String) {
-                        internalTextSourceHandleListeners.forEach {
-                            it.onRequestCreated(dialogRequestId)
-                        }
+            val dialogRequestId = executeSendTextInputEventInternal(TextInputRequester.Request.Builder(payload.text)
+                .includeDialogAttribute(payload.playServiceId == null)
+                .playServiceId(payload.playServiceId).token(payload.token)
+                .source(payload.source)
+                .referrerDialogRequestId(info.directive.header.dialogRequestId).build(), object: TextAgentInterface.RequestListener {
+                override fun onRequestCreated(dialogRequestId: String) {
+                    internalTextSourceHandleListeners.forEach {
+                        it.onRequestCreated(dialogRequestId)
                     }
+                }
 
-                    override fun onReceiveResponse(dialogRequestId: String) {
-                        internalTextSourceHandleListeners.forEach {
-                            it.onReceiveResponse(dialogRequestId)
-                        }
+                override fun onReceiveResponse(dialogRequestId: String) {
+                    internalTextSourceHandleListeners.forEach {
+                        it.onReceiveResponse(dialogRequestId)
                     }
+                }
 
-                    override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
-                        internalTextSourceHandleListeners.forEach {
-                            it.onError(dialogRequestId, type)
-                        }
+                override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
+                    internalTextSourceHandleListeners.forEach {
+                        it.onError(dialogRequestId, type)
                     }
-                })
+                }
+            })
             internalTextSourceHandleListeners.forEach {
                 it.onRequested(dialogRequestId)
             }
@@ -309,12 +311,11 @@ class TextAgent(
                 }
             }, namespaceAndName)
         } else {
-            val dialogRequestId = executeSendTextInputEventInternal(payload.text,
-                targetPlayServiceId == null,
-                targetPlayServiceId,
-                payload.token,
-                null,
-                info.directive.header.dialogRequestId,
+            val dialogRequestId = executeSendTextInputEventInternal(
+                TextInputRequester.Request.Builder(payload.text)
+                    .includeDialogAttribute(targetPlayServiceId == null)
+                    .playServiceId(targetPlayServiceId).token(payload.token)
+                    .referrerDialogRequestId(info.directive.header.dialogRequestId).build(),
                 object : TextAgentInterface.RequestListener {
                     override fun onRequestCreated(dialogRequestId: String) {
                         internalTextRedirectHandleListeners.forEach {
@@ -384,15 +385,30 @@ class TextAgent(
         text: String,
         playServiceId: String?,
         token: String?,
+        source: String?,
         referrerDialogRequestId: String?,
         includeDialogAttribute: Boolean,
         listener: TextAgentInterface.RequestListener?
     ): String {
-        Logger.d(TAG, "[requestTextInput] text: $text")
-        return executeSendTextInputEventInternal(text, includeDialogAttribute, playServiceId,token, null, referrerDialogRequestId, listener)
+        return textInput(TextInputRequester.Request.Builder(text).playServiceId(playServiceId).token(token)
+            .source(source).referrerDialogRequestId(referrerDialogRequestId)
+            .includeDialogAttribute(includeDialogAttribute), listener)
     }
 
-    private fun createMessage(text: String, includeDialogAttribute: Boolean, context: String, playServiceId: String?, token: String?, source: String?, dialogRequestId: String, referrerDialogRequestId: String?) =
+    override fun textInput(
+        request: TextInputRequester.Request,
+        listener: TextAgentInterface.RequestListener?
+    ): String {
+        Logger.d(TAG, "[textInput] request: $request, listener: $listener")
+        return executeSendTextInputEventInternal(request, listener)
+    }
+
+    override fun textInput(
+        requestBuilder: TextInputRequester.Request.Builder,
+        listener: TextAgentInterface.RequestListener?
+    ): String = textInput(requestBuilder.build(), listener)
+
+    private fun createMessage(context: String, request: TextInputRequester.Request, dialogRequestId: String) =
         EventMessageRequest.Builder(
             context,
             NAMESPACE,
@@ -402,19 +418,19 @@ class TextAgent(
             .payload(
                 JsonObject().apply
                 {
-                    addProperty("text", text)
-                    token?.let {
+                    addProperty("text", request.text)
+                    request.token?.let {
                         addProperty("token", it)
                     }
-                    source?.let {
+                    request.source?.let {
                         addProperty("source", it)
                     }
 
-                    playServiceId?.let {
+                    request.playServiceId?.let {
                         addProperty("playServiceId", it)
                     }
 
-                    if(includeDialogAttribute) {
+                    if(request.includeDialogAttribute) {
                         dialogAttributeStorage.getRecentAttribute()?.let { attr ->
                             attr.playServiceId?.let {
                                 addProperty("playServiceId", it)
@@ -429,15 +445,10 @@ class TextAgent(
                         }
                     }
                 }.toString()
-            ).referrerDialogRequestId(referrerDialogRequestId ?: "").build()
+            ).referrerDialogRequestId(request.referrerDialogRequestId ?: "").build()
 
     private fun executeSendTextInputEventInternal(
-        text: String,
-        includeDialogAttribute: Boolean,
-        playServiceId: String?,
-        token: String?,
-        source: String?,
-        referrerDialogRequestId: String?,
+        request: TextInputRequester.Request,
         listener: TextAgentInterface.RequestListener?
     ): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
@@ -446,7 +457,7 @@ class TextAgent(
             override fun onContext(jsonContext: String) {
                 Logger.d(TAG, "[onContextAvailable] jsonContext: $jsonContext")
                 executor.submit {
-                    createMessage(text, includeDialogAttribute, jsonContext, playServiceId, token, source, dialogRequestId, referrerDialogRequestId).let {
+                    createMessage(jsonContext, request, dialogRequestId).let {
                         listener?.onRequestCreated(dialogRequestId)
 
                         val call = messageSender.newCall(it)

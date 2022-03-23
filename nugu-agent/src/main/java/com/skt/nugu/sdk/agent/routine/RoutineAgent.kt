@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.agent.routine.handler.ContinueDirectiveHandler
 import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
 import com.skt.nugu.sdk.agent.routine.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
+import com.skt.nugu.sdk.agent.text.TextInputRequester
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -233,13 +234,10 @@ class RoutineAgent(
         }
 
         private fun doTextAction(action: Action) {
-            textAgent?.requestTextInput(
-                action.text!!,
-                action.playServiceId,
-                action.token,
-                null,
-                false,
-                object : TextAgentInterface.RequestListener {
+            textAgent?.textInput(
+                TextInputRequester.Request.Builder(action.text!!)
+                    .playServiceId(action.playServiceId).token(action.token)
+                    .includeDialogAttribute(false), object : TextAgentInterface.RequestListener {
                     override fun onRequestCreated(dialogRequestId: String) {
                         Logger.d(TAG, "[onRequestCreated] dialogRequestId: $dialogRequestId")
                         textInputRequests.add(dialogRequestId)
