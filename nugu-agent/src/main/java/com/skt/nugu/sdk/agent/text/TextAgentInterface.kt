@@ -17,7 +17,7 @@ package com.skt.nugu.sdk.agent.text
 
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
-interface TextAgentInterface {
+interface TextAgentInterface: TextInputRequester {
     enum class ErrorType {
         ERROR_NETWORK,
         ERROR_RESPONSE_TIMEOUT,
@@ -85,6 +85,7 @@ interface TextAgentInterface {
      * @param text the input text which to send request.
      * @param playServiceId the playServiceId for request
      * @param token: the token for request
+     * @param source: the source for request
      * @param referrerDialogRequestId the referrerDialogRequestId for request
      * @param includeDialogAttribute the flag to include or not dialog's attribute
      * @param listener the listener for request
@@ -94,6 +95,7 @@ interface TextAgentInterface {
         text: String,
         playServiceId: String? = null,
         token: String? = null,
+        source: String? = null,
         referrerDialogRequestId: String? = null,
         includeDialogAttribute: Boolean = true,
         listener: RequestListener? = null

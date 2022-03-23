@@ -177,6 +177,7 @@ interface ClientHelperInterface {
      * @param text : the source text for
      * @param playServiceId the playServiceId for request
      * @param token: the token for request
+     * @param source: the source for request
      * @param referrerDialogRequestId the referrerDialogRequestId for request
      * @param includeDialogAttribute the flag to include or not dialog's attribute
      * @param listener the listener for request
@@ -186,6 +187,7 @@ interface ClientHelperInterface {
         text: String,
         playServiceId: String? = null,
         token: String? = null,
+        source: String? = null,
         referrerDialogRequestId: String? = null,
         includeDialogAttribute: Boolean = true,
         listener: TextAgentInterface.RequestListener? = null
