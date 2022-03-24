@@ -47,6 +47,7 @@ import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
+import com.skt.nugu.sdk.agent.extension.ExtensionAgent
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
 import com.skt.nugu.sdk.agent.location.LocationAgent
 import com.skt.nugu.sdk.agent.location.LocationProvider
@@ -765,15 +766,15 @@ class NuguAndroidClient private constructor(
 
                 builder.extensionClient?.also { extensionClient ->
                     addAgentFactory(
-                        DefaultExtensionAgent.NAMESPACE,
-                        object : AgentFactory<DefaultExtensionAgent> {
-                            override fun create(container: SdkContainer): DefaultExtensionAgent =
+                        ExtensionAgent.NAMESPACE,
+                        object : AgentFactory<ExtensionAgent> {
+                            override fun create(container: SdkContainer): ExtensionAgent =
                                 with(container) {
-                                    DefaultExtensionAgent(
+                                    ExtensionAgent(
+                                        getDirectiveSequencer(),
                                         getContextManager(),
                                         getMessageSender()
                                     ).apply {
-                                        getDirectiveSequencer().addDirectiveHandler(this)
                                         setClient(extensionClient)
                                     }
                                 }
@@ -1208,7 +1209,7 @@ class NuguAndroidClient private constructor(
         }
     override val extensionAgent: ExtensionAgentInterface?
         get() = try {
-            client.getAgent(DefaultExtensionAgent.NAMESPACE) as ExtensionAgentInterface
+            client.getAgent(ExtensionAgent.NAMESPACE) as ExtensionAgentInterface
         } catch (th: Throwable) {
             null
         }
