@@ -210,27 +210,31 @@ class TextAgent(
                 .includeDialogAttribute(payload.playServiceId == null)
                 .playServiceId(payload.playServiceId).token(payload.token)
                 .source(payload.source)
-                .referrerDialogRequestId(info.directive.header.dialogRequestId).build(), object: TextAgentInterface.RequestListener {
-                override fun onRequestCreated(dialogRequestId: String) {
-                    internalTextSourceHandleListeners.forEach {
-                        it.onRequestCreated(dialogRequestId)
-                    }
-                }
-
-                override fun onReceiveResponse(dialogRequestId: String) {
-                    internalTextSourceHandleListeners.forEach {
-                        it.onReceiveResponse(dialogRequestId)
-                    }
-                }
-
-                override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
-                    internalTextSourceHandleListeners.forEach {
-                        it.onError(dialogRequestId, type)
-                    }
-                }
-            })
+                .referrerDialogRequestId(info.directive.header.dialogRequestId).build(), handleSourceDirectiveRequestListener)
             internalTextSourceHandleListeners.forEach {
                 it.onRequested(dialogRequestId)
+            }
+        }
+    }
+
+    private val handleSourceDirectiveRequestListener by lazy {
+        object : TextAgentInterface.RequestListener {
+            override fun onRequestCreated(dialogRequestId: String) {
+                internalTextSourceHandleListeners.forEach {
+                    it.onRequestCreated(dialogRequestId)
+                }
+            }
+
+            override fun onReceiveResponse(dialogRequestId: String) {
+                internalTextSourceHandleListeners.forEach {
+                    it.onReceiveResponse(dialogRequestId)
+                }
+            }
+
+            override fun onError(dialogRequestId: String, type: TextAgentInterface.ErrorType) {
+                internalTextSourceHandleListeners.forEach {
+                    it.onError(dialogRequestId, type)
+                }
             }
         }
     }

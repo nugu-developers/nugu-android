@@ -73,6 +73,19 @@ interface TextInputRequester {
         }
     }
 
+    /**
+     * Given a request, request "Text.Input" event.
+     * @param request the request. refer [Request]
+     * @param listener the listener for request's status.
+     * @return the dialogRequestId for request
+     */
     fun textInput(request: Request, listener: TextAgentInterface.RequestListener? = null): String
+
+    /**
+     * Given a builder for request, request "Text.Input" event.
+     * @param requestBuilder the builder for request. refer [Request] and [Request.Builder]
+     * @param listener the listener for request's status.
+     * @return the dialogRequestId for request
+     */
     fun textInput(requestBuilder: Request.Builder, listener: TextAgentInterface.RequestListener? = null): String
 }
