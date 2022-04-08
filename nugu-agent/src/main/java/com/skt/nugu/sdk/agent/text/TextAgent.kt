@@ -81,7 +81,7 @@ class TextAgent(
         private const val TAG = "TextAgent"
 
         const val NAMESPACE = "Text"
-        private val VERSION = Version(1,6)
+        private val VERSION = Version(1,7)
 
         private const val NAME_TEXT_SOURCE = "TextSource"
         private const val NAME_TEXT_REDIRECT = "TextRedirect"
