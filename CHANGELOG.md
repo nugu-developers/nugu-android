@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 1.7.7 *(2022-04-11)*
+-----------------------------
+* Fix: Fix wrong update source audio info (#2223)
+* Fix: Notify media progress when duration retrieved (#2225)
+* New: Support Text Interface v1.7 (#2230)
+	*  Add source for TextInput event (#2227)
+
+Version 1.7.6 *(2022-04-06)*
+-----------------------------
+* Fix: Fix PhoneCall's Contact Serialization (#2220)
+
 Version 1.7.5 *(2022-02-22)*
 -----------------------------
 * New: Update PhoneCall v1.3 (#2217)
