@@ -137,7 +137,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
                     val body = JSONObject(response.body)
                     throw BaseException.UnAuthenticatedException(
                         error = body.get("error").toString(),
-                        description = body.get("error_description").toString(),
+                        description = body.optString("error_description"),
                         code = body.optString("code")
                     )
                 }
@@ -230,7 +230,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    description = body.get("error_description").toString(),
+                    description = body.optString("error_description"),
                     code = body.optString("code")
                 )
             }
@@ -314,7 +314,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    description = body.get("resultMessage").toString(),
+                    description = body.optString("resultMessage"),
                     code = body.optString("resultCode")
                 )
             }
@@ -348,7 +348,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    description = body.get("error_description").toString(),
+                    description = body.optString("error_description"),
                     code = body.optString("code")
                 )
             }
@@ -386,7 +386,7 @@ class NuguOAuthClient(private val delegate: UrlDelegate) {
                 val body = JSONObject(response.body)
                 throw BaseException.UnAuthenticatedException(
                     error = body.get("error").toString(),
-                    description = body.get("error_description").toString(),
+                    description = body.optString("error_description"),
                     code = body.optString("code")
                 )
             }
