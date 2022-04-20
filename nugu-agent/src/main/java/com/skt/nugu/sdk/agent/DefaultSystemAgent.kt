@@ -338,16 +338,9 @@ class DefaultSystemAgent(
         Logger.d(TAG, "[handleResetConnection] $info")
         val payload =
             MessageFactory.create(info.directive.payload, ResetConnectionPayload::class.java)
-        if (payload == null) {
-            Logger.d(
-                TAG,
-                "[handleResetConnection] invalid payload: ${info.directive.payload}"
-            )
-            return
-        }
 
         executor.submit {
-            connectionManager.resetConnection(payload.description)
+            connectionManager.resetConnection(payload?.description)
         }
     }
 
