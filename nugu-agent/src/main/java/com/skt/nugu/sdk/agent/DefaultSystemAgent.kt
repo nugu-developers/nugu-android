@@ -159,7 +159,7 @@ class DefaultSystemAgent(
 
     internal data class ResetConnectionPayload(
         @SerializedName("description")
-        val description: String
+        val description: String?
     )
 
     /**
