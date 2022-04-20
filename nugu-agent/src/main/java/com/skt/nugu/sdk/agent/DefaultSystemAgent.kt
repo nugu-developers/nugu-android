@@ -82,7 +82,6 @@ class DefaultSystemAgent(
 
         /** events */
         const val EVENT_NAME_SYNCHRONIZE_STATE = "SynchronizeState"
-        const val EVENT_NAME_DISCONNECT = "Disconnect"
         const val EVENT_NAME_ECHO = "Echo"
 
         val HANDOFF_CONNECTION = NamespaceAndName(
@@ -166,9 +165,7 @@ class DefaultSystemAgent(
     /**
      * Shut down the Impl.
      */
-    override fun shutdown() {
-        onUserDisconnect()
-    }
+    override fun shutdown() = Unit
 
     override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val nonBlockingPolicy = BlockingPolicy.sharedInstanceFactory.get()
@@ -268,7 +265,6 @@ class DefaultSystemAgent(
     private fun handleTurnOff(info: DirectiveInfo) {
         Logger.d(TAG, "[handleTurnOff] $info")
         executor.submit {
-            executeDisconnectEvent()
             connectionManager.shutdown()
             observers.forEach { it.onTurnOff() }
         }
@@ -351,7 +347,6 @@ class DefaultSystemAgent(
         }
 
         executor.submit {
-            executeDisconnectEvent()
             connectionManager.resetConnection(payload.description)
         }
     }
@@ -415,20 +410,6 @@ class DefaultSystemAgent(
      */
     private fun handleEcho(info: DirectiveInfo) {
         Logger.d(TAG, "[handleEcho] $info")
-    }
-
-    /**
-     * Execute event in thread for user disconnect
-     */
-    private fun onUserDisconnect() {
-        executor.submit(this@DefaultSystemAgent::executeDisconnectEvent)
-    }
-
-    /**
-     * Execute a disconnect in thread.
-     */
-    private fun executeDisconnectEvent() {
-        sendEvent(name = EVENT_NAME_DISCONNECT, noAck = true)
     }
 
     override fun onContextAvailable(jsonContext: String) {
