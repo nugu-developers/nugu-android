@@ -43,7 +43,7 @@ class AndroidAudioFocusInteractor {
     /**
      * @param audioManager android audio manager to manage AAFM
      */
-    class Factory(private val audioManager: AudioManager, private val useMainThreadOnRequestAudioManager: Boolean = true): AudioFocusInteractorFactory {
+    class Factory(private val audioManager: AudioManager, private val useMainThreadOnRequestAudioManager: Boolean = true, private val alwaysRequestAudioFocus: Boolean = true): AudioFocusInteractorFactory {
         override fun create(
             focusManager: FocusManagerInterface,
             nuguClient: NuguClientInterface
@@ -55,7 +55,8 @@ class AndroidAudioFocusInteractor {
                 Handler(Looper.getMainLooper())
             } else {
                 Handler(HandlerThread("request_audio_manager_thread").apply { start() }.looper)
-            }
+            },
+            alwaysRequestAudioFocus
         ).apply {
             focusManager.setExternalFocusInteractor(this)
         }
@@ -69,7 +70,8 @@ class AndroidAudioFocusInteractor {
         private val audioManager: AudioManager,
         private val audioFocusManager: FocusManagerInterface,
         private val audioPlayerAgent: AudioPlayerAgentInterface?,
-        private val handler: Handler
+        private val handler: Handler,
+        private val alwaysRequestAudioFocus: Boolean
     ) : AudioFocusInteractor,
         FocusManagerInterface.ExternalFocusInteractor, ChannelObserver {
 
@@ -139,9 +141,11 @@ class AndroidAudioFocusInteractor {
             // no-op
         }
 
+        private var currentAudioFocus = AudioManager.AUDIOFOCUS_LOSS
         private val audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener =
             AudioManager.OnAudioFocusChangeListener {
                 Logger.d(TAG, "[onAudioFocusChange] focusChange: $it")
+                currentAudioFocus = it
                 when (it) {
                     AudioManager.AUDIOFOCUS_GAIN,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
@@ -167,8 +171,19 @@ class AndroidAudioFocusInteractor {
                 }
             }
 
+        private fun hasAudioFocus(): Boolean = when(currentAudioFocus) {
+            AudioManager.AUDIOFOCUS_GAIN,
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE,
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK -> true
+            else -> false
+        }
 
         private fun requestAudioFocus(listener: AudioManager.OnAudioFocusChangeListener): Boolean {
+            if(!alwaysRequestAudioFocus && hasAudioFocus()) {
+                return true
+            }
+
             val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 audioManager.requestAudioFocus(
                     AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).setOnAudioFocusChangeListener(
