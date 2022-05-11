@@ -18,5 +18,5 @@ package com.skt.nugu.sdk.agent.ext.mediaplayer.event
 
 interface EventCallback {
     fun onSuccess(message:String?)
-    fun onFailure(errorCode: String)
+    fun onFailure(errorCode: String, data: String?)
 }

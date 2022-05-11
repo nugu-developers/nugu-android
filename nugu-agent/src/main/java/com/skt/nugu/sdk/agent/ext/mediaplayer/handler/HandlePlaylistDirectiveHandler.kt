@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.ext.mediaplayer.handler
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.ext.mediaplayer.MediaPlayerAgent
 import com.skt.nugu.sdk.agent.ext.mediaplayer.event.EventCallback
@@ -31,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 
 class HandlePlaylistDirectiveHandler(
     private val controller: Controller,
@@ -38,6 +40,7 @@ class HandlePlaylistDirectiveHandler(
     private val contextGetter: ContextGetterInterface
 ) : AbstractDirectiveHandler() {
     companion object {
+        private const val TAG = "HandlePlaylistDirectiveHandler"
         private const val NAME_HANDLE_PLAYLIST = "HandlePlayList"
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_FAILED = "Failed"
@@ -83,7 +86,7 @@ class HandlePlaylistDirectiveHandler(
                     })
                 }
 
-                override fun onFailure(errorCode: String) {
+                override fun onFailure(errorCode: String, data: String?) {
                     contextGetter.getContext(object : IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
                             messageSender.newCall(
@@ -95,6 +98,13 @@ class HandlePlaylistDirectiveHandler(
                                 ).payload(JsonObject().apply {
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("errorCode", errorCode)
+                                    data?.let {
+                                        try {
+                                            add("data", JsonParser.parseString(it).asJsonObject)
+                                        } catch (th: Throwable) {
+                                            Logger.e(TAG, "[handleDirective] error to create data json object.", th)
+                                        }
+                                    }
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()

@@ -57,7 +57,7 @@ class MediaPlayerAgent(
         private const val TAG = "MediaPlayerAgent"
 
         const val NAMESPACE = "MediaPlayer"
-        val VERSION = Version(1, 1)
+        val VERSION = Version(1, 2)
     }
 
     init {

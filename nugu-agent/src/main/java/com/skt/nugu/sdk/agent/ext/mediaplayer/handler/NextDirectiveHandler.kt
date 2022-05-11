@@ -35,6 +35,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.skt.nugu.sdk.core.utils.Logger
 
 class NextDirectiveHandler(
     private val controller: Controller,
@@ -42,6 +43,7 @@ class NextDirectiveHandler(
     private val contextGetter: ContextGetterInterface
 ): AbstractDirectiveHandler() {
     companion object {
+        private const val TAG = "NextDirectiveHandler"
         private const val NAME_NEXT = "Next"
         private const val NAME_SUCCEEDED = "Succeeded"
         private const val NAME_SUSPENDED = "Suspended"
@@ -123,7 +125,7 @@ class NextDirectiveHandler(
                     })
                 }
 
-                override fun onFailure(errorCode: String) {
+                override fun onFailure(errorCode: String, data: String?) {
                     contextGetter.getContext(object: IgnoreErrorContextRequestor() {
                         override fun onContext(jsonContext: String) {
                             messageSender.newCall(
@@ -136,6 +138,13 @@ class NextDirectiveHandler(
                                     addProperty("playServiceId", payload.playServiceId)
                                     addProperty("token", payload.token)
                                     addProperty("errorCode", errorCode)
+                                    data?.let {
+                                        try {
+                                            add("data", JsonParser.parseString(it).asJsonObject)
+                                        } catch (th: Throwable) {
+                                            Logger.e(TAG, "[handleDirective] error to create data json object.", th)
+                                        }
+                                    }
                                 }.toString())
                                     .referrerDialogRequestId(info.directive.getDialogRequestId())
                                     .build()
