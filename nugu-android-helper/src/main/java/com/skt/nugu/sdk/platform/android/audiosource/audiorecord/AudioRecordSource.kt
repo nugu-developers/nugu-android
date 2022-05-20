@@ -85,14 +85,22 @@ internal open class AudioRecordSource(
         return AudioSource.SOURCE_CLOSED
     }
 
-    override fun close() {
-        Logger.d(TAG, "[close]")
+    protected fun stop() {
         audioRecord?.apply {
-            if(recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+            if (recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                 stop()
             }
-            release()
         }
+    }
+
+    protected fun release() {
+        audioRecord?.release()
         audioRecord = null
+    }
+
+    override fun close() {
+        stop()
+        release()
+        Logger.d(TAG, "[close]")
     }
 }

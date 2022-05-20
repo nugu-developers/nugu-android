@@ -93,6 +93,7 @@ internal class AudioRecordSourceAboveQ(
     }
 
     override fun close() {
+        super.stop()
         audioRecord?.apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 audioRecordingCallback?.let {
@@ -100,7 +101,7 @@ internal class AudioRecordSourceAboveQ(
                 }
             }
         }
-        super.close()
+        super.release()
         isClientSilenced = false
     }
 }
