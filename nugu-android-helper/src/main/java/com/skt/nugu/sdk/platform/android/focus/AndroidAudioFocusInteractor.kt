@@ -200,10 +200,12 @@ class AndroidAudioFocusInteractor {
             }
 
             Logger.d(TAG, "[requestAudioFocus] result: $result")
-            if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
-                return false
+            return if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                currentAudioFocus = AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
+                true
+            } else {
+                false
             }
-            return true
         }
 
         private fun abandonAudioFocus(listener: AudioManager.OnAudioFocusChangeListener) {
@@ -218,6 +220,9 @@ class AndroidAudioFocusInteractor {
                 audioManager.abandonAudioFocus(listener)
             }
 
+            if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                currentAudioFocus = AudioManager.AUDIOFOCUS_LOSS
+            }
             Logger.d(TAG, "[abandonAudioFocus] result: $result")
         }
     }
