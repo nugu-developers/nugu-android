@@ -33,26 +33,24 @@ class ProgressTimer {
         const val NO_INTERVAL = 0L
     }
 
-    private var timerThread: TimerThread? = null
-    private var delay: Long =
-        NO_DELAY
-    private var interval: Long =
-        NO_INTERVAL
-    private var onProgressListener: ProgressListener? = null
-    private var progressProvider: ProgressProvider? = null
+    internal data class ProgressReportParam(
+        val delay: Long,
+        val interval: Long,
+        val progressListener: ProgressListener,
+        val progressProvider: ProgressProvider
+    ) {
+        var lastReportedProgress: Long = 0L
+    }
 
-    private var lastReportedProgress: Long = 0L
+    private var timerThread: TimerThread? = null
+
+    private var currentProgressReportParam: ProgressReportParam? = null
 
     fun init(delay: Long, interval: Long, progressListener: ProgressListener, progressProvider: ProgressProvider) {
         Logger.d(TAG, "[init] delay: $delay, interval: $interval, onProgressListener: $progressListener, progressProvider: $progressProvider")
         cancelTimer()
 
-        this.delay = delay
-        this.interval = interval
-        this.onProgressListener = progressListener
-        this.progressProvider = progressProvider
-
-        lastReportedProgress = 0L
+        currentProgressReportParam = ProgressReportParam(delay, interval, progressListener, progressProvider)
 
         if (NO_DELAY == delay && NO_INTERVAL == interval) {
             Logger.d(TAG, "[init] no timer (no delay and no interval)")
@@ -61,27 +59,37 @@ class ProgressTimer {
     }
 
     private fun startTimer() {
-        Logger.d(TAG, "[startTimer] onProgressListener: $onProgressListener")
-        val listener = onProgressListener
-        val provider = progressProvider
-
-        if(listener ==  null || provider == null) {
+        val copyCurrentProgressReportParam = currentProgressReportParam
+        Logger.d(TAG, "[startTimer] ProgressReportParam: $copyCurrentProgressReportParam")
+        if(copyCurrentProgressReportParam == null) {
             return
         }
 
-        timerThread = TimerThread(listener, provider).apply {
+        timerThread = TimerThread(copyCurrentProgressReportParam).apply {
             start()
         }
     }
 
     private fun cancelTimer() {
-        Logger.d(TAG, "[cancelTimer] timer: $timerThread")
+        Logger.d(TAG, "[cancelTimer] ProgressReportParam: $currentProgressReportParam, timer: $timerThread")
         timerThread?.requestCancel()
+        timerThread = null
+    }
+
+    private fun finishTimer() {
+        Logger.d(TAG, "[finishTimer] ProgressReportParam: $currentProgressReportParam, timer: $timerThread")
+        timerThread?.requestFinish()
+        timerThread = null
     }
 
     fun start() {
         Logger.d(TAG, "[start]")
         startTimer()
+    }
+
+    fun finish() {
+        Logger.d(TAG, "[finish]")
+        finishTimer()
     }
 
     fun pause() {
@@ -97,54 +105,61 @@ class ProgressTimer {
     fun stop() {
         Logger.d(TAG, "[stop]")
         cancelTimer()
-
-        delay =
-            NO_DELAY
-        interval =
-            NO_INTERVAL
-        onProgressListener = null
-        progressProvider = null
-        lastReportedProgress = 0L
+        currentProgressReportParam = null
     }
 
     private inner class TimerThread(
-//        private val delay: Long,
-//        private val interval: Long,
-        private val progressListener: ProgressListener,
-        private val progressProvider: ProgressProvider
+        private val progressReportParam: ProgressReportParam
     ) : Thread() {
         private var isCancelling = false
+        private var isFinishing = false
 
         override fun run() {
             super.run()
 
-            while(!isCancelling) {
-                try {
-                    val prevReportedProgress = lastReportedProgress
-                    lastReportedProgress = progressProvider.getProgress()
+            while (!isCancelling) {
+                with(progressReportParam) {
+                    try {
+                        val prevReportedProgress = lastReportedProgress
+                        lastReportedProgress = progressProvider.getProgress()
 
-                    if (delay != NO_DELAY && !isCancelling) {
-                        if(delay in (prevReportedProgress + 1)..lastReportedProgress) {
-                            progressListener.onProgressReportDelay(delay, lastReportedProgress)
+                        if (delay != NO_DELAY && !isCancelling) {
+                            if (delay in (prevReportedProgress + 1)..lastReportedProgress) {
+                                progressListener.onProgressReportDelay(delay, lastReportedProgress)
+                            }
                         }
-                    }
 
-                    var intervalReport: Long
-                    if (interval != NO_INTERVAL && !isCancelling) {
-                        intervalReport = interval * (prevReportedProgress / interval + 1)
-                        if(intervalReport in (prevReportedProgress + 1)..lastReportedProgress) {
-                            progressListener.onProgressReportInterval(intervalReport, lastReportedProgress)
+                        val intervalReport: Long
+                        if (interval != NO_INTERVAL && !isCancelling) {
+                            intervalReport = interval * (prevReportedProgress / interval + 1)
+                            if (intervalReport in (prevReportedProgress + 1)..lastReportedProgress) {
+                                progressListener.onProgressReportInterval(
+                                    intervalReport,
+                                    lastReportedProgress
+                                )
+                            }
                         }
-                    }
 
-                    sleep(100L)
-                } catch (e: Exception) {
+                        if (isFinishing) {
+                            return
+                        }
+
+                        sleep(100L)
+                    } catch (e: Exception) {
+                    }
                 }
             }
         }
 
         fun requestCancel() {
-            isCancelling = true
+            if(!isFinishing) {
+                // if finish requested, do not cancel.
+                isCancelling = true
+            }
+        }
+
+        fun requestFinish() {
+            isFinishing = true
         }
     }
 }
