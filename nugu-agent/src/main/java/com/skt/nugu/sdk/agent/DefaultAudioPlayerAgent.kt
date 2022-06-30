@@ -1279,7 +1279,7 @@ class DefaultAudioPlayerAgent(
         when (currentActivity) {
             AudioPlayerAgentInterface.State.PLAYING -> {
                 sendPlaybackFinishedEvent()
-                progressTimer.stop()
+                progressTimer.finish()
 
                 val audioInfoContext = createAudioInfoContext()
                 audioInfoContext?.let { context->
