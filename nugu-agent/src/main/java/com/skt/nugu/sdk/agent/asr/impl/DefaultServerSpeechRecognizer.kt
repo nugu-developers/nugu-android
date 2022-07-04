@@ -15,6 +15,8 @@
  */
 package com.skt.nugu.sdk.agent.asr.impl
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.asr.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -141,7 +143,7 @@ class DefaultServerSpeechRecognizer(
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_SERVER,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
                 wakeup = payloadWakeupInfo,
-                asrContext = payloadAttribute?.asrContext,
+                asrContext =  payloadAttribute?.asrContext?.let { JsonParser.parseString(it).asJsonObject },
                 timeout = AsrRecognizeEventPayload.Timeout(
                     epdParam.timeoutInSeconds * 1000L,
                     epdParam.maxDurationInSeconds * 1000L,
