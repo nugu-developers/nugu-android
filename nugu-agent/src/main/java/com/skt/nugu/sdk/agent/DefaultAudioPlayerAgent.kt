@@ -177,6 +177,12 @@ class DefaultAudioPlayerAgent(
     private var sourceId: SourceId = SourceId.ERROR()
     private var offset: Long = 0L
     private var duration: Long? = null
+    private var canGetOffsetFromMediaPlayer: Boolean = false
+        set(value) {
+            field = value
+            Logger.d(TAG, "canGetOffsetFromMediaPlayer: $value")
+        }
+
     private var playCalled = false
     private var stopCalled = false
     private var stopReason: AudioPlayerAgentInterface.StopReason? = null
@@ -462,6 +468,7 @@ class DefaultAudioPlayerAgent(
 
             return if(executeFetchSource(item)) {
                 item.isFetched = true
+                canGetOffsetFromMediaPlayer = true
                 true
             } else {
                 false
@@ -802,7 +809,7 @@ class DefaultAudioPlayerAgent(
             }
             AudioPlayerAgentInterface.State.PLAYING,
             AudioPlayerAgentInterface.State.PAUSED -> {
-                getOffsetInMilliseconds()
+                updateCurrentOffsetIfAvailable()
                 if (mediaPlayer.stop(sourceId)) {
                     stopReason = reason
                     stopCalled = true
@@ -827,7 +834,7 @@ class DefaultAudioPlayerAgent(
                 pauseReason = reason
             }
             AudioPlayerAgentInterface.State.PLAYING -> {
-                getOffsetInMilliseconds()
+                updateCurrentOffsetIfAvailable()
                 if (!mediaPlayer.pause(sourceId)) {
 
                 } else {
@@ -919,7 +926,7 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun getOffsetInMilliseconds(): Long {
-        if (!sourceId.isError()) {
+        if (!sourceId.isError() && canGetOffsetFromMediaPlayer) {
             val offset = mediaPlayer.getOffset(sourceId)
             if (offset != MEDIA_PLAYER_INVALID_OFFSET) {
                 this.offset = offset
@@ -927,6 +934,12 @@ class DefaultAudioPlayerAgent(
         }
 
         return offset
+    }
+
+    private fun updateCurrentOffsetIfAvailable() {
+        if(canGetOffsetFromMediaPlayer) {
+            getOffsetInMilliseconds()
+        }
     }
 
     override fun requestFavoriteCommand(current: Boolean) {
@@ -1073,6 +1086,8 @@ class DefaultAudioPlayerAgent(
 
     override fun onPlaybackStopped(id: SourceId) {
         Logger.d(TAG, "[onPlaybackStopped] id : $id")
+        canGetOffsetFromMediaPlayer = false
+
         executor.submit {
             executeOnPlaybackStopped(id)
         }
@@ -1153,6 +1168,9 @@ class DefaultAudioPlayerAgent(
     }
 
     private fun executeOnPlaybackPlayingOnBackgroundFocus() {
+        // save current offset before pause.
+        updateCurrentOffsetIfAvailable()
+
         if (!mediaPlayer.pause(sourceId)) {
             Logger.e(TAG, "[executeOnPlaybackPlayingOnBackgroundFocus] pause failed")
         } else {
@@ -1165,6 +1183,9 @@ class DefaultAudioPlayerAgent(
             Logger.e(TAG, "[executeOnPlaybackPlayingOnLostFocus] stop already called")
             return
         }
+
+        // save current offset before stop.
+        updateCurrentOffsetIfAvailable()
 
         if (!mediaPlayer.stop(sourceId)) {
             Logger.e(TAG, "[executeOnPlaybackPlayingOnLostFocus] stop failed")
@@ -1422,6 +1443,7 @@ class DefaultAudioPlayerAgent(
 
             AudioPlayerAgentInterface.State.PLAYING -> {
                 if (!sourceId.isError()) {
+                    updateCurrentOffsetIfAvailable()
                     mediaPlayer.pause(sourceId)
                 }
                 return
