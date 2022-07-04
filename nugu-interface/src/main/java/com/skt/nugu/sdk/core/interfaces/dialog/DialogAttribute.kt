@@ -19,40 +19,8 @@ package com.skt.nugu.sdk.core.interfaces.dialog
 data class DialogAttribute(
     val playServiceId: String?,
     val domainTypes: Array<String>?,
-    val asrContext: AsrContext?
+    val asrContext: String? // json formatted string
 ) {
-    data class AsrContext(
-        val task: String?,
-        val sceneId: String?,
-        val sceneText: Array<String>?,
-        val playServiceId: String?
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as AsrContext
-
-            if (task != other.task) return false
-            if (sceneId != other.sceneId) return false
-            if (sceneText != null) {
-                if (other.sceneText == null) return false
-                if (!sceneText.contentEquals(other.sceneText)) return false
-            } else if (other.sceneText != null) return false
-            if (playServiceId != other.playServiceId) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = task?.hashCode() ?: 0
-            result = 31 * result + (sceneId?.hashCode() ?: 0)
-            result = 31 * result + (sceneText?.contentHashCode() ?: 0)
-            result = 31 * result + (playServiceId?.hashCode() ?: 0)
-            return result
-        }
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -60,7 +28,10 @@ data class DialogAttribute(
         other as DialogAttribute
 
         if (playServiceId != other.playServiceId) return false
-        if (!domainTypes.contentEquals(other.domainTypes)) return false
+        if (domainTypes != null) {
+            if (other.domainTypes == null) return false
+            if (!domainTypes.contentEquals(other.domainTypes)) return false
+        } else if (other.domainTypes != null) return false
         if (asrContext != other.asrContext) return false
 
         return true
@@ -68,8 +39,8 @@ data class DialogAttribute(
 
     override fun hashCode(): Int {
         var result = playServiceId?.hashCode() ?: 0
-        result = 31 * result + domainTypes.contentHashCode()
-        result = 31 * result + asrContext.hashCode()
+        result = 31 * result + (domainTypes?.contentHashCode() ?: 0)
+        result = 31 * result + (asrContext?.hashCode() ?: 0)
         return result
     }
 }

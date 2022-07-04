@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.asr
 
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
 
@@ -24,7 +25,7 @@ data class ExpectSpeechPayload internal constructor(
     @SerializedName("domainTypes")
     val domainTypes: Array<String>?,
     @SerializedName("asrContext")
-    val asrContext: AsrContext?,
+    val asrContext: JsonObject?,
     @SerializedName("epd")
     val epd: EpdParam?,
     @SerializedName("listenTimeoutFailBeep")
@@ -35,14 +36,7 @@ data class ExpectSpeechPayload internal constructor(
             DialogAttribute(
                 this.playServiceId,
                 this.domainTypes,
-                this.asrContext?.let {
-                    DialogAttribute.AsrContext(
-                        it.task,
-                        it.sceneId,
-                        it.sceneText,
-                        it.playServiceId
-                    )
-                }
+                this.asrContext?.toString()
             )
         }
     }
@@ -55,42 +49,6 @@ data class ExpectSpeechPayload internal constructor(
         @SerializedName("maxSpeechDurationMilliseconds")
         val maxSpeechDurationMilliseconds: Long?
     )
-
-    data class AsrContext(
-        @SerializedName("task")
-        val task: String?,
-        @SerializedName("sceneId")
-        val sceneId: String?,
-        @SerializedName("sceneText")
-        val sceneText: Array<String>?,
-        @SerializedName("playServiceId")
-        val playServiceId: String?
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as AsrContext
-
-            if (task != other.task) return false
-            if (sceneId != other.sceneId) return false
-            if (sceneText != null) {
-                if (other.sceneText == null) return false
-                if (!sceneText.contentEquals(other.sceneText)) return false
-            } else if (other.sceneText != null) return false
-            if (playServiceId != other.playServiceId) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = task?.hashCode() ?: 0
-            result = 31 * result + (sceneId?.hashCode() ?: 0)
-            result = 31 * result + (sceneText?.contentHashCode() ?: 0)
-            result = 31 * result + (playServiceId?.hashCode() ?: 0)
-            return result
-        }
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
