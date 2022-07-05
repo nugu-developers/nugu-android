@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import com.airbnb.lottie.LottieAnimationView
 import com.airbnb.lottie.LottieDrawable
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -58,6 +59,10 @@ class VoiceChromeView : FrameLayout {
      */
     constructor(context: Context, attributeSet: AttributeSet?) : super(context, attributeSet) {
         lottieView = LottieAnimationView(context, attributeSet).also {
+            it.setFailureListener {
+                // TODO : fix me. https://github.com/nugu-developers/nugu-android/issues/2252
+                Logger.e(TAG, "Failure", it)
+            }
             it.enableMergePathsForKitKatAndAbove(true)
             it.addAnimatorListener(animationListener)
             addView(it, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
