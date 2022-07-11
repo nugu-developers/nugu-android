@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.7.8 *(2022-07-11)*
+-----------------------------
+* Fix: Fix ProgressTimer's onProgressReportDelay not called rarely. (#2246)
+* Fix: Fix lottie crash (#2252)
+* Improve: Reduce audio focus request  (#2244)
+* Improve: Manage an audio player's offset at agent (#2250)
+* New: ASR Interface v1.7 (#2248)
+
 Version 1.7.7 *(2022-04-11)*
 -----------------------------
 * Fix: Fix wrong update source audio info (#2223)
