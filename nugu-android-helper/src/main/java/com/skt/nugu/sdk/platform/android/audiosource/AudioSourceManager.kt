@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -39,6 +40,15 @@ class AudioSourceManager(
         private const val TAG = "AudioSourceManager"
     }
 
+    interface Listener {
+        /**
+         * @param buffer the data written
+         * @param offset the start offset in data
+         * @param size the number of bytes to write
+         */
+        fun onBufferWritten(buffer: ByteArray, offset: Int, size: Int)
+    }
+
     private val audioLock = ReentrantLock()
     //@GuardedBy("audioLock")
     private var audioSource: AudioSource? = null
@@ -48,6 +58,8 @@ class AudioSourceManager(
     private val consumerReferences = HashSet<Any>()
 
     private var writeThread: Thread? = null
+
+    private val listeners: CopyOnWriteArraySet<Listener> = CopyOnWriteArraySet<Listener>()
 
     /**
      * Return [SharedDataStream] if already open or success to open.
@@ -123,7 +135,15 @@ class AudioSourceManager(
         }
     }
 
-    private class WriterThread(
+    fun addListener(listener: Listener) {
+        listeners.add(listener)
+    }
+
+    fun removeListener(listener: Listener) {
+        listeners.remove(listener)
+    }
+
+    private inner class WriterThread(
         private val audioInputStream: SharedDataStream,
         private val audioSource: AudioSource
     ) : Thread("WriterThread") {
@@ -136,6 +156,13 @@ class AudioSourceManager(
                         it.write(temp, 0, read)
                     } else {
                         Logger.d(TAG, "[WriterThread] nothing to write")
+                    }
+
+                    listeners.forEach { listener->
+                        listener.onBufferWritten(temp, 0, read)
+                    }
+
+                    if( read <= 0) {
                         return
                     }
                 }
