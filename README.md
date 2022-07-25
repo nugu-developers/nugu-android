@@ -11,7 +11,7 @@ The SDK consist of following components. Look at diagram.
 * Nugu Login kit : Provide helpers for NUGU Login.
 * Nugu Client kit :  Provide helpers to easily develop for NUGU service
 
-![State Diagram](./docs/Components_Diagram.png)
+![State Diagram](https://user-images.githubusercontent.com/53801377/180732180-37aad563-9271-4ec0-9f3a-9eb6e59e8e98.png)
 
 ## Requirements
 ###### Network : above TLS v1.2
