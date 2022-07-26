@@ -8,6 +8,14 @@ dokkaHtml.configure {
     }
 }
 
+dokkaHtmlPartial {
+    dokkaSourceSets {
+        configureEach {
+            includes.from("README.md")
+        }
+    }
+}
+
 task packageJavadoc(type: Jar, dependsOn: dokkaJavadoc) {
     from "$buildDir/dokka/javadoc"
     archiveClassifier.set("javadoc")
