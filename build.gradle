@@ -3,7 +3,7 @@ buildscript {
     ext.kotlin_version = '1.5.20'
     ext.grpc_version = '1.43.1'
     ext.protoc_version = '3.19.1'
-    ext.dokka_version = '1.4.32'
+    ext.dokka_version = '1.7.10'
 
     repositories {
         google()
@@ -65,6 +65,11 @@ apply from: 'versions.gradle'
 subprojects {
     version = nuguVersionName
 }
+
+apply plugin: 'org.jetbrains.dokka'
+//tasks.dokkaHtmlMultiModule {
+//    includes.from("README.md")
+//}
 
 println("version code: $nuguVersionCode")
 println("version name: $nuguVersionName")
