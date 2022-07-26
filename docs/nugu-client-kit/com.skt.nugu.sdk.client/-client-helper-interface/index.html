@@ -1,0 +1,571 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ClientHelperInterface</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>nugu-android</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="nugu-client-kit::com.skt.nugu.sdk.client/ClientHelperInterface///PointingToDeclaration//27865454">
+  <div class="breadcrumbs"><a href="../../index.html">nugu-client-kit</a><span class="delimiter">/</span><a href="../index.html">com.skt.nugu.sdk.client</a><span class="delimiter">/</span><a href="index.html">ClientHelperInterface</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Client</span><wbr><span>Helper</span><wbr><span><span>Interface</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">ClientHelperInterface</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">This is an utility interface that gathers simplified APIs in one place and provides them to clients.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button></div>
+    <div class="tabs-section-body">
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="-1635588050%2FFunctions%2F27865454" anchor-label="addASRListener" id="-1635588050%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-a-s-r-listener.html"><span>add</span><wbr><span><span>ASRListener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1635588050%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-a-s-r-listener.html"><span class="token function">addASRListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-state-change-listener/index.html">ASRAgentInterface.OnStateChangeListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be called when there has been changes of <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-state/index.html">ASRAgentInterface.State</a> or DialogMode</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1980043509%2FFunctions%2F27865454" anchor-label="addASRResultListener" id="-1980043509%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-a-s-r-result-listener.html"><span>add</span><wbr><span>ASRResult</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1980043509%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-a-s-r-result-listener.html"><span class="token function">addASRResultListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-result-listener/index.html">ASRAgentInterface.OnResultListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">add listener to be called when receive following events of STT</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-358316753%2FFunctions%2F27865454" anchor-label="addAudioPlayerListener" id="-358316753%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-audio-player-listener.html"><span>add</span><wbr><span>Audio</span><wbr><span>Player</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-358316753%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-audio-player-listener.html"><span class="token function">addAudioPlayerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.audioplayer/-audio-player-agent-interface/-listener/index.html">AudioPlayerAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be called when there has been an change of <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.audioplayer/-audio-player-agent-interface/-listener/index.html">AudioPlayerAgentInterface.Listener</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1631145554%2FFunctions%2F27865454" anchor-label="addConnectionListener" id="-1631145554%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-connection-listener.html"><span>add</span><wbr><span>Connection</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1631145554%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-connection-listener.html"><span class="token function">addConnectionListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.connection/-connection-status-listener/index.html">ConnectionStatusListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be notified when connection status changed for NUGU</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1667901286%2FFunctions%2F27865454" anchor-label="addDialogUXStateListener" id="-1667901286%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-dialog-u-x-state-listener.html"><span>add</span><wbr><span>Dialog</span><wbr><span>UXState</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1667901286%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-dialog-u-x-state-listener.html"><span class="token function">addDialogUXStateListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.dialog/-dialog-u-x-state-aggregator-interface/-listener/index.html">DialogUXStateAggregatorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be called when there has been an change of <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.dialog/-dialog-u-x-state-aggregator-interface/-dialog-u-x-state/index.html">DialogUXStateAggregatorInterface.DialogUXState</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-622704400%2FFunctions%2F27865454" anchor-label="addOnDirectiveHandlingListener" id="-622704400%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-on-directive-handling-listener.html"><span>add</span><wbr><span>On</span><wbr><span>Directive</span><wbr><span>Handling</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-622704400%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-on-directive-handling-listener.html"><span class="token function">addOnDirectiveHandlingListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-sequencer-interface/-on-directive-handling-listener/index.html">DirectiveSequencerInterface.OnDirectiveHandlingListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be notified when occur event of directive handling.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-813781635%2FFunctions%2F27865454" anchor-label="addOnSendMessageListener" id="-813781635%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-on-send-message-listener.html"><span>add</span><wbr><span>On</span><wbr><span>Send</span><wbr><span>Message</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-813781635%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-on-send-message-listener.html"><span class="token function">addOnSendMessageListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.message/-message-sender/-on-send-message-listener/index.html">MessageSender.OnSendMessageListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be notified when send message</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="758669253%2FFunctions%2F27865454" anchor-label="addReceiveDirectivesListener" id="758669253%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-receive-directives-listener.html"><span>add</span><wbr><span>Receive</span><wbr><span>Directives</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="758669253%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-receive-directives-listener.html"><span class="token function">addReceiveDirectivesListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-group-processor-interface/-listener/index.html">DirectiveGroupProcessorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be notified when receive directives from NUGU platform</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="530627410%2FFunctions%2F27865454" anchor-label="addSpeakerListener" id="530627410%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-speaker-listener.html"><span>add</span><wbr><span>Speaker</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="530627410%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-speaker-listener.html"><span class="token function">addSpeakerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-observer/index.html">SpeakerManagerObserver</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be notified when speaker status changed</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-2068810532%2FFunctions%2F27865454" anchor-label="addSystemAgentListener" id="-2068810532%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-system-agent-listener.html"><span>add</span><wbr><span>System</span><wbr><span>Agent</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2068810532%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-system-agent-listener.html"><span class="token function">addSystemAgentListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.system/-system-agent-interface/-listener/index.html">SystemAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Add listener to be notified when receive an event from the System Capability agent</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1504079017%2FFunctions%2F27865454" anchor-label="cancelTTSAndOthers" id="-1504079017%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="cancel-t-t-s-and-others.html"><span>cancel</span><wbr><span>TTSAnd</span><wbr><span><span>Others</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1504079017%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="cancel-t-t-s-and-others.html"><span class="token function">cancelTTSAndOthers</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Cancel playing tts and other directives which has same dialog request id.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1498283384%2FFunctions%2F27865454" anchor-label="connect" id="1498283384%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="connect.html"><span><span>connect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1498283384%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><strike><span class="token keyword">abstract </span></strike><strike><span class="token keyword"></span></strike><strike><span class="token keyword">fun </span></strike><a href="connect.html"><strike><span class="token function">connect</span></strike></a><strike><span class="token punctuation">(</span></strike><strike><span class="token punctuation">)</span></strike><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Connect to NUGU</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1318626588%2FFunctions%2F27865454" anchor-label="disconnect" id="1318626588%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="disconnect.html"><span><span>disconnect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1318626588%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><strike><span class="token keyword">abstract </span></strike><strike><span class="token keyword"></span></strike><strike><span class="token keyword">fun </span></strike><a href="disconnect.html"><strike><span class="token function">disconnect</span></strike></a><strike><span class="token punctuation">(</span></strike><strike><span class="token punctuation">)</span></strike><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Disconnect from NUGU</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1820199124%2FFunctions%2F27865454" anchor-label="getDisplay" id="-1820199124%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-display.html"><span>get</span><wbr><span><span>Display</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1820199124%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-display.html"><span class="token function">getDisplay</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-aggregator-interface/index.html">DisplayAggregatorInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Return <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-aggregator-interface/index.html">DisplayAggregatorInterface</a> to interact with the client display</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1306464280%2FFunctions%2F27865454" anchor-label="getPlaybackRouter" id="-1306464280%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-playback-router.html"><span>get</span><wbr><span>Playback</span><wbr><span><span>Router</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1306464280%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-playback-router.html"><span class="token function">getPlaybackRouter</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.playback/-playback-router/index.html">PlaybackRouter</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Return <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.playback/-playback-router/index.html">PlaybackRouter</a> which send event to control audio player</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1151960642%2FFunctions%2F27865454" anchor-label="getSpeakerManager" id="-1151960642%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-speaker-manager.html"><span>get</span><wbr><span>Speaker</span><wbr><span><span>Manager</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1151960642%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-speaker-manager.html"><span class="token function">getSpeakerManager</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-interface/index.html">SpeakerManagerInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Return <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-interface/index.html">SpeakerManagerInterface</a> which can control volume &amp; mute</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1512126062%2FFunctions%2F27865454" anchor-label="localStopTTS" id="-1512126062%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="local-stop-t-t-s.html"><span>local</span><wbr><span>Stop</span><wbr><span><span>TTS</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1512126062%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="local-stop-t-t-s.html"><span class="token function">localStopTTS</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Stop current playing TTS</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-2064204933%2FFunctions%2F27865454" anchor-label="removeASRListener" id="-2064204933%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-a-s-r-listener.html"><span>remove</span><wbr><span><span>ASRListener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2064204933%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-a-s-r-listener.html"><span class="token function">removeASRListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-state-change-listener/index.html">ASRAgentInterface.OnStateChangeListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1912702302%2FFunctions%2F27865454" anchor-label="removeASRResultListener" id="1912702302%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-a-s-r-result-listener.html"><span>remove</span><wbr><span>ASRResult</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1912702302%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-a-s-r-result-listener.html"><span class="token function">removeASRResultListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-result-listener/index.html">ASRAgentInterface.OnResultListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">remove event listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1242402754%2FFunctions%2F27865454" anchor-label="removeAudioPlayerListener" id="1242402754%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-audio-player-listener.html"><span>remove</span><wbr><span>Audio</span><wbr><span>Player</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1242402754%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-audio-player-listener.html"><span class="token function">removeAudioPlayerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.audioplayer/-audio-player-agent-interface/-listener/index.html">AudioPlayerAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1275544833%2FFunctions%2F27865454" anchor-label="removeConnectionListener" id="1275544833%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-connection-listener.html"><span>remove</span><wbr><span>Connection</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1275544833%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-connection-listener.html"><span class="token function">removeConnectionListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.connection/-connection-status-listener/index.html">ConnectionStatusListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1266589267%2FFunctions%2F27865454" anchor-label="removeDialogUXStateListener" id="-1266589267%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-dialog-u-x-state-listener.html"><span>remove</span><wbr><span>Dialog</span><wbr><span>UXState</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1266589267%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-dialog-u-x-state-listener.html"><span class="token function">removeDialogUXStateListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.dialog/-dialog-u-x-state-aggregator-interface/-listener/index.html">DialogUXStateAggregatorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="900165181%2FFunctions%2F27865454" anchor-label="removeOnDirectiveHandlingListener" id="900165181%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-on-directive-handling-listener.html"><span>remove</span><wbr><span>On</span><wbr><span>Directive</span><wbr><span>Handling</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="900165181%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-on-directive-handling-listener.html"><span class="token function">removeOnDirectiveHandlingListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-sequencer-interface/-on-directive-handling-listener/index.html">DirectiveSequencerInterface.OnDirectiveHandlingListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-624109494%2FFunctions%2F27865454" anchor-label="removeOnSendMessageListener" id="-624109494%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-on-send-message-listener.html"><span>remove</span><wbr><span>On</span><wbr><span>Send</span><wbr><span>Message</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-624109494%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-on-send-message-listener.html"><span class="token function">removeOnSendMessageListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.message/-message-sender/-on-send-message-listener/index.html">MessageSender.OnSendMessageListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener to be notified when send message</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="830717714%2FFunctions%2F27865454" anchor-label="removeReceiveDirectivesListener" id="830717714%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-receive-directives-listener.html"><span>remove</span><wbr><span>Receive</span><wbr><span>Directives</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="830717714%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-receive-directives-listener.html"><span class="token function">removeReceiveDirectivesListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-group-processor-interface/-listener/index.html">DirectiveGroupProcessorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener to be notified when receive directives from NUGU platform</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-640905883%2FFunctions%2F27865454" anchor-label="removeSpeakerListener" id="-640905883%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-speaker-listener.html"><span>remove</span><wbr><span>Speaker</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-640905883%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-speaker-listener.html"><span class="token function">removeSpeakerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-observer/index.html">SpeakerManagerObserver</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1823935279%2FFunctions%2F27865454" anchor-label="removeSystemAgentListener" id="1823935279%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-system-agent-listener.html"><span>remove</span><wbr><span>System</span><wbr><span>Agent</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1823935279%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-system-agent-listener.html"><span class="token function">removeSystemAgentListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.system/-system-agent-interface/-listener/index.html">SystemAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Remove listener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="406774414%2FFunctions%2F27865454" anchor-label="requestTextInput" id="406774414%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="request-text-input.html"><span>request</span><wbr><span>Text</span><wbr><span><span>Input</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="406774414%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-text-input.html"><span class="token function">requestTextInput</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;playServiceId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;token<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;source<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;referrerDialogRequestId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;includeDialogAttribute<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">true</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.text/-text-agent-interface/-request-listener/index.html">TextAgentInterface.RequestListener</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Send request for NUGU with text input. The client receive the same response(directive) as when they requested ASR.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1208326284%2FFunctions%2F27865454" anchor-label="requestTTS" id="1208326284%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="request-t-t-s.html"><span>request</span><wbr><span><span>TTS</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1208326284%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-t-t-s.html"><span class="token function">requestTTS</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;format<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.tts/-t-t-s-agent-interface/-format/index.html">TTSAgentInterface.Format</a><span class="token operator"> = </span>TTSAgentInterface.Format.TEXT<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;playServiceId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.tts/-t-t-s-agent-interface/-on-playback-listener/index.html">TTSAgentInterface.OnPlaybackListener</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Send request for TTS response given <a href="request-t-t-s.html">text</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="95866062%2FFunctions%2F27865454" anchor-label="setDisplayRenderer" id="95866062%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-display-renderer.html"><span>set</span><wbr><span>Display</span><wbr><span><span>Renderer</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="95866062%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-display-renderer.html"><span class="token function">setDisplayRenderer</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">renderer<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-aggregator-interface/-renderer/index.html">DisplayAggregatorInterface.Renderer</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">set renderer to interact with <a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-aggregator-interface/index.html">DisplayAggregatorInterface</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-368902844%2FFunctions%2F27865454" anchor-label="setStateProvider" id="-368902844%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-state-provider.html"><span>set</span><wbr><span>State</span><wbr><span><span>Provider</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-368902844%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-state-provider.html"><span class="token function">setStateProvider</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">namespaceAndName<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.common/-namespace-and-name/index.html">NamespaceAndName</a><span class="token punctuation">, </span></span><span class="parameter ">stateProvider<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.context/-context-state-provider/index.html">ContextStateProvider</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1416536222%2FFunctions%2F27865454" anchor-label="shutdown" id="-1416536222%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="shutdown.html"><span><span>shutdown</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1416536222%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="shutdown.html"><span class="token function">shutdown</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Shutdown client</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1694106289%2FFunctions%2F27865454" anchor-label="startRecognition" id="-1694106289%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="start-recognition.html"><span>start</span><wbr><span><span>Recognition</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1694106289%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="start-recognition.html"><span class="token function">startRecognition</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;audioInputStream<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.sds/-shared-data-stream/index.html">SharedDataStream</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;audioFormat<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr.audio/-audio-format/index.html">AudioFormat</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;wakeupInfo<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-wakeup-info/index.html">WakeupInfo</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;param<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-end-point-detector-param/index.html">EndPointDetectorParam</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;callback<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-start-recognition-callback/index.html">ASRAgentInterface.StartRecognitionCallback</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;initiator<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-initiator/index.html">ASRAgentInterface.Initiator</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Start recognizing</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1670428013%2FFunctions%2F27865454" anchor-label="stopRecognition" id="1670428013%2FFunctions%2F27865454" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":nugu-client-kit:dokkaHtmlPartial/main" data-filterable-set=":nugu-client-kit:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="stop-recognition.html"><span>stop</span><wbr><span><span>Recognition</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1670428013%2FFunctions%2F27865454"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-client-kit:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="stop-recognition.html"><span class="token function">stopRecognition</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Stop current recognizing.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

@@ -1,0 +1,785 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>NuguOAuth</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>nugu-android</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="nugu-login-kit::com.skt.nugu.sdk.platform.android.login.auth/NuguOAuth///PointingToDeclaration//1588828857">
+  <div class="breadcrumbs"><a href="../../index.html">nugu-login-kit</a><span class="delimiter">/</span><a href="../index.html">com.skt.nugu.sdk.platform.android.login.auth</a><span class="delimiter">/</span><a href="index.html">NuguOAuth</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Nugu</span><wbr><span><span>OAuth</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">NuguOAuth</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">OAuthServerUrl<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span> : <a href="../-nugu-o-auth-interface/index.html">NuguOAuthInterface</a>, <a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.auth/-auth-delegate/index.html">AuthDelegate</a>, <a href="../-nugu-o-auth-client/-url-delegate/index.html">NuguOAuthClient.UrlDelegate</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">NuguOAuth provides an implementation of the NuguOAuthInterface authorization process.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+    <div class="tabs-section-body">
+      <h2 class="tabbedcontent">Constructors</h2>
+      <div class="table" data-togglable="Constructors"><a data-name="-1453112291%2FConstructors%2F1588828857" anchor-label="NuguOAuth" id="-1453112291%2FConstructors%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-nugu-o-auth.html"><span>Nugu</span><wbr><span><span>OAuth</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1453112291%2FConstructors%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="-nugu-o-auth.html"><span class="token function">NuguOAuth</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">OAuthServerUrl<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Types</h2>
+      <div class="table" data-togglable="Types"><a data-name="168630247%2FClasslikes%2F1588828857" anchor-label="Companion" id="168630247%2FClasslikes%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="168630247%2FClasslikes%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Companion objects</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="205352403%2FFunctions%2F1588828857" anchor-label="accountWithTid" id="205352403%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="account-with-tid.html"><span>account</span><wbr><span>With</span><wbr><span><span>Tid</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="205352403%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="account-with-tid.html"><span class="token function">accountWithTid</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;activity<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/app/Activity.html">Activity</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-account-listener/index.html">NuguOAuthInterface.OnAccountListener</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;theme<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-t-h-e-m-e/index.html">NuguOAuthInterface.THEME</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Start the account info with Tid.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="460259062%2FFunctions%2F1588828857" anchor-label="addAuthStateListener" id="460259062%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-auth-state-listener.html"><span>add</span><wbr><span>Auth</span><wbr><span>State</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="460259062%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-auth-state-listener.html"><span class="token function">addAuthStateListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-auth-state-listener/index.html">AuthStateListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">addAuthStateListener adds an AuthStateListener on the given was changed</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="909852850%2FFunctions%2F1588828857" anchor-label="authorizationEndpoint" id="909852850%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="authorization-endpoint.html"><span>authorization</span><wbr><span><span>Endpoint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="909852850%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="authorization-endpoint.html"><span class="token function">authorizationEndpoint</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="335818818%2FFunctions%2F1588828857" anchor-label="baseUrl" id="335818818%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="base-url.html"><span>base</span><wbr><span><span>Url</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="335818818%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="base-url.html"><span class="token function">baseUrl</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="933427854%2FFunctions%2F1588828857" anchor-label="clearAuthorization" id="933427854%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="clear-authorization.html"><span>clear</span><wbr><span><span>Authorization</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="933427854%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="clear-authorization.html"><span class="token function">clearAuthorization</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Delete a auth token</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-839243252%2FFunctions%2F1588828857" anchor-label="codeFromIntent" id="-839243252%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="code-from-intent.html"><span>code</span><wbr><span>From</span><wbr><span><span>Intent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-839243252%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="code-from-intent.html"><span class="token function">codeFromIntent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">intent<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/content/Intent.html">Intent</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1717735832%2FFunctions%2F1588828857" anchor-label="deviceAuthorizationEndpoint" id="-1717735832%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="device-authorization-endpoint.html"><span>device</span><wbr><span>Authorization</span><wbr><span><span>Endpoint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1717735832%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="device-authorization-endpoint.html"><span class="token function">deviceAuthorizationEndpoint</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-164023368%2FFunctions%2F1588828857" anchor-label="deviceUniqueId" id="-164023368%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="device-unique-id.html"><span>device</span><wbr><span>Unique</span><wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-164023368%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="device-unique-id.html"><span class="token function">deviceUniqueId</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="165351544%2FFunctions%2F1588828857" anchor-label="getAccountInfoIntent" id="165351544%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-account-info-intent.html"><span>get</span><wbr><span>Account</span><wbr><span>Info</span><wbr><span><span>Intent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="165351544%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-account-info-intent.html"><span class="token function">getAccountInfoIntent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/content/Intent.html">Intent</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Creating a accountinfo intent</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-759858120%2FFunctions%2F1588828857" anchor-label="getAccountInfoUri" id="-759858120%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-account-info-uri.html"><span>get</span><wbr><span>Account</span><wbr><span>Info</span><wbr><span><span>Uri</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-759858120%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-account-info-uri.html"><span class="token function">getAccountInfoUri</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/net/Uri.html">Uri</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Creating a accountinfo uri</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="783794199%2FFunctions%2F1588828857" anchor-label="getAuthorization" id="783794199%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-authorization.html"><span>get</span><wbr><span><span>Authorization</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="783794199%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-authorization.html"><span class="token function">getAuthorization</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Gets an authorization from cache</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1355648071%2FFunctions%2F1588828857" anchor-label="getAuthState" id="1355648071%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-auth-state.html"><span>get</span><wbr><span>Auth</span><wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1355648071%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-auth-state.html"><span class="token function">getAuthState</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-auth-state-listener/-state/index.html">AuthStateListener.State</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Gets an auth status</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="781146036%2FFunctions%2F1588828857" anchor-label="getCredentials" id="781146036%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-credentials.html"><span>get</span><wbr><span><span>Credentials</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="781146036%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-credentials.html"><span class="token function">getCredentials</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-credentials/index.html">Credentials</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-504108175%2FFunctions%2F1588828857" anchor-label="getExpiresInMillis" id="-504108175%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-expires-in-millis.html"><span>get</span><wbr><span>Expires</span><wbr><span>In</span><wbr><span><span>Millis</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-504108175%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-expires-in-millis.html"><span class="token function">getExpiresInMillis</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-74414894%2FFunctions%2F1588828857" anchor-label="getIssuedTime" id="-74414894%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-issued-time.html"><span>get</span><wbr><span>Issued</span><wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-74414894%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-issued-time.html"><span class="token function">getIssuedTime</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1826405750%2FFunctions%2F1588828857" anchor-label="getLoginIntent" id="-1826405750%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-login-intent.html"><span>get</span><wbr><span>Login</span><wbr><span><span>Intent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1826405750%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-login-intent.html"><span class="token function">getLoginIntent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/content/Intent.html">Intent</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Creating a login intent</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="711906150%2FFunctions%2F1588828857" anchor-label="getLoginUri" id="711906150%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-login-uri.html"><span>get</span><wbr><span>Login</span><wbr><span><span>Uri</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="711906150%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-login-uri.html"><span class="token function">getLoginUri</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/net/Uri.html">Uri</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Creating a login uri</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="176660434%2FFunctions%2F1588828857" anchor-label="getOptions" id="176660434%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-options.html"><span>get</span><wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="176660434%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-options.html"><span class="token function">getOptions</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-nugu-o-auth-options/index.html">NuguOAuthOptions</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Get the <a href="../-nugu-o-auth-options/index.html">NuguOAuthOptions</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-995525492%2FFunctions%2F1588828857" anchor-label="getRefreshToken" id="-995525492%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-refresh-token.html"><span>get</span><wbr><span>Refresh</span><wbr><span><span>Token</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-995525492%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-refresh-token.html"><span class="token function">getRefreshToken</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1545174628%2FFunctions%2F1588828857" anchor-label="getScope" id="-1545174628%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-scope.html"><span>get</span><wbr><span><span>Scope</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1545174628%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-scope.html"><span class="token function">getScope</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Get a scope</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="145447594%2FFunctions%2F1588828857" anchor-label="introspect" id="145447594%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="introspect.html"><span><span>introspect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="145447594%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="introspect.html"><span class="token function">introspect</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-introspect-response-listener/index.html">NuguOAuthInterface.OnIntrospectResponseListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Request introspect The introspect specified by https://tools.ietf.org/html/rfc7662#section-2.1, OAuth 2.0 Token Introspection</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-266116688%2FFunctions%2F1588828857" anchor-label="introspectionEndpoint" id="-266116688%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="introspection-endpoint.html"><span>introspection</span><wbr><span><span>Endpoint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-266116688%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="introspection-endpoint.html"><span class="token function">introspectionEndpoint</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="2084579393%2FFunctions%2F1588828857" anchor-label="isAnonymouslyLogin" id="2084579393%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="is-anonymously-login.html"><span>is</span><wbr><span>Anonymously</span><wbr><span><span>Login</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2084579393%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="is-anonymously-login.html"><span class="token function">isAnonymouslyLogin</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Check whether a anonymous user is authenticated or not.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1843752037%2FFunctions%2F1588828857" anchor-label="isExpired" id="1843752037%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="is-expired.html"><span>is</span><wbr><span><span>Expired</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1843752037%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="is-expired.html"><span class="token function">isExpired</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Check if the token is expired</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1223663647%2FFunctions%2F1588828857" anchor-label="isLogin" id="-1223663647%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="is-login.html"><span>is</span><wbr><span><span>Login</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1223663647%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="is-login.html"><span class="token function">isLogin</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Check whether a user is authenticated or not</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-503882704%2FFunctions%2F1588828857" anchor-label="isSidSupported" id="-503882704%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="is-sid-supported.html"><span>is</span><wbr><span>Sid</span><wbr><span><span>Supported</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-503882704%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="is-sid-supported.html"><span class="token function">isSidSupported</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Returns true if server-initiative-directive is supported.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="2105790038%2FFunctions%2F1588828857" anchor-label="isTidLogin" id="2105790038%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="is-tid-login.html"><span>is</span><wbr><span>Tid</span><wbr><span><span>Login</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2105790038%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="is-tid-login.html"><span class="token function">isTidLogin</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Check whether a tid user is authenticated or not</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1850113085%2FFunctions%2F1588828857" anchor-label="loginAnonymously" id="1850113085%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="login-anonymously.html"><span>login</span><wbr><span><span>Anonymously</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1850113085%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="login-anonymously.html"><span class="token function">loginAnonymously</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-login-listener/index.html">NuguOAuthInterface.OnLoginListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Start anonymous login.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="224584969%2FFunctions%2F1588828857" anchor-label="loginInternal" id="224584969%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="login-internal.html"><span>login</span><wbr><span><span>Internal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="224584969%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="login-internal.html"><span class="token function">loginInternal</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">authorizationRequest<span class="token operator">: </span><a href="../-authorization-request/index.html">AuthorizationRequest</a><span class="token punctuation">, </span></span><span class="parameter ">stateListener<span class="token operator">: </span><a href="../-auth-state-listener/index.html">AuthStateListener</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Request an authentication with auth code</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1231431665%2FFunctions%2F1588828857" anchor-label="loginSilentlyWithTid" id="-1231431665%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="login-silently-with-tid.html"><span>login</span><wbr><span>Silently</span><wbr><span>With</span><wbr><span><span>Tid</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1231431665%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="login-silently-with-tid.html"><span class="token function">loginSilentlyWithTid</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">refreshToken<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-login-listener/index.html">NuguOAuthInterface.OnLoginListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Refresh Token with tid.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1905437919%2FFunctions%2F1588828857" anchor-label="loginWithAuthenticationCode" id="1905437919%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="login-with-authentication-code.html"><span>login</span><wbr><span>With</span><wbr><span>Authentication</span><wbr><span><span>Code</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1905437919%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="login-with-authentication-code.html"><span class="token function">loginWithAuthenticationCode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">code<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-login-listener/index.html">NuguOAuthInterface.OnLoginListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Start a login without browser.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-327666883%2FFunctions%2F1588828857" anchor-label="loginWithDeviceCode" id="-327666883%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="login-with-device-code.html"><span>login</span><wbr><span>With</span><wbr><span>Device</span><wbr><span><span>Code</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-327666883%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="login-with-device-code.html"><span class="token function">loginWithDeviceCode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">deviceCode<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-login-listener/index.html">NuguOAuthInterface.OnLoginListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Login with device_code to issue tokens</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1503147757%2FFunctions%2F1588828857" anchor-label="loginWithTid" id="-1503147757%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="login-with-tid.html"><span>login</span><wbr><span>With</span><wbr><span><span>Tid</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1503147757%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="login-with-tid.html"><span class="token function">loginWithTid</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;activity<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/app/Activity.html">Activity</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-login-listener/index.html">NuguOAuthInterface.OnLoginListener</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;theme<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-t-h-e-m-e/index.html">NuguOAuthInterface.THEME</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Start the login with tid</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="772720269%2FFunctions%2F1588828857" anchor-label="meEndpoint" id="772720269%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="me-endpoint.html"><span>me</span><wbr><span><span>Endpoint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="772720269%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="me-endpoint.html"><span class="token function">meEndpoint</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-106933825%2FFunctions%2F1588828857" anchor-label="removeAuthStateListener" id="-106933825%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-auth-state-listener.html"><span>remove</span><wbr><span>Auth</span><wbr><span>State</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-106933825%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-auth-state-listener.html"><span class="token function">removeAuthStateListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-auth-state-listener/index.html">AuthStateListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Removes an AuthStateListener</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1869369387%2FFunctions%2F1588828857" anchor-label="requestMe" id="1869369387%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="request-me.html"><span>request</span><wbr><span><span>Me</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1869369387%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace strikethrough"><strike><span class="token keyword">open </span></strike><strike><span class="token keyword">override </span></strike><strike><span class="token keyword">fun </span></strike><a href="request-me.html"><strike><span class="token function">requestMe</span></strike></a><strike><span class="token punctuation">(</span></strike><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-me-response-listener/index.html">NuguOAuthInterface.OnMeResponseListener</a></span></span><strike><span class="token punctuation">)</span></strike><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Request me api</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1007080519%2FFunctions%2F1588828857" anchor-label="revocationEndpoint" id="1007080519%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="revocation-endpoint.html"><span>revocation</span><wbr><span><span>Endpoint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1007080519%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="revocation-endpoint.html"><span class="token function">revocationEndpoint</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="694967161%2FFunctions%2F1588828857" anchor-label="revoke" id="694967161%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="revoke.html"><span><span>revoke</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="694967161%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="revoke.html"><span class="token function">revoke</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-revoke-listener/index.html">NuguOAuthInterface.OnRevokeListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Executes revoke the device in a thread.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1798498074%2FFunctions%2F1588828857" anchor-label="setAuthorization" id="-1798498074%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-authorization.html"><span>set</span><wbr><span><span>Authorization</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1798498074%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-authorization.html"><span class="token function">setAuthorization</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">tokenType<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">accessToken<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Sets a auth token and update to the devicegateway</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-860030168%2FFunctions%2F1588828857" anchor-label="setAuthState" id="-860030168%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-auth-state.html"><span>set</span><wbr><span>Auth</span><wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-860030168%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-auth-state.html"><span class="token function">setAuthState</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newState<span class="token operator">: </span><a href="../-auth-state-listener/-state/index.html">AuthStateListener.State</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Set the authorization state to be reported onAuthStateChanged to listeners.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-2120661641%2FFunctions%2F1588828857" anchor-label="setCredentials" id="-2120661641%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-credentials.html"><span>set</span><wbr><span><span>Credentials</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2120661641%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-credentials.html"><span class="token function">setCredentials</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">credential<span class="token operator">: </span><a href="../-credentials/index.html">Credentials</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><br><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-credentials.html"><span class="token function">setCredentials</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">credential<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Set a <a href="../-credentials/index.html">Credentials</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1315368365%2FFunctions%2F1588828857" anchor-label="setOptions" id="-1315368365%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-options.html"><span>set</span><wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1315368365%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-options.html"><span class="token function">setOptions</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">options<span class="token operator">: </span><a href="../-nugu-o-auth-options/index.html">NuguOAuthOptions</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Set the <a href="../-nugu-o-auth-options/index.html">NuguOAuthOptions</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-893048988%2FFunctions%2F1588828857" anchor-label="setResult" id="-893048988%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-result.html"><span>set</span><wbr><span><span>Result</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-893048988%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-result.html"><span class="token function">setResult</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">result<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-result.html"><span class="token function">setResult</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">result<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter ">error<span class="token operator">: </span><a href="../-nugu-o-auth-error/index.html">NuguOAuthError</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Determine success.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-541179400%2FFunctions%2F1588828857" anchor-label="startDeviceAuthorization" id="-541179400%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="start-device-authorization.html"><span>start</span><wbr><span>Device</span><wbr><span><span>Authorization</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-541179400%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="start-device-authorization.html"><span class="token function">startDeviceAuthorization</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">data<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="../-nugu-o-auth-interface/-on-device-authorization-listener/index.html">NuguOAuthInterface.OnDeviceAuthorizationListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Start device authorization by requesting a pair of verification codes from the authorization service.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-155080142%2FFunctions%2F1588828857" anchor-label="tokenEndpoint" id="-155080142%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="token-endpoint.html"><span>token</span><wbr><span><span>Endpoint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-155080142%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="token-endpoint.html"><span class="token function">tokenEndpoint</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-317158959%2FFunctions%2F1588828857" anchor-label="verifyStateFromIntent" id="-317158959%2FFunctions%2F1588828857" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-login-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-login-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="verify-state-from-intent.html"><span>verify</span><wbr><span>State</span><wbr><span>From</span><wbr><span><span>Intent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-317158959%2FFunctions%2F1588828857"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-login-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="verify-state-from-intent.html"><span class="token function">verifyStateFromIntent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">intent<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/content/Intent.html">Intent</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Helper function to extract out from the onNewIntent(Intent) for Sign In.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

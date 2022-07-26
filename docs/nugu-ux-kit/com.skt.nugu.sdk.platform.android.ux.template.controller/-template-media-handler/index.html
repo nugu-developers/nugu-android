@@ -1,0 +1,352 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>TemplateMediaHandler</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>nugu-android</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="nugu-ux-kit::com.skt.nugu.sdk.platform.android.ux.template.controller/TemplateMediaHandler///PointingToDeclaration//-217758495">
+  <div class="breadcrumbs"><a href="../../index.html">nugu-ux-kit</a><span class="delimiter">/</span><a href="../index.html">com.skt.nugu.sdk.platform.android.ux.template.controller</a><span class="delimiter">/</span><a href="index.html">TemplateMediaHandler</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Template</span><wbr><span>Media</span><wbr><span><span>Handler</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="index.html">TemplateMediaHandler</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nuguProvider<span class="token operator">: </span><a href="../../com.skt.nugu.sdk.platform.android.ux.template.presenter/-template-renderer/-nugu-client-provider/index.html">TemplateRenderer.NuguClientProvider</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>templateInfo<span class="token operator">: </span><a href="../-template-handler/-template-info/index.html">TemplateHandler.TemplateInfo</a></span></span><span class="token punctuation">)</span> : <a href="../-template-handler/index.html">TemplateHandler</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">TemplateHandler focused on Media state observing and interaction with it</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
+    <div class="tabs-section-body">
+      <h2 class="tabbedcontent">Constructors</h2>
+      <div class="table" data-togglable="Constructors"><a data-name="-1250515249%2FConstructors%2F-217758495" anchor-label="TemplateMediaHandler" id="-1250515249%2FConstructors%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-template-media-handler.html"><span>Template</span><wbr><span>Media</span><wbr><span><span>Handler</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1250515249%2FConstructors%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="-template-media-handler.html"><span class="token function">TemplateMediaHandler</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nuguProvider<span class="token operator">: </span><a href="../../com.skt.nugu.sdk.platform.android.ux.template.presenter/-template-renderer/-nugu-client-provider/index.html">TemplateRenderer.NuguClientProvider</a><span class="token punctuation">, </span></span><span class="parameter ">templateInfo<span class="token operator">: </span><a href="../-template-handler/-template-info/index.html">TemplateHandler.TemplateInfo</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Types</h2>
+      <div class="table" data-togglable="Types"><a data-name="1979359637%2FClasslikes%2F-217758495" anchor-label="Companion" id="1979359637%2FClasslikes%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1979359637%2FClasslikes%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="-1613378783%2FFunctions%2F-217758495" anchor-label="clear" id="-1613378783%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="clear.html"><span><span>clear</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1613378783%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="clear.html"><span class="token function">clear</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="123032440%2FFunctions%2F-217758495" anchor-label="getNuguClient" id="123032440%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-nugu-client.html"><span>get</span><wbr><span>Nugu</span><wbr><span><span>Client</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="123032440%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-nugu-client.html"><span class="token function">getNuguClient</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-android-helper/com.skt.nugu.sdk.platform.android/-nugu-android-client/index.html">NuguAndroidClient</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1890069398%2FFunctions%2F-217758495" anchor-label="onChipSelected" id="-1890069398%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-chip-selected.html"><span>on</span><wbr><span>Chip</span><wbr><span><span>Selected</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1890069398%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-chip-selected.html"><span class="token function">onChipSelected</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1635073189%2FFunctions%2F-217758495" anchor-label="onCloseAllClicked" id="-1635073189%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-close-all-clicked.html"><span>on</span><wbr><span>Close</span><wbr><span>All</span><wbr><span><span>Clicked</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1635073189%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-close-all-clicked.html"><span class="token function">onCloseAllClicked</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="616137682%2FFunctions%2F-217758495" anchor-label="onCloseClicked" id="616137682%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-close-clicked.html"><span>on</span><wbr><span>Close</span><wbr><span><span>Clicked</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="616137682%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-close-clicked.html"><span class="token function">onCloseClicked</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="72710166%2FFunctions%2F-217758495" anchor-label="onCloseWithParents" id="72710166%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-close-with-parents.html"><span>on</span><wbr><span>Close</span><wbr><span>With</span><wbr><span><span>Parents</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="72710166%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-close-with-parents.html"><span class="token function">onCloseWithParents</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-315164184%2FFunctions%2F-217758495" anchor-label="onContextChanged" id="-315164184%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-context-changed.html"><span>on</span><wbr><span>Context</span><wbr><span><span>Changed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-315164184%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-context-changed.html"><span class="token function">onContextChanged</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">context<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="567494186%2FFunctions%2F-217758495" anchor-label="onControlResult" id="567494186%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-control-result.html"><span>on</span><wbr><span>Control</span><wbr><span><span>Result</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="567494186%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-control-result.html"><span class="token function">onControlResult</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">action<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">result<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1102056764%2FFunctions%2F-217758495" anchor-label="onElementSelected" id="1102056764%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-element-selected.html"><span>on</span><wbr><span>Element</span><wbr><span><span>Selected</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1102056764%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-element-selected.html"><span class="token function">onElementSelected</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">tokenId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">postback<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-928864513%2FFunctions%2F-217758495" anchor-label="onNuguButtonSelected" id="-928864513%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-nugu-button-selected.html"><span>on</span><wbr><span>Nugu</span><wbr><span>Button</span><wbr><span><span>Selected</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-928864513%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-nugu-button-selected.html"><span class="token function">onNuguButtonSelected</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1450224132%2FFunctions%2F-217758495" anchor-label="onPlayerCommand" id="-1450224132%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="on-player-command.html"><span>on</span><wbr><span>Player</span><wbr><span><span>Command</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1450224132%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="on-player-command.html"><span class="token function">onPlayerCommand</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">command<span class="token operator">: </span><a href="../../com.skt.nugu.sdk.platform.android.ux.template.view.media/-player-command/index.html">PlayerCommand</a><span class="token punctuation">, </span></span><span class="parameter ">param<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-345876683%2FFunctions%2F-217758495" anchor-label="onTemplateTouched" id="-345876683%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/on-template-touched.html"><span>on</span><wbr><span>Template</span><wbr><span><span>Touched</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-345876683%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/on-template-touched.html"><span class="token function">onTemplateTouched</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1983304681%2FFunctions%2F-217758495" anchor-label="playTTS" id="1983304681%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/play-t-t-s.html"><span>play</span><wbr><span><span>TTS</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1983304681%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/play-t-t-s.html"><span class="token function">playTTS</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1168387496%2FFunctions%2F-217758495" anchor-label="setClientListener" id="1168387496%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-client-listener.html"><span>set</span><wbr><span>Client</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1168387496%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-client-listener.html"><span class="token function">setClientListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../-template-handler/-client-listener/index.html">TemplateHandler.ClientListener</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1008108080%2FFunctions%2F-217758495" anchor-label="showActivity" id="-1008108080%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/show-activity.html"><span>show</span><wbr><span><span>Activity</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1008108080%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/show-activity.html"><span class="token function">showActivity</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">className<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-2133968396%2FFunctions%2F-217758495" anchor-label="showToast" id="-2133968396%2FFunctions%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../-template-handler/show-toast.html"><span>show</span><wbr><span><span>Toast</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2133968396%2FFunctions%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-template-handler/show-toast.html"><span class="token function">showToast</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Properties</h2>
+      <div class="table" data-togglable="Properties"><a data-name="568814148%2FProperties%2F-217758495" anchor-label="templateInfo" id="568814148%2FProperties%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-ux-kit:dokkaHtmlPartial/release" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="template-info.html"><span>template</span><wbr><span><span>Info</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="568814148%2FProperties%2F-217758495"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-ux-kit:dokkaHtmlPartial/release"><a data-name="568814148%2FProperties%2F-217758495" anchor-label="templateInfo" id="568814148%2FProperties%2F-217758495" data-filterable-set=":nugu-ux-kit:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="template-info.html">templateInfo</a><span class="token operator">: </span><a href="../-template-handler/-template-info/index.html">TemplateHandler.TemplateInfo</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

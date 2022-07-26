@@ -1,0 +1,785 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>NuguAndroidClient</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>nugu-android</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="nugu-android-helper::com.skt.nugu.sdk.platform.android/NuguAndroidClient///PointingToDeclaration//-1291010111">
+  <div class="breadcrumbs"><a href="../../index.html">nugu-android-helper</a><span class="delimiter">/</span><a href="../index.html">com.skt.nugu.sdk.platform.android</a><span class="delimiter">/</span><a href="index.html">NuguAndroidClient</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Nugu</span><wbr><span>Android</span><wbr><span><span>Client</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">NuguAndroidClient</a> : <a href="../../../nugu-client-kit/com.skt.nugu.sdk.client/-client-helper-interface/index.html">ClientHelperInterface</a>, <a href="../../../nugu-client-kit/com.skt.nugu.sdk.client/-nugu-client-interface/index.html">NuguClientInterface</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Implementation of <a href="../../../nugu-client-kit/com.skt.nugu.sdk.client/-client-helper-interface/index.html">ClientHelperInterface</a> for Android</p><p class="paragraph">This class is a basic client to interact with NUGU at Android.</p><p class="paragraph"><a href="https://developer.android.com/reference/kotlin/android/app/Application.html">android.app.Application</a>'s onCreate is a good place to initialize.</p><p class="paragraph">It require many components to initialize. so, we provide a <a href="-builder/index.html">Builder</a> to create and the most of components set to default.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
+    <div class="tabs-section-body">
+      <h2 class="">Types</h2>
+      <div class="table" data-togglable="Types"><a data-name="-446133620%2FClasslikes%2F-1291010111" anchor-label="Builder" id="-446133620%2FClasslikes%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-builder/index.html"><span><span>Builder</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-446133620%2FClasslikes%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">class </span><a href="-builder/index.html">Builder</a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;context<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/content/Context.html">Context</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;authDelegate<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.auth/-auth-delegate/index.html">AuthDelegate</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;defaultAudioProvider<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr.audio/-audio-provider/index.html">AudioProvider</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">The builder for <a href="index.html">NuguAndroidClient</a></p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1561991867%2FClasslikes%2F-1291010111" anchor-label="Companion" id="1561991867%2FClasslikes%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1561991867%2FClasslikes%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="-574972836%2FFunctions%2F-1291010111" anchor-label="addASRListener" id="-574972836%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-a-s-r-listener.html"><span>add</span><wbr><span><span>ASRListener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-574972836%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-a-s-r-listener.html"><span class="token function">addASRListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-state-change-listener/index.html">ASRAgentInterface.OnStateChangeListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="834257053%2FFunctions%2F-1291010111" anchor-label="addASRResultListener" id="834257053%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-a-s-r-result-listener.html"><span>add</span><wbr><span>ASRResult</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="834257053%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-a-s-r-result-listener.html"><span class="token function">addASRResultListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-result-listener/index.html">ASRAgentInterface.OnResultListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="490735681%2FFunctions%2F-1291010111" anchor-label="addAudioPlayerListener" id="490735681%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-audio-player-listener.html"><span>add</span><wbr><span>Audio</span><wbr><span>Player</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="490735681%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-audio-player-listener.html"><span class="token function">addAudioPlayerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.audioplayer/-audio-player-agent-interface/-listener/index.html">AudioPlayerAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="371970368%2FFunctions%2F-1291010111" anchor-label="addConnectionListener" id="371970368%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-connection-listener.html"><span>add</span><wbr><span>Connection</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="371970368%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-connection-listener.html"><span class="token function">addConnectionListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.connection/-connection-status-listener/index.html">ConnectionStatusListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1085637292%2FFunctions%2F-1291010111" anchor-label="addDialogUXStateListener" id="1085637292%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-dialog-u-x-state-listener.html"><span>add</span><wbr><span>Dialog</span><wbr><span>UXState</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1085637292%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-dialog-u-x-state-listener.html"><span class="token function">addDialogUXStateListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.dialog/-dialog-u-x-state-aggregator-interface/-listener/index.html">DialogUXStateAggregatorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-618944226%2FFunctions%2F-1291010111" anchor-label="addOnDirectiveHandlingListener" id="-618944226%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-on-directive-handling-listener.html"><span>add</span><wbr><span>On</span><wbr><span>Directive</span><wbr><span>Handling</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-618944226%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-on-directive-handling-listener.html"><span class="token function">addOnDirectiveHandlingListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-sequencer-interface/-on-directive-handling-listener/index.html">DirectiveSequencerInterface.OnDirectiveHandlingListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="491814571%2FFunctions%2F-1291010111" anchor-label="addOnSendMessageListener" id="491814571%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-on-send-message-listener.html"><span>add</span><wbr><span>On</span><wbr><span>Send</span><wbr><span>Message</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="491814571%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-on-send-message-listener.html"><span class="token function">addOnSendMessageListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.message/-message-sender/-on-send-message-listener/index.html">MessageSender.OnSendMessageListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="493083635%2FFunctions%2F-1291010111" anchor-label="addReceiveDirectivesListener" id="493083635%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-receive-directives-listener.html"><span>add</span><wbr><span>Receive</span><wbr><span>Directives</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="493083635%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-receive-directives-listener.html"><span class="token function">addReceiveDirectivesListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-group-processor-interface/-listener/index.html">DirectiveGroupProcessorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1290077340%2FFunctions%2F-1291010111" anchor-label="addSpeakerListener" id="-1290077340%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-speaker-listener.html"><span>add</span><wbr><span>Speaker</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1290077340%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-speaker-listener.html"><span class="token function">addSpeakerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-observer/index.html">SpeakerManagerObserver</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="745490030%2FFunctions%2F-1291010111" anchor-label="addSystemAgentListener" id="745490030%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="add-system-agent-listener.html"><span>add</span><wbr><span>System</span><wbr><span>Agent</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="745490030%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="add-system-agent-listener.html"><span class="token function">addSystemAgentListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.system/-system-agent-interface/-listener/index.html">SystemAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-992910331%2FFunctions%2F-1291010111" anchor-label="cancelTTSAndOthers" id="-992910331%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="cancel-t-t-s-and-others.html"><span>cancel</span><wbr><span>TTSAnd</span><wbr><span><span>Others</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-992910331%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="cancel-t-t-s-and-others.html"><span class="token function">cancelTTSAndOthers</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="2077347210%2FFunctions%2F-1291010111" anchor-label="connect" id="2077347210%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="connect.html"><span><span>connect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2077347210%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="connect.html"><span class="token function">connect</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-674561078%2FFunctions%2F-1291010111" anchor-label="disconnect" id="-674561078%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="disconnect.html"><span><span>disconnect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-674561078%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="disconnect.html"><span class="token function">disconnect</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1436718675%2FFunctions%2F-1291010111" anchor-label="getAgent" id="-1436718675%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-agent.html"><span>get</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1436718675%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-agent.html"><span class="token function">getAgent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">namespace<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.capability/-capability-agent/index.html">CapabilityAgent</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="481580506%2FFunctions%2F-1291010111" anchor-label="getDisplay" id="481580506%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-display.html"><span>get</span><wbr><span><span>Display</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="481580506%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-display.html"><span class="token function">getDisplay</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-aggregator-interface/index.html">DisplayAggregatorInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="372593018%2FFunctions%2F-1291010111" anchor-label="getPlaybackRouter" id="372593018%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-playback-router.html"><span>get</span><wbr><span>Playback</span><wbr><span><span>Router</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="372593018%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-playback-router.html"><span class="token function">getPlaybackRouter</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.playback/-playback-router/index.html">PlaybackRouter</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="527096656%2FFunctions%2F-1291010111" anchor-label="getSpeakerManager" id="527096656%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="get-speaker-manager.html"><span>get</span><wbr><span>Speaker</span><wbr><span><span>Manager</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="527096656%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-speaker-manager.html"><span class="token function">getSpeakerManager</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-interface/index.html">SpeakerManagerInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1410059072%2FFunctions%2F-1291010111" anchor-label="localStopTTS" id="-1410059072%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="local-stop-t-t-s.html"><span>local</span><wbr><span>Stop</span><wbr><span><span>TTS</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1410059072%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="local-stop-t-t-s.html"><span class="token function">localStopTTS</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="944205965%2FFunctions%2F-1291010111" anchor-label="removeASRListener" id="944205965%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-a-s-r-listener.html"><span>remove</span><wbr><span><span>ASRListener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="944205965%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-a-s-r-listener.html"><span class="token function">removeASRListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-state-change-listener/index.html">ASRAgentInterface.OnStateChangeListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="684159628%2FFunctions%2F-1291010111" anchor-label="removeASRResultListener" id="684159628%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-a-s-r-result-listener.html"><span>remove</span><wbr><span>ASRResult</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="684159628%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-a-s-r-result-listener.html"><span class="token function">removeASRResultListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-on-result-listener/index.html">ASRAgentInterface.OnResultListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1993909392%2FFunctions%2F-1291010111" anchor-label="removeAudioPlayerListener" id="-1993909392%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-audio-player-listener.html"><span>remove</span><wbr><span>Audio</span><wbr><span>Player</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1993909392%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-audio-player-listener.html"><span class="token function">removeAudioPlayerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.audioplayer/-audio-player-agent-interface/-listener/index.html">AudioPlayerAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1826366511%2FFunctions%2F-1291010111" anchor-label="removeConnectionListener" id="1826366511%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-connection-listener.html"><span>remove</span><wbr><span>Connection</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1826366511%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-connection-listener.html"><span class="token function">removeConnectionListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.connection/-connection-status-listener/index.html">ConnectionStatusListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-179198373%2FFunctions%2F-1291010111" anchor-label="removeDialogUXStateListener" id="-179198373%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-dialog-u-x-state-listener.html"><span>remove</span><wbr><span>Dialog</span><wbr><span>UXState</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-179198373%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-dialog-u-x-state-listener.html"><span class="token function">removeDialogUXStateListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.dialog/-dialog-u-x-state-aggregator-interface/-listener/index.html">DialogUXStateAggregatorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1250359119%2FFunctions%2F-1291010111" anchor-label="removeOnDirectiveHandlingListener" id="1250359119%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-on-directive-handling-listener.html"><span>remove</span><wbr><span>On</span><wbr><span>Directive</span><wbr><span>Handling</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1250359119%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-on-directive-handling-listener.html"><span class="token function">removeOnDirectiveHandlingListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-sequencer-interface/-on-directive-handling-listener/index.html">DirectiveSequencerInterface.OnDirectiveHandlingListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-831369124%2FFunctions%2F-1291010111" anchor-label="removeOnSendMessageListener" id="-831369124%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-on-send-message-listener.html"><span>remove</span><wbr><span>On</span><wbr><span>Send</span><wbr><span>Message</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-831369124%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-on-send-message-listener.html"><span class="token function">removeOnSendMessageListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.message/-message-sender/-on-send-message-listener/index.html">MessageSender.OnSendMessageListener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="99331108%2FFunctions%2F-1291010111" anchor-label="removeReceiveDirectivesListener" id="99331108%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-receive-directives-listener.html"><span>remove</span><wbr><span>Receive</span><wbr><span>Directives</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="99331108%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-receive-directives-listener.html"><span class="token function">removeReceiveDirectivesListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.directive/-directive-group-processor-interface/-listener/index.html">DirectiveGroupProcessorInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-114131949%2FFunctions%2F-1291010111" anchor-label="removeSpeakerListener" id="-114131949%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-speaker-listener.html"><span>remove</span><wbr><span>Speaker</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-114131949%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-speaker-listener.html"><span class="token function">removeSpeakerListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.speaker/-speaker-manager-observer/index.html">SpeakerManagerObserver</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="595392605%2FFunctions%2F-1291010111" anchor-label="removeSystemAgentListener" id="595392605%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="remove-system-agent-listener.html"><span>remove</span><wbr><span>System</span><wbr><span>Agent</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="595392605%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="remove-system-agent-listener.html"><span class="token function">removeSystemAgentListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.system/-system-agent-interface/-listener/index.html">SystemAgentInterface.Listener</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="6290620%2FFunctions%2F-1291010111" anchor-label="requestTextInput" id="6290620%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="request-text-input.html"><span>request</span><wbr><span>Text</span><wbr><span><span>Input</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="6290620%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="request-text-input.html"><span class="token function">requestTextInput</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;playServiceId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;token<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;source<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;referrerDialogRequestId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;includeDialogAttribute<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.text/-text-agent-interface/-request-listener/index.html">TextAgentInterface.RequestListener</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1803580514%2FFunctions%2F-1291010111" anchor-label="requestTTS" id="-1803580514%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="request-t-t-s.html"><span>request</span><wbr><span><span>TTS</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1803580514%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="request-t-t-s.html"><span class="token function">requestTTS</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;format<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.tts/-t-t-s-agent-interface/-format/index.html">TTSAgentInterface.Format</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;playServiceId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;listener<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.tts/-t-t-s-agent-interface/-on-playback-listener/index.html">TTSAgentInterface.OnPlaybackListener</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="665748832%2FFunctions%2F-1291010111" anchor-label="setDisplayRenderer" id="665748832%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-display-renderer.html"><span>set</span><wbr><span>Display</span><wbr><span><span>Renderer</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="665748832%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-display-renderer.html"><span class="token function">setDisplayRenderer</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">renderer<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-aggregator-interface/-renderer/index.html">DisplayAggregatorInterface.Renderer</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="49524054%2FFunctions%2F-1291010111" anchor-label="setStateProvider" id="49524054%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="set-state-provider.html"><span>set</span><wbr><span>State</span><wbr><span><span>Provider</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="49524054%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-state-provider.html"><span class="token function">setStateProvider</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">namespaceAndName<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.common/-namespace-and-name/index.html">NamespaceAndName</a><span class="token punctuation">, </span></span><span class="parameter ">stateProvider<span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.context/-context-state-provider/index.html">ContextStateProvider</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-645426800%2FFunctions%2F-1291010111" anchor-label="shutdown" id="-645426800%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="shutdown.html"><span><span>shutdown</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-645426800%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="shutdown.html"><span class="token function">shutdown</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1911033119%2FFunctions%2F-1291010111" anchor-label="startRecognition" id="-1911033119%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="start-recognition.html"><span>start</span><wbr><span><span>Recognition</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1911033119%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="start-recognition.html"><span class="token function">startRecognition</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;audioInputStream<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.sds/-shared-data-stream/index.html">SharedDataStream</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;audioFormat<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr.audio/-audio-format/index.html">AudioFormat</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;wakeupInfo<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-wakeup-info/index.html">WakeupInfo</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;param<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-end-point-detector-param/index.html">EndPointDetectorParam</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;callback<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-start-recognition-callback/index.html">ASRAgentInterface.StartRecognitionCallback</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;initiator<span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/-initiator/index.html">ASRAgentInterface.Initiator</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1511281535%2FFunctions%2F-1291010111" anchor-label="stopRecognition" id="1511281535%2FFunctions%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="stop-recognition.html"><span>stop</span><wbr><span><span>Recognition</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1511281535%2FFunctions%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="stop-recognition.html"><span class="token function">stopRecognition</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Properties</h2>
+      <div class="table" data-togglable="Properties"><a data-name="-1806545311%2FProperties%2F-1291010111" anchor-label="asrAgent" id="-1806545311%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="asr-agent.html"><span>asr</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1806545311%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-1806545311%2FProperties%2F-1291010111" anchor-label="asrAgent" id="-1806545311%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="asr-agent.html">asrAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.asr/-a-s-r-agent-interface/index.html">ASRAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1415951096%2FProperties%2F-1291010111" anchor-label="audioPlayerAgent" id="1415951096%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="audio-player-agent.html"><span>audio</span><wbr><span>Player</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1415951096%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="1415951096%2FProperties%2F-1291010111" anchor-label="audioPlayerAgent" id="1415951096%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="audio-player-agent.html">audioPlayerAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent/-default-audio-player-agent/index.html">DefaultAudioPlayerAgent</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1464950961%2FProperties%2F-1291010111" anchor-label="bluetoothAgent" id="-1464950961%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="bluetooth-agent.html"><span>bluetooth</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1464950961%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-1464950961%2FProperties%2F-1291010111" anchor-label="bluetoothAgent" id="-1464950961%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="bluetooth-agent.html">bluetoothAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.bluetooth/-bluetooth-agent-interface/index.html">BluetoothAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1578343401%2FProperties%2F-1291010111" anchor-label="delegationAgent" id="-1578343401%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="delegation-agent.html"><span>delegation</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1578343401%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-1578343401%2FProperties%2F-1291010111" anchor-label="delegationAgent" id="-1578343401%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="delegation-agent.html">delegationAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.delegation/-delegation-agent-interface/index.html">DelegationAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1390595933%2FProperties%2F-1291010111" anchor-label="displayAgent" id="-1390595933%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="display-agent.html"><span>display</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1390595933%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-1390595933%2FProperties%2F-1291010111" anchor-label="displayAgent" id="-1390595933%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="display-agent.html">displayAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.display/-display-agent-interface/index.html">DisplayAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-322394848%2FProperties%2F-1291010111" anchor-label="extensionAgent" id="-322394848%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="extension-agent.html"><span>extension</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-322394848%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-322394848%2FProperties%2F-1291010111" anchor-label="extensionAgent" id="-322394848%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="extension-agent.html">extensionAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.extension/-extension-agent-interface/index.html">ExtensionAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-253748313%2FProperties%2F-1291010111" anchor-label="networkManager" id="-253748313%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="network-manager.html"><span>network</span><wbr><span><span>Manager</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-253748313%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-253748313%2FProperties%2F-1291010111" anchor-label="networkManager" id="-253748313%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="network-manager.html">networkManager</a><span class="token operator">: </span><a href="../../../nugu-interface/com.skt.nugu.sdk.core.interfaces.connection/-connection-manager-interface/index.html">ConnectionManagerInterface</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1888728670%2FProperties%2F-1291010111" anchor-label="systemAgent" id="1888728670%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="system-agent.html"><span>system</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1888728670%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="1888728670%2FProperties%2F-1291010111" anchor-label="systemAgent" id="1888728670%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="system-agent.html">systemAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.system/-system-agent-interface/index.html">SystemAgentInterface</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1040495972%2FProperties%2F-1291010111" anchor-label="textAgent" id="-1040495972%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="text-agent.html"><span>text</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1040495972%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-1040495972%2FProperties%2F-1291010111" anchor-label="textAgent" id="-1040495972%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="text-agent.html">textAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.text/-text-agent-interface/index.html">TextAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="305406338%2FProperties%2F-1291010111" anchor-label="themeManager" id="305406338%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="theme-manager.html"><span>theme</span><wbr><span><span>Manager</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="305406338%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="305406338%2FProperties%2F-1291010111" anchor-label="themeManager" id="305406338%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="theme-manager.html">themeManager</a><span class="token operator">: </span><a href="../../../nugu-client-kit/com.skt.nugu.sdk.client.theme/-theme-manager-interface/index.html">ThemeManagerInterface</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-2006037868%2FProperties%2F-1291010111" anchor-label="ttsAgent" id="-2006037868%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a>
+        <div class="table-row" data-filterable-current=":nugu-android-helper:dokkaHtmlPartial/release" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="tts-agent.html"><span>tts</span><wbr><span><span>Agent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2006037868%2FProperties%2F-1291010111"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":nugu-android-helper:dokkaHtmlPartial/release"><a data-name="-2006037868%2FProperties%2F-1291010111" anchor-label="ttsAgent" id="-2006037868%2FProperties%2F-1291010111" data-filterable-set=":nugu-android-helper:dokkaHtmlPartial/release"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="tts-agent.html">ttsAgent</a><span class="token operator">: </span><a href="../../../nugu-agent/com.skt.nugu.sdk.agent.tts/-t-t-s-agent-interface/index.html">TTSAgentInterface</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+
