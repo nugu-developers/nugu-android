@@ -18,9 +18,11 @@ package com.skt.nugu.sampleapp.client
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.skt.nugu.sampleapp.BuildConfig
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sampleapp.player.SamplePlayerFactory
 import com.skt.nugu.sampleapp.utils.PreferenceHelper
@@ -146,6 +148,23 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
         }
     }
 
+    /**
+     * Sets the user-agent string.
+     * format:
+     * User-Agent: Apollo-<client_id>/<app-version> (<os> <os version>; <manufacturer> <model>; <add string>)
+     * Sample:
+     * User-Agent: Apollo-app.apollo.agent/1.1.0 (Android 12; samsung SM-G998N; QA)
+    **/
+    private val userAgent by lazy {
+        buildString {
+            append("Apollo-${ConfigurationStore.configuration.clientId}/${BuildConfig.VERSION_NAME} ")
+            append("(")
+            append("Android ${Build.VERSION.RELEASE}; ")
+            append("${Build.MANUFACTURER} ${Build.MODEL}")
+            append(")")
+        }
+    }
+
     private fun init(context: Context, keywordResourceProvider: KeywordResourceProviderInterface) {
         ariaResource = keywordResourceProvider.provideAria()
         tinkerbellResource = keywordResourceProvider.provideTinkerbell()
@@ -156,7 +175,8 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             NuguOAuth.create(
                 options = NuguOAuthOptions.Builder()
                     .deviceUniqueId(deviceUniqueId(context))
-                    .build()
+                    .build(),
+                userAgent = userAgent
             ),
             audioSourceManager
         ).defaultEpdTimeoutMillis(7000L)

@@ -43,7 +43,7 @@ import org.json.JSONObject
  * NuguOAuth provides an implementation of the NuguOAuthInterface
  * authorization process.
  */
-class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate, NuguOAuthClient.UrlDelegate {
+class NuguOAuth(private val OAuthServerUrl: String?, userAgent: String?) : NuguOAuthInterface, AuthDelegate, NuguOAuthClient.UrlDelegate {
     /**
      * Companion objects
      */
@@ -62,15 +62,19 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
         /**
          * Create a [NuguOAuth]
+         * @param options the Options for OAuth
+         * @param OAuthServerUrl The server url for OAuth
+         * @param userAgent The user-agent string
          * @return a [NuguOAuth] instance
          */
         fun create(
             options: NuguOAuthOptions,
-            OAuthServerUrl: String? = null
+            OAuthServerUrl: String? = null,
+            userAgent: String? = null
         ): NuguOAuth {
-            Logger.d(TAG, "[create]")
+            Logger.d(TAG, "[create] OAuthServerUrl=$OAuthServerUrl, userAgent=$userAgent")
             if (instance == null) {
-                instance = NuguOAuth(OAuthServerUrl)
+                instance = NuguOAuth(OAuthServerUrl, userAgent)
             }
             instance?.setOptions(options)
             return instance as NuguOAuth
@@ -143,7 +147,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
     // authentication Implementation
     private val client: NuguOAuthClient by lazy {
-        NuguOAuthClient(this)
+        NuguOAuthClient(this, userAgent)
     }
 
     /// Authorization state change listeners.

@@ -34,9 +34,9 @@ import kotlin.math.pow
  * that manages and persists end-user credentials.
  * @see NuguOAuth
  */
-class NuguOAuthClient(private val delegate: UrlDelegate) {
+class NuguOAuthClient(private val delegate: UrlDelegate, userAgent: String?) {
     // The http client
-    private val client = HttpClient(delegate)
+    private val client = HttpClient(delegate, userAgent)
 
     // The current Credentials for the app
     private var credential: Credentials

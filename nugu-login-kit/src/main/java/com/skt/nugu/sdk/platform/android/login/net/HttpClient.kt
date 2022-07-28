@@ -25,7 +25,7 @@ import javax.net.ssl.*
 /**
  * Provide a base class for http client
  */
-class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
+class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate, private val userAgent: String?) {
     /**
      * Returns a [HttpsURLConnection] instance
      */
@@ -45,6 +45,9 @@ class HttpClient(private val delegate: NuguOAuthClient.UrlDelegate) {
         connection.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded")
         connection.setRequestProperty( "charset", "utf-8")
         connection.setRequestProperty("Accept", "application/json")
+        if (userAgent != null) {
+            connection.setRequestProperty("User-Agent", userAgent)
+        }
         headers?.let {
             for (i in 0 until it.size()) {
                 connection.setRequestProperty( headers.name(i),  headers.value(i))
