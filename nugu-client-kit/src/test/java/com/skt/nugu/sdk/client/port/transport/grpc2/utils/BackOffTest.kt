@@ -71,6 +71,7 @@ class BackOffTest : TestCase() {
                 latch.countDown()
             }
 
+            override fun onPrepared() = Unit
             override fun onRetry(retriesAttempted: Int) {
                 latch.countDown()
             }
@@ -97,6 +98,7 @@ class BackOffTest : TestCase() {
                     attempts++
                 }
 
+                override fun onPrepared() = Unit
                 override fun onRetry(retriesAttempted: Int) {
                     latch.countDown()
                     attempts++
@@ -122,6 +124,7 @@ class BackOffTest : TestCase() {
                 latch.countDown()
             }
 
+            override fun onPrepared() = Unit
             override fun onRetry(retriesAttempted: Int) {
                 latch.countDown()
             }
@@ -146,6 +149,7 @@ class BackOffTest : TestCase() {
                     latch.countDown()
                 }
 
+                override fun onPrepared() = Unit
                 override fun onRetry(retriesAttempted: Int) {
                     attempts++
                     latch.countDown()
