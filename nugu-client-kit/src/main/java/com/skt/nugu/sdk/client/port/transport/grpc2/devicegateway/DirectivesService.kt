@@ -83,7 +83,11 @@ internal class DirectivesService(
                             Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                                 downstream.directiveMessage?.let {
                                     if (it.directivesCount > 0) {
-                                        observer.onReceiveDirectives(downstream.directiveMessage)
+                                        if(!isShutdown.get()) {
+                                            observer.onReceiveDirectives(downstream.directiveMessage)
+                                        } else {
+                                            Logger.w(TAG, "[DirectivesService] This message is not dispatched (${downstream.directiveMessage})")
+                                        }
                                     }
                                     if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
                                         observer.onError(Status.UNAUTHENTICATED, name)
