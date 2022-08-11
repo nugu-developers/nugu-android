@@ -63,6 +63,7 @@ class BackOff private constructor(builder: Builder) {
 
     interface Observer {
         fun onError(error: BackoffError)
+        fun onPrepared()
         /**
          *  Determine whether a request should or should not be retried.
          * @param attempts The number of times the current request has been attempted.**/
@@ -181,6 +182,7 @@ class BackOff private constructor(builder: Builder) {
                 return
             }
 
+            observer.onPrepared()
             scheduledFuture = ObservableScheduledFuture(observer,
                 executorService.schedule({
                     Logger.d(TAG, "[Scheduled] start")

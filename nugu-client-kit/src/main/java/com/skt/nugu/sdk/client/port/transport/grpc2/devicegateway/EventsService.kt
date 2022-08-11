@@ -131,7 +131,7 @@ internal class EventsService(
                 Downstream.MessageCase.DIRECTIVE_MESSAGE -> {
                     downstream.directiveMessage?.let {
                         if (it.directivesCount > 0) {
-                            val isDispatchNeeded = !call.isCanceled() && !call.isCompleted()
+                            val isDispatchNeeded = !call.isCanceled() && !call.isCompleted() && !isShutdown.get()
                             val elapsed = measureTimeMillis {
                                 if(isDispatchNeeded) {
                                     observer.onReceiveDirectives(it)
@@ -203,6 +203,8 @@ internal class EventsService(
                         }
                     }
                 } finally {
+                    cancelScheduledTimeout(streamId)
+                    requestStreamMap.remove(streamId)
                     Logger.e(TAG, log.toString())
                 }
                 observer.onError(status, name)

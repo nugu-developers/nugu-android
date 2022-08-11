@@ -237,9 +237,6 @@ internal class DeviceGatewayClient(policy: Policy,
             }
         }
 
-        isConnected.set(false)
-        firstResponseReceived.set(false)
-
         backoff.awaitRetry(status.code, object : BackOff.Observer {
             override fun onError(error: BackOff.BackoffError) {
                 Logger.w(TAG, "[awaitRetry] error=$error, code=${status.code}")
@@ -259,6 +256,9 @@ internal class DeviceGatewayClient(policy: Policy,
                         processConnection()
                     }
                 }
+            }
+            override fun onPrepared() {
+                processDisconnect()
             }
 
             override fun onRetry(retriesAttempted: Int) {
