@@ -319,6 +319,7 @@ class TextAgent(
                 TextInputRequester.Request.Builder(payload.text)
                     .includeDialogAttribute(targetPlayServiceId == null)
                     .playServiceId(targetPlayServiceId).token(payload.token)
+                    .interactionControl(payload.interactionControl)
                     .referrerDialogRequestId(info.directive.header.dialogRequestId).build(),
                 object : TextAgentInterface.RequestListener {
                     override fun onRequestCreated(dialogRequestId: String) {
@@ -432,6 +433,10 @@ class TextAgent(
 
                     request.playServiceId?.let {
                         addProperty("playServiceId", it)
+                    }
+
+                    request.interactionControl?.let {
+                        add("interactionControl", it.toJsonObject())
                     }
 
                     if(request.includeDialogAttribute) {
