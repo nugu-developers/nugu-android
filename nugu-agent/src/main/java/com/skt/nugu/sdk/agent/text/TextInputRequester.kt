@@ -16,14 +16,17 @@
 
 package com.skt.nugu.sdk.agent.text
 
+import com.skt.nugu.sdk.agent.common.InteractionControl
+
 interface TextInputRequester {
     /**
-     * @param text the input text which to send request.
-     * @param playServiceId the playServiceId for request
-     * @param token: the token for request
-     * @param source: the source for request
-     * @param referrerDialogRequestId the referrerDialogRequestId for request
-     * @param includeDialogAttribute the flag to include or not dialog's attribute
+     * @property text the input text which to send request.
+     * @property playServiceId the playServiceId for request
+     * @property token: the token for request
+     * @property source: the source for request
+     * @property referrerDialogRequestId the referrerDialogRequestId for request
+     * @property interactionControl the interactionControl for request
+     * @property includeDialogAttribute the flag to include or not dialog's attribute
      */
     data class Request(
         val text: String,
@@ -31,6 +34,7 @@ interface TextInputRequester {
         val token: String? = null,
         val source: String? = null,
         val referrerDialogRequestId: String? = null,
+        val interactionControl: InteractionControl? = null,
         val includeDialogAttribute: Boolean = true,
     ) {
         class Builder(
@@ -40,6 +44,7 @@ interface TextInputRequester {
             private var token: String? = null
             private var source: String? = null
             private var referrerDialogRequestId: String? = null
+            private var interactionControl: InteractionControl? = null
             private var includeDialogAttribute: Boolean = true
 
             fun playServiceId(playServiceId: String?): Builder = apply {
@@ -58,6 +63,10 @@ interface TextInputRequester {
                 this.referrerDialogRequestId = referrerDialogRequestId
             }
 
+            fun interactionControl(interactionControl: InteractionControl?): Builder = apply {
+                this.interactionControl = interactionControl
+            }
+
             fun includeDialogAttribute(includeDialogAttribute: Boolean): Builder = apply {
                 this.includeDialogAttribute = includeDialogAttribute
             }
@@ -68,6 +77,7 @@ interface TextInputRequester {
                 token,
                 source,
                 referrerDialogRequestId,
+                interactionControl,
                 includeDialogAttribute
             )
         }
