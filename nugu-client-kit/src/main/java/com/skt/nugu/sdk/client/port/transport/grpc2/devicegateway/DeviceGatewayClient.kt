@@ -79,6 +79,7 @@ internal class DeviceGatewayClient(policy: Policy,
     private val scheduler  = Executors.newSingleThreadScheduledExecutor()
 
     private var pendingHeaders: Map<String, String>? = null
+    private val pendingStopDirectivesService = AtomicBoolean(false)
     /**
      * Set a policy.
      * @return the ServerPolicy
@@ -359,18 +360,20 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     private fun getEventsService() : EventsService? {
-        if(eventsService == null) {
-            currentChannel?.let {
-                eventsService =
-                    EventsService(
-                        it,
-                        this@DeviceGatewayClient,
-                        scheduler,
-                        callOptions
-                    )
+        synchronized(this) {
+            if(eventsService == null) {
+                currentChannel?.let {
+                    eventsService =
+                        EventsService(
+                            it,
+                            this@DeviceGatewayClient,
+                            scheduler,
+                            callOptions
+                        )
+                }
             }
+            return eventsService
         }
-        return eventsService
     }
 
     private fun buildDirectivesService() {
@@ -394,8 +397,21 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     override fun stopDirectivesService() {
-        Logger.d(TAG, "[stopDirectivesService]")
-        processDisconnect()
-        processConnection()
+        val requests = eventsService?.requests() ?: 0
+        Logger.d(TAG, "[stopDirectivesService] requests=$requests")
+        if(requests != 0) {
+            pendingStopDirectivesService.set(true)
+        } else {
+            processDisconnect()
+            processConnection()
+        }
+    }
+
+    override fun onRequestCompleted() {
+        if(pendingStopDirectivesService.compareAndSet(true, false)) {
+            Logger.w(TAG, "[onRequestCompleted] A pending StopDirectivesService is performed.")
+            processDisconnect()
+            processConnection()
+        }
     }
 }
