@@ -71,6 +71,8 @@ class DeviceGatewayClientTest : TestCase() {
         override fun onReceiveAttachment(attachmentMessage: AttachmentMessage) = Unit
         override fun onError(status: Status, who: String) = Unit
         override fun onPingRequestAcknowledged() = Unit
+        override fun onRequestCompleted() = Unit
+
         override fun send(call: Call): Boolean {
             onReceiveDirectives(mock())
             onReceiveAttachment(mock())

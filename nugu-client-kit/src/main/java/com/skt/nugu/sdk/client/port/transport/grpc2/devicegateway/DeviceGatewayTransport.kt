@@ -33,6 +33,7 @@ interface DeviceGatewayTransport {
     fun onReceiveAttachment(attachmentMessage: AttachmentMessage)
     fun onError(status: Status, who: String)
     fun onPingRequestAcknowledged()
+    fun onRequestCompleted()
 
     fun send(call: Call) : Boolean
     fun connect() : Boolean

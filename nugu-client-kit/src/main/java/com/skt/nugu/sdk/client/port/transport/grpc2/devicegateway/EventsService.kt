@@ -205,6 +205,9 @@ internal class EventsService(
                 } finally {
                     cancelScheduledTimeout(streamId)
                     requestStreamMap.remove(streamId)
+                    if(requestStreamMap.size == 0) {
+                        observer.onRequestCompleted()
+                    }
                     Logger.e(TAG, log.toString())
                 }
                 observer.onError(status, name)
@@ -214,6 +217,9 @@ internal class EventsService(
         override fun onCompleted() {
             cancelScheduledTimeout(streamId)
             requestStreamMap.remove(streamId)
+            if(requestStreamMap.size == 0) {
+                observer.onRequestCompleted()
+            }
             Logger.d(TAG, "[onCompleted] messageId=$streamId, numRequests=${requestStreamMap.size}")
             call.onComplete(SDKStatus.OK)
         }
@@ -316,4 +322,9 @@ internal class EventsService(
             Logger.w(TAG, "[shutdown] already shutdown")
         }
     }
+
+    /**
+     * @return The number of streams in the request.
+     */
+    fun requests() = requestStreamMap.size
 }
