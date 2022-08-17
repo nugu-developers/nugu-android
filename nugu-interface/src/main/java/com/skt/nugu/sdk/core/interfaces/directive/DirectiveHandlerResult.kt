@@ -34,11 +34,16 @@ interface DirectiveHandlerResult {
 
     /**
      * Should be called when directive handling failed by [DirectiveHandler].
+     * The related directives will be canceled by [cancelPolicy]
      * @param description the description for failure.
      * @param cancelPolicy the policy for cancellation
      */
     fun setFailed(description: String, cancelPolicy: CancelPolicy = POLICY_CANCEL_ALL)
 
+    /**
+     * @property cancelAll true: cancel all related directives, false: cancel given [partialTargets]
+     * @property partialTargets In case of [cancelAll] is false, given related directives will be canceled
+     */
     data class CancelPolicy(
         val cancelAll: Boolean = true,
         val partialTargets: Set<NamespaceAndName>? = null
