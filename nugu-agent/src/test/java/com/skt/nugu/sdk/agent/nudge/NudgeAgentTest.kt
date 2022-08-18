@@ -27,7 +27,7 @@ class NudgeAgentTest {
 
     @Before
     fun setup() {
-        nudgeAgent = NudgeAgent(mock(), mock())
+        nudgeAgent = NudgeAgent(mock(), mock(), mock(), mock())
         setter = Mockito.mock(ContextSetterInterface::class.java)
 
         val payload = "payload"
@@ -62,7 +62,7 @@ class NudgeAgentTest {
 
     @Test
     fun test_clearNudgeInfo() {
-        nudgeAgent.clearNudgeData()
+        nudgeAgent.clearNudgeData("abc")
 
         Thread.sleep(500)
         assertNull(nudgeAgent.nudgeData)
@@ -93,7 +93,7 @@ class NudgeAgentTest {
             type = ContextType.COMPACT,
             stateRequestToken = 1)
 
-        nudgeAgent.clearNudgeData()
+        nudgeAgent.clearNudgeData("abc")
         Thread.sleep(500)
 
         //and then full context with no nudgeData

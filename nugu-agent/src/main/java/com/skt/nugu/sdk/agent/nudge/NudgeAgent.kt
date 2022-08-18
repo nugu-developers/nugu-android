@@ -17,16 +17,14 @@
 package com.skt.nugu.sdk.agent.nudge
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.DefaultASRAgent
-import com.skt.nugu.sdk.agent.DefaultTTSAgent
-import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
-import com.skt.nugu.sdk.agent.display.DisplayAgent
 import com.skt.nugu.sdk.agent.nudge.NudgeDirectiveHandler.Companion.isAppendDirective
+import com.skt.nugu.sdk.agent.routine.DirectiveGroupHandlingListener
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -34,7 +32,9 @@ import java.util.concurrent.Executors
 
 class NudgeAgent(
     contextManager: ContextManagerInterface,
-    playSynchronizer: PlaySynchronizerInterface
+    playSynchronizer: PlaySynchronizerInterface,
+    private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
+    private val directiveSequencer: DirectiveSequencerInterface
 ) : CapabilityAgent,
     SupportedInterfaceContextProvider,
     NudgeDirectiveObserver,
@@ -67,11 +67,14 @@ class NudgeAgent(
 
     internal data class NudgeData(
         var nudgeInfo: JsonObject?,
-        var dialogRequestId: String
+        var dialogRequestId: String,
+        var receivedPreparedOrStartedPlaySyncObject: Boolean = false
     )
 
     private val executor = Executors.newSingleThreadExecutor()
+
     internal var nudgeData: NudgeData? = null
+    internal var currentNudgeRelatedDirectiveHandlingListener: DirectiveGroupHandlingListener? = null
 
     override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
@@ -87,9 +90,16 @@ class NudgeAgent(
                 nudgeData?.run {
                     val preparedObjectExist = prepared.any { it.dialogRequestId == dialogRequestId }
                     val startedObjectExist = started.any { it.dialogRequestId == dialogRequestId }
+
+                    if(!receivedPreparedOrStartedPlaySyncObject) {
+                        if(preparedObjectExist || startedObjectExist) {
+                            receivedPreparedOrStartedPlaySyncObject = true
+                        }
+                    }
+
                     log += "preparedObject Exist: $preparedObjectExist, startedObject Exist: $startedObjectExist"
-                    if (!preparedObjectExist && !startedObjectExist) {
-                        clearNudgeData()
+                    if (!preparedObjectExist && !startedObjectExist && receivedPreparedOrStartedPlaySyncObject) {
+                        clearNudgeData(dialogRequestId)
                     }
                 }
 
@@ -132,10 +142,13 @@ class NudgeAgent(
         }
     }
 
-    internal fun clearNudgeData() {
+    internal fun clearNudgeData(dialogRequestId: String) {
         executor.submit {
-            Logger.d(TAG, "clearNudgeData")
-            nudgeData = null
+            Logger.d(TAG, "clearNudgeData target dialogRequestId:$dialogRequestId, nudgeData: $nudgeData")
+            if (nudgeData?.dialogRequestId == dialogRequestId) {
+                nudgeData = null
+                currentNudgeRelatedDirectiveHandlingListener = null
+            }
         }
     }
 
@@ -149,6 +162,23 @@ class NudgeAgent(
                 Logger.d(TAG, "[onPreProcessed] nudgeData: $it")
                 nudgeData = NudgeData(null,
                     it.getDialogRequestId())
+                currentNudgeRelatedDirectiveHandlingListener = DirectiveGroupHandlingListener(
+                    it.getDialogRequestId(),
+                    directiveGroupProcessor,
+                    directiveSequencer,
+                    object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
+                        override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                            clearNudgeData(it.getDialogRequestId())
+                        }
+
+                        override fun onCanceled(directive: Directive) {
+                            // nothing to do
+                        }
+
+                        override fun onFailed(directive: Directive) {
+                            // nothing to do
+                        }
+                    })
             }
         }
     }

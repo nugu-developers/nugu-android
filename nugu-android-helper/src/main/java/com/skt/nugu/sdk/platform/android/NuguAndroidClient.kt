@@ -943,7 +943,7 @@ class NuguAndroidClient private constructor(
                 if (builder.enableNudge) {
                     addAgentFactory(NudgeAgent.NAMESPACE, object : AgentFactory<NudgeAgent> {
                         override fun create(container: SdkContainer): NudgeAgent {
-                            return NudgeAgent(container.getContextManager(), container.getPlaySynchronizer()).apply {
+                            return NudgeAgent(container.getContextManager(), container.getPlaySynchronizer(), container.getDirectiveGroupProcessor(), container.getDirectiveSequencer()).apply {
                                 container.getDirectiveSequencer().addDirectiveHandler(NudgeDirectiveHandler(this))
                                 container.getDirectiveGroupProcessor().addListener(this)
                             }
