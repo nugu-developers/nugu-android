@@ -33,8 +33,22 @@ class DirectiveGroupHandlingListener(
     }
 
     interface OnDirectiveResultListener {
+        /**
+         * Called when all directive's handling finished
+         * @param isExistCanceledOrFailed true: If exists any canceled or failed directive.
+         */
         fun onFinish(isExistCanceledOrFailed: Boolean)
+
+        /**
+         * Called when a [directive] canceled
+         * @param directive a canceled directive
+         */
         fun onCanceled(directive: Directive)
+
+        /**
+         * Called when a [directive] failed
+         * @param directive a failed directive
+         */
         fun onFailed(directive: Directive)
     }
 
