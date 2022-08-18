@@ -157,6 +157,7 @@ class NudgeAgent(
 
         nudgeDirective?.let {
             executor.submit {
+                Logger.d(TAG, "[onPreProcessed] nudgeData: $it")
                 nudgeData = NudgeData(null,
                     it.getDialogRequestId(),
                     isExpectSpeechDirectiveExist(),
@@ -169,6 +170,7 @@ class NudgeAgent(
     override fun onNudgeAppendDirective(dialogRequestId: String, nudgePayload: NudgeDirectiveHandler.Payload) {
         executor.submit {
             nudgeData?.let { nudgeData ->
+                Logger.d(TAG, "[onNudgeAppendDirective] current nudgeData: $nudgeData, dialogRequestId: $dialogRequestId")
                 if (nudgeData.dialogRequestId == dialogRequestId) {
                     nudgeData.nudgeInfo = nudgePayload.nudgeInfo
                 }
