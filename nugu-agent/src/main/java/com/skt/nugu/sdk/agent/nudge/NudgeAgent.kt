@@ -67,10 +67,7 @@ class NudgeAgent(
 
     internal data class NudgeData(
         var nudgeInfo: JsonObject?,
-        var dialogRequestId: String,
-        var expectSpeechExist: Boolean,
-        var speakTTSExist: Boolean,
-        var displayTemplateExist: Boolean
+        var dialogRequestId: String
     )
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -145,24 +142,13 @@ class NudgeAgent(
     override fun onPreProcessed(directives: List<Directive>) {
         val nudgeDirective = directives.find { isAppendDirective(it.header.namespace, it.header.name) }
 
-        fun isExpectSpeechDirectiveExist() =
-            directives.any { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_EXPECT_SPEECH }
-
-        fun isSpeakTTSDirectiveExist() =
-            directives.any { it.header.namespace == DefaultTTSAgent.SPEAK.namespace && it.header.name == DefaultTTSAgent.SPEAK.name }
-
-        fun isDisplayDirectiveExist() = directives.any { it.header.namespace == DisplayAgent.NAMESPACE }
-
         Logger.d(TAG, "onDirectiveGroupPreProcessed(). nudgeDirective :  $nudgeDirective")
 
         nudgeDirective?.let {
             executor.submit {
                 Logger.d(TAG, "[onPreProcessed] nudgeData: $it")
                 nudgeData = NudgeData(null,
-                    it.getDialogRequestId(),
-                    isExpectSpeechDirectiveExist(),
-                    isSpeakTTSDirectiveExist(),
-                    isDisplayDirectiveExist())
+                    it.getDialogRequestId())
             }
         }
     }
