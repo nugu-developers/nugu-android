@@ -27,7 +27,7 @@ class NudgeAgentTest {
 
     @Before
     fun setup() {
-        nudgeAgent = NudgeAgent(mock(), mock())
+        nudgeAgent = NudgeAgent(mock(), mock(), mock(), mock())
         setter = Mockito.mock(ContextSetterInterface::class.java)
 
         val payload = "payload"
