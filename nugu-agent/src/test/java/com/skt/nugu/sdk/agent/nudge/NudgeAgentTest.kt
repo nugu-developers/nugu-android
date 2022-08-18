@@ -47,9 +47,6 @@ class NudgeAgentTest {
     fun test_preProcess_nudgeDirective() {
         Thread.sleep(500)
         assertEquals(nudgeAgent.nudgeData!!.dialogRequestId, "abc")
-        assertTrue(nudgeAgent.nudgeData!!.expectSpeechExist)
-        assertTrue(nudgeAgent.nudgeData!!.speakTTSExist)
-        assertFalse(nudgeAgent.nudgeData!!.displayTemplateExist)
     }
 
     @Test
