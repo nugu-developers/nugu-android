@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.7.9 *(2022-08-26)*
+-----------------------------
+* Fix: Append interaction control payload at Text.TextInput event (#2266)
+* Fix: Fix missing nudge context (#2274)
+* Improve: Improve handling of requested event when ServerInitiatedDirective is stopped (#2268)
+* Improve: Update gRPC v1.48.1 (#2270)
+* New: Get audio buffer written at stream (#2255)
+
 Version 1.7.8 *(2022-07-11)*
 -----------------------------
 * Fix: Fix ProgressTimer's onProgressReportDelay not called rarely. (#2246)
