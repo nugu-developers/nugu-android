@@ -227,6 +227,54 @@ class RoutineAgent(
             }
         }
 
+        private fun createDirectiveGroupHandlingListenerForActionHandling(
+            dialogRequestId: String,
+            action: Action
+        ): DirectiveGroupHandlingListener = DirectiveGroupHandlingListener(
+            dialogRequestId,
+            directiveGroupProcessor,
+            directiveSequencer,
+            object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
+                override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                    Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
+                    if (isExistCanceledOrFailed) {
+                        pause()
+                    } else {
+                        scheduledFutureForTryStartNextAction?.cancel(true)
+                        scheduledFutureForTryStartNextAction = null
+                        if (action.postDelayInMilliseconds != null) {
+                            scheduledFutureForTryStartNextAction =
+                                executor.schedule(
+                                    {
+                                        tryStartNextAction()
+                                    },
+                                    action.postDelayInMilliseconds,
+                                    TimeUnit.MILLISECONDS
+                                )
+                        } else {
+                            tryStartNextAction()
+                        }
+                    }
+                }
+
+                override fun onCanceled(directive: Directive) {
+                    pause()
+                }
+
+                override fun onFailed(directive: Directive) {
+                    pause()
+                }
+            },
+            object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
+                override fun onPrepared(directives: List<Directive>) {
+                    Logger.d(TAG, "[onPrepared] action index: $currentActionIndex, ${directives.firstOrNull()?.getDialogRequestId()}")
+                    listeners.forEach {
+                        it.onActionStarted(currentActionIndex, directive)
+                    }
+                }
+            }
+        )
+
         private fun doTextAction(action: Action) {
             textAgent?.textInput(
                 TextInputRequester.Request.Builder(action.text!!)
@@ -236,41 +284,7 @@ class RoutineAgent(
                         Logger.d(TAG, "[onRequestCreated] dialogRequestId: $dialogRequestId")
                         textInputRequests.add(dialogRequestId)
                         currentActionDialogRequestId = dialogRequestId
-                        currentActionHandlingListener = DirectiveGroupHandlingListener(
-                            dialogRequestId,
-                            directiveGroupProcessor,
-                            directiveSequencer,
-                            object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
-                                override fun onFinish(isExistCanceledOrFailed: Boolean) {
-                                    Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
-                                    if (isExistCanceledOrFailed) {
-                                        pause()
-                                    } else {
-                                        scheduledFutureForTryStartNextAction?.cancel(true)
-                                        scheduledFutureForTryStartNextAction = null
-                                        if (action.postDelayInMilliseconds != null) {
-                                            scheduledFutureForTryStartNextAction =
-                                                executor.schedule(
-                                                    {
-                                                        tryStartNextAction()
-                                                    },
-                                                    action.postDelayInMilliseconds,
-                                                    TimeUnit.MILLISECONDS
-                                                )
-                                        } else {
-                                            tryStartNextAction()
-                                        }
-                                    }
-                                }
-
-                                override fun onCanceled(directive: Directive) {
-                                    pause()
-                                }
-
-                                override fun onFailed(directive: Directive) {
-                                    pause()
-                                }
-                            })
+                        currentActionHandlingListener = createDirectiveGroupHandlingListenerForActionHandling(dialogRequestId, action)
                     }
 
                     override fun onReceiveResponse(dialogRequestId: String) {
@@ -307,40 +321,10 @@ class RoutineAgent(
                         TAG,
                         "doDataAction - [onContext] dialogRequestId: ${request.dialogRequestId}"
                     )
+
                     currentActionDialogRequestId = request.dialogRequestId
-                    currentActionHandlingListener = DirectiveGroupHandlingListener(
-                        request.dialogRequestId,
-                        directiveGroupProcessor,
-                        directiveSequencer,
-                        object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
-                            override fun onFinish(isExistCanceledOrFailed: Boolean) {
-                                Logger.d(
-                                    TAG,
-                                    "doDataAction - [onFinish] dialogRequestId: ${request.dialogRequestId}"
-                                )
-                                if (isExistCanceledOrFailed) {
-                                    pause()
-                                } else {
-                                    scheduledFutureForTryStartNextAction?.cancel(true)
-                                    scheduledFutureForTryStartNextAction = null
-                                    if (action.postDelayInMilliseconds != null) {
-                                        scheduledFutureForTryStartNextAction = executor.schedule({
-                                            tryStartNextAction()
-                                        }, action.postDelayInMilliseconds, TimeUnit.MILLISECONDS)
-                                    } else {
-                                        tryStartNextAction()
-                                    }
-                                }
-                            }
+                    currentActionHandlingListener = createDirectiveGroupHandlingListenerForActionHandling(request.dialogRequestId, action)
 
-                            override fun onCanceled(directive: Directive) {
-                                pause()
-                            }
-
-                            override fun onFailed(directive: Directive) {
-                                pause()
-                            }
-                        })
                     messageSender.newCall(request).enqueue(object : MessageSender.Callback {
                         override fun onFailure(request: MessageRequest, status: Status) {
                             currentActionDialogRequestId = null
