@@ -163,11 +163,7 @@ class RoutineAgent(
 
             if (!isPaused) {
                 isPaused = true
-                state = RoutineAgentInterface.State.INTERRUPTED
-
-                listeners.forEach {
-                    it.onInterrupted(directive)
-                }
+                setState(RoutineAgentInterface.State.INTERRUPTED, directive)
             }
         }
 
@@ -199,9 +195,7 @@ class RoutineAgent(
             scheduledFutureForCancelByInterrupt?.cancel(true)
             scheduledFutureForCancelByInterrupt = null
 
-            listeners.forEach {
-                it.onPlaying(directive)
-            }
+            setState(RoutineAgentInterface.State.PLAYING, directive)
             tryStartNextAction()
         }
 
@@ -397,13 +391,12 @@ class RoutineAgent(
             }
 
             override fun onPostSendMessage(request: MessageRequest, status: Status) {
-                Logger.d(TAG, "[onPostSendMessage] request: $request, status: $status")
                 if (!status.isOk() && request is EventMessageRequest) {
                     if (causingPauseRequests.remove(request.dialogRequestId) != null) {
                         currentRoutineRequest?.let {
                             Logger.d(
                                 TAG,
-                                "[onPostSendMessage] cancel current request (causing request: $request)"
+                                "[onPostSendMessage] cancel current request (causing request: $request, status: $status)"
                             )
                             it.cancel()
                         }
@@ -486,36 +479,27 @@ class RoutineAgent(
             RoutineRequest(directive, object : RoutineRequestListener {
                 override fun onCancel() {
                     Logger.d(TAG, "[start] onCancel()")
-                    state = RoutineAgentInterface.State.STOPPED
+                    setState(RoutineAgentInterface.State.STOPPED, directive)
                     currentRoutineRequest?.let {
                         seamlessFocusManager.cancel(it)
                     }
                     currentRoutineRequest = null
                     sendRoutineStopEvent(directive)
-                    listeners.forEach {
-                        it.onStopped(directive)
-                    }
                 }
 
                 override fun onFinish() {
                     Logger.d(TAG, "[start] onFinish()")
-                    state = RoutineAgentInterface.State.FINISHED
+                    setState(RoutineAgentInterface.State.FINISHED, directive)
                     currentRoutineRequest?.let {
                         seamlessFocusManager.cancel(it)
                     }
                     currentRoutineRequest = null
                     sendRoutineFinishEvent(directive)
-                    listeners.forEach {
-                        it.onFinished(directive)
-                    }
                 }
             }).apply {
                 currentRoutineRequest = this
-                val prevState = state
-                state = RoutineAgentInterface.State.PLAYING
-                listeners.forEach {
-                    it.onPlaying(directive)
-                }
+
+                setState(RoutineAgentInterface.State.PLAYING, directive)
 
                 contextManager.getContext(object : IgnoreErrorContextRequestor() {
                     override fun onContext(jsonContext: String) {
@@ -533,7 +517,7 @@ class RoutineAgent(
                         ).enqueue(object : MessageSender.Callback {
                             override fun onFailure(request: MessageRequest, status: Status) {
                                 countDownLatch.countDown()
-                                state = prevState
+                                setState(RoutineAgentInterface.State.STOPPED, directive)
                                 currentRoutineRequest = null
                             }
 
@@ -726,5 +710,23 @@ class RoutineAgent(
     override fun stop(directive: StartDirectiveHandler.StartDirective): Boolean {
         Logger.d(TAG, "[stop] $directive")
         return stopInternal(directive.payload.token)
+    }
+
+    private fun setState(state: RoutineAgentInterface.State, directive: StartDirectiveHandler.StartDirective) {
+        Logger.d(TAG, "[setState] from: ${this.state} , to: $state , directive: ${directive.header}")
+        if(this.state == state) {
+            return
+        }
+
+        this.state = state
+        when(state) {
+            RoutineAgentInterface.State.PLAYING -> listeners.forEach { it.onPlaying(directive) }
+            RoutineAgentInterface.State.STOPPED -> listeners.forEach { it.onStopped(directive) }
+            RoutineAgentInterface.State.FINISHED -> listeners.forEach { it.onFinished(directive) }
+            RoutineAgentInterface.State.INTERRUPTED -> listeners.forEach { it.onInterrupted(directive) }
+            else -> {
+                // ignore idle (never called)
+            }
+        }
     }
 }
