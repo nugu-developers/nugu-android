@@ -26,10 +26,19 @@ class DirectiveGroupHandlingListener(
     private val dialogRequestId: String,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
-    private val directiveResultListener: OnDirectiveResultListener
+    private val directiveResultListener: OnDirectiveResultListener,
+    private val directiveGroupPrepareListener: OnDirectiveGroupPrepareListener? = null
 ) : DirectiveGroupProcessorInterface.Listener, DirectiveSequencerInterface.OnDirectiveHandlingListener {
     companion object {
         private const val TAG = "DirectiveGroupHandlingListener"
+    }
+
+    interface OnDirectiveGroupPrepareListener {
+        /**
+         * Called when all directive's prepared for handling.
+         * @param directives the directives which prepared.
+         */
+        fun onPrepared(directives: List<Directive>)
     }
 
     interface OnDirectiveResultListener {
@@ -65,6 +74,7 @@ class DirectiveGroupHandlingListener(
             Logger.d(TAG, "[onReceiveDirectives] dialogRequestId: $dialogRequestId")
             directiveGroupProcessor.removeListener(this)
             this.directives.addAll(directives)
+            directiveGroupPrepareListener?.onPrepared(directives)
         }
     }
 
