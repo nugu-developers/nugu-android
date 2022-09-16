@@ -140,13 +140,12 @@ class RoutineAgent(
             listener.onCancel()
         }
 
-        private fun cancelCurrentAction() {
-            currentActionDialogRequestId?.let {
-                directiveProcessor.cancelDialogRequestId(it)
-            }
-        }
-
         fun pause(cancelCurrentAction: Boolean = true) {
+            if(isCanceled) {
+                Logger.d(TAG, "[RoutineRequest] pause() ignored by isCanceled: $isCanceled")
+                return
+            }
+
             Logger.d(
                 TAG,
                 "[RoutineRequest] pause - cancelCurrentAction: $cancelCurrentAction, isPaused: $isPaused"
@@ -154,8 +153,7 @@ class RoutineAgent(
             if (cancelCurrentAction) {
                 cancelCurrentAction()
             }
-            scheduledFutureForTryStartNextAction?.cancel(true)
-            scheduledFutureForTryStartNextAction = null
+            cancelNextScheduledAction()
             scheduledFutureForCancelByInterrupt?.cancel(true)
             scheduledFutureForCancelByInterrupt = executor.schedule({
                 cancel(cancelCurrentAction)
@@ -164,6 +162,17 @@ class RoutineAgent(
             if (!isPaused) {
                 isPaused = true
                 setState(RoutineAgentInterface.State.INTERRUPTED, directive)
+            }
+        }
+
+        private fun cancelNextScheduledAction() {
+            scheduledFutureForTryStartNextAction?.cancel(true)
+            scheduledFutureForTryStartNextAction = null
+        }
+
+        private fun cancelCurrentAction() {
+            currentActionDialogRequestId?.let {
+                directiveProcessor.cancelDialogRequestId(it)
             }
         }
 
@@ -190,8 +199,7 @@ class RoutineAgent(
                 return
             }
             isPaused = false
-            scheduledFutureForTryStartNextAction?.cancel(true)
-            scheduledFutureForTryStartNextAction = null
+            cancelNextScheduledAction()
             scheduledFutureForCancelByInterrupt?.cancel(true)
             scheduledFutureForCancelByInterrupt = null
 
@@ -240,8 +248,7 @@ class RoutineAgent(
                     if (isExistCanceledOrFailed) {
                         pause()
                     } else {
-                        scheduledFutureForTryStartNextAction?.cancel(true)
-                        scheduledFutureForTryStartNextAction = null
+                        cancelNextScheduledAction()
                         if (action.postDelayInMilliseconds != null) {
                             scheduledFutureForTryStartNextAction =
                                 executor.schedule(
