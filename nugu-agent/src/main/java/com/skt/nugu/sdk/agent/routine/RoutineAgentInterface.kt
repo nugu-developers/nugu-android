@@ -77,7 +77,9 @@ interface RoutineAgentInterface {
         val token: String?,
         val routineActivity: State,
         val currentAction: Int?,
-        val actions: Array<Action>?
+        val actions: Array<Action>?,
+        val routineId: String?,
+        val routineType: String?
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -92,6 +94,8 @@ interface RoutineAgentInterface {
                 if (other.actions == null) return false
                 if (!actions.contentEquals(other.actions)) return false
             } else if (other.actions != null) return false
+            if (routineId != other.routineId) return false
+            if (routineType != other.routineType) return false
 
             return true
         }
@@ -101,7 +105,10 @@ interface RoutineAgentInterface {
             result = 31 * result + routineActivity.hashCode()
             result = 31 * result + (currentAction ?: 0)
             result = 31 * result + (actions?.contentHashCode() ?: 0)
+            result = 31 * result + (routineId?.hashCode() ?: 0)
+            result = 31 * result + (routineType?.hashCode() ?: 0)
             return result
         }
+
     }
 }
