@@ -669,13 +669,16 @@ class RoutineAgent(
     override fun getContext(): RoutineAgentInterface.Context {
         val request = currentRoutineRequest
         return if (request == null) {
-            RoutineAgentInterface.Context(null, state, null, null)
+            RoutineAgentInterface.Context(null, state, null, null, null, null)
         } else {
+            val payload = request.directive.payload
             RoutineAgentInterface.Context(
-                request.directive.payload.token,
+                payload.token,
                 state,
                 request.getCurrentActionIndex() + 1,
-                request.directive.payload.actions
+                payload.actions,
+                payload.routineId,
+                payload.routineType
             )
         }
     }

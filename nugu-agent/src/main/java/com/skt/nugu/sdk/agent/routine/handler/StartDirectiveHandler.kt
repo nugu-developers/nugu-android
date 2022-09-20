@@ -61,7 +61,11 @@ class StartDirectiveHandler(
             @SerializedName("token")
             val token: String,
             @SerializedName("actions")
-            val actions: Array<Action>
+            val actions: Array<Action>,
+            @SerializedName("routineId")
+            val routineId: String?,
+            @SerializedName("routineType")
+            val routineType: String?,
         ) {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -72,6 +76,8 @@ class StartDirectiveHandler(
                 if (playServiceId != other.playServiceId) return false
                 if (token != other.token) return false
                 if (!actions.contentEquals(other.actions)) return false
+                if (routineId != other.routineId) return false
+                if (routineType != other.routineType) return false
 
                 return true
             }
@@ -80,6 +86,8 @@ class StartDirectiveHandler(
                 var result = playServiceId.hashCode()
                 result = 31 * result + token.hashCode()
                 result = 31 * result + actions.contentHashCode()
+                result = 31 * result + (routineId?.hashCode() ?: 0)
+                result = 31 * result + (routineType?.hashCode() ?: 0)
                 return result
             }
         }
