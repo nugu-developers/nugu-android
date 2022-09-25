@@ -31,13 +31,17 @@ data class Action(
     @SerializedName("token")
     val token: String?,
     @SerializedName("postDelayInMilliseconds")
-    val postDelayInMilliseconds: Long?
+    val postDelayInMilliseconds: Long?,
+    @SerializedName("muteDelayInMilliseconds")
+    val muteDelayInMilliseconds: Long?
 ) {
     enum class Type {
         @SerializedName("TEXT")
         TEXT,
         @SerializedName("DATA")
-        DATA
+        DATA,
+        @SerializedName("BREAK")
+        BREAK
     }
 
     fun toJsonObject(): JsonObject = JsonObject().apply {
@@ -56,6 +60,9 @@ data class Action(
         }
         postDelayInMilliseconds?.let {
             addProperty("postDelayInMilliseconds", it)
+        }
+        muteDelayInMilliseconds?.let {
+            addProperty("muteDelayInMilliseconds", it)
         }
     }
 }

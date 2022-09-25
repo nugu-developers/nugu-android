@@ -20,7 +20,7 @@ import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
 
 interface RoutineAgentInterface {
     enum class State {
-        IDLE, PLAYING, STOPPED, FINISHED, INTERRUPTED
+        IDLE, PLAYING, STOPPED, FINISHED, INTERRUPTED, SUSPENDED
     }
 
     interface RoutineListener {
@@ -28,6 +28,7 @@ interface RoutineAgentInterface {
         fun onStopped(directive: StartDirectiveHandler.StartDirective)
         fun onFinished(directive: StartDirectiveHandler.StartDirective)
         fun onInterrupted(directive: StartDirectiveHandler.StartDirective)
+        fun onSuspended(directive: StartDirectiveHandler.StartDirective)
 
         /**
          * Called a [index] action started of routine for [directive]

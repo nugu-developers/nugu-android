@@ -228,10 +228,19 @@ class RoutineAgent(
 
         private fun doAction(action: Action) {
             Logger.d(TAG, "[RoutineRequest] doAction - $action")
-            if (action.type == Action.Type.TEXT && action.text != null) {
-                doTextAction(action)
-            } else if (action.type == Action.Type.DATA && action.data != null) {
-                doDataAction(action)
+            when(action.type) {
+                Action.Type.TEXT -> {
+                    doTextAction(action)
+                    setState(RoutineAgentInterface.State.PLAYING, directive)
+                }
+                Action.Type.DATA -> {
+                    doDataAction(action)
+                    setState(RoutineAgentInterface.State.PLAYING, directive)
+                }
+                Action.Type.BREAK -> {
+                    doBreakAction(action)
+                    setState(RoutineAgentInterface.State.SUSPENDED, directive)
+                }
             }
         }
 
@@ -288,8 +297,14 @@ class RoutineAgent(
         )
 
         private fun doTextAction(action: Action) {
+            val text = action.text
+            if(text == null) {
+                Logger.w(TAG, "[doTextAction] text should not be null")
+                return
+            }
+
             textAgent?.textInput(
-                TextInputRequester.Request.Builder(action.text!!)
+                TextInputRequester.Request.Builder(text)
                     .playServiceId(action.playServiceId).token(action.token)
                     .includeDialogAttribute(false), object : TextAgentInterface.RequestListener {
                     override fun onRequestCreated(dialogRequestId: String) {
@@ -313,6 +328,12 @@ class RoutineAgent(
         }
 
         private fun doDataAction(action: Action) {
+            val data = action.data
+            if(data == null) {
+                Logger.w(TAG, "[doDataAction] data should not be null")
+                return
+            }
+
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val request = EventMessageRequest.Builder(
@@ -351,6 +372,25 @@ class RoutineAgent(
                     })
                 }
             })
+        }
+
+        private fun doBreakAction(action: Action) {
+            val muteDelayInMilliseconds = action.muteDelayInMilliseconds
+            if(muteDelayInMilliseconds == null) {
+                Logger.w(TAG, "[doBreakAction] muteDelayInMilliseconds should not be null")
+                return
+            }
+
+            // mute 시간 이후, 다음 action을 실행하도록 함.
+            scheduledFutureForTryStartNextAction?.cancel(true)
+            scheduledFutureForTryStartNextAction =
+                executor.schedule(
+                    {
+                        tryStartNextAction()
+                    },
+                    muteDelayInMilliseconds,
+                    TimeUnit.MILLISECONDS
+                )
         }
     }
 
@@ -401,9 +441,8 @@ class RoutineAgent(
             }
 
             private fun shouldPauseRoutine(request: EventMessageRequest): Boolean {
-                return (request.namespace == "Text" && request.name == "TextInput") ||
-                        (request.namespace == "Display" && request.name == "ElementSelected") ||
-                        (request.namespace == "ASR" && request.name == "Recognize")
+                return ((request.namespace == "Text" && request.name == "TextInput") || (request.namespace == "Display" && request.name == "ElementSelected")) ||
+                        ((request.namespace == "ASR" && request.name == "Recognize") && state != RoutineAgentInterface.State.SUSPENDED)
             }
         })
 
@@ -723,6 +762,7 @@ class RoutineAgent(
             RoutineAgentInterface.State.STOPPED -> listeners.forEach { it.onStopped(directive) }
             RoutineAgentInterface.State.FINISHED -> listeners.forEach { it.onFinished(directive) }
             RoutineAgentInterface.State.INTERRUPTED -> listeners.forEach { it.onInterrupted(directive) }
+            RoutineAgentInterface.State.SUSPENDED -> listeners.forEach { it.onSuspended(directive) }
             else -> {
                 // ignore idle (never called)
             }
