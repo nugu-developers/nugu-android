@@ -35,6 +35,13 @@ interface RoutineAgentInterface {
          * @param directive the directive contain [Action]
          */
         fun onActionStarted(index: Int, directive: StartDirectiveHandler.StartDirective)
+
+        /**
+         * Called a [index] action finished of routine for [directive]
+         * @param index finished [Action] index for [StartDirectiveHandler.StartDirective.Payload.actions] (0-based index)
+         * @param directive the directive contain [Action]
+         */
+        fun onActionFinished(index: Int, directive: StartDirectiveHandler.StartDirective)
     }
 
     fun getState(): State

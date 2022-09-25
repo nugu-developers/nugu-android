@@ -245,6 +245,10 @@ class RoutineAgent(
             object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
                 override fun onFinish(isExistCanceledOrFailed: Boolean) {
                     Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
+                    listeners.forEach {
+                        it.onActionFinished(currentActionIndex, directive)
+                    }
+
                     if (isExistCanceledOrFailed) {
                         pause()
                     } else {
@@ -262,6 +266,7 @@ class RoutineAgent(
                             tryStartNextAction()
                         }
                     }
+
                 }
 
                 override fun onCanceled(directive: Directive) {
