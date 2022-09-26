@@ -289,6 +289,10 @@ class RoutineAgent(
             object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
                 override fun onPrepared(directives: List<Directive>) {
                     Logger.d(TAG, "[onPrepared] action index: $currentActionIndex, ${directives.firstOrNull()?.getDialogRequestId()}")
+                    action.actionTimeoutInMilliseconds?.let {
+                        setState(RoutineAgentInterface.State.SUSPENDED, directive)
+                        scheduleActionTimeoutTriggeredEvent(it, action, directive)
+                    }
                     listeners.forEach {
                         it.onActionStarted(currentActionIndex, directive)
                     }
@@ -767,5 +771,35 @@ class RoutineAgent(
                 // ignore idle (never called)
             }
         }
+    }
+
+    private fun scheduleActionTimeoutTriggeredEvent(
+        delay: Long,
+        action: Action,
+        directive: StartDirectiveHandler.StartDirective
+    ) {
+        executor.schedule({
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
+                    val request = EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        "ActionTimeoutTriggered",
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        action.playServiceId?.let {
+                            addProperty("playServiceId", it)
+                        }
+                        action.token?.let {
+                            addProperty("token", it)
+                        }
+                    }.toString())
+                        .referrerDialogRequestId(directive.header.referrerDialogRequestId ?: "")
+                        .build()
+
+                    messageSender.newCall(request).enqueue(null)
+                }
+            })
+        }, delay, TimeUnit.MILLISECONDS)
     }
 }

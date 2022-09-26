@@ -33,7 +33,9 @@ data class Action(
     @SerializedName("postDelayInMilliseconds")
     val postDelayInMilliseconds: Long?,
     @SerializedName("muteDelayInMilliseconds")
-    val muteDelayInMilliseconds: Long?
+    val muteDelayInMilliseconds: Long?,
+    @SerializedName("actionTimeoutInMilliseconds")
+    val actionTimeoutInMilliseconds: Long?,
 ) {
     enum class Type {
         @SerializedName("TEXT")
@@ -63,6 +65,9 @@ data class Action(
         }
         muteDelayInMilliseconds?.let {
             addProperty("muteDelayInMilliseconds", it)
+        }
+        actionTimeoutInMilliseconds?.let {
+            addProperty("actionTimeoutInMilliseconds", it)
         }
     }
 }
