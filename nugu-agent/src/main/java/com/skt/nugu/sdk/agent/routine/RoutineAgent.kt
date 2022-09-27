@@ -820,6 +820,43 @@ class RoutineAgent(
         return stopInternal(directive.payload.token)
     }
 
+    override fun next(): Boolean {
+        Logger.d(TAG, "[next]")
+        currentRoutineRequest?.let {
+            sendMoveControlEvent(it, 1)
+            return true
+        }
+        return false
+    }
+
+    override fun prev(): Boolean {
+        Logger.d(TAG, "[prev]")
+        currentRoutineRequest?.let {
+            sendMoveControlEvent(it, -1)
+            return true
+        }
+        return false
+    }
+
+    private fun sendMoveControlEvent(request: RoutineRequest, offset: Int) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                messageSender.newCall(
+                    EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        "MoveControl",
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        addProperty("playServiceId", request.directive.payload.playServiceId)
+                        addProperty("offset", offset)
+                    }.toString()).referrerDialogRequestId(request.directive.header.dialogRequestId)
+                        .build()
+                ).enqueue(null)
+            }
+        }, namespaceAndName)
+    }
+
     private fun setState(state: RoutineAgentInterface.State, directive: StartDirectiveHandler.StartDirective) {
         Logger.d(TAG, "[setState] from: ${this.state} , to: $state , directive: ${directive.header}")
         if(this.state == state) {
