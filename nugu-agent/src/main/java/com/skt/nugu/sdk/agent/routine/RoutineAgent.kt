@@ -231,15 +231,12 @@ class RoutineAgent(
             when(action.type) {
                 Action.Type.TEXT -> {
                     doTextAction(action)
-                    setState(RoutineAgentInterface.State.PLAYING, directive)
                 }
                 Action.Type.DATA -> {
                     doDataAction(action)
-                    setState(RoutineAgentInterface.State.PLAYING, directive)
                 }
                 Action.Type.BREAK -> {
                     doBreakAction(action)
-                    setState(RoutineAgentInterface.State.SUSPENDED, directive)
                 }
             }
         }
@@ -257,7 +254,7 @@ class RoutineAgent(
                         applyMuteDelay = true
                     }
                     action.actionTimeoutInMilliseconds?.let {
-                        setState(RoutineAgentInterface.State.SUSPENDED, directive)
+                        setSuspendedState(directive, System.currentTimeMillis() + it)
                         scheduleActionTimeoutTriggeredEvent(it, action, directive)
                     }
                     listeners.forEach {
@@ -321,6 +318,7 @@ class RoutineAgent(
                 return
             }
 
+            setState(RoutineAgentInterface.State.PLAYING, directive)
             textAgent?.textInput(
                 TextInputRequester.Request.Builder(text)
                     .playServiceId(action.playServiceId).token(action.token)
@@ -351,7 +349,7 @@ class RoutineAgent(
                 Logger.w(TAG, "[doDataAction] data should not be null")
                 return
             }
-
+            setState(RoutineAgentInterface.State.PLAYING, directive)
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val request = EventMessageRequest.Builder(
@@ -399,6 +397,7 @@ class RoutineAgent(
                 return
             }
 
+            setSuspendedState(directive, System.currentTimeMillis() + muteDelayInMilliseconds)
             // mute 시간 이후, 다음 action을 실행하도록 함.
             scheduledFutureForTryStartNextAction?.cancel(true)
             scheduledFutureForTryStartNextAction =
@@ -774,17 +773,31 @@ class RoutineAgent(
             return
         }
 
+        if(state == RoutineAgentInterface.State.SUSPENDED) {
+            Logger.w(TAG, "[setState] call setSuspendedState(...) instead of this!!!")
+            return
+        }
+
         this.state = state
         when(state) {
             RoutineAgentInterface.State.PLAYING -> listeners.forEach { it.onPlaying(directive) }
             RoutineAgentInterface.State.STOPPED -> listeners.forEach { it.onStopped(directive) }
             RoutineAgentInterface.State.FINISHED -> listeners.forEach { it.onFinished(directive) }
             RoutineAgentInterface.State.INTERRUPTED -> listeners.forEach { it.onInterrupted(directive) }
-            RoutineAgentInterface.State.SUSPENDED -> listeners.forEach { it.onSuspended(directive) }
             else -> {
                 // ignore idle (never called)
             }
         }
+    }
+
+    private fun setSuspendedState(directive: StartDirectiveHandler.StartDirective, expectedTerminateTimestamp: Long) {
+        if(this.state == RoutineAgentInterface.State.SUSPENDED) {
+            return
+        }
+
+        this.state = RoutineAgentInterface.State.SUSPENDED
+
+        listeners.forEach { it.onSuspended(directive, expectedTerminateTimestamp) }
     }
 
     private fun scheduleActionTimeoutTriggeredEvent(
