@@ -20,6 +20,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.display.DisplayAgentInterface
 import com.skt.nugu.sdk.agent.routine.handler.ContinueDirectiveHandler
+import com.skt.nugu.sdk.agent.routine.handler.MoveDirectiveHandler
 import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
 import com.skt.nugu.sdk.agent.routine.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
@@ -56,11 +57,12 @@ class RoutineAgent(
     StartDirectiveHandler.Controller,
     StopDirectiveHandler.Controller,
     ContinueDirectiveHandler.Controller,
+    MoveDirectiveHandler.Controller,
     DisplayAgentInterface.Listener {
     companion object {
         private const val TAG = "RoutineAgent"
 
-        private val VERSION = Version(1, 2)
+        val VERSION = Version(1, 2)
         const val NAMESPACE = "Routine"
         const val EVENT_FAILED = "Failed"
     }
@@ -165,6 +167,37 @@ class RoutineAgent(
             }
         }
 
+        fun move(position: Long): Boolean {
+            val index = findFirstCountableActionFrom((position - 1).toInt())
+
+            return if(index != -1) {
+                pause()
+                tryStartActionIndexAt(index)
+                true
+            } else {
+                false
+            }
+        }
+
+        private fun findFirstCountableActionFrom(startIndex: Int): Int {
+            with(directive.payload.actions) {
+                var index = startIndex
+
+                while (index < size) {
+                    if (get(index).type != Action.Type.BREAK) {
+                        break
+                    }
+                    index++
+                }
+
+                return if(index < size) {
+                    index
+                } else {
+                    -1
+                }
+            }
+        }
+
         private fun cancelNextScheduledAction() {
             scheduledFutureForTryStartNextAction?.cancel(true)
             scheduledFutureForTryStartNextAction = null
@@ -210,13 +243,27 @@ class RoutineAgent(
         private fun tryStartNextAction() {
             Logger.d(
                 TAG,
-                "[RoutineRequest] tryStartNextAction - $currentActionIndex, isPaused: $isPaused"
+                "[RoutineRequest] tryStartNextAction - $currentActionIndex, isPaused: $isPaused, isCanceled: $isCanceled"
             )
             if (isPaused || isCanceled) {
                 return
             }
 
-            currentActionIndex++
+            tryStartActionIndexAt(currentActionIndex + 1)
+        }
+
+        private fun tryStartActionIndexAt(index: Int) {
+            Logger.d(
+                TAG,
+                "[RoutineRequest] tryStartActionIndexAt - target index:$index, current index: $currentActionIndex, isCanceled: $isCanceled"
+            )
+
+            if (isCanceled) {
+                return
+            }
+
+            currentActionIndex = index
+
             if (currentActionIndex < directive.payload.actions.size) {
                 doAction(directive.payload.actions[currentActionIndex])
             } else {
@@ -423,6 +470,7 @@ class RoutineAgent(
         directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this, startDirectiveHandleController))
         directiveSequencer.addDirectiveHandler(StopDirectiveHandler(this))
         directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this, continueDirectiveHandleController))
+        directiveSequencer.addDirectiveHandler(MoveDirectiveHandler(contextManager, messageSender, this, namespaceAndName))
         contextManager.setStateProvider(namespaceAndName, this)
         messageSender.addOnSendMessageListener(object : MessageSender.OnSendMessageListener {
             override fun onPreSendMessage(request: MessageRequest) {
@@ -663,6 +711,11 @@ class RoutineAgent(
     override fun stop(directive: StopDirectiveHandler.StopDirective): Boolean {
         Logger.d(TAG, "[stop] $directive")
         return stopInternal(directive.payload.token)
+    }
+
+    override fun move(directive: MoveDirectiveHandler.MoveDirective): Boolean {
+        Logger.d(TAG, "[move $directive]")
+        return currentRoutineRequest?.move(directive.payload.position) ?: false
     }
 
     override fun doContinue(directive: ContinueDirectiveHandler.ContinueDirective): Boolean {
