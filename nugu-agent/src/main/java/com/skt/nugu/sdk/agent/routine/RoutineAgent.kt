@@ -247,48 +247,15 @@ class RoutineAgent(
         private fun createDirectiveGroupHandlingListenerForActionHandling(
             dialogRequestId: String,
             action: Action
-        ): DirectiveGroupHandlingListener = DirectiveGroupHandlingListener(
-            dialogRequestId,
-            directiveGroupProcessor,
-            directiveSequencer,
-            object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
-                override fun onFinish(isExistCanceledOrFailed: Boolean) {
-                    Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
-                    listeners.forEach {
-                        it.onActionFinished(currentActionIndex, directive)
-                    }
+        ): DirectiveGroupHandlingListener {
+            var applyMuteDelay = false
 
-                    if (isExistCanceledOrFailed) {
-                        pause()
-                    } else {
-                        cancelNextScheduledAction()
-                        if (action.postDelayInMilliseconds != null) {
-                            scheduledFutureForTryStartNextAction =
-                                executor.schedule(
-                                    {
-                                        tryStartNextAction()
-                                    },
-                                    action.postDelayInMilliseconds,
-                                    TimeUnit.MILLISECONDS
-                                )
-                        } else {
-                            tryStartNextAction()
-                        }
-                    }
-
-                }
-
-                override fun onCanceled(directive: Directive) {
-                    pause()
-                }
-
-                override fun onFailed(directive: Directive) {
-                    pause()
-                }
-            },
-            object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
+            val directiveGroupPrepareListener = object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
                 override fun onPrepared(directives: List<Directive>) {
                     Logger.d(TAG, "[onPrepared] action index: $currentActionIndex, ${directives.firstOrNull()?.getDialogRequestId()}")
+                    if(action.muteDelayInMilliseconds != null && directives.any { it.header.namespace == "TTS" && it.header.name == "SPEAK" }) {
+                        applyMuteDelay = true
+                    }
                     action.actionTimeoutInMilliseconds?.let {
                         setState(RoutineAgentInterface.State.SUSPENDED, directive)
                         scheduleActionTimeoutTriggeredEvent(it, action, directive)
@@ -298,7 +265,54 @@ class RoutineAgent(
                     }
                 }
             }
-        )
+
+            return DirectiveGroupHandlingListener(
+                dialogRequestId,
+                directiveGroupProcessor,
+                directiveSequencer,
+                object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
+                    override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                        Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
+                        listeners.forEach {
+                            it.onActionFinished(currentActionIndex, directive)
+                        }
+
+                        if (isExistCanceledOrFailed) {
+                            pause()
+                        } else {
+                            cancelNextScheduledAction()
+                            val delay =
+                                if (action.muteDelayInMilliseconds != null && applyMuteDelay) {
+                                    action.muteDelayInMilliseconds
+                                } else action.postDelayInMilliseconds
+
+                            if (delay != null) {
+                                scheduledFutureForTryStartNextAction =
+                                    executor.schedule(
+                                        {
+                                            tryStartNextAction()
+                                        },
+                                        delay,
+                                        TimeUnit.MILLISECONDS
+                                    )
+                            } else {
+                                tryStartNextAction()
+                            }
+                        }
+
+                    }
+
+                    override fun onCanceled(directive: Directive) {
+                        pause()
+                    }
+
+                    override fun onFailed(directive: Directive) {
+                        pause()
+                    }
+                },
+                directiveGroupPrepareListener
+            )
+        }
 
         private fun doTextAction(action: Action) {
             val text = action.text
