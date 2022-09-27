@@ -81,6 +81,16 @@ interface RoutineAgentInterface {
      */
     fun stop(directive: StartDirectiveHandler.StartDirective): Boolean
 
+    /**
+     * Request next action
+     */
+    fun next(): Boolean
+
+    /**
+     * Request prev action
+     */
+    fun prev(): Boolean
+
     data class Context(
         val token: String?,
         val routineActivity: State,
