@@ -83,7 +83,7 @@ class RequestPermissionDirectiveHandlerTest {
             val requestPermission = it[RequestPermissionDirectiveHandler.DIRECTIVE]
             Assert.assertTrue(requestPermission != null)
             requestPermission?.let { blockingPolicy ->
-                Assert.assertTrue(blockingPolicy.blockedBy == BlockingPolicy.MEDIUM_AUDIO)
+                Assert.assertTrue(blockingPolicy.blockedBy == BlockingPolicy.MEDIUM_ANY_ONLY)
                 Assert.assertTrue(blockingPolicy.blocking == null)
             }
         }

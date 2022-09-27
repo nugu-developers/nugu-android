@@ -16,11 +16,8 @@
 
 package com.skt.nugu.sdk.agent.permission
 
-import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
@@ -80,6 +77,6 @@ class RequestPermissionDirectiveHandler(
     }
 
     override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
-        this[DIRECTIVE] = BlockingPolicy.sharedInstanceFactory.get(BlockingPolicy.MEDIUM_AUDIO)
+        this[DIRECTIVE] = BlockingPolicy.sharedInstanceFactory.get()
     }
 }
