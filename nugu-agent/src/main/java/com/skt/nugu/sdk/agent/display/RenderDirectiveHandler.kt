@@ -310,7 +310,7 @@ class RenderDirectiveHandler(
     override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         val blockingPolicy = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
-            BlockingPolicy.MEDIUM_AUDIO_ONLY
+            BlockingPolicy.MEDIUM_AUDIO_AND_VISUAL
         )
         this[FULLTEXT1] = blockingPolicy
         this[FULLTEXT2] = blockingPolicy
