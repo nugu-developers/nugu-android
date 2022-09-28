@@ -41,6 +41,7 @@ data class BlockingPolicy(
         val MEDIUM_ANY_ONLY: EnumSet<Medium> = EnumSet.of(Medium.ANY)
         val MEDIUM_AUDIO: EnumSet<Medium> = EnumSet.of(Medium.ANY, Medium.AUDIO)
         val MEDIUM_AUDIO_ONLY: EnumSet<Medium> = EnumSet.of(Medium.AUDIO)
+        val MEDIUM_AUDIO_AND_VISUAL: EnumSet<Medium> = EnumSet.of(Medium.AUDIO, Medium.VISUAL)
 
         val sharedInstanceFactory = SharedInstanceFactory()
     }

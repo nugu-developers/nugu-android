@@ -89,7 +89,7 @@ class UpdateDirectiveHandler(
     override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         this[UPDATE] = BlockingPolicy.sharedInstanceFactory.get(
             BlockingPolicy.MEDIUM_AUDIO,
-            BlockingPolicy.MEDIUM_AUDIO_ONLY
+            BlockingPolicy.MEDIUM_AUDIO_AND_VISUAL
         )
     }
 }
