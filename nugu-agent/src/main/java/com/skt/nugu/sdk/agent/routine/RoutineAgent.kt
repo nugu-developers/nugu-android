@@ -62,7 +62,7 @@ class RoutineAgent(
     companion object {
         private const val TAG = "RoutineAgent"
 
-        val VERSION = Version(1, 2)
+        val VERSION = Version(1, 3)
         const val NAMESPACE = "Routine"
         const val EVENT_FAILED = "Failed"
     }
