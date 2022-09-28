@@ -60,6 +60,8 @@ class StartDirectiveHandler(
             val playServiceId: String,
             @SerializedName("token")
             val token: String,
+            @SerializedName("name")
+            val name: String?,
             @SerializedName("actions")
             val actions: Array<Action>,
             @SerializedName("routineId")
@@ -75,6 +77,7 @@ class StartDirectiveHandler(
 
                 if (playServiceId != other.playServiceId) return false
                 if (token != other.token) return false
+                if (name != other.name) return false
                 if (!actions.contentEquals(other.actions)) return false
                 if (routineId != other.routineId) return false
                 if (routineType != other.routineType) return false
@@ -85,6 +88,7 @@ class StartDirectiveHandler(
             override fun hashCode(): Int {
                 var result = playServiceId.hashCode()
                 result = 31 * result + token.hashCode()
+                result = 31 * result + (name?.hashCode() ?: 0)
                 result = 31 * result + actions.contentHashCode()
                 result = 31 * result + (routineId?.hashCode() ?: 0)
                 result = 31 * result + (routineType?.hashCode() ?: 0)
