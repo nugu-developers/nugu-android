@@ -48,7 +48,7 @@ class MoveDirectiveHandler(
         data class Payload(
             @SerializedName("playServiceId")
             val playServiceId: String,
-            @SerializedName("token")
+            @SerializedName("position")
             val position: Long
         )
     }
