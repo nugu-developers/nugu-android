@@ -36,7 +36,7 @@ class PermissionAgent(
         private const val TAG = "PermissionAgent"
         const val NAMESPACE = "Permission"
 
-        val VERSION = Version(1, 1)
+        val VERSION = Version(1, 2)
     }
 
     private val executor = Executors.newSingleThreadExecutor()
