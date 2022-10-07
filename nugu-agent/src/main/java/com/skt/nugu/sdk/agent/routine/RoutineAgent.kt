@@ -297,7 +297,7 @@ class RoutineAgent(
             val directiveGroupPrepareListener = object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
                 override fun onPrepared(directives: List<Directive>) {
                     Logger.d(TAG, "[onPrepared] action index: $currentActionIndex, ${directives.firstOrNull()?.getDialogRequestId()}")
-                    if(action.muteDelayInMilliseconds != null && directives.any { it.header.namespace == "TTS" && it.header.name == "SPEAK" }) {
+                    if(action.muteDelayInMilliseconds != null && !directives.any { it.header.namespace == "TTS" && it.header.name == "SPEAK" }) {
                         applyMuteDelay = true
                     }
                     action.actionTimeoutInMilliseconds?.let {
