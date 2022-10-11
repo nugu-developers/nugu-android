@@ -184,6 +184,7 @@ class RoutineAgent(
 
             return if(index != -1) {
                 pause()
+                isPaused = false
                 tryStartActionIndexAt(index)
                 true
             } else {
@@ -309,7 +310,8 @@ class RoutineAgent(
             val directiveGroupPrepareListener = object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
                 override fun onPrepared(directives: List<Directive>) {
                     Logger.d(TAG, "[onPrepared] action index: $currentActionIndex, ${directives.firstOrNull()?.getDialogRequestId()}")
-                    if(action.muteDelayInMilliseconds != null && !directives.any { it.header.namespace == "TTS" && it.header.name == "SPEAK" }) {
+                    if(action.muteDelayInMilliseconds != null && !directives.any { it.header.namespace == "TTS" && it.header.name == "Speak" }) {
+                        Logger.d(TAG, "[onPrepared] apply mute delay, $directives")
                         applyMuteDelay = true
                     }
                     action.actionTimeoutInMilliseconds?.let {
@@ -338,9 +340,13 @@ class RoutineAgent(
                         } else {
                             cancelNextScheduledAction()
                             val delay =
-                                if (action.muteDelayInMilliseconds != null && applyMuteDelay) {
+                                if (applyMuteDelay) {
+                                    Logger.d(TAG, "[onFinish] apply mute delay: ${action.muteDelayInMilliseconds}")
                                     action.muteDelayInMilliseconds
-                                } else action.postDelayInMilliseconds
+                                } else {
+                                    Logger.d(TAG, "[onFinish] apply post delay: ${action.postDelayInMilliseconds}")
+                                    action.postDelayInMilliseconds
+                                }
 
                             if (delay != null) {
                                 scheduledFutureForTryStartNextAction =
