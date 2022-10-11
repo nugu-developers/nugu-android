@@ -336,7 +336,7 @@ class RoutineAgent(
                         }
 
                         if (isExistCanceledOrFailed) {
-                            pause()
+                            pause(dialogRequestId == currentActionDialogRequestId)
                         } else {
                             cancelNextScheduledAction()
                             val delay =
@@ -365,11 +365,11 @@ class RoutineAgent(
                     }
 
                     override fun onCanceled(directive: Directive) {
-                        pause()
+                        pause(directive.getDialogRequestId() == currentActionDialogRequestId)
                     }
 
                     override fun onFailed(directive: Directive) {
-                        pause()
+                        pause(directive.getDialogRequestId() == currentActionDialogRequestId)
                     }
                 },
                 directiveGroupPrepareListener
