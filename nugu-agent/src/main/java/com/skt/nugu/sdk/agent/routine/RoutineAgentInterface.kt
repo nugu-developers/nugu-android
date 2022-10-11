@@ -93,11 +93,13 @@ interface RoutineAgentInterface {
 
     data class Context(
         val token: String?,
+        val name: String?,
         val routineActivity: State,
         val currentAction: Int?,
         val actions: Array<Action>?,
         val routineId: String?,
-        val routineType: String?
+        val routineType: String?,
+        val routineListType: String?
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -106,6 +108,7 @@ interface RoutineAgentInterface {
             other as Context
 
             if (token != other.token) return false
+            if (name != other.name) return false
             if (routineActivity != other.routineActivity) return false
             if (currentAction != other.currentAction) return false
             if (actions != null) {
@@ -114,19 +117,21 @@ interface RoutineAgentInterface {
             } else if (other.actions != null) return false
             if (routineId != other.routineId) return false
             if (routineType != other.routineType) return false
+            if (routineListType != other.routineListType) return false
 
             return true
         }
 
         override fun hashCode(): Int {
             var result = token?.hashCode() ?: 0
+            result = 31 * result + (name?.hashCode() ?: 0)
             result = 31 * result + routineActivity.hashCode()
             result = 31 * result + (currentAction ?: 0)
             result = 31 * result + (actions?.contentHashCode() ?: 0)
             result = 31 * result + (routineId?.hashCode() ?: 0)
             result = 31 * result + (routineType?.hashCode() ?: 0)
+            result = 31 * result + (routineListType?.hashCode() ?: 0)
             return result
         }
-
     }
 }

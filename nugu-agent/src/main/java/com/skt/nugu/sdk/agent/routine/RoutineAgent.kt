@@ -86,6 +86,18 @@ class RoutineAgent(
             context.token?.let {
                 addProperty("token", it)
             }
+            context.name?.let {
+                addProperty("name", it)
+            }
+            context.routineId?.let {
+                addProperty("routineId", it)
+            }
+            context.routineType?.let {
+                addProperty("routineType", it)
+            }
+            context.routineListType?.let {
+                addProperty("routineListType", it)
+            }
             addProperty("routineActivity", context.routineActivity.name)
             context.currentAction?.let {
                 addProperty("currentAction", it)
@@ -783,16 +795,18 @@ class RoutineAgent(
     override fun getContext(): RoutineAgentInterface.Context {
         val request = currentRoutineRequest
         return if (request == null) {
-            RoutineAgentInterface.Context(null, state, null, null, null, null)
+            RoutineAgentInterface.Context(null, null, state, null, null, null, null, null)
         } else {
             val payload = request.directive.payload
             RoutineAgentInterface.Context(
                 payload.token,
+                payload.name,
                 state,
                 request.getCurrentActionIndex() + 1,
                 payload.actions,
                 payload.routineId,
-                payload.routineType
+                payload.routineType,
+                payload.routineListType
             )
         }
     }
