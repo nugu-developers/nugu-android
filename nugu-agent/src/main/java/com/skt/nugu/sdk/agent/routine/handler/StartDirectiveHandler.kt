@@ -68,6 +68,8 @@ class StartDirectiveHandler(
             val routineId: String?,
             @SerializedName("routineType")
             val routineType: String?,
+            @SerializedName("routineListType")
+            val routineListType: String?,
         ) {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -81,6 +83,7 @@ class StartDirectiveHandler(
                 if (!actions.contentEquals(other.actions)) return false
                 if (routineId != other.routineId) return false
                 if (routineType != other.routineType) return false
+                if (routineListType != other.routineListType) return false
 
                 return true
             }
@@ -92,6 +95,7 @@ class StartDirectiveHandler(
                 result = 31 * result + actions.contentHashCode()
                 result = 31 * result + (routineId?.hashCode() ?: 0)
                 result = 31 * result + (routineType?.hashCode() ?: 0)
+                result = 31 * result + (routineListType?.hashCode() ?: 0)
                 return result
             }
         }
