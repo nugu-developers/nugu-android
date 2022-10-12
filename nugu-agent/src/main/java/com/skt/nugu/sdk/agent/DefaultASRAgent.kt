@@ -40,7 +40,9 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControl
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlManagerInterface
 import com.skt.nugu.sdk.core.interfaces.interaction.InteractionControlMode
-import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.Header
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.playsynchronizer.PlaySynchronizerInterface
 import com.skt.nugu.sdk.core.interfaces.session.SessionManagerInterface
@@ -567,7 +569,13 @@ class DefaultASRAgent(
             }.get(300, TimeUnit.MILLISECONDS)
 
             if(newFocus == FocusState.BACKGROUND) {
-                while(state != ASRAgentInterface.State.IDLE) {
+                // there are 2 cases at FocusState.BACKGROUND
+                // 1. ASR is running, but the other request focus. We have to stop ASR and become IDLE state soon.
+                // 2. ASR is already finished, and releasing focus.
+                while (state != ASRAgentInterface.State.IDLE && // for case 1
+                    // In case of 2, if receive ASR.ExpectSpeech, don't need to wait here.
+                    state != ASRAgentInterface.State.EXPECTING_SPEECH // for case 2
+                ) {
                     Thread.sleep(10)
                 }
             }
