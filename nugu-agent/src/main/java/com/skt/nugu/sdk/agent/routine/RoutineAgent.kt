@@ -112,22 +112,109 @@ class RoutineAgent(
         }.toString()
     }
 
-    interface RoutineRequestListener {
+    interface OnRoutineRequestCompleteListener {
         fun onCancel()
         fun onFinish()
     }
 
     private val executor = Executors.newSingleThreadScheduledExecutor()
     private val listeners = CopyOnWriteArraySet<RoutineAgentInterface.RoutineListener>()
+    private var state = RoutineAgentInterface.State.IDLE
+    private var currentRoutineRequest: RoutineRequest? = null
+    private var textInputRequests = HashSet<String>()
+    private var causingPauseRequests = HashMap<String, EventMessageRequest>()
+    var textAgent: TextAgentInterface? = null
+
+    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+
+    init {
+        directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this, startDirectiveHandleController))
+        directiveSequencer.addDirectiveHandler(StopDirectiveHandler(this))
+        directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this, continueDirectiveHandleController))
+        directiveSequencer.addDirectiveHandler(MoveDirectiveHandler(contextManager, messageSender, this, namespaceAndName))
+        contextManager.setStateProvider(namespaceAndName, this)
+        messageSender.addOnSendMessageListener(object : MessageSender.OnSendMessageListener {
+            override fun onPreSendMessage(request: MessageRequest) {
+                if (request is EventMessageRequest) {
+                    if (textInputRequests.remove(request.dialogRequestId)) {
+                        // if my text request, skip pause.
+                        return
+                    }
+
+                    currentRoutineRequest?.let {
+                        if (shouldPauseRoutine(request)) {
+                            causingPauseRequests[request.dialogRequestId] = request
+                            Logger.d(TAG, "[onPreSendMessage] pause routine by: $request")
+                            // If the request is caused by the current action, do not cancel current action.
+                            it.pause(request.referrerDialogRequestId != it.currentActionDialogRequestId)
+                        }
+                    }
+                }
+            }
+
+            override fun onPostSendMessage(request: MessageRequest, status: Status) {
+                if (!status.isOk() && request is EventMessageRequest) {
+                    if (causingPauseRequests.remove(request.dialogRequestId) != null) {
+                        currentRoutineRequest?.let {
+                            Logger.d(
+                                TAG,
+                                "[onPostSendMessage] cancel current request (causing request: $request, status: $status)"
+                            )
+                            it.cancel()
+                        }
+                    }
+                }
+            }
+
+            private fun shouldPauseRoutine(request: EventMessageRequest): Boolean {
+                return ((request.namespace == "Text" && request.name == "TextInput") || (request.namespace == "Display" && request.name == "ElementSelected")) ||
+                        ((request.namespace == "ASR" && request.name == "Recognize") && state != RoutineAgentInterface.State.SUSPENDED)
+            }
+        })
+
+        directiveSequencer.addOnDirectiveHandlingListener(object :
+            DirectiveSequencerInterface.OnDirectiveHandlingListener {
+            override fun onRequested(directive: Directive) {
+            }
+
+            override fun onCompleted(directive: Directive) {
+                if (directive.getNamespace() == "ASR" && directive.getName() == "ExpectSpeech") {
+                    currentRoutineRequest?.let {
+                        Logger.d(TAG, "pause routine by ASR.ExpectSpeech directive")
+                        // If the request is caused by the current action, do not cancel current action.
+                        it.pause(directive.getDialogRequestId() != currentRoutineRequest?.currentActionDialogRequestId)
+                    }
+                }
+            }
+
+            override fun onCanceled(directive: Directive) {
+            }
+
+            override fun onFailed(directive: Directive, description: String) {
+            }
+        })
+
+        directiveGroupProcessor.addListener(object : DirectiveGroupProcessorInterface.Listener {
+            override fun onPostProcessed(directives: List<Directive>) {
+                directives.firstOrNull()?.getDialogRequestId()?.let { dialogRequestId ->
+                    if (causingPauseRequests.remove(dialogRequestId) != null) {
+                        if (!directives.any { it.getNamespaceAndName() == ContinueDirectiveHandler.CONTINUE || (it.getNamespace() == "ASR" && it.getName() == "NotifyResult") }) {
+                            currentRoutineRequest?.cancel()
+                        }
+                    }
+                }
+            }
+        })
+    }
 
     private inner class RoutineRequest(
         val directive: StartDirectiveHandler.StartDirective,
-        private val listener: RoutineRequestListener
+        private val listener: OnRoutineRequestCompleteListener
     ) : SeamlessFocusManagerInterface.Requester {
         private var currentActionIndex: Int = 0
         private var currentActionHandlingListener: DirectiveGroupHandlingListener? = null
         var currentActionDialogRequestId: String? = null
-        private var isCanceled = false
+        private var isCancelRequested = false
         private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
         private var scheduledFutureForCancelByInterrupt: ScheduledFuture<*>? = null
 
@@ -141,12 +228,12 @@ class RoutineAgent(
         fun cancel(cancelCurrentAction: Boolean = true) {
             Logger.d(
                 TAG,
-                "[RoutineRequest] cancel: $isCanceled, cancelCurrentAction: $cancelCurrentAction"
+                "[RoutineRequest] isCancelRequested: $isCancelRequested, cancelCurrentAction: $cancelCurrentAction"
             )
-            if (isCanceled) {
+            if (isCancelRequested) {
                 return
             }
-            isCanceled = true
+            isCancelRequested = true
             if (cancelCurrentAction) {
                 cancelCurrentAction()
             }
@@ -159,8 +246,8 @@ class RoutineAgent(
                 return
             }
 
-            if(isCanceled) {
-                Logger.d(TAG, "[RoutineRequest] pause() ignored by isCanceled: $isCanceled")
+            if(isCancelRequested) {
+                Logger.d(TAG, "[RoutineRequest] pause() ignored by isCanceled: $isCancelRequested")
                 return
             }
 
@@ -239,9 +326,9 @@ class RoutineAgent(
         fun doContinue() {
             Logger.d(
                 TAG,
-                "[RoutineRequest] doContinue - isCanceled: $isCanceled"
+                "[RoutineRequest] doContinue - isCanceled: $isCancelRequested"
             )
-            if (isCanceled) {
+            if (isCancelRequested) {
                 return
             }
             cancelNextScheduledAction()
@@ -255,9 +342,9 @@ class RoutineAgent(
         private fun tryStartNextAction() {
             Logger.d(
                 TAG,
-                "[RoutineRequest] tryStartNextAction - $currentActionIndex, isCanceled: $isCanceled"
+                "[RoutineRequest] tryStartNextAction - $currentActionIndex, isCanceled: $isCancelRequested"
             )
-            if (isCanceled) {
+            if (isCancelRequested) {
                 return
             }
 
@@ -267,10 +354,10 @@ class RoutineAgent(
         private fun tryStartActionIndexAt(index: Int) {
             Logger.d(
                 TAG,
-                "[RoutineRequest] tryStartActionIndexAt - target index:$index, current index: $currentActionIndex, isCanceled: $isCanceled"
+                "[RoutineRequest] tryStartActionIndexAt - target index:$index, current index: $currentActionIndex, isCanceled: $isCancelRequested"
             )
 
-            if (isCanceled) {
+            if (isCancelRequested) {
                 return
             }
 
@@ -355,7 +442,6 @@ class RoutineAgent(
                                 tryStartNextAction()
                             }
                         }
-
                     }
 
                     override fun onCanceled(directive: Directive) {
@@ -470,94 +556,6 @@ class RoutineAgent(
         }
     }
 
-    private var state = RoutineAgentInterface.State.IDLE
-    private var currentRoutineRequest: RoutineRequest? = null
-    private var textInputRequests = HashSet<String>()
-    private var causingPauseRequests = HashMap<String, EventMessageRequest>()
-    var textAgent: TextAgentInterface? = null
-
-    override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
-
-    init {
-        directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this, startDirectiveHandleController))
-        directiveSequencer.addDirectiveHandler(StopDirectiveHandler(this))
-        directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this, continueDirectiveHandleController))
-        directiveSequencer.addDirectiveHandler(MoveDirectiveHandler(contextManager, messageSender, this, namespaceAndName))
-        contextManager.setStateProvider(namespaceAndName, this)
-        messageSender.addOnSendMessageListener(object : MessageSender.OnSendMessageListener {
-            override fun onPreSendMessage(request: MessageRequest) {
-                if (request is EventMessageRequest) {
-                    if (textInputRequests.remove(request.dialogRequestId)) {
-                        // if my text request, skip pause.
-                        return
-                    }
-
-                    currentRoutineRequest?.let {
-                        if (shouldPauseRoutine(request)) {
-                            causingPauseRequests[request.dialogRequestId] = request
-                            Logger.d(TAG, "[onPreSendMessage] pause routine by: $request")
-                            // If the request is caused by the current action, do not cancel current action.
-                            it.pause(request.referrerDialogRequestId != it.currentActionDialogRequestId)
-                        }
-                    }
-                }
-            }
-
-            override fun onPostSendMessage(request: MessageRequest, status: Status) {
-                if (!status.isOk() && request is EventMessageRequest) {
-                    if (causingPauseRequests.remove(request.dialogRequestId) != null) {
-                        currentRoutineRequest?.let {
-                            Logger.d(
-                                TAG,
-                                "[onPostSendMessage] cancel current request (causing request: $request, status: $status)"
-                            )
-                            it.cancel()
-                        }
-                    }
-                }
-            }
-
-            private fun shouldPauseRoutine(request: EventMessageRequest): Boolean {
-                return ((request.namespace == "Text" && request.name == "TextInput") || (request.namespace == "Display" && request.name == "ElementSelected")) ||
-                        ((request.namespace == "ASR" && request.name == "Recognize") && state != RoutineAgentInterface.State.SUSPENDED)
-            }
-        })
-
-        directiveSequencer.addOnDirectiveHandlingListener(object :
-            DirectiveSequencerInterface.OnDirectiveHandlingListener {
-            override fun onRequested(directive: Directive) {
-            }
-
-            override fun onCompleted(directive: Directive) {
-                if (directive.getNamespace() == "ASR" && directive.getName() == "ExpectSpeech") {
-                    currentRoutineRequest?.let {
-                        Logger.d(TAG, "pause routine by ASR.ExpectSpeech directive")
-                        // If the request is caused by the current action, do not cancel current action.
-                        it.pause(directive.getDialogRequestId() != currentRoutineRequest?.currentActionDialogRequestId)
-                    }
-                }
-            }
-
-            override fun onCanceled(directive: Directive) {
-            }
-
-            override fun onFailed(directive: Directive, description: String) {
-            }
-        })
-
-        directiveGroupProcessor.addListener(object : DirectiveGroupProcessorInterface.Listener {
-            override fun onPostProcessed(directives: List<Directive>) {
-                directives.firstOrNull()?.getDialogRequestId()?.let { dialogRequestId ->
-                    if (causingPauseRequests.remove(dialogRequestId) != null) {
-                        if (!directives.any { it.getNamespaceAndName() == ContinueDirectiveHandler.CONTINUE || (it.getNamespace() == "ASR" && it.getName() == "NotifyResult") }) {
-                            currentRoutineRequest?.cancel()
-                        }
-                    }
-                }
-            }
-        })
-    }
-
     override fun provideState(
         contextSetter: ContextSetterInterface,
         namespaceAndName: NamespaceAndName,
@@ -586,29 +584,31 @@ class RoutineAgent(
             request.cancel()
         }
 
+        val onRoutineCompleteListener = object : OnRoutineRequestCompleteListener {
+            override fun onCancel() {
+                Logger.d(TAG, "[start] onCancel() dialogRequestId: ${directive.header.dialogRequestId}")
+                setState(RoutineAgentInterface.State.STOPPED, directive)
+                currentRoutineRequest?.let {
+                    seamlessFocusManager.cancel(it)
+                }
+                currentRoutineRequest = null
+                sendRoutineStopEvent(directive)
+            }
+
+            override fun onFinish() {
+                Logger.d(TAG, "[start] onFinish() dialogRequestId: ${directive.header.dialogRequestId}")
+                setState(RoutineAgentInterface.State.FINISHED, directive)
+                currentRoutineRequest?.let {
+                    seamlessFocusManager.cancel(it)
+                }
+                currentRoutineRequest = null
+                sendRoutineFinishEvent(directive)
+            }
+        }
+
         textAgent?.let {
             val countDownLatch = CountDownLatch(1)
-            RoutineRequest(directive, object : RoutineRequestListener {
-                override fun onCancel() {
-                    Logger.d(TAG, "[start] onCancel()")
-                    setState(RoutineAgentInterface.State.STOPPED, directive)
-                    currentRoutineRequest?.let {
-                        seamlessFocusManager.cancel(it)
-                    }
-                    currentRoutineRequest = null
-                    sendRoutineStopEvent(directive)
-                }
-
-                override fun onFinish() {
-                    Logger.d(TAG, "[start] onFinish()")
-                    setState(RoutineAgentInterface.State.FINISHED, directive)
-                    currentRoutineRequest?.let {
-                        seamlessFocusManager.cancel(it)
-                    }
-                    currentRoutineRequest = null
-                    sendRoutineFinishEvent(directive)
-                }
-            }).apply {
+            RoutineRequest(directive, onRoutineCompleteListener).apply {
                 currentRoutineRequest = this
 
                 setState(RoutineAgentInterface.State.PLAYING, directive)
