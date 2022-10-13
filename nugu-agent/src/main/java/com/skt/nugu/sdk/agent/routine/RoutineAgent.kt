@@ -127,7 +127,6 @@ class RoutineAgent(
         private var currentActionIndex: Int = 0
         private var currentActionHandlingListener: DirectiveGroupHandlingListener? = null
         var currentActionDialogRequestId: String? = null
-        var isPaused = false
         private var isCanceled = false
         private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
         private var scheduledFutureForCancelByInterrupt: ScheduledFuture<*>? = null
@@ -155,6 +154,11 @@ class RoutineAgent(
         }
 
         fun pause(cancelCurrentAction: Boolean = true) {
+            if(state == RoutineAgentInterface.State.INTERRUPTED) {
+                Logger.d(TAG, "[RoutineRequest] pause() ignored by state: $state")
+                return
+            }
+
             if(isCanceled) {
                 Logger.d(TAG, "[RoutineRequest] pause() ignored by isCanceled: $isCanceled")
                 return
@@ -162,7 +166,7 @@ class RoutineAgent(
 
             Logger.d(
                 TAG,
-                "[RoutineRequest] pause - cancelCurrentAction: $cancelCurrentAction, isPaused: $isPaused"
+                "[RoutineRequest] pause - cancelCurrentAction: $cancelCurrentAction"
             )
             if (cancelCurrentAction) {
                 cancelCurrentAction()
@@ -173,10 +177,7 @@ class RoutineAgent(
                 cancel(cancelCurrentAction)
             }, 60, TimeUnit.SECONDS)
 
-            if (!isPaused) {
-                isPaused = true
-                setState(RoutineAgentInterface.State.INTERRUPTED, directive)
-            }
+            setState(RoutineAgentInterface.State.INTERRUPTED, directive)
         }
 
         fun move(position: Long): Boolean {
@@ -238,12 +239,11 @@ class RoutineAgent(
         fun doContinue() {
             Logger.d(
                 TAG,
-                "[RoutineRequest] doContinue - isPaused: $isPaused, isCanceled: $isCanceled"
+                "[RoutineRequest] doContinue - isCanceled: $isCanceled"
             )
             if (isCanceled) {
                 return
             }
-            isPaused = false
             cancelNextScheduledAction()
             scheduledFutureForCancelByInterrupt?.cancel(true)
             scheduledFutureForCancelByInterrupt = null
@@ -255,9 +255,9 @@ class RoutineAgent(
         private fun tryStartNextAction() {
             Logger.d(
                 TAG,
-                "[RoutineRequest] tryStartNextAction - $currentActionIndex, isPaused: $isPaused, isCanceled: $isCanceled"
+                "[RoutineRequest] tryStartNextAction - $currentActionIndex, isCanceled: $isCanceled"
             )
-            if (isPaused || isCanceled) {
+            if (isCanceled) {
                 return
             }
 
