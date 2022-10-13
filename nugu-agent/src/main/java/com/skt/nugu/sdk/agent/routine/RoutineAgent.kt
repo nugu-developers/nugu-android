@@ -395,7 +395,11 @@ class RoutineAgent(
 
             val directiveGroupPrepareListener = object : DirectiveGroupHandlingListener.OnDirectiveGroupPrepareListener {
                 override fun onPrepared(directives: List<Directive>) {
-                    Logger.d(TAG, "[onPrepared] action index: $currentActionIndex, ${directives.firstOrNull()?.getDialogRequestId()}")
+                    Logger.d(TAG, "[onPrepared] current action index: $currentActionIndex, currentActionDialogRequestId: $currentActionDialogRequestId, preparedDialogRequestId: $dialogRequestId")
+                    if(currentActionDialogRequestId != dialogRequestId) {
+                        return
+                    }
+
                     if(action.muteDelayInMilliseconds != null && !directives.any { it.header.namespace == "TTS" && it.header.name == "Speak" }) {
                         applyMuteDelay = true
                     }
@@ -415,7 +419,12 @@ class RoutineAgent(
                 directiveSequencer,
                 object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
                     override fun onFinish(isExistCanceledOrFailed: Boolean) {
-                        Logger.d(TAG, "[onFinish] dialogRequestId: $dialogRequestId")
+                        Logger.d(TAG, "[onFinish] handling dialogRequestId: $dialogRequestId, current action dialogRequestId: $currentActionDialogRequestId")
+
+                        if(currentActionDialogRequestId != dialogRequestId) {
+                            return
+                        }
+
                         listeners.forEach {
                             it.onActionFinished(currentActionIndex, directive)
                         }
@@ -445,10 +454,16 @@ class RoutineAgent(
                     }
 
                     override fun onCanceled(directive: Directive) {
+                        if(currentActionDialogRequestId != dialogRequestId) {
+                            return
+                        }
                         pause()
                     }
 
                     override fun onFailed(directive: Directive) {
+                        if(currentActionDialogRequestId != dialogRequestId) {
+                            return
+                        }
                         pause()
                     }
                 },
