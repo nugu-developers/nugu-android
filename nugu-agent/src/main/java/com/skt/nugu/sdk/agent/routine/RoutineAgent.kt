@@ -30,17 +30,17 @@ import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupPreProcessor
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.Directive
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
-import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class RoutineAgent(
     private val messageSender: MessageSender,
@@ -119,6 +119,7 @@ class RoutineAgent(
 
     private val executor = Executors.newSingleThreadScheduledExecutor()
     private val listeners = CopyOnWriteArraySet<RoutineAgentInterface.RoutineListener>()
+    private val actionCancelHandler: ActionResponseDirectiveCancelHandler
     private var state = RoutineAgentInterface.State.IDLE
     private var currentRoutineRequest: RoutineRequest? = null
     private var textInputRequests = HashSet<String>()
@@ -128,10 +129,14 @@ class RoutineAgent(
     override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     init {
+        actionCancelHandler = ActionResponseDirectiveCancelHandler(directiveProcessor)
+        directiveGroupProcessor.addDirectiveGroupPreprocessor(actionCancelHandler)
+
         directiveSequencer.addDirectiveHandler(StartDirectiveHandler(this, startDirectiveHandleController))
         directiveSequencer.addDirectiveHandler(StopDirectiveHandler(this))
         directiveSequencer.addDirectiveHandler(ContinueDirectiveHandler(this, continueDirectiveHandleController))
         directiveSequencer.addDirectiveHandler(MoveDirectiveHandler(contextManager, messageSender, this, namespaceAndName))
+
         contextManager.setStateProvider(namespaceAndName, this)
         messageSender.addOnSendMessageListener(object : MessageSender.OnSendMessageListener {
             override fun onPreSendMessage(request: MessageRequest) {
@@ -205,6 +210,44 @@ class RoutineAgent(
                 }
             }
         })
+    }
+
+    class ActionResponseDirectiveCancelHandler(
+        private val directiveProcessor: DirectiveProcessorInterface
+    ) : DirectiveGroupPreProcessor {
+        private val lock = ReentrantLock()
+        // cancel 요청온것
+        private val cancelRequested = LinkedHashSet<String>()
+
+        override fun preProcess(directives: List<Directive>): List<Directive> {
+            lock.withLock {
+                val dialogRequestId = directives.firstOrNull()?.getDialogRequestId()
+                if (dialogRequestId != null) {
+                    if (cancelRequested.remove(dialogRequestId)) {
+                        Logger.d(TAG, "[preProcess] $dialogRequestId's directives removed by ActionResponseDirectiveCancelHandler")
+                        return emptyList()
+                    }
+                }
+
+                return directives
+            }
+        }
+
+        /**
+         * Should be called when action cancel requested.
+         */
+        fun requestCancel(dialogRequestId: String) {
+            Logger.d(TAG, "[ActionResponseDirectiveCancelHandler::requestCancel] dialogRequestId: $dialogRequestId")
+            lock.withLock {
+                if(cancelRequested.size > 20) {
+                    cancelRequested.firstOrNull()?.let {
+                        cancelRequested.remove(it)
+                    }
+                }
+                cancelRequested.add(dialogRequestId)
+            }
+            directiveProcessor.cancelDialogRequestId(dialogRequestId)
+        }
     }
 
     private inner class RoutineRequest(
@@ -305,7 +348,7 @@ class RoutineAgent(
 
         private fun cancelCurrentAction() {
             currentActionDialogRequestId?.let {
-                directiveProcessor.cancelDialogRequestId(it)
+                actionCancelHandler.requestCancel(it)
             }
         }
 
