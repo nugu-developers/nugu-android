@@ -35,7 +35,10 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterfa
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.*
+import com.skt.nugu.sdk.core.interfaces.message.Directive
+import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
+import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
@@ -251,6 +254,12 @@ class RoutineAgent(
         }
     }
 
+    data class ActionTimeoutFuture(
+        val dialogRequestId: String,
+        val future: ScheduledFuture<*>,
+        var runOnTimeout: Runnable? = null
+    )
+
     private inner class RoutineRequest(
         val directive: StartDirectiveHandler.StartDirective,
         private val listener: OnRoutineRequestCompleteListener
@@ -261,6 +270,7 @@ class RoutineAgent(
         private var isCancelRequested = false
         private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
         private var scheduledFutureForCancelByInterrupt: ScheduledFuture<*>? = null
+        private var scheduledFutureForActionTimeout: ActionTimeoutFuture? = null
         private val isActionRequesting = AtomicBoolean(false)
 
         fun start() {
@@ -437,6 +447,41 @@ class RoutineAgent(
             }
         }
 
+        private fun scheduleActionTimeoutTriggeredEvent(
+            delay: Long,
+            action: Action,
+            directive: StartDirectiveHandler.StartDirective
+        ): ScheduledFuture<*> = executor.schedule({
+            contextManager.getContext(object : IgnoreErrorContextRequestor() {
+                override fun onContext(jsonContext: String) {
+                    val request = EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        "ActionTimeoutTriggered",
+                        VERSION.toString()
+                    ).payload(JsonObject().apply {
+                        addProperty("playServiceId", directive.payload.playServiceId)
+                        action.token?.let {
+                            addProperty("token", it)
+                        }
+                    }.toString())
+                        .referrerDialogRequestId(directive.header.referrerDialogRequestId ?: "")
+                        .build()
+
+                    messageSender.newCall(request).enqueue(object: MessageSender.Callback {
+                        override fun onFailure(request: MessageRequest, status: Status) {
+                        }
+
+                        override fun onSuccess(request: MessageRequest) {
+                        }
+
+                        override fun onResponseStart(request: MessageRequest) {
+                        }
+                    })
+                }
+            })
+        }, delay, TimeUnit.MILLISECONDS)
+
         private fun createDirectiveGroupHandlingListenerForActionHandling(
             dialogRequestId: String,
             action: Action
@@ -455,7 +500,7 @@ class RoutineAgent(
                     }
                     action.actionTimeoutInMilliseconds?.let {
                         setSuspendedState(directive, System.currentTimeMillis() + it)
-                        scheduleActionTimeoutTriggeredEvent(it, action, directive)
+                        scheduledFutureForActionTimeout = ActionTimeoutFuture(dialogRequestId, scheduleActionTimeoutTriggeredEvent(it, action, directive))
                     }
                     listeners.forEach {
                         it.onActionStarted(currentActionIndex, directive)
@@ -468,12 +513,12 @@ class RoutineAgent(
                 directiveGroupProcessor,
                 directiveSequencer,
                 object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
-                    override fun onFinish(isExistCanceledOrFailed: Boolean) {
-                        Logger.d(TAG, "[onFinish] handling dialogRequestId: $dialogRequestId, current action dialogRequestId: $currentActionDialogRequestId")
-
+                    private fun onFinishInternal(isExistCanceledOrFailed: Boolean) {
                         if(currentActionDialogRequestId != dialogRequestId) {
                             return
                         }
+
+                        Logger.d(TAG, "[onFinishInternal] handling dialogRequestId: $dialogRequestId, current action dialogRequestId: $currentActionDialogRequestId")
 
                         listeners.forEach {
                             it.onActionFinished(currentActionIndex, directive)
@@ -500,6 +545,17 @@ class RoutineAgent(
                             } else {
                                 tryStartNextAction()
                             }
+                        }
+                    }
+
+                    override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                        if(scheduledFutureForActionTimeout?.dialogRequestId == dialogRequestId) {
+                            // will be handled after action timeout.
+                            scheduledFutureForActionTimeout?.runOnTimeout = Runnable {
+                                onFinishInternal(isExistCanceledOrFailed)
+                            }
+                        } else {
+                            onFinishInternal(isExistCanceledOrFailed)
                         }
                     }
 
@@ -985,35 +1041,5 @@ class RoutineAgent(
         this.state = RoutineAgentInterface.State.SUSPENDED
 
         listeners.forEach { it.onSuspended(directive, expectedTerminateTimestamp) }
-    }
-
-    private fun scheduleActionTimeoutTriggeredEvent(
-        delay: Long,
-        action: Action,
-        directive: StartDirectiveHandler.StartDirective
-    ) {
-        executor.schedule({
-            contextManager.getContext(object : IgnoreErrorContextRequestor() {
-                override fun onContext(jsonContext: String) {
-                    val request = EventMessageRequest.Builder(
-                        jsonContext,
-                        NAMESPACE,
-                        "ActionTimeoutTriggered",
-                        VERSION.toString()
-                    ).payload(JsonObject().apply {
-                        action.playServiceId?.let {
-                            addProperty("playServiceId", it)
-                        }
-                        action.token?.let {
-                            addProperty("token", it)
-                        }
-                    }.toString())
-                        .referrerDialogRequestId(directive.header.referrerDialogRequestId ?: "")
-                        .build()
-
-                    messageSender.newCall(request).enqueue(null)
-                }
-            })
-        }, delay, TimeUnit.MILLISECONDS)
     }
 }
