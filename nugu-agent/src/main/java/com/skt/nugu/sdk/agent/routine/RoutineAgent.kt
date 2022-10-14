@@ -39,6 +39,7 @@ import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -260,6 +261,7 @@ class RoutineAgent(
         private var isCancelRequested = false
         private var scheduledFutureForTryStartNextAction: ScheduledFuture<*>? = null
         private var scheduledFutureForCancelByInterrupt: ScheduledFuture<*>? = null
+        private val isActionRequesting = AtomicBoolean(false)
 
         fun start() {
             Logger.d(TAG, "[RoutineRequest] start")
@@ -311,6 +313,10 @@ class RoutineAgent(
         }
 
         fun move(position: Long): Boolean {
+            if(isActionRequesting.get()) {
+                return false
+            }
+
             val index = findFirstCountableActionFrom((position - 1).toInt())
 
             return if(index != -1) {
@@ -417,6 +423,7 @@ class RoutineAgent(
 
         private fun doAction(action: Action) {
             Logger.d(TAG, "[RoutineRequest] doAction - $action")
+
             when(action.type) {
                 Action.Type.TEXT -> {
                     doTextAction(action)
@@ -521,6 +528,10 @@ class RoutineAgent(
                 return
             }
 
+            if(!isActionRequesting.compareAndSet(false, true)) {
+                return
+            }
+
             setState(RoutineAgentInterface.State.PLAYING, directive)
             textAgent?.textInput(
                 TextInputRequester.Request.Builder(text)
@@ -531,6 +542,7 @@ class RoutineAgent(
                         textInputRequests.add(dialogRequestId)
                         currentActionDialogRequestId = dialogRequestId
                         currentActionHandlingListener = createDirectiveGroupHandlingListenerForActionHandling(dialogRequestId, action)
+                        isActionRequesting.set(false)
                     }
 
                     override fun onReceiveResponse(dialogRequestId: String) {
@@ -542,6 +554,7 @@ class RoutineAgent(
                     ) {
                         currentActionDialogRequestId = null
                         currentActionHandlingListener = null
+                        isActionRequesting.set(false)
                     }
                 })
         }
@@ -552,6 +565,11 @@ class RoutineAgent(
                 Logger.w(TAG, "[doDataAction] data should not be null")
                 return
             }
+
+            if(!isActionRequesting.compareAndSet(false, true)) {
+                return
+            }
+
             setState(RoutineAgentInterface.State.PLAYING, directive)
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
@@ -581,12 +599,14 @@ class RoutineAgent(
                         override fun onFailure(request: MessageRequest, status: Status) {
                             currentActionDialogRequestId = null
                             currentActionHandlingListener = null
+                            isActionRequesting.set(false)
                         }
 
                         override fun onSuccess(request: MessageRequest) {
                         }
 
                         override fun onResponseStart(request: MessageRequest) {
+                            isActionRequesting.set(false)
                         }
                     })
                 }
@@ -600,6 +620,9 @@ class RoutineAgent(
                 return
             }
 
+            if(!isActionRequesting.compareAndSet(false, true)) {
+                return
+            }
             setSuspendedState(directive, System.currentTimeMillis() + muteDelayInMilliseconds)
             // mute 시간 이후, 다음 action을 실행하도록 함.
             scheduledFutureForTryStartNextAction?.cancel(true)
@@ -611,6 +634,8 @@ class RoutineAgent(
                     muteDelayInMilliseconds,
                     TimeUnit.MILLISECONDS
                 )
+
+            isActionRequesting.set(false)
         }
     }
 
