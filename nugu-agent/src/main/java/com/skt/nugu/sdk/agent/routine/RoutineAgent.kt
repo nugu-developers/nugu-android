@@ -532,7 +532,8 @@ class RoutineAgent(
                             pause()
                         } else {
                             cancelNextScheduledAction()
-                            if(!tryStartNextAction) {
+
+                            if(!tryStartNextAction && currentActionIndex < directive.payload.actions.size) {
                                 return
                             }
 
