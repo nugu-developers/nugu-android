@@ -331,6 +331,8 @@ class RoutineAgent(
 
             return if(index != -1) {
                 pause()
+                scheduledFutureForCancelByInterrupt?.cancel(true)
+                scheduledFutureForCancelByInterrupt = null
                 tryStartActionIndexAt(index)
                 true
             } else {
@@ -533,7 +535,7 @@ class RoutineAgent(
                         } else {
                             cancelNextScheduledAction()
 
-                            if(!tryStartNextAction && currentActionIndex < directive.payload.actions.size) {
+                            if(!tryStartNextAction && currentActionIndex < directive.payload.actions.size - 1) {
                                 return
                             }
 
