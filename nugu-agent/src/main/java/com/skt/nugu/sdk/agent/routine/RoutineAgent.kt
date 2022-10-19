@@ -330,6 +330,7 @@ class RoutineAgent(
             val index = findFirstCountableActionFrom((position - 1).toInt())
 
             return if(index != -1) {
+                cancelCurrentAction()
                 pause()
                 scheduledFutureForCancelByInterrupt?.cancel(true)
                 scheduledFutureForCancelByInterrupt = null
