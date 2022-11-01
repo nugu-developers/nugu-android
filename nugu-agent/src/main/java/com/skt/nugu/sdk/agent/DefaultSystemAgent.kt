@@ -52,7 +52,7 @@ class DefaultSystemAgent(
      * This class handles providing configuration for the System Capability agent
      */
     companion object {
-        private const val TAG = "DefaultSystemCapabilityAgent"
+        private const val TAG = "DefaultSystemAgent"
 
         /** exceptions */
         /// The server encountered a runtime error.
@@ -69,6 +69,15 @@ class DefaultSystemAgent(
 
         /// The server encountered a runtime error during TTS processing.
         const val CODE_TTS_SPEAKING_EXCEPTION = "TTS_SPEAKING_EXCEPTION"
+
+        /// The server rejected the connection during concurrent connections.
+        const val CODE_CONCURRENT_CONNECTION_EXCEPTION = "CONCURRENT_CONNECTION_EXCEPTION"
+
+        /// The requested event is not supported.
+        const val CODE_INVALID_REQUEST_EXCEPTION = "INVALID_REQUEST_EXCEPTION"
+
+        /// The requested event during disconnection.
+        const val CODE_SERVICE_UNAVAILABLE_EXCEPTION = "SERVICE_UNAVAILABLE_EXCEPTION"
 
         /** directives */
         const val NAME_HANDOFF_CONNECTION = "HandoffConnection"
@@ -307,21 +316,11 @@ class DefaultSystemAgent(
                 }
 
                 if(exceptionDirectiveDelegate == null) {
-                    when (payload.code) {
-                        CODE_UNAUTHORIZED_REQUEST_EXCEPTION,
-                        CODE_PLAY_ROUTER_PROCESSING_EXCEPTION,
-                        CODE_TTS_SPEAKING_EXCEPTION -> {
-                            if (exceptionCode != null) {
-                                observers.forEach {
-                                    it.onException(exceptionCode, payload.description)
-                                }
-                            }
-                        }
-                        CODE_ASR_RECOGNIZING_EXCEPTION,
-                        CODE_INTERNAL_SERVICE_EXCEPTION -> {
+                    if (exceptionCode != null) {
+                        observers.forEach {
+                            it.onException(exceptionCode, payload.description)
                         }
                     }
-
                 } else {
                     exceptionDirectiveDelegate.onException(ExceptionDirective(info.directive.header, payload))
                 }
