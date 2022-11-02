@@ -423,9 +423,8 @@ class RoutineAgent(
                 return
             }
 
-            currentActionIndex = index
-
-            if (currentActionIndex < directive.payload.actions.size) {
+            if (index < directive.payload.actions.size) {
+                currentActionIndex = index
                 doAction(directive.payload.actions[currentActionIndex])
             } else {
                 listener.onFinish()
