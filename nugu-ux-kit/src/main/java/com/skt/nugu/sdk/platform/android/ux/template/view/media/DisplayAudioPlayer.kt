@@ -63,6 +63,7 @@ import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 open class DisplayAudioPlayer constructor(
     private val templateType: String,
     context: Context,
+    templateResources: MediaTemplateResources? = null,
 ) : TemplateNativeView(context, null, 0), ThemeManagerInterface.ThemeListener {
 
     private constructor(context: Context) : this("", context)
@@ -73,7 +74,7 @@ open class DisplayAudioPlayer constructor(
         private const val TAG = "DisplayAudioPlayer"
     }
 
-    open val mediaTemplateResources = MediaTemplateResources()
+    private val mediaTemplateResources = templateResources ?: MediaTemplateResources()
 
     private lateinit var expandedPlayer: View
     private lateinit var albumImage: ImageView

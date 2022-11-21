@@ -127,9 +127,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:visibility="gone"
-                        app:sizes="small"
+                        app:fontColor="#009900"
                         app:fontColorFocus="@android:color/holo_orange_dark"
-                        app:fontColor="#009900" />
+                        app:sizes="small" />
 
                     <TextView
                         android:id="@id/tv_show_lyrics"
@@ -146,11 +146,11 @@
 
             <com.skt.nugu.sdk.platform.android.ux.template.view.media.LyricsView
                 android:id="@id/cv_lyrics"
-                android:background="#abcdef"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="45dp"
+                android:background="#abcdef"
                 android:visibility="gone"
                 app:fontColor="#000099"
                 app:fontColorFocus="@android:color/holo_orange_light"
@@ -220,9 +220,9 @@
                     android:id="@id/iv_repeat"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/nugu_btn_repeat_inactive"
-                    android:visibility="invisible"
-                    android:scaleType="centerInside"/>
+                    android:visibility="invisible" />
 
                 <Space
                     android:layout_width="0dp"
@@ -252,7 +252,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:src="@drawable/nugu_btn_pause_48"
-                        android:visibility="gone"/>
+                        android:visibility="gone" />
                 </FrameLayout>
 
                 <ImageView
@@ -274,5 +274,14 @@
                     android:visibility="invisible" />
             </LinearLayout>
         </LinearLayout>
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/black"
+            android:text="custom_media_player"
+            android:textColor="@android:color/white"
+            android:textSize="20sp" />
     </FrameLayout>
 </FrameLayout>
