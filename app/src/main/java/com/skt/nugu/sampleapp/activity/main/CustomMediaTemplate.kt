@@ -30,24 +30,7 @@ import com.skt.nugu.sdk.platform.android.ux.template.view.media.MediaTemplateRes
  */
 @SuppressLint("ViewConstructor")
 class CustomMediaTemplate(templateType: String, context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    DisplayAudioPlayer(templateType, context) {
-    inner class CustomMediaTemplateResources : MediaTemplateResources() {
-        // Set your custom layout resource.
-        // It must contain all View resource which is used DisplayAudioPlayer.
-        // Take a look 'R.layout.custom_media_player'
-        override val layoutResIdPort: Int
-            get() = R.layout.custom_media_player
-
-        override val repeatAllResId: Int
-            get() = super.repeatAllResId
-        override val repeatOneResId: Int
-            get() = super.repeatOneResId
-        override val repeatNoneResId: Int
-            get() = android.R.drawable.btn_radio
-    }
-
-    override val mediaTemplateResources: MediaTemplateResources
-        get() = CustomMediaTemplateResources()
+    DisplayAudioPlayer(templateType, context, CustomMediaTemplateResources()) {
 
     override fun onCloseClicked() {
         super.onCloseClicked()
@@ -64,4 +47,19 @@ class CustomMediaTemplate(templateType: String, context: Context, attrs: Attribu
         // called when bar player clicked
         // at this event, super function make player expanded
     }
+}
+
+class CustomMediaTemplateResources : MediaTemplateResources() {
+    // Set your custom layout resource.
+    // It must contain all View resource which is used DisplayAudioPlayer.
+    // Take a look 'R.layout.custom_media_player'
+    override val layoutResIdPort: Int
+        get() = R.layout.custom_media_player
+
+    override val repeatAllResId: Int
+        get() = super.repeatAllResId
+    override val repeatOneResId: Int
+        get() = super.repeatOneResId
+    override val repeatNoneResId: Int
+        get() = android.R.drawable.btn_radio
 }
