@@ -21,10 +21,12 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -47,12 +49,27 @@ class LyricsView @JvmOverloads constructor(
         private const val SIZE_STANDARD = 1
     }
 
+    enum class FontScale(val scale: Int) {
+        SCALE_DEFAULT(1),
+        SCALE_X2(2),
+        SCALE_X4(4);
+
+        fun next(): FontScale {
+            return when (this) {
+                SCALE_DEFAULT -> SCALE_X2
+                SCALE_X2 -> SCALE_X4
+                else -> SCALE_DEFAULT
+            }
+        }
+    }
+
     private val lyrics: ArrayList<LyricsInfo> = ArrayList()
     private var adapter: LyricsAdapter
 
     private val recyclerView by lazy { findViewById<RecyclerView>(R.id.rv_lyrics) }
     private val emptyView by lazy { findViewById<TextView>(R.id.tv_empty) }
     private val titleView by lazy { findViewById<TextView>(R.id.tv_lyrics_header) }
+    private val lyricsExpandBtn by lazy { findViewById<ImageButton>(R.id.btn_lyrics_expand) }
 
     private var enableAutoScroll = true
 
@@ -88,6 +105,7 @@ class LyricsView @JvmOverloads constructor(
         init(attrs)
 
         LayoutInflater.from(context).inflate(R.layout.view_lyrics, this, true)
+
         adapter = LyricsAdapter(
             context,
             lyrics,
@@ -129,6 +147,17 @@ class LyricsView @JvmOverloads constructor(
         })
 
         recyclerView.itemAnimator?.changeDuration = 0L
+
+
+        if (viewSize == SIZE_STANDARD) {
+            lyricsExpandBtn.post {
+                lyricsExpandBtn.visibility = View.VISIBLE
+            }
+
+            lyricsExpandBtn.setOnClickListener {
+                adapter.setFontScale(adapter.fontScale.next())
+            }
+        }
     }
 
     private fun init(attrs: AttributeSet?) {
@@ -186,6 +215,12 @@ class LyricsView @JvmOverloads constructor(
         update()
     }
 
+    fun setFontScale(scale: FontScale) {
+        adapter.setFontScale(scale)
+    }
+
+    fun getFontScale() = adapter.fontScale
+
     @SuppressLint("NotifyDataSetChanged")
     fun setCurrentTimeMs(millis: Long) {
         if (visibility != View.VISIBLE) {
@@ -205,17 +240,8 @@ class LyricsView @JvmOverloads constructor(
                 }
             }
         }
-        val previous = adapter.highlightedPosition
-        if (foundIndex != -1 && previous != foundIndex) {
-            adapter.highlightedPosition = foundIndex
 
-            if (viewSize == SIZE_SMALL) {
-                adapter.notifyDataSetChanged()
-            } else {
-                adapter.notifyItemChanged(foundIndex)
-                if (previous in 0 until lyrics.size) adapter.notifyItemChanged(previous)
-            }
-
+        if (adapter.setHighlight(foundIndex)) {
             scrollToCenter(foundIndex)
         }
     }
@@ -226,12 +252,12 @@ class LyricsView @JvmOverloads constructor(
         }
 
         recyclerView.post {
-            val temp = dpToPixel(context, 31f)
+            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+            val offset = layoutManager.findViewByPosition(index)?.height?.div(2) ?: dpToPixel(context, 31f) //31f is default value
             val scrollPositionOffset =
-                if (viewSize == SIZE_STANDARD) recyclerView.measuredHeight / 2 - temp.toInt()
+                if (viewSize == SIZE_STANDARD) recyclerView.measuredHeight / 2 - offset.toInt()
                 else 0
 
-            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
             layoutManager.scrollToPositionWithOffset(index, scrollPositionOffset)
         }
     }
@@ -259,8 +285,7 @@ class LyricsView @JvmOverloads constructor(
         } else {
             View.GONE
         }
-        adapter.isDark = isDark
-        adapter.notifyDataSetChanged()
+        adapter.setDarkMode(isDark)
 
         setBackgroundColor(if (isDark) bgColorDark else bgColorLight)
         titleView.setTextColor(if (isDark) titleFontColorDark else titleFontColor)
@@ -272,14 +297,19 @@ class LyricsView @JvmOverloads constructor(
         private val viewSize: Int,
         @ColorInt private val fontColor: Int,
         @ColorInt private val fontColorFocus: Int,
-    ) :
-        RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+        companion object {
+            const val STANDARD_FONT_SIZE_SP = 14f
+        }
 
         @ColorInt
         private val fontColorDark = context.resources.genColor(R.color.media_template_lyrics_text_dark)
 
-        var highlightedPosition: Int = -1
-        var isDark = false
+        private var highlightedPosition: Int = -1
+        private var isDark = false
+        var fontScale: FontScale = FontScale.SCALE_DEFAULT
+            private set
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val view =
@@ -323,6 +353,41 @@ class LyricsView @JvmOverloads constructor(
                     else -> fontColor
                 }
             )
+
+            // set text size
+            if (viewSize == SIZE_STANDARD) {
+                viewHolder.line.setTextSize(TypedValue.COMPLEX_UNIT_SP, STANDARD_FONT_SIZE_SP * fontScale.scale)
+            }
+        }
+
+        @SuppressLint("NotifyDataSetChanged")
+        fun setDarkMode(dark: Boolean) {
+            isDark = dark
+            notifyDataSetChanged()
+        }
+
+        @SuppressLint("NotifyDataSetChanged")
+        fun setHighlight(position: Int): Boolean {
+            val previous = highlightedPosition
+            if (position != -1 && previous != position) {
+                highlightedPosition = position
+
+                if (viewSize == SIZE_SMALL) {
+                    notifyDataSetChanged()
+                } else {
+                    notifyItemChanged(position)
+                    if (previous in 0 until lyrics.size) notifyItemChanged(previous)
+                }
+
+                return false
+            }
+            return true
+        }
+
+        @SuppressLint("NotifyDataSetChanged")
+        fun setFontScale(scale: FontScale) {
+            fontScale = scale
+            notifyDataSetChanged()
         }
 
         inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
