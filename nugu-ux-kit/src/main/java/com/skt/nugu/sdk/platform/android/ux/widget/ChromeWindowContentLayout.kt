@@ -89,7 +89,7 @@ class ChromeWindowContentLayout @JvmOverloads constructor(
     @VisibleForTesting
     internal val parentLayoutChangeListener = OnLayoutChangeListener { _, l, t, r, b, oldL, oldT, oldR, oldB ->
         (l == oldL && t == oldT && r == oldR && b == oldB).let { boundEqual ->
-            Logger.d(TAG, "parentLayout Changed.. boundEqual ? $boundEqual")
+            // Logger.d(TAG, "parentLayout Changed.. boundEqual ? $boundEqual")
             if (boundEqual) return@OnLayoutChangeListener
         }
 
