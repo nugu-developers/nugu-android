@@ -64,7 +64,6 @@ class SpeechRecognizerAggregator(
     private var pendingStartListeningParam: StartListeningParam? = null
 
     private var keywordDetectorState = KeywordDetector.State.INACTIVE
-    private var speechProcessorState = AudioEndPointDetector.State.STOP
 
     init {
         keywordDetector?.addOnStateChangeListener(object : KeywordDetector.OnStateChangeListener {
@@ -102,9 +101,7 @@ class SpeechRecognizerAggregator(
 
             override fun onExpectingSpeech() {
                 executor.submit {
-                    if (keywordDetector?.getDetectorState() == KeywordDetector.State.ACTIVE) {
-                        keywordDetector.stopDetect()
-                    }
+                    keywordDetector?.stopDetect()
                     isTriggerStoppingByStartListening = false
 
                     updateState(AudioEndPointDetector.State.EXPECTING_SPEECH , SpeechRecognizerAggregatorInterface.State.EXPECTING_SPEECH)
@@ -148,6 +145,7 @@ class SpeechRecognizerAggregator(
                         keywordDetectorInactivationRunnable = Runnable {
                             setState(aggregatorState)
                         }
+                        keywordDetector?.stopDetect()
                     } else {
                         setState(aggregatorState)
                     }
@@ -170,7 +168,7 @@ class SpeechRecognizerAggregator(
         }
 
         executor.submit {
-            if (keywordDetector.getDetectorState() == KeywordDetector.State.ACTIVE) {
+            if (keywordDetectorState == KeywordDetector.State.ACTIVE) {
                 Logger.w(TAG, "[startListeningWithTrigger] failed - already executing")
                 return@submit
             }
@@ -281,7 +279,7 @@ class SpeechRecognizerAggregator(
         executor.submit {
             Logger.d(
                 TAG,
-                "[startListening] on executor - wakeupInfo: $wakeupInfo, state: $state, keywordDetectorState: ${keywordDetector?.getDetectorState()}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
+                "[startListening] on executor - wakeupInfo: $wakeupInfo, state: $state, keywordDetectorState: ${keywordDetectorState}, isTriggerStoppingByStartListening: $isTriggerStoppingByStartListening"
             )
             when (state) {
                 SpeechRecognizerAggregatorInterface.State.WAITING -> {
