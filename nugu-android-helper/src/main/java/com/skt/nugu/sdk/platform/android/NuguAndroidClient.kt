@@ -800,10 +800,13 @@ class NuguAndroidClient private constructor(
                                 with(container) {
                                     DisplayAgent(
                                         getPlaySynchronizer(),
-                                        ElementSelectedEventHandler(
+                                        object: ElementSelectedEventHandler(
                                             getContextManager(),
                                             getMessageSender()
-                                        ),
+                                        ){
+                                            override fun getNamespace(): String = DisplayAgent.NAMESPACE
+                                            override fun getVersion(): String = DisplayAgent.VERSION.toString()
+                                        },
                                         TriggerChildEventSender(
                                             getContextManager(),
                                             getMessageSender()
