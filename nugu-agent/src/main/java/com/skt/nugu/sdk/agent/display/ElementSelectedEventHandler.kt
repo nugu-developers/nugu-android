@@ -26,16 +26,19 @@ import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 
-class ElementSelectedEventHandler(
+abstract class ElementSelectedEventHandler(
     private val contextGetter: ContextGetterInterface,
     private val messageSender: MessageSender
 ) {
     companion object {
-        private const val EVENT_NAME_ELEMENT_SELECTED = "ElementSelected"
-
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
+        private const val EVENT_NAME = "ElementSelected"
     }
+
+    abstract fun getNamespace(): String
+    abstract fun getVersion(): String
+
     fun setElementSelected(playServiceId: String, token: String, postback: String?, callback: DisplayInterface.OnElementSelectedCallback?): String {
         val dialogRequestId = UUIDGeneration.timeUUID().toString()
 
@@ -44,9 +47,9 @@ class ElementSelectedEventHandler(
                 messageSender.newCall(
                     EventMessageRequest.Builder(
                         jsonContext,
-                        DisplayAgent.NAMESPACE,
-                        EVENT_NAME_ELEMENT_SELECTED,
-                        DisplayAgent.VERSION.toString()
+                        getNamespace(),
+                        EVENT_NAME,
+                        getVersion()
                     ).dialogRequestId(dialogRequestId).payload(
                         JsonObject().apply {
                             addProperty(KEY_TOKEN, token)
