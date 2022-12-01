@@ -196,4 +196,11 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @param templateId the unique identifier for the template card
      */
     fun notifyUserInteractionOnDisplay(templateId: String)
+
+    /**
+     * Call when playlist modified or deleted.
+     * @param deletedTokens token list of deleted at playlists
+     * @param tokens edited token list, empty if not edited.
+     */
+    fun playlistModified(deletedTokens: List<String>, tokens: List<String>)
 }
