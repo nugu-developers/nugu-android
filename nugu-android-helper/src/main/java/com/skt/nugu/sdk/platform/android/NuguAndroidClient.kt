@@ -625,7 +625,14 @@ class NuguAndroidClient private constructor(
                                         AudioPlayerTemplateHandler(
                                             getPlaySynchronizer(),
                                             getSessionManager(),
-                                            getInterLayerDisplayPolicyManager()
+                                            getInterLayerDisplayPolicyManager(),
+                                            object: ElementSelectedEventHandler(
+                                                getContextManager(),
+                                                getMessageSender()
+                                            ){
+                                                override fun getNamespace(): String = DefaultAudioPlayerAgent.NAMESPACE
+                                                override fun getVersion(): String = DefaultAudioPlayerAgent.VERSION.toString()
+                                            }
                                         ).apply {
                                             getDisplayPlayStackManager().addPlayContextProvider(this)
                                             getDirectiveSequencer().addDirectiveHandler(this)

@@ -38,7 +38,8 @@ import java.util.concurrent.*
 class AudioPlayerTemplateHandler(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val sessionManager: SessionManagerInterface,
-    private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager
+    private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
+    private val elementSelectedEventHandler: ElementSelectedEventHandler
 ) : AbstractDirectiveHandler()
     , AudioPlayerDisplayInterface
     , AudioPlayerMetadataDirectiveHandler.Listener
@@ -397,14 +398,21 @@ class AudioPlayerTemplateHandler(
         return false
     }
 
-    @Throws(UnsupportedOperationException::class)
+    @Throws(IllegalStateException::class)
     override fun setElementSelected(
         templateId: String,
         token: String,
         postback: String?,
         callback: DisplayInterface.OnElementSelectedCallback?
     ): String {
-        throw UnsupportedOperationException("setElementSelected not supported")
+        val directiveInfo = templateDirectiveInfoMap[templateId]
+            ?: throw IllegalStateException("[setElementSelected] invalid templateId: $templateId (maybe cleared or not rendered yet)")
+
+        if(directiveInfo.payload.playServiceId.isNullOrBlank()) {
+            throw IllegalStateException("[setElementSelected] empty playServiceId: $templateId")
+        }
+
+        return elementSelectedEventHandler.setElementSelected(directiveInfo.payload.playServiceId ,token, postback, callback)
     }
 
     private fun setHandlingFailed(info: DirectiveInfo, description: String) {
