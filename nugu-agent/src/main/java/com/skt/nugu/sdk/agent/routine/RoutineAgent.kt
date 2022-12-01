@@ -414,6 +414,10 @@ class RoutineAgent(
             directive: StartDirectiveHandler.StartDirective,
             dialogRequestId: String
         ): ScheduledFuture<*> = executor.schedule({
+            if(currentRoutineRequest?.currentActionDialogRequestId != dialogRequestId) {
+                return@schedule
+            }
+
             contextManager.getContext(object : IgnoreErrorContextRequestor() {
                 override fun onContext(jsonContext: String) {
                     val request = EventMessageRequest.Builder(
