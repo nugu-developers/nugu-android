@@ -102,7 +102,7 @@ class LoginActivity : AppCompatActivity(), ClientManager.Observer {
 
         if(!authClient.isTidLogin()) {
             authClient.loginWithTid(
-                activity = this,
+                context = this,
                 listener = object : NuguOAuthInterface.OnLoginListener {
                     // Successfully login
                     override fun onSuccess(credentials: Credentials) {

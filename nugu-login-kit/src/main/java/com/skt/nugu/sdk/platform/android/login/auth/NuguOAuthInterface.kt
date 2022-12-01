@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.login.auth
 
-import android.app.Activity
+import android.content.Context
 import androidx.annotation.Keep
 
 /**
@@ -62,13 +62,13 @@ interface NuguOAuthInterface {
 
     /**
      * Start the login with tid
-     * @param activity The activity making the call.
+     * @param context a context.
      * @param listener Listener to receive result.
      * @param data Constructs any extra parameters necessary to include in the request uri for the client authentication.
      * @param theme Optional custom theme.
      */
     fun loginWithTid(
-        activity: Activity,
+        context: Context,
         listener: OnLoginListener,
         data: Map<String, String> = mapOf(),
         theme: THEME = THEME.LIGHT
@@ -76,13 +76,13 @@ interface NuguOAuthInterface {
 
     /**
      * Start the account info with Tid.
-     * @param activity The activity making the call.
+     * @param context a context.
      * @param listener Listener to receive result.
      * @param data Constructs any extra parameters necessary to include in the request uri for the client authentication.
      * @param theme Optional custom theme.
      */
     fun accountWithTid(
-        activity: Activity,
+        context: Context,
         listener: OnAccountListener,
         data: Map<String, String> = mapOf(),
         theme: THEME = THEME.LIGHT

@@ -15,7 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.login.auth
 
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.VisibleForTesting
@@ -49,8 +49,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      */
     companion object {
         private const val TAG = "NuguOAuth"
-        private const val REQUEST_CODE_LOGIN = 10000
-        private const val REQUEST_CODE_ACCOUNT = 10001
 
         const val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
         const val EXTRA_OAUTH_DATA = "nugu.intent.extra.oauth.data"
@@ -455,7 +453,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     }
 
     override fun accountWithTid(
-        activity: Activity,
+        context: Context,
         listener: NuguOAuthInterface.OnAccountListener,
         data: Map<String, String>,
         theme: NuguOAuthInterface.THEME
@@ -463,13 +461,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         runCatching {
             this.onceLoginListener = OnceLoginListener(listener)
 
-            Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+            Intent(context, NuguOAuthCallbackActivity::class.java).apply {
                 putExtra(EXTRA_OAUTH_ACTION, ACTION_ACCOUNT)
                 putExtra(EXTRA_OAUTH_DATA, data.appendDataToJson(mutableMapOf(
                     "deviceSerialNumber" to options.deviceUniqueId,
                     "theme" to theme.name
                 )).toString())
-                activity.startActivityForResult(this, REQUEST_CODE_ACCOUNT)
+                context.startActivity(this)
             }
         }.onFailure {
             listener.onError(NuguOAuthError(it))
@@ -511,13 +509,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
 
     /**
      * Start the login with tid
-     * @param activity The activity making the call
+     * @param context a context
      * @param listener The listener to notify
      * @param data The extensible information
      * @param theme Theme to apply
      */
     override fun loginWithTid(
-        activity: Activity,
+        context: Context,
         listener: OnLoginListener,
         data: Map<String, String>,
         theme: NuguOAuthInterface.THEME
@@ -529,13 +527,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             checkClientSecret()
             checkRedirectUri()
 
-            Intent(activity, NuguOAuthCallbackActivity::class.java).apply {
+            Intent(context, NuguOAuthCallbackActivity::class.java).apply {
                 putExtra(EXTRA_OAUTH_ACTION, ACTION_LOGIN)
                 putExtra(EXTRA_OAUTH_DATA, data.appendDataToJson(mutableMapOf(
                     "deviceSerialNumber" to options.deviceUniqueId,
                     "theme" to theme.name
                 )).toString())
-                activity.startActivityForResult(this, REQUEST_CODE_LOGIN)
+                context.startActivity(this)
             }
         }.onFailure {
             listener.onError(NuguOAuthError(it))
