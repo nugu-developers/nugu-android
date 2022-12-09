@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+Version 1.7.10 *(2022-12-09)*
+-----------------------------
+* Fix: Fix wrong routine agent state (#2283)
+* Fix: Fix ASR blocking (#2306)
+* Fix: SpeechRecognizer's EXPECTING_SPEECH state forever (sometimes) (#2327)
+* Fix: Prevent invalid Routine.ActionTimeoutTriggered event call (#2329)
+* Fix: Update the NuguOAuthInterface activity parameter to context (#2332)
+* Improve: Change Permission.RequestPermission's Blocking Policy (#2290)
+* Improve: Add exceptions to System.Exception Directive of SystemAgent (#2322)
+* New: Routine Interface v1.3 (#2263)
+* New: Allow selection of focusGain to use in AndroidAudioFocusInteractor (#2279)
+* New: Add listener for Routine's Action Status (#2281)
+* New: Apply "visual" blocking policy (#2294)
+
 Version 1.7.9 *(2022-08-26)*
 -----------------------------
 * Fix: Append interaction control payload at Text.TextInput event (#2266)
