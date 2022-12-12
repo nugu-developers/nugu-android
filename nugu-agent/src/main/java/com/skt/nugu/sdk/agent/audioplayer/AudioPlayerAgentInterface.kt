@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer
 
+import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
+import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.util.TimeUnit
@@ -117,6 +119,22 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @param listener the listener that removed
      */
     fun removeOnDurationListener(listener: OnDurationListener)
+
+    /** Add a listener for playlist changes
+     * @param listener the listener that added
+     */
+    fun addOnPlaylistListener(listener: OnPlaylistListener)
+
+    /**
+     * Remove a listener
+     * @param listener the listener that removed
+     */
+    fun removeOnPlaylistListener(listener: OnPlaylistListener)
+
+    /**
+     * Get current playlist if exist
+     */
+    fun getPlaylist(): JsonObject?
 
     /** Set a presenter for lyrics
      * @param presenter the presenter to be set
