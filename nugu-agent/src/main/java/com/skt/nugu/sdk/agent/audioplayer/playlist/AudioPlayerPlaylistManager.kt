@@ -21,9 +21,13 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
     private val listeners = CopyOnWriteArraySet<OnPlaylistListener>()
 
     override fun setPlaylist(playlist: JsonObject) {
-        val token = playlist.getPlaylistToken()
+        val token = playlist.getPlaylistToken() ?: return
 
-        if(token != null) {
+        val currentPlaylist = this.playlist
+
+        if(currentPlaylist?.token == token) {
+            updatePlaylist(playlist)
+        } else {
             this.playlist = Playlist(token, playlist)
 
             listeners.forEach {
