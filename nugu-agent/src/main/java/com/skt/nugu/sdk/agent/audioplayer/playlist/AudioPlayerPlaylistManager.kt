@@ -37,14 +37,14 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
     }
 
     override fun updatePlaylist(changes: JsonObject) {
-        val token = changes.getPlaylistToken()
-
         val currentPlaylist = this.playlist
 
         if(currentPlaylist == null) {
             Logger.w(TAG, "[updatePlaylist] no playlist now.")
             return
         }
+
+        val token = changes.getPlaylistToken()
 
         if(currentPlaylist.token == token) {
             currentPlaylist.raw.deepMerge(changes)
