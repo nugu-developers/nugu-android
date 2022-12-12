@@ -75,7 +75,7 @@ class DefaultAudioPlayerAgent(
     private val channelName: String,
     enableDisplayLifeCycleManagement: Boolean,
     private val audioPlayerTemplateHandler: AudioPlayerTemplateHandler?,
-    private val playlistManager: PlaylistManager
+    private val playlistManager: PlaylistManager?
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , ChannelObserver
@@ -461,7 +461,7 @@ class DefaultAudioPlayerAgent(
 
         private fun setPlaylist(template: JsonObject) {
             kotlin.runCatching {
-                playlistManager.setPlaylist(template.getAsJsonObject("playlist"))
+                playlistManager?.setPlaylist(template.getAsJsonObject("playlist"))
             }
         }
 
@@ -903,14 +903,14 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun addOnPlaylistListener(listener: OnPlaylistListener) {
-        playlistManager.addListener(listener)
+        playlistManager?.addListener(listener)
     }
 
     override fun removeOnPlaylistListener(listener: OnPlaylistListener) {
-        playlistManager.removeListener(listener)
+        playlistManager?.removeListener(listener)
     }
 
-    override fun getPlaylist(): JsonObject? = playlistManager.getPlaylist()
+    override fun getPlaylist(): JsonObject? = playlistManager?.getPlaylist()
 
     override fun play() {
         onButtonPressed(PlaybackButton.PLAY)
@@ -1590,6 +1590,14 @@ class DefaultAudioPlayerAgent(
                     currentActivity
                 }
 
+            val playlistToken = if(playlistManager == null) {
+                // null if playlistManager is null.
+                null
+            } else {
+                // empty string if current playlist token is not exist.
+                playlistManager.getPlaylist()?.getPlaylistToken() ?: ""
+            }
+
             contextSetter.setState(
                 namespaceAndName, StateContext(
                     playerActivity,
@@ -1598,7 +1606,7 @@ class DefaultAudioPlayerAgent(
                     getOffsetInMilliseconds(),
                     duration,
                     lyricsPresenter?.getVisibility(),
-                    playlistManager.getPlaylist()?.getPlaylistToken()
+                    playlistToken
                 ), StateRefreshPolicy.ALWAYS, contextType, stateRequestToken
             )
         }
