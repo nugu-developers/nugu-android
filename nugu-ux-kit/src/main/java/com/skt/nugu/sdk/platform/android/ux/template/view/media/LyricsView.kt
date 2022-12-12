@@ -22,11 +22,11 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -50,9 +50,7 @@ class LyricsView @JvmOverloads constructor(
     }
 
     enum class FontScale(val scale: Int) {
-        SCALE_DEFAULT(1),
-        SCALE_X2(2),
-        SCALE_X4(4);
+        SCALE_DEFAULT(1), SCALE_X2(2), SCALE_X4(4);
 
         fun next(): FontScale {
             return when (this) {
@@ -61,15 +59,18 @@ class LyricsView @JvmOverloads constructor(
                 else -> SCALE_DEFAULT
             }
         }
+
+        val text = "X$scale"
     }
 
+    private var layoutId = R.layout.view_lyrics
     private val lyrics: ArrayList<LyricsInfo> = ArrayList()
     private var adapter: LyricsAdapter
 
     private val recyclerView by lazy { findViewById<RecyclerView>(R.id.rv_lyrics) }
     private val emptyView by lazy { findViewById<TextView>(R.id.tv_empty) }
     private val titleView by lazy { findViewById<TextView>(R.id.tv_lyrics_header) }
-    private val lyricsExpandBtn by lazy { findViewById<ImageButton>(R.id.btn_lyrics_expand) }
+    private val btnFontSize by lazy { findViewById<TextView>(R.id.btn_font_size) }
 
     private var enableAutoScroll = true
 
@@ -94,6 +95,10 @@ class LyricsView @JvmOverloads constructor(
     @ColorInt
     private var fontColor = resources.genColor(R.color.media_template_lyrics_text)
 
+    private var fontSizeScalable = false
+    private var fontSizeScaleUnitSp = 2
+    private var lyricsGravity = Gravity.CENTER
+
     var isDark = false
         set(value) {
             val update = field != value
@@ -104,7 +109,7 @@ class LyricsView @JvmOverloads constructor(
     init {
         init(attrs)
 
-        LayoutInflater.from(context).inflate(R.layout.view_lyrics, this, true)
+        LayoutInflater.from(context).inflate(layoutId, this, true)
 
         adapter = LyricsAdapter(
             context,
@@ -113,6 +118,8 @@ class LyricsView @JvmOverloads constructor(
             fontColor,
             fontColorFocus,
         )
+        adapter.fontSizeScaleUnitSp = fontSizeScaleUnitSp
+        adapter.lyricsGravity = lyricsGravity
 
         recyclerView.setOnClickListener {
             this@LyricsView.performClick()
@@ -122,14 +129,12 @@ class LyricsView @JvmOverloads constructor(
             this@LyricsView.performClick()
         }
 
-        recyclerView.layoutManager =
-            object : LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
-                override fun canScrollVertically(): Boolean {
-                    if (viewSize == SIZE_SMALL)
-                        return false
-                    return super.canScrollVertically()
-                }
+        recyclerView.layoutManager = object : LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
+            override fun canScrollVertically(): Boolean {
+                if (viewSize == SIZE_SMALL) return false
+                return super.canScrollVertically()
             }
+        }
         recyclerView.adapter = adapter
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -148,14 +153,16 @@ class LyricsView @JvmOverloads constructor(
 
         recyclerView.itemAnimator?.changeDuration = 0L
 
-
         if (viewSize == SIZE_STANDARD) {
-            lyricsExpandBtn.post {
-                lyricsExpandBtn.visibility = View.VISIBLE
-            }
+            if (fontSizeScalable) {
+                btnFontSize.post {
+                    btnFontSize.text = adapter.fontScale.text
+                    btnFontSize.visibility = View.VISIBLE
+                }
 
-            lyricsExpandBtn.setOnClickListener {
-                adapter.setFontScale(adapter.fontScale.next())
+                btnFontSize.setOnClickListener {
+                    setFontScale(adapter.fontScale.next())
+                }
             }
         }
     }
@@ -169,6 +176,17 @@ class LyricsView @JvmOverloads constructor(
             fontColor = getColor(R.styleable.LyricsView_fontColor, fontColor)
             fontColorFocus = getColor(R.styleable.LyricsView_fontColorFocus, fontColorFocus)
             titleFontColor = getColor(R.styleable.LyricsView_fontColorTitle, titleFontColor)
+
+            fontSizeScalable = getBoolean(R.styleable.LyricsView_fontSizeScalable, false)
+            fontSizeScaleUnitSp = getInt(R.styleable.LyricsView_fontSizeScaleUnitSp, 2)
+            layoutId = getResourceId(R.styleable.LyricsView_layoutRes, layoutId)
+
+            lyricsGravity = when (getInt(R.styleable.LyricsView_lyricsGravity, 0)) {
+                0 -> Gravity.CENTER
+                1 -> Gravity.START or Gravity.CENTER_VERTICAL
+                else -> Gravity.END or Gravity.CENTER_VERTICAL
+            }
+
         }.recycle()
 
         (background as? ColorDrawable)?.color?.apply { bgColorLight = this }
@@ -196,7 +214,6 @@ class LyricsView @JvmOverloads constructor(
     fun setTitle(title: String?, marquee: Boolean = false) {
         titleView.text = title
         titleView.visibility = if (title != null) View.VISIBLE else View.INVISIBLE
-
         titleView.setTextColor(if (isDark) titleFontColorDark else titleFontColor)
 
         if (marquee) titleView.enableMarquee()
@@ -217,6 +234,7 @@ class LyricsView @JvmOverloads constructor(
 
     fun setFontScale(scale: FontScale) {
         adapter.setFontScale(scale)
+        btnFontSize.text = adapter.fontScale.text
     }
 
     fun getFontScale() = adapter.fontScale
@@ -254,9 +272,8 @@ class LyricsView @JvmOverloads constructor(
         recyclerView.post {
             val layoutManager = recyclerView.layoutManager as LinearLayoutManager
             val offset = layoutManager.findViewByPosition(index)?.height?.div(2) ?: dpToPixel(context, 31f) //31f is default value
-            val scrollPositionOffset =
-                if (viewSize == SIZE_STANDARD) recyclerView.measuredHeight / 2 - offset.toInt()
-                else 0
+            val scrollPositionOffset = if (viewSize == SIZE_STANDARD) recyclerView.measuredHeight / 2 - offset.toInt()
+            else 0
 
             layoutManager.scrollToPositionWithOffset(index, scrollPositionOffset)
         }
@@ -269,11 +286,10 @@ class LyricsView @JvmOverloads constructor(
 
         val layoutManager = recyclerView.layoutManager as LinearLayoutManager
 
-        val targetPosition =
-            if (direction == Direction.NEXT) layoutManager.findLastVisibleItemPosition()
-            else {
-                (layoutManager.findFirstCompletelyVisibleItemPosition() - layoutManager.childCount + 1).coerceAtLeast(0)
-            }
+        val targetPosition = if (direction == Direction.NEXT) layoutManager.findLastVisibleItemPosition()
+        else {
+            (layoutManager.findFirstCompletelyVisibleItemPosition() - layoutManager.childCount + 1).coerceAtLeast(0)
+        }
 
         layoutManager.scrollToPositionWithOffset(targetPosition, 0)
     }
@@ -311,14 +327,19 @@ class LyricsView @JvmOverloads constructor(
         var fontScale: FontScale = FontScale.SCALE_DEFAULT
             private set
 
+        var fontSizeScaleUnitSp = 2
+        var lyricsGravity = Gravity.CENTER
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val view =
-                LayoutInflater.from(context)
-                    .inflate(if (viewSize == SIZE_SMALL) R.layout.view_item_small_lyrics else R.layout.view_item_lyrics, parent, false)
+            val view = LayoutInflater.from(context)
+                .inflate(if (viewSize == SIZE_SMALL) R.layout.view_item_small_lyrics else R.layout.view_item_lyrics, parent, false)
             view.setOnClickListener {
                 parent.performClick()
             }
-            return Holder(view)
+
+            return Holder(view).apply {
+                line.gravity = lyricsGravity
+            }
         }
 
         override fun getItemCount(): Int {
@@ -356,7 +377,7 @@ class LyricsView @JvmOverloads constructor(
 
             // set text size
             if (viewSize == SIZE_STANDARD) {
-                viewHolder.line.setTextSize(TypedValue.COMPLEX_UNIT_SP, STANDARD_FONT_SIZE_SP * fontScale.scale)
+                viewHolder.line.setTextSize(TypedValue.COMPLEX_UNIT_SP, STANDARD_FONT_SIZE_SP + ((fontScale.scale - 1) * fontSizeScaleUnitSp))
             }
         }
 
