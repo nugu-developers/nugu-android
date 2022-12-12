@@ -27,6 +27,9 @@ import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlayCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
+import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistManager
+import com.skt.nugu.sdk.agent.audioplayer.playlist.getPlaylistToken
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
@@ -71,7 +74,8 @@ class DefaultAudioPlayerAgent(
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val channelName: String,
     enableDisplayLifeCycleManagement: Boolean,
-    private val audioPlayerTemplateHandler: AudioPlayerTemplateHandler?
+    private val audioPlayerTemplateHandler: AudioPlayerTemplateHandler?,
+    private val playlistManager: PlaylistManager
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , ChannelObserver
@@ -377,6 +381,10 @@ class DefaultAudioPlayerAgent(
                 playSynchronizer.prepareSync(this)
             }
 
+            playPayload.audioItem.metaData?.template?.let { template->
+                setPlaylist(template)
+            }
+
             if(currentFocus == FocusState.NONE) {
                 focusManager.prepare(focusRequester)
             }
@@ -449,6 +457,12 @@ class DefaultAudioPlayerAgent(
                 }
             }
             return true
+        }
+
+        private fun setPlaylist(template: JsonObject) {
+            kotlin.runCatching {
+                playlistManager.setPlaylist(template.getAsJsonObject("playlist"))
+            }
         }
 
         private fun executeFetchItem(item: AudioInfo): Boolean {
@@ -887,6 +901,16 @@ class DefaultAudioPlayerAgent(
             durationListeners.remove(listener)
         }
     }
+
+    override fun addOnPlaylistListener(listener: OnPlaylistListener) {
+        playlistManager.addListener(listener)
+    }
+
+    override fun removeOnPlaylistListener(listener: OnPlaylistListener) {
+        playlistManager.removeListener(listener)
+    }
+
+    override fun getPlaylist(): JsonObject? = playlistManager.getPlaylist()
 
     override fun play() {
         onButtonPressed(PlaybackButton.PLAY)
@@ -1500,7 +1524,8 @@ class DefaultAudioPlayerAgent(
         val token: String,
         val offsetInMilliseconds: Long,
         val durationInMilliseconds: Long?,
-        val lyricsVisible: Boolean?
+        val lyricsVisible: Boolean?,
+        val playlistToken: String?
     ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -1536,6 +1561,10 @@ class DefaultAudioPlayerAgent(
             lyricsVisible?.let {
                 addProperty("lyricsVisible", it)
             }
+
+            playlistToken?.let {
+                addProperty("playlistToken", it)
+            }
         }.toString()
     }
 
@@ -1568,7 +1597,8 @@ class DefaultAudioPlayerAgent(
                     token,
                     getOffsetInMilliseconds(),
                     duration,
-                    lyricsPresenter?.getVisibility()
+                    lyricsPresenter?.getVisibility(),
+                    playlistManager.getPlaylist()?.getPlaylistToken()
                 ), StateRefreshPolicy.ALWAYS, contextType, stateRequestToken
             )
         }

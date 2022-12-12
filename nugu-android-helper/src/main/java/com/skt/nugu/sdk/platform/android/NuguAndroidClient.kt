@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playlist.AudioPlayerPlaylistManager
 import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
@@ -621,6 +622,10 @@ class NuguAndroidClient private constructor(
                         object : AgentFactory<DefaultAudioPlayerAgent> {
                             override fun create(container: SdkContainer): DefaultAudioPlayerAgent =
                                 with(container) {
+                                    val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler().apply {
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
+
                                     val audioPlayerTemplateHandler = if (builder.enableDisplay) {
                                         AudioPlayerTemplateHandler(
                                             getPlaySynchronizer(),
@@ -639,13 +644,14 @@ class NuguAndroidClient private constructor(
                                             getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
                                                 AudioPlayerDirectivePreProcessor()
                                             )
-                                            AudioPlayerMetadataDirectiveHandler()
-                                                .apply {
-                                                    getDirectiveSequencer().addDirectiveHandler(this)
-                                                }.addListener(this)
+                                            audioPlayerMetadataDirectiveHandler.addListener(this)
                                         }
                                     } else {
                                         null
+                                    }
+
+                                    val audioPlayerPlaylistManager = AudioPlayerPlaylistManager().apply {
+                                        audioPlayerMetadataDirectiveHandler.addListener(this)
                                     }
 
                                     DefaultAudioPlayerAgent(
@@ -659,7 +665,8 @@ class NuguAndroidClient private constructor(
                                         getDirectiveGroupProcessor(),
                                         DefaultFocusChannel.MEDIA_CHANNEL_NAME,
                                         builder.enableDisplayLifeCycleManagement,
-                                        audioPlayerTemplateHandler
+                                        audioPlayerTemplateHandler,
+                                        audioPlayerPlaylistManager
                                     ).apply {
                                         AudioPlayerLyricsDirectiveHandler(
                                             getContextManager(),
