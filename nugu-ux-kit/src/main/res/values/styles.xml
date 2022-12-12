@@ -75,5 +75,19 @@
         <attr name="fontColor" format="color|reference" />
         <attr name="fontColorFocus" format="color|reference" />
         <attr name="fontColorTitle" format="color|reference" />
+
+        <!-- whether fontScale function support or not. If it's true scale button will showing. (default : false) -->
+        <attr name="fontSizeScalable" format="boolean" />
+
+        <!-- base unit of font size scale amount. (default : 2 sp) -->
+        <attr name="fontSizeScaleUnitSp" format="integer" />
+        <attr name="layoutRes" format="reference" />
+
+        <!-- each lyrics text gravity (default : center)  -->
+        <attr name="lyricsGravity" format="enum">
+            <enum name="center" value="0" />
+            <enum name="start" value="1" />
+            <enum name="end" value="2" />
+        </attr>
     </declare-styleable>
 </resources>

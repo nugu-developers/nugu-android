@@ -43,11 +43,16 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
-    <ImageButton
-        android:id="@+id/btn_lyrics_expand"
+    <TextView
+        android:id="@+id/btn_font_size"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/nugu_btn_skip_next_32"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_round_blue"
+        android:gravity="center"
+        android:padding="5dp"
+        android:textColor="#001ffe"
+        android:textSize="11sp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
