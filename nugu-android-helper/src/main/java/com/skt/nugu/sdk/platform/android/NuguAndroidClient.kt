@@ -282,6 +282,9 @@ class NuguAndroidClient private constructor(
         // audio player agent (optional)
         internal var enableAudioPlayer: Boolean = true
 
+        // audio player's playlist (optional)
+        internal var enableAudioPlayerPlaylist: Boolean = false
+
         // permission agent (optional)
         internal var permissionDelegate: PermissionDelegate? = null
 
@@ -401,6 +404,7 @@ class NuguAndroidClient private constructor(
         fun systemExceptionDirectiveDelegate(delegate: ExceptionDirectiveDelegate?) = apply { this.systemExceptionDirectiveDelegate = delegate }
 
         fun enableAudioPlayer(enable: Boolean) = apply { this.enableAudioPlayer = enable }
+        fun enableAudioPlayerPlaylist(enable: Boolean) = apply {this.enableAudioPlayerPlaylist = enable}
         fun enableDisplay(enable: Boolean) = apply { this.enableDisplay = enable }
         fun enableChips(enable: Boolean) = apply { this.enableChips = enable }
         fun enableNudge(enable: Boolean) = apply { this.enableNudge = enable }
@@ -650,8 +654,12 @@ class NuguAndroidClient private constructor(
                                         null
                                     }
 
-                                    val audioPlayerPlaylistManager = AudioPlayerPlaylistManager().apply {
-                                        audioPlayerMetadataDirectiveHandler.addListener(this)
+                                    val audioPlayerPlaylistManager = if(builder.enableAudioPlayerPlaylist) {
+                                        AudioPlayerPlaylistManager().apply {
+                                            audioPlayerMetadataDirectiveHandler.addListener(this)
+                                        }
+                                    } else {
+                                        null
                                     }
 
                                     DefaultAudioPlayerAgent(
