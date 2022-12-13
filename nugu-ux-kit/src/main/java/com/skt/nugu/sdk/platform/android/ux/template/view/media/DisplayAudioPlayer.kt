@@ -259,7 +259,7 @@ open class DisplayAudioPlayer constructor(
         }
     }
 
-    data class RenderInfo(val lyricShowing: Boolean, val barType: Boolean)
+    data class RenderInfo(val lyricShowing: Boolean, val barType: Boolean, val lyricsFontScale : LyricsView.FontScale)
 
     init {
         currOrientation = resources.configuration.orientation
@@ -570,7 +570,7 @@ open class DisplayAudioPlayer constructor(
             }
         }
 
-        item.content?.run {
+        item.content.run {
             albumImage.updateImage(imageUrl, thumbTransformCornerAlbumCover, isMerge)
             header.updateText(title, isMerge)
             body.updateText(subtitle1, isMerge)
@@ -795,7 +795,7 @@ open class DisplayAudioPlayer constructor(
         }
     }
 
-    override fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, expandedPlayer.y != 0f)
+    override fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, expandedPlayer.y != 0f, lyricsView.getFontScale())
 
     override fun applyRenderInfo(renderInfo: Any) {
         (renderInfo as? RenderInfo)?.run {
@@ -809,6 +809,8 @@ open class DisplayAudioPlayer constructor(
             if (!barType) {
                 expand(true)
             }
+
+            lyricsView.setFontScale(renderInfo.lyricsFontScale)
         }
     }
 
