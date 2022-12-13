@@ -45,8 +45,8 @@ enum class Repeat {
 
 @Keep
 class AudioPlayer(
-    @SerializedName("title") val title: AudioPlayerTitle,
-    @SerializedName("content") val content: AudioPlayerContent,
+    @SerializedName("title") val title: AudioPlayerTitle?,
+    @SerializedName("content") val content: AudioPlayerContent?,
 )
 
 @Keep
