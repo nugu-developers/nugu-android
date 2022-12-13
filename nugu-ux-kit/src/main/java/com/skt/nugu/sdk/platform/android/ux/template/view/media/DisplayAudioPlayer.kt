@@ -167,7 +167,7 @@ open class DisplayAudioPlayer constructor(
 
         override fun onMediaDurationRetrieved(durationMs: Long) {
             audioPlayerItem?.run {
-                if (content.durationSec == null) {
+                if (content?.durationSec == null) {
                     return
                 }
             }
@@ -182,7 +182,7 @@ open class DisplayAudioPlayer constructor(
             mediaCurrentTimeMs = currentTimeMs
 
             audioPlayerItem?.run {
-                if (content.durationSec == null) {
+                if (content?.durationSec == null) {
                     return
                 }
             }
