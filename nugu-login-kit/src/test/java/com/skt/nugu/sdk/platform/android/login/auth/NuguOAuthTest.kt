@@ -16,7 +16,6 @@
 
 package com.skt.nugu.sdk.platform.android.login.auth
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
@@ -416,9 +415,8 @@ class NuguOAuthTest  {
 
     @Test
     fun testLoginWithTid() {
-        val activity = Activity()
         val client = Mockito.mock(NuguOAuthInterface::class.java)
-        verify(client, never()).loginWithTid(activity, object : NuguOAuthInterface.OnLoginListener {
+        verify(client, never()).loginWithTid(ApplicationProvider.getApplicationContext(), object : NuguOAuthInterface.OnLoginListener {
             override fun onSuccess(credentials: Credentials) {
             }
 
@@ -428,9 +426,8 @@ class NuguOAuthTest  {
     }
     @Test
     fun testAccountWithTid() {
-        val activity = Activity()
         val client = Mockito.mock(NuguOAuthInterface::class.java)
-        verify(client, never()).accountWithTid(activity, object : NuguOAuthInterface.OnAccountListener {
+        verify(client, never()).accountWithTid(ApplicationProvider.getApplicationContext(), object : NuguOAuthInterface.OnAccountListener {
             override fun onSuccess(credentials: Credentials) {
             }
 

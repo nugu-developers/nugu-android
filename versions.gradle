@@ -37,12 +37,12 @@ ext {
     robolectricVersion = "4.3.1"
 
     // SDK
-    keensenseVersion = "0.2.9"
+    keensenseVersion = "0.3.0"
     jademarbleVersion = "0.2.7"
     silvertrayVersion = "4.4.1"
 
-    baseNuguVersionCode = 10709
-    baseNuguVersionName = "1.7.9"
+    baseNuguVersionCode = 10710
+    baseNuguVersionName = "1.7.10"
 
     if (rootProject.publishSnapshot) {
         // type current timestamp

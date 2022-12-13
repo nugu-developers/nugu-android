@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerAgentInterface
 import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playlist.AudioPlayerPlaylistManager
 import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
@@ -281,6 +282,9 @@ class NuguAndroidClient private constructor(
         // audio player agent (optional)
         internal var enableAudioPlayer: Boolean = true
 
+        // audio player's playlist (optional)
+        internal var enableAudioPlayerPlaylist: Boolean = false
+
         // permission agent (optional)
         internal var permissionDelegate: PermissionDelegate? = null
 
@@ -400,6 +404,7 @@ class NuguAndroidClient private constructor(
         fun systemExceptionDirectiveDelegate(delegate: ExceptionDirectiveDelegate?) = apply { this.systemExceptionDirectiveDelegate = delegate }
 
         fun enableAudioPlayer(enable: Boolean) = apply { this.enableAudioPlayer = enable }
+        fun enableAudioPlayerPlaylist(enable: Boolean) = apply {this.enableAudioPlayerPlaylist = enable}
         fun enableDisplay(enable: Boolean) = apply { this.enableDisplay = enable }
         fun enableChips(enable: Boolean) = apply { this.enableChips = enable }
         fun enableNudge(enable: Boolean) = apply { this.enableNudge = enable }
@@ -621,21 +626,37 @@ class NuguAndroidClient private constructor(
                         object : AgentFactory<DefaultAudioPlayerAgent> {
                             override fun create(container: SdkContainer): DefaultAudioPlayerAgent =
                                 with(container) {
+                                    val audioPlayerMetadataDirectiveHandler = AudioPlayerMetadataDirectiveHandler().apply {
+                                        getDirectiveSequencer().addDirectiveHandler(this)
+                                    }
+
                                     val audioPlayerTemplateHandler = if (builder.enableDisplay) {
                                         AudioPlayerTemplateHandler(
                                             getPlaySynchronizer(),
                                             getSessionManager(),
-                                            getInterLayerDisplayPolicyManager()
+                                            getInterLayerDisplayPolicyManager(),
+                                            object: ElementSelectedEventHandler(
+                                                getContextManager(),
+                                                getMessageSender()
+                                            ){
+                                                override fun getNamespace(): String = DefaultAudioPlayerAgent.NAMESPACE
+                                                override fun getVersion(): String = DefaultAudioPlayerAgent.VERSION.toString()
+                                            }
                                         ).apply {
                                             getDisplayPlayStackManager().addPlayContextProvider(this)
                                             getDirectiveSequencer().addDirectiveHandler(this)
                                             getDirectiveGroupProcessor().addDirectiveGroupPreprocessor(
                                                 AudioPlayerDirectivePreProcessor()
                                             )
-                                            AudioPlayerMetadataDirectiveHandler()
-                                                .apply {
-                                                    getDirectiveSequencer().addDirectiveHandler(this)
-                                                }.addListener(this)
+                                            audioPlayerMetadataDirectiveHandler.addListener(this)
+                                        }
+                                    } else {
+                                        null
+                                    }
+
+                                    val audioPlayerPlaylistManager = if(builder.enableAudioPlayerPlaylist) {
+                                        AudioPlayerPlaylistManager().apply {
+                                            audioPlayerMetadataDirectiveHandler.addListener(this)
                                         }
                                     } else {
                                         null
@@ -652,7 +673,8 @@ class NuguAndroidClient private constructor(
                                         getDirectiveGroupProcessor(),
                                         DefaultFocusChannel.MEDIA_CHANNEL_NAME,
                                         builder.enableDisplayLifeCycleManagement,
-                                        audioPlayerTemplateHandler
+                                        audioPlayerTemplateHandler,
+                                        audioPlayerPlaylistManager
                                     ).apply {
                                         AudioPlayerLyricsDirectiveHandler(
                                             getContextManager(),
@@ -800,10 +822,13 @@ class NuguAndroidClient private constructor(
                                 with(container) {
                                     DisplayAgent(
                                         getPlaySynchronizer(),
-                                        ElementSelectedEventHandler(
+                                        object: ElementSelectedEventHandler(
                                             getContextManager(),
                                             getMessageSender()
-                                        ),
+                                        ){
+                                            override fun getNamespace(): String = DisplayAgent.NAMESPACE
+                                            override fun getVersion(): String = DisplayAgent.VERSION.toString()
+                                        },
                                         TriggerChildEventSender(
                                             getContextManager(),
                                             getMessageSender()

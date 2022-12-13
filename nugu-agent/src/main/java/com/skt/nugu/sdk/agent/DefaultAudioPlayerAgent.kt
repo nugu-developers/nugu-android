@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.audioplayer.AudioItem
@@ -26,6 +27,9 @@ import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlayCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
+import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
+import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistManager
+import com.skt.nugu.sdk.agent.audioplayer.playlist.getPlaylistToken
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
@@ -70,7 +74,8 @@ class DefaultAudioPlayerAgent(
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val channelName: String,
     enableDisplayLifeCycleManagement: Boolean,
-    private val audioPlayerTemplateHandler: AudioPlayerTemplateHandler?
+    private val audioPlayerTemplateHandler: AudioPlayerTemplateHandler?,
+    private val playlistManager: PlaylistManager?
 ) : CapabilityAgent
     , SupportedInterfaceContextProvider
     , ChannelObserver
@@ -106,7 +111,7 @@ class DefaultAudioPlayerAgent(
         private const val TAG = "AudioPlayerAgent"
 
         const val NAMESPACE = "AudioPlayer"
-        val VERSION = Version(1,6)
+        val VERSION = Version(1,7)
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
@@ -126,6 +131,7 @@ class DefaultAudioPlayerAgent(
         private const val NAME_FAVORITE_COMMAND_ISSUED = "FavoriteCommandIssued"
         private const val NAME_REPEAT_COMMAND_ISSUED = "RepeatCommandIssued"
         private const val NAME_SHUFFLE_COMMAND_ISSUED = "ShuffleCommandIssued"
+        private const val NAME_PLAYLIST_MODIFIED = "PlaylistModified"
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
@@ -375,6 +381,10 @@ class DefaultAudioPlayerAgent(
                 playSynchronizer.prepareSync(this)
             }
 
+            playPayload.audioItem.metaData?.template?.let { template->
+                setPlaylist(template)
+            }
+
             if(currentFocus == FocusState.NONE) {
                 focusManager.prepare(focusRequester)
             }
@@ -447,6 +457,12 @@ class DefaultAudioPlayerAgent(
                 }
             }
             return true
+        }
+
+        private fun setPlaylist(template: JsonObject) {
+            kotlin.runCatching {
+                playlistManager?.setPlaylist(template.getAsJsonObject("playlist"))
+            }
         }
 
         private fun executeFetchItem(item: AudioInfo): Boolean {
@@ -885,6 +901,16 @@ class DefaultAudioPlayerAgent(
             durationListeners.remove(listener)
         }
     }
+
+    override fun addOnPlaylistListener(listener: OnPlaylistListener) {
+        playlistManager?.addListener(listener)
+    }
+
+    override fun removeOnPlaylistListener(listener: OnPlaylistListener) {
+        playlistManager?.removeListener(listener)
+    }
+
+    override fun getPlaylist(): JsonObject? = playlistManager?.getPlaylist()
 
     override fun play() {
         onButtonPressed(PlaybackButton.PLAY)
@@ -1498,7 +1524,8 @@ class DefaultAudioPlayerAgent(
         val token: String,
         val offsetInMilliseconds: Long,
         val durationInMilliseconds: Long?,
-        val lyricsVisible: Boolean?
+        val lyricsVisible: Boolean?,
+        val playlistToken: String?
     ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -1534,6 +1561,10 @@ class DefaultAudioPlayerAgent(
             lyricsVisible?.let {
                 addProperty("lyricsVisible", it)
             }
+
+            playlistToken?.let {
+                addProperty("playlistToken", it)
+            }
         }.toString()
     }
 
@@ -1559,6 +1590,14 @@ class DefaultAudioPlayerAgent(
                     currentActivity
                 }
 
+            val playlistToken = if(playlistManager == null) {
+                // null if playlistManager is null.
+                null
+            } else {
+                // empty string if current playlist token is not exist.
+                playlistManager.getPlaylist()?.getPlaylistToken() ?: ""
+            }
+
             contextSetter.setState(
                 namespaceAndName, StateContext(
                     playerActivity,
@@ -1566,7 +1605,8 @@ class DefaultAudioPlayerAgent(
                     token,
                     getOffsetInMilliseconds(),
                     duration,
-                    lyricsPresenter?.getVisibility()
+                    lyricsPresenter?.getVisibility(),
+                    playlistToken
                 ), StateRefreshPolicy.ALWAYS, contextType, stateRequestToken
             )
         }
@@ -1787,6 +1827,36 @@ class DefaultAudioPlayerAgent(
 
     override fun notifyUserInteractionOnDisplay(templateId: String) {
         lifeCycleScheduler?.refreshSchedule()
+    }
+
+    override fun playlistModified(deletedTokens: List<String>, tokens: List<String>) {
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                executor.submit {
+                    val messageRequest = EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE,
+                        NAME_PLAYLIST_MODIFIED,
+                        VERSION.toString()
+                    ).payload(
+                        JsonObject().apply {
+                            add("deletedTokens", JsonArray().apply {
+                                deletedTokens.forEach {
+                                    add(it)
+                                }
+                            })
+                            add("tokens", JsonArray().apply {
+                                tokens.forEach {
+                                    add(it)
+                                }
+                            })
+                        }.toString()
+                    ).build()
+
+                    messageSender.newCall(messageRequest).enqueue(null)
+                }
+            }
+        }, namespaceAndName)
     }
 
     override fun displayCardRendered(
