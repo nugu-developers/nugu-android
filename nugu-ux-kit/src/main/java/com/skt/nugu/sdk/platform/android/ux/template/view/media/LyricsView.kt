@@ -400,9 +400,9 @@ class LyricsView @JvmOverloads constructor(
                     if (previous in 0 until lyrics.size) notifyItemChanged(previous)
                 }
 
-                return false
+                return true
             }
-            return true
+            return false
         }
 
         @SuppressLint("NotifyDataSetChanged")
