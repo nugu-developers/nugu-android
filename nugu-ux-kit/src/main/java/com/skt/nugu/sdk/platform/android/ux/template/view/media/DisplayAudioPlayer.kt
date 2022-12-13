@@ -570,7 +570,7 @@ open class DisplayAudioPlayer constructor(
             }
         }
 
-        item.content.run {
+        item.content?.run {
             albumImage.updateImage(imageUrl, thumbTransformCornerAlbumCover, isMerge)
             header.updateText(title, isMerge)
             body.updateText(subtitle1, isMerge)
