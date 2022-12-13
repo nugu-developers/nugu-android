@@ -204,8 +204,8 @@ class DisplayAudioPlayerTest {
 
         // check item is not null && content.durationSec is null
         spy.audioPlayerItem = emptyAudioPlayerInfo
-        whenever(emptyAudioPlayerInfo.content.durationSec).thenReturn(null)
-        println("${spy.audioPlayerItem} / ${spy.audioPlayerItem!!.content.durationSec}")
+        whenever(emptyAudioPlayerInfo.content?.durationSec).thenReturn(null)
+        println("${spy.audioPlayerItem} / ${spy.audioPlayerItem!!.content?.durationSec}")
         spy.mediaListener.onMediaDurationRetrieved(1000)
         spy.mediaListener.onMediaProgressChanged(20f, 200)
 
