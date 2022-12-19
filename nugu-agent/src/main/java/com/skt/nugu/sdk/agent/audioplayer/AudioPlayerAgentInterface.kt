@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
+import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.util.TimeUnit
@@ -134,7 +135,7 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     /**
      * Get current playlist if exist
      */
-    fun getPlaylist(): JsonObject?
+    fun getPlaylist(): Playlist?
 
     /** Set a presenter for lyrics
      * @param presenter the presenter to be set
