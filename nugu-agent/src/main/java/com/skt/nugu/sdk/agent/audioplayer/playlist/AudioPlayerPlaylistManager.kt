@@ -58,7 +58,7 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
         currentPlaylist: Playlist,
         changes: JsonObject
     ) {
-        currentPlaylist.raw.deepMerge(changes)
+        currentPlaylist.raw.mergePlaylist(changes)
 
         listeners.forEach {
             it.onUpdatePlaylist(changes, currentPlaylist)
