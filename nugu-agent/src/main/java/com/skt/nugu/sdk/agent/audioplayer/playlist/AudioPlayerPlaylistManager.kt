@@ -12,52 +12,60 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
         private const val TAG = "AudioPlayerPlaylistManager"
     }
 
-    internal data class Playlist(
-        val token: String,
-        val raw: JsonObject
-    )
-
     private var playlist: Playlist? = null
     private val listeners = CopyOnWriteArraySet<OnPlaylistListener>()
 
-    override fun setPlaylist(playlist: JsonObject) {
-        val token = playlist.getPlaylistToken() ?: return
+    override fun setPlaylist(playServiceId: String, rawPlaylist: JsonObject) {
+        val token = rawPlaylist.getPlaylistToken() ?: return
 
         val currentPlaylist = this.playlist
 
-        if(currentPlaylist?.token == token) {
-            updatePlaylist(playlist)
+        if(currentPlaylist?.playServiceId == playServiceId && currentPlaylist.token == token) {
+            updatePlaylist(playServiceId, rawPlaylist)
         } else {
-            this.playlist = Playlist(token, playlist)
+            val newPlaylist = Playlist(playServiceId, token, rawPlaylist)
+            this.playlist = newPlaylist
 
             listeners.forEach {
-                it.onSetPlaylist(playlist)
+                it.onSetPlaylist(newPlaylist)
             }
         }
     }
 
-    override fun updatePlaylist(changes: JsonObject) {
+    override fun updatePlaylist(playServiceId: String, changes: JsonObject) {
         val currentPlaylist = this.playlist
 
         if(currentPlaylist == null) {
-            Logger.w(TAG, "[updatePlaylist] no playlist now.")
+            Logger.d(TAG, "[updatePlaylist] no playlist now.")
+            return
+        }
+
+        if(currentPlaylist.playServiceId != playServiceId) {
+            Logger.d(TAG, "[updatePlaylist] not matched playServiceId(current: ${currentPlaylist.playServiceId}, update: $playServiceId)")
             return
         }
 
         val token = changes.getPlaylistToken()
+        if(currentPlaylist.token != token) {
+            Logger.d(TAG, "[updatePlaylist] token($token) is not matched current playlist's token(${this.playlist?.token}).")
+            return
+        }
 
-        if(currentPlaylist.token == token) {
-            currentPlaylist.raw.deepMerge(changes)
+        updatePlaylistInternal(currentPlaylist, changes)
+    }
 
-            listeners.forEach {
-                it.onUpdatePlaylist(changes, currentPlaylist.raw)
-            }
-        } else {
-            Logger.w(TAG, "[updatePlaylist] token($token) is not matched current playlist's token(${this.playlist?.token}).")
+    private fun updatePlaylistInternal(
+        currentPlaylist: Playlist,
+        changes: JsonObject
+    ) {
+        currentPlaylist.raw.deepMerge(changes)
+
+        listeners.forEach {
+            it.onUpdatePlaylist(changes, currentPlaylist)
         }
     }
 
-    override fun getPlaylist(): JsonObject? = this.playlist?.raw
+    override fun getPlaylist(): Playlist? = this.playlist?.copy()
 
     override fun addListener(listener: OnPlaylistListener) {
         listeners.add(listener)
@@ -71,7 +79,7 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
         val playlist = getPlaylist(jsonMetaData)
 
         if(playlist != null) {
-            updatePlaylist(playlist)
+            updatePlaylist(playServiceId, playlist)
         }
     }
 

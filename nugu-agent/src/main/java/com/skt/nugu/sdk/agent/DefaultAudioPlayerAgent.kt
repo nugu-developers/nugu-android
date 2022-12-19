@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlayCommand
 import com.skt.nugu.sdk.agent.audioplayer.playback.AudioPlayerRequestPlaybackCommandDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
+import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
 import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistManager
 import com.skt.nugu.sdk.agent.audioplayer.playlist.getPlaylistToken
 import com.skt.nugu.sdk.agent.common.Direction
@@ -382,7 +383,7 @@ class DefaultAudioPlayerAgent(
             }
 
             playPayload.audioItem.metaData?.template?.let { template->
-                setPlaylist(template)
+                setPlaylist(playServiceId, template)
             }
 
             if(currentFocus == FocusState.NONE) {
@@ -459,9 +460,9 @@ class DefaultAudioPlayerAgent(
             return true
         }
 
-        private fun setPlaylist(template: JsonObject) {
+        private fun setPlaylist(playServiceId: String, template: JsonObject) {
             kotlin.runCatching {
-                playlistManager?.setPlaylist(template.getAsJsonObject("playlist"))
+                playlistManager?.setPlaylist(playServiceId, template.getAsJsonObject("playlist"))
             }
         }
 
@@ -910,7 +911,7 @@ class DefaultAudioPlayerAgent(
         playlistManager?.removeListener(listener)
     }
 
-    override fun getPlaylist(): JsonObject? = playlistManager?.getPlaylist()
+    override fun getPlaylist(): Playlist? = playlistManager?.getPlaylist()
 
     override fun play() {
         onButtonPressed(PlaybackButton.PLAY)
@@ -1595,7 +1596,7 @@ class DefaultAudioPlayerAgent(
                 null
             } else {
                 // empty string if current playlist token is not exist.
-                playlistManager.getPlaylist()?.getPlaylistToken() ?: ""
+                playlistManager.getPlaylist()?.token ?: ""
             }
 
             contextSetter.setState(
