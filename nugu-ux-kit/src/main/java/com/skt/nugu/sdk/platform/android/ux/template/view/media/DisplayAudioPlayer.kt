@@ -125,8 +125,7 @@ open class DisplayAudioPlayer constructor(
 
     private var bgColorLight = resources.genColor(R.color.media_template_bg_light)
 
-    @VisibleForTesting
-    internal var audioPlayerItem: AudioPlayer? = null
+    protected var audioPlayerItem: AudioPlayer? = null
 
     private var currOrientation = ORIENTATION_UNDEFINED
 

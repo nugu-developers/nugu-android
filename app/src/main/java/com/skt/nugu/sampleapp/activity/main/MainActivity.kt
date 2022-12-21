@@ -216,8 +216,8 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
 //            }
 
             /** (example code) if you want use your custom media template view, uncomment below and take a look CustomMediaTemplate class */
-//            TemplateView.templateConstructor[MEDIA_TEMPLATE_TYPES] = { templateType, context ->
-//                CustomMediaTemplate(templateType, context)
+//            TemplateView.templateConstructor[MEDIA_TEMPLATE_TYPES] = { context, templateType, isPlaylistSupport ->
+//                CustomMediaTemplate(templateType, context, isPlaylistSupport)
 //            }
 
         })
