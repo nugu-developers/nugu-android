@@ -2,6 +2,12 @@
     <string name="app_name">NuguUXKit</string>
     <string name="nugu_guide_text">말씀해주세요</string>
 
-    <string name="lyrics_button_default_text">전체 가사보기</string>
-    <string name="lyric_empty">가사 서비스를 지원하지 않은 음원입니다.</string>
+    <string name="nugu_lyrics_button_default_text">전체 가사보기</string>
+    <string name="nugu_lyrics_empty">가사 서비스를 지원하지 않은 음원입니다.</string>
+
+    <string name="nugu_playlist_delete">삭제</string>
+    <string name="nugu_playlist_select_all">전체선택</string>
+    <string name="nugu_playlist_deselect_all">선택해제</string>
+    <string name="nugu_playlist_cancel">취소</string>
+    <string name="nugu_playlist_complete">완료</string>
 </resources>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="@dimen/media_player_title_height"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:id="@+id/view_title_container"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="#ffffff"
+            android:paddingHorizontal="16dp">
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="start|center_vertical"
+                android:textColor="#091840"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical">
+
+                <TextView
+                    android:id="@+id/btn_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/nugu_bg_round_corner_100_blue"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="#334cff"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/btn_edit"
+                    android:layout_marginStart="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/nugu_bg_round_corner_100_blue"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="#334cff"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/view_edit_top_container"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="#ffffff"
+            android:paddingHorizontal="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/btn_select_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|center_vertical"
+                android:drawableLeft="@drawable/nugu_button_playlist_select_all"
+                android:text="@string/nugu_playlist_select_all"
+                android:textColor="@color/nugu_playlist_btn_select_all"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/btn_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:background="@drawable/nugu_button_playlist_delete"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:text="@string/nugu_playlist_delete"
+                android:textColor="@color/nugu_playlist_btn_delete"
+                android:textSize="14sp" />
+
+        </FrameLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#ced1d9" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/view_play_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#ffffff" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <LinearLayout
+        android:id="@+id/view_edit_bottom_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/media_player_playlist_edit_mode_button_height"
+        android:layout_gravity="bottom"
+        android:background="#ffffff"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="20dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/nugu_bg_playlist_btn_cancel"
+            android:gravity="center"
+            android:text="@string/nugu_playlist_cancel"
+            android:textColor="#212121"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/btn_complete"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/nugu_bg_playlist_btn_complete"
+            android:enabled="false"
+            android:gravity="center"
+            android:text="@string/nugu_playlist_complete"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
+    </LinearLayout>
+</FrameLayout>

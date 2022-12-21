@@ -33,9 +33,12 @@ import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.controller.DefaultTemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler.TemplateInfo
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.playlist.PlaylistStateListener
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.playlist.PlaylistRenderer
 import java.util.*
 
-class TemplateFragment : Fragment() {
+class TemplateFragment : Fragment(), PlaylistStateListener {
     companion object {
         private const val TAG = "TemplateFragment"
         private const val ARG_DIALOG_REQUEST_ID = "dialog_request_id"
@@ -58,6 +61,8 @@ class TemplateFragment : Fragment() {
             template: String,
             displayType: DisplayAggregatorInterface.Type,
             playServiceId: String,
+            isPlaylistSupport: Boolean,
+            playlistRenderer: PlaylistRenderer?,
         ): TemplateFragment {
             return TemplateFragment().apply {
                 arguments = createBundle(name, dialogRequestId, templateId, parentTemplateId, template, displayType, playServiceId)
@@ -65,6 +70,8 @@ class TemplateFragment : Fragment() {
                 pendingExternalViewRenderer = externalRenderer
                 pendingTemplateLoadingListener = templateLoadingListener
                 handlerFactory = templateHandlerFactory
+                this.isPlaylistSupport = isPlaylistSupport
+                this.playlistRenderer = playlistRenderer
             }
         }
 
@@ -91,7 +98,7 @@ class TemplateFragment : Fragment() {
 
     enum class RenderNotifyState { NONE, RENDERED, RENDER_FAILED, RENDER_CLEARED }
 
-    private val layoutId = R.layout.fragment_template
+    private val layoutId = R.layout.nugu_fragment_template
     private var templateView: TemplateView? = null
     private var pendingNuguProvider: TemplateRenderer.NuguClientProvider? = null
     private var pendingExternalViewRenderer: TemplateRenderer.ExternalViewRenderer? = null
@@ -100,6 +107,8 @@ class TemplateFragment : Fragment() {
     var previousRenderInfo: Any? = null
 
     private lateinit var handlerFactory: TemplateHandler.TemplateHandlerFactory
+    private var playlistRenderer: PlaylistRenderer? = null
+    private var isPlaylistSupport: Boolean = false
 
     private val viewModel: TemplateViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(TemplateViewModel::class.java)
@@ -119,7 +128,7 @@ class TemplateFragment : Fragment() {
             viewModel.templateLoadingListener = this
         }
 
-        viewModel.onClose = { onClose(false) }
+        viewModel.onCleared = { onClose(false) }
 
         retainInstance = true
     }
@@ -140,31 +149,37 @@ class TemplateFragment : Fragment() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun initView() {
-        templateView = TemplateView.createView(getTemplateType(), requireContext().applicationContext)
+        this.view?.findViewById<ViewGroup>(R.id.template_view)?.let { parent ->
+            templateView = TemplateView.createView(
+                getTemplateType(),
+                requireContext().applicationContext,
+                forceToWebView = false,
+                playlistSupport = isPlaylistSupport
+            )
 
-        val parent = this.view?.findViewById<ViewGroup>(R.id.template_view)
-
-        parent?.run {
-            with(templateView!!) {
+            templateView?.run {
+                (this as? DisplayAudioPlayer)?.setPlaylistRenderer(playlistRenderer)
 
                 if (viewModel.templateHandler != null) {
                     (viewModel.templateHandler as? DefaultTemplateHandler)?.updateFragment(this@TemplateFragment)
                     templateHandler = viewModel.templateHandler
                 } else {
-                    templateHandler = handlerFactory.onCreate(viewModel.nuguClientProvider,
+                    templateHandler = handlerFactory.onCreate(
+                        viewModel.nuguClientProvider,
                         TemplateInfo(getTemplateId(), getTemplateType()),
-                        this@TemplateFragment)
+                        this@TemplateFragment
+                    )
                     viewModel.templateHandler = templateHandler
                 }
 
-                addView(this.asView())
+                parent.addView(this.asView())
             }
         }
     }
 
     private fun loadTemplate() {
-        val dialogRequestId = arguments?.getString(ARG_DIALOG_REQUEST_ID, "") ?: ""
-        val template = arguments?.getString(ARG_TEMPLATE, "") ?: ""
+        val dialogRequestId = getDialogRequestedId()
+        val template = getTemplate()
 
         Logger.d(TAG, "[load] templateId: ${getTemplateId()}")
 
@@ -189,9 +204,14 @@ class TemplateFragment : Fragment() {
                         viewModel.templateLoadingListener?.onComplete(getTemplateId(), getTemplateType(), getDisplayType())
                     }, onLoadingFail = { reason ->
                         viewModel.templateLoadingListener?.onReceivedError(getTemplateId(), getTemplateType(), getDisplayType(), reason)
-                    }, !TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType()))
+                    }, !TemplateView.enableCloseButton(getTemplateType(), getPlayServiceId(), getDisplayType())
+                )
             }
         }
+    }
+
+    fun getTemplate(): String {
+        return arguments?.getString(ARG_TEMPLATE, "") ?: ""
     }
 
     fun getTemplateId(): String {
@@ -252,9 +272,9 @@ class TemplateFragment : Fragment() {
 
             supportFragmentManager.fragments.filterIsInstance<TemplateFragment>()
                 .find { it.getTemplateId() == this@TemplateFragment.getParentTemplateId() }?.let {
-                supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
-                it.onClose()
-            }
+                    supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
+                    it.onClose()
+                }
         }
     }
 
@@ -269,6 +289,18 @@ class TemplateFragment : Fragment() {
 
     fun isNuguButtonVisible(): Boolean = templateView?.isNuguButtonVisible() == true
 
+    override fun onPlaylistHidden() {
+        (templateView as? PlaylistStateListener)?.onPlaylistHidden()
+    }
+
+    override fun onPlaylistEditModeChanged(editMode: Boolean) {
+        (templateView as? PlaylistStateListener)?.onPlaylistEditModeChanged(editMode)
+    }
+
+    fun getPlaylistBottomMargin(): Int {
+        return (templateView as? DisplayAudioPlayer)?.getPlaylistBottomMargin() ?: 0
+    }
+
     /**
      * @param isUserIntention : If it is true, User wanted to close template intentionally.
      * For example user could click close button or request as uttering.
@@ -280,10 +312,9 @@ class TemplateFragment : Fragment() {
             "onClose.. current notifyRenderedState. ${viewModel.renderNotified}, isUserInteraction : $isUserIntention,  externalRendering :${
                 viewModel.externalRenderer?.getVisibleList()?.any { it.templateId == getTemplateId() } == true
             }")
+
         if (viewModel.renderNotified == RenderNotifyState.RENDERED) {
-            if (!isUserIntention
-                && viewModel.externalRenderer?.getVisibleList()?.any { it.templateId == getTemplateId() } == true
-            ) {
+            if (!isUserIntention && viewModel.externalRenderer?.getVisibleList()?.any { it.templateId == getTemplateId() } == true) {
                 // do not invoke notifyCleared()
             } else {
                 notifyCleared()

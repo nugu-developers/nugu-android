@@ -49,22 +49,19 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.*
 import com.skt.nugu.sdk.platform.android.ux.template.controller.TemplateHandler
-import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayer
-import com.skt.nugu.sdk.platform.android.ux.template.model.AudioPlayerUpdate
-import com.skt.nugu.sdk.platform.android.ux.template.model.LyricsType
-import com.skt.nugu.sdk.platform.android.ux.template.model.Repeat
+import com.skt.nugu.sdk.platform.android.ux.template.model.*
 import com.skt.nugu.sdk.platform.android.ux.template.presenter.EmptyLyricsPresenter
 import com.skt.nugu.sdk.platform.android.ux.template.view.TemplateNativeView
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.playlist.PlaylistRenderer
+import com.skt.nugu.sdk.platform.android.ux.template.view.media.playlist.PlaylistStateListener
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton.Companion.dpToPx
 import com.skt.nugu.sdk.platform.android.ux.widget.setThrottledOnClickListener
 
 
 @SuppressLint("ClickableViewAccessibility")
 open class DisplayAudioPlayer constructor(
-    private val templateType: String,
-    context: Context,
-    templateResources: MediaTemplateResources? = null,
-) : TemplateNativeView(context, null, 0), ThemeManagerInterface.ThemeListener {
+    private val templateType: String, context: Context, templateResources: MediaTemplateResources? = null, val isPlayListSupport: Boolean = false
+) : TemplateNativeView(context, null, 0), ThemeManagerInterface.ThemeListener, PlaylistStateListener {
 
     private constructor(context: Context) : this("", context)
     private constructor(context: Context, attrs: AttributeSet?) : this("", context)
@@ -99,6 +96,9 @@ open class DisplayAudioPlayer constructor(
     private lateinit var mediaController: View
     private lateinit var albumCover: View
 
+    private var btnShowPlaylist: ImageView? = null
+    private var btnHidePlaylist: ImageView? = null
+
     /* Bar Player */
     private lateinit var barPlayer: View
     private lateinit var barBody: View
@@ -121,6 +121,7 @@ open class DisplayAudioPlayer constructor(
 
     private val thumbTransformCornerAlbumCover by lazy { RoundedCorners(dpToPx(mediaTemplateResources.mainImageRoundingRadiusDp, context)) }
     private val thumbTransformCornerAlbumBadge by lazy { RoundedCorners(dpToPx(mediaTemplateResources.badgeImageRoundingRadiusDp, context)) }
+    private val thumbTransformCornerBtnHidePlaylist by lazy { RoundedCorners(dpToPx(8f, context)) }
 
     private var bgColorLight = resources.genColor(R.color.media_template_bg_light)
 
@@ -130,6 +131,8 @@ open class DisplayAudioPlayer constructor(
     private var currOrientation = ORIENTATION_UNDEFINED
 
     private var isDark: Boolean = false
+
+    private var isPlaylistEditMode: Boolean = false
 
     private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
         return runCatching { gson.fromJson(json, classOfT) }.getOrNull()
@@ -146,6 +149,8 @@ open class DisplayAudioPlayer constructor(
                 updateThemeIfNeeded()
             }
         }
+
+    private var playlistRenderer: PlaylistRenderer? = null
 
     @VisibleForTesting
     internal val mediaListener = object : TemplateHandler.ClientListener {
@@ -174,7 +179,7 @@ open class DisplayAudioPlayer constructor(
 
             timeEnd.post {
                 mediaDurationMs = durationMs
-                timeEnd.updateText(convertToTimeMs(durationMs.toInt()), true)
+                timeEnd.text = convertToTimeMs(durationMs.toInt())
             }
         }
 
@@ -202,8 +207,7 @@ open class DisplayAudioPlayer constructor(
         var mediaPlaying: Int,
         var isBarType: Int,
         var isLyricShowing: Int,
-    ) :
-        AbsSavedState(superState) {
+    ) : AbsSavedState(superState) {
 
         override fun writeToParcel(dest: Parcel?, flags: Int) {
             super.writeToParcel(dest, flags)
@@ -217,12 +221,14 @@ open class DisplayAudioPlayer constructor(
 
     override fun onSaveInstanceState(): Parcelable? {
         super.onSaveInstanceState()
-        return SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
+        return SavedStates(
+            super.onSaveInstanceState() ?: Bundle.EMPTY,
             mediaDurationMs,
             mediaCurrentTimeMs,
             if (mediaPlaying) 1 else 0,
             if (expandedPlayer.y != 0f) 1 else 0,
-            if (lyricsView.visibility == View.VISIBLE) 1 else 0)
+            if (lyricsView.visibility == View.VISIBLE) 1 else 0
+        )
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
@@ -234,9 +240,7 @@ open class DisplayAudioPlayer constructor(
             mediaPlaying = savedState.mediaPlaying == 1
 
             timeEnd.post {
-                if (timeEnd.visibility == View.VISIBLE) {
-                    timeEnd.updateText(convertToTimeMs(mediaDurationMs.toInt()), true)
-                }
+                timeEnd.text = (convertToTimeMs(mediaDurationMs.toInt()))
                 lyricsView.visibility = if (savedState.isLyricShowing == 1) View.VISIBLE else View.GONE
 
                 updateCurrentTimeInfo(mediaCurrentTimeMs)
@@ -259,7 +263,9 @@ open class DisplayAudioPlayer constructor(
         }
     }
 
-    data class RenderInfo(val lyricShowing: Boolean, val barType: Boolean, val lyricsFontScale : LyricsView.FontScale)
+    data class RenderInfo(
+        val lyricShowing: Boolean, val barType: Boolean, val lyricsFontScale: LyricsView.FontScale, val playlistEditMode: Boolean
+    )
 
     init {
         currOrientation = resources.configuration.orientation
@@ -272,6 +278,7 @@ open class DisplayAudioPlayer constructor(
                 setContentView(true)
             }
 
+            // apply mobile layout spec for portrait layout.
             if (mediaTemplateResources.layoutResIdPort == R.layout.view_display_audioplayer_port && currOrientation == ORIENTATION_PORTRAIT) {
                 post {
                     val titleHeight = resources.getDimensionPixelSize(R.dimen.media_player_title_height)
@@ -396,12 +403,25 @@ open class DisplayAudioPlayer constructor(
             onViewClicked(it ?: return@setThrottledOnClickListener)
         }
 
+        btnShowPlaylist?.setThrottledOnClickListener {
+            onViewClicked(it ?: return@setThrottledOnClickListener)
+
+            updateLayoutForPlaylist()
+            playlistRenderer?.showPlaylist()
+        }
+
+        btnHidePlaylist?.setThrottledOnClickListener {
+            onViewClicked(it ?: return@setThrottledOnClickListener)
+            playlistRenderer?.hidePlaylist()
+        }
+
         progressView.setOnTouchListener { _, _ -> true }
         barProgress.setOnTouchListener { _, _ -> true }
     }
 
     open fun onCollapseButtonClicked() {
         collapse()
+        playlistRenderer?.hidePlaylist()
     }
 
     open fun onBarPlayerClicked() {
@@ -410,6 +430,11 @@ open class DisplayAudioPlayer constructor(
 
     open fun onViewClicked(v: View) {
         // do nothing. This function is only for notifying clicked view information to Custom Media Template
+    }
+
+    override fun onCloseClicked() {
+        playlistRenderer?.hidePlaylist()
+        super.onCloseClicked()
     }
 
     /**
@@ -424,12 +449,14 @@ open class DisplayAudioPlayer constructor(
 
         // if isRefresh, save current state to restore after setContentView
         if (isRefresh) {
-            savedState = SavedStates(super.onSaveInstanceState() ?: Bundle.EMPTY,
+            savedState = SavedStates(
+                super.onSaveInstanceState() ?: Bundle.EMPTY,
                 mediaDurationMs,
                 mediaCurrentTimeMs,
                 if (mediaPlaying) 1 else 0,
                 if (expandedPlayer.y != 0f) 1 else 0,
-                if (lyricsView.visibility == View.VISIBLE) 1 else 0)
+                if (lyricsView.visibility == View.VISIBLE) 1 else 0
+            )
         }
 
         if (currOrientation == ORIENTATION_PORTRAIT) {
@@ -475,6 +502,8 @@ open class DisplayAudioPlayer constructor(
         btnPlay = findViewById(R.id.btn_play)
         btnPause = findViewById(R.id.btn_pause)
         btnNext = findViewById(R.id.btn_next)
+        btnShowPlaylist = findViewById(R.id.btn_show_playlist)
+        btnHidePlaylist = findViewById(R.id.btn_hide_playlist)
         progressView = findViewById(R.id.sb_progress)
         timeCurrent = findViewById(R.id.tv_playtime)
         timeEnd = findViewById(R.id.tv_fulltime)
@@ -562,11 +591,13 @@ open class DisplayAudioPlayer constructor(
                     logo.setImageResource(mediaTemplateResources.nuguLogoDefault)
                 }
             } else {
-                logo.updateImage(it,
+                logo.updateImage(
+                    it,
                     thumbTransformCornerAlbumBadge,
                     isMerge,
                     placeHolder = mediaTemplateResources.nuguLogoPlaceHolder,
-                    loadingFailImage = mediaTemplateResources.nuguLogoDefault)
+                    loadingFailImage = mediaTemplateResources.nuguLogoDefault
+                )
             }
         }
 
@@ -605,7 +636,7 @@ open class DisplayAudioPlayer constructor(
                     LyricsType.NON_SYNC -> {
                         with(btnShowLyrics) {
                             visibility = View.VISIBLE
-                            text = lyrics.showButton?.text ?: resources.getString(R.string.lyrics_button_default_text)
+                            text = lyrics.showButton?.text ?: resources.getString(R.string.nugu_lyrics_button_default_text)
                         }
                         smallLyricsView.visibility = View.GONE
                     }
@@ -650,6 +681,10 @@ open class DisplayAudioPlayer constructor(
 
         if (expandedPlayer.visibility != View.VISIBLE) {
             collapse(true)
+        }
+
+        if (!isMerge) {
+            loadPlaylistButton(item.content?.imageUrl)
         }
     }
 
@@ -713,8 +748,8 @@ open class DisplayAudioPlayer constructor(
         }
 
         templateHandler?.getNuguClient()?.themeManager?.run {
-            val newIsDark = theme == DARK ||
-                    (theme == SYSTEM && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
+            val newIsDark =
+                theme == DARK || (theme == SYSTEM && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
             Logger.i(TAG, "updateThemeIfNeeded. currentTheme $theme current isDark? $isDark,  new isDark? $newIsDark")
 
             if (isDark != newIsDark) {
@@ -732,9 +767,7 @@ open class DisplayAudioPlayer constructor(
         }
 
         timeCurrent.post {
-            if (timeCurrent.visibility == View.VISIBLE) {
-                timeCurrent.updateText(convertToTimeMs(currentTimeMs.toInt()), true)
-            }
+            timeCurrent.text = convertToTimeMs(currentTimeMs.toInt())
             progressView.progress = p.toInt()
             barProgress.progress = p.toInt()
             lyricsView.setCurrentTimeMs(currentTimeMs)
@@ -795,7 +828,8 @@ open class DisplayAudioPlayer constructor(
         }
     }
 
-    override fun getRenderInfo() = RenderInfo(lyricsView.visibility == View.VISIBLE, expandedPlayer.y != 0f, lyricsView.getFontScale())
+    override fun getRenderInfo() =
+        RenderInfo(lyricsView.visibility == View.VISIBLE, expandedPlayer.y != 0f, lyricsView.getFontScale(), isPlaylistEditMode)
 
     override fun applyRenderInfo(renderInfo: Any) {
         (renderInfo as? RenderInfo)?.run {
@@ -811,6 +845,11 @@ open class DisplayAudioPlayer constructor(
             }
 
             lyricsView.setFontScale(renderInfo.lyricsFontScale)
+
+            if (isPlayListSupport && playlistRenderer?.isPlaylistVisible() == true) {
+                updateLayoutForPlaylist()
+                onPlaylistEditModeChanged(this.playlistEditMode)
+            }
         }
     }
 
@@ -863,5 +902,39 @@ open class DisplayAudioPlayer constructor(
         }
 
         btnRepeat.setTag(R.id.iv_repeat, repeat)
+    }
+
+    fun setPlaylistRenderer(renderer: PlaylistRenderer?) {
+        playlistRenderer = renderer
+        if (playlistRenderer?.isPlaylistVisible() == true && currOrientation != ORIENTATION_PORTRAIT) {
+            playlistRenderer?.hidePlaylist()
+        }
+    }
+
+    open fun loadPlaylistButton(albumCoverUrl: String?) {
+        btnShowPlaylist?.visibility = if (isPlayListSupport) View.VISIBLE else View.GONE
+        btnHidePlaylist?.updateImage(albumCoverUrl, thumbTransformCornerBtnHidePlaylist, false)
+    }
+
+    open fun getPlaylistBottomMargin(): Int {
+        return mediaController.height + ((mediaController.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0)
+    }
+
+    open fun updateLayoutForPlaylist() {
+        btnShowPlaylist?.visibility = View.GONE
+        btnHidePlaylist?.visibility = View.VISIBLE
+    }
+
+    override fun onPlaylistHidden() {
+        btnShowPlaylist?.visibility = View.VISIBLE
+        btnHidePlaylist?.visibility = View.GONE
+    }
+
+    override fun onPlaylistEditModeChanged(editMode: Boolean) {
+        isPlaylistEditMode = editMode
+        post {
+            btnClose.visibility = if (isPlaylistEditMode) View.GONE else View.VISIBLE
+            btnCollapse.visibility = if (isPlaylistEditMode) View.GONE else View.VISIBLE
+        }
     }
 }

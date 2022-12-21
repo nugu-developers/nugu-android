@@ -8,7 +8,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:gravity="center"
-        android:hint="@string/lyric_empty"
+        android:hint="@string/nugu_lyrics_empty"
         android:lineSpacingExtra="15sp"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"

@@ -47,6 +47,7 @@ enum class Repeat {
 class AudioPlayer(
     @SerializedName("title") val title: AudioPlayerTitle?,
     @SerializedName("content") val content: AudioPlayerContent?,
+    @SerializedName("playlist") val playlist: Playlist?,
 )
 
 @Keep
@@ -73,6 +74,87 @@ data class AudioPlayerContent(
     @SerializedName("badgeImageUrl") val badgeImageUrl: String?,
     @SerializedName("lyrics") val lyrics: Lyrics?,
     @SerializedName("settings") val settings: Settings?,
+)
+
+@Keep
+data class Playlist(
+    val type: String = "",
+    val title: TextFormat? = null,
+    val subTitle: TextFormat? = null,
+    val token: String = "",
+    val edit: TextFormat? = null,
+    val button: ButtonObject? = null,
+    val currentToken: String = "",
+    val list: ListObject = ListObject()
+) {
+    @Keep
+    data class TextFormat(val text: String? = null, val imageUrl: String? = null)
+
+    @Keep
+    data class ListObject(
+        val replaceType: String? = null,
+        val items: List<PlayListItem> = emptyList()
+    )
+
+    @Keep
+    data class PlayListItem(
+        val text: TextObject = TextObject(),
+        val subText: TextObject? = null,
+        val imageUrl: String? = null,
+        val badgeUrl: String? = null,
+        val badgeMessage: String? = null,
+        val available: Boolean = true, // default value is true
+        val token: String = "",
+        val favorite: Favorite? = null,
+        val postback: Any? = null,
+    ) {
+        @Keep
+        data class Favorite(
+            val text: TextObject? = null,
+            val imageUrl: String? = null,
+            val status: Boolean? = null,
+            val token: String = "",
+            val postback: Any? = null
+        )
+    }
+}
+
+@Keep
+data class ButtonObject(
+    val type: String? = null,
+    val image: ImageObject? = null,
+    val text: String? = null,
+    val token: String = "",
+    val eventType: String? = null,
+    val textInput: TextInput? = null,
+    val postback: Any? = null,
+    val autoTrigger: AutoTrigger? = null,
+    val closeTemplateAfter: Boolean = false
+) {
+    @Keep
+    data class ImageObject(
+        val contentDescription: String? = null, val list: List<ImageSource>? = null
+    ) {
+        @Keep
+        data class ImageSource(
+            val url: String = "", val size: String? = null, val widthPixels: Long? = null, val heightPixels: Long? = null
+        )
+    }
+
+    @Keep
+    data class TextInput(
+        val text: String = "", val playServiceId: String? = null
+    )
+
+    @Keep
+    data class AutoTrigger(
+        val delayInMilliseconds: Long = 0L, val showTimer: Boolean = false
+    )
+}
+
+@Keep
+data class TextObject(
+    val str: String = "", val maxLine: Int? = null
 )
 
 @Keep

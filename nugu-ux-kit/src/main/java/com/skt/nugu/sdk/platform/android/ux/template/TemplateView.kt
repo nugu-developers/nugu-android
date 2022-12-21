@@ -62,10 +62,10 @@ interface TemplateView {
          * key : TemplateType list
          * value : TemplateView Constructor
          */
-        val templateConstructor: HashMap<List<String>, (String, Context) -> TemplateView> by lazy {
-            HashMap<List<String>, (String, Context) -> TemplateView>().also {
-                it[MEDIA_TEMPLATE_TYPES] = { templateType, context ->
-                    DisplayAudioPlayer(templateType, context)
+        val templateConstructor: HashMap<List<String>, (Context, String, Boolean) -> TemplateView> by lazy {
+            HashMap<List<String>, (Context, String, Boolean) -> TemplateView>().also {
+                it[MEDIA_TEMPLATE_TYPES] = { context, templateType, isPlaylistSupport ->
+                    DisplayAudioPlayer(templateType, context, isPlayListSupport = isPlaylistSupport)
                 }
             }
         }
@@ -76,12 +76,12 @@ interface TemplateView {
          *
          * @return appropriate TemplateView object which is determined by templateType
          */
-        fun createView(templateType: String, context: Context, forceToWebView: Boolean = false): TemplateView {
+        fun createView(templateType: String, context: Context, forceToWebView: Boolean = false, playlistSupport: Boolean = false): TemplateView {
             Logger.i(TAG, "createView(). templateType: $templateType, native? ${MEDIA_TEMPLATE_TYPES.contains(templateType)}")
 
             if (!forceToWebView) {
                 templateConstructor.keys.find { it.contains(templateType) }?.let { key ->
-                    templateConstructor[key]?.invoke(templateType, context)?.run {
+                    templateConstructor[key]?.invoke(context, templateType, playlistSupport)?.run {
                         this.asView().id = R.id.template_view
                         return this
                     }
@@ -108,7 +108,7 @@ interface TemplateView {
         dialogRequestId: String,
         onLoadingComplete: (() -> Unit)? = null,
         onLoadingFail: ((String?) -> Unit)? = null,
-        disableCloseButton : Boolean,
+        disableCloseButton: Boolean,
     )
 
     /**
