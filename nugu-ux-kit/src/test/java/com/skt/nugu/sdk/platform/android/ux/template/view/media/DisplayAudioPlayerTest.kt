@@ -144,7 +144,10 @@ class DisplayAudioPlayerTest {
                 parentTemplateId,
                 templateString,
                 displayType,
-                playServiceId)
+                playServiceId,
+                false,
+                null
+            )
         }
     }
 
@@ -156,7 +159,7 @@ class DisplayAudioPlayerTest {
         whenever(nuguClientProvider.getNuguClient()).thenReturn(nuguAndroidClient)
         whenever(nuguAndroidClient.themeManager).thenReturn(themeManager)
 
-        audioPlayerInfo = AudioPlayer(audioPlayerTitle, audioPlayerContent)
+        audioPlayerInfo = AudioPlayer(audioPlayerTitle, audioPlayerContent, null)
     }
 
     @Test

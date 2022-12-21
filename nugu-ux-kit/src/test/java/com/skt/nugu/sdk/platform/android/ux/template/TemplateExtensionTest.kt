@@ -70,7 +70,7 @@ class TemplateExtensionTest {
         assertEquals(imageView.visibility, View.VISIBLE)
 
         imageView.updateImage(null, null, isMerge = false)
-        assertEquals(imageView.visibility, View.GONE)
+        assertEquals(imageView.visibility, View.VISIBLE)
 
         imageView.updateImage("temp url", null, isMerge = false)
         assertEquals(imageView.visibility, View.VISIBLE)

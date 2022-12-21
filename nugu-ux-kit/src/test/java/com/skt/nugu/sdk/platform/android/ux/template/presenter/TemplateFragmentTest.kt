@@ -67,7 +67,10 @@ class TemplateFragmentTest {
                 parentTemplateId,
                 template,
                 displayType,
-                playServiceId)
+                playServiceId,
+                false,
+                null
+            )
         }
     }
 
