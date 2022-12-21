@@ -163,8 +163,8 @@ open class TemplateRenderer(
 
                 setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out).add(containerId, newTemplate, displayType.name).apply {
                     // todo. when different playlist.. even it is same service
-                    // bring PlaylistFragment to front when  same service mediaTemplate coming up.
                     if (newTemplate.isMediaTemplate()) {
+                        // bring PlaylistFragment to front when  same service mediaTemplate coming up.
                         if (previousSameServiceRenderInfo != null) {
                             fragmentManagerRef.get()?.fragments?.find { it is PlaylistFragment }?.let { playlistFragment ->
                                 detach(playlistFragment).attach(playlistFragment)

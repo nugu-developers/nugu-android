@@ -39,7 +39,7 @@ class TemplateViewTest {
         assertTrue(templateViewWeb2 is TemplateWebView)
 
         // return to original settings
-        TemplateView.templateConstructor[TemplateView.MEDIA_TEMPLATE_TYPES] = { templateType, context ->
+        TemplateView.templateConstructor[TemplateView.MEDIA_TEMPLATE_TYPES] = { context, templateType, _ ->
             DisplayAudioPlayer(templateType, context).apply { id = R.id.template_view }
         }
 
