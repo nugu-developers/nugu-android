@@ -27,9 +27,9 @@
     <dimen name="fab_nugu_bottom_margin_standard">1dp</dimen>
     <dimen name="fab_mic_bottom_margin">2dp</dimen>
 
-
     <!-- media player -->
     <dimen name="media_player_title_height">64dp</dimen>
     <dimen name="media_player_controller_height">132dp</dimen>
     <dimen name="media_player_controller_margin">4dp</dimen>
+    <dimen name="media_player_playlist_edit_mode_button_height">88dp</dimen>
 </resources>

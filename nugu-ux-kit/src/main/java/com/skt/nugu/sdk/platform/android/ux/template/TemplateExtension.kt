@@ -23,12 +23,12 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.Transformation
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 
 fun TextView.updateText(text: String?, isMerge: Boolean = false, maintainLayout: Boolean = false) {
     if (isMerge && text.isNullOrBlank()) return
 
     this.text = getSpannable(text)
+
     visibility = if (text != null) {
         View.VISIBLE
     } else {
@@ -44,8 +44,6 @@ fun ImageView.updateImage(
     @DrawableRes loadingFailImage: Int? = null
 ) {
     if (isMerge && url.isNullOrBlank()) return
-
-    visibility = if (url != null) View.VISIBLE else View.GONE
 
     post {
         Glide.with(context).load(url)

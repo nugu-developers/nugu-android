@@ -267,6 +267,26 @@
                     android:src="@drawable/nugu_image_shuffle"
                     android:visibility="invisible" />
             </LinearLayout>
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start">
+
+                <ImageView
+                    android:id="@+id/btn_show_playlist"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/nugu_template_btn_playlist"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/btn_hide_playlist"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="4dp"
+                    android:visibility="gone" />
+            </FrameLayout>
         </LinearLayout>
     </FrameLayout>
 </FrameLayout>

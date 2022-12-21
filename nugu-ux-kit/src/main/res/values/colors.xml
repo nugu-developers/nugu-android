@@ -37,4 +37,12 @@
     <color name="media_template_lyrics_text">#444444</color>
     <color name="media_template_lyrics_text_dark">#888888</color>
     <color name="media_template_lyrics_text_focus">#009dff</color>
+
+
+    <!-- playlist -->
+    <color name="nugu_playlist_item_bg_deselected">#ffffff</color>
+    <color name="nugu_playlist_item_bg_selected">#e7e9ed</color>
+
+    <color name="nugu_playlist_item_title_color">#091840</color>
+    <color name="nugu_playlist_item_title_color_playing">#334cff</color>
 </resources>
