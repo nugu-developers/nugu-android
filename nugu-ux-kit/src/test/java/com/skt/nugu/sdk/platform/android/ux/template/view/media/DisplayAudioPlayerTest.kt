@@ -195,33 +195,6 @@ class DisplayAudioPlayerTest {
     }
 
     @Test
-    fun test_mediaListener() {
-        val spy = spy(audioPlayerViewType1)
-        spy.mediaListener.onMediaStateChanged(AudioPlayerAgentInterface.State.PAUSED, 0L, 0f, false)
-        spy.mediaListener.onMediaStateChanged(AudioPlayerAgentInterface.State.PLAYING, 0L, 0f, false)
-
-        // check item null
-        println("${spy.audioPlayerItem}")
-        spy.mediaListener.onMediaDurationRetrieved(1000)
-        spy.mediaListener.onMediaProgressChanged(10f, 100)
-
-        // check item is not null && content.durationSec is null
-        spy.audioPlayerItem = emptyAudioPlayerInfo
-        whenever(emptyAudioPlayerInfo.content?.durationSec).thenReturn(null)
-        println("${spy.audioPlayerItem} / ${spy.audioPlayerItem!!.content?.durationSec}")
-        spy.mediaListener.onMediaDurationRetrieved(1000)
-        spy.mediaListener.onMediaProgressChanged(20f, 200)
-
-        // check item is not null && content.durationSec is not null
-        spy.audioPlayerItem = audioPlayerInfo
-        println("${spy.audioPlayerItem} / ${spy.audioPlayerItem?.content?.durationSec}")
-        spy.mediaListener.onMediaDurationRetrieved(1000)
-        spy.mediaListener.onMediaProgressChanged(30f, 300)
-
-        assertEquals(spy.audioPlayerItem!!.content, audioPlayerContent)
-    }
-
-    @Test
     fun test_update_empty() {
         val audioPlayerUpdate = AudioPlayerUpdate(emptyAudioPlayerInfo)
         val spy = spy(audioPlayerViewType1)

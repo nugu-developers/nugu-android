@@ -40,7 +40,9 @@
 
 
     <!-- playlist -->
-    <color name="nugu_playlist_item_bg_deselected">#ffffff</color>
+    <color name="nugu_playlist_bg">@color/media_template_bg_light</color>
+
+    <color name="nugu_playlist_item_bg_deselected">@color/nugu_playlist_bg</color>
     <color name="nugu_playlist_item_bg_selected">#e7e9ed</color>
 
     <color name="nugu_playlist_item_title_color">#091840</color>

@@ -71,7 +71,6 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(PlaylistViewModel::class.java)
     }
 
-    private var templateId: String = ""
     private var playlist: Playlist? = null
     private var eventListener: PlaylistEventListener? = null
 

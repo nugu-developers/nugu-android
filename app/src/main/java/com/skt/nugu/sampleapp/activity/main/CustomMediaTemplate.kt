@@ -19,6 +19,7 @@ package com.skt.nugu.sampleapp.activity.main
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import com.skt.nugu.sampleapp.R
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.DisplayAudioPlayer
 import com.skt.nugu.sdk.platform.android.ux.template.view.media.MediaTemplateResources
@@ -29,8 +30,8 @@ import com.skt.nugu.sdk.platform.android.ux.template.view.media.MediaTemplateRes
  * In most cases you would not use it.
  */
 @SuppressLint("ViewConstructor")
-class CustomMediaTemplate(templateType: String, context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    DisplayAudioPlayer(templateType, context, CustomMediaTemplateResources()) {
+class CustomMediaTemplate(templateType: String, context: Context, isPlaylistSupport : Boolean,  attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
+    DisplayAudioPlayer(templateType, context, CustomMediaTemplateResources(), isPlaylistSupport) {
 
     override fun onCloseClicked() {
         super.onCloseClicked()
@@ -46,6 +47,27 @@ class CustomMediaTemplate(templateType: String, context: Context, attrs: Attribu
         super.onBarPlayerClicked()
         // called when bar player clicked
         // at this event, super function make player expanded
+    }
+    
+    // code below of overriding updateLayoutForPlaylist() and onPlaylistHidden() is example how DisplayAudioPlayer's layout  could be customized according to Playlist visibility.
+    // this example hide and show repeat and shuffle button when playlist shown or hidden.
+    override fun updateLayoutForPlaylist() {
+        super.updateLayoutForPlaylist()
+        findViewById<View>(R.id.iv_repeat).visibility = View.GONE
+        findViewById<View>(R.id.iv_shuffle).visibility = View.GONE
+    }
+
+    override fun onPlaylistHidden() {
+        super.onPlaylistHidden()
+        findViewById<View>(R.id.iv_repeat).visibility = if (audioPlayerItem?.content?.settings?.repeat != null) View.VISIBLE else View.INVISIBLE
+        findViewById<View>(R.id.iv_shuffle).visibility = if (audioPlayerItem?.content?.settings?.shuffle != null) View.VISIBLE else View.INVISIBLE
+    }
+
+    // Playlist basically shown upper media control area. This make user can keep see media progress and control.
+    // For it Playlist should know DisplayAudioPlayer's Control area height and getPlaylistBottomMargin() will provide it.
+    // If your layout doesn't follow this rule. You can customize it by overriding getPlaylistBottomMargin()
+    override fun getPlaylistBottomMargin(): Int {
+        return super.getPlaylistBottomMargin()
     }
 }
 

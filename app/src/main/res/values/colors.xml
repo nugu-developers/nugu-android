@@ -3,4 +3,7 @@
     <color name="colorPrimary">#979b9d</color>
     <color name="colorPrimaryDark">#979b9d</color>
     <color name="colorAccent">#D81B60</color>
+
+    <!-- nugu playlist bg color overriding-->
+    <!--    <color name="nugu_playlist_bg">#abcdef</color>-->
 </resources>

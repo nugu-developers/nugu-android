@@ -15,7 +15,7 @@
             android:id="@+id/view_title_container"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:background="#ffffff"
+            android:background="@color/nugu_playlist_bg"
             android:paddingHorizontal="16dp">
 
             <TextView
@@ -63,7 +63,7 @@
             android:id="@+id/view_edit_top_container"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:background="#ffffff"
+            android:background="@color/nugu_playlist_bg"
             android:paddingHorizontal="16dp"
             android:visibility="gone">
 
@@ -100,7 +100,7 @@
             android:id="@+id/view_play_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#ffffff" />
+            android:background="@color/nugu_playlist_bg" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <LinearLayout
@@ -108,7 +108,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/media_player_playlist_edit_mode_button_height"
         android:layout_gravity="bottom"
-        android:background="#ffffff"
+        android:background="@color/nugu_playlist_bg"
         android:paddingHorizontal="12dp"
         android:paddingVertical="20dp"
         android:visibility="gone">
