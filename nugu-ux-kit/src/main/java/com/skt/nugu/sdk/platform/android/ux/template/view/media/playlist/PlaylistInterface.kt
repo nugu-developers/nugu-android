@@ -34,5 +34,5 @@ interface PlaylistEventListener {
     ) {
     }
 
-    fun playlistModified(deletedTokens: List<String>, tokens: List<String>) {}
+    fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {}
 }

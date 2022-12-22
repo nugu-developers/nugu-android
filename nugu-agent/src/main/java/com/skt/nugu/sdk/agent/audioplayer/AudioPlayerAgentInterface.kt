@@ -217,9 +217,9 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
     fun notifyUserInteractionOnDisplay(templateId: String)
 
     /**
-     * Call when playlist modified or deleted.
+     * Send request to modify playlist
      * @param deletedTokens token list of deleted at playlists
      * @param tokens edited token list, empty if not edited.
      */
-    fun playlistModified(deletedTokens: List<String>, tokens: List<String>)
+    fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>)
 }

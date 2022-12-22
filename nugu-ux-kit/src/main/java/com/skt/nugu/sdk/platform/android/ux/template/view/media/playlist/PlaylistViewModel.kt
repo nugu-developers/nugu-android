@@ -213,7 +213,7 @@ class PlaylistViewModel : ViewModel() {
         if (editMode.value && completable.value) {
             val tokens = _playlist.value.map { it.item.token }
             val deleteTokens = previousList?.map { it.item.token }?.filterNot { tokens.contains(it) }
-            eventListener?.playlistModified(deleteTokens ?: emptyList(), tokens)
+            eventListener?.modifyPlaylist(deleteTokens ?: emptyList(), tokens)
 
             setCompletable(false)
             clearAllSelectedState()
