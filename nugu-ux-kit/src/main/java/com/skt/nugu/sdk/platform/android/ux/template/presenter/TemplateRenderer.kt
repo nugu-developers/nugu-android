@@ -82,6 +82,10 @@ open class TemplateRenderer(
         override fun onUpdatePlaylist(changes: JsonObject, updated: Playlist) {
             notifyPlaylistDataUpdated(changes, updated)
         }
+
+        override fun onClearPlaylist() {
+            notifyPlaylistDataCleared()
+        }
     }
 
     private val fragmentCallback = object : FragmentLifecycleCallbacks() {
@@ -307,6 +311,12 @@ open class TemplateRenderer(
     private fun notifyPlaylistDataUpdated(changes: JsonObject, updated: Playlist) {
         fragmentManagerRef.get()?.fragments?.filterIsInstance<PlaylistDataListener>()?.forEach {
             it.onUpdatePlaylist(changes, updated)
+        }
+    }
+
+    private fun notifyPlaylistDataCleared() {
+        fragmentManagerRef.get()?.fragments?.filterIsInstance<PlaylistDataListener>()?.forEach {
+            it.onClearPlaylist()
         }
     }
 

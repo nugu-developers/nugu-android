@@ -15,4 +15,9 @@ interface OnPlaylistListener {
      * @param updated a playlist which updated (changes + current playlist)
      */
     fun onUpdatePlaylist(changes: JsonObject, updated: Playlist)
+
+    /**
+     * Called when playlist removed
+     */
+    fun onClearPlaylist()
 }

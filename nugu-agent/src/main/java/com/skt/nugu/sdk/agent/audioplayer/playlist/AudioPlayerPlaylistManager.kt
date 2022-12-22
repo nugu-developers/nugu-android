@@ -65,6 +65,14 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
         }
     }
 
+    override fun clearPlaylist() {
+        playlist = null
+
+        listeners.forEach {
+            it.onClearPlaylist()
+        }
+    }
+
     override fun getPlaylist(): Playlist? = this.playlist?.copy()
 
     override fun addListener(listener: OnPlaylistListener) {

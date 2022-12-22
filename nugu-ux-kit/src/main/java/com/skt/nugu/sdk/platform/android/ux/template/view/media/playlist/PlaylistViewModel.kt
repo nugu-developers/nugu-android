@@ -99,6 +99,10 @@ class PlaylistViewModel : ViewModel() {
         }
     }
 
+    fun clearPlaylist() {
+        // TODO : clear playlist
+    }
+
     fun moveItem(from: Int, to: Int) {
         if (editMode.value) {
             runCatching {
