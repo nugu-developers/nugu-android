@@ -22,6 +22,8 @@ interface PlaylistDataListener {
     fun onSetPlaylist(playlist: Playlist) {}
 
     fun onUpdatePlaylist(changes: JsonObject, updated: Playlist) {}
+
+    fun onClearPlaylist()
 }
 
 interface PlaylistEventListener {

@@ -461,8 +461,12 @@ class DefaultAudioPlayerAgent(
         }
 
         private fun setPlaylist(playServiceId: String, template: JsonObject) {
-            kotlin.runCatching {
-                playlistManager?.setPlaylist(playServiceId, template.getAsJsonObject("playlist"))
+            playlistManager?.let { manager->
+                kotlin.runCatching {
+                    manager.setPlaylist(playServiceId, template.getAsJsonObject("playlist"))
+                }.onFailure {
+                    manager.clearPlaylist()
+                }
             }
         }
 

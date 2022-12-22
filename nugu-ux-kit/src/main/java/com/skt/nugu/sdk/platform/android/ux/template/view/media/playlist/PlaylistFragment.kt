@@ -236,6 +236,10 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         viewModel.updatePlaylist(changes, updated)
     }
 
+    override fun onClearPlaylist() {
+        viewModel.clearPlaylist()
+    }
+
     fun observeEditMode(listener: (Boolean) -> Unit) {
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.editMode.collectCancelable {
