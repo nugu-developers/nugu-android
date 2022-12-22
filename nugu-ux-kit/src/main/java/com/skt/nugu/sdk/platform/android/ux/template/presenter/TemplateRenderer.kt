@@ -284,8 +284,8 @@ open class TemplateRenderer(
 
     }
 
-    override fun playlistModified(deletedTokens: List<String>, tokens: List<String>) {
-        nuguClientProvider.getNuguClient().audioPlayerAgent?.playlistModified(deletedTokens, tokens)
+    override fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {
+        nuguClientProvider.getNuguClient().audioPlayerAgent?.modifyPlaylist(deletedTokens, tokens)
     }
 
     override fun isPlaylistVisible(): Boolean {

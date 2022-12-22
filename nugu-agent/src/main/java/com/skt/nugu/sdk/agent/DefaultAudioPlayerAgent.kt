@@ -30,7 +30,6 @@ import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
 import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
 import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistManager
-import com.skt.nugu.sdk.agent.audioplayer.playlist.getPlaylistToken
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
@@ -132,7 +131,7 @@ class DefaultAudioPlayerAgent(
         private const val NAME_FAVORITE_COMMAND_ISSUED = "FavoriteCommandIssued"
         private const val NAME_REPEAT_COMMAND_ISSUED = "RepeatCommandIssued"
         private const val NAME_SHUFFLE_COMMAND_ISSUED = "ShuffleCommandIssued"
-        private const val NAME_PLAYLIST_MODIFIED = "PlaylistModified"
+        private const val NAME_MODIFY_PLAYLIST = "ModifyPlaylist"
 
         private const val KEY_PLAY_SERVICE_ID = "playServiceId"
         private const val KEY_TOKEN = "token"
@@ -1834,14 +1833,14 @@ class DefaultAudioPlayerAgent(
         lifeCycleScheduler?.refreshSchedule()
     }
 
-    override fun playlistModified(deletedTokens: List<String>, tokens: List<String>) {
+    override fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 executor.submit {
                     val messageRequest = EventMessageRequest.Builder(
                         jsonContext,
                         NAMESPACE,
-                        NAME_PLAYLIST_MODIFIED,
+                        NAME_MODIFY_PLAYLIST,
                         VERSION.toString()
                     ).payload(
                         JsonObject().apply {
