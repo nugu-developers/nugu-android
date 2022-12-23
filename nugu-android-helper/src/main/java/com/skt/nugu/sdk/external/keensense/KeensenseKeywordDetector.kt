@@ -16,7 +16,6 @@
 
 package com.skt.nugu.sdk.external.keensense
 
-import android.content.Context
 import android.content.res.AssetManager
 import com.skt.nugu.keensense.KeywordDetectorObserver
 import com.skt.nugu.keensense.KeywordDetectorStateObserver

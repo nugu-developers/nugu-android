@@ -23,12 +23,15 @@ import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
+import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
+import com.skt.nugu.sdk.platform.android.speechrecognizer.recorder.KeywordRecorder
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import kotlin.math.min
 
 class SpeechRecognizerAggregator(
     private val keywordDetector: KeywordDetector?,
@@ -53,6 +56,8 @@ class SpeechRecognizerAggregator(
     private var keywordDetectorInactivationRunnable: Runnable? = null
 
     private var isTriggerStoppingByStartListening = false
+
+    var keywordRecorder: KeywordRecorder? = null
 
     private data class StartListeningParam(
         var wakeupInfo: WakeupInfo? = null,
@@ -196,6 +201,11 @@ class SpeechRecognizerAggregator(
                         TAG,
                         "[onDetected] wakeupInfo: $wakeupInfo"
                     )
+                    keywordRecorder?.let { recorder->
+                        Thread {
+                            recordDetectedKeyword(recorder, inputStream, wakeupInfo)
+                        }.start()
+                    }
 
                     keywordDetectorResultRunnable = Runnable {
                         setState(SpeechRecognizerAggregatorInterface.State.WAKEUP)
@@ -214,6 +224,38 @@ class SpeechRecognizerAggregator(
                             setState(SpeechRecognizerAggregatorInterface.State.IDLE)
                             releaseInputResources()
                         }
+                    }
+                }
+
+                private fun recordDetectedKeyword(
+                    recorder: KeywordRecorder,
+                    source: SharedDataStream,
+                    wakeupInfo: WakeupInfo
+                ) {
+                    var reader: SharedDataStream.Reader? = null
+                    try {
+                        reader = source.createReader(wakeupInfo.boundary.startPosition)
+                        val totalSizeInBytesToRead = wakeupInfo.boundary.endPosition - wakeupInfo.boundary.startPosition
+
+                        val buffer = ByteArray(2048)
+                        var read = -1
+                        var leftSizeToWrite = totalSizeInBytesToRead
+                        if (recorder.open()) {
+                            while (leftSizeToWrite > 0) {
+                                read = reader.read(
+                                    buffer,
+                                    0,
+                                    min(buffer.size, leftSizeToWrite.toInt())
+                                )
+                                if (read > 0) {
+                                    recorder.write(buffer, 0, read)
+                                    leftSizeToWrite -= read
+                                }
+                            }
+                            recorder.close()
+                        }
+                    } finally {
+                        reader?.close()
                     }
                 }
 
