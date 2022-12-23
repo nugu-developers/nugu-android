@@ -53,6 +53,8 @@ import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechProcessorDelegate
 import com.skt.nugu.sdk.platform.android.speechrecognizer.SpeechRecognizerAggregator
 import com.skt.nugu.sdk.platform.android.speechrecognizer.measure.SimplePcmPowerMeasure
+import com.skt.nugu.sdk.platform.android.speechrecognizer.recorder.FileKeywordRecorder
+import com.skt.nugu.sdk.platform.android.speechrecognizer.recorder.ObbDirFileProvider
 import java.math.BigInteger
 import java.net.URI
 import java.security.SecureRandom
@@ -330,7 +332,9 @@ object ClientManager : AudioPlayerAgentInterface.Listener {
             SpeechProcessorDelegate(asrAgent),
             audioSourceManager,
             Handler(Looper.getMainLooper())
-        )
+        ).apply {
+            //keywordRecorder = FileKeywordRecorder(ObbDirFileProvider(context))
+        }
 
         val wakeupWordStateProvider = object : WakeupWordContextProvider() {
             override fun getWakeupWord(): String = PreferenceHelper.triggerKeyword(context = context, defValue = "아리아")
