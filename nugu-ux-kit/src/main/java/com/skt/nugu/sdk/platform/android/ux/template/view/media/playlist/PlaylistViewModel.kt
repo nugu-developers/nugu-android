@@ -68,11 +68,19 @@ class PlaylistViewModel : ViewModel() {
 
     private val gson = Gson()
     private fun <T> fromJsonOrNull(json: String, classOfT: Class<T>): T? {
-        return runCatching { gson.fromJson(json, classOfT) }.getOrNull()
+        return runCatching {
+            gson.fromJson(json, classOfT)
+        }.onFailure {
+            it.printStackTrace()
+        }.getOrNull()
     }
 
     private fun <T> fromJsonOrNull(json: JsonElement, classOfT: Class<T>): T? {
-        return runCatching { gson.fromJson(json, classOfT) }.getOrNull()
+        return runCatching {
+            gson.fromJson(json, classOfT)
+        }.onFailure {
+            it.printStackTrace()
+        }.getOrNull()
     }
 
     fun setEventListener(listener: PlaylistEventListener?) {
@@ -105,7 +113,7 @@ class PlaylistViewModel : ViewModel() {
     }
 
     fun updatePlaylist(changes: JsonObject, updated: PlaylistFromAgent) {
-        Logger.d(TAG, "updatePlaylist() changed:\n$changes, \n updated:\n$updated" )
+        Logger.d(TAG, "updatePlaylist() changed:\n$changes, \n updated:\n$updated")
 
         fromJsonOrNull(changes, Playlist::class.java)?.let { changedPlaylist ->
 
@@ -125,7 +133,7 @@ class PlaylistViewModel : ViewModel() {
             // list items
             var isListChanged = false
             changedPlaylist.list.items.let { newItems ->
-                if(newItems.isNotEmpty()) isListChanged = true
+                if (newItems.isNotEmpty()) isListChanged = true
                 val currentPlayingToken = changedPlaylist.currentToken ?: _playlist.value.find { it.isPlaying }?.item?.token
                 setPlaylistItems(newItems, currentPlayingToken)
             }
