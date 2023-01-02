@@ -92,7 +92,7 @@ class PlaylistViewModel : ViewModel() {
         _playlist.value.clear()
 
         fromJsonOrNull(list.raw.toString(), Playlist::class.java)?.let { playlist ->
-            Logger.d(TAG, "setPlaylist() playlist parsing success  \n $playlist")
+            Logger.d(TAG, "setPlaylist() playlist parsing success")
 
             playlist.list.items.run {
                 setPlaylistItems(this, playlist.currentToken)
