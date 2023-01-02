@@ -155,8 +155,8 @@ class PlaylistViewModel : ViewModel() {
     }
 
     fun clearPlaylist() {
-        //todo. spec needed
-        Logger.d(TAG, "clearPlaylist(")
+        // do nothing here.
+        // TemplateRenderer hide playlist.
     }
 
     fun moveItem(from: Int, to: Int) {

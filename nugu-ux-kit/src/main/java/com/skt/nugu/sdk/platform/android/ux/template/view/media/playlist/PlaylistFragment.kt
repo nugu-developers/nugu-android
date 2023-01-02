@@ -248,7 +248,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         }.apply(coroutineJobs::add)
     }
 
-    fun <T> Flow<T>.collectCancelable(block: (T) -> Unit) {
+    private fun <T> Flow<T>.collectCancelable(block: (T) -> Unit) {
         CoroutineScope(Dispatchers.Main).launch {
             collect {
                 block.invoke(it)
