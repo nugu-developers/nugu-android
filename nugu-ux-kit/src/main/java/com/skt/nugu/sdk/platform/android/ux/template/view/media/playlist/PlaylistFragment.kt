@@ -195,7 +195,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
 
         viewModel.editButton.collectCancelable {
             btnEdit.visibility = if (it == null) View.GONE else View.VISIBLE
-            btnEdit.text = it?.text
+            btnEdit.text = it?.text?.text
         }
 
         viewModel.button.collectCancelable {
