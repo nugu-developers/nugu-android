@@ -106,7 +106,7 @@ class ViewHolder(view: View, viewModel: PlaylistViewModel) : RecyclerView.ViewHo
         }
 
         itemView.findViewById<TextView>(R.id.tv_title).run {
-            text = item.text.str
+            text = item.text.text
             maxLines = item.text.maxLine ?: 1
             setTextColor(if (listItem.isPlaying) titleColorPlaying else titleColor)
         }
@@ -118,7 +118,7 @@ class ViewHolder(view: View, viewModel: PlaylistViewModel) : RecyclerView.ViewHo
 
         itemView.findViewById<TextView>(R.id.tv_subtitle).run {
             visibility = if (item.subText != null) View.VISIBLE else View.GONE
-            text = item.subText?.str
+            text = item.subText?.text
             maxLines = item.subText?.maxLine ?: 1
         }
 

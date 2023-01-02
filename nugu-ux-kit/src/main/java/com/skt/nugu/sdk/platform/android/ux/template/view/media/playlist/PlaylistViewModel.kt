@@ -2,6 +2,7 @@ package com.skt.nugu.sdk.platform.android.ux.template.view.media.playlist
 
 import androidx.lifecycle.ViewModel
 import com.google.gson.Gson
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.template.model.ButtonObject
@@ -70,17 +71,23 @@ class PlaylistViewModel : ViewModel() {
         return runCatching { gson.fromJson(json, classOfT) }.getOrNull()
     }
 
+    private fun <T> fromJsonOrNull(json: JsonElement, classOfT: Class<T>): T? {
+        return runCatching { gson.fromJson(json, classOfT) }.getOrNull()
+    }
+
     fun setEventListener(listener: PlaylistEventListener?) {
         eventListener = listener
     }
 
     fun setPlaylist(list: PlaylistFromAgent) {
+        Logger.d(TAG, "setPlaylist() ${list.raw}")
         _playlist.value.clear()
 
         fromJsonOrNull(list.raw.toString(), Playlist::class.java)?.let { playlist ->
+            Logger.d(TAG, "setPlaylist() playlist parsing success  \n $playlist")
 
             playlist.list.items.run {
-                _playlist.value.addAll(this.map { ListItem(it, false, it.token == playlist.currentToken) })
+                setPlaylistItems(this, playlist.currentToken)
             }
 
             CoroutineScope(Dispatchers.Main).launch {
@@ -92,15 +99,56 @@ class PlaylistViewModel : ViewModel() {
         }
     }
 
-    fun updatePlaylist(changes: JsonObject, updated: PlaylistFromAgent) {
-        //todo. update list.
-        fromJsonOrNull(updated.raw.toString(), Playlist::class.java)?.let { updatedPlaylist ->
+    private fun setPlaylistItems(list: List<Playlist.PlayListItem>, currentToken: String?) {
+        Logger.d(TAG, "setPlaylistItems(")
+        _playlist.value.addAll(list.map { ListItem(it, false, it.token == currentToken) })
+    }
 
+    fun updatePlaylist(changes: JsonObject, updated: PlaylistFromAgent) {
+        Logger.d(TAG, "updatePlaylist() changed:\n$changes, \n updated:\n$updated" )
+
+        fromJsonOrNull(changes, Playlist::class.java)?.let { changedPlaylist ->
+
+            Logger.d(TAG, "updatePlaylist() parsing success $changedPlaylist")
+
+            CoroutineScope(Dispatchers.Main).launch {
+                // title
+                changedPlaylist.title?.text?.apply { _title.emit(this) }
+
+                // edit button
+                changedPlaylist.edit?.apply { _editButton.emit(this) }
+
+                // button
+                changedPlaylist.button?.apply { _button.emit(this) }
+            }
+
+            // list items
+            var isListChanged = false
+            changedPlaylist.list.items.let { newItems ->
+                if(newItems.isNotEmpty()) isListChanged = true
+                val currentPlayingToken = changedPlaylist.currentToken ?: _playlist.value.find { it.isPlaying }?.item?.token
+                setPlaylistItems(newItems, currentPlayingToken)
+            }
+
+            // current playing item
+            if (!isListChanged && changedPlaylist.currentToken?.isNotBlank() == true) {
+                val prevPlayingIndex = _playlist.value.indexOfFirst { it.isPlaying }
+                val currPlayingIndex = _playlist.value.indexOfFirst { it.item.token == changedPlaylist.currentToken }
+
+                _playlist.value.getOrNull(prevPlayingIndex)?.isPlaying = false
+                _playlist.value.getOrNull(currPlayingIndex)?.isPlaying = true
+
+                CoroutineScope(Dispatchers.Main).launch {
+                    if (prevPlayingIndex != -1) _updatePlaylistItem.emit(prevPlayingIndex)
+                    if (currPlayingIndex != -1) _updatePlaylistItem.emit(currPlayingIndex)
+                }
+            }
         }
     }
 
     fun clearPlaylist() {
-        // TODO : clear playlist
+        //todo. spec needed
+        Logger.d(TAG, "clearPlaylist(")
     }
 
     fun moveItem(from: Int, to: Int) {

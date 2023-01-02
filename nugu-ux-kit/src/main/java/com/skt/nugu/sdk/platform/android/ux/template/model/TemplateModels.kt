@@ -46,8 +46,7 @@ enum class Repeat {
 @Keep
 class AudioPlayer(
     @SerializedName("title") val title: AudioPlayerTitle?,
-    @SerializedName("content") val content: AudioPlayerContent?,
-    @SerializedName("playlist") val playlist: Playlist?,
+    @SerializedName("content") val content: AudioPlayerContent?
 )
 
 @Keep
@@ -84,7 +83,7 @@ data class Playlist(
     val token: String = "",
     val edit: TextFormat? = null,
     val button: ButtonObject? = null,
-    val currentToken: String = "",
+    val currentToken: String? = null,
     val list: ListObject = ListObject()
 ) {
     @Keep
@@ -154,7 +153,7 @@ data class ButtonObject(
 
 @Keep
 data class TextObject(
-    val str: String = "", val maxLine: Int? = null
+    val text: String = "", val maxLine: Int? = null
 )
 
 @Keep
