@@ -323,6 +323,8 @@ open class TemplateRenderer(
         fragmentManagerRef.get()?.fragments?.filterIsInstance<PlaylistDataListener>()?.forEach {
             it.onClearPlaylist()
         }
+
+        hidePlaylist()
     }
 
     private fun getPlaylistBottomMargin(): Int {
