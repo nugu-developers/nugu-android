@@ -74,7 +74,7 @@ open class TemplateRenderer(
     protected val gson = Gson()
     private val defaultTemplateHandlerFactory = TemplateHandler.TemplateHandlerFactory()
 
-    private val onPlaylistListener = object : OnPlaylistListener {
+    private var onPlaylistListener : OnPlaylistListener? = object : OnPlaylistListener {
         override fun onSetPlaylist(playlist: Playlist) {
             notifyNewPlaylistData(playlist)
         }
@@ -102,14 +102,17 @@ open class TemplateRenderer(
         }
     }
 
-
     init {
         DEVICE_TYPE_CODE = deviceTypeCode
 
         nuguClientProvider.getNuguClient().audioPlayerAgent?.run {
             // Empty lyrics presenter for receiving lyrics. Actual lyrics control works in each TemplateView.
             setLyricsPresenter(EmptyLyricsPresenter)
-            addOnPlaylistListener(onPlaylistListener)
+            onPlaylistListener?.apply(::addOnPlaylistListener)
+        }
+
+        if (fragmentManager != null) {
+            fragmentManagerRef.get()?.registerFragmentLifecycleCallbacks(fragmentCallback, false)
         }
     }
 
@@ -145,6 +148,8 @@ open class TemplateRenderer(
 
             val previousSameServiceRenderInfo =
                 (fragmentManagerRef.get()?.fragments?.find { it is TemplateFragment && it.getPlayServiceId() == playServiceId && it.getRenderInfo() != null } as? TemplateFragment)?.getRenderInfo()
+
+            Logger.d(TAG, "render() isListSupportTemplate : $isListSupportTemplate, previousSameServiceRenderInfo : $previousSameServiceRenderInfo ")
 
             fragmentManagerRef.get()?.beginTransaction()?.run {
                 val newTemplate = TemplateFragment.newInstance(
@@ -346,11 +351,18 @@ open class TemplateRenderer(
 
     fun setFragmentManager(fragmentManager: FragmentManager?) {
         if (fragmentManager != null) {
+            runCatching {
+                fragmentManagerRef.get()?.unregisterFragmentLifecycleCallbacks(fragmentCallback)
+            }
+
             fragmentManagerRef.clear()
             fragmentManagerRef = WeakReference(fragmentManager)
             fragmentManagerRef.get()?.registerFragmentLifecycleCallbacks(fragmentCallback, false)
         } else {
-            fragmentManagerRef.get()?.unregisterFragmentLifecycleCallbacks(fragmentCallback)
+            runCatching {
+                fragmentManagerRef.get()?.unregisterFragmentLifecycleCallbacks(fragmentCallback)
+            }
+
             fragmentManagerRef.clear()
         }
     }
@@ -364,7 +376,11 @@ open class TemplateRenderer(
     }
 
     fun onDestroyed() {
-        nuguClientProvider.getNuguClient().audioPlayerAgent?.removeOnPlaylistListener(onPlaylistListener)
+        onPlaylistListener?.run {
+            nuguClientProvider.getNuguClient().audioPlayerAgent?.removeOnPlaylistListener(this)
+        }
+        onPlaylistListener = null
+
         fragmentManagerRef.get()?.unregisterFragmentLifecycleCallbacks(fragmentCallback)
         fragmentManagerRef.clear()
         templateClearTimer.cancel()
