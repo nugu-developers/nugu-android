@@ -104,8 +104,8 @@ data class Playlist(
         val badgeMessage: String? = null,
         val available: Boolean = true, // default value is true
         val token: String = "",
-        val favorite: Favorite? = null,
-        val postback: Any? = null,
+        var favorite: Favorite? = null,
+        var postback: Any? = null,
     ) {
         @Keep
         data class Favorite(

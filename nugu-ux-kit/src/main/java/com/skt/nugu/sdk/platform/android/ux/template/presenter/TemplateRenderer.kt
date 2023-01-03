@@ -74,7 +74,7 @@ open class TemplateRenderer(
     protected val gson = Gson()
     private val defaultTemplateHandlerFactory = TemplateHandler.TemplateHandlerFactory()
 
-    private var onPlaylistListener : OnPlaylistListener? = object : OnPlaylistListener {
+    private var onPlaylistListener: OnPlaylistListener? = object : OnPlaylistListener {
         override fun onSetPlaylist(playlist: Playlist) {
             notifyNewPlaylistData(playlist)
         }
@@ -174,7 +174,7 @@ open class TemplateRenderer(
                     // todo. when different playlist.. even it is same service
                     if (newTemplate.isMediaTemplate()) {
                         // bring PlaylistFragment to front when  same service mediaTemplate coming up.
-                        if (previousSameServiceRenderInfo != null) {
+                        if (isListSupportTemplate && previousSameServiceRenderInfo != null) {
                             fragmentManagerRef.get()?.fragments?.find { it is PlaylistFragment }?.let { playlistFragment ->
                                 detach(playlistFragment).attach(playlistFragment)
                             }
