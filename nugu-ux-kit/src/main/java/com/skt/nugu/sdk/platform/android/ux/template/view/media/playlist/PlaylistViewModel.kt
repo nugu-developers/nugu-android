@@ -71,7 +71,7 @@ class PlaylistViewModel : ViewModel() {
         return runCatching {
             gson.fromJson(json, classOfT)
         }.onFailure {
-            it.printStackTrace()
+            Logger.e(TAG, it.message ?: "", it)
         }.getOrNull()
     }
 
@@ -79,7 +79,7 @@ class PlaylistViewModel : ViewModel() {
         return runCatching {
             gson.fromJson(json, classOfT)
         }.onFailure {
-            it.printStackTrace()
+            Logger.e(TAG, it.message ?: "", it)
         }.getOrNull()
     }
 
