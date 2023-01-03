@@ -437,6 +437,7 @@ class DefaultAudioPlayerAgent(
                         nextAudioInfo.playContext = it.playContext
                     }
 
+
                     with(nextAudioInfo.directive) {
                         // consume
                         if(nextAudioInfo.payload.sourceType == SourceType.ATTACHMENT) {
@@ -463,8 +464,6 @@ class DefaultAudioPlayerAgent(
             playlistManager?.let { manager->
                 kotlin.runCatching {
                     manager.setPlaylist(playServiceId, template.getAsJsonObject("playlist"))
-                }.onFailure {
-                    manager.clearPlaylist()
                 }
             }
         }
