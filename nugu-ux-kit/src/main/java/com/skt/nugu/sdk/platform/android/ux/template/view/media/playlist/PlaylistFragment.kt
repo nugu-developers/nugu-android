@@ -21,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.util.*
 
 class PlaylistFragment : Fragment(), PlaylistDataListener {
 
@@ -53,17 +54,14 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
 
             if (from in 0 until adapter.itemCount && to in 0 until adapter.itemCount) {
                 viewModel.moveItem(from, to)
+                return true
             }
 
-            return true
+            return false
         }
 
         override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
             // do nothing.
-        }
-
-        override fun canDropOver(recyclerView: RecyclerView, current: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-            return true
         }
     })
 
@@ -110,6 +108,8 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
             recyclerView = it.findViewById(R.id.view_play_list)
             recyclerView.adapter = adapter
             recyclerView.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+            recyclerView.itemAnimator?.changeDuration = 0L
+
             dragHelper.attachToRecyclerView(recyclerView)
             (recyclerView.layoutParams as? MarginLayoutParams)?.bottomMargin = playlistBottomMargin
 
