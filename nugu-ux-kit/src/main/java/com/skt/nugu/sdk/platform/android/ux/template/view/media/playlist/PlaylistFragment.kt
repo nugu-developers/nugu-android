@@ -54,6 +54,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
 
             if (from in 0 until adapter.itemCount && to in 0 until adapter.itemCount) {
                 viewModel.moveItem(from, to)
+                adapter.moveData(from, to)
                 return true
             }
 
@@ -184,10 +185,6 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
 
         viewModel.removePlaylistItem.collectCancelable {
             adapter.removeItem(it)
-        }
-
-        viewModel.movePlaylistItem.collectCancelable {
-            adapter.moveData(it.first, it.second)
         }
 
         viewModel.title.collectCancelable {
