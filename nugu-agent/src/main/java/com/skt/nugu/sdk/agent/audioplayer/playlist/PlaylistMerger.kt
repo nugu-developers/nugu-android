@@ -15,8 +15,12 @@ fun JsonObject.mergePlaylist(changes: JsonObject) {
 
     deepMerge(changes)
 
-    if(originList != null && updateList != null) {
+    if (originList != null && updateList != null) {
         add(KEY_LIST, getMergePlaylistList(originList, updateList))
+    } else if (originList != null) {
+        add(KEY_LIST, originList)
+    } else if (updateList != null) {
+        add(KEY_LIST, updateList)
     }
 }
 
