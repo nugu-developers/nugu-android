@@ -46,9 +46,9 @@
 
                 <TextView
                     android:id="@+id/btn_edit"
-                    android:layout_marginStart="10dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
                     android:background="@drawable/nugu_bg_round_corner_100_blue"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="4dp"
@@ -99,9 +99,9 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/view_play_list"
             android:layout_width="match_parent"
-            android:overScrollMode="never"
             android:layout_height="match_parent"
-            android:background="@color/nugu_playlist_bg" />
+            android:background="@color/nugu_playlist_bg"
+            android:overScrollMode="never" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <LinearLayout

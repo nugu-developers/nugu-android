@@ -36,9 +36,6 @@ class PlaylistViewModel : ViewModel() {
     private val _updatePlaylistItem = MutableSharedFlow<Int>()
     val updatePlaylistItem = _updatePlaylistItem.asSharedFlow()
 
-    private val _movePlaylistItem = MutableSharedFlow<Pair<Int, Int>>()  //from, to
-    val movePlaylistItem = _movePlaylistItem.asSharedFlow()
-
     private val _removePlaylistItem = MutableSharedFlow<List<Int>>()
     val removePlaylistItem = _removePlaylistItem.asSharedFlow()
 
@@ -162,11 +159,6 @@ class PlaylistViewModel : ViewModel() {
             runCatching {
                 val removed = _playlist.value.removeAt(from)
                 _playlist.value.add(to, removed)
-            }.onSuccess {
-                CoroutineScope(Dispatchers.Main).launch {
-                    _movePlaylistItem.emit(from to to)
-                }
-
                 onListChanged()
             }
         }
