@@ -99,6 +99,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/view_play_list"
             android:layout_width="match_parent"
+            android:overScrollMode="never"
             android:layout_height="match_parent"
             android:background="@color/nugu_playlist_bg" />
     </androidx.appcompat.widget.LinearLayoutCompat>
