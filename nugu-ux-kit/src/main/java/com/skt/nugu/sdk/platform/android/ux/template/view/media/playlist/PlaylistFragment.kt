@@ -122,6 +122,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
                     viewModel.onEditBtnClicked()
                 }
             }
+
             btnBtn = it.findViewById<TextView>(R.id.btn_btn).apply {
                 setOnClickListener {
                     viewModel.onButtonClicked()
