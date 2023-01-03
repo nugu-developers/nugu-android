@@ -25,5 +25,7 @@ class TemplateViewModel : ViewModel() {
 
         onCleared = null
         templateHandler = null
+        externalRenderer = null
+        templateLoadingListener = null
     }
 }

@@ -385,6 +385,11 @@ open class TemplateRenderer(
 
         fragmentManagerRef.get()?.unregisterFragmentLifecycleCallbacks(fragmentCallback)
         fragmentManagerRef.clear()
+
         templateClearTimer.cancel()
+
+        externalViewRenderer = null
+        templateLoadingListener = null
+        templateHandlerFactory = null
     }
 }
