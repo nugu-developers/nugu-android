@@ -135,14 +135,13 @@ class LyricsView @JvmOverloads constructor(
                 return super.canScrollVertically()
             }
         }
+
         recyclerView.adapter = adapter
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (viewSize == SIZE_STANDARD) {
                     enableAutoScroll = when (newState) {
-                        RecyclerView.SCROLL_STATE_DRAGGING,
-                        RecyclerView.SCROLL_STATE_SETTLING,
-                        -> false
+                        RecyclerView.SCROLL_STATE_DRAGGING, RecyclerView.SCROLL_STATE_SETTLING -> false
                         RecyclerView.SCROLL_STATE_IDLE -> true
                         else -> enableAutoScroll
                     }
@@ -162,6 +161,15 @@ class LyricsView @JvmOverloads constructor(
 
                 btnFontSize.setOnClickListener {
                     setFontScale(adapter.fontScale.next())
+                }
+            }
+        }
+
+        with(recyclerView) {
+            post {
+                if (viewSize == SIZE_SMALL) {
+                    layoutParams.height = LayoutParams.WRAP_CONTENT
+                    requestLayout()
                 }
             }
         }

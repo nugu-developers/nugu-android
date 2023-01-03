@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/tv_lyrics_header"
@@ -22,8 +21,9 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_lyrics"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_lyrics_header"
+        android:layout_height="0dp"
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_lyrics_header"
         tools:listitem="@layout/view_item_lyrics" />
@@ -32,7 +32,6 @@
         android:id="@+id/tv_empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:gravity="center"
