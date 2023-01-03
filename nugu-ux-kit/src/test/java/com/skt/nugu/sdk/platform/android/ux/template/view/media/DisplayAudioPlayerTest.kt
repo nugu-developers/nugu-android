@@ -159,7 +159,7 @@ class DisplayAudioPlayerTest {
         whenever(nuguClientProvider.getNuguClient()).thenReturn(nuguAndroidClient)
         whenever(nuguAndroidClient.themeManager).thenReturn(themeManager)
 
-        audioPlayerInfo = AudioPlayer(audioPlayerTitle, audioPlayerContent, null)
+        audioPlayerInfo = AudioPlayer(audioPlayerTitle, audioPlayerContent)
     }
 
     @Test
