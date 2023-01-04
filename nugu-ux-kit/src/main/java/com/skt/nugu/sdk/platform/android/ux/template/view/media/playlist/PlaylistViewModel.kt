@@ -106,9 +106,9 @@ class PlaylistViewModel : ViewModel() {
     }
 
     fun updatePlaylist(changes: JsonObject, updated: PlaylistFromAgent) {
-        Logger.d(TAG, "updatePlaylist() changed:\n$changes, \n updated:\n$updated")
+        Logger.d(TAG, "updatePlaylist() changed:\n$changes")
 
-        fromJsonOrNull(updated.raw, Playlist::class.java)?.let { changedPlaylist ->
+        fromJsonOrNull(changes, Playlist::class.java)?.let { changedPlaylist ->
             Logger.d(TAG, "updatePlaylist() parsing success")
 
             CoroutineScope(Dispatchers.Main).launch {
