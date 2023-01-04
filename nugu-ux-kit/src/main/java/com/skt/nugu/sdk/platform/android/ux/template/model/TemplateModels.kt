@@ -84,7 +84,7 @@ data class Playlist(
     val edit: TextFormat? = null,
     val button: ButtonObject? = null,
     val currentToken: String? = null,
-    val list: ListObject = ListObject()
+    val list: ListObject? = null
 ) {
     @Keep
     data class TextFormat(val text: TextObject? = null, val imageUrl: String? = null)
