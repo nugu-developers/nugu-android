@@ -47,4 +47,12 @@
 
     <color name="nugu_playlist_item_title_color">#091840</color>
     <color name="nugu_playlist_item_title_color_playing">#334cff</color>
+
+    <color name="nugu_playlist_dialog_outside_bg">#51000000</color>
+    <color name="nugu_playlist_dialog_bg">#ffffff</color>
+    <color name="nugu_playlist_dialog_text">#091840</color>
+    <color name="nugu_playlist_dialog_negative_btn_bg">#e7e9ed</color>
+    <color name="nugu_playlist_dialog_negative_btn_text">#212121</color>
+    <color name="nugu_playlist_dialog_positive_btn_bg">#334cff</color>
+    <color name="nugu_playlist_dialog_positive_btn_text">#ffffff</color>
 </resources>
