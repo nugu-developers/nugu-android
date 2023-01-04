@@ -58,11 +58,10 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
         currentPlaylist: Playlist,
         changes: JsonObject
     ) {
-        val changesCopy = changes.deepCopy()
-        currentPlaylist.raw.mergePlaylist(changes)
+        currentPlaylist.raw.mergePlaylist(changes.deepCopy())
 
         listeners.forEach {
-            it.onUpdatePlaylist(changesCopy, currentPlaylist)
+            it.onUpdatePlaylist(changes, currentPlaylist)
         }
     }
 
