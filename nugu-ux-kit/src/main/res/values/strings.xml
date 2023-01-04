@@ -10,4 +10,10 @@
     <string name="nugu_playlist_deselect_all">선택해제</string>
     <string name="nugu_playlist_cancel">취소</string>
     <string name="nugu_playlist_complete">완료</string>
+
+    <string name="nugu_playlist_dialog_cancel_title">재생목록 변경사항을 저장하지 않고\n나가시겠어요?</string>
+    <string name="nugu_playlist_dialog_delete_title">선택된 %d개의 곡을 삭제하시겠습니까?</string>
+    <string name="nugu_playlist_dialog_negative">취소</string>
+    <string name="nugu_playlist_dialog_cancel_positive">나가기</string>
+    <string name="nugu_playlist_dialog_delete_positive">삭제</string>
 </resources>
