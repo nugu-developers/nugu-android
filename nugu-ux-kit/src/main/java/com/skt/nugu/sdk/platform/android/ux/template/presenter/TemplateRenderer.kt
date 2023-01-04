@@ -91,7 +91,7 @@ open class TemplateRenderer(
     private val fragmentCallback = object : FragmentLifecycleCallbacks() {
         override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
             Logger.d(TAG, "fragment destroy . current mediaTemplate cnt :${getMediaTemplateCount()}")
-            if (getMediaTemplateCount() == 0) hidePlaylist()
+            if (getMediaTemplateCount() == 0) hidePlaylist("media template not exist")
 
             if (f is PlaylistFragment) {
                 fm.fragments.filterIsInstance<PlaylistStateListener>().forEach {
@@ -226,8 +226,6 @@ open class TemplateRenderer(
             }
         }
 
-        hidePlaylist()
-
         return (clearCnt > 0).also { Logger.i(TAG, "clearAll(). $clearCnt template cleared ") }
     }
 
@@ -266,8 +264,8 @@ open class TemplateRenderer(
         return true
     }
 
-    override fun hidePlaylist(): Boolean {
-        Logger.d(TAG, "hidePlaylist")
+    override fun hidePlaylist(reason : String?): Boolean {
+        Logger.d(TAG, "hidePlaylist. reason : $reason")
 
         fragmentManagerRef.get()?.let { fragmentManager ->
             fragmentManager.findFragmentByTag(PlaylistFragment.TAG)?.let { playlistFragment ->
@@ -324,7 +322,7 @@ open class TemplateRenderer(
             it.onClearPlaylist()
         }
 
-        hidePlaylist()
+        hidePlaylist("playlist data cleared")
     }
 
     private fun getPlaylistBottomMargin(): Int {
