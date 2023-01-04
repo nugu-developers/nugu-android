@@ -411,7 +411,7 @@ open class DisplayAudioPlayer constructor(
 
         btnHidePlaylist?.setThrottledOnClickListener {
             onViewClicked(it ?: return@setThrottledOnClickListener)
-            playlistRenderer?.hidePlaylist()
+            playlistRenderer?.hidePlaylist("hide playlist button clicked")
         }
 
         progressView.setOnTouchListener { _, _ -> true }
@@ -420,7 +420,7 @@ open class DisplayAudioPlayer constructor(
 
     open fun onCollapseButtonClicked() {
         collapse()
-        playlistRenderer?.hidePlaylist()
+        playlistRenderer?.hidePlaylist("media template collapsed")
     }
 
     open fun onBarPlayerClicked() {
@@ -429,11 +429,6 @@ open class DisplayAudioPlayer constructor(
 
     open fun onViewClicked(v: View) {
         // do nothing. This function is only for notifying clicked view information to Custom Media Template
-    }
-
-    override fun onCloseClicked() {
-        playlistRenderer?.hidePlaylist()
-        super.onCloseClicked()
     }
 
     /**
@@ -906,7 +901,7 @@ open class DisplayAudioPlayer constructor(
     fun setPlaylistRenderer(renderer: PlaylistRenderer?) {
         playlistRenderer = renderer
         if (playlistRenderer?.isPlaylistVisible() == true && currOrientation != ORIENTATION_PORTRAIT) {
-            playlistRenderer?.hidePlaylist()
+            playlistRenderer?.hidePlaylist("orientation is not Portrait. playlist is only supported in Portrait.")
         }
     }
 

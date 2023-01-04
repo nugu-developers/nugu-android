@@ -7,7 +7,7 @@ import com.skt.nugu.sdk.agent.display.DisplayInterface
 interface PlaylistRenderer {
     fun showPlaylist(): Boolean
 
-    fun hidePlaylist(): Boolean
+    fun hidePlaylist(reason: String? = null): Boolean
 
     fun isPlaylistVisible(): Boolean
 }
