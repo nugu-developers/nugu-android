@@ -87,12 +87,12 @@ class PlaylistViewModel : ViewModel() {
 
     fun setPlaylist(list: PlaylistFromAgent) {
         Logger.d(TAG, "setPlaylist() ${list.raw}")
-        _playlist.value.clear()
 
         fromJsonOrNull(list.raw.toString(), Playlist::class.java)?.let { playlist ->
             Logger.d(TAG, "setPlaylist() playlist parsing success")
 
-            playlist.list.items.run {
+            playlist.list?.items?.run {
+                _playlist.value.clear()
                 _playlist.value.addAll(map { ListItem(it, false, it.token == playlist.currentToken) })
             }
 
@@ -123,7 +123,7 @@ class PlaylistViewModel : ViewModel() {
             }
 
             // list items
-            changedPlaylist.list.items.forEach { newItems ->
+            changedPlaylist.list?.items?.forEach { newItems ->
                 playlist.value.find { it.item.token == newItems.token }?.let { targetItem ->
                     if (newItems.favorite != null) targetItem.item.favorite = newItems.favorite
                     if (newItems.postback != null) targetItem.item.postback = newItems.postback
