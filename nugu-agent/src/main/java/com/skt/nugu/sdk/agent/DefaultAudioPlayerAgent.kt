@@ -1834,6 +1834,11 @@ class DefaultAudioPlayerAgent(
     }
 
     override fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {
+        val playServiceId: String = this.playServiceId ?: kotlin.run {
+            Logger.d(TAG,"[modifyPlaylist] ignored (playServiceId is null)")
+            return
+        }
+
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 executor.submit {
@@ -1854,6 +1859,7 @@ class DefaultAudioPlayerAgent(
                                     add(it)
                                 }
                             })
+                            addProperty("playServiceId", playServiceId)
                         }.toString()
                     ).build()
 
