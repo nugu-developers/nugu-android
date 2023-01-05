@@ -192,7 +192,7 @@ class PlaylistViewModel : ViewModel() {
             if (!clickedItem.isPlaying) {
                 eventListener?.setElementSelected(
                     clickedItem.item.token,
-                    clickedItem.item.postback.toString(),
+                    gson.toJson(clickedItem.item.postback),
                     object : DisplayInterface.OnElementSelectedCallback {
                         override fun onSuccess(dialogRequestId: String) {
                             Logger.d(TAG, "onItemClicked() elementSelected SUCCESS. dialogRequestId:$dialogRequestId")
