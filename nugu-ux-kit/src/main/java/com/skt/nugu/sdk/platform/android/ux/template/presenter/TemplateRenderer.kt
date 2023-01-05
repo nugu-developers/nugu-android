@@ -265,7 +265,7 @@ open class TemplateRenderer(
         return true
     }
 
-    override fun hidePlaylist(reason : String?): Boolean {
+    override fun hidePlaylist(reason: String?): Boolean {
         Logger.d(TAG, "hidePlaylist. reason : $reason")
 
         fragmentManagerRef.get()?.let { fragmentManager ->
@@ -283,9 +283,12 @@ open class TemplateRenderer(
     override fun setElementSelected(token: String, postback: String?, callback: DisplayInterface.OnElementSelectedCallback?) {
         (fragmentManagerRef.get()?.fragments?.find { (it as? TemplateFragment)?.isMediaTemplate() == true } as? TemplateFragment)?.getTemplateId()
             ?.let { templateId ->
-                nuguClientProvider.getNuguClient().audioPlayerAgent?.setElementSelected(templateId, token, postback, callback)
+                runCatching {
+                    nuguClientProvider.getNuguClient().audioPlayerAgent?.setElementSelected(templateId, token, postback, callback)
+                }.onFailure {
+                    Logger.e(TAG, it.message ?: "", it)
+                }
             }
-
     }
 
     override fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {

@@ -98,7 +98,7 @@ class PlaylistViewModel : ViewModel() {
 
             CoroutineScope(Dispatchers.Main).launch {
                 _updatePlaylist.emit(Unit)
-                _title.emit(playlist.title?.text?.text)
+                _title.emit(playlist.subTitle?.text?.text)
                 _editButton.emit(playlist.edit)
                 _button.emit(playlist.button)
             }
