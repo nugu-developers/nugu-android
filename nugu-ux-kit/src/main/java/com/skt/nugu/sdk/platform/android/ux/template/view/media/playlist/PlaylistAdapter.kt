@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
 import com.skt.nugu.sdk.platform.android.ux.template.updateImage
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
@@ -41,20 +42,33 @@ class PlaylistAdapter(private val viewModel: PlaylistViewModel) : RecyclerView.A
     }
 
     fun moveData(from: Int, to: Int) {
-        val removed = playlist.removeAt(from)
-        playlist.add(to, removed)
-        notifyItemMoved(from, to)
+        runCatching {
+            playlist.removeAt(from)
+        }.onFailure {
+            Logger.e(TAG, "moveData($from, $to) fail", it)
+        }.getOrNull()?.let { removed ->
+            playlist.add(to, removed)
+            notifyItemMoved(from, to)
+        }
     }
 
     fun updateItem(position: Int, item: PlaylistViewModel.ListItem) {
-        playlist[position] = item
-        notifyItemChanged(position)
+        if (playlist.size > position) {
+            playlist[position] = item
+            notifyItemChanged(position)
+        } else {
+            Logger.e(TAG, "updateItem($position, ${item.item.token} fail. current adapter data size is ${playlist.size}")
+        }
     }
 
     fun removeItem(positions: List<Int>) {
-        positions.reversed().forEach {
-            playlist.removeAt(it)
-            notifyItemRemoved(it)
+        runCatching {
+            positions.reversed().forEach {
+                playlist.removeAt(it)
+                notifyItemRemoved(it)
+            }
+        }.onFailure {
+            Logger.e(TAG, "removeItem($positions) fail", it)
         }
     }
 

@@ -92,8 +92,7 @@ class PlaylistViewModel : ViewModel() {
             Logger.d(TAG, "setPlaylist() playlist parsing success")
 
             playlist.list?.items?.run {
-                _playlist.value.clear()
-                _playlist.value.addAll(map { ListItem(it, false, it.token == playlist.currentToken) })
+                replacePlaylist(this, playlist.currentToken)
             }
 
             CoroutineScope(Dispatchers.Main).launch {
@@ -102,6 +101,13 @@ class PlaylistViewModel : ViewModel() {
                 _editButton.emit(playlist.edit)
                 _button.emit(playlist.button)
             }
+        }
+    }
+
+    private fun replacePlaylist(list: List<Playlist.PlayListItem>, currentToken: String?) {
+        CoroutineScope(Dispatchers.Main).launch {
+            _playlist.value.clear()
+            _playlist.value.addAll(list.map { ListItem(it, false, it.token == currentToken) })
         }
     }
 
@@ -122,28 +128,47 @@ class PlaylistViewModel : ViewModel() {
                 changedPlaylist.button?.apply { _button.emit(this) }
             }
 
-            // list items
-            changedPlaylist.list?.items?.forEach { newItems ->
-                playlist.value.find { it.item.token == newItems.token }?.let { targetItem ->
-                    if (newItems.favorite != null) targetItem.item.favorite = newItems.favorite
-                    if (newItems.postback != null) targetItem.item.postback = newItems.postback
-                    CoroutineScope(Dispatchers.Main).launch {
-                        _updatePlaylistItem.emit(playlist.value.indexOf(targetItem))
-                    }
+            var listReplaced = false
+            // list item removed, or reordered
+            fromJsonOrNull(updated.raw, Playlist::class.java)?.let { updatedList ->
+                val updatedTokens = updatedList.list?.items?.map { it.token }
+                val currentTokens = playlist.value.map { it.item.token }
+
+                if (updatedTokens != null && updatedTokens != currentTokens) {
+                    Logger.d(TAG, "updatePlaylist() updatedList is different with current known list. replace all")
+                    Logger.d(TAG, "updatePlaylist() updateTokens $updatedTokens")
+                    Logger.d(TAG, "updatePlaylist() currentTokens $currentTokens")
+                    listReplaced = true
+                    replacePlaylist(updatedList.list.items, updatedList.currentToken)
+                } else {
+                    Logger.d(TAG, "updatePlaylist() updatedList is same with current known list")
                 }
             }
 
-            // current playing item
-            if (changedPlaylist.currentToken?.isNotBlank() == true) {
-                val prevPlayingIndex = playlist.value.indexOfFirst { it.isPlaying }
-                val currPlayingIndex = playlist.value.indexOfFirst { it.item.token == changedPlaylist.currentToken }
+            if (!listReplaced) {
+                // list items
+                changedPlaylist.list?.items?.forEach { newItems ->
+                    playlist.value.find { it.item.token == newItems.token }?.let { targetItem ->
+                        if (newItems.favorite != null) targetItem.item.favorite = newItems.favorite
+                        if (newItems.postback != null) targetItem.item.postback = newItems.postback
+                        CoroutineScope(Dispatchers.Main).launch {
+                            _updatePlaylistItem.emit(playlist.value.indexOf(targetItem))
+                        }
+                    }
+                }
 
-                _playlist.value.getOrNull(prevPlayingIndex)?.isPlaying = false
-                _playlist.value.getOrNull(currPlayingIndex)?.isPlaying = true
+                // current playing item
+                if (changedPlaylist.currentToken?.isNotBlank() == true) {
+                    val prevPlayingIndex = playlist.value.indexOfFirst { it.isPlaying }
+                    val currPlayingIndex = playlist.value.indexOfFirst { it.item.token == changedPlaylist.currentToken }
 
-                CoroutineScope(Dispatchers.Main).launch {
-                    if (prevPlayingIndex != -1) _updatePlaylistItem.emit(prevPlayingIndex)
-                    if (currPlayingIndex != -1) _updatePlaylistItem.emit(currPlayingIndex)
+                    _playlist.value.getOrNull(prevPlayingIndex)?.isPlaying = false
+                    _playlist.value.getOrNull(currPlayingIndex)?.isPlaying = true
+
+                    CoroutineScope(Dispatchers.Main).launch {
+                        if (prevPlayingIndex != -1) _updatePlaylistItem.emit(prevPlayingIndex)
+                        if (currPlayingIndex != -1) _updatePlaylistItem.emit(currPlayingIndex)
+                    }
                 }
             }
         }
@@ -171,7 +196,15 @@ class PlaylistViewModel : ViewModel() {
     fun onButtonClicked() {
         Logger.d(TAG, "onButtonClicked()  token: ${button.value?.token}")
         button.value?.run {
-            eventListener?.setElementSelected(token, postback.toString(), null)
+            eventListener?.setElementSelected(token, gson.toJson(postback), object : DisplayInterface.OnElementSelectedCallback {
+                override fun onSuccess(dialogRequestId: String) {
+                    Logger.d(TAG, "onButtonClicked() elementSelected SUCCESS. dialogRequestId:$dialogRequestId")
+                }
+
+                override fun onError(dialogRequestId: String, errorType: DisplayInterface.ErrorType) {
+                    Logger.d(TAG, "onButtonClicked() elementSelected ERROR. dialogRequestId:$dialogRequestId, errorType $errorType")
+                }
+            })
         }
     }
 
@@ -190,8 +223,7 @@ class PlaylistViewModel : ViewModel() {
             onSelectedStateChanged()
         } else {
             if (!clickedItem.isPlaying) {
-                eventListener?.setElementSelected(
-                    clickedItem.item.token,
+                eventListener?.setElementSelected(clickedItem.item.token,
                     gson.toJson(clickedItem.item.postback),
                     object : DisplayInterface.OnElementSelectedCallback {
                         override fun onSuccess(dialogRequestId: String) {
@@ -209,7 +241,7 @@ class PlaylistViewModel : ViewModel() {
     fun onItemFavoriteClicked(position: Int) {
         Logger.d(TAG, "onItemFavoriteClicked() token: ${_playlist.value.getOrNull(position)?.item?.favorite?.token}")
         _playlist.value.getOrNull(position)?.item?.favorite?.run {
-            eventListener?.setElementSelected(token, postback.toString(), object : DisplayInterface.OnElementSelectedCallback {
+            eventListener?.setElementSelected(token, gson.toJson(postback), object : DisplayInterface.OnElementSelectedCallback {
                 override fun onSuccess(dialogRequestId: String) {
                     Logger.d(TAG, "onItemFavoriteClicked() SUCCESS. dialogRequestId:$dialogRequestId")
                 }
