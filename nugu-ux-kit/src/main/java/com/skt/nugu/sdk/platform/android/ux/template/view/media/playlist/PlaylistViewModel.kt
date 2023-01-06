@@ -129,7 +129,7 @@ class PlaylistViewModel : ViewModel() {
             }
 
             var listReplaced = false
-            // list item removed, or reordered
+            // replace all when updated list is  different with current known data
             fromJsonOrNull(updated.raw, Playlist::class.java)?.let { updatedList ->
                 val updatedTokens = updatedList.list?.items?.map { it.token }
                 val currentTokens = playlist.value.map { it.item.token }
