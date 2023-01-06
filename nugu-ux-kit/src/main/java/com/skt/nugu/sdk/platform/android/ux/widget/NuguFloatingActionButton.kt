@@ -268,10 +268,10 @@ class NuguFloatingActionButton @JvmOverloads constructor(
             it.duration = 1000
             it.startDelay = 0
             it.addListener(object : Animator.AnimatorListener {
-                override fun onAnimationRepeat(animation: Animator?) {}
-                override fun onAnimationCancel(animation: Animator?) {}
-                override fun onAnimationStart(animation: Animator?) {}
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationRepeat(animation: Animator) {}
+                override fun onAnimationCancel(animation: Animator) {}
+                override fun onAnimationStart(animation: Animator) {}
+                override fun onAnimationEnd(animation: Animator) {
                     if (loopPlay) {
                         animation?.startDelay = 5000
                         animation?.start()

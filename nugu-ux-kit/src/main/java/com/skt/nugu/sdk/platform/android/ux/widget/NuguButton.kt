@@ -423,14 +423,14 @@ class NuguButton @JvmOverloads constructor(
             it.duration = 500
             it.startDelay = 0
             it.addListener(object : Animator.AnimatorListener {
-                override fun onAnimationRepeat(animation: Animator?) {}
-                override fun onAnimationCancel(animation: Animator?) {}
-                override fun onAnimationStart(animation: Animator?) {
+                override fun onAnimationRepeat(animation: Animator) {}
+                override fun onAnimationCancel(animation: Animator) {}
+                override fun onAnimationStart(animation: Animator) {
                     imageView.setImageResource(0)
                     imageView.setImageDrawable(getImageDrawableResId(ICON_LOGO))
                 }
 
-                override fun onAnimationEnd(animation: Animator?) {}
+                override fun onAnimationEnd(animation: Animator) {}
             })
         }
         animator3?.let {
@@ -441,14 +441,14 @@ class NuguButton @JvmOverloads constructor(
             it.duration = 500
             it.startDelay = 0
             it.addListener(object : Animator.AnimatorListener {
-                override fun onAnimationRepeat(animation: Animator?) {}
-                override fun onAnimationCancel(animation: Animator?) {}
-                override fun onAnimationStart(animation: Animator?) {
+                override fun onAnimationRepeat(animation: Animator) {}
+                override fun onAnimationCancel(animation: Animator) {}
+                override fun onAnimationStart(animation: Animator) {
                     imageView.setImageResource(0)
                     imageView.setImageDrawable(getImageDrawableResId(ICON_MIC))
                 }
 
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator) {
                 }
             })
         }
@@ -458,20 +458,20 @@ class NuguButton @JvmOverloads constructor(
             play(animator3).before(animator4)
 
             addListener(object : Animator.AnimatorListener {
-                override fun onAnimationRepeat(animation: Animator?) {
+                override fun onAnimationRepeat(animation: Animator) {
                 }
 
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator) {
                     if (loopPlay) {
                         animationSet?.startDelay = 3000
                         animationSet?.start()
                     }
                 }
 
-                override fun onAnimationCancel(animation: Animator?) {
+                override fun onAnimationCancel(animation: Animator) {
                 }
 
-                override fun onAnimationStart(animation: Animator?) {
+                override fun onAnimationStart(animation: Animator) {
                 }
             })
         }

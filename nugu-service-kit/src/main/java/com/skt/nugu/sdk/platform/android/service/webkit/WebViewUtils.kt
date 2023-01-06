@@ -58,9 +58,9 @@ object WebViewUtils {
             if (!cacheDir.exists()) {
                 cacheDir.mkdirs()
             }
-            setAppCachePath(cacheDir.absolutePath)
+//            setAppCachePath(cacheDir.absolutePath)
             allowFileAccess = true
-            setAppCacheEnabled(true)
+//            setAppCacheEnabled(true)
         }
         webView.isScrollbarFadingEnabled = true
         /*

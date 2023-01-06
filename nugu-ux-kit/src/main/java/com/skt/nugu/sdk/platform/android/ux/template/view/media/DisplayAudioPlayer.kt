@@ -208,13 +208,13 @@ open class DisplayAudioPlayer constructor(
         var isLyricShowing: Int,
     ) : AbsSavedState(superState) {
 
-        override fun writeToParcel(dest: Parcel?, flags: Int) {
+        override fun writeToParcel(dest: Parcel, flags: Int) {
             super.writeToParcel(dest, flags)
-            dest?.writeLong(durationMs)
-            dest?.writeLong(currentTimeMs)
-            dest?.writeInt(mediaPlaying)
-            dest?.writeInt(isBarType)
-            dest?.writeInt(isLyricShowing)
+            dest.writeLong(durationMs)
+            dest.writeLong(currentTimeMs)
+            dest.writeInt(mediaPlaying)
+            dest.writeInt(isBarType)
+            dest.writeInt(isLyricShowing)
         }
     }
 
