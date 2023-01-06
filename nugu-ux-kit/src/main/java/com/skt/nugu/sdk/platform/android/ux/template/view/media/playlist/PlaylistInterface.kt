@@ -34,5 +34,7 @@ interface PlaylistEventListener {
     ) {
     }
 
+    fun textInput(text: String, playServiceId: String?)
+
     fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {}
 }
