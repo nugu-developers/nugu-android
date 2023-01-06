@@ -79,12 +79,12 @@ class FloatingView @JvmOverloads constructor(
     }
 
     inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
-        override fun onSingleTapUp(e: MotionEvent?): Boolean {
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
             callbacks.onClick()
             return true
         }
 
-        override fun onLongPress(e: MotionEvent?) {
+        override fun onLongPress(e: MotionEvent) {
             callbacks.onLongPress()
         }
     }

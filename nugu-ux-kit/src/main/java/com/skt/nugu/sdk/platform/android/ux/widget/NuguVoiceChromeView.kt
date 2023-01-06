@@ -79,19 +79,19 @@ class NuguVoiceChromeView : FrameLayout {
 
     private val isPendingAnimating = AtomicBoolean(false)
     private val animationListener = object : Animator.AnimatorListener {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
             isPendingAnimating.set(false)
         }
 
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
             nextAnimation()
         }
 
-        override fun onAnimationCancel(animation: Animator?) {
+        override fun onAnimationCancel(animation: Animator) {
             nextAnimation(true)
         }
 
-        override fun onAnimationRepeat(animation: Animator?) {
+        override fun onAnimationRepeat(animation: Animator) {
             if(queue.size > 0) {
                 animation?.cancel()
             }

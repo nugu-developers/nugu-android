@@ -197,11 +197,11 @@ class TemplateWebView @JvmOverloads constructor(
     ) :
         AbsSavedState(superState) {
 
-        override fun writeToParcel(dest: Parcel?, flags: Int) {
+        override fun writeToParcel(dest: Parcel, flags: Int) {
             super.writeToParcel(dest, flags)
-            dest?.writeLong(durationMs)
-            dest?.writeLong(currentTimeMs)
-            dest?.writeInt(mediaPlaying)
+            dest.writeLong(durationMs)
+            dest.writeLong(currentTimeMs)
+            dest.writeInt(mediaPlaying)
         }
     }
 

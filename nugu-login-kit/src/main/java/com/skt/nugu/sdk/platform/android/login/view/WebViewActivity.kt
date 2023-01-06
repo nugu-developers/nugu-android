@@ -126,9 +126,9 @@ class WebViewActivity : /**AppCompatActivity()**/
             if (!cacheDir.exists()) {
                 cacheDir.mkdirs()
             }
-            setAppCachePath(cacheDir.absolutePath)
+//            setAppCachePath(cacheDir.absolutePath)
             allowFileAccess = true
-            setAppCacheEnabled(true)
+//            setAppCacheEnabled(true)
         }
         webView.isScrollbarFadingEnabled = true
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

@@ -7,9 +7,9 @@ def getVersionNameFromCode(code) {
 }
 
 ext {
-    compileSdkVersion = 31
+    compileSdkVersion = 33
     minSdkVersion = 19
-    targetSdkVersion = 30
+    targetSdkVersion = 33
 
     // 3rd
     androidMaterialVersion = "1.4.0"

@@ -23,7 +23,8 @@
         <activity
             android:name=".activity.LoginActivity"
             android:configChanges="orientation|keyboardHidden"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -44,7 +45,8 @@
         <activity android:name=".activity.GuideActivity" />
         <activity
             android:name=".activity.SettingsServiceActivity"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
