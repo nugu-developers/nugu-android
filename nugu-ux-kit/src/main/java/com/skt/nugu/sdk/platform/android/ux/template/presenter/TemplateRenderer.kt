@@ -291,6 +291,10 @@ open class TemplateRenderer(
             }
     }
 
+    override fun textInput(text : String, playServiceId: String?) {
+        nuguClientProvider.getNuguClient().textAgent?.requestTextInput(text, playServiceId)
+    }
+
     override fun modifyPlaylist(deletedTokens: List<String>, tokens: List<String>) {
         nuguClientProvider.getNuguClient().audioPlayerAgent?.modifyPlaylist(deletedTokens, tokens)
     }

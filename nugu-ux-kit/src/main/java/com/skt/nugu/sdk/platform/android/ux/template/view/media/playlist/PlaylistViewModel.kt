@@ -8,6 +8,7 @@ import com.skt.nugu.sdk.agent.display.DisplayInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.template.model.ButtonObject
 import com.skt.nugu.sdk.platform.android.ux.template.model.Playlist
+import com.skt.nugu.sdk.platform.android.ux.template.webview.ButtonEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -196,15 +197,23 @@ class PlaylistViewModel : ViewModel() {
     fun onButtonClicked() {
         Logger.d(TAG, "onButtonClicked()  token: ${button.value?.token}")
         button.value?.run {
-            eventListener?.setElementSelected(token, gson.toJson(postback), object : DisplayInterface.OnElementSelectedCallback {
-                override fun onSuccess(dialogRequestId: String) {
-                    Logger.d(TAG, "onButtonClicked() elementSelected SUCCESS. dialogRequestId:$dialogRequestId")
+            if (eventType == ButtonEvent.TextInput.eventType) {
+                if (textInput != null) {
+                    eventListener?.textInput(textInput.text, textInput.playServiceId)
+                } else {
+                    Logger.e(TAG, "onButtonClicked() token: ${button.value?.token}. evenType is 'textInput' but textInput value is not exist")
                 }
+            } else {
+                eventListener?.setElementSelected(token, gson.toJson(postback), object : DisplayInterface.OnElementSelectedCallback {
+                    override fun onSuccess(dialogRequestId: String) {
+                        Logger.d(TAG, "onButtonClicked() elementSelected SUCCESS. dialogRequestId:$dialogRequestId")
+                    }
 
-                override fun onError(dialogRequestId: String, errorType: DisplayInterface.ErrorType) {
-                    Logger.d(TAG, "onButtonClicked() elementSelected ERROR. dialogRequestId:$dialogRequestId, errorType $errorType")
-                }
-            })
+                    override fun onError(dialogRequestId: String, errorType: DisplayInterface.ErrorType) {
+                        Logger.d(TAG, "onButtonClicked() elementSelected ERROR. dialogRequestId:$dialogRequestId, errorType $errorType")
+                    }
+                })
+            }
         }
     }
 
