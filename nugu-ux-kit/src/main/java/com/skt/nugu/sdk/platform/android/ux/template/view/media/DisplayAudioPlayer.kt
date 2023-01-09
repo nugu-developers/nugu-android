@@ -149,7 +149,7 @@ open class DisplayAudioPlayer constructor(
             }
         }
 
-    private var playlistRenderer: PlaylistRenderer? = null
+    protected var playlistRenderer: PlaylistRenderer? = null
 
     @VisibleForTesting
     internal val mediaListener = object : TemplateHandler.ClientListener {
