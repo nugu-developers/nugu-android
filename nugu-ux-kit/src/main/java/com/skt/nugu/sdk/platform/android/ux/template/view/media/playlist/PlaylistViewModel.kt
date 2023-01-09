@@ -97,7 +97,6 @@ class PlaylistViewModel : ViewModel() {
             }
 
             CoroutineScope(Dispatchers.Main).launch {
-                _updatePlaylist.emit(Unit)
                 _title.emit(playlist.subTitle?.text?.text)
                 _editButton.emit(playlist.edit)
                 _button.emit(playlist.button)
@@ -109,6 +108,8 @@ class PlaylistViewModel : ViewModel() {
         CoroutineScope(Dispatchers.Main).launch {
             _playlist.value.clear()
             _playlist.value.addAll(list.map { ListItem(it, false, it.token == currentToken) })
+
+            _updatePlaylist.emit(Unit)
         }
     }
 
@@ -120,7 +121,7 @@ class PlaylistViewModel : ViewModel() {
 
             CoroutineScope(Dispatchers.Main).launch {
                 // title
-                changedPlaylist.title?.text?.text?.apply { _title.emit(this) }
+                changedPlaylist.subTitle?.text?.text?.apply { _title.emit(this) }
 
                 // edit button
                 changedPlaylist.edit?.apply { _editButton.emit(this) }
