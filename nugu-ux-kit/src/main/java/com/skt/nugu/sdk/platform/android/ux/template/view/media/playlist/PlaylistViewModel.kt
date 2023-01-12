@@ -392,6 +392,8 @@ class PlaylistViewModel : ViewModel() {
 
             setCompletable(changed)
         }
+
+        onSelectedStateChanged()
     }
 
     private fun setCompletable(enable: Boolean) {
