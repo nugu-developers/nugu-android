@@ -7,7 +7,7 @@
         android:id="@+id/v_bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/nugu_playlist_item" />
+        android:background="@drawable/nugu_playlist_item" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
