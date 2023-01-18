@@ -146,7 +146,8 @@
                 android:visibility="gone"
                 app:fontColor="#000099"
                 app:fontColorFocus="@android:color/holo_orange_light"
-                app:fontColorTitle="#e89bbd" />
+                app:fontColorTitle="#e89bbd"
+                app:itemLayoutRes="@layout/view_custom_item_lyrics"/>
 
         </FrameLayout>
 

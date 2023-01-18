@@ -29,6 +29,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.skt.nugu.sdk.agent.common.Direction
@@ -64,6 +65,9 @@ class LyricsView @JvmOverloads constructor(
     }
 
     private var layoutId = R.layout.view_lyrics
+    private var itemLayoutId = R.layout.view_item_lyrics
+    private var smallItemLayoutId = R.layout.view_item_small_lyrics
+
     private val lyrics: ArrayList<LyricsInfo> = ArrayList()
     private var adapter: LyricsAdapter
 
@@ -117,6 +121,8 @@ class LyricsView @JvmOverloads constructor(
             viewSize,
             fontColor,
             fontColorFocus,
+            itemLayoutId,
+            smallItemLayoutId
         )
         adapter.fontSizeScaleUnitSp = fontSizeScaleUnitSp
         adapter.lyricsGravity = lyricsGravity
@@ -188,6 +194,8 @@ class LyricsView @JvmOverloads constructor(
             fontSizeScalable = getBoolean(R.styleable.LyricsView_fontSizeScalable, false)
             fontSizeScaleUnitSp = getInt(R.styleable.LyricsView_fontSizeScaleUnitSp, 2)
             layoutId = getResourceId(R.styleable.LyricsView_layoutRes, layoutId)
+            itemLayoutId = getResourceId(R.styleable.LyricsView_itemLayoutRes, itemLayoutId)
+            smallItemLayoutId = getResourceId(R.styleable.LyricsView_smallItemLayoutRes, smallItemLayoutId)
 
             lyricsGravity = when (getInt(R.styleable.LyricsView_lyricsGravity, 0)) {
                 0 -> Gravity.CENTER
@@ -321,6 +329,8 @@ class LyricsView @JvmOverloads constructor(
         private val viewSize: Int,
         @ColorInt private val fontColor: Int,
         @ColorInt private val fontColorFocus: Int,
+        @LayoutRes private val itemLayoutId: Int,
+        @LayoutRes private val smallItemLayoutId: Int,
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -340,7 +350,7 @@ class LyricsView @JvmOverloads constructor(
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val view = LayoutInflater.from(context)
-                .inflate(if (viewSize == SIZE_SMALL) R.layout.view_item_small_lyrics else R.layout.view_item_lyrics, parent, false)
+                .inflate(if (viewSize == SIZE_SMALL) smallItemLayoutId else itemLayoutId, parent, false)
             view.setOnClickListener {
                 parent.performClick()
             }
