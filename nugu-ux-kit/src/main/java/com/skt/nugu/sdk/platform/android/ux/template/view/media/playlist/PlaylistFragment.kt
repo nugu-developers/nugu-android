@@ -74,6 +74,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
     private var eventListener: PlaylistEventListener? = null
 
     private lateinit var recyclerView: RecyclerView
+    private val layoutManager by lazy { LinearLayoutManager(context, RecyclerView.VERTICAL, false) }
     private val adapter by lazy { PlaylistAdapter(viewModel) }
 
     private lateinit var btnEdit: TextView
@@ -108,7 +109,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         return inflater.inflate(R.layout.nugu_fragment_playlist, container, false).also {
             recyclerView = it.findViewById(R.id.view_play_list)
             recyclerView.adapter = adapter
-            recyclerView.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+            recyclerView.layoutManager = layoutManager
             recyclerView.itemAnimator?.changeDuration = 0L
 
             dragHelper.attachToRecyclerView(recyclerView)
@@ -171,12 +172,15 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun observeViewModel() {
-        viewModel.playlist.collectCancelable {
-            adapter.setList(it)
+        viewModel.playlist.collectCancelable { list ->
+            adapter.setList(list)
+            list.indexOfFirst { it.isPlaying }.takeIf { it >= 0 }?.let { playingPosition ->
+                layoutManager.scrollToPositionWithOffset(playingPosition, 0)
+            }
         }
 
         viewModel.updatePlaylist.collectCancelable {
-            adapter.setList(viewModel.playlist.value)
+            adapter.setList(viewModel.playlist.value, diff = true)
         }
 
         viewModel.updatePlaylistItem.collectCancelable {

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.skt.nugu.sdk.core.utils.Logger
@@ -35,10 +36,17 @@ class PlaylistAdapter(private val viewModel: PlaylistViewModel) : RecyclerView.A
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    fun setList(list: List<PlaylistViewModel.ListItem>) {
-        playlist.clear()
-        playlist.addAll(list)
-        notifyDataSetChanged()
+    fun setList(list: List<PlaylistViewModel.ListItem>, diff: Boolean = false) {
+        if (diff) {
+            val diffResult = DiffUtil.calculateDiff(DiffUtilCallback(playlist, list))
+            playlist.clear()
+            playlist.addAll(list)
+            diffResult.dispatchUpdatesTo(this)
+        } else {
+            playlist.clear()
+            playlist.addAll(list)
+            notifyDataSetChanged()
+        }
     }
 
     fun moveData(from: Int, to: Int) {
@@ -145,4 +153,18 @@ class ViewHolder(view: View, viewModel: PlaylistViewModel) : RecyclerView.ViewHo
             visibility = if (editMode) View.VISIBLE else View.GONE
         }
     }
+}
+
+class DiffUtilCallback(private val oldList: List<PlaylistViewModel.ListItem>, private val newList: List<PlaylistViewModel.ListItem>) :
+    DiffUtil.Callback() {
+    override fun getOldListSize(): Int = oldList.size
+
+    override fun getNewListSize(): Int = newList.size
+
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+        return oldList.getOrNull(oldItemPosition)?.item?.token == newList.getOrNull(newItemPosition)?.item?.token
+    }
+
+    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+        oldList[oldItemPosition] == newList[newItemPosition]
 }
