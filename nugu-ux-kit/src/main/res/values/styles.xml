@@ -76,12 +76,20 @@
         <attr name="fontColorFocus" format="color|reference" />
         <attr name="fontColorTitle" format="color|reference" />
 
+        <attr name="layoutRes" format="reference" />
+
+        <!-- lyrics item view holder layout.
+             android:textColor attr in this layout will not work since the logic for highlight and dark mode text color in LyricsView.
+             so you must use fontColor attr of LyricsView to set text color
+        -->
+        <attr name="itemLayoutRes" format="reference" />
+        <attr name="smallItemLayoutRes" format="reference" />
+
         <!-- whether fontScale function support or not. If it's true scale button will showing. (default : false) -->
         <attr name="fontSizeScalable" format="boolean" />
 
         <!-- base unit of font size scale amount. (default : 2 sp) -->
         <attr name="fontSizeScaleUnitSp" format="integer" />
-        <attr name="layoutRes" format="reference" />
 
         <!-- each lyrics text gravity (default : center)  -->
         <attr name="lyricsGravity" format="enum">
