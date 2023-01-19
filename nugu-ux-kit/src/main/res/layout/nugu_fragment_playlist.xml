@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -50,6 +51,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:background="@drawable/nugu_bg_round_corner_100_blue"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="4dp"
                     android:textColor="#334cff"
@@ -72,10 +75,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|center_vertical"
-                android:drawableLeft="@drawable/nugu_button_playlist_select_all"
+                android:drawablePadding="4dp"
                 android:text="@string/nugu_playlist_select_all"
                 android:textColor="@color/nugu_playlist_btn_select_all"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                app:drawableLeftCompat="@drawable/nugu_button_playlist_select_all" />
 
             <TextView
                 android:id="@+id/btn_delete"
