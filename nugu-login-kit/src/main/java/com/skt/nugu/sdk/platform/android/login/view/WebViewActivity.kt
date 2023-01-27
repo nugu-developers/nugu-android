@@ -23,6 +23,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.webkit.*
+import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import java.io.File
 
@@ -33,6 +34,7 @@ import java.io.File
 class WebViewActivity : /**AppCompatActivity()**/
     Activity() {
     companion object {
+        private const val TAG = "WebViewActivity"
         const val SCHEME_HTTPS = "https"
         const val SCHEME_HTTP = "http"
         var supportDeepLink = true
@@ -43,7 +45,7 @@ class WebViewActivity : /**AppCompatActivity()**/
         super.onCreate(savedInstanceState)
         val action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
         val webView = try { WebView(this) } catch (e: Throwable) {
-                setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_FAILED, Intent().apply {
+                setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_FAILED, Intent().apply {
                     putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, e)
                 })
                 finish()
@@ -62,13 +64,14 @@ class WebViewActivity : /**AppCompatActivity()**/
                         return try {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             intent.putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, action.toString())
-                            setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_SUCCESS, intent)
+                            setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_SUCCESS, intent)
                             finish()
                             true
                         } catch (e: Throwable) {
+                            Logger.e(TAG, "[shouldOverrideUrlLoading] url=$url, cause=${e.cause}, message=${e.message}")
                             val intent = Intent()
                             intent.putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, e)
-                            setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_FAILED, intent)
+                            setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_FAILED, intent)
                             finish()
                             false
                         }
@@ -84,19 +87,15 @@ class WebViewActivity : /**AppCompatActivity()**/
             ) {
                 super.onReceivedError(view, request, error)
 
-                val intent = Intent()
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    intent.putExtra(
+                val message = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    "[onReceivedError] errorCode=${error?.errorCode}, description=${error?.description.toString()}"
+                     else "[onReceivedError] error=${error?.toString()}"
+                setResult(
+                    NuguOAuthCallbackActivity.WEBVIEW_RESULT_FAILED, Intent().putExtra(
                         NuguOAuthCallbackActivity.EXTRA_ERROR,
-                        Throwable(error?.description.toString())
+                        Throwable(message)
                     )
-                } else {
-                    intent.putExtra(
-                        NuguOAuthCallbackActivity.EXTRA_ERROR,
-                        Throwable(error?.toString())
-                    )
-                }
-                setResult(NuguOAuthCallbackActivity.RESULT_WEBVIEW_FAILED, intent)
+                )
                 finish()
             }
         }
