@@ -48,6 +48,7 @@ class NuguOAuthCallbackActivity : Activity() {
     private var handler: Handler = Handler(Looper.getMainLooper())
     private val finishRunnable = Runnable {
         if(firstRequestCode == nextRequestCode) {
+            auth.setResult(false, NuguOAuthError(Throwable("user cancelled")))
             finish()
         }
     }
