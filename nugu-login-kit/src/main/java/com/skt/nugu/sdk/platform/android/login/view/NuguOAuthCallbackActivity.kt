@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.platform.android.login.view
 
 import android.app.Activity
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -27,6 +26,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.*
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
+import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE
 import java.lang.IllegalStateException
 
 /**
@@ -36,24 +36,19 @@ class NuguOAuthCallbackActivity : Activity() {
     /** Get NuguOAuth instance **/
     companion object {
         private const val TAG = "NuguOAuthCallbackActivity"
-        const val RESULT_WEBVIEW_FAILED = RESULT_FIRST_USER + 1
-        const val RESULT_WEBVIEW_SUCCESS = RESULT_FIRST_USER + 2
         const val EXTRA_ERROR  = "error"
-        private const val WEBVIEW_REQUEST_CODE = CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE + 1
-        private const val finishDelayMillis = 100L
+        const val WEBVIEW_REQUEST_CODE = CHROME_CUSTOM_TAB_REQUEST_CODE + 1
+        const val WEBVIEW_RESULT_FAILED = RESULT_FIRST_USER + 1
+        const val WEBVIEW_RESULT_SUCCESS = RESULT_FIRST_USER + 2
     }
     private val auth by lazy { NuguOAuth.getClient() }
     private var action: String? = NuguOAuth.ACTION_LOGIN
     private var data: String? = null
     private var handler: Handler = Handler(Looper.getMainLooper())
     private val finishRunnable = Runnable {
-        if(firstRequestCode == nextRequestCode) {
-            auth.setResult(false, NuguOAuthError(Throwable("user cancelled")))
-            finish()
-        }
+        auth.setResult(false, NuguOAuthError(Throwable("user cancelled")))
+        finish()
     }
-    private var nextRequestCode = CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE
-    private var firstRequestCode = 0
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(NuguOAuth.EXTRA_OAUTH_ACTION, action)
@@ -83,18 +78,19 @@ class NuguOAuthCallbackActivity : Activity() {
     internal fun processOAuthCallback(intent: Intent?) : Boolean {
         action = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_ACTION)
         data = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_DATA)
+        Logger.w(TAG, "[processOAuthCallback] action=$action, supportDeepLink=${WebViewActivity.supportDeepLink}")
 
         val isTidLogin = try {
             auth.isTidLogin()
         } catch (e: IllegalStateException) {
-            e.printStackTrace()
+            auth.setResult(false, NuguOAuthError(e))
             return false
         }
 
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
                 if (isTidLogin) {
-                    Logger.d(TAG, "[processOAuthCallback] isTidLogin=$isTidLogin")
+                    Logger.d(TAG, "[processOAuthCallback] already login")
                     auth.setResult(true)
                     return false
                 }
@@ -105,13 +101,14 @@ class NuguOAuthCallbackActivity : Activity() {
                 }
 
                 val fallbackRunnable = Runnable {
-                    Logger.e(TAG, "[processOAuthCallback] fallback, action=$action")
-                    nextRequestCode = WEBVIEW_REQUEST_CODE
+                    Logger.w(TAG, "[processOAuthCallback] fallback")
+                    handler.removeCallbacks(finishRunnable)
                     startActivityForResult(Intent(this, WebViewActivity::class.java).apply {
                         putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
                         data = auth.getLoginUri(this@NuguOAuthCallbackActivity.data)
-                    }, nextRequestCode)
+                    }, WEBVIEW_REQUEST_CODE)
                 }
+
                 if(!WebViewActivity.supportDeepLink) {
                     fallbackRunnable.run()
                     return true
@@ -131,12 +128,12 @@ class NuguOAuthCallbackActivity : Activity() {
                     return true
                 }
                 val fallbackRunnable = Runnable {
-                    Logger.e(TAG, "[processOAuthCallback] fallback, action=$action")
-                    nextRequestCode = WEBVIEW_REQUEST_CODE
+                    Logger.w(TAG, "[processOAuthCallback] fallback")
+                    handler.removeCallbacks(finishRunnable)
                     startActivityForResult(Intent(this, WebViewActivity::class.java).apply {
                         putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
                         data = auth.getAccountInfoUri(this@NuguOAuthCallbackActivity.data)
-                    }, nextRequestCode)
+                    }, WEBVIEW_REQUEST_CODE)
                 }
 
                 if(!WebViewActivity.supportDeepLink) {
@@ -154,6 +151,7 @@ class NuguOAuthCallbackActivity : Activity() {
             }
             else -> {
                 Logger.e(TAG, "[processOAuthCallback] unexpected action=$action")
+                auth.setResult(false, NuguOAuthError(Throwable("unexpected action=$action")))
                 return false
             }
         }
@@ -162,23 +160,31 @@ class NuguOAuthCallbackActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        firstRequestCode = requestCode
-
-        if(resultCode == RESULT_WEBVIEW_FAILED) {
-            val error = data?.extras?.getSerializable(EXTRA_ERROR)
-            if (error is Throwable) {
-                auth.setResult(false, NuguOAuthError(error))
-            } else auth.setResult(false)
-            finish()
-        } else if(resultCode == RESULT_WEBVIEW_SUCCESS) {
-            if(auth.verifyStateFromIntent(data)) {
-                performLogin(auth.codeFromIntent(data))
-            } else {
-                auth.setResult(false, NuguOAuthError(Throwable("Csrf failed. data=$data")))
-                finish()
+        Logger.d(TAG, "[onActivityResult] requestCode=$requestCode, resultCode=$resultCode")
+        when(requestCode) {
+            WEBVIEW_REQUEST_CODE -> {
+                when(resultCode) {
+                    WEBVIEW_RESULT_FAILED -> {
+                        val extraError = data?.extras?.getSerializable(EXTRA_ERROR)
+                        if (extraError is Throwable)
+                            auth.setResult(false, NuguOAuthError(extraError))
+                        else auth.setResult(false)
+                        finish()
+                    }
+                    WEBVIEW_RESULT_SUCCESS -> {
+                        if(auth.verifyStateFromIntent(data)) {
+                            performLogin(auth.codeFromIntent(data))
+                        } else {
+                            auth.setResult(false, NuguOAuthError(Throwable("Csrf failed. data=$data")))
+                            finish()
+                        }
+                    }
+                    else -> handler.postDelayed(finishRunnable, 100L)
+                }
             }
-        } else {
-            handler.postDelayed(finishRunnable, finishDelayMillis)
+            CHROME_CUSTOM_TAB_REQUEST_CODE -> {
+                handler.postDelayed(finishRunnable, 100L)
+            }
         }
     }
 
@@ -190,12 +196,13 @@ class NuguOAuthCallbackActivity : Activity() {
      */
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        Logger.d(TAG, "[onNewIntent]")
         handler.removeCallbacks(finishRunnable)
 
         if (auth.verifyStateFromIntent(intent)) {
             performLogin(auth.codeFromIntent(intent))
         } else {
-            auth.setResult(false)
+            auth.setResult(false, NuguOAuthError(Throwable("Csrf failed. data=$data")))
             finish()
         }
     }
@@ -204,6 +211,7 @@ class NuguOAuthCallbackActivity : Activity() {
      * Perform a login.
      */
     private fun performLogin(code : String?) {
+        Logger.d(TAG, "[performLogin]")
         auth.loginInternal(
             AuthorizationRequest.AuthorizationCodeRequest(code),
             object : AuthStateListener {
