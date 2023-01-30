@@ -91,7 +91,7 @@
                 android:paddingVertical="4dp"
                 android:text="@string/nugu_playlist_delete"
                 android:textColor="@color/nugu_playlist_btn_delete"
-                android:textSize="15sp" />
+                android:textSize="14sp" />
 
         </FrameLayout>
 
