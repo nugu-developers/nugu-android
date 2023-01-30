@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
 import com.skt.nugu.sdk.platform.android.ux.R
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguSimpleDialogView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -106,7 +107,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        return inflater.inflate(R.layout.nugu_fragment_playlist, container, false).also {
+        return inflater.inflate(TemplateView.playlistLayoutId ?: R.layout.nugu_fragment_playlist, container, false).also {
             recyclerView = it.findViewById(R.id.view_play_list)
             recyclerView.adapter = adapter
             recyclerView.layoutManager = layoutManager

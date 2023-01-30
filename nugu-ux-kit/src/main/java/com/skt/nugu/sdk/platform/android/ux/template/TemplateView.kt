@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.ux.template
 
 import android.content.Context
 import android.view.View
+import androidx.annotation.LayoutRes
 import androidx.annotation.MainThread
 import com.skt.nugu.sdk.agent.display.DisplayAggregatorInterface
 import com.skt.nugu.sdk.core.utils.Logger
@@ -90,6 +91,20 @@ interface TemplateView {
 
             return TemplateWebView(context).apply { id = R.id.template_view }
         }
+
+        /**
+         *  for Custom Layout.
+         *  This must include every res in R.layout.nugu_fragment_playlist
+         */
+        @LayoutRes
+        var playlistLayoutId : Int? = null
+
+        /**
+         *  for Custom Layout.
+         *  This must include every res in R.layout.nugu_view_holder_playlist_item
+         */
+        @LayoutRes
+        var playlistItemLayoutId : Int? = null
     }
 
     var templateHandler: TemplateHandler?
