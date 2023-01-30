@@ -26,7 +26,7 @@
                 android:layout_gravity="center_vertical"
                 android:gravity="start|center_vertical"
                 android:textColor="#091840"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <androidx.appcompat.widget.LinearLayoutCompat
@@ -78,7 +78,7 @@
                 android:drawablePadding="4dp"
                 android:text="@string/nugu_playlist_select_all"
                 android:textColor="@color/nugu_playlist_btn_select_all"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 app:drawableLeftCompat="@drawable/nugu_button_playlist_select_all" />
 
             <TextView
@@ -91,7 +91,7 @@
                 android:paddingVertical="4dp"
                 android:text="@string/nugu_playlist_delete"
                 android:textColor="@color/nugu_playlist_btn_delete"
-                android:textSize="14sp" />
+                android:textSize="15sp" />
 
         </FrameLayout>
 

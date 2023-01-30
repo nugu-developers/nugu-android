@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
+import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.updateImage
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 
@@ -24,7 +25,7 @@ class PlaylistAdapter(private val viewModel: PlaylistViewModel) : RecyclerView.A
     private var editMode = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_play_item, parent, false), viewModel)
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(TemplateView.playlistItemLayoutId ?: R.layout.nugu_view_holder_playlist_item, parent, false), viewModel)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
