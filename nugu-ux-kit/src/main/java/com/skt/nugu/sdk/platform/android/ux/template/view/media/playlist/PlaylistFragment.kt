@@ -181,7 +181,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         }
 
         viewModel.updatePlaylist.collectCancelable {
-            adapter.setList(viewModel.playlist.value, diff = true)
+            adapter.setList(viewModel.playlist.value, diff = it)
         }
 
         viewModel.updatePlaylistItem.collectCancelable {
