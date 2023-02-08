@@ -25,6 +25,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         ): PlaylistFragment {
             return PlaylistFragment().apply {
                 this.playlist = playlist
+                this.playServiceId = playlist?.playServiceId
                 this.eventListener = eventListener
             }
         }
@@ -39,6 +40,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
 
     private lateinit var playlistView: PlaylistView
     private var playlist: Playlist? = null
+    private var playServiceId : String? = null
     private var eventListener: PlaylistEventListener? = null
 
     private val coroutineJobs = arrayListOf<Job>()
@@ -56,7 +58,7 @@ class PlaylistFragment : Fragment(), PlaylistDataListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        return PlaylistView.createView(playlist?.playServiceId, requireContext()).also {
+        return PlaylistView.createView(playServiceId, requireContext()).also {
             playlistView = it
             playlistView.setPlaylistViewModel(viewModel)
         }.asView()
