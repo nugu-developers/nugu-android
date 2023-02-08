@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.ux.R
-import com.skt.nugu.sdk.platform.android.ux.template.TemplateView
 import com.skt.nugu.sdk.platform.android.ux.template.updateImage
 import com.skt.nugu.sdk.platform.android.ux.widget.NuguButton
 
@@ -24,8 +23,14 @@ class PlaylistAdapter(private val viewModel: PlaylistViewModel) : RecyclerView.A
     private var playlist: ArrayList<PlaylistViewModel.ListItem> = arrayListOf()
     private var editMode = false
 
+    var onViewClicked : ((View) -> Unit)? = null
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(TemplateView.playlistItemLayoutId ?: R.layout.nugu_view_holder_playlist_item, parent, false), viewModel)
+        return ViewHolder(
+            LayoutInflater.from(parent.context).inflate(PlaylistView.playlistItemLayoutId ?: R.layout.nugu_view_holder_playlist_item, parent, false),
+            viewModel,
+            onViewClicked
+        )
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -89,18 +94,19 @@ class PlaylistAdapter(private val viewModel: PlaylistViewModel) : RecyclerView.A
 }
 
 @SuppressLint("ClickableViewAccessibility")
-class ViewHolder(view: View, viewModel: PlaylistViewModel) : RecyclerView.ViewHolder(view) {
+class ViewHolder(view: View, viewModel: PlaylistViewModel, onViewClicked: ((View) -> Unit)?) : RecyclerView.ViewHolder(view) {
     private val thumbTransformCorner by lazy { RoundedCorners(NuguButton.dpToPx(8f, view.context)) }
 
     private val titleColor = view.context.resources.getColor(R.color.nugu_playlist_item_title_color)
     private val titleColorPlaying = view.context.resources.getColor(R.color.nugu_playlist_item_title_color_playing)
 
     init {
-        view.findViewById<View>(R.id.v_bg).setOnClickListener {
+        view.findViewById<View>(R.id.nugu_playlist_item_bg).setOnClickListener {
             viewModel.onItemClicked(adapterPosition)
+            onViewClicked?.invoke(it)
         }
 
-        view.findViewById<View>(R.id.iv_drag_handle).run {
+        view.findViewById<View>(R.id.nugu_playlist_item_drag_handle).run {
             setOnTouchListener { _, event ->
                 if (event.action == MotionEvent.ACTION_DOWN) {
                     viewModel.onDragHandleTouchDown(adapterPosition)
@@ -109,8 +115,9 @@ class ViewHolder(view: View, viewModel: PlaylistViewModel) : RecyclerView.ViewHo
             }
         }
 
-        itemView.findViewById<View>(R.id.iv_favorite).setOnClickListener {
+        itemView.findViewById<View>(R.id.nugu_playlist_item_btn_favorite).setOnClickListener {
             viewModel.onItemFavoriteClicked(adapterPosition)
+            onViewClicked?.invoke(it)
         }
     }
 
@@ -119,38 +126,38 @@ class ViewHolder(view: View, viewModel: PlaylistViewModel) : RecyclerView.ViewHo
 
         item ?: return
 
-        itemView.findViewById<View>(R.id.v_bg).isSelected = listItem.isSelected
+        itemView.findViewById<View>(R.id.nugu_playlist_item_bg).isSelected = listItem.isSelected
 
-        itemView.findViewById<ImageView>(R.id.iv_thumbnail).run {
+        itemView.findViewById<ImageView>(R.id.nugu_playlist_item_thumbnail).run {
             visibility = if (item.imageUrl != null) View.VISIBLE else View.GONE
             if (item.imageUrl != null) {
                 updateImage(item.imageUrl, placeHolder = R.drawable.nugu_logo_placeholder_60, transformation = thumbTransformCorner)
             }
         }
 
-        itemView.findViewById<TextView>(R.id.tv_title).run {
+        itemView.findViewById<TextView>(R.id.nugu_playlist_item_title).run {
             text = item.text.text
             maxLines = item.text.maxLine ?: 1
             setTextColor(if (listItem.isPlaying) titleColorPlaying else titleColor)
         }
 
-        itemView.findViewById<ImageView>(R.id.iv_badge).run {
+        itemView.findViewById<ImageView>(R.id.nugu_playlist_item_badge).run {
             visibility = if (item.badgeUrl != null) View.VISIBLE else View.GONE
             updateImage(item.badgeUrl, null)
         }
 
-        itemView.findViewById<TextView>(R.id.tv_subtitle).run {
+        itemView.findViewById<TextView>(R.id.nugu_playlist_item_subtitle).run {
             visibility = if (item.subText != null) View.VISIBLE else View.GONE
             text = item.subText?.text
             maxLines = item.subText?.maxLine ?: 1
         }
 
-        itemView.findViewById<View>(R.id.iv_favorite).run {
+        itemView.findViewById<View>(R.id.nugu_playlist_item_btn_favorite).run {
             visibility = if (item.favorite != null && !editMode) View.VISIBLE else View.GONE
             isSelected = item.favorite?.status == true
         }
 
-        itemView.findViewById<View>(R.id.iv_drag_handle).run {
+        itemView.findViewById<View>(R.id.nugu_playlist_item_drag_handle).run {
             visibility = if (editMode) View.VISIBLE else View.GONE
         }
     }
