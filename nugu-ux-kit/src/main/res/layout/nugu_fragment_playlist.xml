@@ -13,14 +13,14 @@
         android:orientation="vertical">
 
         <FrameLayout
-            android:id="@+id/view_title_container"
+            android:id="@+id/nugu_playlist_title_container"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:background="@color/nugu_playlist_bg"
             android:paddingHorizontal="16dp">
 
             <TextView
-                android:id="@+id/tv_title"
+                android:id="@+id/nugu_playlist_item_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -35,7 +35,7 @@
                 android:layout_gravity="end|center_vertical">
 
                 <TextView
-                    android:id="@+id/btn_btn"
+                    android:id="@+id/nugu_playlist_btn_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/nugu_bg_round_corner_100_blue"
@@ -46,7 +46,7 @@
                     android:visibility="gone" />
 
                 <TextView
-                    android:id="@+id/btn_edit"
+                    android:id="@+id/nugu_playlist_btn_edit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
@@ -63,7 +63,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/view_edit_top_container"
+            android:id="@+id/nugu_playlist_edit_top_container"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:background="@color/nugu_playlist_bg"
@@ -71,7 +71,7 @@
             android:visibility="gone">
 
             <TextView
-                android:id="@+id/btn_select_all"
+                android:id="@+id/nugu_playlist_btn_select_all"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|center_vertical"
@@ -82,7 +82,7 @@
                 app:drawableLeftCompat="@drawable/nugu_button_playlist_select_all" />
 
             <TextView
-                android:id="@+id/btn_delete"
+                android:id="@+id/nugu_playlist_btn_delete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical"
@@ -101,7 +101,7 @@
             android:background="#ced1d9" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/view_play_list"
+            android:id="@+id/nugu_playlist_play_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/nugu_playlist_bg"
@@ -109,7 +109,7 @@
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <LinearLayout
-        android:id="@+id/view_edit_bottom_container"
+        android:id="@+id/nugu_playlist_edit_bottom_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/media_player_playlist_edit_mode_button_height"
         android:layout_gravity="bottom"
@@ -119,7 +119,7 @@
         android:visibility="gone">
 
         <TextView
-            android:id="@+id/btn_cancel"
+            android:id="@+id/nugu_playlist_btn_cancel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginHorizontal="4dp"
@@ -131,7 +131,7 @@
             android:textSize="16sp" />
 
         <TextView
-            android:id="@+id/btn_complete"
+            android:id="@+id/nugu_playlist_btn_complete"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginHorizontal="4dp"

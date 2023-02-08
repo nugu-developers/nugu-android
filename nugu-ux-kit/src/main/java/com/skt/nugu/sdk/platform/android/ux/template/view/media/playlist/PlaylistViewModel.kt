@@ -28,6 +28,8 @@ class PlaylistViewModel : ViewModel() {
 
     private var eventListener: PlaylistEventListener? = null
 
+    var playlistBottomMargin: Int = 0
+
     private val _playlist = MutableStateFlow<ArrayList<ListItem>>(arrayListOf())
     val playlist = _playlist.asStateFlow()
 

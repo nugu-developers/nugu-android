@@ -255,7 +255,7 @@ open class TemplateRenderer(
                     notifyPlaylistEditModeChanged(it)
                 }
 
-                playlistFragment.playlistBottomMargin = getPlaylistBottomMargin()
+                playlistFragment.setPlaylistBottomMargin(getPlaylistBottomMargin())
 
                 setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out).add(containerId, playlistFragment, PlaylistFragment.TAG)
                     .commitNowAllowingStateLoss()
@@ -291,7 +291,7 @@ open class TemplateRenderer(
             }
     }
 
-    override fun textInput(text : String, playServiceId: String?) {
+    override fun textInput(text: String, playServiceId: String?) {
         nuguClientProvider.getNuguClient().textAgent?.requestTextInput(text, playServiceId)
     }
 
