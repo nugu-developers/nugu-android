@@ -204,9 +204,9 @@ class RoutineAgent(
             override fun onPostProcessed(directives: List<Directive>) {
                 directives.firstOrNull()?.getDialogRequestId()?.let { dialogRequestId ->
                     if (causingPauseRequests.remove(dialogRequestId) != null) {
-                        if (!directives.any { it.getNamespaceAndName() == ContinueDirectiveHandler.CONTINUE || (it.getNamespace() == "ASR" && it.getName() == "NotifyResult") }) {
-                            currentRoutineRequest?.cancel()
-                        }
+//                        if (!directives.any { it.getNamespaceAndName() == ContinueDirectiveHandler.CONTINUE || (it.getNamespace() == "ASR" && it.getName() == "NotifyResult") }) {
+//                            currentRoutineRequest?.cancel()
+//                        }
                     }
                 }
             }
