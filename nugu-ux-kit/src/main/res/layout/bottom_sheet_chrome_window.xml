@@ -28,7 +28,7 @@
             android:singleLine="true"
             android:textAlignment="textStart"
             android:textSize="17sp"
-            app:fontFamily="@font/noto_sans_kr_medium_hestia" />
+            />
 
         <com.skt.nugu.sdk.platform.android.ux.widget.NuguChipsView
             android:id="@+id/chipsView"
