@@ -23,6 +23,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.webkit.*
+import androidx.annotation.RequiresApi
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
 import java.io.File
@@ -56,28 +57,15 @@ class WebViewActivity : /**AppCompatActivity()**/
         //supportActionBar?.setDisplayShowTitleEnabled(false)
         setDefaultWebSettings(webView)
         webView.webViewClient = object : WebViewClient() {
+            @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val uri = request?.url ?: return false
+                return handleUri(uri)
+            }
+
+            @Deprecated("deprecated")
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                url?.apply {
-                    val scheme = Uri.parse(this).scheme
-                    val isWebScheme = SCHEME_HTTP == scheme || SCHEME_HTTPS == scheme
-                    if (!isWebScheme) {
-                        return try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                            intent.putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, action.toString())
-                            setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_SUCCESS, intent)
-                            finish()
-                            true
-                        } catch (e: Throwable) {
-                            Logger.e(TAG, "[shouldOverrideUrlLoading] url=$url, cause=${e.cause}, message=${e.message}")
-                            val intent = Intent()
-                            intent.putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, e)
-                            setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_FAILED, intent)
-                            finish()
-                            false
-                        }
-                    }
-                }
-                return false
+                return handleUri(Uri.parse(url))
             }
 
             override fun onReceivedError(
@@ -91,6 +79,37 @@ class WebViewActivity : /**AppCompatActivity()**/
                     "[onReceivedError] url=${view?.url}, requestUrl=${request?.url}, errorCode=${error?.errorCode}, description=${error?.description.toString()}"
                      else "[onReceivedError] url=${view?.url}, error=${error?.toString()}"
                 Logger.e(TAG, message)
+            }
+
+            private fun handleUri(uri: Uri) : Boolean {
+                val scheme = uri.scheme
+                val isWebScheme = SCHEME_HTTP == scheme || SCHEME_HTTPS == scheme
+                if (!isWebScheme) {
+                    return try {
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        intent.putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, action.toString())
+                        setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_SUCCESS, intent)
+                        finish()
+                        true
+                    } catch (e: Throwable) {
+                        Logger.e(TAG, "[shouldOverrideUrlLoading] uri=$uri, cause=${e.cause}, message=${e.message}")
+                        val intent = Intent()
+                        intent.putExtra(NuguOAuthCallbackActivity.EXTRA_ERROR, e)
+                        setResult(NuguOAuthCallbackActivity.WEBVIEW_RESULT_FAILED, intent)
+                        finish()
+                        false
+                    }
+                }
+                return false
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    CookieManager.getInstance().flush()
+                } else {
+                    CookieSyncManager.getInstance().sync()
+                }
             }
         }
         intent.data?.apply {
