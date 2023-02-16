@@ -287,11 +287,6 @@ class NuguWebView @JvmOverloads constructor(
 
     private fun updateCookies(url: String) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                CookieManager.getInstance().removeAllCookies(null)
-            } else {
-                CookieManager.getInstance().removeAllCookie()
-            }
             cookies.forEach { (key, value) ->
                 val header = StringBuilder()
                 header.append(key).append("=").append(value)
