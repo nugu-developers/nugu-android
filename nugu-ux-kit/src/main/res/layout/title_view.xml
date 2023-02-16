@@ -21,7 +21,6 @@
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/noto_sans_kr_medium_hestia"
             android:textColor="@color/media_template_text_title_light"
             android:gravity="center"
             android:maxLines="1"

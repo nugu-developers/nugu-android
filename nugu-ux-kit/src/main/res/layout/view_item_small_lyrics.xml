@@ -5,7 +5,6 @@
     android:minHeight="18dp"
     android:layout_marginStart="20dp"
     android:layout_marginEnd="20dp"
-    android:fontFamily="@font/noto_sans_kr_regular_hestia"
     android:gravity="center"
     android:paddingStart="20dp"
     android:clickable="false"
