@@ -28,7 +28,7 @@ interface RoutineAgentInterface {
         fun onStopped(directive: StartDirectiveHandler.StartDirective)
         fun onFinished(directive: StartDirectiveHandler.StartDirective)
         fun onInterrupted(directive: StartDirectiveHandler.StartDirective)
-        fun onSuspended(directive: StartDirectiveHandler.StartDirective, expectedTerminateTimestamp: Long)
+        fun onSuspended(directive: StartDirectiveHandler.StartDirective, index: Int, expectedTerminateTimestamp: Long)
 
         /**
          * Called a [index] action started of routine for [directive]

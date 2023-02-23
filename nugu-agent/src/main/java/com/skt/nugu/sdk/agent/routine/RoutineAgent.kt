@@ -468,7 +468,7 @@ class RoutineAgent(
                         applyMuteDelay = true
                     }
                     action.actionTimeoutInMilliseconds?.let {
-                        setSuspendedState(directive, System.currentTimeMillis() + it)
+                        setSuspendedState(directive, currentActionIndex, System.currentTimeMillis() + it)
                         scheduledFutureForActionTimeout = ActionTimeoutFuture(dialogRequestId, scheduleActionTimeoutTriggeredEvent(it, action, directive, dialogRequestId))
                     }
                     listeners.forEach {
@@ -653,7 +653,7 @@ class RoutineAgent(
             if(!isActionRequesting.compareAndSet(false, true)) {
                 return
             }
-            setSuspendedState(directive, System.currentTimeMillis() + muteDelayInMilliseconds)
+            setSuspendedState(directive, currentActionIndex, System.currentTimeMillis() + muteDelayInMilliseconds)
             // mute 시간 이후, 다음 action을 실행하도록 함.
             scheduledFutureForTryStartNextAction?.cancel(true)
             scheduledFutureForTryStartNextAction =
@@ -1007,13 +1007,13 @@ class RoutineAgent(
         }
     }
 
-    private fun setSuspendedState(directive: StartDirectiveHandler.StartDirective, expectedTerminateTimestamp: Long) {
+    private fun setSuspendedState(directive: StartDirectiveHandler.StartDirective, index: Int, expectedTerminateTimestamp: Long) {
         if(this.state == RoutineAgentInterface.State.SUSPENDED) {
             return
         }
 
         this.state = RoutineAgentInterface.State.SUSPENDED
 
-        listeners.forEach { it.onSuspended(directive, expectedTerminateTimestamp) }
+        listeners.forEach { it.onSuspended(directive, index, expectedTerminateTimestamp) }
     }
 }
