@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+Version 1.7.11 *(2023-02-28)*
+-----------------------------
+* Fix: WebViewActivity cookie sync issue (#2379)
+* Fix: Do not cancel the routine when receiving a response to a request to pause a routine (#2376)
+* Fix: ERR_CONNECTION_RESET on WebViewActivity (#2372)
+* Fix: Fix event not dispatched when closing chrome custom tab (#2369)
+* Fix: Chrome Custom Tabs not available in Android 11 (#2338)
+* Improve : Append current action index at onSuspended() (#2381)
+* Improve: Update gRPC v1.51.1 (#2352)
+* Improve: Update Compile&Target SDK 33 (#2358)
+* New: Provide utility class to record keyword audio source (#2344)
+* New: Support AudioPlayer v1.7 (#2330)
+
 Version 1.7.10 *(2022-12-09)*
 -----------------------------
 * Fix: Fix wrong routine agent state (#2283)
