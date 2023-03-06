@@ -286,36 +286,17 @@ class RoutineAgent(
                 return false
             }
 
-            val index = findFirstCountableActionFrom((position - 1).toInt())
+            val targetIndex = (position - 1).toInt()
 
-            return if(index != -1) {
+            return if(targetIndex != -1) {
                 cancelCurrentAction()
                 pause()
                 scheduledFutureForCancelByInterrupt?.cancel(true)
                 scheduledFutureForCancelByInterrupt = null
-                tryStartActionIndexAt(index)
+                tryStartActionIndexAt(targetIndex)
                 true
             } else {
                 false
-            }
-        }
-
-        private fun findFirstCountableActionFrom(startIndex: Int): Int {
-            with(directive.payload.actions) {
-                var index = startIndex
-
-                while (index < size) {
-                    if (get(index).type != Action.Type.BREAK) {
-                        break
-                    }
-                    index++
-                }
-
-                return if(index < size) {
-                    index
-                } else {
-                    -1
-                }
             }
         }
 
