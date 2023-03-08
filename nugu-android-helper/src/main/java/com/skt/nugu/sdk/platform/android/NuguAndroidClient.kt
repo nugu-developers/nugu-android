@@ -46,6 +46,7 @@ import com.skt.nugu.sdk.agent.delegation.DelegationClient
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.*
+import com.skt.nugu.sdk.agent.display.timer.DisplayTimer
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgent
@@ -837,7 +838,8 @@ class NuguAndroidClient private constructor(
                                         getInterLayerDisplayPolicyManager(),
                                         getContextManager(),
                                         builder.enableDisplayLifeCycleManagement,
-                                        builder.defaultDisplayDuration
+                                        builder.defaultDisplayDuration,
+                                        DisplayTimer.Factory
                                     ).apply {
                                         getDisplayPlayStackManager().addPlayContextProvider(this)
 

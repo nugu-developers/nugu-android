@@ -23,6 +23,14 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DisplayTimer(private val tag: String): DisplayTimerInterface {
+    companion object {
+        val Factory by lazy {
+            object : DisplayTimerInterface.Factory {
+                override fun newTimer(): DisplayTimerInterface = DisplayTimer("DisplayAgent::DisplayTimer")
+            }
+        }
+    }
+
     private val lock = ReentrantLock()
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>> = HashMap()
