@@ -47,6 +47,7 @@ import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregator
 import com.skt.nugu.sdk.agent.dialog.DialogUXStateAggregatorInterface
 import com.skt.nugu.sdk.agent.display.*
 import com.skt.nugu.sdk.agent.display.timer.DisplayTimer
+import com.skt.nugu.sdk.agent.display.timer.DisplayTimerInterface
 import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgent
@@ -251,6 +252,7 @@ class NuguAndroidClient private constructor(
         internal var enableDisplay: Boolean = true
         internal var defaultDisplayDuration = 7000L
         internal var enableDisplayLifeCycleManagement = true
+        internal var displayTimerFactory: DisplayTimerInterface.Factory = DisplayTimer.Factory
 
         // battery agent (optional)
         internal var batteryStatusProvider: BatteryStatusProvider? = AndroidBatteryStatusProvider(context)
@@ -370,6 +372,12 @@ class NuguAndroidClient private constructor(
          */
         fun defaultDisplayDuration(duration: Long) =
             apply { this.defaultDisplayDuration = duration }
+
+        /**
+         * @param displayTimerFactory the factory to create new timer for display agent
+         */
+        fun displayTimerFactory(displayTimerFactory: DisplayTimerInterface.Factory) =
+            apply { this.displayTimerFactory = displayTimerFactory }
 
         /**
          * @param handler the handler for text source directive. If not provided, default behavior at TextAgent.
@@ -839,7 +847,7 @@ class NuguAndroidClient private constructor(
                                         getContextManager(),
                                         builder.enableDisplayLifeCycleManagement,
                                         builder.defaultDisplayDuration,
-                                        DisplayTimer.Factory
+                                        builder.displayTimerFactory
                                     ).apply {
                                         getDisplayPlayStackManager().addPlayContextProvider(this)
 
