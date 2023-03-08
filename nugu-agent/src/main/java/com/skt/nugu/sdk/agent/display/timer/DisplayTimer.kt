@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent.display
+package com.skt.nugu.sdk.agent.display.timer
 
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -22,7 +22,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class DisplayTimer(private val tag: String) {
+class DisplayTimer(private val tag: String): DisplayTimerInterface {
     private val lock = ReentrantLock()
     private val clearTimeoutScheduler = ScheduledThreadPoolExecutor(1)
     private val clearTimeoutFutureMap: MutableMap<String, ScheduledFuture<*>> = HashMap()
@@ -34,7 +34,7 @@ class DisplayTimer(private val tag: String) {
         val clear:() -> Unit
     )
 
-    fun start(id: String, timeout: Long, clear:() -> Unit): Boolean {
+    override fun start(id: String, timeout: Long, clear:() -> Unit): Boolean {
         lock.withLock {
             val exist = clearRequestParamMap[id] != null
             if(exist) {
@@ -57,7 +57,7 @@ class DisplayTimer(private val tag: String) {
         }
     }
 
-    fun stop(id: String): Boolean {
+    override fun stop(id: String): Boolean {
         lock.withLock {
             clearRequestParamMap.remove(id)
             val future = clearTimeoutFutureMap.remove(id)
@@ -74,7 +74,7 @@ class DisplayTimer(private val tag: String) {
         }
     }
 
-    fun reset(id: String) {
+    override fun reset(id: String) {
         lock.withLock {
             val param = clearRequestParamMap[id] ?: return
             if (stop(id)) {
