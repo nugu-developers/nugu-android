@@ -134,10 +134,12 @@ internal class DeviceGatewayClient(policy: Policy,
     /**
      * disconnect from DeviceGateway
      */
-    override fun disconnect() {
-        Logger.d(TAG, "[disconnect]")
-        processDisconnect()
-    }
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("shutdown()"),
+        message = "This feature is deprecated. Using shutdown instead."
+    )
+    override fun disconnect() {}
 
     /**
      * Returns whether this object is currently connected to DeviceGateway.
