@@ -22,7 +22,7 @@ import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.*
-import com.skt.nugu.sdk.agent.display.timer.DisplayTimer
+import com.skt.nugu.sdk.agent.display.timer.DisplayTimerInterface
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -48,7 +48,8 @@ class DisplayAgent(
     private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
     contextStateProviderRegistry: ContextStateProviderRegistry,
     enableDisplayLifeCycleManagement: Boolean,
-    private val defaultDuration: Long
+    private val defaultDuration: Long,
+    displayTimerFactory: DisplayTimerInterface.Factory
 ) : CapabilityAgent, DisplayAgentInterface
     , SupportedInterfaceContextProvider
     , ControlFocusDirectiveHandler.Controller
@@ -228,7 +229,7 @@ class DisplayAgent(
 
     private val currentInfo = HashMap<String, TemplateDirectiveInfo>()
     private val renderedInfo = ArrayList<TemplateDirectiveInfo>()
-    private val contextLayerTimer: MutableMap<DisplayAgentInterface.ContextLayer, DisplayTimer>? =
+    private val contextLayerTimer: MutableMap<DisplayAgentInterface.ContextLayer, DisplayTimerInterface>? =
         if (enableDisplayLifeCycleManagement) {
             HashMap()
         } else {
@@ -249,7 +250,7 @@ class DisplayAgent(
         contextStateProviderRegistry.setStateProvider(namespaceAndName, this)
         contextLayerTimer?.apply {
             EnumSet.allOf(DisplayAgentInterface.ContextLayer::class.java).forEach {
-                put(it, DisplayTimer(TAG))
+                put(it, displayTimerFactory.newTimer())
             }
         }
     }
