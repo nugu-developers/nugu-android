@@ -309,6 +309,7 @@ class RoutineAgent(
             currentActionDialogRequestId?.let {
                 routineActionResponseDirectiveCanceler.requestCancel(it)
             }
+            scheduledFutureForActionTimeout?.future?.cancel(true)
         }
 
         fun cancelIfCurrentRoutineDisplayCleared(dialogRequestId: String) {
