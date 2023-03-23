@@ -907,8 +907,8 @@ open class DisplayAudioPlayer constructor(
     }
 
     open fun loadPlaylistButton(albumCoverUrl: String?) {
-        btnShowPlaylist?.visibility = if (isPlayListSupport) View.VISIBLE else View.GONE
         btnHidePlaylist?.updateImage(albumCoverUrl, thumbTransformCornerBtnHidePlaylist, false)
+        btnShowPlaylist?.visibility = if (isPlayListSupport) View.VISIBLE else View.GONE
     }
 
     open fun getPlaylistBottomMargin(): Int {

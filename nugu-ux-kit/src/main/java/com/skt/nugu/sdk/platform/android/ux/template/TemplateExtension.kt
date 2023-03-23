@@ -45,6 +45,8 @@ fun ImageView.updateImage(
 ) {
     if (isMerge && url.isNullOrBlank()) return
 
+    visibility = if (url != null) View.VISIBLE else View.GONE
+
     post {
         Glide.with(context).load(url)
             .override(measuredWidth, measuredHeight)
