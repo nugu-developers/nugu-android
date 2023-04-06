@@ -136,6 +136,9 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             override fun onError(error: NuguOAuthError) {
+                if(error.isCanceled()) {
+                    return
+                }
                 handleOAuthError(error)
             }
         })

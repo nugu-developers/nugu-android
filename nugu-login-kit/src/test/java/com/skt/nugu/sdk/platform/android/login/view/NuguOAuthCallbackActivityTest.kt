@@ -22,8 +22,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.skt.nugu.sdk.client.configuration.ConfigurationStore
 import com.skt.nugu.sdk.platform.android.login.auth.Credentials
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.Companion.ACTION_LOGIN
-import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.Companion.EXTRA_OAUTH_ACTION
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.ACTION_LOGIN
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuth.EXTRA_OAUTH_ACTION
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthInterface
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthOptions
 import org.junit.Assert

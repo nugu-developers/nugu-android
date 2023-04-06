@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.platform.android.login.exception
 
 import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError.Companion.NETWORK_ERROR
+import com.skt.nugu.sdk.platform.android.login.auth.NuguOAuthError.Companion.USER_CANCELED
 
 /**
  * The BaseException class is used as the Base across all login exception classes
@@ -29,4 +30,7 @@ sealed class BaseException(val error: String, val description: String, val code:
      * Thrown when authentication fails.
      */
     class UnAuthenticatedException(error: String, description: String, code: String?) : BaseException(error, description, code)
+
+    class UserCanceledException(description: String) : BaseException(USER_CANCELED, description)
+
 }
