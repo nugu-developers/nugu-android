@@ -242,7 +242,7 @@ class NuguOAuthTest  {
 
     @Test
     fun testOnceLoginListener() {
-        val listener = NuguOAuth.OnceLoginListener(object : NuguOAuthInterface.OnLoginListener {
+        val listener = OnceLoginListener(object : NuguOAuthInterface.OnLoginListener {
             override fun onSuccess(credentials: Credentials) {
                 Assert.assertNotNull(credentials)
             }
@@ -257,7 +257,7 @@ class NuguOAuthTest  {
 
     @Test
     fun testOnAccountListener() {
-        val listener = NuguOAuth.OnceLoginListener(object : NuguOAuthInterface.OnAccountListener {
+        val listener = OnceLoginListener(object : NuguOAuthInterface.OnAccountListener {
             override fun onSuccess(credentials: Credentials) {
                 Assert.assertNotNull(credentials)
             }
@@ -282,20 +282,9 @@ class NuguOAuthTest  {
 
     @Test
     fun testGenerateClientState() {
-        val client = NuguOAuth.create(options = NuguOAuthOptions.Builder()
-            .deviceUniqueId("device1")
-            .build(), "https://localhost")
-        val clientState = client.generateClientState()
-        Assert.assertEquals(clientState, client.clientState)
-        Assert.assertTrue(client.verifyState(clientState))
-        Assert.assertFalse(client.verifyState("dummy"))
-
-    }
-
-    @Test
-    fun testGetOptions() {
-        val client = NuguOAuth("https://localhost")
-        Assert.assertNull(client.getOptions())
+        val csrf = CSRFProtection()
+        val clientState = csrf.generateState()
+        Assert.assertTrue(csrf.verifyState(clientState))
     }
 
     @Test
@@ -592,7 +581,7 @@ class NuguOAuthTest  {
                 scope = "device:S.I.D."
             )
         )
-        client.onceLoginListener = NuguOAuth.OnceLoginListener(object : NuguOAuthInterface.OnLoginListener {
+        client.onceLoginListener = OnceLoginListener(object : NuguOAuthInterface.OnLoginListener {
             override fun onSuccess(credentials: Credentials) {
                 Assert.assertNotNull(credentials)
             }

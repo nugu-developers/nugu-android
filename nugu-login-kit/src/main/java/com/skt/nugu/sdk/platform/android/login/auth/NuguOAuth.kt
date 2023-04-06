@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.platform.android.login.auth
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -36,62 +37,61 @@ import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.ClientC
 import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.AuthorizationCodeRequest
 import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.RefreshTokenRequest
 import com.skt.nugu.sdk.platform.android.login.auth.AuthorizationRequest.DeviceCodeRequest
-import org.json.JSONObject
-
+import com.skt.nugu.sdk.platform.android.login.extention.appendDataToJson
 
 /**
  * NuguOAuth provides an implementation of the NuguOAuthInterface
  * authorization process.
  */
-class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthDelegate, NuguOAuthClient.UrlDelegate {
+object NuguOAuth : NuguOAuthInterface, AuthDelegate, NuguOAuthClient.UrlDelegate {
+    private const val TAG = "NuguOAuth"
+    private var OAuthServerUrl: String? = null
+    private var authError: NuguOAuthError = NuguOAuthError(Throwable("An unexpected error"))
+    private val executor = Executors.newSingleThreadExecutor()
+
+    // current state
+    private var state = AuthStateListener.State.UNINITIALIZED
+    // authentication Implementation
+    private val client: NuguOAuthClient by lazy {
+        NuguOAuthClient(this)
+    }
+    /// Authorization state change listeners.
+    private val listeners = ConcurrentLinkedQueue<AuthStateListener>()
+
+    /** Oauth default options @see [NuguOAuthOptions] **/
+    private lateinit var options: NuguOAuthOptions
+
+    @VisibleForTesting
+    internal var onceLoginListener: OnceLoginListener? = null
+
+    const val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
+    const val EXTRA_OAUTH_DATA = "nugu.intent.extra.oauth.data"
+
+    const val ACTION_LOGIN = "nugu.intent.action.oauth.LOGIN"
+    const val ACTION_ACCOUNT = "nugu.intent.action.oauth.ACCOUNT"
+
     /**
-     * Companion objects
+     * Returns a NuguOAuth instance.
      */
-    companion object {
-        private const val TAG = "NuguOAuth"
-
-        const val EXTRA_OAUTH_ACTION = "nugu.intent.extra.oauth.action"
-        const val EXTRA_OAUTH_DATA = "nugu.intent.extra.oauth.data"
-
-        const val ACTION_LOGIN = "nugu.intent.action.oauth.LOGIN"
-        const val ACTION_ACCOUNT = "nugu.intent.action.oauth.ACCOUNT"
-
-        private var instance: NuguOAuth? = null
-
-        /**
-         * Create a [NuguOAuth]
-         * @return a [NuguOAuth] instance
-         */
-        fun create(
-            options: NuguOAuthOptions,
-            OAuthServerUrl: String? = null
-        ): NuguOAuth {
-            Logger.d(TAG, "[create]")
-            if (instance == null) {
-                instance = NuguOAuth(OAuthServerUrl)
-            }
-            instance?.setOptions(options)
-            return instance as NuguOAuth
-        }
-
-        /**
-         * Returns a NuguOAuth instance.
-         */
-        @Throws(IllegalStateException::class)
-        fun getClient(): NuguOAuth {
-            if (instance == null) {
-                throw IllegalStateException(
-                    "Failed to create NuguOAuth," +
-                            "Using after calling NuguOAuth.create(context)"
-                )
-            }
-            return instance as NuguOAuth
-        }
+    fun getClient(): NuguOAuth {
+        return this
     }
 
-    private var authError: NuguOAuthError = NuguOAuthError(Throwable("An unexpected error"))
-
-    private val executor = Executors.newSingleThreadExecutor()
+    /**
+     * Create a [NuguOAuth]
+     * @return a [NuguOAuth] instance
+     */
+    fun create(
+        options: NuguOAuthOptions,
+        serverUrl: String? = null
+    ): NuguOAuth {
+        Logger.d(TAG, "[create]")
+        setOptions(options)
+        OAuthServerUrl = serverUrl?.also {
+            Logger.d(TAG, "OAuth Server URL has changed.")
+        }
+        return this
+    }
 
     @Throws(IllegalStateException::class)
     override fun baseUrl(): String {
@@ -135,38 +135,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         return "${baseUrl()}/v1/auth/oauth/me"
     }
 
-    // current state
-    private var state = AuthStateListener.State.UNINITIALIZED
-    //private var refreshToken: String? = null
-
-    // authentication Implementation
-    private val client: NuguOAuthClient by lazy {
-        NuguOAuthClient(this)
-    }
-
-    /// Authorization state change listeners.
-    private val listeners = ConcurrentLinkedQueue<AuthStateListener>()
-
-    /** Oauth default options @see [NuguOAuthOptions] **/
-    private lateinit var options: NuguOAuthOptions
-
-    @VisibleForTesting
-    internal var onceLoginListener: OnceLoginListener? = null
-
-    @VisibleForTesting
-    internal var clientState: String = "" // CSRF protection
-
-    internal class OnceLoginListener(private var listener: OnLoginListener?) : OnLoginListener {
-        override fun onSuccess(credentials: Credentials) {
-            listener?.onSuccess(credentials) ?: Logger.w(TAG, "[onSuccess] Listener has already been called.")
-            listener = null
-        }
-        override fun onError(error: NuguOAuthError) {
-            listener?.onError(error) ?: Logger.w(TAG, "[onError] Listener has already been called.")
-            listener = null
-        }
-    }
-
     /**
      * addAuthStateListener adds an AuthStateListener on the given was changed
      */
@@ -208,8 +176,6 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      * Executes revoke the device in a thread.
      */
     override fun revoke(listener: NuguOAuthInterface.OnRevokeListener) {
-        Logger.d(TAG, "[revoke]")
-
         executor.submit {
             runCatching {
                 checkClientId()
@@ -219,6 +185,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
                 clearAuthorization()
                 listener.onSuccess()
             }.onFailure {
+                Logger.e(TAG, "[revoke] onFailure=$it")
                 listener.onError(NuguOAuthError(it))
             }
         }
@@ -234,6 +201,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             }.onSuccess {
                 setAuthState(AuthStateListener.State.REFRESHED)
             }.onFailure {
+                Logger.e(TAG, "[executeAuthorization] onError=$it")
                 // If UnAuthenticatedException in AuthorizationFlow,
                 // remove existing token from cache.
                 authError = NuguOAuthError(it)
@@ -394,13 +362,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         null
     }
 
-    @VisibleForTesting
-    internal fun generateClientState() = UUID.randomUUID().toString().apply {
-        clientState = this
-    }
+    private val csrf = CSRFProtection()
 
-    @VisibleForTesting
-    internal fun verifyState(state: String?) = state == this.clientState
     @VisibleForTesting
     internal fun verifyCode(code: String?) = !code.isNullOrBlank()
 
@@ -423,12 +386,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
     /**
      * Creating a login uri
      */
-    fun getLoginUri(data : String?): Uri {
-        val appendUri = String.format(
-            "&state=%s", generateClientState()
-        )
-        return Uri.parse(makeAuthorizeUri(data) + appendUri)
-    }
+    fun getLoginUri(data : String?): Uri = Uri.parse(makeAuthorizeUri(data) + "&state=${csrf.generateState()}")
 
     /**
      * Creating a accountinfo intent
@@ -442,12 +400,8 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
      * Creating a accountinfo uri
      */
     fun getAccountInfoUri(data: String?): Uri {
-        val appendUri = String.format(
-            "&prompt=%s&access_token=%s&state=%s",
-            "mypage",
-            client.getCredentials().accessToken,
-            generateClientState()
-        )
+        val appendUri =
+            "&prompt=mypage&access_token=${client.getCredentials().accessToken}&state=${csrf.generateState()}"
         val temp = makeAuthorizeUri(data) + appendUri
         return Uri.parse(temp)
     }
@@ -467,9 +421,11 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
                     "deviceSerialNumber" to options.deviceUniqueId,
                     "theme" to theme.name
                 )).toString())
+                if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(this)
             }
         }.onFailure {
+            Logger.e(TAG, "[accountWithTid] onError=$it")
             listener.onError(NuguOAuthError(it))
         }
     }
@@ -486,9 +442,9 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
                 state = it.getQueryParameter("state")
             }
         }
-        return verifyState(state).also { result ->
+        return csrf.verifyState(state).also { result ->
             if(!result) {
-                Logger.d(TAG, "[verifyStateFromIntent] Csrf failed. state=$state")
+                Logger.d(TAG, "[verifyState] The received state is invalid. Try again. state=$state")
             }
         }
     }
@@ -533,9 +489,13 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
                     "deviceSerialNumber" to options.deviceUniqueId,
                     "theme" to theme.name
                 )).toString())
+                if (context !is Activity) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
                 context.startActivity(this)
             }
         }.onFailure {
+            Logger.e(TAG, "[loginWithTid] onFailure=$it")
             listener.onError(NuguOAuthError(it))
         }
     }
@@ -569,6 +529,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             checkClientId()
             checkClientSecret()
         }.onFailure {
+            Logger.e(TAG, "[loginAnonymously] onFailure=$it")
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
             loginInternal(ClientCredentialsRequest(),
@@ -591,6 +552,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             checkClientId()
             checkClientSecret()
         }.onFailure {
+            Logger.e(TAG, "[loginWithAuthenticationCode] onFailure=$it")
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
             loginInternal(AuthorizationCodeRequest(code), object : AuthStateListener {
@@ -609,6 +571,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             checkClientId()
             checkClientSecret()
         }.onFailure {
+            Logger.e(TAG, "[loginSilentlyWithTid] onFailure=$it")
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
             loginInternal(RefreshTokenRequest(refreshToken), object : AuthStateListener {
@@ -650,6 +613,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             checkClientId()
             checkClientSecret()
         }.onFailure {
+            Logger.e(TAG, "[loginWithDeviceCode] onFailure=$it")
             listener.onError(NuguOAuthError(it))
         }.onSuccess {
             loginInternal(DeviceCodeRequest(deviceCode), object : AuthStateListener {
@@ -667,6 +631,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
                 checkClientSecret()
                 client.handleStartDeviceAuthorization(data)
             }.onFailure {
+                Logger.e(TAG, "[startDeviceAuthorization] onFailure=$it")
                 listener.onError(NuguOAuthError(it))
             }.onSuccess {
                 listener.onSuccess(it)
@@ -683,6 +648,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
             }.onSuccess {
                 listener.onSuccess(it)
             }.onFailure {
+                Logger.e(TAG, "[introspect] onFailure=$it")
                 listener.onError(NuguOAuthError(it))
             }
         }
@@ -728,7 +694,7 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         message = "This feature is deprecated."
     )
     override fun requestMe(listener: NuguOAuthInterface.OnMeResponseListener) {
-        Logger.d(TAG, "[requestMe]")
+        Logger.i(TAG, "[requestMe] This feature is deprecated")
         executor.submit {
             runCatching {
                 client.handleMe()
@@ -746,13 +712,4 @@ class NuguOAuth(private val OAuthServerUrl: String?) : NuguOAuthInterface, AuthD
         Logger.w(TAG, "[deviceUniqueId] : $e")
         null
     }
-}
-/**
- * Appends a map of param to the json.
-*/
-internal fun Map<String, String>.appendDataToJson(newData : MutableMap<String, String>) : JSONObject {
-    for ((key, value) in this) {
-        newData[key] = value
-    }
-    return JSONObject(newData.toMap())
 }

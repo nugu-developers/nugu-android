@@ -25,6 +25,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.browser.customtabs.CustomTabsIntent
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.platform.android.login.auth.*
+import com.skt.nugu.sdk.platform.android.login.exception.BaseException
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper
 import com.skt.nugu.sdk.platform.android.login.helper.CustomTabActivityHelper.CHROME_CUSTOM_TAB_REQUEST_CODE
 import java.lang.IllegalStateException
@@ -46,7 +47,7 @@ class NuguOAuthCallbackActivity : Activity() {
     private var data: String? = null
     private var handler: Handler = Handler(Looper.getMainLooper())
     private val finishRunnable = Runnable {
-        auth.setResult(false, NuguOAuthError(Throwable("user cancelled")))
+        auth.setResult(false, NuguOAuthError(BaseException.UserCanceledException(("user cancelled"))))
         finish()
     }
 
@@ -80,16 +81,9 @@ class NuguOAuthCallbackActivity : Activity() {
         data = intent?.getStringExtra(NuguOAuth.EXTRA_OAUTH_DATA)
         Logger.w(TAG, "[processOAuthCallback] action=$action, supportDeepLink=${WebViewActivity.supportDeepLink}")
 
-        val isTidLogin = try {
-            auth.isTidLogin()
-        } catch (e: IllegalStateException) {
-            auth.setResult(false, NuguOAuthError(e))
-            return false
-        }
-
         when(action) {
             NuguOAuth.ACTION_LOGIN -> {
-                if (isTidLogin) {
+                if (auth.isTidLogin()) {
                     Logger.d(TAG, "[processOAuthCallback] already login")
                     auth.setResult(true)
                     return false
@@ -100,12 +94,13 @@ class NuguOAuthCallbackActivity : Activity() {
                     return true
                 }
 
+                val uri = auth.getLoginUri(data)
                 val fallbackRunnable = Runnable {
                     Logger.w(TAG, "[processOAuthCallback] fallback")
                     handler.removeCallbacks(finishRunnable)
                     startActivityForResult(Intent(this, WebViewActivity::class.java).apply {
                         putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
-                        data = auth.getLoginUri(this@NuguOAuthCallbackActivity.data)
+                        data = uri
                     }, WEBVIEW_REQUEST_CODE)
                 }
 
@@ -115,7 +110,7 @@ class NuguOAuthCallbackActivity : Activity() {
                 }
                 val customTabsIntent = CustomTabsIntent.Builder()
                     .setUrlBarHidingEnabled(true).build()
-                CustomTabActivityHelper.openCustomTab(this, customTabsIntent, auth.getLoginUri(this.data), object :
+                CustomTabActivityHelper.openCustomTab(this, customTabsIntent, uri, object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         fallbackRunnable.run()
@@ -127,12 +122,13 @@ class NuguOAuthCallbackActivity : Activity() {
                     performLogin(auth.codeFromIntent(intent))
                     return true
                 }
+                val uri = auth.getAccountInfoUri(data)
                 val fallbackRunnable = Runnable {
                     Logger.w(TAG, "[processOAuthCallback] fallback")
                     handler.removeCallbacks(finishRunnable)
                     startActivityForResult(Intent(this, WebViewActivity::class.java).apply {
                         putExtra(NuguOAuth.EXTRA_OAUTH_ACTION, this@NuguOAuthCallbackActivity.action)
-                        data = auth.getAccountInfoUri(this@NuguOAuthCallbackActivity.data)
+                        data = uri
                     }, WEBVIEW_REQUEST_CODE)
                 }
 
@@ -142,7 +138,7 @@ class NuguOAuthCallbackActivity : Activity() {
                 }
                 val customTabsIntent = CustomTabsIntent.Builder()
                     .setUrlBarHidingEnabled(true).build()
-                CustomTabActivityHelper.openCustomTab(this, customTabsIntent, auth.getAccountInfoUri(data), object :
+                CustomTabActivityHelper.openCustomTab(this, customTabsIntent, uri, object :
                     CustomTabActivityHelper.CustomTabFallback {
                     override fun openUri(activity: Activity?, uri: Uri?) {
                         fallbackRunnable.run()

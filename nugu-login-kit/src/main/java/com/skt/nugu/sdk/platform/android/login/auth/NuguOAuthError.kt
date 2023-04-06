@@ -38,7 +38,7 @@ class NuguOAuthError(val throwable: Throwable) {
     var description: String = throwable.message ?: "unspecified"
     var code: String? =  (throwable as? BaseException.UnAuthenticatedException)?.code
     var httpCode: Int? =  (throwable as? BaseException.HttpErrorException)?.httpCode
-
+    fun isCanceled() = error == USER_CANCELED
     @Suppress("unused")
     companion object {
         /** oauth errors **/
@@ -74,6 +74,9 @@ class NuguOAuthError(val throwable: Throwable) {
 
         /** ClientUnspecifiedException, UninitializedPropertyAccessException **/
         const val INITIALIZE_ERROR = "initialize_error"
+
+        /** no error **/
+        const val USER_CANCELED = "user_canceled"
 
         /** poc status **/
         const val FINISHED = "FINISHED"
