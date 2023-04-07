@@ -85,7 +85,7 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
     }
 
     override fun removeListener(listener: OnPlaylistListener) {
-        listeners.add(listener)
+        listeners.remove(listener)
     }
 
     override fun onMetadataUpdate(playServiceId: String, jsonMetaData: String) {
