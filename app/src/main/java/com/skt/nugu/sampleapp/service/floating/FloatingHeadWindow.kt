@@ -256,8 +256,8 @@ class FloatingHeadWindow(val context: Context) : FloatingView.Callbacks {
                                 or Intent.FLAG_ACTIVITY_NO_USER_ACTION
                                 or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
                     ),
-                //.putExtras(pushIntent),
-                PendingIntent.FLAG_ONE_SHOT
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+                else PendingIntent.FLAG_ONE_SHOT
             )
 
             contentIntent.send()
