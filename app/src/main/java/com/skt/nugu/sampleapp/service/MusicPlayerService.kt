@@ -279,7 +279,8 @@ class MusicPlayerService : Service(), AudioPlayerAgentInterface.Listener {
             context,
             0,
             Intent(context, MusicPlayerService::class.java).apply { this.action = action },
-            PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            else PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
 
