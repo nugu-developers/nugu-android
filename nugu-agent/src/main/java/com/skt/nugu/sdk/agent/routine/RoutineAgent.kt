@@ -46,12 +46,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 class RoutineAgent(
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
-    private val directiveProcessor: DirectiveProcessorInterface,
+    directiveProcessor: DirectiveProcessorInterface,
     private val directiveSequencer: DirectiveSequencerInterface,
     private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val seamlessFocusManager: SeamlessFocusManagerInterface,
     startDirectiveHandleController: StartDirectiveHandler.HandleController? = null,
     continueDirectiveHandleController: ContinueDirectiveHandler.HandleController? = null,
+    private val interruptTimeoutInSecond: Long? = 60
 ) : CapabilityAgent,
     RoutineAgentInterface,
     SupportedInterfaceContextProvider,
@@ -273,10 +274,13 @@ class RoutineAgent(
                 cancelCurrentAction()
             }
             cancelNextScheduledAction()
-            scheduledFutureForCancelByInterrupt?.cancel(true)
-            scheduledFutureForCancelByInterrupt = executor.schedule({
-                cancel(cancelCurrentAction)
-            }, 60, TimeUnit.SECONDS)
+
+            interruptTimeoutInSecond?.let {
+                scheduledFutureForCancelByInterrupt?.cancel(true)
+                scheduledFutureForCancelByInterrupt = executor.schedule({
+                    cancel(cancelCurrentAction)
+                }, it, TimeUnit.SECONDS)
+            }
 
             setState(RoutineAgentInterface.State.INTERRUPTED, directive)
         }
