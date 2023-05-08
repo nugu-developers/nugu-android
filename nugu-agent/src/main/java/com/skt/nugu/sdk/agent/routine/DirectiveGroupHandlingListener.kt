@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterfa
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 class DirectiveGroupHandlingListener(
@@ -41,12 +42,25 @@ class DirectiveGroupHandlingListener(
         fun onPrepared(directives: List<Directive>)
     }
 
+    sealed class Result {
+        object COMPLETE : Result()
+        object CANCELED : Result()
+        object FAILED : Result()
+        object SKIPPED: Result()
+    }
+
     interface OnDirectiveResultListener {
         /**
          * Called when all directive's handling finished
-         * @param isExistCanceledOrFailed true: If exists any canceled or failed directive.
+         * @param results the results for all directive's handling
          */
-        fun onFinish(isExistCanceledOrFailed: Boolean)
+        fun onFinish(results: Map<Directive, Result>)
+
+        /**
+         * Called when a [directive] completed
+         * @param directive a completed directive
+         */
+        fun onCompleted(directive: Directive)
 
         /**
          * Called when a [directive] canceled
@@ -59,10 +73,16 @@ class DirectiveGroupHandlingListener(
          * @param directive a failed directive
          */
         fun onFailed(directive: Directive)
+
+        /**
+         * Called when a [directive] skipped
+         * @param directive a skipped directive
+         */
+        fun onSkipped(directive: Directive)
     }
 
     private val directives = CopyOnWriteArrayList<Directive>()
-    private var existCanceledOrFailed = false
+    private val results = ConcurrentHashMap<Directive, Result>()
 
     init {
         directiveSequencer.addOnDirectiveHandlingListener(this)
@@ -83,42 +103,54 @@ class DirectiveGroupHandlingListener(
     }
 
     override fun onCompleted(directive: Directive) {
-        if(directives.remove(directive)) {
-            Logger.d(TAG, "[onCompleted] ${directive.header}")
-            notifyResultIfEmpty()
+        if(!directives.remove(directive)) {
+            return
         }
+
+        Logger.d(TAG, "[onCompleted] ${directive.header}")
+        results[directive] = Result.COMPLETE
+        directiveResultListener.onCompleted(directive)
+        notifyIfAllDirectiveHandled()
     }
 
     override fun onCanceled(directive: Directive) {
-        if(directives.remove(directive)) {
-            Logger.d(TAG, "[onCanceled] ${directive.header}")
-            existCanceledOrFailed = true
-            directiveResultListener.onCanceled(directive)
-            notifyResultIfEmpty()
+        if(!directives.remove(directive)) {
+            return
         }
+
+        Logger.d(TAG, "[onCanceled] ${directive.header}")
+        results[directive] = Result.CANCELED
+        directiveResultListener.onCanceled(directive)
+        notifyIfAllDirectiveHandled()
     }
 
     override fun onFailed(directive: Directive, description: String) {
-        if(directives.remove(directive)) {
-            Logger.d(TAG, "[onFailed] ${directive.header}")
-            existCanceledOrFailed = true
-            directiveResultListener.onFailed(directive)
-            notifyResultIfEmpty()
+        if(!directives.remove(directive)) {
+            return
         }
+
+        Logger.d(TAG, "[onFailed] ${directive.header}")
+        results[directive] = Result.FAILED
+        directiveResultListener.onFailed(directive)
+        notifyIfAllDirectiveHandled()
     }
 
     override fun onSkipped(directive: Directive) {
-        if(directives.remove(directive)) {
-            Logger.d(TAG, "[onSkipped] ${directive.header}")
-            notifyResultIfEmpty()
+        if(!directives.remove(directive)) {
+            return
         }
+
+        Logger.d(TAG, "[onSkipped] ${directive.header}")
+        results[directive] = Result.SKIPPED
+        directiveResultListener.onSkipped(directive)
+        notifyIfAllDirectiveHandled()
     }
 
-    private fun notifyResultIfEmpty() {
+    private fun notifyIfAllDirectiveHandled() {
         if(directives.isEmpty()) {
-            Logger.d(TAG, "[notifyResultIfEmpty] dialogRequestId: $dialogRequestId, existCanceledOrFailed: $existCanceledOrFailed")
+            Logger.d(TAG, "[notifyResultIfEmpty] dialogRequestId: $dialogRequestId")
             directiveSequencer.removeOnDirectiveHandlingListener(this)
-            directiveResultListener.onFinish(existCanceledOrFailed)
+            directiveResultListener.onFinish(results)
         }
     }
 }

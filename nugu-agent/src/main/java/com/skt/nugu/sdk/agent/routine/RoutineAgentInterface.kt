@@ -17,6 +17,7 @@
 package com.skt.nugu.sdk.agent.routine
 
 import com.skt.nugu.sdk.agent.routine.handler.StartDirectiveHandler
+import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 interface RoutineAgentInterface {
     enum class State {
@@ -34,15 +35,17 @@ interface RoutineAgentInterface {
          * Called a [index] action started of routine for [directive]
          * @param index started [Action] index for [StartDirectiveHandler.StartDirective.Payload.actions] (0-based index)
          * @param directive the directive contain [Action]
+         * @param actionItems the directive's for action request
          */
-        fun onActionStarted(index: Int, directive: StartDirectiveHandler.StartDirective)
+        fun onActionStarted(index: Int, directive: StartDirectiveHandler.StartDirective, actionItems: List<Directive>?)
 
         /**
          * Called a [index] action finished of routine for [directive]
          * @param index finished [Action] index for [StartDirectiveHandler.StartDirective.Payload.actions] (0-based index)
          * @param directive the directive contain [Action]
+         * @param actionItemAndResults the directive's for action request and it's result
          */
-        fun onActionFinished(index: Int, directive: StartDirectiveHandler.StartDirective)
+        fun onActionFinished(index: Int, directive: StartDirectiveHandler.StartDirective, actionItemAndResults: Map<Directive, DirectiveGroupHandlingListener.Result>?)
     }
 
     fun getState(): State
