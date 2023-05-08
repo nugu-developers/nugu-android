@@ -607,6 +607,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
             SystemAgentInterface.ExceptionCode.UNAUTHORIZED_REQUEST_EXCEPTION -> {
                 /** Nothing to do because handle on [onConnectionStatusChanged] **/
             }
+            else -> {
+                // TODO : XXX
+            }
         }
     }
 

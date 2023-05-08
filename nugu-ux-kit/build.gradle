@@ -7,8 +7,6 @@ android {
     defaultConfig {
         minSdkVersion rootProject.minSdkVersion
         targetSdkVersion rootProject.targetSdkVersion
-        versionCode rootProject.nuguVersionCode
-        versionName rootProject.nuguVersionName
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
@@ -70,7 +68,7 @@ dependencies {
     testImplementation "androidx.test.ext:junit:$androidXJunitVersion"
     testImplementation "androidx.test.espresso:espresso-core:$androidXEspressoCoreVersion"
 
-    testImplementation 'org.json:json:20180813'
+    testImplementation "org.json:json:$jsonVersion"
     testImplementation "androidx.test.ext:junit-ktx:$testJunitKtxVersion"
     testImplementation "androidx.test:core-ktx:$testCoreKtxVersion"
     testImplementation "org.robolectric:robolectric:$robolectricVersion"
