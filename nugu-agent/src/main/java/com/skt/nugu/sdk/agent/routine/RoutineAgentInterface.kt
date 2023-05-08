@@ -46,6 +46,16 @@ interface RoutineAgentInterface {
          * @param actionItemAndResults the directive's for action request and it's result
          */
         fun onActionFinished(index: Int, directive: StartDirectiveHandler.StartDirective, actionItemAndResults: Map<Directive, DirectiveGroupHandlingListener.Result>?)
+
+        // TODO : If we need onActionItemStarted callback, then impl
+
+        /**
+         * Called when a item[item] of action of [actionIndex] is finished with [result]
+         * @param actionIndex a index of action
+         * @param item a item for action
+         * @param result a result of item
+         */
+        fun onActionItemFinished(actionIndex: Int, item: Directive, result: DirectiveGroupHandlingListener.Result)
     }
 
     fun getState(): State
