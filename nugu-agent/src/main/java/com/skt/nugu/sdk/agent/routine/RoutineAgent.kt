@@ -520,7 +520,13 @@ class RoutineAgent(
                     }
 
                     override fun onCompleted(directive: Directive) {
-                        // nothing
+                        if(currentActionDialogRequestId != dialogRequestId) {
+                            return
+                        }
+
+                        listeners.forEach {
+                            it.onActionItemFinished(currentActionIndex, directive, DirectiveGroupHandlingListener.Result.COMPLETE)
+                        }
                     }
 
                     override fun onCanceled(directive: Directive) {
@@ -528,6 +534,9 @@ class RoutineAgent(
                             return
                         }
                         pause()
+                        listeners.forEach {
+                            it.onActionItemFinished(currentActionIndex, directive, DirectiveGroupHandlingListener.Result.CANCELED)
+                        }
                     }
 
                     override fun onFailed(directive: Directive) {
@@ -535,10 +544,18 @@ class RoutineAgent(
                             return
                         }
                         pause()
+                        listeners.forEach {
+                            it.onActionItemFinished(currentActionIndex, directive, DirectiveGroupHandlingListener.Result.FAILED)
+                        }
                     }
 
                     override fun onSkipped(directive: Directive) {
-                        // nothing
+                        if(currentActionDialogRequestId != dialogRequestId) {
+                            return
+                        }
+                        listeners.forEach {
+                            it.onActionItemFinished(currentActionIndex, directive, DirectiveGroupHandlingListener.Result.SKIPPED)
+                        }
                     }
                 },
                 directiveGroupPrepareListener
