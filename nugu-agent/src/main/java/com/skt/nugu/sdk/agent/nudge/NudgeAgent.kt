@@ -167,8 +167,12 @@ class NudgeAgent(
                     directiveGroupProcessor,
                     directiveSequencer,
                     object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
-                        override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                        override fun onFinish(results: Map<Directive, DirectiveGroupHandlingListener.Result>) {
                             clearNudgeData(it.getDialogRequestId())
+                        }
+
+                        override fun onCompleted(directive: Directive) {
+                            // nothing to do
                         }
 
                         override fun onCanceled(directive: Directive) {
@@ -176,6 +180,10 @@ class NudgeAgent(
                         }
 
                         override fun onFailed(directive: Directive) {
+                            // nothing to do
+                        }
+
+                        override fun onSkipped(directive: Directive) {
                             // nothing to do
                         }
                     })

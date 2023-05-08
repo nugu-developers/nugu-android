@@ -458,7 +458,7 @@ class RoutineAgent(
                         scheduledFutureForActionTimeout = ActionTimeoutFuture(dialogRequestId, scheduleActionTimeoutTriggeredEvent(it, action, directive, dialogRequestId))
                     }
                     listeners.forEach {
-                        it.onActionStarted(currentActionIndex, directive)
+                        it.onActionStarted(currentActionIndex, directive, directives)
                     }
                 }
             }
@@ -468,7 +468,7 @@ class RoutineAgent(
                 directiveGroupProcessor,
                 directiveSequencer,
                 object : DirectiveGroupHandlingListener.OnDirectiveResultListener {
-                    private fun onFinishInternal(isExistCanceledOrFailed: Boolean, tryStartNextAction: Boolean = true) {
+                    private fun onFinishInternal(results: Map<Directive, DirectiveGroupHandlingListener.Result>, tryStartNextAction: Boolean = true) {
                         if(currentActionDialogRequestId != dialogRequestId) {
                             return
                         }
@@ -476,10 +476,10 @@ class RoutineAgent(
                         Logger.d(TAG, "[onFinishInternal] handling dialogRequestId: $dialogRequestId, current action dialogRequestId: $currentActionDialogRequestId")
 
                         listeners.forEach {
-                            it.onActionFinished(currentActionIndex, directive)
+                            it.onActionFinished(currentActionIndex, directive, results)
                         }
 
-                        if (isExistCanceledOrFailed) {
+                        if (results.values.any { it == DirectiveGroupHandlingListener.Result.CANCELED || it == DirectiveGroupHandlingListener.Result.FAILED }) {
                             pause()
                         } else {
                             cancelNextScheduledAction()
@@ -508,15 +508,19 @@ class RoutineAgent(
                         }
                     }
 
-                    override fun onFinish(isExistCanceledOrFailed: Boolean) {
+                    override fun onFinish(results: Map<Directive, DirectiveGroupHandlingListener.Result>) {
                         if(scheduledFutureForActionTimeout?.dialogRequestId == dialogRequestId) {
                             // will be handled after action timeout.
                             scheduledFutureForActionTimeout?.runOnTimeout = Runnable {
-                                onFinishInternal(isExistCanceledOrFailed, false)
+                                onFinishInternal(results, false)
                             }
                         } else {
-                            onFinishInternal(isExistCanceledOrFailed)
+                            onFinishInternal(results)
                         }
+                    }
+
+                    override fun onCompleted(directive: Directive) {
+                        // nothing
                     }
 
                     override fun onCanceled(directive: Directive) {
@@ -531,6 +535,10 @@ class RoutineAgent(
                             return
                         }
                         pause()
+                    }
+
+                    override fun onSkipped(directive: Directive) {
+                        // nothing
                     }
                 },
                 directiveGroupPrepareListener
