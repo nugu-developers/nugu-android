@@ -322,6 +322,17 @@ class DefaultTTSAgent(
     init {
         Logger.d(TAG, "[init] $this")
         speechPlayer.setPlaybackEventListener(this)
+        speechPlayer.setOnDurationListener(object: MediaPlayerControlInterface.OnDurationListener {
+            override fun onRetrieved(id: SourceId, duration: Long?) {
+                Logger.d(TAG, "[onRetrieved] id: $id, duration: $duration, currentInfo's sourceId: ${currentInfo?.sourceId}")
+                val info = currentInfo ?: return
+                if(info.sourceId == id) {
+                    listeners.forEach {
+                        it.onTTSDurationRetrieved(info.directive.getDialogRequestId(), duration)
+                    }
+                }
+            }
+        })
         contextManager.setStateProvider(namespaceAndName, this)
         interLayerDisplayPolicyManager.addListener(this)
     }
