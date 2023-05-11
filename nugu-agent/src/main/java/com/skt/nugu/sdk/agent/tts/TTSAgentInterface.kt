@@ -61,6 +61,14 @@ interface TTSAgentInterface {
         fun onReceiveTTSText(text: String?, dialogRequestId: String){}
 
         /**
+         * Called when a tts duration retrieved.
+         * (Empty implementation for backward compatibility)
+         * @param dialogRequestId the dialog request id for tts
+         * @param duration the duration for tts, null if unknown.
+         */
+        fun onTTSDurationRetrieved(dialogRequestId: String, duration: Long?){}
+
+        /**
          * Called when occur error after onReceiveTTSText
          */
         fun onError(dialogRequestId: String){}
