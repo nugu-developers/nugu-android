@@ -97,7 +97,7 @@ class EventsService(
                 name = ATTACHMENT,
                 filename = messageRequest.toFilename(),
                 headers = Headers.Builder().add(MESSAGE_ID, messageRequest.messageId).build(),
-                body = content.toRequestBody(APPLICATION_SPEEX.toMediaType())
+                body = content.toRequestBody(messageRequest.mediaType.toMediaType())
             ).close(messageRequest.isEnd).build()
         } ?: return false
 
