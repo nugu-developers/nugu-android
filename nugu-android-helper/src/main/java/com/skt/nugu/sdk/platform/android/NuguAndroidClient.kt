@@ -52,6 +52,8 @@ import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgent
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
+import com.skt.nugu.sdk.agent.image.ImageAgent
+import com.skt.nugu.sdk.agent.image.ImageAgentImpl
 import com.skt.nugu.sdk.agent.location.LocationAgent
 import com.skt.nugu.sdk.agent.location.LocationProvider
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
@@ -294,6 +296,9 @@ class NuguAndroidClient private constructor(
         // nudge agent (optional)
         internal var enableNudge: Boolean = false
 
+        // image agent (optional)
+        internal var enableImage: Boolean = false
+
         /**
          * @param builder the builder for audio focus's channel configuration
          */
@@ -467,6 +472,8 @@ class NuguAndroidClient private constructor(
          * @param permissionDelegate the delegate for PermissionAgent. If it is null, permission agent not added.
          */
         fun enablePermission(permissionDelegate: PermissionDelegate?) = apply { this.permissionDelegate = permissionDelegate }
+
+        fun enableImage(enable: Boolean) = apply { this.enableImage = enable }
 
         /**
          * @param policy the cancel policy on stop tts
@@ -982,6 +989,14 @@ class NuguAndroidClient private constructor(
                                 container.getDirectiveSequencer().addDirectiveHandler(NudgeDirectiveHandler(this))
                                 container.getDirectiveGroupProcessor().addListener(this)
                             }
+                        }
+                    })
+                }
+
+                if(builder.enableImage) {
+                    addAgentFactory(ImageAgentImpl.NAMESPACE, object : AgentFactory<ImageAgentImpl> {
+                        override fun create(container: SdkContainer): ImageAgentImpl {
+                            return ImageAgentImpl(contextManager = container.getContextManager(), messageSender = container.getMessageSender())
                         }
                     })
                 }

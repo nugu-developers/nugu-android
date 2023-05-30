@@ -1,7 +1,6 @@
 package com.skt.nugu.sdk.agent.image
 
 import com.google.gson.JsonObject
-import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -35,7 +34,7 @@ class ImageAgentImpl(
         const val EVENT_NAME_SEND_IMAGE = "SendImage"
 
         private fun buildCompactContext(): JsonObject = JsonObject().apply {
-            addProperty("version", AbstractSystemAgent.VERSION.toString())
+            addProperty("version", VERSION.toString())
         }
 
         private val COMPACT_STATE: String = buildCompactContext().toString()
