@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.audioplayer
 
-import com.google.gson.JsonObject
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
 import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
