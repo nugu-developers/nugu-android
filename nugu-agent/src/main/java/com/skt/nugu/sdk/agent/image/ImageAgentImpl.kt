@@ -24,7 +24,7 @@ import java.util.concurrent.Executors
 class ImageAgentImpl(
     private val contextManager: ContextManagerInterface,
     private val messageSender: MessageSender,
-): CapabilityAgent, SupportedInterfaceContextProvider, ImageAgent {
+) : CapabilityAgent, SupportedInterfaceContextProvider, ImageAgent {
     companion object {
         private const val TAG = "ImageAgent"
 
@@ -44,7 +44,8 @@ class ImageAgentImpl(
         override fun value(): String = COMPACT_STATE
     }
 
-    override val namespaceAndName: NamespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
+    override val namespaceAndName: NamespaceAndName =
+        NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
 
     private val senderExecutors = Executors.newSingleThreadExecutor()
 
@@ -58,7 +59,10 @@ class ImageAgentImpl(
         contextType: ContextType,
         stateRequestToken: Int
     ) {
-        Logger.d(TAG, "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken")
+        Logger.d(
+            TAG,
+            "[provideState] namespaceAndName: $namespaceAndName, contextType: $contextType, stateRequestToken: $stateRequestToken"
+        )
         contextSetter.setState(
             namespaceAndName,
             contextState,
@@ -69,110 +73,113 @@ class ImageAgentImpl(
     }
 
     override fun sendImage(source: ImageSource, callback: ImageAgent.SendImageCallback?) {
-        senderExecutors.submit {
-            contextManager.getContext(object : IgnoreErrorContextRequestor() {
-                override fun onContext(jsonContext: String) {
-                    val eventRequest = EventMessageRequest.Builder(jsonContext,
-                        NAMESPACE, EVENT_NAME_SEND_IMAGE, VERSION.toString())
+
+        contextManager.getContext(object : IgnoreErrorContextRequestor() {
+            override fun onContext(jsonContext: String) {
+                senderExecutors.submit {
+                    val eventRequest = EventMessageRequest.Builder(
+                        jsonContext,
+                        NAMESPACE, EVENT_NAME_SEND_IMAGE, VERSION.toString()
+                    )
                         .build()
 
                     callback?.onEventRequestCreated(eventRequest)
                     // send image event.
-                    messageSender.newCall(
-                        eventRequest
-                    ).enqueue(object: MessageSender.Callback {
-                        override fun onFailure(request: MessageRequest, status: Status) {
-                            callback?.onEventRequestFailed(eventRequest, status)
-                        }
 
-                        override fun onSuccess(request: MessageRequest) {
-                            callback?.onEventRequestSuccess(eventRequest)
-                        }
+                    val status = messageSender.newCall(eventRequest).execute()
 
-                        override fun onResponseStart(request: MessageRequest) {
-                        }
-                    })
+                    if(status.isOk()) {
+                        callback?.onEventRequestSuccess(eventRequest)
 
-                    // send attachments
-                    sendAttachment(eventRequest, callback)
+                        // send attachments
+                        sendAttachment(eventRequest, callback)
+                    } else {
+                        callback?.onEventRequestFailed(eventRequest, status)
+                        callback?.onImageSendFailed()
+                    }
+                }
+            }
+
+            private fun sendAttachment(
+                request: EventMessageRequest,
+                callback: ImageAgent.SendImageCallback?
+            ) {
+                val sourceByteArray = source.getByteArray()
+                val inputStream = sourceByteArray?.let {
+                    ByteArrayInputStream(it)
+                } ?: kotlin.run {
+                    callback?.onImageSourceRetrieveFailed(source)
+                    callback?.onImageSendFailed()
+                    return
                 }
 
-                private fun sendAttachment(
-                    request: EventMessageRequest,
-                    callback: ImageAgent.SendImageCallback?
-                ) {
-                    val sourceByteArray = source.getByteArray()
-                    val inputStream = sourceByteArray?.let {
-                        ByteArrayInputStream(it)
-                    } ?: kotlin.run {
-                        callback?.onImageSourceRetrieveFailed(source)
-                        return
-                    }
+                callback?.onImageSourceRetrieved(source, sourceByteArray)
 
-                    callback?.onImageSourceRetrieved(source, sourceByteArray)
+                inputStream.use {
+                    val tempBuffer = ByteArray(8192)
+                    var totalRead = 0
+                    var read: Int
+                    var currentAttachmentSequenceNumber = 0
+                    var isEnd = false
+                    var isFailed = false
 
-                    inputStream.use {
-                        val tempBuffer = ByteArray(8192)
-                        var totalRead = 0
-                        var read: Int
-                        var currentAttachmentSequenceNumber = 0
-                        var isEnd = false
-                        var isFailed = false
+                    while (!isEnd && !isFailed) {
+                        val offset = totalRead
+                        read = it.read(tempBuffer)
+                        val currentRead = read
 
-                        while (!isEnd && !isFailed) {
-                            val offset = totalRead
-                            read = it.read(tempBuffer)
-                            val currentRead = read
+                        if (read > -1) {
+                            totalRead += read
+                        } else {
+                            isEnd = true
+                        }
 
-                            if(read > -1) {
-                                totalRead += read
+                        val attachment = AttachmentMessageRequest(
+                            UUIDGeneration.timeUUID().toString(),
+                            request.dialogRequestId,
+                            request.context,
+                            request.namespace,
+                            request.name,
+                            request.version,
+                            request.dialogRequestId,
+                            currentAttachmentSequenceNumber,
+                            isEnd,
+                            request.messageId,
+                            source.getMediaType(),
+                            if(isEnd) {
+                                null
                             } else {
-                                isEnd = true
-                            }
-
-                            val attachment = AttachmentMessageRequest(
-                                UUIDGeneration.timeUUID().toString(),
-                                request.dialogRequestId,
-                                request.context,
-                                request.namespace,
-                                request.name,
-                                request.version,
-                                request.dialogRequestId,
-                                currentAttachmentSequenceNumber,
-                                isEnd,
-                                request.messageId,
-                                source.getMediaType(),
                                 ByteArray(read).apply {
                                     System.arraycopy(tempBuffer, 0, this, 0, read)
                                 }
+                            }
+                        )
+
+                        currentAttachmentSequenceNumber++
+
+                        val status = messageSender.newCall(attachment).execute()
+
+                        if(status.isOk()) {
+                            callback?.onImageSourceSent(
+                                source,
+                                sourceByteArray,
+                                offset.toLong(),
+                                currentRead.toLong()
                             )
-
-                            currentAttachmentSequenceNumber++
-
-                            messageSender.newCall(attachment).enqueue(object: MessageSender.Callback {
-                                override fun onFailure(request: MessageRequest, status: Status) {
-                                    isFailed = true
-                                }
-
-                                override fun onSuccess(request: MessageRequest) {
-                                    callback?.onImageSourceSent(source, sourceByteArray, offset.toLong(), currentRead.toLong())
-                                }
-
-                                override fun onResponseStart(request: MessageRequest) {
-                                }
-                            })
-                        }
-
-                        if(isFailed) {
-                            callback?.onImageSendFailed()
-                        }
-
-                        if(isEnd) {
-                            callback?.onImageSendCompleted()
+                        } else {
+                            isFailed = true
                         }
                     }
+
+                    if (isFailed) {
+                        callback?.onImageSendFailed()
+                    }
+
+                    if (isEnd) {
+                        callback?.onImageSendCompleted()
+                    }
                 }
-            })
-        }
+            }
+        })
     }
 }
