@@ -11,9 +11,7 @@ import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface
 import com.skt.nugu.sdk.core.interfaces.context.ContextType
 import com.skt.nugu.sdk.core.interfaces.context.StateRefreshPolicy
 import com.skt.nugu.sdk.core.interfaces.context.SupportedInterfaceContextProvider
-import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
-import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -80,7 +78,7 @@ class ImageAgentImpl(
                     val eventRequest = EventMessageRequest.Builder(
                         jsonContext,
                         NAMESPACE, EVENT_NAME_SEND_IMAGE, VERSION.toString()
-                    )
+                    ).isStreaming(true)
                         .build()
 
                     callback?.onEventRequestCreated(eventRequest)

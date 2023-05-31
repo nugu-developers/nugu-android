@@ -56,29 +56,4 @@ class DirectivePreconditionsTest : TestCase() {
             }
         ).build().checkIfDirectiveIsUnauthorizedRequestException())
     }
-
-    @Test
-    fun testCheckIfEventMessageIsAsrRecognizeTrue() {
-        Assert.assertTrue(
-            EventMessageRequest.Builder(
-                context = "",
-                namespace = "ASR",
-                name = "Recognize",
-                version = "1.0"
-            ).build().checkIfEventMessageIsAsrRecognize()
-        )
-    }
-
-    @Test
-    fun testCheckIfEventMessageIsAsrRecognizeFalse() {
-        Assert.assertFalse(
-            EventMessageRequest.Builder(
-                context = "",
-                namespace = "TTS",
-                name = "Speak",
-                version = "1.0"
-            ).build().checkIfEventMessageIsAsrRecognize()
-        )
-    }
-
 }

@@ -151,6 +151,7 @@ class DefaultServerSpeechRecognizer(
                 )
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
+            .isStreaming(true)
             .build()
 
         val call = messageSender.newCall(

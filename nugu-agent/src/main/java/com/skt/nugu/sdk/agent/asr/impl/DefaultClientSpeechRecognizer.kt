@@ -153,6 +153,7 @@ class DefaultClientSpeechRecognizer(
                 wakeup = payloadWakeup
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
+            .isStreaming(true)
             .build()
 
         val request =

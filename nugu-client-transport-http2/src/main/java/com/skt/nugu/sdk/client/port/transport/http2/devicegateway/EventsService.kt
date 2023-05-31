@@ -75,6 +75,7 @@ class EventsService(
     private fun handleRequestStreamingCall(call: MessageCall) : Boolean {
         val messageRequest = call.request() as EventMessageRequest
 
+        // TODO : maybe use this? messageRequest.isStreaming
         val hasASR = messageRequest.namespace == "ASR"
         val hasRecognize = messageRequest.name == "Recognize"
         val isStart = hasASR && hasRecognize
