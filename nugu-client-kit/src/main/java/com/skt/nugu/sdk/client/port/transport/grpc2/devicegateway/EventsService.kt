@@ -17,7 +17,6 @@ package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
 import com.google.common.annotations.VisibleForTesting
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
-import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toProtobufMessage
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
@@ -283,7 +282,7 @@ internal class EventsService(
         }
         val event = call.request() as EventMessageRequest
         try {
-            val expectedAttachment = event.checkIfEventMessageIsAsrRecognize()
+            val expectedAttachment = event.isStreaming
             streamLock.withLock {
                 buildChannel(event.messageId, call, expectedAttachment)?.apply {
                     requestStreamMap[event.messageId] = this

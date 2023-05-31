@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
  * @param version the version
  * @param payload the payload (json formatted string).
  * @param referrerDialogRequestId the referrerDialogRequestId.
+ * @param isStreaming indicate whether send attachments after or not
  */
 data class EventMessageRequest(
     val messageId: String,
@@ -37,7 +38,8 @@ data class EventMessageRequest(
     val name: String,
     val version: String,
     val payload: String,
-    val referrerDialogRequestId: String
+    val referrerDialogRequestId: String,
+    val isStreaming: Boolean
 ) : MessageRequest {
 
     /**
@@ -57,6 +59,7 @@ data class EventMessageRequest(
         private var messageId: String = UUIDGeneration.timeUUID().toString()
         private var payload: String = "{}"
         private var referrerDialogRequestId: String = ""
+        private var isStreaming: Boolean = false
 
         /**
          * Set dialogRequestId
@@ -86,6 +89,13 @@ data class EventMessageRequest(
             apply { this.referrerDialogRequestId = referrerDialogRequestId }
 
         /**
+         * Set isStreaming
+         * @param isStreaming the isStreaming to be set
+         */
+        fun isStreaming(isStreaming: Boolean) =
+            apply { this.isStreaming = isStreaming }
+
+        /**
          * Create a EventMessageRequest applied given params.
          */
         fun build(): EventMessageRequest =
@@ -97,7 +107,8 @@ data class EventMessageRequest(
                 name,
                 version,
                 payload,
-                referrerDialogRequestId
+                referrerDialogRequestId,
+                isStreaming
             )
     }
 }
