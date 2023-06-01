@@ -70,14 +70,18 @@ class ImageAgentImpl(
         )
     }
 
-    override fun sendImage(source: ImageSource, callback: ImageAgent.SendImageCallback?) {
+    override fun sendImage(source: ImageSource, callback: ImageAgent.SendImageCallback?): ImageAgent.SendImageRequest {
+        val request = object: ImageAgent.SendImageRequest {
+            override val dialogRequestId: String = UUIDGeneration.timeUUID().toString()
+        }
+
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 senderExecutors.submit {
                     val eventRequest = EventMessageRequest.Builder(
                         jsonContext,
                         NAMESPACE, EVENT_NAME_SEND_IMAGE, VERSION.toString()
-                    ).isStreaming(true)
+                    ).dialogRequestId(request.dialogRequestId).isStreaming(true)
                         .build()
 
                     // send image event async, if we send this as sync, then will be timeout occur.
@@ -168,5 +172,7 @@ class ImageAgentImpl(
                 }
             }
         })
+
+        return request
     }
 }
