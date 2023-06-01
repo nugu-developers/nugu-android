@@ -1,19 +1,22 @@
 package com.skt.nugu.sdk.agent.image
 
-import com.skt.nugu.sdk.core.interfaces.message.Status
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-
 interface ImageAgent {
     fun sendImage(source: ImageSource, callback: SendImageCallback? = null)
 
     interface SendImageCallback {
-        fun onEventRequestCreated(request: EventMessageRequest)
-        fun onEventRequestFailed(request: EventMessageRequest, status: Status)
-        fun onEventRequestSuccess(request: EventMessageRequest)
+        // Called when a image source's byte retrieved.
         fun onImageSourceRetrieved(source: ImageSource, byteArray: ByteArray)
+        // Called when a image source's byte retrieving failed.
         fun onImageSourceRetrieveFailed(source: ImageSource)
+
+        // Called when a image source's byte sent
         fun onImageSourceSent(source: ImageSource, byteArray: ByteArray, offset: Long, size: Long)
+
+        // Called when send a image failed.
         fun onImageSendFailed()
-        fun onImageSendCompleted()
+
+        // Called when send a image success.
+        // It does not mean that the image was processed normally on the server.
+        fun onImageSendSuccess()
     }
 }

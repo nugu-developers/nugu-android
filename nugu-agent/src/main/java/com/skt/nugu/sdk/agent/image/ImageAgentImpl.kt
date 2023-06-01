@@ -71,7 +71,6 @@ class ImageAgentImpl(
     }
 
     override fun sendImage(source: ImageSource, callback: ImageAgent.SendImageCallback?) {
-
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 senderExecutors.submit {
@@ -81,20 +80,10 @@ class ImageAgentImpl(
                     ).isStreaming(true)
                         .build()
 
-                    callback?.onEventRequestCreated(eventRequest)
-                    // send image event.
-
-                    val status = messageSender.newCall(eventRequest).execute()
-
-                    if(status.isOk()) {
-                        callback?.onEventRequestSuccess(eventRequest)
-
-                        // send attachments
-                        sendAttachment(eventRequest, callback)
-                    } else {
-                        callback?.onEventRequestFailed(eventRequest, status)
-                        callback?.onImageSendFailed()
-                    }
+                    // send image event async, if we send this as sync, then will be timeout occur.
+                    // because of attachment not sent.
+                    messageSender.newCall(eventRequest).enqueue(null)
+                    sendAttachment(eventRequest, callback)
                 }
             }
 
@@ -174,7 +163,7 @@ class ImageAgentImpl(
                     }
 
                     if (isEnd) {
-                        callback?.onImageSendCompleted()
+                        callback?.onImageSendSuccess()
                     }
                 }
             }

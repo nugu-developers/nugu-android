@@ -197,7 +197,7 @@ internal class EventsService(
                 try {
                     if (status.code == Status.Code.DEADLINE_EXCEEDED) {
                         if (expectedAttachment && !isSendingAttachmentMessage) {
-                            log.append(", It occurs because the attachment was not sent after Asr.Recognize.")
+                            log.append(", It occurs because the attachment was not sent after [EventMessageRequest::isStreaming == true]")
                             return
                         }
                     }
