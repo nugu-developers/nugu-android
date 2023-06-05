@@ -93,8 +93,15 @@ class NuguOAuthCallbackActivity : Activity() {
                     performLogin(auth.codeFromIntent(intent))
                     return true
                 }
+                val uri = kotlin.runCatching {
+                    auth.getLoginUri(data)
+                }.onFailure {
+                    Logger.d(TAG, "[processOAuthCallback] SDK not initialised (getLoginUri)")
+                    Logger.e(TAG, "[processOAuthCallback] $it")
+                    auth.setResult(false)
+                    return false
+                }.getOrNull()
 
-                val uri = auth.getLoginUri(data)
                 val fallbackRunnable = Runnable {
                     Logger.w(TAG, "[processOAuthCallback] fallback")
                     handler.removeCallbacks(finishRunnable)
@@ -122,7 +129,15 @@ class NuguOAuthCallbackActivity : Activity() {
                     performLogin(auth.codeFromIntent(intent))
                     return true
                 }
-                val uri = auth.getAccountInfoUri(data)
+                val uri = kotlin.runCatching {
+                    auth.getAccountInfoUri(data)
+                }.onFailure {
+                    Logger.e(TAG, "[processOAuthCallback] SDK not initialised (getAccountInfoUri)")
+                    Logger.e(TAG, "[processOAuthCallback] $it")
+                    auth.setResult(false)
+                    return false
+                }.getOrNull()
+
                 val fallbackRunnable = Runnable {
                     Logger.w(TAG, "[processOAuthCallback] fallback")
                     handler.removeCallbacks(finishRunnable)
