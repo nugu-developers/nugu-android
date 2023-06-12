@@ -52,6 +52,7 @@ class RoutineAgent(
     private val seamlessFocusManager: SeamlessFocusManagerInterface,
     startDirectiveHandleController: StartDirectiveHandler.HandleController? = null,
     continueDirectiveHandleController: ContinueDirectiveHandler.HandleController? = null,
+    internal var controller: RoutineAgentInterface.RoutineController? = null,
     private val interruptTimeoutInSecond: Long? = 60
 ) : CapabilityAgent,
     RoutineAgentInterface,
@@ -127,6 +128,7 @@ class RoutineAgent(
     private var currentRoutineRequest: RoutineRequest? = null
     private var textInputRequests = HashSet<String>()
     private var causingPauseRequests = HashMap<String, EventMessageRequest>()
+
     var textAgent: TextAgentInterface? = null
 
     override val namespaceAndName = NamespaceAndName(SupportedInterfaceContextProvider.NAMESPACE, NAMESPACE)
@@ -369,8 +371,14 @@ class RoutineAgent(
             }
 
             if (index < directive.payload.actions.size) {
-                currentActionIndex = index
-                doAction(directive.payload.actions[currentActionIndex])
+                val currentController = controller
+
+                if(currentController == null || currentController.continueAction(index, directive)) {
+                    currentActionIndex = index
+                    doAction(directive.payload.actions[currentActionIndex])
+                } else {
+                    pause()
+                }
             } else {
                 listener.onFinish()
             }
@@ -941,6 +949,10 @@ class RoutineAgent(
 
     override fun removeListener(listener: RoutineAgentInterface.RoutineListener) {
         listeners.remove(listener)
+    }
+
+    override fun setRoutineController(controller: RoutineAgentInterface.RoutineController?) {
+        this.controller = controller
     }
 
     override fun resume(directive: StartDirectiveHandler.StartDirective): Boolean {
