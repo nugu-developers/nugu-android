@@ -24,6 +24,14 @@ interface RoutineAgentInterface {
         IDLE, PLAYING, STOPPED, FINISHED, INTERRUPTED, SUSPENDED
     }
 
+    interface RoutineController {
+        /**
+         * Called before do [directive] action index of [actionIndex]
+         * @return true: do action, false: do not action and try to pause routine.
+         */
+        fun continueAction(actionIndex: Int, directive: StartDirectiveHandler.StartDirective): Boolean
+    }
+
     interface RoutineListener {
         fun onPlaying(directive: StartDirectiveHandler.StartDirective)
         fun onStopped(directive: StartDirectiveHandler.StartDirective)
@@ -74,6 +82,12 @@ interface RoutineAgentInterface {
      * Remove listener for routine
      */
     fun removeListener(listener: RoutineListener)
+
+    /**
+     * Set routine controller
+     * @param controller null to remove controller.
+     */
+    fun setRoutineController(controller: RoutineController? = null)
 
     /**
      * Start a routine
