@@ -603,6 +603,7 @@ class RoutineAgent(
                     ) {
                         currentActionDialogRequestId = null
                         currentActionHandlingListener = null
+                        pause(directive)
                         isActionRequesting.set(false)
                     }
                 })
@@ -648,6 +649,7 @@ class RoutineAgent(
                         override fun onFailure(request: MessageRequest, status: Status) {
                             currentActionDialogRequestId = null
                             currentActionHandlingListener = null
+                            pause(directive)
                             isActionRequesting.set(false)
                         }
 
