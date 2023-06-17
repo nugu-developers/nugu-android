@@ -123,6 +123,7 @@ class DefaultTTSAgent(
         var isHandled = false
         var cancelByStop = false
         var state = TTSAgentInterface.State.IDLE
+        var volume = playerVolume
 
         val focusChannel: SeamlessFocusManagerInterface.Channel = SeamlessFocusManagerInterface.Channel(channelName, object: ChannelObserver {
             override fun onFocusChanged(newFocus: FocusState) {
@@ -226,6 +227,7 @@ class DefaultTTSAgent(
         private fun startPlaying() {
             directive.getAttachmentReader()?.let {
                 with(speechPlayer.setSource(it)) {
+                    speechPlayer.setVolume(volume)
                     sourceId = this
                     Logger.d(TAG, "[startPlaying] sourceId: $this, info: $this@SpeakDirectiveInfo")
                     when {
@@ -316,6 +318,8 @@ class DefaultTTSAgent(
     //    @GuardedBy("stateLock")
     private var isAlreadyStopping = false
     private var isAlreadyPausing = false
+
+    private var playerVolume = 1.0f
 
     private val playContextManager = TTSPlayContextProvider()
 
@@ -1055,7 +1059,22 @@ class DefaultTTSAgent(
         return dialogRequestId
     }
 
-    override fun setVolume(volume: Float) = speechPlayer.setVolume(volume)
+    override fun setVolume(volume: Float) {
+        playerVolume = volume
+        currentInfo?.volume = volume
+        speechPlayer.setVolume(volume)
+    }
+    override fun applyVolume(volume: Float, dialogRequestId: String): Boolean {
+        currentInfo?.let {
+            if(it.directive.getDialogRequestId() == dialogRequestId) {
+                it.volume = volume
+                speechPlayer.setVolume(volume)
+                return true
+            }
+        }
+
+        return false
+    }
 
     override fun getPlayContext(): PlayStackManagerInterface.PlayContext? {
         val playContext = playContextManager.getPlayContext()
