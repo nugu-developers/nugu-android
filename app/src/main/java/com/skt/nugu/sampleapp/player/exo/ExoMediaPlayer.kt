@@ -121,7 +121,8 @@ class ExoMediaPlayer(
             const val SEEK_TO = 8
             const val GET_OFFSET = 9
             const val GET_DURATION = 10
-            const val ERROR = 11
+            const val SET_VOLUME = 11
+            const val ERROR = 12
         }
 
         var retVal: Any? = null
@@ -561,7 +562,11 @@ class ExoMediaPlayer(
     }
 
     override fun setVolume(volume: Float) {
-        player.volume = volume
+        if (isMainThread()) {
+            player.volume = volume
+        } else {
+            await(FuncMessage.SET_VOLUME, volume)
+        }
     }
 
     private fun isPaused(): Boolean {
@@ -714,6 +719,14 @@ class ExoMediaPlayer(
                     msg.runAndRelease {
                         (data1 as? SourceId)?.let {
                             retVal = playerRef.get()?.getDurationInternal(it)
+                        }
+                    }
+                }
+
+                FuncMessage.SET_VOLUME -> {
+                    msg.runAndRelease {
+                        (data1 as? Float)?.let {
+                            retVal = playerRef.get()?.setVolume(it)
                         }
                     }
                 }
