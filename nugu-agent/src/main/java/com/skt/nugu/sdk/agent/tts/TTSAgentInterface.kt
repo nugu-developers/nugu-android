@@ -117,4 +117,10 @@ interface TTSAgentInterface {
      * @param volume the volume to set in range 0.0 to 1.0.
      */
     fun setVolume(volume: Float)
+
+    /**
+     * Apply the volume to current tts matched with [dialogRequestId] only.
+     * @param volume the volume to set in range 0.0 to 1.0.
+     */
+    fun applyVolume(volume: Float, dialogRequestId: String): Boolean
 }
