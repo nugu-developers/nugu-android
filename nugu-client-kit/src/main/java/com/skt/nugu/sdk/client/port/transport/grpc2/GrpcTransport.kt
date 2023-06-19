@@ -265,12 +265,13 @@ internal class GrpcTransport internal constructor(
         if (!state.isConnected()) {
             Logger.d(TAG, "[send] Status : ($state), request : ${call.request()}")
             executor.submit {
-                deviceGatewayClient?.send(call)
-                    ?: call.onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+                if(deviceGatewayClient?.send(call) != true) {
+                    call.onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+                }
             }
             return true
         }
-        return deviceGatewayClient?.send(call) ?: false
+        return deviceGatewayClient?.send(call) == true
     }
 
     /**

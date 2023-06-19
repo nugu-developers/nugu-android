@@ -28,6 +28,8 @@ import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayC
 import com.skt.nugu.sdk.client.port.transport.http2.devicegateway.DeviceGatewayTransport
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
+import com.skt.nugu.sdk.core.interfaces.message.Status
+import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
 import com.skt.nugu.sdk.core.interfaces.transport.DnsLookup
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -265,9 +267,14 @@ internal class HTTP2Transport(
     override fun send(call: Call): Boolean {
         if (!state.isConnected()) {
             Logger.d(TAG, "[send], Status : ($state), request : ${call.request()}")
-            return false
+            executor.submit {
+                if(deviceGatewayClient?.send(call) != true) {
+                    call.onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
+                }
+            }
+            return true
         }
-        return deviceGatewayClient?.send(call) ?: false
+        return deviceGatewayClient?.send(call) == true
     }
 
     /**
