@@ -99,6 +99,13 @@ interface RoutineAgentInterface {
      * Resume a routine started by [directive]
      */
     fun resume(directive: StartDirectiveHandler.StartDirective): Boolean
+
+    /**
+     * Resume a current index action
+     * @param directive a directive which is currently running routine.
+     */
+    fun resumeCurrent(directive: StartDirectiveHandler.StartDirective): Boolean
+
     /**
      * Pause a routine started by [directive]
      */
