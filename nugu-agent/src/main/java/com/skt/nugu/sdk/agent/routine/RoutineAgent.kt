@@ -332,10 +332,10 @@ class RoutineAgent(
             }
         }
 
-        fun doContinue() {
+        fun doActionWithOffset(offset: Int) {
             Logger.d(
                 TAG,
-                "[RoutineRequest] doContinue - isCanceled: $isCancelRequested"
+                "[RoutineRequest] doActionWithOffset - isCanceled: $isCancelRequested / offset: $offset"
             )
             if (isCancelRequested) {
                 return
@@ -345,9 +345,9 @@ class RoutineAgent(
             scheduledFutureForCancelByInterrupt = null
 
             setState(RoutineAgentInterface.State.PLAYING, directive)
-            tryStartNextAction()
+            tryStartActionIndexAt(currentActionIndex + offset)
         }
-
+        
         private fun tryStartNextAction() {
             Logger.d(
                 TAG,
@@ -885,7 +885,13 @@ class RoutineAgent(
 
     private fun resumeInternal(token: String): Boolean {
         return commandInternal(token) {
-            it.doContinue()
+            it.doActionWithOffset(1)
+        }
+    }
+
+    private fun resumeCurrentInternal(token: String): Boolean {
+        return commandInternal(token) {
+            it.doActionWithOffset(0)
         }
     }
 
@@ -960,6 +966,11 @@ class RoutineAgent(
     override fun resume(directive: StartDirectiveHandler.StartDirective): Boolean {
         Logger.d(TAG, "[resume] $directive")
         return resumeInternal(directive.payload.token)
+    }
+
+    override fun resumeCurrent(directive: StartDirectiveHandler.StartDirective): Boolean {
+        Logger.d(TAG, "[resumeCurrent]")
+        return resumeCurrentInternal(directive.payload.token)
     }
 
     override fun pause(directive: StartDirectiveHandler.StartDirective): Boolean {
