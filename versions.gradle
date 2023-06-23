@@ -37,7 +37,7 @@ ext {
     robolectricVersion = "4.3.1"
 
     // SDK
-    keensenseVersion = "0.3.0"
+    keensenseVersion = "0.3.1"
     jademarbleVersion = "0.2.7"
     silvertrayVersion = "4.4.1"
 
