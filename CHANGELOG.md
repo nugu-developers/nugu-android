@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 1.7.12 *(2023-06-30)*
+-----------------------------
+* Fix: NuguOAuth crashes
+* Fix: AudioPlayerPlaylistManager.removeListener is invalid
+* Fix: Cancel ActionTriggeredTimeout Event when action canceled
+* Fix: Use position of Move directive directly
+* Fix: Listener not being called
+* Improve : Update NuguOAuth class to object
+* Improve : Customizable display timer for DisplayAgent
+* Improve : Shutdown of networkManager to async
+
 Version 1.7.11 *(2023-02-28)*
 -----------------------------
 * Fix: WebViewActivity cookie sync issue (#2379)
