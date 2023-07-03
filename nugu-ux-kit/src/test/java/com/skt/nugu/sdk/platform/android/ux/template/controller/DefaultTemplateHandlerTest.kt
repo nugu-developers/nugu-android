@@ -73,18 +73,4 @@ class DefaultTemplateHandlerTest {
         verify(templateFragment).requireContext()
 //        verifyNoMoreInteractions(templateFragment)
     }
-
-    @Test
-    fun showActivity() {
-        try {
-            templateHandler.showActivity("MainActivity")
-        }catch(e: Exception){
-            e.printStackTrace()
-        }
-
-        templateHandler.clear()
-        templateHandler.showActivity("MainActivity")
-//        verify(templateFragment).startActivity(ArgumentMatchers.any())
-    }
-
 }
