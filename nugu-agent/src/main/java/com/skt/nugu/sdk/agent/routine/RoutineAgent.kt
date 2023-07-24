@@ -585,6 +585,7 @@ class RoutineAgent(
             textAgent?.textInput(
                 TextInputRequester.Request.Builder(text)
                     .playServiceId(action.playServiceId).token(action.token)
+                    .source("DYNAMIC_ROUTINE_ACTION")
                     .includeDialogAttribute(false), object : TextAgentInterface.RequestListener {
                     override fun onRequestCreated(dialogRequestId: String) {
                         Logger.d(TAG, "[onRequestCreated] dialogRequestId: $dialogRequestId")
