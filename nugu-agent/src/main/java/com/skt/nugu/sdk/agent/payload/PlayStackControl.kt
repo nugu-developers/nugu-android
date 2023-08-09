@@ -26,7 +26,9 @@ data class PlayStackControl(
     private val playServiceId: String?
 ) {
     enum class Type {
+        @SerializedName("NONE")
         NONE,
+        @SerializedName("PUSH")
         PUSH
     }
 
