@@ -84,7 +84,9 @@ dependencies {
     testImplementation 'androidx.test.espresso:espresso-web:3.4.0'
 }
 
-apply from: '../jacoco.gradle'
-apply from: '../javadoc-android.gradle'
 apply from: '../publish-android.gradle'
 
+if (!rootProject.hasProperty("sdkAsSubmodule")) {
+    apply from: '../jacoco.gradle'
+    apply from: '../javadoc-android.gradle'
+}

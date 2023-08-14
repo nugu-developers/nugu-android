@@ -46,6 +46,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
-apply from: '../javadoc-android.gradle'
 apply from: '../publish-android.gradle'
-apply from: '../jacoco.gradle'
+
+if (!rootProject.hasProperty("sdkAsSubmodule")) {
+    apply from: '../javadoc-android.gradle'
+    apply from: '../jacoco.gradle'
+}

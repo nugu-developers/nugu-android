@@ -37,26 +37,29 @@ ext {
     robolectricVersion = "4.3.1"
 
     // SDK
-    keensenseVersion = "0.3.0"
-    jademarbleVersion = "0.2.7"
-    silvertrayVersion = "4.4.1"
+    defaultKeensenseVersion = "0.3.0"
+    defaultJademarbleVersion = "0.2.7"
+    defaultSilvertrayVersion = "4.4.1"
 
-    baseNuguVersionCode = 10711
-    baseNuguVersionName = "1.7.11"
+    defaultBaseNuguVersionCode = 10711
+    defaultBaseNuguVersionName = "1.7.11"
 
-    if (rootProject.publishSnapshot) {
-        // type current timestamp
-        // timestamp='yyyyMMdd.HHmm'
-        // ex) timestamp='20210128.1643'
+    keensenseVersion = rootProject.hasProperty("keensenseVersion") ? rootProject.keensenseVersion : defaultKeensenseVersion
+    jademarbleVersion = rootProject.hasProperty("jademarbleVersion") ? rootProject.jademarbleVersion : defaultJademarbleVersion
+    silvertrayVersion = rootProject.hasProperty("silvertrayVersion") ? rootProject.silvertrayVersion : defaultSilvertrayVersion
 
-        // for CI
-        timestamp = System.getenv('SNAPSHOT_TIMESTAMP')
+    nuguVersionCode = rootProject.hasProperty("nuguVersionCode") ? rootProject.nuguVersionCode : defaultBaseNuguVersionCode
+    nuguVersionName = rootProject.hasProperty("nuguVersionName") ? rootProject.nuguVersionName : defaultBaseNuguVersionName
 
-        // snapshot version is higher than current version.
-        nuguVersionCode = baseNuguVersionCode + 1
-        nuguVersionName = "${getVersionNameFromCode(nuguVersionCode)}-${timestamp}-SNAPSHOT"
-    } else {
-        nuguVersionCode = baseNuguVersionCode
-        nuguVersionName = getVersionNameFromCode(nuguVersionCode)
-    }
+    println("====================================================")
+    println("configurations (nugu-andrid/versions.gradle)")
+    println("====================================================")
+    println("rootDir.path: ${rootDir.path}")
+    println("rootProject.name: ${rootProject.name}")
+    println("##nuguVersionCode: $nuguVersionCode")
+    println("##nuguVersionName: $nuguVersionName")
+    println("##isReleaseMode: $isReleaseMode")
+    println("##publishSnapshot: $publishSnapshot")
+    println("##isSubmodule: ${rootProject.hasProperty("sdkAsSubmodule")}")
+    println("====================================================")
 }

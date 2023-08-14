@@ -50,6 +50,9 @@ dependencies {
     testImplementation "org.robolectric:robolectric:$robolectricVersion"
 }
 
-apply from: '../javadoc-android.gradle'
 apply from: '../publish-android.gradle'
-apply from: '../jacoco.gradle'
+
+if (!rootProject.hasProperty("sdkAsSubmodule")) {
+    apply from: '../javadoc-android.gradle'
+    apply from: '../jacoco.gradle'
+}

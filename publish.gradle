@@ -1,46 +1,17 @@
-apply plugin: 'maven-publish'
+/**
+ * 버전배포: publish-base.gradle 파일 참고
+ */
+apply from: '../publish-base.gradle'
 
 publishing {
-    Properties properties = new Properties()
-    if (project.rootProject.file('local.properties').canRead()) {
-        properties.load(project.rootProject.file("local.properties").newDataInputStream())
-    }
-
-    def userName = properties['maven.userName']
-    def passWord = properties['maven.password']
-    def mavenTarget = ""
-    if(project.rootProject.publishSnapshot) {
-        mavenTarget = "maven-snapshots"
-    } else {
-        mavenTarget = "maven-releases"
-    }
-
-    repositories {
-        maven {
-            url "http://223.39.117.163:8081/repository/$mavenTarget/"
-            credentials {
-                username userName
-                password passWord
-            }
-        }
-
-        maven {
-            url "http://223.39.117.164:8081/repository/$mavenTarget/"
-            credentials {
-                username userName
-                password passWord
-            }
-        }
-    }
-
     publications {
-        mavenJava(MavenPublication) {
-            groupId = "com.skt.nugu.sdk"
+        nuguSdkJar(MavenPublication) {
+            groupId = NUGU_SDK_MAVEN_GROUP_ID
 
             from components.java
-
-            artifact sourceJar
-            artifact packageJavadoc
         }
     }
 }
+
+publishNuguSdk.dependsOn publishNuguSdkJarPublicationToMavenRepository
+publishNuguSdkJarPublicationToMavenRepository.dependsOn publishNuguSdkJarPublicationToMaven2Repository

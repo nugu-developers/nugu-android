@@ -47,7 +47,7 @@ dependencies {
 }
 
 protobuf {
-    def useAppleSilicon = false
+    def useAppleSilicon = true
 
     if(useAppleSilicon) {
         protoc { artifact = "com.google.protobuf:protoc:$protoc_version:osx-x86_64" }
@@ -80,6 +80,9 @@ protobuf {
     }
 }
 
-apply from: '../javadoc.gradle'
 apply from: '../publish.gradle'
-apply from: '../jacocoJavaLib.gradle'
+
+if (!rootProject.hasProperty("sdkAsSubmodule")) {
+    apply from: '../javadoc.gradle'
+    apply from: '../jacocoJavaLib.gradle'
+}

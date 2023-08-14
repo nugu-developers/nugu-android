@@ -56,8 +56,8 @@ task clean(type: Delete) {
 }
 
 ext {
-    isReleaseMode = Boolean.parseBoolean(System.getenv("IS_RELEASE_MODE")) ?: false
-    publishSnapshot = Boolean.parseBoolean(System.getenv("PUBLISH_SNAPSHOT")) ?: false
+    isReleaseMode = rootProject.hasProperty("isReleaseMode") ? rootProject.isReleaseMode : true
+    publishSnapshot = rootProject.hasProperty("publishSnapshot") ? rootProject.publishSnapshot : true
 }
 
 apply from: 'versions.gradle'
@@ -97,4 +97,16 @@ sonarqube {
                                                           "$rootDir/nugu-ux-kit/build/reports/jacoco/coverageReport/coverageReport.xml"]
     }
 }
+
+println("====================================================")
+println("configurations (nugu-andrid/build.gradle)")
+println("====================================================")
+println("rootDir.path: ${rootDir.path}")
+println("rootProject.name: ${rootProject.name}")
+println("##nuguVersionCode: $nuguVersionCode")
+println("##nuguVersionName: $nuguVersionName")
+println("##isReleaseMode: $isReleaseMode")
+println("##publishSnapshot: $publishSnapshot")
+println("##isSubmodule: ${rootProject.hasProperty("sdkAsSubmodule")}")
+println("====================================================")
 

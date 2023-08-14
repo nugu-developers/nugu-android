@@ -1,0 +1,61 @@
+apply plugin: 'maven-publish'
+
+/**
+ * NUGU SDK 버전배포를 위한 Nexus Repository 및 maven group 설정.
+ * 업로드 명령어 실행 시 NUGU_SDK_MAVEN_GROUP_ID 의 그룹명, nuguVersionName 에 명시된 버전명으로
+ * 모든 NUGU SDK 의 모듈이 Nexus 에 업로드됨.
+ *
+ * <중요> 예외처리된 AP 에 연결해서 명령어를 실행해야 함.
+ *
+ * [업로드 명령어]
+ * $ gradlew publishNuguSdk
+ */
+publishing {
+    Properties properties = new Properties()
+    if (project.rootProject.file('local.properties').canRead()) {
+        properties.load(project.rootProject.file("local.properties").newDataInputStream())
+    }
+
+    def userName = properties['maven.userName']
+    def passWord = properties['maven.password']
+
+    /**
+     * local.properties 파일에서 계정정보를 정상 로딩하지 못한 경우
+     * NUGU auto build-preset 의 계정정보를 로딩
+     */
+    if (userName == null || passWord == null) {
+        def nexusAccountPath = "../build-preset/nexus_account.properties"
+        if (project.rootProject.file(nexusAccountPath).canRead()) {
+            properties.load(project.rootProject.file(nexusAccountPath).newDataInputStream())
+        }
+
+        userName = properties["NEXUS_ACCOUNT_NAME"]
+        passWord = properties["NEXUS_ACCOUNT_PASSWORD"]
+    }
+
+    repositories {
+        maven {
+            url "http://223.39.117.163:8081/repository/maven-nuguauto-private/"
+            allowInsecureProtocol true
+            credentials {
+                username userName
+                password passWord
+            }
+        }
+
+        maven {
+            url "http://223.39.117.164:8081/repository/maven-nuguauto-private/"
+            allowInsecureProtocol true
+            credentials {
+                username userName
+                password passWord
+            }
+        }
+    }
+}
+
+ext {
+    NUGU_SDK_MAVEN_GROUP_ID = "test.com.skt.nugu.sdk"
+}
+
+task publishNuguSdk
