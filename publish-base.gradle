@@ -55,7 +55,7 @@ publishing {
 }
 
 ext {
-    NUGU_SDK_MAVEN_GROUP_ID = "test.com.skt.nugu.sdk"
+    NUGU_SDK_MAVEN_GROUP_ID = "com.skt.nugu.sdk"
 }
 
 task publishNuguSdk
