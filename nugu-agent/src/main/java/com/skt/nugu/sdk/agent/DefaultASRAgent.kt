@@ -514,7 +514,7 @@ class DefaultASRAgent(
         }
     }
 
-    private fun executeCancelExpectSpeechDirective(messageId: String) {
+    private fun executeCancelExpectSpeechDirective(messageId: String, cancelPolicy: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_ALL) {
         Logger.d(TAG, "[executeCancelExpectSpeechDirective] messageId: $messageId")
         val request = currentRequest
         if (request == null) {
@@ -523,7 +523,7 @@ class DefaultASRAgent(
                     focusManager.cancel(asrFocusRequester)
                     sessionManager.deactivate(it.directive.header.dialogRequestId, it)
                     // TODO : refactor need
-                    it.result.setFailed("executeCancelExpectSpeechDirective")
+                    it.result.setFailed("executeCancelExpectSpeechDirective", cancelPolicy)
                     clearPreHandledExpectSpeech()
                     clearCurrentAttributeKeyIfMatchWith(it)
                 }
@@ -955,10 +955,14 @@ class DefaultASRAgent(
         }
     }
 
-    override fun stopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
-        Logger.d(TAG, "[stopRecognition] $cancel, $cause")
+    override fun stopRecognition(
+        cancel: Boolean,
+        cause: ASRAgentInterface.CancelCause,
+        cancelPolicy: DirectiveHandlerResult.CancelPolicy
+    ) {
+        Logger.d(TAG, "[stopRecognition] $cancel, $cause, $cancelPolicy")
         executor.submit {
-            executeStopRecognition(cancel, cause)
+            executeStopRecognition(cancel, cause, cancelPolicy)
         }
     }
 
@@ -1058,11 +1062,11 @@ class DefaultASRAgent(
         })
     }
 
-    private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause) {
+    private fun executeStopRecognition(cancel: Boolean, cause: ASRAgentInterface.CancelCause, cancelPolicy: DirectiveHandlerResult.CancelPolicy) {
         currentSpeechRecognizer.stop(cancel, cause)
         if(cancel) {
             expectSpeechDirectiveParam?.let {
-                executeCancelExpectSpeechDirective(it.directive.header.messageId)
+                executeCancelExpectSpeechDirective(it.directive.header.messageId, cancelPolicy)
             }
         }
     }
