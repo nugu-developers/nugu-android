@@ -24,6 +24,7 @@ import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.asr.audio.AudioProvider
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import com.skt.nugu.sdk.platform.android.speechrecognizer.recorder.KeywordRecorder
@@ -435,11 +436,11 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun stopListening(cancel: Boolean) {
-        Logger.d(TAG, "[stopListening]")
+    override fun stopListening(cancel: Boolean, cancelPolicy: DirectiveHandlerResult.CancelPolicy) {
+        Logger.d(TAG, "[stopListening] cancel: $cancel, cancelPolicy: $cancelPolicy")
         executor.submit {
             Logger.d(TAG, "[stopListening] on executor")
-            speechProcessor.stop(cancel)
+            speechProcessor.stop(cancel, cancelPolicy)
         }
 
     }

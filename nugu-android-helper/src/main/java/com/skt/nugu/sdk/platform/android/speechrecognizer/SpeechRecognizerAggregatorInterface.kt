@@ -20,6 +20,7 @@ import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 
 /**
  * Utility interface for speech recognition
@@ -140,8 +141,9 @@ interface SpeechRecognizerAggregatorInterface {
      * If [cancel] is true, stop epd and cancel asr processing.
      * Otherwise, stop epd but finish asr processing.
      * @param cancel the flag to cancel or finish processing
+     * @param cancelPolicy the cancel policy if ExpectSpeech directive canceled. default: [DirectiveHandlerResult.POLICY_CANCEL_ALL]]
      */
-    fun stopListening(cancel: Boolean = true)
+    fun stopListening(cancel: Boolean = true, cancelPolicy: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_ALL)
 
     /**
      * Stop keyword detector

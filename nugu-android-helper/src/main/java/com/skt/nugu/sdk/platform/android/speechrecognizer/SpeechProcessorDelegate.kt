@@ -21,6 +21,7 @@ import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.utils.Logger
 
 /**
@@ -53,9 +54,10 @@ class SpeechProcessorDelegate(
 
     /**
      * Request stop epd to [ASRAgentInterface]
+     * @param cancelPolicy the cancel policy if ExpectSpeech directive canceled. default: [DirectiveHandlerResult.POLICY_CANCEL_ALL]]
      */
-    fun stop(cancel: Boolean = true) {
-        asrAgent.stopRecognition(cancel)
+    fun stop(cancel: Boolean = true, cancelPolicy: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_ALL) {
+        asrAgent.stopRecognition(cancel = cancel, cancelPolicy = cancelPolicy)
     }
 
     /** Add a listener to be called when a state changed.
