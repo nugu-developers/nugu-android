@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.asr
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
 import com.skt.nugu.sdk.core.interfaces.common.EventCallback
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.message.Header
 
 /**
@@ -239,8 +240,10 @@ interface ASRAgentInterface {
 
     /**
      * Stop current recognition
+     * @param cause the cause for stop recognition, default: [CancelCause.LOCAL_API]]
+     * @param cancelPolicy the cancel policy if ExpectSpeech directive canceled. default: [DirectiveHandlerResult.POLICY_CANCEL_ALL]]
      */
-    fun stopRecognition(cancel: Boolean = true, cause: CancelCause = CancelCause.LOCAL_API)
+    fun stopRecognition(cancel: Boolean = true, cause: CancelCause = CancelCause.LOCAL_API, cancelPolicy: DirectiveHandlerResult.CancelPolicy = DirectiveHandlerResult.POLICY_CANCEL_ALL)
 
     /** Add a listener to be called when a state changed.
      * @param listener the state listener that added
