@@ -116,6 +116,12 @@ interface RoutineAgentInterface {
     fun stop(directive: StartDirectiveHandler.StartDirective): Boolean
 
     /**
+     * Stop a routine started by [directive]
+     * However, an "ActionTimeoutTriggered" event will not be canceled which already scheduled.
+     */
+    fun stopSoftly(directive: StartDirectiveHandler.StartDirective): Boolean
+
+    /**
      * Request next action
      */
     fun next(): Boolean

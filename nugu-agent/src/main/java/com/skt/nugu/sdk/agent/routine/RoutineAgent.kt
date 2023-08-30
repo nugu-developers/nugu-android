@@ -242,7 +242,7 @@ class RoutineAgent(
             }
         }
 
-        fun cancel(cancelCurrentAction: Boolean = true) {
+        fun cancel(cancelCurrentAction: Boolean = true, cancelScheduledTimeoutFuture: Boolean = true) {
             Logger.d(
                 TAG,
                 "[RoutineRequest] isCancelRequested: $isCancelRequested, cancelCurrentAction: $cancelCurrentAction"
@@ -252,7 +252,7 @@ class RoutineAgent(
             }
             isCancelRequested = true
             if (cancelCurrentAction) {
-                cancelCurrentAction()
+                cancelCurrentAction(cancelScheduledTimeoutFuture)
             }
             listener.onCancel()
         }
@@ -311,11 +311,13 @@ class RoutineAgent(
             scheduledFutureForTryStartNextAction = null
         }
 
-        private fun cancelCurrentAction() {
+        private fun cancelCurrentAction(cancelScheduledTimeoutFuture: Boolean = true) {
             currentActionDialogRequestId?.let {
                 routineActionResponseDirectiveCanceler.requestCancel(it)
             }
-            scheduledFutureForActionTimeout?.future?.cancel(true)
+            if(cancelScheduledTimeoutFuture) {
+                scheduledFutureForActionTimeout?.future?.cancel(true)
+            }
         }
 
         fun cancelIfCurrentRoutineDisplayCleared(dialogRequestId: String) {
@@ -902,9 +904,9 @@ class RoutineAgent(
         }
     }
 
-    private fun stopInternal(token: String): Boolean {
+    private fun stopInternal(token: String, cancelScheduledTimeoutFuture: Boolean = true): Boolean {
         return commandInternal(token) {
-            it.cancel()
+            it.cancel(cancelScheduledTimeoutFuture = cancelScheduledTimeoutFuture)
         }
     }
 
@@ -982,6 +984,11 @@ class RoutineAgent(
     override fun stop(directive: StartDirectiveHandler.StartDirective): Boolean {
         Logger.d(TAG, "[stop] $directive")
         return stopInternal(directive.payload.token)
+    }
+
+    override fun stopSoftly(directive: StartDirectiveHandler.StartDirective): Boolean {
+        Logger.d(TAG, "[stopSoftly] $directive")
+        return stopInternal(directive.payload.token, false)
     }
 
     override fun next(): Boolean {
