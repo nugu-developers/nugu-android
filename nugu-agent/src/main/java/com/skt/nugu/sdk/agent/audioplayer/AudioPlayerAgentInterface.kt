@@ -18,6 +18,7 @@ package com.skt.nugu.sdk.agent.audioplayer
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.LyricsPresenter
 import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
 import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
+import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistPresenter
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.util.TimeUnit
@@ -140,6 +141,11 @@ interface AudioPlayerAgentInterface: AudioPlayerDisplayInterface {
      * @param presenter the presenter to be set
      */
     fun setLyricsPresenter(presenter: LyricsPresenter?)
+
+    /** Set a presenter for playlist
+     * @param presenter the presenter to be set
+     */
+    fun setPlaylistPresenter(presenter: PlaylistPresenter?)
 
     interface RequestCommandHandler {
         fun handleRequestCommand(payload: String, header: Header): Boolean

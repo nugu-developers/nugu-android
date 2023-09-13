@@ -30,6 +30,8 @@ import com.skt.nugu.sdk.agent.audioplayer.playback.PlaybackDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playlist.OnPlaylistListener
 import com.skt.nugu.sdk.agent.audioplayer.playlist.Playlist
 import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistManager
+import com.skt.nugu.sdk.agent.audioplayer.playlist.PlaylistPresenter
+import com.skt.nugu.sdk.agent.audioplayer.playlist.ShowPlaylistDirectiveHandler
 import com.skt.nugu.sdk.agent.common.Direction
 import com.skt.nugu.sdk.agent.display.AudioPlayerDisplayInterface
 import com.skt.nugu.sdk.agent.display.AudioPlayerTemplateHandler
@@ -82,7 +84,6 @@ class DefaultAudioPlayerAgent(
     , AudioPlayerAgentInterface
     , PlaybackHandler
     , MediaPlayerControlInterface.PlaybackEventListener
-    , AudioPlayerLyricsDirectiveHandler.VisibilityController
     , AudioPlayerLyricsDirectiveHandler.PagingController
     , PlayStackManagerInterface.PlayContextProvider {
 
@@ -210,6 +211,34 @@ class DefaultAudioPlayerAgent(
         override fun onProgressReportInterval(request: Long, actual: Long) {
             Logger.d(TAG, "[onProgressReportInterval] request: $request / actual: $actual")
             sendProgressReportInterval(actual)
+        }
+    }
+
+    val lyricsVisibilityController = object : AudioPlayerLyricsDirectiveHandler.VisibilityController {
+        override fun show(playServiceId: String): Boolean {
+            return if (currentItem?.playServiceId == playServiceId) {
+                lyricsPresenter?.show() ?: false
+            } else {
+                false
+            }
+        }
+
+        override fun hide(playServiceId: String): Boolean {
+            return if (currentItem?.playServiceId == playServiceId) {
+                lyricsPresenter?.hide() ?: false
+            } else {
+                false
+            }
+        }
+    }
+
+    val playlistVisibilityController = object : ShowPlaylistDirectiveHandler.PlaylistVisibilityController {
+        override fun show(playServiceId: String): Boolean {
+            return if (currentItem?.playServiceId == playServiceId) {
+                playlistPresenter?.show(playServiceId) ?: false
+            } else {
+                false
+            }
         }
     }
 
@@ -1529,7 +1558,8 @@ class DefaultAudioPlayerAgent(
         val offsetInMilliseconds: Long,
         val durationInMilliseconds: Long?,
         val lyricsVisible: Boolean?,
-        val playlistToken: String?
+        val playlistToken: String?,
+        val playlistVisible: Boolean?
     ) : BaseContextState {
         companion object {
             private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -1568,6 +1598,10 @@ class DefaultAudioPlayerAgent(
 
             playlistToken?.let {
                 addProperty("playlistToken", it)
+            }
+
+            playlistVisible?.let {
+                addProperty("playlistVisible", it)
             }
         }.toString()
     }
@@ -1610,7 +1644,8 @@ class DefaultAudioPlayerAgent(
                     getOffsetInMilliseconds(),
                     duration,
                     lyricsPresenter?.getVisibility(),
-                    playlistToken
+                    playlistToken,
+                    playlistPresenter?.getVisibility()
                 ), StateRefreshPolicy.ALWAYS, contextType, stateRequestToken
             )
         }
@@ -1891,24 +1926,15 @@ class DefaultAudioPlayerAgent(
     var lyricsPresenter: LyricsPresenter? = null
         private set
 
+    var playlistPresenter: PlaylistPresenter? = null
+        private set
+
     override fun setLyricsPresenter(presenter: LyricsPresenter?) {
         lyricsPresenter = presenter
     }
 
-    override fun show(playServiceId: String): Boolean {
-        return if (currentItem?.playServiceId == playServiceId) {
-            lyricsPresenter?.show() ?: false
-        } else {
-            false
-        }
-    }
-
-    override fun hide(playServiceId: String): Boolean {
-        return if (currentItem?.playServiceId == playServiceId) {
-            lyricsPresenter?.hide() ?: false
-        } else {
-            false
-        }
+    override fun setPlaylistPresenter(presenter: PlaylistPresenter?) {
+        playlistPresenter = presenter
     }
 
     override fun controlPage(
