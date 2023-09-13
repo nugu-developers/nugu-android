@@ -33,6 +33,7 @@ import com.skt.nugu.sdk.agent.audioplayer.AudioPlayerDirectivePreProcessor
 import com.skt.nugu.sdk.agent.audioplayer.lyrics.AudioPlayerLyricsDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.metadata.AudioPlayerMetadataDirectiveHandler
 import com.skt.nugu.sdk.agent.audioplayer.playlist.AudioPlayerPlaylistManager
+import com.skt.nugu.sdk.agent.audioplayer.playlist.ShowPlaylistDirectiveHandler
 import com.skt.nugu.sdk.agent.battery.BatteryStatusProvider
 import com.skt.nugu.sdk.agent.battery.DefaultBatteryAgent
 import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
@@ -695,9 +696,17 @@ class NuguAndroidClient private constructor(
                                         AudioPlayerLyricsDirectiveHandler(
                                             getContextManager(),
                                             getMessageSender(),
-                                            this,
+                                            lyricsVisibilityController,
                                             this,
                                             getInterLayerDisplayPolicyManager()
+                                        ).apply {
+                                            getDirectiveSequencer().addDirectiveHandler(this)
+                                        }
+
+                                        ShowPlaylistDirectiveHandler(
+                                            getContextManager(),
+                                            getMessageSender(),
+                                            playlistVisibilityController
                                         ).apply {
                                             getDirectiveSequencer().addDirectiveHandler(this)
                                         }
