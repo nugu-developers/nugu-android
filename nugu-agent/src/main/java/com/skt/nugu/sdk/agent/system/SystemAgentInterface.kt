@@ -54,6 +54,11 @@ interface SystemAgentInterface {
          * The device has been revoked.
          */
         fun onRevoke(reason: RevokeReason)
+
+        /**
+         * After receiving an event, terminate app according to app's rule.
+         */
+        fun onTerminateApp(payload: String)
     }
 
     /**

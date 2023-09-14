@@ -88,6 +88,7 @@ class DefaultSystemAgent(
         const val NAME_NO_DIRECTIVES = "NoDirectives"
         const val NAME_NOOP = "Noop"
         const val NAME_RESET_CONNECTION = "ResetConnection"
+        const val NAME_TERMINATE_APP = "TerminateApp"
 
         /** events */
         const val EVENT_NAME_SYNCHRONIZE_STATE = "SynchronizeState"
@@ -124,6 +125,11 @@ class DefaultSystemAgent(
         val RESET_CONNECTION = NamespaceAndName(
             NAMESPACE,
             NAME_RESET_CONNECTION
+        )
+
+        val TERMINATE_APP = NamespaceAndName(
+            NAMESPACE,
+            NAME_TERMINATE_APP
         )
 
         private fun buildCompactContext(): JsonObject = JsonObject().apply {
@@ -187,6 +193,7 @@ class DefaultSystemAgent(
         this[NO_DIRECTIVES] = nonBlockingPolicy
         this[NOOP] = nonBlockingPolicy
         this[RESET_CONNECTION] = nonBlockingPolicy
+        this[TERMINATE_APP] = nonBlockingPolicy
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -229,6 +236,7 @@ class DefaultSystemAgent(
             NAME_RESET_CONNECTION -> handleResetConnection(info)
             NAME_NO_DIRECTIVES, NAME_NOOP -> {
             }
+            NAME_TERMINATE_APP -> handleTerminateApp(info)
         }
         setHandlingCompleted(info)
     }
@@ -347,6 +355,14 @@ class DefaultSystemAgent(
 
         executor.submit {
             connectionManager.resetConnection(payload.description)
+        }
+    }
+
+    private fun handleTerminateApp(info: DirectiveInfo) {
+        Logger.d(TAG, "[handleTerminateApp] $info")
+
+        executor.submit {
+            observers.forEach { it.onTerminateApp(info.directive.payload) }
         }
     }
 
