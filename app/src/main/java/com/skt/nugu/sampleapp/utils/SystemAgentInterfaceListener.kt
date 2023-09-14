@@ -25,4 +25,8 @@ interface SystemAgentInterfaceListener : SystemAgentInterface.Listener {
     override fun onTerminateApp(payload: String) {
         /* default implementation */
     }
+
+    override fun onRequireUpdate(payload: String) {
+        /* default implementation */
+    }
 }

@@ -59,6 +59,11 @@ interface SystemAgentInterface {
          * After receiving an event, terminate app according to app's rule.
          */
         fun onTerminateApp(payload: String)
+
+        /**
+         * After receiving an event, process app's update according to app's rule.
+         */
+        fun onRequireUpdate(payload: String)
     }
 
     /**
