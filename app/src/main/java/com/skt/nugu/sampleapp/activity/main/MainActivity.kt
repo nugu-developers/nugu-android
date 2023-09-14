@@ -580,6 +580,10 @@ class MainActivity : AppCompatActivity(), SpeechRecognizerAggregatorInterface.On
         handleRevoke()
     }
 
+    override fun onTerminateApp(payload: String) {
+        finish()
+    }
+
     override fun onException(code: SystemAgentInterface.ExceptionCode, description: String?) {
         when (code) {
             SystemAgentInterface.ExceptionCode.PLAY_ROUTER_PROCESSING_EXCEPTION -> {

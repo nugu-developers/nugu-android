@@ -22,4 +22,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
  */
 interface SystemAgentInterfaceListener : SystemAgentInterface.Listener {
     override fun onTurnOff() {/* default implementation */}
+    override fun onTerminateApp(payload: String) {
+        /* default implementation */
+    }
 }
