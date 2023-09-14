@@ -31,7 +31,7 @@ abstract class AbstractSystemAgent (
     SystemAgentInterface, ContextRequester {
     companion object {
         const val NAMESPACE = "System"
-        val VERSION = Version(1,3)
+        val VERSION = Version(1,4)
     }
 
     abstract fun shutdown()
