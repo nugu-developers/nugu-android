@@ -232,15 +232,23 @@ class DefaultAudioPlayerAgent(
         }
     }
 
-    val playlistVisibilityController = object : ShowPlaylistDirectiveHandler.PlaylistVisibilityController {
-        override fun show(playServiceId: String): Boolean {
-            return if (currentItem?.playServiceId == playServiceId) {
-                playlistPresenter?.show(playServiceId) ?: false
-            } else {
-                false
+    val playlistVisibilityController =
+        object : ShowPlaylistDirectiveHandler.PlaylistVisibilityController {
+            override fun show(playServiceId: String): ShowPlaylistDirectiveHandler.PlaylistVisibilityController.ShowResult {
+                return if (currentItem?.playServiceId == playServiceId) {
+                    playlistPresenter?.show(playServiceId)
+                        ?: ShowPlaylistDirectiveHandler.PlaylistVisibilityController.ShowResult.Failure(
+                            ShowPlaylistDirectiveHandler.PlaylistVisibilityController.ShowResult.Failure.Type.UNDEFINED,
+                            "A client does not set playlistPresenter."
+                        )
+                } else {
+                    ShowPlaylistDirectiveHandler.PlaylistVisibilityController.ShowResult.Failure(
+                        ShowPlaylistDirectiveHandler.PlaylistVisibilityController.ShowResult.Failure.Type.UNDEFINED,
+                        "Not matched playServiceId(current: ${currentItem?.playServiceId}, target: $playServiceId)"
+                    )
+                }
             }
         }
-    }
 
     private val playbackInfoProvider = object : AudioPlayerPlaybackInfoProvider {
         override fun getToken(): String? {

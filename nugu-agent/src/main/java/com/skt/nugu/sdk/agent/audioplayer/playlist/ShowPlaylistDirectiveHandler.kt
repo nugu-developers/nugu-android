@@ -38,7 +38,20 @@ class ShowPlaylistDirectiveHandler(
     )
 
     interface PlaylistVisibilityController {
-        fun show(playServiceId: String): Boolean
+        sealed interface ShowResult {
+            object Success: ShowResult
+            data class Failure(
+                val type: Type,
+                val message: String?
+            ): ShowResult {
+
+                enum class Type(val value: String) {
+                    NOT_SUPPORTED("NOT_SUPPORTED"), UNDEFINED("UNDEFINED")
+                }
+            }
+        }
+
+        fun show(playServiceId: String): ShowResult
     }
 
     override fun preHandleDirective(info: DirectiveInfo) {
@@ -56,26 +69,47 @@ class ShowPlaylistDirectiveHandler(
         val playServiceId = payload.playServiceId
         val referrerDialogRequestId = info.directive.getDialogRequestId()
 
-        if (visibilityController.show(playServiceId)) {
-            sendEvent("${NAME_SHOW_PLAYLIST}Succeeded", playServiceId, referrerDialogRequestId)
-        } else {
-            sendEvent("${NAME_SHOW_PLAYLIST}Failed", playServiceId, referrerDialogRequestId)
+        when(val ret = visibilityController.show(playServiceId)) {
+            is PlaylistVisibilityController.ShowResult.Failure -> {
+                sendFailedEvent(ret, playServiceId, referrerDialogRequestId)
+            }
+            PlaylistVisibilityController.ShowResult.Success -> {
+                sendSucceededEvent(playServiceId, referrerDialogRequestId)
+            }
         }
 
         setHandlingCompleted(info)
     }
 
-    private fun sendEvent(name: String, playServiceId: String, referrerDialogRequestId: String) {
+    private fun sendSucceededEvent(playServiceId: String, referrerDialogRequestId: String) {
+        sendEvent("${NAME_SHOW_PLAYLIST}Succeeded", JsonObject().apply {
+            addProperty("playServiceId", playServiceId)
+        }, referrerDialogRequestId)
+    }
+
+    private fun sendFailedEvent(
+        failure: PlaylistVisibilityController.ShowResult.Failure,
+        playServiceId: String,
+        referrerDialogRequestId: String
+    ) {
+        sendEvent("${NAME_SHOW_PLAYLIST}Failed", JsonObject().apply {
+            addProperty("playServiceId", playServiceId)
+            add("error", JsonObject().apply {
+                addProperty("type", failure.type.value)
+                failure.message?.let {
+                    addProperty("message", it)
+                }
+            })
+        }, referrerDialogRequestId)
+    }
+
+    private fun sendEvent(name: String, payload: JsonObject, referrerDialogRequestId: String) {
         contextManager.getContext(object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
                 messageSender.newCall(
                     EventMessageRequest.Builder(jsonContext,
                         NAMESPACE, name, VERSION.toString())
-                        .payload(
-                            JsonObject().apply {
-                                addProperty("playServiceId", playServiceId)
-                            }.toString()
-                        )
+                        .payload(payload.toString())
                         .referrerDialogRequestId(referrerDialogRequestId)
                         .build()
                 ).enqueue(null)
