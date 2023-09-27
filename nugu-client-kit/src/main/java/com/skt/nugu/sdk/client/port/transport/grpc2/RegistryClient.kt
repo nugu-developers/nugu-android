@@ -76,14 +76,9 @@ internal class RegistryClient(
         fun onError(reason: ChangedReason)
     }
 
-    fun getPolicy(serverInfo: NuguServerInfo, authDelegate: AuthDelegate, observer: Observer, isStartReceiveServerInitiatedDirective: () -> Boolean) {
+    fun getPolicy(serverInfo: NuguServerInfo, authDelegate: AuthDelegate, observer: Observer) {
         if (isShutdown.get()) {
             Logger.w(TAG, "[getPolicy] already shutdown")
-            return
-        }
-        if(!isStartReceiveServerInitiatedDirective()) {
-            Logger.d(TAG,"[getPolicy] Skip getPolicy call because keepConnection is false.")
-            notifyPolicy(DefaultPolicy(serverInfo), observer)
             return
         }
 
