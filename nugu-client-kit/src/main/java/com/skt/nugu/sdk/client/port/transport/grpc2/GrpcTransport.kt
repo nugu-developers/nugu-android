@@ -108,12 +108,13 @@ internal class GrpcTransport internal constructor(
      * @return true is success, otherwise false
      */
     private fun tryGetPolicy(): Boolean {
+        val isStartReceiveServerInitiatedDirective = isStartReceiveServerInitiatedDirective()
         if(DetailedState.CONNECTING_REGISTRY == getDetailedState()) {
             Logger.w(TAG,"[tryGetPolicy] Duplicate status")
             return false
         }
 
-        if(!isStartReceiveServerInitiatedDirective()) {
+        if(!isStartReceiveServerInitiatedDirective) {
             return tryConnectToDeviceGateway(RegistryClient.DefaultPolicy(getDelegatedServerInfo()))
         }
 
@@ -127,24 +128,19 @@ internal class GrpcTransport internal constructor(
                     // succeeded, then it should be connection to DeviceGateway
                     policy?.let {
                         tryConnectToDeviceGateway(it)
-                    } ?: setState(DetailedState.FAILED, ChangedReason.UNRECOVERABLE_ERROR)
-
+                    } ?: kotlin.run {
+                        val reason = ChangedReason.UNRECOVERABLE_ERROR
+                        reason.cause = Throwable("A policy in progress error occurred.")
+                        setState(DetailedState.FAILED, reason)
+                    }
                     policyLatch.countDown()
                 }
 
                 override fun onError(reason: ChangedReason) {
-                    when (reason) {
-                        ChangedReason.INVALID_AUTH -> {
-                            setState(DetailedState.FAILED,ChangedReason.INVALID_AUTH)
-                        }
-                        else -> {
-                            setState(DetailedState.FAILED, reason)
-                        }
-                    }
-
+                    setState(DetailedState.FAILED, reason)
                     policyLatch.countDown()
                 }
-            }, isStartReceiveServerInitiatedDirective)
+            })
 
             try {
                 if (!policyLatch.await(WAIT_FOR_POLICY_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
