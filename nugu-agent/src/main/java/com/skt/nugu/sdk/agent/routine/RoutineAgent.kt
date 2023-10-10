@@ -411,6 +411,9 @@ class RoutineAgent(
             dialogRequestId: String
         ): ScheduledFuture<*> = executor.schedule({
             if(currentRoutineRequest?.currentActionDialogRequestId != dialogRequestId) {
+                listeners.forEach {
+                    it.onSkipActionTimeoutTrigger(action, directive, dialogRequestId)
+                }
                 return@schedule
             }
 
@@ -463,6 +466,7 @@ class RoutineAgent(
                     if(action.muteDelayInMilliseconds != null && !directives.any { it.header.namespace == "TTS" && it.header.name == "Speak" }) {
                         applyMuteDelay = true
                     }
+
                     action.actionTimeoutInMilliseconds?.let {
                         setSuspendedState(directive, currentActionIndex, System.currentTimeMillis() + it)
                         scheduledFutureForActionTimeout = ActionTimeoutFuture(dialogRequestId, scheduleActionTimeoutTriggeredEvent(it, action, directive, dialogRequestId))
@@ -582,6 +586,7 @@ class RoutineAgent(
             if(!isActionRequesting.compareAndSet(false, true)) {
                 return
             }
+
 
             setState(RoutineAgentInterface.State.PLAYING, directive)
             textAgent?.textInput(
