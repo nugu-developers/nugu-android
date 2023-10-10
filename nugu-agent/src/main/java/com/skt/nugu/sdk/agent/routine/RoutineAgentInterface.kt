@@ -64,6 +64,20 @@ interface RoutineAgentInterface {
          * @param result a result of item
          */
         fun onActionItemFinished(actionIndex: Int, item: Directive, result: DirectiveGroupHandlingListener.Result)
+
+        /**
+         * After routine finished or stopped, an 'ActionTimeoutTrigger' event will not called.
+         * Sometimes, this case should be handled.
+         *
+         * @param action a action which trigger "ActionTimeoutTrigger" event
+         * @param directive a start directive which trigger "ActionTimeoutTrigger" event
+         * @param dialogRequestId a dialogRequestId for [action]
+         */
+        fun onSkipActionTimeoutTrigger(
+            action: Action,
+            directive: StartDirectiveHandler.StartDirective,
+            dialogRequestId: String
+        ) {}
     }
 
     fun getState(): State
