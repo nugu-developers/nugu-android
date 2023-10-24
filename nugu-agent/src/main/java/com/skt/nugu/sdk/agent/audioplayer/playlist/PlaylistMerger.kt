@@ -3,7 +3,9 @@ package com.skt.nugu.sdk.agent.audioplayer.playlist
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import com.skt.nugu.sdk.agent.util.deepMerge
+import com.skt.nugu.sdk.core.utils.Logger
 
+private const val TAG = "PlaylistMerger"
 private const val KEY_LIST = "list"
 private const val KEY_LIST_REPLACE_TYPE= "replaceType"
 private const val REPLACE_TYPE_PARTIAL = "partial"
@@ -12,6 +14,9 @@ private const val REPLACE_TYPE_ALL = "all"
 fun JsonObject.mergePlaylist(changes: JsonObject) {
     val originList = remove(KEY_LIST) as? JsonObject
     val updateList = changes.remove(KEY_LIST) as? JsonObject
+
+    Logger.d(TAG, "[mergePlaylist] originList: $originList")
+    Logger.d(TAG, "[mergePlaylist] updateList: $updateList")
 
     deepMerge(changes)
 
