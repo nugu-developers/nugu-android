@@ -15,8 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.tts
 
-import com.skt.nugu.sdk.agent.DefaultTTSAgent
-
 /**
  * Interface for TTS Capability Agent
  */

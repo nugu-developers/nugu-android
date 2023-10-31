@@ -1,7 +1,7 @@
 package com.skt.nugu.sdk.agent.nudge
 
 import com.skt.nugu.sdk.agent.DefaultASRAgent
-import com.skt.nugu.sdk.agent.DefaultTTSAgent
+import com.skt.nugu.sdk.agent.tts.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.ContextSetterInterface

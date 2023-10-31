@@ -18,7 +18,7 @@ package com.skt.nugu.sdk.agent.tts.handler
 
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractDirectiveHandler
-import com.skt.nugu.sdk.agent.DefaultTTSAgent
+import com.skt.nugu.sdk.agent.tts.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy

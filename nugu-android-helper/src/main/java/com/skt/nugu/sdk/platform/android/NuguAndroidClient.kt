@@ -53,7 +53,6 @@ import com.skt.nugu.sdk.agent.ext.message.MessageAgent
 import com.skt.nugu.sdk.agent.ext.message.MessageClient
 import com.skt.nugu.sdk.agent.extension.ExtensionAgent
 import com.skt.nugu.sdk.agent.extension.ExtensionAgentInterface
-import com.skt.nugu.sdk.agent.image.ImageAgent
 import com.skt.nugu.sdk.agent.image.ImageAgentImpl
 import com.skt.nugu.sdk.agent.location.LocationAgent
 import com.skt.nugu.sdk.agent.location.LocationProvider
@@ -83,6 +82,7 @@ import com.skt.nugu.sdk.agent.system.SystemAgentInterface
 import com.skt.nugu.sdk.agent.text.ExpectTypingHandlerInterface
 import com.skt.nugu.sdk.agent.text.TextAgent
 import com.skt.nugu.sdk.agent.text.TextAgentInterface
+import com.skt.nugu.sdk.agent.tts.DefaultTTSAgent
 import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.utility.UtilityAgent

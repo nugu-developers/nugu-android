@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.skt.nugu.sdk.agent
+package com.skt.nugu.sdk.agent.tts
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.agent.common.tts.TTSPlayContextProvider
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
-import com.skt.nugu.sdk.agent.tts.TTSAgentInterface
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
@@ -46,6 +46,7 @@ import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.UUIDGeneration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -203,7 +204,7 @@ class DefaultTTSAgent(
                     Thread.sleep(5)
                 }
             }
-        }, "${NAMESPACE}-${directive.header.messageId}")
+        }, "$NAMESPACE-${directive.header.messageId}")
 
         val layerForDisplayPolicy = object : InterLayerDisplayPolicyManager.PlayLayer {
             override fun getPushPlayServiceId(): String? =
@@ -303,7 +304,7 @@ class DefaultTTSAgent(
     }
 
     private val executor = Executors.newSingleThreadExecutor()
-    private val listeners = HashSet<TTSAgentInterface.Listener>()
+    private val listeners = CopyOnWriteArraySet<TTSAgentInterface.Listener>()
     private val requestListenerMap =
         ConcurrentHashMap<String, TTSAgentInterface.OnPlaybackListener>()
 
@@ -368,7 +369,8 @@ class DefaultTTSAgent(
         focusManager.prepare(speakInfo)
 
         val waitCountDownListener = CountDownLatch(1)
-        val waitStop: Boolean = currentInfo?.addOnFinishListener(object : OnSpeakDirectiveFinishListener {
+        val waitStop: Boolean = currentInfo?.addOnFinishListener(object :
+            OnSpeakDirectiveFinishListener {
             override fun onFinish() {
                 waitCountDownListener.countDown()
             }
@@ -551,8 +553,8 @@ class DefaultTTSAgent(
     }
 
     private fun notifyObservers(state: TTSAgentInterface.State, dialogRequestId: String) {
-        for (observer in listeners) {
-            observer.onStateChanged(state, dialogRequestId)
+        listeners.forEach { listener ->
+            listener.onStateChanged(state, dialogRequestId)
         }
     }
 
