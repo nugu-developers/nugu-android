@@ -86,6 +86,7 @@ interface TextAgentInterface: TextInputRequester {
      * @param playServiceId the playServiceId for request
      * @param token: the token for request
      * @param source: the source for request
+     * @param service the service payload(json formatted string) for request
      * @param referrerDialogRequestId the referrerDialogRequestId for request
      * @param includeDialogAttribute the flag to include or not dialog's attribute
      * @param listener the listener for request
@@ -96,6 +97,7 @@ interface TextAgentInterface: TextInputRequester {
         playServiceId: String? = null,
         token: String? = null,
         source: String? = null,
+        service: String? = null,
         referrerDialogRequestId: String? = null,
         includeDialogAttribute: Boolean = true,
         listener: RequestListener? = null

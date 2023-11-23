@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent.text
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.agent.AbstractCapabilityAgent
 import com.skt.nugu.sdk.agent.common.InteractionControl
@@ -391,12 +392,13 @@ class TextAgent(
         playServiceId: String?,
         token: String?,
         source: String?,
+        service: String?,
         referrerDialogRequestId: String?,
         includeDialogAttribute: Boolean,
         listener: TextAgentInterface.RequestListener?
     ): String {
         return textInput(TextInputRequester.Request.Builder(text).playServiceId(playServiceId).token(token)
-            .source(source).referrerDialogRequestId(referrerDialogRequestId)
+            .source(source).service(service).referrerDialogRequestId(referrerDialogRequestId)
             .includeDialogAttribute(includeDialogAttribute), listener)
     }
 
@@ -429,6 +431,10 @@ class TextAgent(
                     }
                     request.source?.let {
                         addProperty("source", it)
+                    }
+
+                    request.service?.let {
+                        add("service", JsonParser.parseString(it).asJsonObject)
                     }
 
                     request.playServiceId?.let {
