@@ -55,6 +55,7 @@ interface SpeechRecognizer {
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         attribute: DialogAttribute?,
         epdParam: EndPointDetectorParam,
+        service: String?,
         resultListener: ASRAgentInterface.OnResultListener?
     ): Request?
 

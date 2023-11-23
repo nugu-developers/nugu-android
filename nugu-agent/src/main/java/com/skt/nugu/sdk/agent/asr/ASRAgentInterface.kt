@@ -226,6 +226,7 @@ interface ASRAgentInterface {
      * @param wakeupInfo the wakeup info(boundary & word) causing this recognition. The boundary should be relative position for [audioInputStream],
      * If the recognition was not invoked by wakeup, set to null.
      * @param param the params for EPD
+     * @param service the service payload(json formatted string) for ASR
      * @param callback the callback for request
      * @param initiator the initiator causing recognition
      */
@@ -234,6 +235,7 @@ interface ASRAgentInterface {
         audioFormat: AudioFormat? = null,
         wakeupInfo: WakeupInfo? = null,
         param: EndPointDetectorParam? = null,
+        service: String? = null,
         callback: StartRecognitionCallback? = null,
         initiator: Initiator
     )

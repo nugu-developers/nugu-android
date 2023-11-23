@@ -139,6 +139,7 @@ interface ClientHelperInterface {
      * @param wakeupInfo the wakeupInfo of wakeword for [audioInputStream] if exist.
      * @param param the params for EPD
      * @param callback the callback for request
+     * @param service the service payload(json formatted string) for ASR
      * @param initiator the initiator causing recognition
      */
     fun startRecognition(
@@ -146,6 +147,7 @@ interface ClientHelperInterface {
         audioFormat: AudioFormat?,
         wakeupInfo: WakeupInfo?,
         param: EndPointDetectorParam?,
+        service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator
     )

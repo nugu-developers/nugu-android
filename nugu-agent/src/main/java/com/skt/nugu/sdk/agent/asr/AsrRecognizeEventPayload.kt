@@ -27,7 +27,8 @@ data class AsrRecognizeEventPayload(
     private val endpointing: String,
     private val encoding: String? = null,
     private val wakeup: PayloadWakeup? = null,
-    private val timeout: Timeout? = null
+    private val timeout: Timeout? = null,
+    private val service: JsonObject? = null,
 ) {
     companion object {
         const val CODEC_SPEEX = "SPEEX"
@@ -102,6 +103,10 @@ data class AsrRecognizeEventPayload(
                 addProperty("maxSpeech", it.maxSpeech)
                 addProperty("response", it.response)
             })
+        }
+
+        service?.let {
+            add("service", it)
         }
     }.toString()
 }
