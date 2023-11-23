@@ -1,6 +1,7 @@
 package com.skt.nugu.sdk.agent.image
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.version.Version
 import com.skt.nugu.sdk.core.interfaces.capability.CapabilityAgent
@@ -70,7 +71,11 @@ class ImageAgentImpl(
         )
     }
 
-    override fun sendImage(source: ImageSource, callback: ImageAgent.SendImageCallback?): ImageAgent.SendImageRequest {
+    override fun sendImage(
+        source: ImageSource,
+        service: String?,
+        callback: ImageAgent.SendImageCallback?
+    ): ImageAgent.SendImageRequest {
         val request = object: ImageAgent.SendImageRequest {
             override val dialogRequestId: String = UUIDGeneration.timeUUID().toString()
         }
@@ -81,7 +86,13 @@ class ImageAgentImpl(
                     val eventRequest = EventMessageRequest.Builder(
                         jsonContext,
                         NAMESPACE, EVENT_NAME_SEND_IMAGE, VERSION.toString()
-                    ).dialogRequestId(request.dialogRequestId).isStreaming(true)
+                    ).dialogRequestId(request.dialogRequestId)
+                        .payload(JsonObject().apply {
+                            service?.let {
+                                add("service", JsonParser.parseString(service).asJsonObject)
+                            }
+                        }.toString())
+                        .isStreaming(true)
                         .build()
 
                     // send image event async, if we send this as sync, then will be timeout occur.
