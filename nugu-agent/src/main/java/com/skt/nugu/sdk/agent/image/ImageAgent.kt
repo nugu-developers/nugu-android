@@ -1,7 +1,7 @@
 package com.skt.nugu.sdk.agent.image
 
 interface ImageAgent {
-    fun sendImage(source: ImageSource, callback: SendImageCallback? = null): SendImageRequest
+    fun sendImage(source: ImageSource, service: String? = null, callback: SendImageCallback? = null): SendImageRequest
 
     interface SendImageRequest {
         val dialogRequestId: String
