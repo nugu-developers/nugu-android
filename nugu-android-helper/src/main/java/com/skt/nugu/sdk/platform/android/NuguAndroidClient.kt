@@ -1185,10 +1185,11 @@ class NuguAndroidClient private constructor(
         playServiceId: String?,
         token: String?,
         source: String?,
+        service: String?,
         referrerDialogRequestId: String?,
         includeDialogAttribute: Boolean,
         listener: TextAgentInterface.RequestListener?
-    ): String? = textAgent?.requestTextInput(text, playServiceId, token, source, referrerDialogRequestId, includeDialogAttribute, listener)
+    ): String? = textAgent?.requestTextInput(text, playServiceId, token, source, service, referrerDialogRequestId, includeDialogAttribute, listener)
 
     override fun requestTTS(text: String, format: TTSAgentInterface.Format, playServiceId: String?, listener: TTSAgentInterface.OnPlaybackListener?): String? = ttsAgent?.requestTTS(text, format, playServiceId, listener)
 

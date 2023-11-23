@@ -24,6 +24,7 @@ interface TextInputRequester {
      * @property playServiceId the playServiceId for request
      * @property token: the token for request
      * @property source: the source for request
+     * @property service: the extra for request
      * @property referrerDialogRequestId the referrerDialogRequestId for request
      * @property interactionControl the interactionControl for request
      * @property includeDialogAttribute the flag to include or not dialog's attribute
@@ -33,6 +34,7 @@ interface TextInputRequester {
         val playServiceId: String? = null,
         val token: String? = null,
         val source: String? = null,
+        val service: String? = null,
         val referrerDialogRequestId: String? = null,
         val interactionControl: InteractionControl? = null,
         val includeDialogAttribute: Boolean = true,
@@ -43,6 +45,7 @@ interface TextInputRequester {
             private var playServiceId: String? = null
             private var token: String? = null
             private var source: String? = null
+            private var service: String? = null
             private var referrerDialogRequestId: String? = null
             private var interactionControl: InteractionControl? = null
             private var includeDialogAttribute: Boolean = true
@@ -57,6 +60,10 @@ interface TextInputRequester {
 
             fun source(source: String?): Builder = apply {
                 this.source = source
+            }
+
+            fun service(service: String?): Builder = apply {
+                this.service = service
             }
 
             fun referrerDialogRequestId(referrerDialogRequestId: String?): Builder = apply {
@@ -76,6 +83,7 @@ interface TextInputRequester {
                 playServiceId,
                 token,
                 source,
+                service,
                 referrerDialogRequestId,
                 interactionControl,
                 includeDialogAttribute
