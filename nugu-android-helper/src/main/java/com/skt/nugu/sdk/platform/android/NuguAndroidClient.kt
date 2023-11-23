@@ -1147,6 +1147,7 @@ class NuguAndroidClient private constructor(
         audioFormat: AudioFormat?,
         wakeupInfo: WakeupInfo?,
         param: EndPointDetectorParam?,
+        service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator
     ) {
@@ -1160,6 +1161,7 @@ class NuguAndroidClient private constructor(
             audioFormat,
             wakeupInfo,
             param,
+            service,
             callback,
             initiator
         )

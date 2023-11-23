@@ -112,6 +112,7 @@ class DefaultClientSpeechRecognizer(
         expectSpeechDirectiveParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
         attribute: DialogAttribute?,
         epdParam: EndPointDetectorParam,
+        service: String?,
         resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
         Logger.d(
@@ -150,7 +151,8 @@ class DefaultClientSpeechRecognizer(
                 asrContext = payloadAttribute?.asrContext?.let { JsonParser.parseString(it).asJsonObject },
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
-                wakeup = payloadWakeup
+                wakeup = payloadWakeup,
+                service = service?.let { JsonParser.parseString(it).asJsonObject }
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .isStreaming(true)

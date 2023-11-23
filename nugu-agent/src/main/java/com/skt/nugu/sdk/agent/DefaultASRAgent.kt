@@ -125,6 +125,7 @@ class DefaultASRAgent(
         val wakeupInfo: WakeupInfo?,
         val expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
         val endPointDetectorParam: EndPointDetectorParam?,
+        val service: String?,
         val callback: ASRAgentInterface.StartRecognitionCallback?,
         val jsonContext: String,
         val initiator: ASRAgentInterface.Initiator,
@@ -380,7 +381,7 @@ class DefaultASRAgent(
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
-        executeStartRecognition(audioInputStream, audioFormat, null, param, null, object: ASRAgentInterface.StartRecognitionCallback {
+        executeStartRecognition(audioInputStream, audioFormat, null, param, null, null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
                 // no-op
             }
@@ -592,6 +593,7 @@ class DefaultASRAgent(
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
         param: EndPointDetectorParam?,
+        service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String,
         initiator: ASRAgentInterface.Initiator,
@@ -647,6 +649,7 @@ class DefaultASRAgent(
             wakeupInfo,
             expectSpeechDirectiveParam,
             param,
+            service,
             callback,
             jsonContext,
             initiator,
@@ -749,6 +752,7 @@ class DefaultASRAgent(
             param.expectSpeechDirectiveParam,
             dialogAttributeStorage.getRecentAttribute(),
             endPointDetectorParam,
+            param.service,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(header: Header) {
                     param.expectSpeechDirectiveParam?.let {
@@ -904,6 +908,7 @@ class DefaultASRAgent(
         audioFormat: AudioFormat?,
         wakeupInfo: WakeupInfo?,
         param: EndPointDetectorParam?,
+        service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator
     ) {
@@ -922,6 +927,7 @@ class DefaultASRAgent(
                     wakeupInfo,
                     expectSpeechDirectiveParam,
                     param,
+                    service,
                     callback,
                     initiator,
                     resultListener = null
@@ -947,6 +953,7 @@ class DefaultASRAgent(
                     null,
                     expectSpeechDirectiveParam,
                     param,
+                    service,
                     callback,
                     initiator,
                     resultListener = null
@@ -1024,6 +1031,7 @@ class DefaultASRAgent(
         wakeupInfo: WakeupInfo?,
         expectSpeechDirectiveParam: ExpectSpeechDirectiveParam?,
         param: EndPointDetectorParam?,
+        service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator,
         byUser: Boolean = true,
@@ -1049,6 +1057,7 @@ class DefaultASRAgent(
                         wakeupInfo,
                         expectSpeechDirectiveParam,
                         param,
+                        service,
                         callback,
                         jsonContext,
                         initiator,

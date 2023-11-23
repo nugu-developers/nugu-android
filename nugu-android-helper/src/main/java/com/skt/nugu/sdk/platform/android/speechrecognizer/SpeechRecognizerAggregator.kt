@@ -63,6 +63,7 @@ class SpeechRecognizerAggregator(
     private data class StartListeningParam(
         var wakeupInfo: WakeupInfo? = null,
         var epdParam: EndPointDetectorParam? = null,
+        var service: String? = null,
         var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null,
         var initiator: ASRAgentInterface.Initiator
     )
@@ -215,6 +216,7 @@ class SpeechRecognizerAggregator(
                                 audioProvider.getFormat(),
                                 wakeupInfo,
                                 epdParam,
+                                null,
                                 listeningCallback,
                                 ASRAgentInterface.Initiator.WAKE_UP_WORD
                             )
@@ -271,6 +273,7 @@ class SpeechRecognizerAggregator(
                                 audioFormat,
                                 pendingStartListeningParam?.wakeupInfo,
                                 pendingStartListeningParam?.epdParam,
+                                pendingStartListeningParam?.service,
                                 pendingStartListeningParam?.startListeningCallback,
                                 pendingStartListeningParam?.initiator ?: ASRAgentInterface.Initiator.TAP
                             )
@@ -314,7 +317,13 @@ class SpeechRecognizerAggregator(
         }
     }
 
-    override fun startListening(wakeupInfo: WakeupInfo?, epdParam: EndPointDetectorParam?, callback: ASRAgentInterface.StartRecognitionCallback?, initiator: ASRAgentInterface.Initiator) {
+    override fun startListening(
+        wakeupInfo: WakeupInfo?,
+        epdParam: EndPointDetectorParam?,
+        service: String?,
+        callback: ASRAgentInterface.StartRecognitionCallback?,
+        initiator: ASRAgentInterface.Initiator
+    ) {
         Logger.d(
             TAG,
             "[startListening]"
@@ -333,7 +342,7 @@ class SpeechRecognizerAggregator(
                     }
 
                     Logger.d(TAG, "[startListening] will be started after trigger stopped.")
-                    this.pendingStartListeningParam = StartListeningParam(wakeupInfo, epdParam, callback, initiator)
+                    this.pendingStartListeningParam = StartListeningParam(wakeupInfo, epdParam, service, callback, initiator)
                     isTriggerStoppingByStartListening = true
                     keywordDetector?.stopDetect()
                 }
@@ -348,6 +357,7 @@ class SpeechRecognizerAggregator(
                         audioProvider.getFormat(),
                         wakeupInfo,
                         epdParam,
+                        service,
                         callback,
                         initiator
                     )
@@ -360,6 +370,7 @@ class SpeechRecognizerAggregator(
         audioFormat: AudioFormat,
         wakeupInfo: WakeupInfo?,
         epdParam : EndPointDetectorParam?,
+        service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator
     ) {
@@ -393,6 +404,7 @@ class SpeechRecognizerAggregator(
                 audioFormat,
                 wakeupInfo,
                 epdParam,
+                service,
                 object: ASRAgentInterface.StartRecognitionCallback {
                     override fun onSuccess(dialogRequestId: String) {
                         Logger.d(TAG, "[executeStartListeningInternal] onSuccess")

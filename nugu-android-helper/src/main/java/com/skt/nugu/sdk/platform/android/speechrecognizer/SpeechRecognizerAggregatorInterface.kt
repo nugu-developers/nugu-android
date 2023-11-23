@@ -121,15 +121,26 @@ interface SpeechRecognizerAggregatorInterface {
      * Start keyword detector first.
      * After detection, start end point detector
      */
-    fun startListeningWithTrigger(epdParam: EndPointDetectorParam? = null, triggerCallback: TriggerCallback? = null, listeningCallback: ASRAgentInterface.StartRecognitionCallback? = null)
+    fun startListeningWithTrigger(
+        epdParam: EndPointDetectorParam? = null,
+        triggerCallback: TriggerCallback? = null,
+        listeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
+    )
 
     /**
      * Start keyword detector.
      * @param wakeupInfo the wakeup info of wakeup word for input
      * @param epdParam the epd params
+     * @param service the service payload(json formatted string) for ASR
      * @param initiator the initiator
      */
-    fun startListening(wakeupInfo: WakeupInfo? = null, epdParam: EndPointDetectorParam? = null, callback: ASRAgentInterface.StartRecognitionCallback? = null, initiator: ASRAgentInterface.Initiator)
+    fun startListening(
+        wakeupInfo: WakeupInfo? = null,
+        epdParam: EndPointDetectorParam? = null,
+        service: String? = null,
+        callback: ASRAgentInterface.StartRecognitionCallback? = null,
+        initiator: ASRAgentInterface.Initiator
+    )
 
     /**
      * Stop Recognizing
