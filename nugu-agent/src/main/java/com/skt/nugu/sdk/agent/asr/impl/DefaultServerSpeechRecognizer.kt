@@ -96,6 +96,7 @@ class DefaultServerSpeechRecognizer(
         attribute: DialogAttribute?,
         epdParam: EndPointDetectorParam,
         service: String?,
+        requestType: RequestType?,
         resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request? {
         Logger.d(
@@ -150,7 +151,8 @@ class DefaultServerSpeechRecognizer(
                     epdParam.maxDurationInSeconds * 1000L,
                     10 * 1000L // TODO : fixed at 10sec now.
                 ),
-                service = service?.let { JsonParser.parseString(it).asJsonObject }
+                service = service?.let { JsonParser.parseString(it).asJsonObject },
+                requestType = requestType
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
             .isStreaming(true)

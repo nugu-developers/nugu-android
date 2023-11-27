@@ -56,6 +56,7 @@ interface SpeechRecognizer {
         attribute: DialogAttribute?,
         epdParam: EndPointDetectorParam,
         service: String?,
+        requestType: RequestType?,
         resultListener: ASRAgentInterface.OnResultListener?
     ): Request?
 
