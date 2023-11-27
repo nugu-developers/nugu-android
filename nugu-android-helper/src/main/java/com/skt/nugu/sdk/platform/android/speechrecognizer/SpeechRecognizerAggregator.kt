@@ -19,6 +19,7 @@ import android.os.Handler
 import android.os.Looper
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
+import com.skt.nugu.sdk.agent.asr.RequestType
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -65,6 +66,7 @@ class SpeechRecognizerAggregator(
         var epdParam: EndPointDetectorParam? = null,
         var service: String? = null,
         var startListeningCallback: ASRAgentInterface.StartRecognitionCallback? = null,
+        var requestType: RequestType?,
         var initiator: ASRAgentInterface.Initiator
     )
 
@@ -218,6 +220,7 @@ class SpeechRecognizerAggregator(
                                 epdParam,
                                 null,
                                 listeningCallback,
+                                null,
                                 ASRAgentInterface.Initiator.WAKE_UP_WORD
                             )
 
@@ -275,6 +278,7 @@ class SpeechRecognizerAggregator(
                                 pendingStartListeningParam?.epdParam,
                                 pendingStartListeningParam?.service,
                                 pendingStartListeningParam?.startListeningCallback,
+                                pendingStartListeningParam?.requestType,
                                 pendingStartListeningParam?.initiator ?: ASRAgentInterface.Initiator.TAP
                             )
                             pendingStartListeningParam = null
@@ -322,6 +326,7 @@ class SpeechRecognizerAggregator(
         epdParam: EndPointDetectorParam?,
         service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
+        requestType: RequestType?,
         initiator: ASRAgentInterface.Initiator
     ) {
         Logger.d(
@@ -342,7 +347,7 @@ class SpeechRecognizerAggregator(
                     }
 
                     Logger.d(TAG, "[startListening] will be started after trigger stopped.")
-                    this.pendingStartListeningParam = StartListeningParam(wakeupInfo, epdParam, service, callback, initiator)
+                    this.pendingStartListeningParam = StartListeningParam(wakeupInfo, epdParam, service, callback, requestType, initiator)
                     isTriggerStoppingByStartListening = true
                     keywordDetector?.stopDetect()
                 }
@@ -359,6 +364,7 @@ class SpeechRecognizerAggregator(
                         epdParam,
                         service,
                         callback,
+                        requestType,
                         initiator
                     )
                 }
@@ -372,6 +378,7 @@ class SpeechRecognizerAggregator(
         epdParam : EndPointDetectorParam?,
         service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
+        requestType: RequestType?,
         initiator: ASRAgentInterface.Initiator
     ) {
         val inputStream = audioProvider.acquireAudioInputStream(speechProcessor)
