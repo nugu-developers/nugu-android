@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.platform.android.speechrecognizer
 
 import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.asr.EndPointDetectorParam
+import com.skt.nugu.sdk.agent.asr.RequestType
 import com.skt.nugu.sdk.agent.asr.WakeupInfo
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
@@ -132,6 +133,7 @@ interface SpeechRecognizerAggregatorInterface {
      * @param wakeupInfo the wakeup info of wakeup word for input
      * @param epdParam the epd params
      * @param service the service payload(json formatted string) for ASR
+     * @param requestType the type for ASR
      * @param initiator the initiator
      */
     fun startListening(
@@ -139,6 +141,7 @@ interface SpeechRecognizerAggregatorInterface {
         epdParam: EndPointDetectorParam? = null,
         service: String? = null,
         callback: ASRAgentInterface.StartRecognitionCallback? = null,
+        requestType: RequestType? = null,
         initiator: ASRAgentInterface.Initiator
     )
 
