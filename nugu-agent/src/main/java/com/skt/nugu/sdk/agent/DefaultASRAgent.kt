@@ -129,6 +129,7 @@ class DefaultASRAgent(
         val callback: ASRAgentInterface.StartRecognitionCallback?,
         val jsonContext: String,
         val initiator: ASRAgentInterface.Initiator,
+        val requestType: RequestType?,
         val asrResultListener: ASRAgentInterface.OnResultListener? = null
     )
 
@@ -403,7 +404,7 @@ class DefaultASRAgent(
                     currentAudioProvider = null
                 }
             }
-        }, ASRAgentInterface.Initiator.EXPECT_SPEECH,false, object: ASRAgentInterface.OnResultListener {
+        }, ASRAgentInterface.Initiator.EXPECT_SPEECH, null,false, object: ASRAgentInterface.OnResultListener {
             override fun onNoneResult(header: Header) {
                 setHandlingCompleted(info)
             }
@@ -597,6 +598,7 @@ class DefaultASRAgent(
         callback: ASRAgentInterface.StartRecognitionCallback?,
         jsonContext: String,
         initiator: ASRAgentInterface.Initiator,
+        requestType: RequestType?,
         byUser: Boolean,
         resultListener: ASRAgentInterface.OnResultListener?
     ) {
@@ -653,6 +655,7 @@ class DefaultASRAgent(
             callback,
             jsonContext,
             initiator,
+            requestType,
             resultListener
         ).apply {
             if (focusState == FocusState.FOREGROUND) {
@@ -753,6 +756,7 @@ class DefaultASRAgent(
             dialogAttributeStorage.getRecentAttribute(),
             endPointDetectorParam,
             param.service,
+            param.requestType,
             object : ASRAgentInterface.OnResultListener {
                 override fun onNoneResult(header: Header) {
                     param.expectSpeechDirectiveParam?.let {
@@ -910,9 +914,10 @@ class DefaultASRAgent(
         param: EndPointDetectorParam?,
         service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
-        initiator: ASRAgentInterface.Initiator
+        initiator: ASRAgentInterface.Initiator,
+        requestType: RequestType?
     ) {
-        Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream, initiator: $initiator")
+        Logger.d(TAG, "[startRecognition] audioInputStream: $audioInputStream, initiator: $initiator, requestType: $requestType")
         executor.submit {
             if(state == ASRAgentInterface.State.EXPECTING_SPEECH) {
                 Logger.w(TAG, "[startRecognition] cannot start recognize when EXPECT_SPEECH state.")
@@ -930,6 +935,7 @@ class DefaultASRAgent(
                     service,
                     callback,
                     initiator,
+                    requestType,
                     resultListener = null
                 )
             } else {
@@ -956,6 +962,7 @@ class DefaultASRAgent(
                     service,
                     callback,
                     initiator,
+                    requestType,
                     resultListener = null
                 )
             }
@@ -1034,6 +1041,7 @@ class DefaultASRAgent(
         service: String?,
         callback: ASRAgentInterface.StartRecognitionCallback?,
         initiator: ASRAgentInterface.Initiator,
+        requestType: RequestType? = null,
         byUser: Boolean = true,
         resultListener: ASRAgentInterface.OnResultListener? = null
     ) {
@@ -1049,7 +1057,6 @@ class DefaultASRAgent(
 
         contextManager.getContext(contextRequester = object : IgnoreErrorContextRequestor() {
             override fun onContext(jsonContext: String) {
-                Logger.d(TAG, "[onContext]")
                 executor.submit {
                     executeStartRecognitionOnContextAvailable(
                         audioInputStream,
@@ -1061,6 +1068,7 @@ class DefaultASRAgent(
                         callback,
                         jsonContext,
                         initiator,
+                        requestType,
                         byUser,
                         resultListener
                     )

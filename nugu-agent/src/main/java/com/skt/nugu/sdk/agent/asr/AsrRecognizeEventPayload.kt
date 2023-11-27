@@ -29,6 +29,7 @@ data class AsrRecognizeEventPayload(
     private val wakeup: PayloadWakeup? = null,
     private val timeout: Timeout? = null,
     private val service: JsonObject? = null,
+    private val requestType: RequestType? = null
 ) {
     companion object {
         const val CODEC_SPEEX = "SPEEX"
@@ -107,6 +108,10 @@ data class AsrRecognizeEventPayload(
 
         service?.let {
             add("service", it)
+        }
+
+        requestType?.let {
+            addProperty("requestType", it.name)
         }
     }.toString()
 }

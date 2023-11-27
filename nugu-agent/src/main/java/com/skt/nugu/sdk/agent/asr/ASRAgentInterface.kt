@@ -229,6 +229,7 @@ interface ASRAgentInterface {
      * @param service the service payload(json formatted string) for ASR
      * @param callback the callback for request
      * @param initiator the initiator causing recognition
+     * @param requestType the type of request
      */
     fun startRecognition(
         audioInputStream: SharedDataStream? = null,
@@ -237,7 +238,8 @@ interface ASRAgentInterface {
         param: EndPointDetectorParam? = null,
         service: String? = null,
         callback: StartRecognitionCallback? = null,
-        initiator: Initiator
+        initiator: Initiator,
+        requestType: RequestType? = null
     )
 
     /**
