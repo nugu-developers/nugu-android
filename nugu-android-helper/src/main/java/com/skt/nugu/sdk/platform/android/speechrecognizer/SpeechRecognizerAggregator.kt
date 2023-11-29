@@ -429,7 +429,8 @@ class SpeechRecognizerAggregator(
                         callback?.onError(dialogRequestId, errorType)
                     }
                 },
-                initiator
+                initiator,
+                requestType
             )
             try {
                 countDownLatch.await(1, TimeUnit.MINUTES)
