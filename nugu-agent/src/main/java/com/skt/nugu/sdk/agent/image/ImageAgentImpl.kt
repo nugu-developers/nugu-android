@@ -28,7 +28,7 @@ class ImageAgentImpl(
         private const val TAG = "ImageAgent"
 
         const val NAMESPACE = "Image"
-        val VERSION = Version(1, 0)
+        val VERSION = Version(1, 1)
 
         const val EVENT_NAME_SEND_IMAGE = "SendImage"
 
