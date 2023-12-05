@@ -116,6 +116,11 @@ interface SpeechRecognizerAggregatorInterface {
         fun onTriggerError(errorType: KeywordDetector.DetectorResultObserver.ErrorType)
     }
 
+    interface ASRParamProvider {
+        fun service(): String?
+        fun requestType(): RequestType?
+    }
+
     /**
      * Start recognizing
      *
@@ -125,7 +130,8 @@ interface SpeechRecognizerAggregatorInterface {
     fun startListeningWithTrigger(
         epdParam: EndPointDetectorParam? = null,
         triggerCallback: TriggerCallback? = null,
-        listeningCallback: ASRAgentInterface.StartRecognitionCallback? = null
+        listeningCallback: ASRAgentInterface.StartRecognitionCallback? = null,
+        asrParamProviderOnWakeup: ASRParamProvider? = null
     )
 
     /**
