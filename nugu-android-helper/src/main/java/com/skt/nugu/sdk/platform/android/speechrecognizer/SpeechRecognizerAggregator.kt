@@ -168,7 +168,8 @@ class SpeechRecognizerAggregator(
     override fun startListeningWithTrigger(
         epdParam: EndPointDetectorParam?,
         triggerCallback: SpeechRecognizerAggregatorInterface.TriggerCallback?,
-        listeningCallback: ASRAgentInterface.StartRecognitionCallback?
+        listeningCallback: ASRAgentInterface.StartRecognitionCallback?,
+        asrParamProviderOnWakeup: SpeechRecognizerAggregatorInterface.ASRParamProvider?
     ) {
         if(keywordDetector == null) {
             Logger.w(TAG, "[startListeningWithTrigger] ignored: keywordDetector is null")
@@ -218,9 +219,9 @@ class SpeechRecognizerAggregator(
                                 audioProvider.getFormat(),
                                 wakeupInfo,
                                 epdParam,
-                                null,
+                                asrParamProviderOnWakeup?.service(),
                                 listeningCallback,
-                                null,
+                                asrParamProviderOnWakeup?.requestType(),
                                 ASRAgentInterface.Initiator.WAKE_UP_WORD
                             )
 
