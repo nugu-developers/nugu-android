@@ -64,6 +64,7 @@ class DefaultClientSpeechRecognizer(
         var senderThread: SpeechRecognizeAttachmentSenderThread?,
         override val eventMessage: EventMessageRequest,
         val expectSpeechParam: DefaultASRAgent.ExpectSpeechDirectiveParam?,
+        val epdParam: EndPointDetectorParam,
         val resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request {
         override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
@@ -73,7 +74,7 @@ class DefaultClientSpeechRecognizer(
         var cancelCause: ASRAgentInterface.CancelCause? = null
         val shouldBeHandledResult = HashSet<String>()
         var receiveResponse = false
-        var call: Call? = null
+        var recognizeEventCall: Call? = null
 
         val eventMessageHeader = with(eventMessage) {
             Header(dialogRequestId, messageId, name, namespace, version, referrerDialogRequestId)
@@ -169,6 +170,7 @@ class DefaultClientSpeechRecognizer(
                 null,
                 eventMessage,
                 expectSpeechDirectiveParam,
+                epdParam,
                 resultListener
             )
 
@@ -203,7 +205,7 @@ class DefaultClientSpeechRecognizer(
 
 
         if(cancel) {
-            request.call?.cancel()
+            request.recognizeEventCall?.cancel()
         }
 
         if (isEpdRunning) {
@@ -282,46 +284,61 @@ class DefaultClientSpeechRecognizer(
             return
         }
 
-        messageSender.newCall(
-            recognizeRequest.eventMessage,
-            hashMapOf("Last-Asr-Event-Time" to Preferences.get("Last-Asr-Event-Time").toString())
-        ).apply {
-            recognizeRequest.call = this
-            if(!this.enqueue(object: MessageSender.Callback {
-                    override fun onFailure(request: MessageRequest, status: Status) {
-                        Logger.d(TAG, "[onFailure] request: $request, status: $status")
-                        if(recognizeRequest == currentRequest && status.error == Status.StatusError.TIMEOUT && recognizeRequest.senderThread != null) {
-                            // if sender thread is working, we handle a timeout error as unknown error.
-                            // this occur when some attachment sent too late(after timeout).
-                            recognizeRequest.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
-                            endPointDetector.stopDetector()
-                        } else {
-                            recognizeRequest.errorTypeForCausingEpdStop = when (status.error) {
-                                Status.StatusError.OK /** cancel, no error **/ ,
-                                Status.StatusError.TIMEOUT /** Nothing to do because handle on [onResponseTimeout] **/ ,
-                                Status.StatusError.UNKNOWN -> /** Same as return false of [enqueue] **/ return
-                                Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
-                                Status.StatusError.UNAUTHENTICATED -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
-                            }
-                            endPointDetector.stopDetector()
-                        }
-                    }
+        sendRecognizeRequestEventIfNotDeferred(recognizeRequest)
 
-                    override fun onSuccess(request: MessageRequest) {
-                        Logger.d(TAG, "[onSuccess] request: $request")
-                    }
-
-                    override fun onResponseStart(request: MessageRequest) {
-                        Logger.d(TAG, "[onResponseStart] request: $request")
-                        Preferences.set("Last-Asr-Event-Time", dateFormat.format(Calendar.getInstance().time))
-                    }
-                })) {
-                recognizeRequest.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
-                endPointDetector.stopDetector()
-            }
-        }
         epdState = AudioEndPointDetector.State.EXPECTING_SPEECH
         setState(SpeechRecognizer.State.EXPECTING_SPEECH, recognizeRequest)
+    }
+
+    private fun sendRecognizeRequestEventIfNotDeferred(recognizeRequest: RecognizeRequest) {
+        val call = createRecognizeRequestCall(recognizeRequest)
+
+        if(call.callTimeout() > recognizeRequest.epdParam.timeoutInSeconds * 1000L) {
+            sendRecognizeRequest(recognizeRequest, call)
+        }
+    }
+
+    private fun createRecognizeRequestCall(recognizeRequest: RecognizeRequest): Call =
+        messageSender.newCall(
+            recognizeRequest.eventMessage,
+            hashMapOf("Last-Asr-Event-Time" to Preferences.get("Last-Asr-Event-Time"))
+        )
+
+    private fun sendRecognizeRequest(recognizeRequest: RecognizeRequest, call: Call) {
+        recognizeRequest.recognizeEventCall = call
+
+        if(!call.enqueue(object: MessageSender.Callback {
+                override fun onFailure(request: MessageRequest, status: Status) {
+                    Logger.d(TAG, "[onFailure] request: $request, status: $status")
+                    if(recognizeRequest == currentRequest && status.error == Status.StatusError.TIMEOUT && recognizeRequest.senderThread != null) {
+                        // if sender thread is working, we handle a timeout error as unknown error.
+                        // this occur when some attachment sent too late(after timeout).
+                        recognizeRequest.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                        endPointDetector.stopDetector()
+                    } else {
+                        recognizeRequest.errorTypeForCausingEpdStop = when (status.error) {
+                            Status.StatusError.OK /** cancel, no error **/ ,
+                            Status.StatusError.TIMEOUT /** Nothing to do because handle on [onResponseTimeout] **/ ,
+                            Status.StatusError.UNKNOWN -> /** Same as return false of [enqueue] **/ return
+                            Status.StatusError.NETWORK -> ASRAgentInterface.ErrorType.ERROR_NETWORK
+                            Status.StatusError.UNAUTHENTICATED -> ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                        }
+                        endPointDetector.stopDetector()
+                    }
+                }
+
+                override fun onSuccess(request: MessageRequest) {
+                    Logger.d(TAG, "[onSuccess] request: $request")
+                }
+
+                override fun onResponseStart(request: MessageRequest) {
+                    Logger.d(TAG, "[onResponseStart] request: $request")
+                    Preferences.set("Last-Asr-Event-Time", dateFormat.format(Calendar.getInstance().time))
+                }
+            })) {
+            recognizeRequest.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_NETWORK
+            endPointDetector.stopDetector()
+        }
     }
 
     override fun onSpeechStart(eventPosition: Long?) {
@@ -334,6 +351,10 @@ class DefaultClientSpeechRecognizer(
             Logger.e(TAG, "[AudioEndPointDetector::onSpeechStart] null request. check this!!!")
             epdState = AudioEndPointDetector.State.SPEECH_START
             return
+        }
+
+        if(request.recognizeEventCall == null) {
+            sendRecognizeRequest(request, createRecognizeRequestCall(request))
         }
 
         startSpeechSenderThread(request, eventPosition)
