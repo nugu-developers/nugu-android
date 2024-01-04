@@ -238,6 +238,7 @@ class NuguAndroidClient private constructor(
         internal var endPointDetectorModelFilePath: String? = null
         internal var endPointDetector: AudioEndPointDetector? = null
         internal var asrEncoder: Encoder = SpeexEncoder()
+        internal var expectSpeechHandler: ASRAgentInterface.ExpectSpeechHandler? = null
 
         // text agent
         internal var textSourceHandler: TextAgentInterface.TextSourceHandler? = null
@@ -339,6 +340,12 @@ class NuguAndroidClient private constructor(
          */
         fun asrEncoder(asrEncoder: Encoder) =
             apply { this.asrEncoder = asrEncoder }
+
+        /**
+         * @param handler the handler for expect speech directive. If not provided, default behavior at ASRAgent.
+         */
+        fun expectSpeechHandler(handler: ASRAgentInterface.ExpectSpeechHandler?) =
+            apply { this.expectSpeechHandler = handler }
 
         /**
          * @param factory the transport factory for network
@@ -552,7 +559,8 @@ class NuguAndroidClient private constructor(
                                 DefaultFocusChannel.USER_ASR_CHANNEL_NAME,
                                 DefaultFocusChannel.DM_ASR_CHANNEL_NAME,
                                 getPlaySynchronizer(),
-                                getInteractionControlManager()
+                                getInteractionControlManager(),
+                                builder.expectSpeechHandler
                             ).apply {
                                 getDirectiveSequencer().addDirectiveHandler(this)
 

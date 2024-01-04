@@ -68,7 +68,8 @@ class DefaultASRAgent(
     userInteractionDialogChannelName: String,
     internalDialogChannelName: String,
     private val playSynchronizer: PlaySynchronizerInterface,
-    private val interactionControlManager: InteractionControlManagerInterface
+    private val interactionControlManager: InteractionControlManagerInterface,
+    private val expectSpeechHandler: ASRAgentInterface.ExpectSpeechHandler? = null
 ) : AbstractCapabilityAgent(NAMESPACE)
     , ASRAgentInterface
     , SpeechRecognizer.OnStateChangeListener
@@ -381,6 +382,30 @@ class DefaultASRAgent(
             return
         }
 
+        when (expectSpeechHandler?.shouldExecuteDirective(payload, info.directive.header)
+            ?: ASRAgentInterface.ExpectSpeechHandler.Result.OK) {
+            is ASRAgentInterface.ExpectSpeechHandler.Result.Cancel -> {
+                setHandlingExpectSpeechFailed(
+                    param,
+                    info,
+                    "[executeHandleExpectSpeechDirective] canceled by expectSpeechHandler"
+                )
+                return
+            }
+
+            ASRAgentInterface.ExpectSpeechHandler.Result.Skip -> {
+                setHandlingExpectSpeechSkipped(
+                    param,
+                    info
+                )
+                return
+            }
+
+            ASRAgentInterface.ExpectSpeechHandler.Result.OK -> {
+                // continue following code
+            }
+        }
+
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
         executeStartRecognition(audioInputStream, audioFormat, null, param, null, null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
@@ -492,6 +517,14 @@ class DefaultASRAgent(
         }
         param?.directive?.payload?.let {
             sendListenFailed(it, info.directive.getDialogRequestId())
+        }
+    }
+
+    private fun setHandlingExpectSpeechSkipped(param: ExpectSpeechDirectiveParam?, info: DirectiveInfo) {
+        setHandlingCompleted(info)
+        clearCurrentAttributeKeyIfMatchWith(param)
+        param?.let {
+            sessionManager.deactivate(it.directive.header.dialogRequestId, it)
         }
     }
 

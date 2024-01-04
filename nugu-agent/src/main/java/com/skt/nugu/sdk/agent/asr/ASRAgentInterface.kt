@@ -290,4 +290,20 @@ interface ASRAgentInterface {
          */
         fun getHeaders() : Map<String, String>?
     }
+
+    interface ExpectSpeechHandler {
+        sealed interface Result {
+            object OK : Result
+            object Skip : Result
+            data class Cancel(private val msg: String) : Result
+        }
+
+        /**
+         * @return
+         * * [Result.OK] : execute directive.
+         * * [Result.Skip] : skip directive, but we handle the directive's result as success.
+         * * [Result.Cancel] : cancel directive, handle the directive's result as failure.
+         */
+        fun shouldExecuteDirective(payload: ExpectSpeechPayload, header: Header): Result
+    }
 }
