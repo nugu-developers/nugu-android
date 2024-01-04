@@ -140,6 +140,12 @@ class DefaultClientSpeechRecognizer(
             ExpectSpeechPayload.getDialogAttribute(it)
         } ?: attribute
 
+        val jsonService = if(service != null) {
+            JsonParser.parseString(service).asJsonObject
+        } else {
+            expectSpeechDirectiveParam?.directive?.payload?.service
+        }
+
         val eventMessage = EventMessageRequest.Builder(
             context,
             DefaultASRAgent.RECOGNIZE.namespace,
@@ -154,7 +160,7 @@ class DefaultClientSpeechRecognizer(
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
                 wakeup = payloadWakeup,
-                service = service?.let { JsonParser.parseString(it).asJsonObject },
+                service = jsonService,
                 requestType = requestType
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")

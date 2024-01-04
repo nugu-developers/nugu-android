@@ -132,6 +132,10 @@ class DefaultServerSpeechRecognizer(
             ExpectSpeechPayload.getDialogAttribute(it)
         } ?: attribute
 
+        val jsonService = if(service != null) {
+            JsonParser.parseString(service).asJsonObject
+        } else expectSpeechDirectiveParam?.directive?.payload?.service
+
         val eventMessage = EventMessageRequest.Builder(
             context,
             DefaultASRAgent.RECOGNIZE.namespace,
@@ -151,7 +155,7 @@ class DefaultServerSpeechRecognizer(
                     epdParam.maxDurationInSeconds * 1000L,
                     10 * 1000L // TODO : fixed at 10sec now.
                 ),
-                service = service?.let { JsonParser.parseString(it).asJsonObject },
+                service = jsonService,
                 requestType = requestType
             ).toJsonString()
         ).referrerDialogRequestId(referrerDialogRequestId ?: "")
