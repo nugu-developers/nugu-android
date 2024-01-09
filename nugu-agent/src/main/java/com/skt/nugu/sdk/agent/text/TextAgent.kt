@@ -74,6 +74,8 @@ class TextAgent(
         val token: String,
         @SerializedName("targetPlayServiceId")
         val targetPlayServiceId: String?,
+        @SerializedName("service")
+        val service: JsonObject?,
         @SerializedName("interactionControl")
         val interactionControl: InteractionControl?
     )
@@ -320,6 +322,7 @@ class TextAgent(
                 TextInputRequester.Request.Builder(payload.text)
                     .includeDialogAttribute(targetPlayServiceId == null)
                     .playServiceId(targetPlayServiceId).token(payload.token)
+                    .service(payload.service?.toString())
                     .interactionControl(payload.interactionControl)
                     .referrerDialogRequestId(info.directive.header.dialogRequestId).build(),
                 object : TextAgentInterface.RequestListener {
