@@ -62,7 +62,10 @@ class TextAgent(
         @SerializedName("token")
         val token: String,
         @SerializedName("source")
-        val source: String?
+        val source: String?,
+        @SerializedName("service")
+        val service: JsonObject?
+
     )
 
     internal data class TextRedirectPayload(
@@ -211,6 +214,7 @@ class TextAgent(
         } else {
             val dialogRequestId = executeSendTextInputEventInternal(TextInputRequester.Request.Builder(payload.text)
                 .includeDialogAttribute(payload.playServiceId == null)
+                .service(payload.service?.toString())
                 .playServiceId(payload.playServiceId).token(payload.token)
                 .source(payload.source)
                 .referrerDialogRequestId(info.directive.header.dialogRequestId).build(), handleSourceDirectiveRequestListener)
