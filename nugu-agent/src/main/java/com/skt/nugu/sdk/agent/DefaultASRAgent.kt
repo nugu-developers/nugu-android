@@ -368,20 +368,6 @@ class DefaultASRAgent(
             return
         }
 
-        currentAudioProvider = audioProvider
-
-        val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
-        val audioFormat: AudioFormat = audioProvider.getFormat()
-
-        if (audioInputStream == null) {
-            setHandlingExpectSpeechFailed(
-                param,
-                info,
-                "[executeHandleExpectSpeechDirective] audioInputStream is null"
-            )
-            return
-        }
-
         when (expectSpeechHandler?.shouldExecuteDirective(payload, info.directive.header)
             ?: ASRAgentInterface.ExpectSpeechHandler.Result.OK) {
             is ASRAgentInterface.ExpectSpeechHandler.Result.Cancel -> {
@@ -404,6 +390,20 @@ class DefaultASRAgent(
             ASRAgentInterface.ExpectSpeechHandler.Result.OK -> {
                 // continue following code
             }
+        }
+
+        currentAudioProvider = audioProvider
+
+        val audioInputStream: SharedDataStream? = audioProvider.acquireAudioInputStream(this)
+        val audioFormat: AudioFormat = audioProvider.getFormat()
+
+        if (audioInputStream == null) {
+            setHandlingExpectSpeechFailed(
+                param,
+                info,
+                "[executeHandleExpectSpeechDirective] audioInputStream is null"
+            )
+            return
         }
 
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
