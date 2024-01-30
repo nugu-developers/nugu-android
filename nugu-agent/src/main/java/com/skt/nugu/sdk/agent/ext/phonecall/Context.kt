@@ -24,7 +24,8 @@ data class Context(
     val state: State,
     val template: Template?,
     val recipient: Recipient?,
-    val numberBlockable: Boolean?
+    val numberBlockable: Boolean?,
+    val aiPhoneUserId: String?
 ) {
     enum class Intent {
         @SerializedName("CALL")
