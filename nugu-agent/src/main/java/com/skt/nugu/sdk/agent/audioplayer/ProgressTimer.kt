@@ -33,24 +33,25 @@ class ProgressTimer {
         const val NO_INTERVAL = 0L
     }
 
-    internal data class ProgressReportParam(
+    internal data class ProgressReportParamAndProgress(
         val delay: Long,
         val interval: Long,
         val progressListener: ProgressListener,
         val progressProvider: ProgressProvider
     ) {
         var lastReportedProgress: Long = 0L
+        var isDelayReported = false
     }
 
     private var timerThread: TimerThread? = null
 
-    private var currentProgressReportParam: ProgressReportParam? = null
+    private var currentProgressReportParamAndProgress: ProgressReportParamAndProgress? = null
 
     fun init(delay: Long, interval: Long, progressListener: ProgressListener, progressProvider: ProgressProvider) {
         Logger.d(TAG, "[init] delay: $delay, interval: $interval, onProgressListener: $progressListener, progressProvider: $progressProvider")
         cancelTimer()
 
-        currentProgressReportParam = ProgressReportParam(delay, interval, progressListener, progressProvider)
+        currentProgressReportParamAndProgress = ProgressReportParamAndProgress(delay, interval, progressListener, progressProvider)
 
         if (NO_DELAY == delay && NO_INTERVAL == interval) {
             Logger.d(TAG, "[init] no timer (no delay and no interval)")
@@ -59,7 +60,7 @@ class ProgressTimer {
     }
 
     private fun startTimer() {
-        val copyCurrentProgressReportParam = currentProgressReportParam
+        val copyCurrentProgressReportParam = currentProgressReportParamAndProgress
         Logger.d(TAG, "[startTimer] ProgressReportParam: $copyCurrentProgressReportParam")
         if(copyCurrentProgressReportParam == null) {
             return
@@ -71,13 +72,13 @@ class ProgressTimer {
     }
 
     private fun cancelTimer() {
-        Logger.d(TAG, "[cancelTimer] ProgressReportParam: $currentProgressReportParam, timer: $timerThread")
+        Logger.d(TAG, "[cancelTimer] ProgressReportParam: $currentProgressReportParamAndProgress, timer: $timerThread")
         timerThread?.requestCancel()
         timerThread = null
     }
 
     private fun finishTimer() {
-        Logger.d(TAG, "[finishTimer] ProgressReportParam: $currentProgressReportParam, timer: $timerThread")
+        Logger.d(TAG, "[finishTimer] ProgressReportParam: $currentProgressReportParamAndProgress, timer: $timerThread")
         timerThread?.requestFinish()
         timerThread = null
     }
@@ -105,11 +106,11 @@ class ProgressTimer {
     fun stop() {
         Logger.d(TAG, "[stop]")
         cancelTimer()
-        currentProgressReportParam = null
+        currentProgressReportParamAndProgress = null
     }
 
     private inner class TimerThread(
-        private val progressReportParam: ProgressReportParam
+        private val progressReportParamAndProgress: ProgressReportParamAndProgress
     ) : Thread() {
         private var isCancelling = false
         private var isFinishing = false
@@ -118,14 +119,15 @@ class ProgressTimer {
             super.run()
 
             while (!isCancelling) {
-                with(progressReportParam) {
+                with(progressReportParamAndProgress) {
                     try {
                         val prevReportedProgress = lastReportedProgress
                         lastReportedProgress = progressProvider.getProgress()
 
-                        if (delay != NO_DELAY && !isCancelling) {
+                        if (delay != NO_DELAY && !isCancelling && !isDelayReported) {
                             if (delay in (prevReportedProgress + 1)..lastReportedProgress) {
                                 progressListener.onProgressReportDelay(delay, lastReportedProgress)
+                                isDelayReported = true
                             }
                         }
 
