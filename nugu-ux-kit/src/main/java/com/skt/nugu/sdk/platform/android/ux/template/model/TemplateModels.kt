@@ -105,6 +105,7 @@ data class Playlist(
         val available: Boolean = true, // default value is true
         val token: String = "",
         var favorite: Favorite? = null,
+        var libraryAvailable: Boolean? = null,
         var postback: Any? = null,
     ) {
         @Keep
@@ -161,6 +162,7 @@ data class Settings(
     @SerializedName("favorite") val favorite: Boolean?,
     @SerializedName("repeat") val repeat: Repeat?,
     @SerializedName("shuffle") val shuffle: Boolean?,
+    @SerializedName("libraryAvailable") val libraryAvailable: Boolean?,
 )
 
 @Keep

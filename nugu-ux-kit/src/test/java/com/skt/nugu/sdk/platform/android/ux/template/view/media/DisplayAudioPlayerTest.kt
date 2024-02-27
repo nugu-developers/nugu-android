@@ -105,7 +105,7 @@ class DisplayAudioPlayerTest {
         "badgeMessage",
         "badgeUrl",
         Lyrics("title", LyricsType.SYNC, null, ShowButtonText("showButtonText")),
-        Settings(true, Repeat.ALL, false))
+        Settings(true, Repeat.ALL, false, false))
 
     private val templateTypeMedia = "AudioPlayer.Template1"
     private val dialogRequestId = "abc"
