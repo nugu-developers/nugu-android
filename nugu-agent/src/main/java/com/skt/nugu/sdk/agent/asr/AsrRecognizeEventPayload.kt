@@ -28,6 +28,7 @@ data class AsrRecognizeEventPayload(
     private val encoding: String? = null,
     private val wakeup: PayloadWakeup? = null,
     private val timeout: Timeout? = null,
+    private val epd: EndPointDetectorParam? = null,
     private val service: JsonObject? = null,
     private val requestType: RequestType? = null
 ) {
@@ -103,6 +104,14 @@ data class AsrRecognizeEventPayload(
                 addProperty("listen", it.listen)
                 addProperty("maxSpeech", it.maxSpeech)
                 addProperty("response", it.response)
+            })
+        }
+
+        epd?.let {
+            add("epd", JsonObject().apply {
+                addProperty("timeoutMilliseconds", it.timeoutInSeconds * 1000L)
+                addProperty("silenceIntervalInMilliseconds", it.pauseLengthInMilliseconds)
+                addProperty("maxSpeechDurationMilliseconds", it.maxDurationInSeconds * 1000L)
             })
         }
 

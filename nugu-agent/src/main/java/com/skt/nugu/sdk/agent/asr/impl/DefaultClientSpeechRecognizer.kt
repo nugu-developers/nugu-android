@@ -160,6 +160,7 @@ class DefaultClientSpeechRecognizer(
                 endpointing = AsrRecognizeEventPayload.ENDPOINTING_CLIENT,
                 encoding = if (enablePartialResult) AsrRecognizeEventPayload.ENCODING_PARTIAL else AsrRecognizeEventPayload.ENCODING_COMPLETE,
                 wakeup = payloadWakeup,
+                epd = epdParam,
                 service = jsonService,
                 requestType = requestType
             ).toJsonString()
