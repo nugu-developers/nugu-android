@@ -78,7 +78,7 @@ class DefaultASRAgent(
         private const val TAG = "DefaultASRAgent"
 
         const val NAMESPACE = "ASR"
-        val VERSION = Version(1,8)
+        val VERSION = Version(1,9)
 
         const val NAME_EXPECT_SPEECH = "ExpectSpeech"
         const val NAME_RECOGNIZE = "Recognize"
