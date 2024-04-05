@@ -104,6 +104,7 @@ class DisplayAudioPlayerTest {
         "bgColor",
         "badgeMessage",
         "badgeUrl",
+        null,
         Lyrics("title", LyricsType.SYNC, null, ShowButtonText("showButtonText")),
         Settings(true, Repeat.ALL, false, false))
 

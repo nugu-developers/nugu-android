@@ -71,6 +71,7 @@ data class AudioPlayerContent(
     @SerializedName("backgroundColor") val backgroundColor: String?,
     @SerializedName("badgeMessage") val badgeMessage: String?,
     @SerializedName("badgeImageUrl") val badgeImageUrl: String?,
+    @SerializedName("badgeButton") val badgeButton: BadgeButton?,
     @SerializedName("lyrics") val lyrics: Lyrics?,
     @SerializedName("settings") val settings: Settings?,
 )
@@ -182,6 +183,14 @@ data class ShowButtonText(
 data class LyricsInfo(
     @SerializedName("time") val time: Int?,
     @SerializedName("text") val text: String?,
+)
+
+@Keep
+data class BadgeButton(
+    @SerializedName("token") val token: String,
+    @SerializedName("text") val text: String,
+    @SerializedName("backgroundColor") val backgroundColor: String?,
+    @SerializedName("postback") val postback: Any? = null,
 )
 
 @Keep
