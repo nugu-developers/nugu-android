@@ -112,7 +112,7 @@ class DefaultAudioPlayerAgent(
         private const val TAG = "AudioPlayerAgent"
 
         const val NAMESPACE = "AudioPlayer"
-        val VERSION = Version(1,9)
+        val VERSION = Version(1,10)
 
         const val EVENT_NAME_PLAYBACK_STARTED = "PlaybackStarted"
         const val EVENT_NAME_PLAYBACK_FINISHED = "PlaybackFinished"
