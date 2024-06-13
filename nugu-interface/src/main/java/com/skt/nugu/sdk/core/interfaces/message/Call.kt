@@ -21,11 +21,12 @@ interface Call {
     fun isCanceled(): Boolean
     fun cancel()
     fun execute(): Status
-    fun enqueue(callback: MessageSender.Callback?): Boolean
+    fun enqueue(callback: MessageSender.Callback? = null, eventListener: MessageSender.EventListener? = null): Boolean
     fun noAck(): Call
     fun onStart()
     fun onComplete(status: Status)
     fun isCompleted(): Boolean
+    fun onAsyncKeyReceived(asyncKey: AsyncKey)
     fun callTimeout(millis: Long): Call
     fun callTimeout(): Long
     fun reschedule()

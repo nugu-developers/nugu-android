@@ -72,6 +72,7 @@ class DeviceGatewayClientTest : TestCase() {
         override fun onError(status: Status, who: String) = Unit
         override fun onPingRequestAcknowledged() = Unit
         override fun onRequestCompleted() = Unit
+        override fun onAsyncKeyReceived(call: Call, asyncKey: AsyncKey) = Unit
 
         override fun send(call: Call): Boolean {
             onReceiveDirectives(mock())
@@ -213,5 +214,24 @@ class DeviceGatewayClientTest : TestCase() {
         val mock : DeviceGatewayTransport = mock()
         verify(mock, never()).connect()
         verify(mock, never()).startDirectivesService()
+    }
+
+    @Test
+    fun testAsync() {
+        val client = DeviceGatewayClient(
+            policy = RegistryClient.DefaultPolicy(serverInfo),
+            messageConsumer = mock(),
+            transportObserver = mock(),
+            authDelegate = mock(),
+            callOptions = null,
+            channelOptions = null,
+            isStartReceiveServerInitiatedDirective = mock()
+        )
+        Assert.assertNotNull(client)
+        Assert.assertFalse(client.isConnected())
+        client.handleOnConnected()
+        Assert.assertTrue(client.isConnected())
+        client.shutdown()
+        Assert.assertFalse(client.isConnected())
     }
 }

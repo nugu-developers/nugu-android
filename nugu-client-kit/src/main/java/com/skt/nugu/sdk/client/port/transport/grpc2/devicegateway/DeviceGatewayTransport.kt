@@ -16,8 +16,8 @@
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.Call
-import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import devicegateway.grpc.AttachmentMessage
 import devicegateway.grpc.DirectiveMessage
 import io.grpc.Status
@@ -34,6 +34,7 @@ interface DeviceGatewayTransport {
     fun onError(status: Status, who: String)
     fun onPingRequestAcknowledged()
     fun onRequestCompleted()
+    fun onAsyncKeyReceived(call: Call, asyncKey: AsyncKey)
 
     fun send(call: Call) : Boolean
     fun connect() : Boolean

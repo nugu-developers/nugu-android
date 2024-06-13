@@ -53,6 +53,13 @@ interface MessageSender {
     }
 
     /**
+     * The listener to be notified when occur event
+     */
+    interface EventListener {
+        fun onAsyncKeyReceived(request: MessageRequest, asyncKey: AsyncKey)
+    }
+
+    /**
      * Add listener to notified when occur events
      * @param listener the listener will be added
      */

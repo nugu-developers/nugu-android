@@ -21,7 +21,6 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
-import org.junit.Assert.*
 
 import junit.framework.TestCase
 import org.junit.Assert
@@ -80,16 +79,16 @@ class EventsServiceTest : TestCase() {
         val call = Grpc2Call(mockTransport, request, headers, listener)
         val responseObserver = service.ClientCallStreamObserver("streamId", call, false)
         val future = service.scheduleTimeout("streamId", call)
-        val clientChannel = EventsService.ClientChannel(
+        val clientChannel = ClientChannel(
             mock(), future, responseObserver
         )
-        service.requestStreamMap["streamId"] = clientChannel
+        service.channels["streamId"] = clientChannel
         Assert.assertEquals(service.obtainChannel("streamId"), clientChannel)
-        Assert.assertEquals(service.requestStreamMap.size, 1)
+        Assert.assertEquals(service.channels.size, 1)
         service.cancelScheduledTimeout("streamId")
         future?.let { Assert.assertTrue(it.isCancelled) }
         service.halfClose("streamId")
         service.shutdown()
-        Assert.assertEquals(service.requestStreamMap.size, 0)
+        Assert.assertEquals(service.channels.size, 0)
     }
 }

@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
-import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import devicegateway.grpc.DirectiveMessage
 
 object DirectivePreconditions {
@@ -34,13 +36,21 @@ object DirectivePreconditions {
         return false
     }
 
-    fun EventMessageRequest.checkIfEventMessageIsAsrRecognize(): Boolean {
-        val namespace = "ASR"
-        val name = "Recognize"
+    internal data class Payload(
+        @SerializedName("asyncKey")
+        val asyncKey: AsyncKey
+    )
 
-        if (this.namespace == namespace && this.name == name) {
-            return true
+    fun DirectiveMessage.checkIfDirectiveIsStreaming(block: (AsyncKey) -> Unit) {
+        val key = "\"asyncKey\""
+        this.directivesOrBuilderList.forEach {
+            if (it.payload.contains(key)) {
+                runCatching {
+                    Gson().fromJson(it.payload, Payload::class.java).asyncKey
+                }.onSuccess { asyncKey ->
+                    block.invoke(asyncKey)
+                }
+            }
         }
-        return false
     }
 }

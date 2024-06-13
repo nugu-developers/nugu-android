@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2
 
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
@@ -31,7 +32,8 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     private var canceled = false
     private var completed = false
     private var callback: MessageSender.Callback? = null
-    private var listener: MessageSender.OnSendMessageListener? = listener
+    private var eventListener: MessageSender.EventListener? = null
+    private var sendMessageListener: MessageSender.OnSendMessageListener? = listener
     private var noAck = false
     private var callTimeoutMillis = 1000 * 10L
     private var invokeStartEvent = true
@@ -42,8 +44,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
 
     override fun request() = request
     override fun headers() = headers
-
-    override fun enqueue(callback: MessageSender.Callback?): Boolean {
+    override fun enqueue(callback: MessageSender.Callback?, eventListener: MessageSender.EventListener?): Boolean {
         synchronized(this) {
             if (executed) {
                 callback?.onFailure(request(),Status(
@@ -60,8 +61,9 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             executed = true
         }
         this.callback = callback
+        this.eventListener = eventListener
 
-        listener?.onPreSendMessage(request())
+        sendMessageListener?.onPreSendMessage(request())
         if (transport?.send(this) != true) {
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
             return false
@@ -119,7 +121,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             }
         }
 
-        listener?.onPreSendMessage(request())
+        sendMessageListener?.onPreSendMessage(request())
         if (transport?.send(this) != true) {
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
@@ -153,19 +155,19 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         }
         // Notify Callback
         if (status.isOk()) {
-            if(invokeStartEvent) {
-                invokeStartEvent = false
-                callback?.onResponseStart(request())
-            }
+            onStart()
             callback?.onSuccess(request())
         } else {
             callback?.onFailure(request(), status)
         }
-        callback = null
 
         // Notify Listener
-        listener?.onPostSendMessage(request(), status)
-        listener = null
+        sendMessageListener?.onPostSendMessage(request(), status)
+        sendMessageListener = null
+    }
+
+    override fun onAsyncKeyReceived(asyncKey: AsyncKey) {
+        eventListener?.onAsyncKeyReceived(request(), asyncKey)
     }
 
     override fun noAck(): MessageCall {

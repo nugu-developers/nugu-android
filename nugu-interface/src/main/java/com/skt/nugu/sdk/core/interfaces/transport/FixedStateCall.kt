@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.core.interfaces.transport
 
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
@@ -44,7 +45,10 @@ class FixedStateCall(
         return status
     }
 
-    override fun enqueue(callback: MessageSender.Callback?): Boolean {
+    override fun enqueue(
+        callback: MessageSender.Callback?,
+        eventCallback: MessageSender.EventListener?
+    ): Boolean {
         isOnPreSendMessageCalled = true
         listener?.onPreSendMessage(request())
         callback?.onFailure(request(), status)
@@ -69,6 +73,7 @@ class FixedStateCall(
         listener = null
     }
     override fun isCompleted() = false
+    override fun onAsyncKeyReceived(asyncKey: AsyncKey) = Unit
 
     override fun callTimeout(millis: Long): Call {
         // no op

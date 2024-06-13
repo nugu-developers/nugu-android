@@ -16,7 +16,6 @@
 package com.skt.nugu.sdk.client.port.transport.grpc2.utils
 
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
-import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfEventMessageIsAsrRecognize
 import junit.framework.TestCase
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import devicegateway.grpc.DirectiveMessage

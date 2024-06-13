@@ -15,7 +15,9 @@
  */
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsStreaming
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
+import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.DirectivesRequest
 import devicegateway.grpc.Downstream
@@ -23,6 +25,7 @@ import devicegateway.grpc.VoiceServiceGrpc
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -32,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This class is designed to manage downstream of DeviceGateway
  */
 internal class DirectivesService(
+    private val streamCalls: ConcurrentHashMap<String, Call>,
     private val channel: ManagedChannel,
     private val observer: DeviceGatewayTransport
 ) {
@@ -84,6 +88,13 @@ internal class DirectivesService(
                                 downstream.directiveMessage?.let {
                                     if (it.directivesCount > 0) {
                                         if(!isShutdown.get()) {
+
+                                            val log = StringBuilder()
+                                            log.append("[DirectivesService] ")
+                                            log.append(it.directivesList.joinToString(separator = ", ", prefix = "event=") { directive ->
+                                                "${directive.header.namespace}.${directive.header.name}"
+                                            })
+                                            Logger.d(TAG, log.toString())
                                             observer.onReceiveDirectives(downstream.directiveMessage)
                                         } else {
                                             Logger.w(TAG, "[DirectivesService] This message is not dispatched (${downstream.directiveMessage})")
@@ -91,6 +102,11 @@ internal class DirectivesService(
                                     }
                                     if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
                                         observer.onError(Status.UNAUTHENTICATED, name)
+                                    }
+                                    it.checkIfDirectiveIsStreaming { asyncKey ->
+                                        streamCalls[asyncKey.eventDialogRequestId]?.let { call ->
+                                            observer.onAsyncKeyReceived(call, asyncKey)
+                                        }
                                     }
                                 }
                             }
