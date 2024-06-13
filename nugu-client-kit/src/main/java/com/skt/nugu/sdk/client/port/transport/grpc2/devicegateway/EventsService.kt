@@ -16,6 +16,7 @@
 package com.skt.nugu.sdk.client.port.transport.grpc2.devicegateway
 
 import com.google.common.annotations.VisibleForTesting
+import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsStreaming
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.DirectivePreconditions.checkIfDirectiveIsUnauthorizedRequestException
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toProtobufMessage
 import com.skt.nugu.sdk.core.interfaces.message.Call
@@ -47,7 +48,8 @@ internal class EventsService(
     private val channel: ManagedChannel,
     private val observer: DeviceGatewayTransport,
     private val scheduler: ScheduledExecutorService,
-    private val callOptions: CallOptions?
+    private val callOptions: CallOptions?,
+    internal val channels: ConcurrentHashMap<String, ClientChannel?> = ConcurrentHashMap()
 ) {
     companion object {
         private const val TAG = "EventsService"
@@ -57,16 +59,8 @@ internal class EventsService(
     @VisibleForTesting
     internal val isShutdown = AtomicBoolean(false)
     private val streamLock = ReentrantLock()
-
-    @VisibleForTesting
-    internal val requestStreamMap = ConcurrentHashMap<String, ClientChannel?>()
     private val waitForReady = callOptions?.waitForReady ?: true
 
-    internal data class ClientChannel (
-        var clientCall : StreamObserver<Upstream>?,
-        var scheduledFuture: ScheduledFuture<*>?,
-        val responseObserver : ClientCallStreamObserver
-    )
     private fun buildChannel(streamId: String, call: Call, expectedAttachment: Boolean): ClientChannel? {
         if (!isShutdown.get()) {
             val responseObserver = ClientCallStreamObserver(streamId, call, expectedAttachment)
@@ -90,13 +84,13 @@ internal class EventsService(
         if (isShutdown.get()) {
             return null
         }
-        return requestStreamMap[streamId]
+        return channels[streamId]
     }
 
     @VisibleForTesting
     internal fun scheduleTimeout(streamId: String, call: Call) : ScheduledFuture<*>? {
         return scheduler.schedule({
-            requestStreamMap[streamId]?.apply {
+            channels[streamId]?.apply {
                 if(this.responseObserver.isReceivedDownstream.compareAndSet(true, false)) {
                     Logger.w(TAG,"[scheduleTimeout] Renew the schedule, It occurs because the downstream is too slow. $streamId")
                     scheduleTimeout(streamId, call)
@@ -112,7 +106,7 @@ internal class EventsService(
 
     @VisibleForTesting
     fun cancelScheduledTimeout(streamId: String) {
-        requestStreamMap[streamId]?.apply {
+        channels[streamId]?.apply {
             scheduledFuture?.cancel(true)
         }
     }
@@ -138,14 +132,14 @@ internal class EventsService(
                             }
 
                             val log = StringBuilder()
-                            log.append("[onNext] directive, requestMessageId={$streamId}, ")
-                            log.append(it.directivesList.joinToString(separator = ", ", prefix = "messageId=") {
-                                it.header.messageId
+                            log.append("[onNext] directive, requestMessageId=$streamId, ")
+                            log.append(it.directivesList.joinToString(separator = ", ", prefix = "event=") { directive ->
+                                "${directive.header.namespace}.${directive.header.name}"
                             })
                             if(!isDispatchNeeded) {
                                 log.append(", dispatched=$isDispatchNeeded")
                             }
-                            if(elapsed  > 100) {
+                            if(elapsed > 100) {
                                 log.append(", elapsed=$elapsed")
                             }
                             Logger.d(TAG, log.toString())
@@ -153,6 +147,9 @@ internal class EventsService(
                         if (it.checkIfDirectiveIsUnauthorizedRequestException()) {
                             call.onComplete(SDKStatus.UNAUTHENTICATED)
                             observer.onError(Status.UNAUTHENTICATED, name)
+                        }
+                        it.checkIfDirectiveIsStreaming { asyncKey ->
+                            observer.onAsyncKeyReceived(call, asyncKey)
                         }
                     }
                 }
@@ -203,10 +200,8 @@ internal class EventsService(
                     }
                 } finally {
                     cancelScheduledTimeout(streamId)
-                    requestStreamMap.remove(streamId)
-                    if(requestStreamMap.size == 0) {
-                        observer.onRequestCompleted()
-                    }
+                    channels.remove(streamId)
+                    observer.onRequestCompleted()
                     Logger.e(TAG, log.toString())
                 }
                 observer.onError(status, name)
@@ -215,11 +210,9 @@ internal class EventsService(
 
         override fun onCompleted() {
             cancelScheduledTimeout(streamId)
-            requestStreamMap.remove(streamId)
-            if(requestStreamMap.size == 0) {
-                observer.onRequestCompleted()
-            }
-            Logger.d(TAG, "[onCompleted] messageId=$streamId, numRequests=${requestStreamMap.size}")
+            channels.remove(streamId)
+            observer.onRequestCompleted()
+            Logger.d(TAG, "[onCompleted] messageId=$streamId, numRequests=${channels.size}")
             call.onComplete(SDKStatus.OK)
         }
     }
@@ -228,7 +221,7 @@ internal class EventsService(
     fun halfClose(streamId : String) {
         streamLock.withLock {
             try {
-                requestStreamMap[streamId]?.apply {
+                channels[streamId]?.apply {
                     this.clientCall?.onCompleted()
                     this.clientCall = null
                 }
@@ -285,7 +278,7 @@ internal class EventsService(
             val expectedAttachment = event.isStreaming
             streamLock.withLock {
                 buildChannel(event.messageId, call, expectedAttachment)?.apply {
-                    requestStreamMap[event.messageId] = this
+                    channels[event.messageId] = this
                     Logger.d(TAG, "[onNext] event=${event.namespace}.${event.name}, messageId=${event.messageId}")
                     this.clientCall?.onNext(
                         Upstream.newBuilder()
@@ -312,11 +305,11 @@ internal class EventsService(
 
     fun shutdown() {
         if (isShutdown.compareAndSet(false, true)) {
-            requestStreamMap.forEach {
+            channels.forEach {
                 cancelScheduledTimeout(it.key)
                 halfClose(it.key)
             }
-            requestStreamMap.clear()
+            channels.clear()
         } else {
             Logger.w(TAG, "[shutdown] already shutdown")
         }
@@ -325,5 +318,5 @@ internal class EventsService(
     /**
      * @return The number of streams in the request.
      */
-    fun requests() = requestStreamMap.size
+    fun requests() = channels.size
 }

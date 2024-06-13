@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.client.port.transport.http2
 
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.MessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.message.Status
@@ -37,6 +38,7 @@ internal class HTTP2Call(
     private var canceled = false
     private var completed = false
     private var callback: MessageSender.Callback? = null
+    private var eventListener: MessageSender.EventListener? = null
     private var listener: MessageSender.OnSendMessageListener? = listener
     private var callTimeoutMillis = 1000 * 10L
     private var noAck = false
@@ -48,8 +50,10 @@ internal class HTTP2Call(
 
     override fun request() = request
     override fun headers() = headers
-
-    override fun enqueue(callback: MessageSender.Callback?): Boolean {
+    override fun enqueue(
+        callback: MessageSender.Callback?,
+        eventListener: MessageSender.EventListener?
+    ): Boolean {
         synchronized(this) {
             if (executed) {
                 callback?.onFailure(request(),Status(
@@ -66,6 +70,7 @@ internal class HTTP2Call(
             executed = true
         }
         this.callback = callback
+        this.eventListener = eventListener
 
         scheduleTimeout()
 
@@ -176,6 +181,10 @@ internal class HTTP2Call(
         // Notify Listener
         listener?.onPostSendMessage(request(), status)
         listener = null
+    }
+
+    override fun onAsyncKeyReceived(asyncKey: AsyncKey) {
+        eventListener?.onAsyncKeyReceived(request(), asyncKey)
     }
 
     private val hashCode : Int by lazy {

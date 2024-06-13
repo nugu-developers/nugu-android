@@ -26,6 +26,7 @@ import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverte
 import com.skt.nugu.sdk.client.port.transport.grpc2.utils.MessageRequestConverter.toStringMessage
 import com.skt.nugu.sdk.core.interfaces.auth.AuthDelegate
 import com.skt.nugu.sdk.core.interfaces.connection.ConnectionStatusListener.ChangedReason
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
@@ -40,6 +41,7 @@ import io.grpc.Status
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -146,6 +148,8 @@ internal class DeviceGatewayClient(policy: Policy,
      */
     fun isConnected(): Boolean = isConnected.get()
 
+
+    private val streamingCalls = ConcurrentHashMap<String /* dialogRequestId */, Call>()
     /**
      * Sends a message request.
      * @param request the messageRequest to be sent
@@ -273,6 +277,7 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     override fun shutdown() {
+        streamingCalls.clear()
         messageConsumer = null
         transportObserver = null
         backoff.shutdown()
@@ -386,6 +391,7 @@ internal class DeviceGatewayClient(policy: Policy,
         currentChannel?.apply {
             directivesService =
                 DirectivesService(
+                    streamingCalls,
                     this,
                     this@DeviceGatewayClient
                 )
@@ -410,10 +416,21 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     override fun onRequestCompleted() {
-        if(pendingStopDirectivesService.compareAndSet(true, false)) {
-            Logger.w(TAG, "[onRequestCompleted] A pending StopDirectivesService is performed.")
-            processDisconnect()
-            processConnection()
+        if( eventsService?.requests() == 0 /* no more requests */ ) {
+            if (pendingStopDirectivesService.compareAndSet(true, false)) {
+                Logger.w(TAG, "[onRequestCompleted] A pending StopDirectivesService is performed.")
+                processDisconnect()
+                processConnection()
+            }
         }
+    }
+
+    override fun onAsyncKeyReceived(call: Call, asyncKey: AsyncKey) {
+        when(asyncKey.state) {
+            AsyncKey.State.START -> streamingCalls[asyncKey.eventDialogRequestId] = call
+            AsyncKey.State.ONGOING -> Unit
+            AsyncKey.State.END -> streamingCalls.remove(asyncKey.eventDialogRequestId)
+        }
+        call.onAsyncKeyReceived(asyncKey)
     }
 }
