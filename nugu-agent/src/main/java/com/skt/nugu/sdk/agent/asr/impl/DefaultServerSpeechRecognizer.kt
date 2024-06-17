@@ -373,7 +373,8 @@ class DefaultServerSpeechRecognizer(
 
     override fun onReceiveDirectives(
         dialogRequestId: String,
-        directives: List<Directive>
+        directives: List<Directive>,
+        asyncKey: AsyncKey?
     ): Boolean {
         val request = currentRequest
         if (request == null) {
