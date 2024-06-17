@@ -15,7 +15,6 @@
  */
 package com.skt.nugu.sdk.agent.asr.impl
 
-import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.asr.*
@@ -62,7 +61,7 @@ class DefaultServerSpeechRecognizer(
     ) : SpeechRecognizer.Request {
         override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
         var cancelCause: ASRAgentInterface.CancelCause? = null
-        val shouldBeHandledResult = HashSet<String>()
+        val shouldBeNotifyResult = HashSet<String>()
         var receiveResponse = false
         var call: Call? = null
 
@@ -334,8 +333,8 @@ class DefaultServerSpeechRecognizer(
         }
 
         synchronized(request) {
-            request.shouldBeHandledResult.remove(directive.getMessageId())
-            if (request.shouldBeHandledResult.isEmpty() && request.receiveResponse) {
+            request.shouldBeNotifyResult.remove(directive.getMessageId())
+            if (request.shouldBeNotifyResult.isEmpty() && request.receiveResponse) {
                 handleFinish()
             }
         }
@@ -373,7 +372,8 @@ class DefaultServerSpeechRecognizer(
 
     override fun onReceiveDirectives(
         dialogRequestId: String,
-        directives: List<Directive>
+        directives: List<Directive>,
+        asyncKey: AsyncKey?
     ): Boolean {
         val request = currentRequest
         if (request == null) {
@@ -389,11 +389,19 @@ class DefaultServerSpeechRecognizer(
             return false
         }
 
-        val receiveResponse = directives.filter { it.header.namespace != DefaultASRAgent.NAMESPACE }.any()
+        // postpone timeout delay
+        inputProcessorManager.onRequested(this, dialogRequestId)
+
+        val receiveResponse =
+            directives.any {
+                it.header.namespace != DefaultASRAgent.NAMESPACE &&
+                        !(it.header.namespace == "Adot" && it.header.name == "AckMessage") &&
+                        (asyncKey == null || asyncKey.state == AsyncKey.State.END)
+            }
 
         return synchronized(request) {
             if (receiveResponse) {
-                if (request.shouldBeHandledResult.isEmpty()) {
+                if (request.shouldBeNotifyResult.isEmpty()) {
                     Logger.d(TAG, "[onReceiveResponse] receive response : no result should be handled, handleFinish()")
                     handleFinish()
                 } else {
@@ -404,11 +412,11 @@ class DefaultServerSpeechRecognizer(
             } else {
                 directives.filter { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT }
                     .forEach {
-                        request.shouldBeHandledResult.add(it.getMessageId())
+                        request.shouldBeNotifyResult.add(it.getMessageId())
                     }
                 Logger.d(
                     TAG,
-                    "[onReceiveResponse] receive asr response : ${request.shouldBeHandledResult.size}"
+                    "[onReceiveResponse] receive asr notify response : ${request.shouldBeNotifyResult.size}"
                 )
                 false
             }
