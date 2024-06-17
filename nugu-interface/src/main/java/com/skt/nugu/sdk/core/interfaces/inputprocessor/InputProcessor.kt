@@ -15,10 +15,11 @@
  */
 package com.skt.nugu.sdk.core.interfaces.inputprocessor
 
+import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 interface InputProcessor {
     fun onSendEventFinished(dialogRequestId: String)
-    fun onReceiveDirectives(dialogRequestId: String, directives: List<Directive>): Boolean
+    fun onReceiveDirectives(dialogRequestId: String, directives: List<Directive>, asyncKey: AsyncKey? = null): Boolean
     fun onResponseTimeout(dialogRequestId: String)
 }
