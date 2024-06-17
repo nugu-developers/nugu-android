@@ -15,6 +15,7 @@
  */
 package com.skt.nugu.sdk.agent.asr.impl
 
+import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.DefaultASRAgent
 import com.skt.nugu.sdk.agent.asr.*
@@ -72,7 +73,7 @@ class DefaultClientSpeechRecognizer(
 
         var stopByCancel: Boolean? = null
         var cancelCause: ASRAgentInterface.CancelCause? = null
-        val shouldBeHandledResult = HashSet<String>()
+        val shouldBeNotifyResult = HashSet<String>()
         var receiveResponse = false
         var recognizeEventCall: Call? = null
 
@@ -272,8 +273,8 @@ class DefaultClientSpeechRecognizer(
         }
 
         synchronized(request) {
-            request.shouldBeHandledResult.remove(directive.getMessageId())
-            if (request.shouldBeHandledResult.isEmpty() && request.receiveResponse) {
+            request.shouldBeNotifyResult.remove(directive.getMessageId())
+            if (request.shouldBeNotifyResult.isEmpty() && request.receiveResponse) {
                 handleFinish()
             }
         }
@@ -598,19 +599,34 @@ class DefaultClientSpeechRecognizer(
             return false
         }
 
-        if (dialogRequestId != request.eventMessage.dialogRequestId) {
-            Logger.e(
-                TAG,
-                "[onReceiveResponse] invalid : (receive: $dialogRequestId, current: ${request.eventMessage.dialogRequestId})"
-            )
-            return false
+        val requestDialogRequestId = request.eventMessage.dialogRequestId
+        val asyncKey = getAsyncKeyPayload(directives.first())
+
+        if (dialogRequestId != requestDialogRequestId) {
+            if(asyncKey == null || asyncKey.eventDialogRequestId != requestDialogRequestId) {
+                Logger.e(
+                    TAG,
+                    "[onReceiveResponse] invalid : (receive: $dialogRequestId, current: ${request.eventMessage.dialogRequestId})"
+                )
+                return false
+            }
         }
 
-        val receiveResponse = directives.filter { it.header.namespace != DefaultASRAgent.NAMESPACE }.any()
+        // postpone timeout delay
+        inputProcessorManager.onRequested(this, dialogRequestId)
+
+        val receiveResponse =
+            directives.any {
+                it.header.namespace != DefaultASRAgent.NAMESPACE &&
+                        !(it.header.namespace == "Adot" && it.header.name == "AckMessage") &&
+                        (asyncKey == null || asyncKey.state == AsyncKey.State.END)
+            }
+
+        Logger.d(TAG, "[onReceiveResponse] receiveResponse: $receiveResponse and asyncKey: ${asyncKey}")
 
         return synchronized(request) {
             if (receiveResponse) {
-                if (request.shouldBeHandledResult.isEmpty()) {
+                if (request.shouldBeNotifyResult.isEmpty()) {
                     Logger.d(TAG, "[onReceiveResponse] receive response : no result should be handled, handleFinish()")
                     handleFinish()
                 } else {
@@ -621,16 +637,26 @@ class DefaultClientSpeechRecognizer(
             } else {
                 directives.filter { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT }
                     .forEach {
-                        request.shouldBeHandledResult.add(it.getMessageId())
+                        request.shouldBeNotifyResult.add(it.getMessageId())
                     }
                 Logger.d(
                     TAG,
-                    "[onReceiveResponse] receive asr response : ${request.shouldBeHandledResult.size}"
+                    "[onReceiveResponse] receive asr response : ${request.shouldBeNotifyResult.size}"
                 )
                 false
             }
         }
     }
+
+    private fun getAsyncKeyPayload(directive: Directive): AsyncKey? =
+        runCatching {
+            if (directive.payload.contains("\"asyncKey\"")) {
+                Gson().fromJson(
+                    directive.payload,
+                    AsyncKeyPayload::class.java
+                ).asyncKey
+            } else null
+        }.getOrNull()
 
     override fun onResponseTimeout(dialogRequestId: String) {
         currentRequest?.let {
