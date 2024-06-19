@@ -426,6 +426,11 @@ internal class DeviceGatewayClient(policy: Policy,
     }
 
     override fun onAsyncKeyReceived(call: Call, asyncKey: AsyncKey) {
+        if(call.isCanceled()) {
+            Logger.w(TAG, "[onAsyncKeyReceived] This call is cancelled and not delivered. (eventDialogRequestId=${asyncKey.eventDialogRequestId})")
+            streamingCalls.remove(asyncKey.eventDialogRequestId)
+            return
+        }
         when(asyncKey.state) {
             AsyncKey.State.START -> streamingCalls[asyncKey.eventDialogRequestId] = call
             AsyncKey.State.ONGOING -> Unit
