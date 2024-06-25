@@ -36,15 +36,6 @@ class PlaybackRouter : PlaybackRouter {
         }
     }
 
-//    override fun togglePressed(toggle: PlaybackToggle, action: Boolean) {
-//        val currentHandler = handler
-//        if(currentHandler != null) {
-//            currentHandler.onTogglePressed(toggle, action)
-//        } else {
-//            Logger.w(TAG, "[togglePressed] no handler to route")
-//        }
-//    }
-
     override fun setHandler(handler: PlaybackHandler?) {
         this.handler = handler
     }

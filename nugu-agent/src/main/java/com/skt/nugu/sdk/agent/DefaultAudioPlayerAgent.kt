@@ -1840,7 +1840,7 @@ class DefaultAudioPlayerAgent(
 
     override fun onButtonPressed(button: PlaybackButton) {
         executor.submit {
-            Logger.w(TAG, "[onButtonPressed] button: $button, state : $currentActivity")
+            Logger.d(TAG, "[onButtonPressed] button: $button, state : $currentActivity")
             when (button) {
                 PlaybackButton.PLAY -> executeResumeByButton()
                 //sendPlayCommandIssued()
