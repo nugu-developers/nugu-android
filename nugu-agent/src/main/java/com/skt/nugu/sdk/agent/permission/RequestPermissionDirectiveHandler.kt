@@ -23,7 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.message.Header
 import java.lang.Exception
 
-class RequestPermissionDirectiveHandler(
+open class RequestPermissionDirectiveHandler(
     private val controller: Controller
 ): AbstractDirectiveHandler() {
     companion object {
@@ -77,6 +77,9 @@ class RequestPermissionDirectiveHandler(
     }
 
     override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
-        this[DIRECTIVE] = BlockingPolicy.sharedInstanceFactory.get()
+        this[DIRECTIVE] = getBlockingPolicy()
     }
+
+    protected open fun getBlockingPolicy(): BlockingPolicy =
+        BlockingPolicy.sharedInstanceFactory.get()
 }
