@@ -211,6 +211,7 @@ class NuguAndroidClient private constructor(
         internal var systemExceptionDirectiveDelegate: ExceptionDirectiveDelegate? = null
         internal var asrBeepResourceProvider: AsrBeepResourceProvider? = null
         internal var audioFocusInteractorFactory: AudioFocusInteractorFactory? = AndroidContextDummyFocusInteractorFactory(context)
+        internal var playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
 
         internal var clientVersion: String? = null
             get() = try {
@@ -360,6 +361,12 @@ class NuguAndroidClient private constructor(
             apply { audioFocusInteractorFactory = factory }
 
         /**
+         * @param playbackRouter the playback router for audio player control
+         */
+        fun playbackRouter(playbackRouter: PlaybackRouter) =
+            apply { this.playbackRouter = playbackRouter}
+
+        /**
          * If null or not provided, then the default implementation is applied.
          * The default control a BT's audio playback according to focus and streaming state.
          * @param handler the focus handler for bluetooth.
@@ -503,7 +510,7 @@ class NuguAndroidClient private constructor(
     }
 
     private val dialogUXStateAggregator: DialogUXStateAggregator
-    private val playbackRouter: PlaybackRouter = com.skt.nugu.sdk.agent.playback.impl.PlaybackRouter()
+    private val playbackRouter: PlaybackRouter = builder.playbackRouter
     private val displayAggregator: DisplayAggregator?
     private val audioFocusInteractor: AudioFocusInteractor?
     private val beepPlaybackController: BeepPlaybackController by lazy {
