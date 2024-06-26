@@ -228,6 +228,9 @@ class NuguAndroidClient private constructor(
         // Preferences
         internal var preferences: PreferencesInterface? = AndroidPreferences(context)
 
+        // Attachment
+        internal var attachmentTimeoutInSeconds: Long = 10
+
         /**
          *  Variables below are for creating Agent.
          */
@@ -504,6 +507,8 @@ class NuguAndroidClient private constructor(
 
         fun pref(preferences: PreferencesInterface) = apply { this.preferences = preferences }
 
+        fun attachmentTimeoutInSeconds(timeoutInSeconds: Long) = apply {this.attachmentTimeoutInSeconds = timeoutInSeconds}
+
         fun build(): NuguAndroidClient {
             return NuguAndroidClient(this)
         }
@@ -526,6 +531,7 @@ class NuguAndroidClient private constructor(
         .systemExceptionDirectiveDelegate(builder.systemExceptionDirectiveDelegate)
         .preferences(builder.preferences)
         .sdkVersion(BuildConfig.VERSION_NAME)
+        .attachmentTimeoutInSeconds(builder.attachmentTimeoutInSeconds)
         .apply {
             fun addCustomAgent() {
                 builder.agentFactoryMap.forEach {
