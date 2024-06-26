@@ -91,6 +91,8 @@ class NuguClient private constructor(
 
         internal var systemExceptionDelegate: ExceptionDirectiveDelegate? = null
 
+        internal var attachmentTimeoutInSeconds: Long = 10
+
         internal val agentFactoryMap = HashMap<String, AgentFactory<*>>()
 
 
@@ -109,6 +111,7 @@ class NuguClient private constructor(
         fun clientVersion(clientVersion: String) = apply { this.clientVersion = clientVersion }
         fun osType(osType: OsContextProvider.Type) = apply { this.osType = osType }
         fun audioFocusChannelConfiguration(builder: DefaultFocusChannel.Builder) = apply { this.audioFocusChannelConfigurationBuilder = builder }
+        fun attachmentTimeoutInSeconds(timeoutInSeconds: Long) = apply {this.attachmentTimeoutInSeconds = timeoutInSeconds}
         fun build() = NuguClient(this)
     }
 
@@ -161,7 +164,7 @@ class NuguClient private constructor(
                 inputProcessorManager.addResponseTimeoutListener(it)
             }
 
-            val attachmentManager = AttachmentManager()
+            val attachmentManager = AttachmentManager(builder.attachmentTimeoutInSeconds)
             val messageDispatcher =
                 MessageDispatcher(directiveGroupProcessor, attachmentManager)
 
