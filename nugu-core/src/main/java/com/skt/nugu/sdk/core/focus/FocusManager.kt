@@ -118,9 +118,9 @@ class FocusManager(
         finishListener?.onFinish()
 
         val contains = synchronized(activeChannels) {
-            activeChannels.filter {
+            activeChannels.any {
                 it.channel == channelToAcquire
-            }.any()
+            }
         }
 
         val shouldReleaseChannelFocus =
@@ -138,9 +138,9 @@ class FocusManager(
 
         channelToAcquire.setInterfaceName(interfaceName)
         synchronized(activeChannels) {
-            val exist = activeChannels.filter {
+            val exist = activeChannels.any {
                 it.channel == channelToAcquire
-            }.any()
+            }
 
             if(!exist) {
                 ActiveChannel(channelToAcquire).let {
@@ -281,4 +281,6 @@ class FocusManager(
     override fun setExternalFocusInteractor(focusInteractor: FocusManagerInterface.ExternalFocusInteractor) {
         externalFocusInteractor = focusInteractor
     }
+
+    override fun getExternalFocusInteractor(): FocusManagerInterface.ExternalFocusInteractor? = externalFocusInteractor
 }
