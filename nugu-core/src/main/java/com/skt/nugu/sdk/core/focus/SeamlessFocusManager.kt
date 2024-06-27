@@ -80,12 +80,16 @@ class SeamlessFocusManager(private val focusManager: FocusManagerInterface, priv
         requester: Requester,
         channel: SeamlessFocusManagerInterface.Channel
     ) {
+
         lock.withLock {
             val removed = requesterSet.remove(requester)
+            val isExternalFocusAcquiring = focusManager.getExternalFocusInteractor()?.isFocusAcquiring() ?: false
+
             if(requesterSet.isNotEmpty()
                 && focus == FocusState.NONE
                 && channel.interfaceName == currentForegroundFocusInterfaceName
                 && lastAcquiringFocusInterfaceName == null
+                && !isExternalFocusAcquiring
             ) {
                 Logger.d(TAG, "[release] acquire group channel before release requester")
                 focusManager.acquireChannel(holderChannelName, this, HOLDER_INTERFACE_NAME)

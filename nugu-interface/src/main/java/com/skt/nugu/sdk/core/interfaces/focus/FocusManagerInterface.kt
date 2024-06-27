@@ -41,7 +41,13 @@ interface FocusManagerInterface {
     interface ExternalFocusInteractor {
         fun acquire(channelName: String, requesterName: String): Boolean
         fun release(channelName: String, requesterName: String)
+
+        // default implementation for backward compatibility
+        fun isFocusAcquiring(): Boolean = false
     }
 
     fun setExternalFocusInteractor(focusInteractor: ExternalFocusInteractor)
+
+    // default implementation for backward compatibility
+    fun getExternalFocusInteractor(): ExternalFocusInteractor? = null
 }

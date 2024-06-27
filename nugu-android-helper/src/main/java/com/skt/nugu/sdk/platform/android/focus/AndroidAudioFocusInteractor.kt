@@ -29,6 +29,8 @@ import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * This class manage an external audio player (such as music or video player apps) focus changes.
@@ -73,21 +75,50 @@ class AndroidAudioFocusInteractor {
 
     /**
      * @param audioManager android audio manager to manage AAFM
-     * @param audioFocusManager NUGU audio focus manager
+     * @param focusManger NUGU audio focus manager
      */
     internal class Impl(
         private val audioManager: AudioManager,
-        private val audioFocusManager: FocusManagerInterface,
+        focusManger: FocusManagerInterface,
         private val audioPlayerAgent: AudioPlayerAgentInterface?,
         private val handler: Handler,
         private val alwaysRequestAudioFocus: Boolean,
         private val focusGain: Int
     ) : AudioFocusInteractor,
-        FocusManagerInterface.ExternalFocusInteractor, ChannelObserver {
+        FocusManagerInterface.ExternalFocusInteractor {
 
-        private val channelName = DefaultFocusChannel.INTERACTION_CHANNEL_NAME
         private val releaseCallbackMap = HashMap<String, Runnable>()
         private var focusOwnerReferences = HashSet<String>()
+        private val audioFocusManager = AudioFocusManagerInner(audioFocusManager = focusManger)
+
+        private class AudioFocusManagerInner(
+            private val audioFocusManager: FocusManagerInterface
+        ): ChannelObserver {
+            private val channelName: String = DefaultFocusChannel.INTERACTION_CHANNEL_NAME
+            private var isFocusAcquiring = false
+            private val lock = ReentrantLock()
+            fun acquireChannelFocus() {
+                lock.withLock {
+                    Logger.d(TAG, "[AudioFocusManagerInner::acquireChannelFocus]")
+                    isFocusAcquiring = true
+                    if(!audioFocusManager.acquireChannel(channelName, this, TAG)) {
+                        isFocusAcquiring = false
+                    }
+                }
+            }
+
+            fun releaseChannelFocus() {
+                lock.withLock {
+                    Logger.d(TAG, "[AudioFocusManagerInner::releaseChannelFocus]")
+                    isFocusAcquiring = false
+                    audioFocusManager.releaseChannel(this.channelName, this)
+                }
+            }
+
+            fun isFocusAcquiring() = isFocusAcquiring
+
+            override fun onFocusChanged(newFocus: FocusState) = Unit
+        }
 
         override fun acquire(channelName: String, requesterName: String): Boolean {
             if(requesterName == TAG) {
@@ -105,7 +136,7 @@ class AndroidAudioFocusInteractor {
             handler.post {
                 // whenever acquired, request audio focus
                 result = if(requestAudioFocus(audioFocusChangeListener)) {
-                    audioFocusManager.releaseChannel(this.channelName, this)
+                    audioFocusManager.releaseChannelFocus()
                     focusOwnerReferences.add(requesterName)
                     true
                 } else {
@@ -138,7 +169,7 @@ class AndroidAudioFocusInteractor {
                     abandonAudioFocus(audioFocusChangeListener)
 
                     // Since the change of the audio focus is no longer known and don't care about anymore, we need to release the focus here.
-                    audioFocusManager.releaseChannel(channelName, this)
+                    audioFocusManager.releaseChannelFocus()
                     Logger.d(TAG, "[release] abandonAudioFocus")
                 }
             }.apply {
@@ -147,9 +178,7 @@ class AndroidAudioFocusInteractor {
             }
         }
 
-        override fun onFocusChanged(newFocus: FocusState) {
-            // no-op
-        }
+        override fun isFocusAcquiring(): Boolean = audioFocusManager.isFocusAcquiring()
 
         private var currentAudioFocus = AudioManager.AUDIOFOCUS_LOSS
         private val audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener =
@@ -161,7 +190,7 @@ class AndroidAudioFocusInteractor {
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK -> {
-                        audioFocusManager.releaseChannel(channelName, this)
+                        audioFocusManager.releaseChannelFocus()
                     }
                     AudioManager.AUDIOFOCUS_LOSS,
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
@@ -173,10 +202,7 @@ class AndroidAudioFocusInteractor {
                         // 현재 Nugu 시나리오를 Pause해야하는데 어떻게 해결?
                         // 현재 외부 App이 Foreground로 가도록 하고, 지금 것은 Background로 가야한다.
                         // Nugu의 특정 Interaction이 발생하는 순간 외부 App은 Focus를 Loss 해야한다.
-                        audioFocusManager.acquireChannel(
-                            channelName, this,
-                            TAG
-                        )
+                        audioFocusManager.acquireChannelFocus()
                     }
                 }
             }
