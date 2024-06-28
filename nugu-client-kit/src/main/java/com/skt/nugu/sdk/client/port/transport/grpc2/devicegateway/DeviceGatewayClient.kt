@@ -434,7 +434,8 @@ internal class DeviceGatewayClient(policy: Policy,
         when(asyncKey.state) {
             AsyncKey.State.START -> streamingCalls[asyncKey.eventDialogRequestId] = call
             AsyncKey.State.ONGOING -> Unit
-            AsyncKey.State.END -> streamingCalls.remove(asyncKey.eventDialogRequestId)
+            else->streamingCalls.remove(asyncKey.eventDialogRequestId)
+//            AsyncKey.State.END -> streamingCalls.remove(asyncKey.eventDialogRequestId)
         }
         call.onAsyncKeyReceived(asyncKey)
     }
