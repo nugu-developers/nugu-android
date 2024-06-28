@@ -124,6 +124,7 @@ internal class DirectivesService(
                     }
 
                     override fun onError(t: Throwable) {
+                        Logger.w(TAG, "[onError]", t)
                         if (!isShutdown.get()) {
                             isStarted.set(false)
                             cancelDeadlineTimer()
