@@ -611,12 +611,12 @@ class DefaultClientSpeechRecognizer(
 
         val receiveResponse =
             directiveAndAsyncKeys.any {(directive, asyncKey)->
-                directive.header.namespace != DefaultASRAgent.NAMESPACE &&
+                !(directive.header.namespace == DefaultASRAgent.NAMESPACE && directive.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT) &&
                         !(directive.header.namespace == "Adot" && directive.header.name == "AckMessage") &&
                         (asyncKey == null || asyncKey.state == AsyncKey.State.END)
             }
 
-        Logger.d(TAG, "[onReceiveResponse] receiveResponse: $receiveResponse")
+        Logger.d(TAG, "[onReceiveResponse] receiveResponse: $receiveResponse , dialogRequestId: $dialogRequestId")
 
         return synchronized(request) {
             if (receiveResponse) {

@@ -393,7 +393,7 @@ class DefaultServerSpeechRecognizer(
 
         val receiveResponse =
             directiveAndAsyncKeys.any {(directive, asyncKey)->
-                directive.header.namespace != DefaultASRAgent.NAMESPACE &&
+                !(directive.header.namespace == DefaultASRAgent.NAMESPACE && directive.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT) &&
                         !(directive.header.namespace == "Adot" && directive.header.name == "AckMessage") &&
                         (asyncKey == null || asyncKey.state == AsyncKey.State.END)
             }
