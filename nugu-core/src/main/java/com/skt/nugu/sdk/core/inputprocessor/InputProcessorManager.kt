@@ -15,12 +15,9 @@
  */
 package com.skt.nugu.sdk.core.inputprocessor
 
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
-import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.getAsyncKey
@@ -40,8 +37,7 @@ class InputProcessorManager(private val timeoutInMilliSeconds: Long = 10 * 1000L
         val sampleDirective = directives.firstOrNull() ?: return
 
         val directiveDialogRequestId = sampleDirective.header.dialogRequestId
-        val asyncKey = sampleDirective.getAsyncKey()
-        val asyncKeyEventDialogRequestId = asyncKey?.eventDialogRequestId
+        val asyncKeyEventDialogRequestId = sampleDirective.payload.getAsyncKey()?.eventDialogRequestId
 
         val dialogRequestId = if(requests.containsKey(directiveDialogRequestId)) {
             directiveDialogRequestId
@@ -55,7 +51,9 @@ class InputProcessorManager(private val timeoutInMilliSeconds: Long = 10 * 1000L
             return
         }
 
-        val receiveResponse = requests[dialogRequestId]?.onReceiveDirectives(dialogRequestId, directives, asyncKey) ?: false
+        val receiveResponse = requests[dialogRequestId]?.onReceiveDirectives(dialogRequestId, directives.map {
+            it to it.payload.getAsyncKey()
+        }) ?: false
 
         if(receiveResponse) {
             dialogRequestId.let {

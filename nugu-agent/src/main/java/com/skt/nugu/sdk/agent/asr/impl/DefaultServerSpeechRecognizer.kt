@@ -372,8 +372,7 @@ class DefaultServerSpeechRecognizer(
 
     override fun onReceiveDirectives(
         dialogRequestId: String,
-        directives: List<Directive>,
-        asyncKey: AsyncKey?
+        directiveAndAsyncKeys: List<Pair<Directive, AsyncKey?>>
     ): Boolean {
         val request = currentRequest
         if (request == null) {
@@ -393,11 +392,13 @@ class DefaultServerSpeechRecognizer(
         inputProcessorManager.onRequested(this, dialogRequestId)
 
         val receiveResponse =
-            directives.any {
-                it.header.namespace != DefaultASRAgent.NAMESPACE &&
-                        !(it.header.namespace == "Adot" && it.header.name == "AckMessage") &&
+            directiveAndAsyncKeys.any {(directive, asyncKey)->
+                directive.header.namespace != DefaultASRAgent.NAMESPACE &&
+                        !(directive.header.namespace == "Adot" && directive.header.name == "AckMessage") &&
                         (asyncKey == null || asyncKey.state == AsyncKey.State.END)
             }
+
+        Logger.d(TAG, "[onReceiveResponse] receiveResponse: $receiveResponse")
 
         return synchronized(request) {
             if (receiveResponse) {
@@ -410,7 +411,8 @@ class DefaultServerSpeechRecognizer(
                 }
                 true
             } else {
-                directives.filter { it.header.namespace == DefaultASRAgent.NAMESPACE && it.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT }
+                directiveAndAsyncKeys.filter { (directive, _) -> directive.header.namespace == DefaultASRAgent.NAMESPACE && directive.header.name == DefaultASRAgent.NAME_NOTIFY_RESULT }
+                    .map { it.first }
                     .forEach {
                         request.shouldBeNotifyResult.add(it.getMessageId())
                     }
