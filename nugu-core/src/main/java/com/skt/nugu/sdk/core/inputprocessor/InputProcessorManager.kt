@@ -23,17 +23,13 @@ import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInte
 import com.skt.nugu.sdk.core.interfaces.message.AsyncKey
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.sdk.core.utils.getAsyncKey
 import java.util.concurrent.*
 
 class InputProcessorManager(private val timeoutInMilliSeconds: Long = 10 * 1000L) : InputProcessorManagerInterface, DirectiveGroupProcessorInterface.Listener {
     companion object {
         private const val TAG = "InputProcessorManager"
     }
-
-    private data class AsyncKeyPayload(
-        @SerializedName("asyncKey")
-        val asyncKey: AsyncKey
-    )
 
     private val responseTimeoutListeners = HashSet<InputProcessorManagerInterface.OnResponseTimeoutListener>()
     private val requests = ConcurrentHashMap<String, InputProcessor>()
@@ -44,7 +40,7 @@ class InputProcessorManager(private val timeoutInMilliSeconds: Long = 10 * 1000L
         val sampleDirective = directives.firstOrNull() ?: return
 
         val directiveDialogRequestId = sampleDirective.header.dialogRequestId
-        val asyncKey = getAsyncKey(sampleDirective)
+        val asyncKey = sampleDirective.getAsyncKey()
         val asyncKeyEventDialogRequestId = asyncKey?.eventDialogRequestId
 
         val dialogRequestId = if(requests.containsKey(directiveDialogRequestId)) {
@@ -72,16 +68,6 @@ class InputProcessorManager(private val timeoutInMilliSeconds: Long = 10 * 1000L
             requests.remove(dialogRequestId)
         }
     }
-
-    private fun getAsyncKey(directive: Directive): AsyncKey? =
-        runCatching {
-            if (directive.payload.contains("\"asyncKey\"")) {
-                Gson().fromJson(
-                    directive.payload,
-                    AsyncKeyPayload::class.java
-                ).asyncKey
-            } else null
-        }.getOrNull()
 
     override fun onRequested(inputProcessor: InputProcessor, dialogRequestId: String) {
         Logger.d(TAG, "[onRequested] $inputProcessor, $dialogRequestId")
