@@ -33,6 +33,7 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
@@ -55,6 +56,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DefaultASRAgent(
+    private val directiveProcessorInterface: DirectiveProcessorInterface,
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val focusManager: SeamlessFocusManagerInterface,
     private val messageSender: MessageSender,
@@ -144,6 +146,7 @@ class DefaultASRAgent(
     private var focusState = FocusState.NONE
 
     private var waitingFocusInternalStartRecognitionParam: InternalStartRecognitionParam? = null
+    private var currentDirectiveBlocker: DirectiveProcessorInterface.Blocker? = null
     private var currentRequest: Pair<SpeechRecognizer.Request, InternalStartRecognitionParam>? = null
 
     private var expectSpeechDirectiveParam: ExpectSpeechDirectiveParam? = null
@@ -856,6 +859,10 @@ class DefaultASRAgent(
 
                 param.callback?.onError(UUIDGeneration.timeUUID().toString(), ASRAgentInterface.StartRecognitionCallback.ErrorType.ERROR_CANNOT_START_RECOGNIZER)
             } else {
+                DirectiveProcessorInterface.Blocker(it.eventMessage.dialogRequestId, BlockingPolicy.MEDIUM_AUDIO_ONLY).also { blocker->
+                    currentDirectiveBlocker = blocker
+                    directiveProcessorInterface.addDirectiveBlocker(blocker)
+                }
                 currentRequest = Pair(it, param)
                 param.callback?.onSuccess(it.eventMessage.dialogRequestId)
             }
@@ -932,6 +939,10 @@ class DefaultASRAgent(
                 SpeechRecognizer.State.STOP -> {
                     currentAudioProvider?.releaseAudioInputStream(this)
                     currentAudioProvider = null
+                    currentDirectiveBlocker?.let {
+                        directiveProcessorInterface.removeDirectiveBlocker(it)
+                    }
+                    currentDirectiveBlocker = null
                     currentRequest = null
                     ASRAgentInterface.State.IDLE
                 }
