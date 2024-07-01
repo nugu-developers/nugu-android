@@ -427,7 +427,7 @@ class DirectiveProcessor(
             val directive = directiveAndPolicy.directive
 
             // first get asyncKey's dialogRequestId, if not exist check dialogRequestId
-            val dialogRequestId = directive.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
+            val dialogRequestId = directive.payload.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
 
             val blockedMediums = blockedMediumsMap[dialogRequestId]
                 ?: return directiveAndPolicy

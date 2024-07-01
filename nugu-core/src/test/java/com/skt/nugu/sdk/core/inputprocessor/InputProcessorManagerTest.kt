@@ -67,12 +67,12 @@ class InputProcessorManagerTest {
         )
 
         val inputProcessor: InputProcessor = mock()
-        whenever(inputProcessor.onReceiveDirectives(dialogRequestId, received)).thenReturn(true)
+        whenever(inputProcessor.onReceiveDirectives(dialogRequestId, received.map { it to null })).thenReturn(true)
 
         manager.onRequested(inputProcessor, dialogRequestId)
         manager.onPostProcessed(received)
 
-        verify(inputProcessor).onReceiveDirectives(dialogRequestId, received)
+        verify(inputProcessor).onReceiveDirectives(dialogRequestId, received.map { it to null })
         Thread.sleep(100)
         verify(inputProcessor, never()).onResponseTimeout(dialogRequestId)
         verify(listener, never()).onResponseTimeout(dialogRequestId)

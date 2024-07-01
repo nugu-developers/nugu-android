@@ -20,6 +20,6 @@ import com.skt.nugu.sdk.core.interfaces.message.Directive
 
 interface InputProcessor {
     fun onSendEventFinished(dialogRequestId: String)
-    fun onReceiveDirectives(dialogRequestId: String, directives: List<Directive>, asyncKey: AsyncKey? = null): Boolean
+    fun onReceiveDirectives(dialogRequestId: String, directiveAndAsyncKeys: List<Pair<Directive, AsyncKey?>>): Boolean
     fun onResponseTimeout(dialogRequestId: String)
 }
