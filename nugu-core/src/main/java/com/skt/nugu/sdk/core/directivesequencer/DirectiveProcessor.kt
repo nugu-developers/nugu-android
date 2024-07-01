@@ -23,6 +23,7 @@ import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
+import com.skt.nugu.sdk.core.utils.getAsyncKey
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -423,7 +424,12 @@ class DirectiveProcessor(
         Logger.d(TAG, "[getNextUnblockedDirectiveLocked] block mediums : $blockedMediumsMap")
 
         for (directiveAndPolicy in handlingQueue) {
-            val blockedMediums = blockedMediumsMap[directiveAndPolicy.directive.getDialogRequestId()]
+            val directive = directiveAndPolicy.directive
+            
+            // first get asyncKey's dialogRequestId, if not exist check dialogRequestId
+            val dialogRequestId = directive.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
+
+            val blockedMediums = blockedMediumsMap[dialogRequestId]
                 ?: return directiveAndPolicy
 
             val policy = directiveAndPolicy.policy
