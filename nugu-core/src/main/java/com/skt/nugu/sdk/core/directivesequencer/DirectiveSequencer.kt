@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.core.directivesequencer
 
 import com.skt.nugu.sdk.core.interfaces.message.Directive
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandler
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveSequencerInterface
 import com.skt.nugu.sdk.core.utils.Logger
 import com.skt.nugu.sdk.core.utils.LoopThread
@@ -118,5 +119,13 @@ class DirectiveSequencer :
 
     override fun cancelDialogRequestId(dialogRequestId: String) {
         directiveProcessor.cancelDialogRequestId(dialogRequestId)
+    }
+
+    override fun addDirectiveBlocker(blocker: DirectiveProcessorInterface.Blocker) {
+        directiveProcessor.addDirectiveBlocker(blocker)
+    }
+
+    override fun removeDirectiveBlocker(blocker: DirectiveProcessorInterface.Blocker) {
+        directiveProcessor.removeDirectiveBlocker(blocker)
     }
 }
