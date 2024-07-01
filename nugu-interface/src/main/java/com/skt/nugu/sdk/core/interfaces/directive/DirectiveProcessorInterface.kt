@@ -16,6 +16,13 @@
 
 package com.skt.nugu.sdk.core.interfaces.directive
 
+import java.util.EnumSet
+
 interface DirectiveProcessorInterface {
     fun cancelDialogRequestId(dialogRequestId: String)
+
+    data class Blocker(val dialogRequestId: String, val blockingPolicy: EnumSet<BlockingPolicy.Medium>)
+
+    fun addDirectiveBlocker(blocker: Blocker)
+    fun removeDirectiveBlocker(blocker: Blocker)
 }

@@ -86,6 +86,7 @@ class DirectiveProcessor(
     private var isEnabled = true
 
     private var listeners = CopyOnWriteArraySet<DirectiveSequencerInterface.OnDirectiveHandlingListener>()
+    private val directiveProcessBlocker = CopyOnWriteArraySet<DirectiveProcessorInterface.Blocker>()
 
     init {
         processingLoop.start()
@@ -144,6 +145,18 @@ class DirectiveProcessor(
     override fun cancelDialogRequestId(dialogRequestId: String) {
         lock.withLock {
             scrub(dialogRequestId)
+        }
+    }
+
+    override fun addDirectiveBlocker(blocker: DirectiveProcessorInterface.Blocker) {
+        Logger.d(TAG, "[addDirectiveBlocker: $blocker]")
+        directiveProcessBlocker.add(blocker)
+    }
+
+    override fun removeDirectiveBlocker(blocker: DirectiveProcessorInterface.Blocker) {
+        Logger.d(TAG, "[removeDirectiveBlocker: $blocker]")
+        if(directiveProcessBlocker.remove(blocker)) {
+            processingLoop.wakeOne()
         }
     }
 
@@ -390,14 +403,20 @@ class DirectiveProcessor(
 
     private fun getNextUnblockedDirectiveLocked(): DirectiveAndPolicy? {
         // A medium is considered blocked if a previous blocking directive hasn't been completed yet.
-        val blockedMediumsMap: MutableMap<String, MutableMap<BlockingPolicy.Medium, Boolean>> = HashMap()
+        val blockedMediumsMap: MutableMap<String, MutableSet<BlockingPolicy.Medium>> = HashMap<String, MutableSet<BlockingPolicy.Medium>>().apply {
 
-        // Mark mediums used by blocking directives being handled as blocked.
-        directivesBeingHandled.forEach { src ->
-            blockedMediumsMap[src.key] = HashMap<BlockingPolicy.Medium, Boolean>().also { dst ->
-                src.value.forEach {
-                    dst[it.key] = true
-                }
+            // Mark mediums used by blocking directives being handled as blocked.
+            putAll(directivesBeingHandled.map {
+                it.key to it.value.keys
+            }.associate {
+                it.first to EnumSet.copyOf(it.second)
+            })
+
+            // Mark mediums used by blocker
+            directiveProcessBlocker.forEach {
+                val map = remove(it.dialogRequestId) ?: HashSet()
+                map.addAll(it.blockingPolicy)
+                put(it.dialogRequestId, map)
             }
         }
 
@@ -410,11 +429,11 @@ class DirectiveProcessor(
             val policy = directiveAndPolicy.policy
 
             val blocked = policy.blockedBy?.any {
-                blockedMediums[it] == true
+                blockedMediums.contains(it)
             } ?: false
 
             policy.blocking?.forEach {
-                blockedMediums[it] = true
+                blockedMediums.add(it)
             }
 
             if (!blocked) {
