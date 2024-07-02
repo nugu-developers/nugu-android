@@ -412,13 +412,23 @@ class DefaultASRAgent(
         setState(ASRAgentInterface.State.EXPECTING_SPEECH)
         executeStartRecognition(audioInputStream, audioFormat, null, param, null, null, object: ASRAgentInterface.StartRecognitionCallback {
             override fun onSuccess(dialogRequestId: String) {
-                // no-op
+                expectSpeechHandler?.startRecognitionCallback?.let {
+                    runCatching {
+                        it.onSuccess(dialogRequestId)
+                    }
+                }
             }
 
             override fun onError(
                 dialogRequestId: String,
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
             ) {
+                expectSpeechHandler?.startRecognitionCallback?.let {
+                    runCatching {
+                        it.onError(dialogRequestId, errorType)
+                    }
+                }
+
                 if(state == ASRAgentInterface.State.EXPECTING_SPEECH && waitingFocusInternalStartRecognitionParam == null) {
                     // back to idle state only when failed to request
                     setState(ASRAgentInterface.State.IDLE)

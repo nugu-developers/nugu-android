@@ -305,5 +305,7 @@ interface ASRAgentInterface {
          * * [Result.Cancel] : cancel directive, handle the directive's result as failure.
          */
         fun shouldExecuteDirective(payload: ExpectSpeechPayload, header: Header): Result
+
+        val startRecognitionCallback: StartRecognitionCallback?
     }
 }
