@@ -33,6 +33,8 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
+private fun getBlockingKey(directive: Directive): String = directive.payload.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
+
 class DirectiveProcessor(
     private val directiveRouter: DirectiveRouter
 ) : DirectiveProcessorInterface {
@@ -69,8 +71,82 @@ class DirectiveProcessor(
         val policy: BlockingPolicy
     )
 
+    private class BlockingDirectiveStore {
+        private val blockingObjects: ConcurrentHashMap<String, MutableMap<BlockingPolicy.Medium, Directive>> = ConcurrentHashMap()
+
+        fun get() = blockingObjects
+
+        fun setDirectiveBeingHandledLocked(directive: Directive, policy: BlockingPolicy) {
+            val blocking = policy.blocking ?: return
+
+            val key = getBlockingKey(directive)
+
+            BlockingPolicy.MEDIUM_ALL.forEach { medium ->
+                if (blocking.contains(medium)) {
+                    val map = blockingObjects[key] ?: HashMap()
+                    map[medium] = directive
+                    blockingObjects[key] = map
+                }
+            }
+        }
+
+
+        fun clearDirectiveBeingHandledLocked(directive: Directive, policy: BlockingPolicy) {
+            val key = getBlockingKey(directive)
+            blockingObjects[key]?.let {
+                BlockingPolicy.MEDIUM_ALL.forEach { medium ->
+                    if (policy.blocking?.contains(medium) == true && it[medium] != null) {
+                        it.remove(medium)
+                    }
+                }
+
+                if (it.isEmpty()) {
+                    blockingObjects.remove(key)
+                }
+            }
+        }
+
+        fun clearDirectiveBeingHandledLocked(shouldClear: (Directive) -> Boolean): Set<Directive> {
+            val freed = HashSet<Directive>()
+
+            blockingObjects.values.forEach {
+                BlockingPolicy.MEDIUM_ALL.forEach { medium ->
+                    it[medium]?.let { directive ->
+                        if (shouldClear(directive)) {
+                            freed.add(directive)
+                            it.remove(medium)
+                        }
+
+                        if (it.isEmpty()) {
+                            blockingObjects.remove(getBlockingKey(directive))
+                        }
+                    }
+                }
+            }
+
+            return freed
+        }
+
+        fun removeDirective(directive: Directive) {
+            val key = getBlockingKey(directive)
+
+            blockingObjects[key]?.let {
+                BlockingPolicy.MEDIUM_ALL.forEach { medium ->
+                    if (it[medium] == directive) {
+                        Logger.d(TAG, "[removeDirectiveLocked] $medium blocking lock removed")
+                        it.remove(medium)
+                    }
+                }
+
+                if (it.isEmpty()) {
+                    blockingObjects.remove(key)
+                }
+            }
+        }
+    }
+
     private var directiveBeingPreHandled: Directive? = null
-    private val directivesBeingHandled: ConcurrentHashMap<String, MutableMap<BlockingPolicy.Medium, Directive>> = ConcurrentHashMap()
+    private val blockingDirectiveStore: BlockingDirectiveStore = BlockingDirectiveStore()
     private var cancelingQueue = ArrayDeque<Directive>()
     private var handlingQueue = ArrayDeque<DirectiveAndPolicy>()
     private val lock = ReentrantLock()
@@ -174,7 +250,7 @@ class DirectiveProcessor(
 
     private fun scrub(shouldClear: (Directive) -> Boolean) {
         var changed = cancelDirectiveBeingPreHandledLocked(shouldClear)
-        val freed = clearDirectiveBeingHandledLocked(shouldClear)
+        val freed = blockingDirectiveStore.clearDirectiveBeingHandledLocked(shouldClear)
 
         if (freed.isNotEmpty()) {
             cancelingQueue.addAll(freed)
@@ -203,41 +279,6 @@ class DirectiveProcessor(
         }
 
         return false
-    }
-
-    private fun clearDirectiveBeingHandledLocked(dialogRequestId: String, policy: BlockingPolicy) {
-        directivesBeingHandled[dialogRequestId]?.let {
-            EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-                if (policy.blocking?.contains(medium) == true && it[medium] != null) {
-                    it.remove(medium)
-                }
-            }
-
-            if (it.isEmpty()) {
-                directivesBeingHandled.remove(dialogRequestId)
-            }
-        }
-    }
-
-    private fun clearDirectiveBeingHandledLocked(shouldClear: (Directive) -> Boolean): Set<Directive> {
-        val freed = HashSet<Directive>()
-
-        directivesBeingHandled.values.forEach {
-            EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-                it[medium]?.let { directive ->
-                    if (shouldClear(directive)) {
-                        freed.add(directive)
-                        it.remove(medium)
-                    }
-
-                    if (it.isEmpty()) {
-                        directivesBeingHandled.remove(directive.getDialogRequestId())
-                    }
-                }
-            }
-        }
-
-        return freed
     }
 
     fun disable() {
@@ -288,18 +329,7 @@ class DirectiveProcessor(
 
         handlingQueue.find { it.directive == directive }?.run { handlingQueue.remove(this) }
 
-        directivesBeingHandled[directive.getDialogRequestId()]?.let {
-            EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-                if (it[medium] == directive) {
-                    Logger.d(TAG, "[removeDirectiveLocked] $medium blocking lock removed")
-                    it.remove(medium)
-                }
-            }
-
-            if (it.isEmpty()) {
-                directivesBeingHandled.remove(directive.getDialogRequestId())
-            }
-        }
+        blockingDirectiveStore.removeDirective(directive)
 
         if (cancelingQueue.isNotEmpty() || handlingQueue.isNotEmpty()) {
             processingLoop.wakeOne()
@@ -346,15 +376,14 @@ class DirectiveProcessor(
             val it = getNextUnblockedDirectiveLocked()
 
             if (it == null) {
-                Logger.d(TAG, "[handleQueuedDirectivesLocked] all queued directives are blocked $directivesBeingHandled")
+                Logger.d(TAG, "[handleQueuedDirectivesLocked] all queued directives are blocked ${blockingDirectiveStore.get()}")
                 break
             }
 
             val directive = it.directive
             val policy = it.policy
 
-            // if policy is not blocking, then don't set???
-            setDirectiveBeingHandledLocked(directive, policy)
+            blockingDirectiveStore.setDirectiveBeingHandledLocked(directive, policy)
             handlingQueue.remove(it)
 
             handleDirectiveCalled = true
@@ -374,7 +403,7 @@ class DirectiveProcessor(
 
             // if handle failed or directive is not blocking
             if (!handleDirectiveSucceeded || (policy.blocking == null || policy.blocking?.isEmpty() == true)) {
-                clearDirectiveBeingHandledLocked(directive.getDialogRequestId(), policy)
+                blockingDirectiveStore.clearDirectiveBeingHandledLocked(directive, policy)
             }
 
             if (!handleDirectiveSucceeded) {
@@ -390,24 +419,12 @@ class DirectiveProcessor(
         return handleDirectiveCalled
     }
 
-    private fun setDirectiveBeingHandledLocked(directive: Directive, policy: BlockingPolicy) {
-        val key = directive.getDialogRequestId()
-
-        EnumSet.allOf(BlockingPolicy.Medium::class.java).forEach { medium ->
-            if (policy.blocking?.contains(medium) == true) {
-                val map = directivesBeingHandled[key] ?: HashMap()
-                map[medium] = directive
-                directivesBeingHandled[key] = map
-            }
-        }
-    }
-
     private fun getNextUnblockedDirectiveLocked(): DirectiveAndPolicy? {
         // A medium is considered blocked if a previous blocking directive hasn't been completed yet.
         val blockedMediumsMap: MutableMap<String, MutableSet<BlockingPolicy.Medium>> = HashMap<String, MutableSet<BlockingPolicy.Medium>>().apply {
 
             // Mark mediums used by blocking directives being handled as blocked.
-            putAll(directivesBeingHandled.map {
+            putAll(blockingDirectiveStore.get().map {
                 it.key to it.value.keys
             }.associate {
                 it.first to EnumSet.copyOf(it.second)
@@ -426,10 +443,7 @@ class DirectiveProcessor(
         for (directiveAndPolicy in handlingQueue) {
             val directive = directiveAndPolicy.directive
 
-            // first get asyncKey's dialogRequestId, if not exist check dialogRequestId
-            val dialogRequestId = directive.payload.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
-
-            val blockedMediums = blockedMediumsMap[dialogRequestId]
+            val blockedMediums = blockedMediumsMap[getBlockingKey(directive)]
                 ?: return directiveAndPolicy
 
             val policy = directiveAndPolicy.policy
