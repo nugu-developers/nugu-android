@@ -16,16 +16,17 @@
 package com.skt.nugu.sdk.client.channel
 
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
+import java.util.concurrent.CopyOnWriteArrayList
 
 class DefaultFocusChannel {
     companion object {
-        private const val TOP_PRIORITY = 10
-        private const val FIRST_PRIORITY = 100
-        private const val SECOND_PRIORITY = 200
-        private const val THIRD_PRIORITY = 300
-        private const val FOURTH_PRIORITY = 400
-        private const val FIFTH_PRIORITY = 500
-        private const val NO_PRIORITY = 10000
+        const val TOP_PRIORITY = 10
+        const val FIRST_PRIORITY = 100
+        const val SECOND_PRIORITY = 200
+        const val THIRD_PRIORITY = 300
+        const val FOURTH_PRIORITY = 400
+        const val FIFTH_PRIORITY = 500
+        const val NO_PRIORITY = 10000
 
         // If you add other channel, only allow to use positive number for priority
         // Also, each priority must be a multiple of 2.
@@ -83,9 +84,26 @@ class DefaultFocusChannel {
         internal var soundBeepChannelReleasePriority: Int = FIFTH_PRIORITY,
 
         internal var asrBeepChannelAcquirePriority: Int = FIFTH_PRIORITY,
-        internal var asrBeepChannelReleasePriority: Int = FOURTH_PRIORITY,
+        internal var asrBeepChannelReleasePriority: Int = FOURTH_PRIORITY
     ) {
-        fun build(): List<FocusManagerInterface.ChannelConfiguration> = listOf(
+        private val additionals = CopyOnWriteArrayList<FocusManagerInterface.ChannelConfiguration>()
+
+        fun addChannelConfiguration(
+            name: String,
+            acquirePriority: Int,
+            releasePriority: Int
+        ): Builder {
+            additionals.add(
+                FocusManagerInterface.ChannelConfiguration(
+                    name,
+                    acquirePriority,
+                    releasePriority
+                )
+            )
+            return this
+        }
+
+        fun build(): List<FocusManagerInterface.ChannelConfiguration> = mutableListOf(
             FocusManagerInterface.ChannelConfiguration(
                 INTERACTION_CHANNEL_NAME,
                 INTERACTION_CHANNEL_ACQUIRE_PRIORITY,
@@ -131,6 +149,8 @@ class DefaultFocusChannel {
                 asrBeepChannelAcquirePriority,
                 asrBeepChannelReleasePriority
             )
-        )
+        ).apply {
+            addAll(additionals)
+        }
     }
 }
