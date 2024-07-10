@@ -60,13 +60,22 @@ class DefaultServerSpeechRecognizer(
         val resultListener: ASRAgentInterface.OnResultListener?
     ) : SpeechRecognizer.Request {
         override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
+
         var cancelCause: ASRAgentInterface.CancelCause? = null
         val shouldBeNotifyResult = HashSet<String>()
         var receiveResponse = false
-        var call: Call? = null
+        var recognizeEventCall: Call? = null
 
         val eventMessageHeader = with(eventMessage) {
             Header(dialogRequestId, messageId, name, namespace, version, referrerDialogRequestId)
+        }
+
+        override fun cancelRequest() {
+            recognizeEventCall?.let {
+                if(!it.isCanceled()) {
+                    it.cancel()
+                }
+            }
         }
     }
 
@@ -176,7 +185,7 @@ class DefaultServerSpeechRecognizer(
             RecognizeRequest(
                 thread, eventMessage, expectSpeechDirectiveParam, resultListener
             )
-        recognizeRequest.call = call
+        recognizeRequest.recognizeEventCall = call
         currentRequest = recognizeRequest
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
@@ -275,7 +284,7 @@ class DefaultServerSpeechRecognizer(
         if(cancel) {
             currentRequest?.cancelCause = cause
             currentRequest?.senderThread?.requestStop()
-            currentRequest?.call?.cancel()
+            currentRequest?.recognizeEventCall?.cancel()
         } else {
             currentRequest?.senderThread?.requestFinish()
         }

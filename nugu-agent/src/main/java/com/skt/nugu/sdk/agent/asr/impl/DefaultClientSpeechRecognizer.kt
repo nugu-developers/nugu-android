@@ -68,6 +68,7 @@ class DefaultClientSpeechRecognizer(
         val resultListener: ASRAgentInterface.OnResultListener?
     ): SpeechRecognizer.Request {
         override val attributeKey: String? = expectSpeechParam?.directive?.header?.messageId
+
         var errorTypeForCausingEpdStop: ASRAgentInterface.ErrorType? = null
 
         var stopByCancel: Boolean? = null
@@ -78,6 +79,14 @@ class DefaultClientSpeechRecognizer(
 
         val eventMessageHeader = with(eventMessage) {
             Header(dialogRequestId, messageId, name, namespace, version, referrerDialogRequestId)
+        }
+
+        override fun cancelRequest() {
+            recognizeEventCall?.let {
+                if(!it.isCanceled()) {
+                    it.cancel()
+                }
+            }
         }
     }
 
