@@ -429,6 +429,11 @@ class SpeechRecognizerAggregator(
                         countDownLatch.countDown()
                         callback?.onError(dialogRequestId, errorType)
                     }
+
+                    override fun onCancellableRetrieved(cancelable: ASRAgentInterface.StartRecognitionCallback.Cancellable) {
+                        Logger.d(TAG, "[executeStartListeningInternal] onCancellableRetrieved: $cancelable")
+                        callback?.onCancellableRetrieved(cancelable)
+                    }
                 },
                 initiator,
                 requestType
