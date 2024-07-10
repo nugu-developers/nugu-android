@@ -217,6 +217,12 @@ interface ASRAgentInterface {
             ERROR_TAKE_TOO_LONG_START_RECOGNITION,
             ERROR_UNKNOWN
         }
+
+        interface Cancellable {
+            fun cancel()
+        }
+
+        fun onCancellableRetrieved(cancelable: Cancellable) = Unit
     }
 
     /**

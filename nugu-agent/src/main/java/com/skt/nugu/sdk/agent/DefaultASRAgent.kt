@@ -416,6 +416,14 @@ class DefaultASRAgent(
                 }
             }
 
+            override fun onCancellableRetrieved(cancelable: ASRAgentInterface.StartRecognitionCallback.Cancellable) {
+                expectSpeechHandler?.startRecognitionCallback?.let {
+                    runCatching {
+                        it.onCancellableRetrieved(cancelable)
+                    }
+                }
+            }
+
             override fun onError(
                 dialogRequestId: String,
                 errorType: ASRAgentInterface.StartRecognitionCallback.ErrorType
@@ -868,6 +876,7 @@ class DefaultASRAgent(
             } else {
                 currentRequest = Pair(it, param)
                 param.callback?.onSuccess(it.eventMessage.dialogRequestId)
+                param.callback?.onCancellableRetrieved(createASRCancellable(it))
             }
         }
 
@@ -875,6 +884,17 @@ class DefaultASRAgent(
             expectSpeechDirectiveParam = null
         }
     }
+
+    private fun createASRCancellable(request: SpeechRecognizer.Request) =
+        object : ASRAgentInterface.StartRecognitionCallback.Cancellable {
+            override fun cancel() {
+                if (currentRequest?.first == request && state.isRecognizing()) {
+                    stopRecognition(true, ASRAgentInterface.CancelCause.LOCAL_API)
+                } else {
+                    request.cancelRequest()
+                }
+            }
+        }
 
     override val configurations: Map<NamespaceAndName, BlockingPolicy> = HashMap<NamespaceAndName, BlockingPolicy>().apply {
         this[EXPECT_SPEECH] = BlockingPolicy.sharedInstanceFactory.get(
