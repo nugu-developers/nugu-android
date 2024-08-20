@@ -28,6 +28,7 @@ import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
 import com.skt.nugu.sdk.agent.util.IgnoreErrorContextRequestor
 import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.agent.version.Version
+import com.skt.nugu.sdk.core.interfaces.attachment.AttachmentManagerInterface
 import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
@@ -61,6 +62,7 @@ class DefaultTTSAgent(
     private val contextManager: ContextManagerInterface,
     private val playSynchronizer: PlaySynchronizerInterface,
     private val interLayerDisplayPolicyManager: InterLayerDisplayPolicyManager,
+    private val attachmentManager: AttachmentManagerInterface,
     private val cancelPolicyOnStopTTS: DirectiveHandlerResult.CancelPolicy,
     private val channelName: String
 ) : AbstractCapabilityAgent(NAMESPACE)
@@ -227,23 +229,27 @@ class DefaultTTSAgent(
 
         private fun startPlaying() {
             directive.getAttachmentReader()?.let {
-                with(speechPlayer.setSource(it)) {
-                    speechPlayer.setVolume(volume)
-                    sourceId = this
-                    Logger.d(TAG, "[startPlaying] sourceId: $this, info: $this@SpeakDirectiveInfo")
-                    when {
-                        isError() -> executePlaybackError(
-                            ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
-                            "setSource failed"
-                        )
-                        !speechPlayer.play(this) -> executePlaybackError(
+                val sourceId = speechPlayer.setSource(it)
+                speechPlayer.setVolume(volume)
+                this.sourceId = sourceId
+                Logger.d(TAG, "[startPlaying] sourceId: $this, info: $this@SpeakDirectiveInfo")
+
+                if(sourceId.isError()) {
+                    executePlaybackError(
+                        ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
+                        "setSource failed"
+                    )
+                } else {
+                    attachmentManager.ensureAttachmentPreservation(directive.getMessageId(), true)
+                    if(speechPlayer.play(sourceId)) {
+                        isAlreadyPausing = false
+                        isAlreadyStopping = false
+                    } else {
+                        attachmentManager.ensureAttachmentPreservation(directive.getMessageId(), false)
+                        executePlaybackError(
                             ErrorType.MEDIA_ERROR_INTERNAL_DEVICE_ERROR,
                             "playFailed"
                         )
-                        else -> {
-                            isAlreadyPausing = false
-                            isAlreadyStopping = false
-                        }
                     }
                 }
             }
@@ -334,6 +340,23 @@ class DefaultTTSAgent(
                 if(info.sourceId == id) {
                     listeners.forEach {
                         it.onTTSDurationRetrieved(info.directive.getDialogRequestId(), duration)
+                    }
+                }
+            }
+        })
+        speechPlayer.setBufferEventListener(object : MediaPlayerControlInterface.BufferEventListener {
+            override fun onBufferUnderrun(id: SourceId) {
+                currentInfo?.let {
+                    if(it.sourceId == id) {
+                        attachmentManager.ensureAttachmentPreservation(it.directive.getMessageId(), false)
+                    }
+                }
+            }
+
+            override fun onBufferRefilled(id: SourceId) {
+                currentInfo?.let {
+                    if(it.sourceId == id) {
+                        attachmentManager.ensureAttachmentPreservation(it.directive.getMessageId(), true)
                     }
                 }
             }

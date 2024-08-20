@@ -616,6 +616,7 @@ class NuguAndroidClient private constructor(
                             getContextManager(),
                             getPlaySynchronizer(),
                             getInterLayerDisplayPolicyManager(),
+                            getAttachmentManager(),
                             builder.cancelPolicyOnStopTTS,
                             DefaultFocusChannel.TTS_CHANNEL_NAME
                         ).apply {
