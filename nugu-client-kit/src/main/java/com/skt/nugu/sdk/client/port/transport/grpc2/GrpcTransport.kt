@@ -207,7 +207,6 @@ internal class GrpcTransport internal constructor(
             messageConsumer = messageConsumer,
             transportObserver = deviceGatewayObserver,
             authDelegate = authDelegate,
-            callOptions = callOptions,
             channelOptions = channelOptions,
             isStartReceiveServerInitiatedDirective = isStartReceiveServerInitiatedDirective
         ).let {
@@ -410,7 +409,7 @@ internal class GrpcTransport internal constructor(
         request: MessageRequest,
         headers: Map<String, String>?,
         listener: MessageSender.OnSendMessageListener
-    ) =  Grpc2Call(activeTransport, request, headers, listener)
+    ) =  Grpc2Call(activeTransport, request, headers, callOptions, listener)
 
     override fun startDirectivesService() {
         executor.submit {

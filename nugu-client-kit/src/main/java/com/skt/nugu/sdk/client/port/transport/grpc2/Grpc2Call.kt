@@ -21,13 +21,19 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageSender
 import com.skt.nugu.sdk.core.interfaces.transport.Transport
 import com.skt.nugu.sdk.core.interfaces.message.Status
 import com.skt.nugu.sdk.core.interfaces.message.Status.Companion.withDescription
+import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
 import com.skt.nugu.sdk.core.utils.Logger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import com.skt.nugu.sdk.core.interfaces.message.Call as MessageCall
 
-internal class Grpc2Call(val transport: Transport?, val request: MessageRequest, val headers: Map<String, String>?, listener: MessageSender.OnSendMessageListener) :
-    MessageCall {
+internal class Grpc2Call(
+    val transport: Transport?,
+    val request: MessageRequest,
+    private val headers: Map<String, String>?,
+    private val callOptions: CallOptions?,
+    listener: MessageSender.OnSendMessageListener
+) : MessageCall {
     private var executed = false
     private var canceled = false
     private var completed = false
@@ -35,27 +41,35 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     private var eventListener: MessageSender.EventListener? = null
     private var sendMessageListener: MessageSender.OnSendMessageListener? = listener
     private var noAck = false
-    private var callTimeoutMillis = 1000 * 10L
+    private var callTimeoutMillis = callOptions?.callTimeoutMillis ?: (1000 * 10L)
     private var invokeStartEvent = true
+    private var lastRequestTimeMillis = 0L
+    private var lastResponseTimeMillis = 0L
 
-    companion object{
+    companion object {
         private const val TAG = "GrpcCall"
     }
 
     override fun request() = request
     override fun headers() = headers
-    override fun enqueue(callback: MessageSender.Callback?, eventListener: MessageSender.EventListener?): Boolean {
+    override fun enqueue(
+        callback: MessageSender.Callback?, eventListener: MessageSender.EventListener?
+    ): Boolean {
         synchronized(this) {
             if (executed) {
-                callback?.onFailure(request(),Status(
-                    Status.Code.FAILED_PRECONDITION
-                ).withDescription("Already Executed"))
+                callback?.onFailure(
+                    request(), Status(
+                        Status.Code.FAILED_PRECONDITION
+                    ).withDescription("Already Executed")
+                )
                 return false
             }
             if (canceled) {
-                callback?.onFailure(request(),Status(
-                    Status.Code.CANCELLED
-                ).withDescription("Already canceled"))
+                callback?.onFailure(
+                    request(), Status(
+                        Status.Code.CANCELLED
+                    ).withDescription("Already canceled")
+                )
                 return false
             }
             executed = true
@@ -69,7 +83,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             return false
         }
 
-        if(noAck) {
+        if (noAck) {
             onComplete(Status.OK)
         }
         return true
@@ -126,7 +140,7 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
             onComplete(Status.FAILED_PRECONDITION.withDescription("send() called while not connected"))
         }
 
-        if(noAck) {
+        if (noAck) {
             onComplete(Status.OK)
         }
         try {
@@ -138,7 +152,9 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
     }
 
     override fun onStart() {
-        if(invokeStartEvent) {
+        lastResponseTimeMillis = System.currentTimeMillis()
+
+        if (invokeStartEvent) {
             invokeStartEvent = false
             callback?.onResponseStart(request())
         }
@@ -179,9 +195,20 @@ internal class Grpc2Call(val transport: Transport?, val request: MessageRequest,
         callTimeoutMillis = millis
         return this
     }
+
     override fun callTimeout() = callTimeoutMillis
 
-    override fun reschedule() {
-        // no op
+    override fun reschedule() = Unit
+
+    override fun waitForReady(): Boolean {
+        return callOptions?.waitForReady ?: true
+    }
+
+    override fun getLastResponseTimeMillis() = lastResponseTimeMillis
+
+    override fun getLastRequestTimeMillis() = lastRequestTimeMillis
+
+    override fun updateLastRequestTimeMillis() {
+        lastRequestTimeMillis = System.currentTimeMillis()
     }
 }

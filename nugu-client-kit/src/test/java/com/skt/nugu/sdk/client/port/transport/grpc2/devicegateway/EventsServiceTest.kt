@@ -52,8 +52,7 @@ class EventsServiceTest : TestCase() {
         val service = EventsService(
             mock(),
             mock(),
-            scheduler,
-            null
+            scheduler
         )
         Assert.assertFalse(service.isShutdown.get())
         service.shutdown()
@@ -66,8 +65,7 @@ class EventsServiceTest : TestCase() {
         val service = EventsService(
             mock(),
             mock(),
-            scheduler,
-            null
+            scheduler
         )
         val listener: MessageSender.OnSendMessageListener = mock()
         val headers = hashMapOf("Last-Asr-Event-Time" to "123")
@@ -76,9 +74,9 @@ class EventsServiceTest : TestCase() {
             "namespace",
             "name", "version"
         ).build()
-        val call = Grpc2Call(mockTransport, request, headers, listener)
+        val call = Grpc2Call(mockTransport, request, headers, null, listener)
         val responseObserver = service.ClientCallStreamObserver("streamId", call, false)
-        val future = service.scheduleTimeout("streamId", call)
+        val future = service.scheduleTimeout("streamId", call.callTimeout())
         val clientChannel = ClientChannel(
             mock(), future, responseObserver
         )
