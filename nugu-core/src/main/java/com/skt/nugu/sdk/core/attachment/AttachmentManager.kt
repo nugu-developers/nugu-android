@@ -38,6 +38,8 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
         var writerCreated: Boolean = false,
         var writerClosed: Boolean = false,
         var receiveEndAttachment: Boolean = false,
+        var isLocked: Boolean = false,
+        var onTimeout: (() -> Unit)? = null,
         val createdAt: Long = System.currentTimeMillis()
     )
 
@@ -63,7 +65,7 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
 
                 Logger.d(
                     TAG,
-                    "[createReader] Attachment Created Before - attachmentId: $attachmentId, status: $status, created reader: $reader"
+                    "[createReader] attachmentId: $attachmentId, status: $status, created reader: $reader"
                 )
                 reader
             } else {
@@ -75,8 +77,7 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
 
                 val timeoutFuture = attachmentTimeoutFutureMap[attachmentId]
                 if(timeoutFuture == null) {
-                    attachmentTimeoutFutureMap[attachmentId] = scheduleExecutor.schedule({
-                        // no attachment received
+                    newStatus.onTimeout = {
                         Logger.d(TAG, "[createReader] attachment timeout: $attachmentId")
                         lock.withLock {
                             attachment.createWriter().close(true)
@@ -84,7 +85,8 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                             newStatus.writerClosed = true
                             removeAttachment(attachmentId)
                         }
-                    }, timeoutInSeconds, TimeUnit.SECONDS)
+                    }
+                    scheduleTimeoutLocked(attachmentId)
                 }
 
                 Logger.d(
@@ -94,6 +96,14 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                 reader
             }
         }
+    }
+
+    private fun scheduleTimeoutLocked(attachmentId: String) {
+        val status = attachmentsStatus[attachmentId] ?: return
+        attachmentTimeoutFutureMap[attachmentId] = scheduleExecutor.schedule({
+            if (status.isLocked) return@schedule
+            status.onTimeout?.invoke()
+        }, timeoutInSeconds, TimeUnit.SECONDS)
     }
 
     override fun removeAttachment(attachmentId: String) {
@@ -170,14 +180,17 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                 if (attachment.isEnd) {
                     writer.close()
                 } else {
-                    attachmentTimeoutFutureMap[attachmentId] = scheduleExecutor.schedule({
-                        Logger.d(TAG, "[onAttachment] attachment timeout: $attachmentId")
-                        lock.withLock {
-                            writer.close(true)
-                            status.writerClosed = true
-                            removeAttachment(attachmentId)
+                    if(!status.isLocked) {
+                        status.onTimeout = {
+                            Logger.d(TAG, "[onAttachment] attachment timeout: $attachmentId")
+                            lock.withLock {
+                                writer.close(true)
+                                status.writerClosed = true
+                                removeAttachment(attachmentId)
+                            }
                         }
-                    }, timeoutInSeconds, TimeUnit.SECONDS)
+                        scheduleTimeoutLocked(attachmentId)
+                    }
                 }
             }
 
@@ -186,6 +199,27 @@ class AttachmentManager(private val timeoutInSeconds: Long = 10) : AttachmentMan
                 status.writerClosed = true
                 status.receiveEndAttachment = true
                 tryRemoveAttachmentAndStatusLocked(attachmentId)
+            }
+        }
+    }
+
+    override fun ensureAttachmentPreservation(attachmentId: String, ensure: Boolean) {
+        lock.withLock {
+            Logger.d(TAG, "[ensureAttachmentPreservation] attachmentId: $attachmentId, ensure: $ensure")
+            if(ensure) {
+                var status = attachmentsStatus[attachmentId]
+                if (status == null) {
+                    status = AttachmentStatus(isLocked = true)
+                    attachmentsStatus[attachmentId] = status
+                } else {
+                    status.isLocked = true
+                }
+
+                attachmentTimeoutFutureMap.remove(attachmentId)?.cancel(true)
+            } else {
+                val status = attachmentsStatus[attachmentId] ?: return@withLock
+                status.isLocked = false
+                scheduleTimeoutLocked(attachmentId)
             }
         }
     }

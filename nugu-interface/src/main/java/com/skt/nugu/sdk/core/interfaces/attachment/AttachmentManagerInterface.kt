@@ -36,4 +36,11 @@ interface AttachmentManagerInterface {
      * @param attachment the received attachment
      */
     fun onAttachment(attachment: AttachmentMessage)
+
+    /**
+     * Preventing the attachment from being removed due to timeout, if [ensure] is true.
+     * @param attachmentId the id of attachment
+     * @param ensure if true, attachment will be preserved
+     */
+    fun ensureAttachmentPreservation(attachmentId: String, ensure: Boolean)
 }
