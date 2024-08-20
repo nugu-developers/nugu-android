@@ -18,4 +18,4 @@ package com.skt.nugu.sdk.core.interfaces.transport
 /**
  * The collection of runtime options for a new RPC call.
  */
-data class CallOptions(val waitForReady: Boolean)
+data class CallOptions(val waitForReady: Boolean, val callTimeoutMillis: Long)

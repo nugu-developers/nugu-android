@@ -224,5 +224,15 @@ internal class HTTP2Call(
             scheduleTimeout()
         }
     }
+
+    override fun waitForReady() = true
+
+    override fun getLastResponseTimeMillis() = 0L
+
+    override fun getLastRequestTimeMillis() = 0L
+
+    override fun updateLastRequestTimeMillis() {
+        // no op
+    }
 }
 

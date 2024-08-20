@@ -38,7 +38,7 @@ class ChannelBuilderUtils {
             policy: ServerPolicy,
             channelOptions: ChannelOptions?,
             authDelegate: AuthDelegate,
-            delegate: HeaderClientInterceptor.Delegate,
+            headerClientInterceptorDelegate: HeaderClientInterceptor.Delegate,
             isStartReceiveServerInitiatedDirective: () -> Boolean
         ): ManagedChannelBuilder<*> {
             val channelBuilder = OkHttpChannelBuilder
@@ -55,7 +55,7 @@ class ChannelBuilderUtils {
             return channelBuilder.intercept(
                 HeaderClientInterceptor(
                     authDelegate,
-                    delegate
+                    headerClientInterceptorDelegate
                 )
             )
         }

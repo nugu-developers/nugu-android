@@ -94,7 +94,6 @@ class DeviceGatewayClientTest : TestCase() {
             messageConsumer = mock(),
             transportObserver = mock(),
             authDelegate = mock(),
-            callOptions = null,
             channelOptions = null,
             isStartReceiveServerInitiatedDirective = mock()
         )
@@ -113,7 +112,6 @@ class DeviceGatewayClientTest : TestCase() {
             messageConsumer = mock(),
             transportObserver = mock(),
             authDelegate = mock(),
-            callOptions = null,
             channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
@@ -140,7 +138,6 @@ class DeviceGatewayClientTest : TestCase() {
             messageConsumer = mock(),
             transportObserver = mock(),
             authDelegate = mock(),
-            callOptions = null,
             channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
@@ -151,7 +148,7 @@ class DeviceGatewayClientTest : TestCase() {
             "name", "version"
         ).build()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(mockTransport, request, null, listener)
+        val call = Grpc2Call(mockTransport, request, null, null, listener)
         Assert.assertTrue(client.send(call))
     }
 
@@ -162,7 +159,6 @@ class DeviceGatewayClientTest : TestCase() {
             messageConsumer = mock(),
             transportObserver = mock(),
             authDelegate = mock(),
-            callOptions = null,
             channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
@@ -174,7 +170,7 @@ class DeviceGatewayClientTest : TestCase() {
         ).build()
         val listener: MessageSender.OnSendMessageListener = mock()
         val headers = hashMapOf("Last-Asr-Event-Time" to "123")
-        val call = Grpc2Call(mockTransport, request, headers, listener)
+        val call = Grpc2Call(mockTransport, request, headers, null, listener)
         Assert.assertTrue(client.send(call))
         Assert.assertEquals(client.getHeaders(), headers)
         client.shutdown()
@@ -201,7 +197,6 @@ class DeviceGatewayClientTest : TestCase() {
             messageConsumer = mock(),
             transportObserver = deviceGatewayObserver,
             authDelegate = mock(),
-            callOptions = null,
             channelOptions = null,
             isStartReceiveServerInitiatedDirective = { false }
         )
@@ -223,7 +218,6 @@ class DeviceGatewayClientTest : TestCase() {
             messageConsumer = mock(),
             transportObserver = mock(),
             authDelegate = mock(),
-            callOptions = null,
             channelOptions = null,
             isStartReceiveServerInitiatedDirective = mock()
         )

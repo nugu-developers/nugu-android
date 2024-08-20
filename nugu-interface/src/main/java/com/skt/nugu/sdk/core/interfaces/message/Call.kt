@@ -30,4 +30,8 @@ interface Call {
     fun callTimeout(millis: Long): Call
     fun callTimeout(): Long
     fun reschedule()
+    fun waitForReady(): Boolean
+    fun getLastResponseTimeMillis(): Long
+    fun getLastRequestTimeMillis(): Long
+    fun updateLastRequestTimeMillis()
 }

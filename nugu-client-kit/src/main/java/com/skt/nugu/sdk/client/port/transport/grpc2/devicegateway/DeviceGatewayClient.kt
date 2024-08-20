@@ -31,7 +31,6 @@ import com.skt.nugu.sdk.core.interfaces.message.MessageConsumer
 import com.skt.nugu.sdk.core.interfaces.message.Call
 import com.skt.nugu.sdk.core.interfaces.message.request.AttachmentMessageRequest
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
-import com.skt.nugu.sdk.core.interfaces.transport.CallOptions
 import com.skt.nugu.sdk.core.interfaces.transport.ChannelOptions
 import com.skt.nugu.sdk.core.utils.Logger
 import devicegateway.grpc.AttachmentMessage
@@ -54,7 +53,6 @@ internal class DeviceGatewayClient(policy: Policy,
                                    private var messageConsumer: MessageConsumer?,
                                    private var transportObserver: DeviceGatewayTransport.TransportObserver?,
                                    private val authDelegate: AuthDelegate,
-                                   private val callOptions: CallOptions?,
                                    private val channelOptions: ChannelOptions?,
                                    private val isStartReceiveServerInitiatedDirective: () -> Boolean)
     :
@@ -374,8 +372,7 @@ internal class DeviceGatewayClient(policy: Policy,
                         EventsService(
                             it,
                             this@DeviceGatewayClient,
-                            scheduler,
-                            callOptions
+                            scheduler
                         )
                 }
             }

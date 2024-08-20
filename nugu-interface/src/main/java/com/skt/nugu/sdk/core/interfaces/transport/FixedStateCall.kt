@@ -81,6 +81,11 @@ class FixedStateCall(
     }
     override fun callTimeout() = 0L
 
-    override fun reschedule() {
-    }
+    override fun reschedule() = Unit
+
+    override fun waitForReady() = true
+    override fun getLastResponseTimeMillis() = 0L
+    override fun getLastRequestTimeMillis() = 0L
+
+    override fun updateLastRequestTimeMillis() = Unit
 }

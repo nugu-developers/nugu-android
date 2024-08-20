@@ -51,7 +51,7 @@ class Grpc2CallTest : TestCase() {
     fun testEnqueueReturnTrue() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         Assert.assertTrue(call.enqueue(mock()))
     }
 
@@ -59,7 +59,7 @@ class Grpc2CallTest : TestCase() {
     fun testEnqueueOnResponseStart() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         call.noAck()
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
@@ -79,7 +79,7 @@ class Grpc2CallTest : TestCase() {
     fun testEnqueueOnSuccess() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         call.noAck()
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
@@ -99,7 +99,7 @@ class Grpc2CallTest : TestCase() {
     fun testEnqueueAlreadyExecuted() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         call.noAck()
         call.enqueue(mock())
         call.enqueue(object : MessageSender.Callback {
@@ -120,7 +120,7 @@ class Grpc2CallTest : TestCase() {
     fun testEnqueueCancel() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
                 Assert.assertTrue(status.toString(), status.code == Status.Code.CANCELLED)
@@ -141,7 +141,7 @@ class Grpc2CallTest : TestCase() {
     fun testEnqueueDeadlineExceeded() {
         val originRequest: MessageRequest = mock()
         val listener: MessageSender.OnSendMessageListener = mock()
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         call.callTimeout(1)
         Assert.assertEquals(1, call.callTimeout())
         Assert.assertEquals(Status.DEADLINE_EXCEEDED, call.execute())
@@ -160,7 +160,7 @@ class Grpc2CallTest : TestCase() {
                     Assert.assertTrue(originRequest == request)
                 }
             }
-        val call = Grpc2Call(transport, originRequest, null, listener)
+        val call = Grpc2Call(transport, originRequest, null, null, listener)
         call.callTimeout(1)
         Assert.assertEquals(1, call.callTimeout())
         call.execute()
@@ -168,19 +168,19 @@ class Grpc2CallTest : TestCase() {
 
     @Test
     fun testGetRequest() {
-        val call = Grpc2Call(transport, mock(), null, mock())
+        val call = Grpc2Call(transport, mock(), null, null, mock())
         Assert.assertNotNull(call.request())
     }
 
     @Test
     fun testGetHeaders() {
-        val call = Grpc2Call(transport, mock(), hashMapOf("Last-Asr-Event-Time" to "123"), mock())
+        val call = Grpc2Call(transport, mock(), hashMapOf("Last-Asr-Event-Time" to "123"),null, mock())
         Assert.assertNotNull(call.headers())
     }
 
     @Test
     fun testEnqueueOnStart() {
-        val call = Grpc2Call(transport, mock(), null, mock())
+        val call = Grpc2Call(transport, mock(), null, null,  mock())
         call.enqueue(object : MessageSender.Callback {
             override fun onFailure(request: MessageRequest, status: Status) {
             }
@@ -197,7 +197,7 @@ class Grpc2CallTest : TestCase() {
 
     @Test
     fun testEnqueueOnComplete() {
-        val call = Grpc2Call(transport, mock(), null, mock())
+        val call = Grpc2Call(transport, mock(), null, null, mock())
         call.enqueue(mock())
         call.onComplete(Status.OK)
         Assert.assertTrue(call.isCompleted())
