@@ -6,6 +6,7 @@ import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.utils.Logger
+import com.skt.nugu.silvertray.player.BufferListener
 import com.skt.nugu.silvertray.player.DurationListener
 import com.skt.nugu.silvertray.player.EventListener
 import com.skt.nugu.silvertray.player.Player
@@ -37,6 +38,15 @@ abstract class AbstractNuguOpusPlayer(protected val player: Player = Player()): 
             override fun onFoundDuration(duration: Long) {
                 Logger.d(TAG, "[onFoundDuration] duration: $duration")
                 durationListener?.onRetrieved(currentSourceId, duration)
+            }
+        })
+        player.addBufferListener(object: BufferListener {
+            override fun onBufferRefilled() {
+                bufferEventListener?.onBufferRefilled(currentSourceId)
+            }
+
+            override fun onBufferUnderrun() {
+                bufferEventListener?.onBufferUnderrun(currentSourceId)
             }
         })
     }
