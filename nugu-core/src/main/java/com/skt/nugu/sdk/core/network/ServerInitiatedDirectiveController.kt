@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ServerInitiatedDirectiveController(val TAG: String) {
     private var isStart =  AtomicBoolean(false)
     private var completionListenerCalled =  AtomicBoolean(false)
-    private var initialized = false
     private var listener: (() -> Unit)? = null
 
     fun notifyOnCompletionListener() {
@@ -38,31 +37,16 @@ class ServerInitiatedDirectiveController(val TAG: String) {
 
     /**
      * Start the DirectivesService
-     * @return An initialized true or false.
      */
-    fun start(transport: Transport?): Boolean {
+    fun start() {
         if (isStart.get()) {
             Logger.w(TAG, "[start] ServerInitiatedDirective is already started.")
-            return initialized
+            return
         }
         isStart.set(true)
         completionListenerCalled.set(false)
 
-        if(transport == null) {
-            initialized = false
-        }
-        return initialized.also { initialized ->
-            if (initialized) {
-                transport?.startDirectivesService() ?: run {
-                    Logger.w(
-                        TAG,
-                        "[start] activeTransport is not possible."
-                    )
-                }
-            }
-            Logger.i(TAG, "[start] ServerInitiatedDirective started, initialized=$initialized")
-            this.initialized = true
-        }
+        Logger.i(TAG, "[start] ServerInitiatedDirective started")
     }
 
     fun stop(transport: Transport?) {
@@ -86,7 +70,6 @@ class ServerInitiatedDirectiveController(val TAG: String) {
     fun release() {
         listener = null
         isStart.set(false)
-        initialized = false
         completionListenerCalled.set(false)
     }
 

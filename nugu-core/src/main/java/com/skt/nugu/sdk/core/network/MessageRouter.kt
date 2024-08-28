@@ -328,13 +328,9 @@ class MessageRouter(
             sidController.release()
         }
         sidController.setOnCompletionListener(onCompletion)
-        if(!sidController.start(activeTransport)) {
-            setConnectionStatus(
-                ConnectionStatusListener.Status.CONNECTING,
-                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
-            )
-            createActiveTransport()
-        }
+        sidController.start()
+
+        createActiveTransport()
         return true
     }
 
