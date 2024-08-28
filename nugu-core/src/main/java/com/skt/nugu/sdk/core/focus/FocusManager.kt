@@ -219,7 +219,8 @@ class FocusManager(
         if (it.acquire(channel.name, channel.getInterfaceName())) {
             true
         } else {
-            it.shouldBeAcquired()
+            // failed to acquire external focus
+            !it.shouldBeAcquired()
         }
     } ?: true
 
