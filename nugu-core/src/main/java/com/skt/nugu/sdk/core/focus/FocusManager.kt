@@ -158,20 +158,25 @@ class FocusManager(
         val currentForegroundChannel = foregroundChannel
 
         when {
-            currentForegroundChannel == null -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
-            currentForegroundChannel == channelToAcquire -> setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+            currentForegroundChannel == null || currentForegroundChannel == channelToAcquire -> {
+                acquireExternalFocus(channelToAcquire)
+                setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+            }
             channelToAcquire.priority.acquire <= currentForegroundChannel.priority.release -> {
                 val higherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
                     activeChannels.filter { it.channel.priority.release < channelToAcquire.priority.acquire && it.channel != currentForegroundChannel && it.channel != channelToAcquire }
                 }
-                Logger.d(TAG, "$activeChannels")
 
                 if(higherPriorityChannelExceptForegroundChannel.any()) {
                     // Even if the request channel has higher priority than foreground channel, get background focus due to another higher priority channels exist.
                     setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
                 } else {
-                    setChannelFocus(currentForegroundChannel, FocusState.BACKGROUND)
-                    setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+                    if(acquireExternalFocus(channelToAcquire)) {
+                        setChannelFocus(currentForegroundChannel, FocusState.BACKGROUND)
+                        setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+                    } else {
+                        setChannelFocus(currentForegroundChannel, FocusState.BACKGROUND)
+                    }
                 }
             }
             else -> {
@@ -210,30 +215,18 @@ class FocusManager(
         return true
     }
 
-    private fun stopForegroundActivityHelper(foregroundChannel: Channel, foregroundChannelInterfaceName: String) {
-        if (foregroundChannelInterfaceName != foregroundChannel.getInterfaceName()) {
-            return
+    private fun acquireExternalFocus(channel: Channel): Boolean = externalFocusInteractor?.let {
+        if (it.acquire(channel.name, channel.getInterfaceName())) {
+            true
+        } else {
+            it.shouldBeAcquired()
         }
+    } ?: true
 
-        if (foregroundChannel.hasObserver() == false) {
-            return
-        }
-
-        setChannelFocus(foregroundChannel, FocusState.NONE)
-        removeActiveChannel(foregroundChannel)
-        foregroundHighestPriorityActiveChannel()
-    }
+    private fun releaseExternalFocus(channel: Channel) = externalFocusInteractor?.release(channel.name, channel.getInterfaceName())
 
     private fun setChannelFocus(channel: Channel, focus: FocusState) {
         Logger.d(TAG, "[setChannelFocus] $channel, $focus")
-        // if foreground focus requested, then acquire external focus if need.
-        externalFocusInteractor?.let {
-            if(focus == FocusState.FOREGROUND) {
-                if(!it.acquire(channel.name, channel.getInterfaceName())) {
-                    // TODO: ignore currently. later, have to handle this case.
-                }
-            }
-        }
 
         if (!channel.setFocus(focus)) {
             return
@@ -244,10 +237,8 @@ class FocusManager(
         }
 
         // if loss focus, then release external focus also.
-        externalFocusInteractor?.let {
-            if(focus == FocusState.NONE) {
-                it.release(channel.name, channel.getInterfaceName())
-            }
+        if(focus == FocusState.NONE) {
+            releaseExternalFocus(channel)
         }
 
         channelConfigurations.find { it.name == channel.name }?.let { config ->
@@ -264,6 +255,7 @@ class FocusManager(
         val channelToForeground = getHighestPriorityActiveChannel()
         Logger.d(TAG, "[foregroundHighestPriorityActiveChannel] ${channelToForeground?.channel?.name}, $activeChannels")
         if (channelToForeground != null) {
+            acquireExternalFocus(channelToForeground.channel)
             setChannelFocus(channelToForeground.channel, FocusState.FOREGROUND)
         } else {
             Logger.d(TAG, "[foregroundHighestPriorityActiveChannel] non channel to foreground.")
