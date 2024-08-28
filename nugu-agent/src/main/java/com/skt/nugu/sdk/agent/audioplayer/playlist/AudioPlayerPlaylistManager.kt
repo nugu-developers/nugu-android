@@ -21,11 +21,15 @@ class AudioPlayerPlaylistManager : PlaylistManager, AudioPlayerMetadataDirective
         val currentPlaylist = this.playlist
 
         if(currentPlaylist?.playServiceId == playServiceId && currentPlaylist.token == token) {
+            Logger.d(TAG, "[setPlaylist] updatePlaylist due to same with previous playlist")
             updatePlaylist(playServiceId, rawPlaylist)
         } else {
             // if previous list exist, notify clear playlist explicitly
             if (currentPlaylist != null) {
+                Logger.d(TAG, "[setPlaylist] clearPlaylist first due to different with previous playlist")
                 clearPlaylist()
+            } else {
+                Logger.d(TAG, "[setPlaylist] set newPlaylist")
             }
 
             val newPlaylist = Playlist(playServiceId, token, rawPlaylist)
