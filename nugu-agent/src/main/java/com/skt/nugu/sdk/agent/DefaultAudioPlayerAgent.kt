@@ -501,6 +501,7 @@ class DefaultAudioPlayerAgent(
                 kotlin.runCatching {
                     manager.setPlaylist(playServiceId, template.getAsJsonObject("playlist"))
                 }.onFailure {
+                    Logger.e(TAG, "[setPlaylist] onFailure ", it)
                     manager.clearPlaylist()
                 }
             }
