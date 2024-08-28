@@ -383,7 +383,7 @@ internal class GrpcTransport internal constructor(
         }
         Logger.d(
             TAG,
-            "[setState] ${getDetailedState()} -> $newDetailedState ${if (transportObserver == null) "(not delivered)" else ""}"
+            "[setState] ${getDetailedState()} -> $newDetailedState ${if (transportObserver == null) "(not delivered), $this" else ""}"
         )
         // Update state
         state.setDetailedState(newDetailedState, reason)
