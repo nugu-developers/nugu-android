@@ -44,6 +44,11 @@ interface FocusManagerInterface {
 
         // default implementation for backward compatibility
         fun isFocusAcquiring(): Boolean = false
+
+        /**
+         * Default is false for backward compatibility.
+         */
+        fun shouldBeAcquired(): Boolean = false
     }
 
     fun setExternalFocusInteractor(focusInteractor: ExternalFocusInteractor)
