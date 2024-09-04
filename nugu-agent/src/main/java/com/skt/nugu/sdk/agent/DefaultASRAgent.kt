@@ -33,6 +33,7 @@ import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
 import com.skt.nugu.sdk.core.interfaces.focus.SeamlessFocusManagerInterface
@@ -56,6 +57,7 @@ import kotlin.concurrent.withLock
 
 class DefaultASRAgent(
     private val inputProcessorManager: InputProcessorManagerInterface,
+    private val directiveProcessor: DirectiveProcessorInterface,
     private val focusManager: SeamlessFocusManagerInterface,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
@@ -892,6 +894,8 @@ class DefaultASRAgent(
                     stopRecognition(true, ASRAgentInterface.CancelCause.LOCAL_API)
                 } else {
                     request.cancelRequest()
+                    // cancel received directives until now.
+                    directiveProcessor.cancelDialogRequestId(request.eventMessage.dialogRequestId)
                 }
             }
         }
