@@ -140,12 +140,15 @@ internal class EventsService(
         private var isSendingAttachmentMessage = false
 
         fun sendMessage(clientCall: StreamObserver<Upstream>?, build: Upstream) {
+            updateLastRequestTimeMillis()
             if (build.hasAttachmentMessage()) {
                 isSendingAttachmentMessage = true
             }
             clientCall?.onNext(build)
         }
 
+
+        fun updateLastRequestTimeMillis() = call.updateLastRequestTimeMillis()
         fun getLastRequestTimeMillis() = call.getLastRequestTimeMillis()
         fun getLastResponseTimeMillis() = call.getLastResponseTimeMillis()
         fun getRemainingTimeoutMillis(currentTimeMillis: Long) =
@@ -294,7 +297,6 @@ internal class EventsService(
         try {
             streamLock.withLock {
                 obtainChannel(attachment.parentMessageId)?.apply {
-                    call.updateLastRequestTimeMillis()
                     this.responseObserver.sendMessage(
                         this.clientCall, Upstream.newBuilder()
                             .setAttachmentMessage(attachment.toProtobufMessage())
@@ -334,7 +336,6 @@ internal class EventsService(
                         TAG,
                         "[onNext] event=${event.namespace}.${event.name}, messageId=${event.messageId}"
                     )
-                    call.updateLastRequestTimeMillis()
                     this.responseObserver.sendMessage(
                         this.clientCall, Upstream.newBuilder()
                             .setEventMessage(event.toProtobufMessage())
