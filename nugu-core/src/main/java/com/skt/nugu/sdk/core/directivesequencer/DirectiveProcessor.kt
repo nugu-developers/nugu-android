@@ -33,7 +33,7 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
-private fun getBlockingKey(directive: Directive): String = directive.payload.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
+private fun getDirectiveRequestKey(directive: Directive): String = directive.payload.getAsyncKey()?.eventDialogRequestId ?: directive.getDialogRequestId()
 
 class DirectiveProcessor(
     private val directiveRouter: DirectiveRouter
@@ -79,7 +79,7 @@ class DirectiveProcessor(
         fun setDirectiveBeingHandledLocked(directive: Directive, policy: BlockingPolicy) {
             val blocking = policy.blocking ?: return
 
-            val key = getBlockingKey(directive)
+            val key = getDirectiveRequestKey(directive)
 
             BlockingPolicy.MEDIUM_ALL.forEach { medium ->
                 if (blocking.contains(medium)) {
@@ -92,7 +92,7 @@ class DirectiveProcessor(
 
 
         fun clearDirectiveBeingHandledLocked(directive: Directive, policy: BlockingPolicy) {
-            val key = getBlockingKey(directive)
+            val key = getDirectiveRequestKey(directive)
             blockingObjects[key]?.let {
                 BlockingPolicy.MEDIUM_ALL.forEach { medium ->
                     if (policy.blocking?.contains(medium) == true && it[medium] != null) {
@@ -118,7 +118,7 @@ class DirectiveProcessor(
                         }
 
                         if (it.isEmpty()) {
-                            blockingObjects.remove(getBlockingKey(directive))
+                            blockingObjects.remove(getDirectiveRequestKey(directive))
                         }
                     }
                 }
@@ -128,7 +128,7 @@ class DirectiveProcessor(
         }
 
         fun removeDirective(directive: Directive) {
-            val key = getBlockingKey(directive)
+            val key = getDirectiveRequestKey(directive)
 
             blockingObjects[key]?.let {
                 BlockingPolicy.MEDIUM_ALL.forEach { medium ->
@@ -244,7 +244,7 @@ class DirectiveProcessor(
         }
 
         scrub { directive: Directive ->
-            directive.getDialogRequestId() == dialogRequestId && targets?.contains(directive.getNamespaceAndName()) ?: true
+            getDirectiveRequestKey(directive) == dialogRequestId && targets?.contains(directive.getNamespaceAndName()) ?: true
         }
     }
 
@@ -311,10 +311,10 @@ class DirectiveProcessor(
         lock.withLock {
             removeDirectiveLocked(directive)
             if (cancelPolicy.cancelAll) {
-                scrub(directive.getDialogRequestId())
+                scrub(getDirectiveRequestKey(directive))
             } else {
                 if (!cancelPolicy.partialTargets.isNullOrEmpty()) {
-                    scrub(directive.getDialogRequestId(), cancelPolicy.partialTargets)
+                    scrub(getDirectiveRequestKey(directive), cancelPolicy.partialTargets)
                 }
             }
         }
@@ -411,7 +411,7 @@ class DirectiveProcessor(
                     TAG,
                     "[handleQueuedDirectivesLocked] handleDirectiveFailed message id : ${directive.getMessageId()}"
                 )
-                scrub(directive.getDialogRequestId())
+                scrub(getDirectiveRequestKey(directive))
             }
         }
 
@@ -443,7 +443,7 @@ class DirectiveProcessor(
         for (directiveAndPolicy in handlingQueue) {
             val directive = directiveAndPolicy.directive
 
-            val blockedMediums = blockedMediumsMap[getBlockingKey(directive)]
+            val blockedMediums = blockedMediumsMap[getDirectiveRequestKey(directive)]
                 ?: return directiveAndPolicy
 
             val policy = directiveAndPolicy.policy
