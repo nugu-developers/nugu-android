@@ -175,7 +175,7 @@ class FocusManager(
                         setChannelFocus(currentForegroundChannel, FocusState.BACKGROUND)
                         setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
                     } else {
-                        setChannelFocus(currentForegroundChannel, FocusState.BACKGROUND)
+                        setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
                     }
                 }
             }
