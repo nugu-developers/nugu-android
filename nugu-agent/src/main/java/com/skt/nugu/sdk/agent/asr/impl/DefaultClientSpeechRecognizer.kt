@@ -325,7 +325,13 @@ class DefaultClientSpeechRecognizer(
 
         if(!call.enqueue(object: MessageSender.Callback {
                 override fun onFailure(request: MessageRequest, status: Status) {
+                    if(currentRequest != null && recognizeRequest != currentRequest) {
+                        Logger.d(TAG, "[onFailure] request: $request, status: $status (old request, ignore onFailure)")
+                        return
+                    }
+
                     Logger.d(TAG, "[onFailure] request: $request, status: $status")
+
                     if(recognizeRequest == currentRequest && status.error == Status.StatusError.TIMEOUT && recognizeRequest.senderThread != null) {
                         // if sender thread is working, we handle a timeout error as unknown error.
                         // this occur when some attachment sent too late(after timeout).
