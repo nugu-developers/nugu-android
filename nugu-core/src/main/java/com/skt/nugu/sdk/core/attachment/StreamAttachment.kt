@@ -80,6 +80,7 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
         return object : Attachment.Reader, BufferEventListener {
             private var contentIndex = 0
             private var chunkIndex = 0
+            private var position = 0
             private var isClosing = false
             private var isReading = false
             private val waitLock = Object()
@@ -133,6 +134,8 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                 return null
             }
 
+            override fun position(): Int = position
+
             private fun readInternal(
                 offsetInBytes: Int,
                 sizeInBytes: Int,
@@ -171,7 +174,11 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                                     throw e
                                 }
                             } else {
-                                return sizeInBytes - leftSizeInBytes
+                                val read = sizeInBytes - leftSizeInBytes
+                                if(read > 0) {
+                                    position += read
+                                }
+                                return read
                             }
                         } else {
                             // 읽을 데이터가 하나도 준비되있지 않음. (UNDERRUN)
@@ -200,6 +207,9 @@ class StreamAttachment(private val attachmentId: String) : Attachment {
                         throw e
                     }
                 } else {
+                    if(read > 0) {
+                        position += read
+                    }
                     read
                 }
             }

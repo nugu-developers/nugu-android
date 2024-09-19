@@ -88,6 +88,11 @@ interface Attachment {
         fun readChunk(): ByteBuffer?
 
         /**
+         * Return this buffer's position
+         */
+        fun position(): Int
+
+        /**
          * Close the reader
          */
         fun close()

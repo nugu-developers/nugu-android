@@ -125,7 +125,7 @@ class DialogUXStateAggregator(
     override fun onStateChanged(state: TTSAgentInterface.State, dialogRequestId: String) {
         Logger.d(TAG, "[onStateChanged-TTS] State: $state")
         ttsState = state
-        handlingTTSSpeakDirective.remove(dialogRequestId)
+        val removedDirective = handlingTTSSpeakDirective.remove(dialogRequestId)
 
         executor.submit {
             when (state) {
@@ -133,7 +133,11 @@ class DialogUXStateAggregator(
                     // never called.
                 }
                 TTSAgentInterface.State.PLAYING -> {
-                    setState(DialogUXStateAggregatorInterface.DialogUXState.SPEAKING)
+                    removedDirective?.getAttachmentReader()?.let {
+                        if(it.position() > 0) {
+                            setState(DialogUXStateAggregatorInterface.DialogUXState.SPEAKING)
+                        }
+                    }
                 }
                 TTSAgentInterface.State.STOPPED,
                 TTSAgentInterface.State.FINISHED -> {
@@ -338,11 +342,11 @@ class DialogUXStateAggregator(
         )
     }
 
-    private val handlingTTSSpeakDirective = HashSet<String>()
+    private val handlingTTSSpeakDirective = HashMap<String, Directive>()
 
     override fun onRequested(directive: Directive) {
         if(directive.getNamespace() == "TTS" && directive.getName() == "Speak") {
-            handlingTTSSpeakDirective.add(directive.getDialogRequestId())
+            handlingTTSSpeakDirective[directive.getDialogRequestId()] = directive
         }
     }
 
