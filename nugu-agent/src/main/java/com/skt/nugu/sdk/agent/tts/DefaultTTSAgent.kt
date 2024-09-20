@@ -77,7 +77,7 @@ class DefaultTTSAgent(
         @SerializedName("playServiceId")
         val playServiceId: String?,
         @SerializedName("text")
-        val text: String,
+        val text: String?,
         @SerializedName("token")
         val token: String,
         @SerializedName("playStackControl")
@@ -89,7 +89,7 @@ class DefaultTTSAgent(
         private const val TAG = "DefaultTTSAgent"
 
         const val NAMESPACE = "TTS"
-        private val VERSION = Version(1, 3)
+        private val VERSION = Version(1, 4)
 
         private const val NAME_SPEAK = "Speak"
 
