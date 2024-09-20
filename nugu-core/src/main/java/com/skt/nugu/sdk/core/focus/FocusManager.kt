@@ -159,8 +159,11 @@ class FocusManager(
 
         when {
             currentForegroundChannel == null || currentForegroundChannel == channelToAcquire -> {
-                acquireExternalFocus(channelToAcquire)
-                setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+                if(acquireExternalFocus(channelToAcquire)) {
+                    setChannelFocus(channelToAcquire, FocusState.FOREGROUND)
+                } else {
+                    setChannelFocus(channelToAcquire, FocusState.BACKGROUND)
+                }
             }
             channelToAcquire.priority.acquire <= currentForegroundChannel.priority.release -> {
                 val higherPriorityChannelExceptForegroundChannel = synchronized(activeChannels) {
