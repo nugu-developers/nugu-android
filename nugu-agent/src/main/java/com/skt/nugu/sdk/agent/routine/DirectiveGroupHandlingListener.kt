@@ -91,7 +91,7 @@ class DirectiveGroupHandlingListener(
 
     override fun onPostProcessed(directives: List<Directive>) {
         if (directives.firstOrNull()?.header?.dialogRequestId == dialogRequestId) {
-            Logger.d(TAG, "[onReceiveDirectives] dialogRequestId: $dialogRequestId")
+            Logger.d(TAG, "[onPostProcessed] dialogRequestId: $dialogRequestId")
             directiveGroupProcessor.removeListener(this)
             this.directives.addAll(directives)
             directiveGroupPrepareListener?.onPrepared(directives)
