@@ -561,6 +561,7 @@ class NuguAndroidClient private constructor(
                             DefaultASRAgent(
                                 getInputManagerProcessor(),
                                 getDirectiveSequencer(),
+                                getDirectiveGroupProcessor(),
                                 getAudioSeamlessFocusManager(),
                                 getMessageSender(),
                                 getContextManager(),

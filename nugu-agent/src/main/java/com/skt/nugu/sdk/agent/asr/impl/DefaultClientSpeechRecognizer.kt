@@ -17,6 +17,7 @@ package com.skt.nugu.sdk.agent.asr.impl
 
 import com.google.gson.JsonParser
 import com.skt.nugu.sdk.agent.DefaultASRAgent
+import com.skt.nugu.sdk.agent.DefaultSystemAgent
 import com.skt.nugu.sdk.agent.asr.*
 import com.skt.nugu.sdk.agent.asr.audio.AudioEndPointDetector
 import com.skt.nugu.sdk.agent.asr.audio.AudioFormat
@@ -24,7 +25,11 @@ import com.skt.nugu.sdk.agent.asr.audio.Encoder
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessor
 import com.skt.nugu.sdk.core.interfaces.inputprocessor.InputProcessorManagerInterface
 import com.skt.nugu.sdk.agent.sds.SharedDataStream
+import com.skt.nugu.sdk.agent.system.AbstractSystemAgent
+import com.skt.nugu.sdk.agent.system.ExceptionDirective
+import com.skt.nugu.sdk.agent.util.MessageFactory
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttribute
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.message.*
 import com.skt.nugu.sdk.core.interfaces.message.request.EventMessageRequest
 import com.skt.nugu.sdk.core.utils.Logger
@@ -41,9 +46,10 @@ class DefaultClientSpeechRecognizer(
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val audioEncoder: Encoder,
     private val messageSender: MessageSender,
-    private val endPointDetector: AudioEndPointDetector
+    private val endPointDetector: AudioEndPointDetector,
 ) : SpeechRecognizer, InputProcessor
-, AudioEndPointDetector.OnStateChangedListener {
+    , DirectiveGroupProcessorInterface.Listener
+    , AudioEndPointDetector.OnStateChangedListener {
     companion object {
         private const val TAG = "DefaultClientSpeechRecognizer"
 
@@ -661,6 +667,29 @@ class DefaultClientSpeechRecognizer(
         currentRequest?.let {
             if(it.eventMessage.dialogRequestId == dialogRequestId) {
                 handleError(ASRAgentInterface.ErrorType.ERROR_RESPONSE_TIMEOUT, it.eventMessageHeader)
+            }
+        }
+    }
+
+    override fun onPostProcessed(directives: List<Directive>) {
+        super.onPostProcessed(directives)
+        val request = currentRequest ?: return
+
+        val systemExceptionDirective =
+            directives.firstOrNull { it.header.namespace == AbstractSystemAgent.NAMESPACE && it.header.name == DefaultSystemAgent.NAME_EXCEPTION && request.eventMessageHeader.dialogRequestId == it.getDialogRequestId() }
+
+        systemExceptionDirective?.let {
+            val payload =
+                MessageFactory.create(it.payload, ExceptionDirective.Payload::class.java) ?: return@let
+            if(payload.code == DefaultSystemAgent.CODE_ASR_RECOGNIZING_EXCEPTION) {
+                Logger.w(TAG, "[onPostProcessed] occur asr error by system exception payload: $payload")
+                if(epdState.isActive()) {
+                    request.errorTypeForCausingEpdStop = ASRAgentInterface.ErrorType.ERROR_UNKNOWN
+                    endPointDetector.stopDetector()
+                } else {
+                    request.senderThread?.requestStop()
+                    handleError(ASRAgentInterface.ErrorType.ERROR_UNKNOWN, request.eventMessageHeader)
+                }
             }
         }
     }

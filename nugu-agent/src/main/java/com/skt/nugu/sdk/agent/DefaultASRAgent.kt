@@ -32,6 +32,7 @@ import com.skt.nugu.sdk.core.interfaces.common.NamespaceAndName
 import com.skt.nugu.sdk.core.interfaces.context.*
 import com.skt.nugu.sdk.core.interfaces.dialog.DialogAttributeStorageInterface
 import com.skt.nugu.sdk.core.interfaces.directive.BlockingPolicy
+import com.skt.nugu.sdk.core.interfaces.directive.DirectiveGroupProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveHandlerResult
 import com.skt.nugu.sdk.core.interfaces.directive.DirectiveProcessorInterface
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
@@ -58,6 +59,7 @@ import kotlin.concurrent.withLock
 class DefaultASRAgent(
     private val inputProcessorManager: InputProcessorManagerInterface,
     private val directiveProcessor: DirectiveProcessorInterface,
+    private val directiveGroupProcessor: DirectiveGroupProcessorInterface,
     private val focusManager: SeamlessFocusManagerInterface,
     private val messageSender: MessageSender,
     private val contextManager: ContextManagerInterface,
@@ -234,7 +236,9 @@ class DefaultASRAgent(
                 inputProcessorManager,
                 audioEncoder,
                 messageSender
-            )
+            ).also {
+                directiveGroupProcessor.addListener(it)
+            }
 
         clientEpdSpeechRecognizer = if (endPointDetector != null) {
             DefaultClientSpeechRecognizer(
@@ -242,7 +246,9 @@ class DefaultASRAgent(
                 audioEncoder,
                 messageSender,
                 endPointDetector
-            )
+            ).also {
+                directiveGroupProcessor.addListener(it)
+            }
         } else {
             null
         }
