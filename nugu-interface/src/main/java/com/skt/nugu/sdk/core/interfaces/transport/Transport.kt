@@ -72,7 +72,7 @@ interface Transport {
     /**
     The server can send some directives at certain times.
      */
-    fun startDirectivesService() = Unit
+    fun startDirectivesService() : Boolean = true
 
     /**
     Stop receiving server-initiated-directive.

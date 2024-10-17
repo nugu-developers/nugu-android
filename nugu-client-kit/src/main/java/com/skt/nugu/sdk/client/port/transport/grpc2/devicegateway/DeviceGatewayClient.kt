@@ -79,7 +79,7 @@ internal class DeviceGatewayClient(policy: Policy,
     private val scheduler  = Executors.newSingleThreadScheduledExecutor()
 
     private var pendingHeaders: Map<String, String>? = null
-    private val pendingStopDirectivesService = AtomicBoolean(false)
+    private val pendingStop = AtomicBoolean(false)
     /**
      * Set a policy.
      * @return the ServerPolicy
@@ -109,12 +109,13 @@ internal class DeviceGatewayClient(policy: Policy,
                     return false
                 }
             }
-            if(!isStartReceiveServerInitiatedDirective()) {
-                handleOnConnected()
-                return true
-            }
-            buildDirectivesService()
         }
+
+        if(!isStartReceiveServerInitiatedDirective()) {
+            handleOnConnected()
+            return true
+        }
+        buildDirectivesService()
         return true
     }
     /**
@@ -382,31 +383,33 @@ internal class DeviceGatewayClient(policy: Policy,
 
     private fun buildDirectivesService() {
         Logger.d(TAG, "[buildDirectivesService] currentChannel=$currentChannel")
-
-        pingService?.shutdown()
-        directivesService?.shutdown()
-        currentChannel?.apply {
-            directivesService =
-                DirectivesService(
-                    streamingCalls,
-                    this,
-                    this@DeviceGatewayClient
-                )
-            pingService =
-                PingService(
-                    this,
-                    healthCheckPolicy,
-                    this@DeviceGatewayClient
-                )
+        synchronized(this) {
+            pingService?.shutdown()
+            directivesService?.shutdown()
+            currentChannel?.apply {
+                directivesService =
+                    DirectivesService(
+                        streamingCalls,
+                        this,
+                        this@DeviceGatewayClient
+                    )
+                pingService =
+                    PingService(
+                        this,
+                        healthCheckPolicy,
+                        this@DeviceGatewayClient
+                    )
+            }
         }
     }
 
     override fun stopDirectivesService() {
         val requests = eventsService?.requests() ?: 0
-        Logger.d(TAG, "[stopDirectivesService] requests=$requests")
         if(requests != 0) {
-            pendingStopDirectivesService.set(true)
+            Logger.i(TAG, "[stopDirectivesService] pending stop, requests=$requests")
+            pendingStop.set(true)
         } else {
+            Logger.d(TAG, "[stopDirectivesService]")
             processDisconnect()
             processConnection()
         }
@@ -414,8 +417,8 @@ internal class DeviceGatewayClient(policy: Policy,
 
     override fun onRequestCompleted() {
         if( eventsService?.requests() == 0 /* no more requests */ ) {
-            if (pendingStopDirectivesService.compareAndSet(true, false)) {
-                Logger.w(TAG, "[onRequestCompleted] A pending StopDirectivesService is performed.")
+            if (pendingStop.compareAndSet(true, false)) {
+                Logger.i(TAG, "[onRequestCompleted] A pending stop is performed.")
                 processDisconnect()
                 processConnection()
             }

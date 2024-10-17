@@ -423,11 +423,12 @@ internal class HTTP2Transport(
         listener: MessageSender.OnSendMessageListener
     ) = HTTP2Call(scheduler, activeTransport, request, headers, listener)
 
-    override fun startDirectivesService() {
+    override fun startDirectivesService() : Boolean {
         deviceGatewayClient?.let {
             setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
             it.startDirectivesService()
         } ?: Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+        return true
     }
 
     override fun stopDirectivesService() {
