@@ -411,13 +411,21 @@ internal class GrpcTransport internal constructor(
         listener: MessageSender.OnSendMessageListener
     ) =  Grpc2Call(activeTransport, request, headers, callOptions, listener)
 
-    override fun startDirectivesService() {
-        executor.submit {
-            deviceGatewayClient?.let {
+    override fun startDirectivesService(): Boolean {
+        checkAuthorizationIfEmpty {
+            Logger.w(TAG, "[startDirectivesService] authorization is empty")
+        } ?: return false
+
+        deviceGatewayClient?.let {
+            executor.submit {
                 setState(DetailedState.RECONNECTING, ChangedReason.SERVER_ENDPOINT_CHANGED)
                 it.startDirectivesService()
-            } ?: Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+            }
+        } ?: kotlin.run {
+            Logger.w(TAG, "[startDirectivesService] deviceGatewayClient is not initialized")
+            return false
         }
+        return true
     }
 
     override fun stopDirectivesService() {

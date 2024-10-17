@@ -328,9 +328,14 @@ class MessageRouter(
             sidController.release()
         }
         sidController.setOnCompletionListener(onCompletion)
-        sidController.start()
-
-        createActiveTransport()
+        if(!sidController.start(activeTransport)) {
+            setConnectionStatus(
+                ConnectionStatusListener.Status.CONNECTING,
+                ConnectionStatusListener.ChangedReason.CLIENT_REQUEST
+            )
+            createActiveTransport()
+        }
+        Logger.i(TAG, "[start] ServerInitiatedDirective start.")
         return true
     }
 
