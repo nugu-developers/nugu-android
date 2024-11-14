@@ -66,7 +66,7 @@ import java.net.URI
 import java.util.concurrent.*
 
 class DefaultAudioPlayerAgent(
-    private val mediaPlayer: MediaPlayerInterface,
+    private val playerFactory: PlayerFactory,
     private val messageSender: MessageSender,
     private val focusManager: SeamlessFocusManagerInterface,
     private val contextManager: ContextManagerInterface,
@@ -170,6 +170,38 @@ class DefaultAudioPlayerAgent(
         LinkedHashSet<AudioPlayerAgentInterface.Listener>()
     private val durationListeners = LinkedHashSet<AudioPlayerAgentInterface.OnDurationListener>()
     private val playbackListeners = LinkedHashSet<AudioPlayerAgentInterface.OnPlaybackListener>()
+
+    private val mediaPlayer: MediaPlayerInterface by lazy {
+        playerFactory.createAudioPlayer().also {
+            it.setPlaybackEventListener(this)
+            it.setOnDurationListener(object : MediaPlayerControlInterface.OnDurationListener {
+                override fun onRetrieved(id: SourceId, duration: Long?) {
+                    executor.submit {
+                        Logger.d(TAG, "[onRetrieved] sourceId: $sourceId, id: $id, duration: $duration")
+                        if(sourceId == id) {
+                            this@DefaultAudioPlayerAgent.duration = duration
+
+                            // should fetch offset
+                            if(duration != null) {
+                                currentItem?.let {
+                                    //
+                                    if(!it.isCanceled) {
+                                        executeFetchOffset(it.payload.audioItem.stream.offsetInMilliseconds)
+                                    }
+                                }
+                            }
+
+                            createAudioInfoContext()?.let { context->
+                                durationListeners.forEach { listener ->
+                                    listener.onRetrieved(duration, context)
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        }
+    }
 
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -730,33 +762,6 @@ class DefaultAudioPlayerAgent(
             TAG,
             "[init] channelName: $channelName, enableDisplayLifeCycleManagement: $enableDisplayLifeCycleManagement"
         )
-        mediaPlayer.setPlaybackEventListener(this)
-        mediaPlayer.setOnDurationListener(object : MediaPlayerControlInterface.OnDurationListener {
-            override fun onRetrieved(id: SourceId, duration: Long?) {
-                executor.submit {
-                    Logger.d(TAG, "[onRetrieved] sourceId: $sourceId, id: $id, duration: $duration")
-                    if(sourceId == id) {
-                        this@DefaultAudioPlayerAgent.duration = duration
-
-                        // should fetch offset
-                        if(duration != null) {
-                            currentItem?.let {
-                                //
-                                if(!it.isCanceled) {
-                                    executeFetchOffset(it.payload.audioItem.stream.offsetInMilliseconds)
-                                }
-                            }
-                        }
-
-                        createAudioInfoContext()?.let { context->
-                            durationListeners.forEach { listener ->
-                                listener.onRetrieved(duration, context)
-                            }
-                        }
-                    }
-                }
-            }
-        })
         contextManager.setStateProvider(namespaceAndName, this)
 
         // pause directive handler

@@ -19,6 +19,7 @@ package com.skt.nugu.sdk.agent.common.tts
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.core.interfaces.attachment.Attachment
 import com.skt.nugu.sdk.core.interfaces.context.PlayStackManagerInterface
@@ -33,7 +34,7 @@ class TTSScenarioPlayer(
     private val playSynchronizer: PlaySynchronizerInterface,
     private val focusManager: SeamlessFocusManagerInterface,
     private val focusChannelName: String,
-    private val player: MediaPlayerInterface,
+    private val playerFactory: PlayerFactory,
     audioPlayStackManager: PlayStackManagerInterface
 ) : MediaPlayerControlInterface.PlaybackEventListener
     , ChannelObserver {
@@ -74,9 +75,14 @@ class TTSScenarioPlayer(
     private val focusRequester = object: SeamlessFocusManagerInterface.Requester {}
     private val focusChannel = SeamlessFocusManagerInterface.Channel(focusChannelName, this, TAG)
 
+    private val player by lazy {
+        playerFactory.createSpeakPlayer().also {
+            it.setPlaybackEventListener(this@TTSScenarioPlayer)
+        }
+    }
+
     init {
         Logger.d(TAG, "[init] $this")
-        player.setPlaybackEventListener(this)
         audioPlayStackManager.addPlayContextProvider(ttsPlayContextProvider)
     }
 

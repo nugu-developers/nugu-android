@@ -22,6 +22,7 @@ import com.skt.nugu.sdk.agent.common.tts.TTSPlayContextProvider
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerInterface
+import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
 import com.skt.nugu.sdk.agent.payload.PlayStackControl
 import com.skt.nugu.sdk.agent.tts.handler.StopDirectiveHandler
@@ -56,7 +57,7 @@ import kotlin.collections.HashSet
 import kotlin.concurrent.withLock
 
 class DefaultTTSAgent(
-    private val speechPlayer: MediaPlayerInterface,
+    private val playerFactory: PlayerFactory,
     private val messageSender: MessageSender,
     private val focusManager: SeamlessFocusManagerInterface,
     private val contextManager: ContextManagerInterface,
@@ -329,38 +330,42 @@ class DefaultTTSAgent(
     private var playerVolume = 1.0f
 
     private val playContextManager = TTSPlayContextProvider()
+    private val speechPlayer: MediaPlayerInterface by lazy {
+        playerFactory.createSpeakPlayer().also {
+            it.setPlaybackEventListener(this@DefaultTTSAgent)
+            it.setOnDurationListener(object: MediaPlayerControlInterface.OnDurationListener {
+                override fun onRetrieved(id: SourceId, duration: Long?) {
+                    Logger.d(TAG, "[onRetrieved] id: $id, duration: $duration, currentInfo's sourceId: ${currentInfo?.sourceId}")
+                    val info = currentInfo ?: return
+                    if(info.sourceId == id) {
+                        listeners.forEach {
+                            it.onTTSDurationRetrieved(info.directive.getDialogRequestId(), duration)
+                        }
+                    }
+                }
+            })
+            it.setBufferEventListener(object : MediaPlayerControlInterface.BufferEventListener {
+                override fun onBufferUnderrun(id: SourceId) {
+                    currentInfo?.let {
+                        if(it.sourceId == id) {
+                            attachmentManager.ensureAttachmentPreservation(it.directive.getMessageId(), false)
+                        }
+                    }
+                }
+
+                override fun onBufferRefilled(id: SourceId) {
+                    currentInfo?.let {
+                        if(it.sourceId == id) {
+                            attachmentManager.ensureAttachmentPreservation(it.directive.getMessageId(), true)
+                        }
+                    }
+                }
+            })
+        }
+    }
 
     init {
         Logger.d(TAG, "[init] $this")
-        speechPlayer.setPlaybackEventListener(this)
-        speechPlayer.setOnDurationListener(object: MediaPlayerControlInterface.OnDurationListener {
-            override fun onRetrieved(id: SourceId, duration: Long?) {
-                Logger.d(TAG, "[onRetrieved] id: $id, duration: $duration, currentInfo's sourceId: ${currentInfo?.sourceId}")
-                val info = currentInfo ?: return
-                if(info.sourceId == id) {
-                    listeners.forEach {
-                        it.onTTSDurationRetrieved(info.directive.getDialogRequestId(), duration)
-                    }
-                }
-            }
-        })
-        speechPlayer.setBufferEventListener(object : MediaPlayerControlInterface.BufferEventListener {
-            override fun onBufferUnderrun(id: SourceId) {
-                currentInfo?.let {
-                    if(it.sourceId == id) {
-                        attachmentManager.ensureAttachmentPreservation(it.directive.getMessageId(), false)
-                    }
-                }
-            }
-
-            override fun onBufferRefilled(id: SourceId) {
-                currentInfo?.let {
-                    if(it.sourceId == id) {
-                        attachmentManager.ensureAttachmentPreservation(it.directive.getMessageId(), true)
-                    }
-                }
-            }
-        })
         contextManager.setStateProvider(namespaceAndName, this)
         interLayerDisplayPolicyManager.addListener(this)
     }

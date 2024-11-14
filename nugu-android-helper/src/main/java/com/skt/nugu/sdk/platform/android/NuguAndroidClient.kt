@@ -612,7 +612,7 @@ class NuguAndroidClient private constructor(
                 addAgentFactory(DefaultTTSAgent.NAMESPACE, object : AgentFactory<DefaultTTSAgent> {
                     override fun create(container: SdkContainer): DefaultTTSAgent = with(container) {
                         DefaultTTSAgent(
-                            builder.playerFactory.createSpeakPlayer(),
+                            builder.playerFactory,
                             getMessageSender(),
                             getAudioSeamlessFocusManager(),
                             getContextManager(),
@@ -704,7 +704,7 @@ class NuguAndroidClient private constructor(
                                     }
 
                                     DefaultAudioPlayerAgent(
-                                        builder.playerFactory.createAudioPlayer(),
+                                        builder.playerFactory,
                                         getMessageSender(),
                                         getAudioSeamlessFocusManager(),
                                         getContextManager(),
@@ -980,7 +980,7 @@ class NuguAndroidClient private constructor(
                                 container.getPlaySynchronizer(),
                                 container.getAudioSeamlessFocusManager(),
                                 DefaultFocusChannel.TTS_CHANNEL_NAME,
-                                builder.playerFactory.createSpeakPlayer(),
+                                builder.playerFactory,
                                 container.getAudioPlayStackManager()
                             ),
                             container.getContextManager(),
@@ -1091,7 +1091,7 @@ class NuguAndroidClient private constructor(
                     DefaultFocusChannel.ASR_BEEP_CHANNEL_NAME,
                     asrAgent,
                     provider,
-                    builder.playerFactory.createBeepPlayer(),
+                    builder.playerFactory,
                     beepPlaybackController,
                     asrBeepPlaybackPriority
                 )

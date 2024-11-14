@@ -20,8 +20,8 @@ import com.skt.nugu.sdk.agent.asr.ASRAgentInterface
 import com.skt.nugu.sdk.agent.beep.BeepPlaybackController
 import com.skt.nugu.sdk.agent.mediaplayer.ErrorType
 import com.skt.nugu.sdk.agent.mediaplayer.MediaPlayerControlInterface
+import com.skt.nugu.sdk.agent.mediaplayer.PlayerFactory
 import com.skt.nugu.sdk.agent.mediaplayer.SourceId
-import com.skt.nugu.sdk.agent.mediaplayer.UriSourcePlayablePlayer
 import com.skt.nugu.sdk.core.interfaces.focus.ChannelObserver
 import com.skt.nugu.sdk.core.interfaces.focus.FocusManagerInterface
 import com.skt.nugu.sdk.core.interfaces.focus.FocusState
@@ -36,7 +36,7 @@ class AsrBeepPlayer(
     private val focusChannelName: String,
     asrAgent: ASRAgentInterface,
     private val beepResourceProvider: AsrBeepResourceProvider,
-    private val mediaPlayer: UriSourcePlayablePlayer,
+    private val playerFactory: PlayerFactory,
     private val beepPlaybackController: BeepPlaybackController,
     private val beepPlaybackPriority: Int
 ): MediaPlayerControlInterface.PlaybackEventListener {
@@ -104,11 +104,16 @@ class AsrBeepPlayer(
 
     private val executor = Executors.newSingleThreadExecutor()
     private val currentSources = CopyOnWriteArraySet<BeepPlaybackControllerSource>()
+    private val player by lazy {
+        playerFactory.createBeepPlayer().also {
+            it.setPlaybackEventListener(this@AsrBeepPlayer)
+        }
+    }
 
     init {
+        Logger.d(TAG, "[ASRBeepPlayer::init]")
         asrAgent.addOnResultListener(asrOnResultListener)
         asrAgent.addOnStateChangeListener(asrOnStateChangeListener)
-        mediaPlayer.setPlaybackEventListener(this)
     }
 
     private fun tryPlayBeep(uri: URI) {
@@ -126,9 +131,9 @@ class AsrBeepPlayer(
 
                                 object: BeepPlaybackControllerSource(this) {
                                     override fun play() {
-                                        mediaPlayer.setSource(uri, null).let {
+                                        player.setSource(uri, null).let {
                                             sourceId = it
-                                            if (!it.isError() && mediaPlayer.play(it)) {
+                                            if (!it.isError() && player.play(it)) {
                                                 Logger.d(TAG, "[tryPlayBeep] sourceId: $it")
                                             } else {
                                                 onSourceCompleted(this)
